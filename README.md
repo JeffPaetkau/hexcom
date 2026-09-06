@@ -29,7 +29,7 @@ Tests, and the fastest way to see whether anything is broken:
 dotnet test
 ```
 
-The sandbox needs **Godot 4.4 .NET edition** ([godotengine.org](https://godotengine.org/download)
+The sandbox needs **Godot 4.7 .NET edition** ([godotengine.org](https://godotengine.org/download)
 — the build labelled ".NET", not the plain one). Open `game/project.godot` in the editor and
 press F5. If your Godot is a different 4.x, change the `Godot.NET.Sdk` version in
 `game/Hexcom.Game.csproj` to match.
