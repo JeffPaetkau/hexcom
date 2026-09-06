@@ -584,10 +584,20 @@ public partial class HexSandbox : Node2D
         var plan = _battle.PlanShot(shooter, quarry);
         if (!plan.CanFire) return $"shot at {quarry.Name}: {plan.Refusal}";
 
-        var face = plan.Target.Protection;
+        var armour = plan.Target.Protection;
+
+        // A body is a hexagon, so a shot is never at one plate. Show the spread and what each is
+        // still carrying, because which side is worn is what turning is for.
+        var faces = string.Join(", ", plan.Aspects.Select(a =>
+            $"{a.Face} {a.Share:P0} (s{armour.ShieldOn(a.Face)}/p{armour.ArmourOn(a.Face)})"));
+
+        var glancing = plan.GlancingFactor < 0.995
+            ? $"    glancing {plan.GlancingFactor:P0}"
+            : "";
+
         return $"shot at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP    "
-               + $"{plan.Weapon.Name} ({plan.Weapon.Kind})    "
-               + $"{plan.FaceHit} face, shield {face.ShieldOn(plan.FaceHit)} plate {face.ArmourOn(plan.FaceHit)}"
+               + $"{plan.Weapon.Name} ({plan.Weapon.Kind}){glancing}    "
+               + faces
                + "    right-click to fire";
     }
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Hexcom.Core.Hexes;
+
 
 namespace Hexcom.Core.Combat;
 
@@ -67,8 +67,8 @@ public sealed class Protection
     public int ShieldPerFace { get; }
     public int ArmourPerFace { get; }
 
-    public int ShieldOn(HexDirection face) => _shield[(int)face];
-    public int ArmourOn(HexDirection face) => _armour[(int)face];
+    public int ShieldOn(BodyFace face) => _shield[(int)face];
+    public int ArmourOn(BodyFace face) => _armour[(int)face];
 
     /// <summary>Shield left across all faces, for a summary readout.</summary>
     public int TotalShield => _shield.Sum();
@@ -77,8 +77,8 @@ public sealed class Protection
     public int TotalArmour => _armour.Sum();
 
     /// <summary>Faces with nothing left to stop a beam.</summary>
-    public IEnumerable<HexDirection> BareFaces
-        => HexDirectionExtensions.All.Where(d => ShieldOn(d) == 0);
+    public IEnumerable<BodyFace> BareFaces
+        => BodyFaces.All.Where(d => ShieldOn(d) == 0);
 
     /// <summary>Bring every face back up, at the loadout rate. Called as a unit's turn starts.</summary>
     public void Recharge()
@@ -95,7 +95,7 @@ public sealed class Protection
     /// the same eleven points of damage lands very differently depending on what threw it. Plate
     /// ablates as it works; shields deplete and will come back.
     /// </remarks>
-    public DamageTaken Absorb(HexDirection face, DamageKind kind, int damage)
+    public DamageTaken Absorb(BodyFace face, DamageKind kind, int damage, double obliquityDegrees = 0)
     {
         var index = (int)face;
 
@@ -109,25 +109,33 @@ public sealed class Protection
         _armour[index] -= byArmour;
         through -= byArmour;
 
-        return new DamageTaken(face, kind, damage, byShield, byArmour, Math.Max(0, through));
+        return new DamageTaken(face, kind, damage, byShield, byArmour, Math.Max(0, through), obliquityDegrees);
     }
 
     private static int Round(double value) => (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }
 
 /// <summary>What one hit did on the way in.</summary>
-/// <param name="Face">Which face took it.</param>
-/// <param name="Incoming">Damage before anything stopped it.</param>
+/// <param name="Face">Which of the soldier's own sides took it.</param>
+/// <param name="Incoming">
+/// Damage arriving at the plate. A kinetic round that came in at an angle has already been
+/// docked for skipping off, so this can be less than the weapon does.
+/// </param>
 /// <param name="StoppedByShield">Soaked by the force shield, which will recharge.</param>
 /// <param name="StoppedByArmour">Soaked by plate, which ablated doing it.</param>
 /// <param name="ToVitality">What reached the soldier.</param>
+/// <param name="ObliquityDegrees">How far off square it arrived, for the readout.</param>
 public sealed record DamageTaken(
-    HexDirection Face,
+    BodyFace Face,
     DamageKind Kind,
     int Incoming,
     int StoppedByShield,
     int StoppedByArmour,
-    int ToVitality)
+    int ToVitality,
+    double ObliquityDegrees = 0)
 {
     public bool WasStopped => ToVitality == 0;
+
+    /// <summary>Whether this one came in at enough of an angle to be worth mentioning.</summary>
+    public bool WasGlancing => ObliquityDegrees >= BodyFaces.DegreesPerFace / 2;
 }

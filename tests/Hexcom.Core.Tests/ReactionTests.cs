@@ -462,13 +462,14 @@ public class ReactionTests
 
         var faceNow = battle.FaceToward(runner, watchman);
         var outcome = battle.Move(Node(4, 1));
-        var faceHit = outcome.Reactions!.Resolutions.Single().Shot.Forecast.FaceHit;
+        var faceHit = outcome.Reactions!.Resolutions.Single().Shot.Forecast.LikeliestFace;
 
         // Which plate the round arrives at is worked out where it lands, not where the runner
         // was standing when the window opened. Nothing special-cases this: the runner is
-        // genuinely standing there by the time the shot goes off.
-        Assert.Equal(HexDirection.NorthWest, faceNow);
-        Assert.Equal(HexDirection.SouthWest, faceHit);
+        // genuinely standing there by the time the shot goes off, showing whichever side the
+        // run has swung round by then.
+        Assert.Equal(BodyFace.FrontLeft, faceNow);
+        Assert.Equal(BodyFace.RearLeft, faceHit);
     }
 
     // ---- spending the reserve --------------------------------------------------

@@ -12,7 +12,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 221 tests, ~0.7s
+dotnet test                 # 227 tests, ~0.7s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -76,6 +76,14 @@ one.
   route and fires from each landing tick, so the mover is genuinely standing there. That is why
   sight, cover and which face a round hits need no special case inside a window — but it does
   mean anything reading a unit's position mid-window sees an intermediate one.
+- **`BodyFace` is not `HexDirection`.** Armour faces are the soldier's own sides, so `BodyFace`
+  is an offset from `Unit.Facing`, not a compass point. `Battle.FacesPresentedTo` returns a
+  *distribution* — a body is a hexagon, so a shot can always reach two or three plates — and the
+  round is rolled against it in `Resolve`. Anything that wants one answer takes `Aspects[0]` or
+  `ShotPlan.LikeliestFace`.
+- **Nothing may assume ten action points.** The turn allowance is provisional and expected to
+  vary per soldier. `ReserveFraction` is a share for that reason. Fire mode prices are still
+  absolute, which is a recorded open question rather than an oversight.
 - `dotnet test -v q` hides assertion messages. Use
   `--logger "console;verbosity=detailed"` and grep for `Error Message`.
 - Bash heredocs in this environment break on apostrophes in the body. Use the Write/Edit tools

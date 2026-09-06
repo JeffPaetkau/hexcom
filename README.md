@@ -114,11 +114,19 @@ the same weapon shoot worse.
   costs a point.
 - **Weapons, shooting and protection** — beam against kinetic, and each defeats what the other
   cannot. Shields soak beams and shrug at solid objects; ablative plate stops rounds and cooks
-  under a beam. Both are tracked **per face**, so the walk round the back that buys an unnoticed
-  approach also buys the thin side of the armour. Hit chance comes from the sight trace's
-  exposure figure, weapon range bands, fire mode and stance. Firing gives you away through the
-  channel your weapon uses: a slug rifle is heard through walls, a beam paints a line back to you
-  for anyone facing your way, and a powered blade does neither.
+  under a beam. Both are tracked **per side of the body** — front, two shoulders, two flanks and
+  the back — so the walk round the back that buys an unnoticed approach also buys the thin side
+  of the armour, and a soldier whose front shield has collapsed can turn a fresh one to the
+  threat for a point. Hit chance comes from the sight trace's exposure figure, weapon range
+  bands, fire mode and stance. Firing gives you away through the channel your weapon uses: a slug
+  rifle is heard through walls, a beam paints a line back to you for anyone facing your way, and
+  a powered blade does neither.
+- **A body is a hexagon too** — so a shot is never at one plate. Head-on you can reach half the
+  front and a quarter of each shoulder; on the corner, two plates equally. Which one a round
+  finds is rolled against those shares. A slug that arrives at an angle skips off and loses up to
+  half its damage; a beam lands where it lands and burns. So catching somebody on the corner is
+  the better shot with a slugthrower, and standing square to the threat is the better place to
+  be — which makes turning on the spot worth its action point.
 - **The reaction window, and overwatch** — a move is committed before anyone answers it, so for
   its duration both sides know the future. Inside the window **action points are time**: a
   reactor placing an action at tick *t* that costs *k* resolves at *t + k*, against wherever the

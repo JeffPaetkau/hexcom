@@ -37,10 +37,26 @@ public sealed record GunneryModel
     public double CrouchingSteadiness { get; init; } = 1.08;
 
     public double ProneSteadiness { get; init; } = 1.15;
+
+    /// <summary>
+    /// How much of a kinetic round is lost skipping off a plate it met edge-on rather than
+    /// square. Half at ninety degrees, and a quarter at the sixty degrees a shoulder presents.
+    /// </summary>
+    /// <remarks>
+    /// Kinetic only, and that asymmetry is the point. A solid object arriving at an angle
+    /// deflects; a beam lands wherever it lands and burns. So the geometry of an approach reads
+    /// differently depending on what is being carried, which is one more reason a squad wants
+    /// both families rather than settling on one.
+    /// </remarks>
+    public double GlancingPenalty { get; init; } = 0.5;
 }
 
 /// <summary>What a shot would look like, worked out before anyone commits to it.</summary>
-/// <param name="FaceHit">Which of the target's faces the round would arrive at.</param>
+/// <param name="Aspects">
+/// Which of the target's own sides this shot can reach and how squarely, widest first. A body is
+/// a hexagon, so there is never just one: head-on it is half the front plate and a quarter of
+/// each shoulder, and which one a given round finds is rolled when it is fired.
+/// </param>
 /// <param name="Refusal">Why the shot cannot be taken, in words fit to show a player.</param>
 /// <param name="AimBonus">
 /// Multiplier from having the weapon already pointed the right way. One for an ordinary shot;
@@ -58,16 +74,30 @@ public sealed record ShotPlan(
     SightResult Sight,
     double HitChance,
     int ApCost,
-    HexDirection FaceHit,
+    IReadOnlyList<FacingAspect> Aspects,
     string? Refusal,
     double AimBonus = 1.0,
     UnitPose? TargetPose = null,
-    ApSource Paying = ApSource.Turn)
+    ApSource Paying = ApSource.Turn,
+    double GlancingFactor = 1.0)
 {
     public bool CanFire => Refusal is null;
 
-    /// <summary>Expected damage through to the soldier, for an AI weighing options.</summary>
-    public double ExpectedDamage => HitChance * Mode.Shots * Weapon.Damage;
+    /// <summary>The side the shot is most likely to find. What an interface points at.</summary>
+    public BodyFace LikeliestFace => Aspects.Count > 0 ? Aspects[0].Face : BodyFace.Front;
+
+    /// <summary>
+    /// Expected damage arriving at the plate, for an AI weighing options.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="GlancingFactor"/> is the average share of a round that survives the angle it
+    /// comes in at, weighted by how likely each face is to be the one hit — so it matters more
+    /// than it looks. Catching somebody toward a corner spreads every round over two plates at a
+    /// mild angle; catching them square puts half the rounds on an unangled plate and the rest on
+    /// a shoulder they skip off. For a slugthrower the corner is the better shot, and a reactor
+    /// choosing where along a committed move to catch a runner now notices.
+    /// </remarks>
+    public double ExpectedDamage => HitChance * Mode.Shots * Weapon.Damage * GlancingFactor;
 }
 
 /// <summary>One round, and what it did.</summary>
@@ -171,4 +201,24 @@ public sealed class Gunnery(GunneryModel? model = null)
         Stance.Crouching => Model.CrouchingSteadiness,
         _ => 1.0,
     };
+
+    /// <summary>
+    /// Share of a round's damage that survives arriving at <paramref name="obliquityDegrees"/>
+    /// off square. One for a beam, which does not skip.
+    /// </summary>
+    public double GlancingFactor(DamageKind kind, double obliquityDegrees)
+    {
+        if (kind != DamageKind.Kinetic) return 1.0;
+
+        var squareness = Math.Cos(obliquityDegrees * Math.PI / 180.0);
+        return 1.0 - Model.GlancingPenalty * (1.0 - Math.Clamp(squareness, 0, 1));
+    }
+
+    /// <summary>
+    /// What a round actually arrives with after skipping, given which face it found.
+    /// </summary>
+    public int DamageAt(WeaponProfile weapon, double obliquityDegrees)
+        => (int)Math.Round(
+            weapon.Damage * GlancingFactor(weapon.Kind, obliquityDegrees),
+            MidpointRounding.AwayFromZero);
 }

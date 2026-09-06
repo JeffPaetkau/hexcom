@@ -81,6 +81,18 @@ public static class Geometry2D
         return sum * 0.5;
     }
 
+    /// <summary>
+    /// The turn from bearing <paramref name="a"/> to bearing <paramref name="b"/>, in (-pi, pi].
+    /// Positive is counter-clockwise.
+    /// </summary>
+    public static double SignedAngleBetween(double a, double b)
+    {
+        var difference = (NormalizeAngle(b) - NormalizeAngle(a)) % (Math.PI * 2);
+        if (difference > Math.PI) difference -= Math.PI * 2;
+        if (difference <= -Math.PI) difference += Math.PI * 2;
+        return difference;
+    }
+
     /// <summary>The smaller angle between two bearings, always in [0, pi].</summary>
     public static double AngleBetween(double a, double b)
     {

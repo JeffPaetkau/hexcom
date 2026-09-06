@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 8 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 9 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 221 tests run in about half a second today.</li>
+        <li>The rules are unit-testable headless — 227 tests run in about half a second today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1156,14 +1156,29 @@
         turns. It changes the texture of the game rather than handing the player a handicap.
       </p>
       <p>
-        The dial settled at <strong>seven tenths</strong>, measured against the ten point turn
-        and the price list in section 10. Stand still and seven bank, which is exactly an aimed
-        shot. Spend half the turn getting somewhere and three bank, which is exactly a snap shot.
-        Sprint the whole ten and nothing banks. Every rung of the movement economy therefore
-        lands on a real decision about what can still be answered with. A floor cuts anything
-        below two points, on the grounds that a leftover nothing can be spent on is noise and
-        inviting the interface to offer it is worse than rounding it away.
+        The dial settled at <strong>seven tenths</strong>. It is a share rather than a fixed
+        number, which matters more than the number does: the ten point turn is provisional, and
+        the allowance is expected to vary by soldier once stats, training and kit feed into it,
+        so nothing here may assume ten. What is calibrated is the shape — seven tenths puts the
+        three rungs of the movement economy on either side of the fire mode prices, so each is a
+        real decision rather than a rounding accident. Against a ten point turn it lands exactly:
+        hold everything and seven bank, which is an aimed shot; spend half the turn moving and
+        three bank, which is a snap shot; sprint and nothing banks. A floor cuts anything below
+        two points, because a leftover nothing can be spent on is noise and offering it is worse
+        than rounding it away.
       </p>
+
+      <div class="aside">
+        <span class="tag">Open</span>
+        <p>
+          Fire mode prices are absolute while the allowance is not. A soldier given more points
+          does not merely move further — they bank a larger reserve and can afford better shots
+          out of it, so the advantage compounds across three systems at once. That may be exactly
+          the reward speed should buy, or it may want a compensating mechanism. The question only
+          becomes real when the allowance stops being a flat ten, and it should be answered then
+          rather than guessed at now.
+        </p>
+      </div>
 
       <h3>Keeping it from becoming a cascade</h3>
       <p>
@@ -1509,19 +1524,70 @@
         on top of what exists, not a rewrite.
       </p>
 
-      <h3>Protection is per face</h3>
+      <h3>Protection is per face, and the faces belong to the body</h3>
       <p>
-        Both shields and armour are tracked per facing rather than as one pool. Flanking then
+        Both shields and armour are tracked per side rather than as one pool. Flanking then
         matters for damage as much as it does for detection, and it reuses the arc machinery that
         already decides what a unit notices — the same walk round the back that buys you an
         unnoticed approach also buys you the thin side of the armour.
       </p>
       <p>
-        It also gives the two defences different textures. A shield that has collapsed on one
-        facing can be turned away from the threat while it recharges, which makes turning a
-        combat decision and not just a looking one. Armour does not recover, so a face that has
-        been chewed through stays chewed through, and a unit slowly runs out of good sides to
-        present.
+        The sides are named <strong>relative to the soldier</strong>, not to the compass: front,
+        the two shoulders, the two flanks behind them, and the back. The plate that took a round
+        from the north-east is the plate that happened to be pointing north-east at the time, and
+        turning about puts it somewhere else. That is what makes a shield that has collapsed on
+        one side worth turning away from the threat while it recharges, so turning is a combat
+        decision and not just a looking one. Armour does not recover, so a side that has been
+        chewed through stays chewed through, and a unit slowly runs out of good ones to present.
+      </p>
+
+      <h3>A body is a hexagon too</h3>
+      <p>
+        Which side a round finds is not a matter of rounding the bearing to the nearest of six.
+        Stand in front of somebody and you are looking at their front plate square on
+        <em>and</em> a sliver of each shoulder; stand toward a corner and you get two plates at
+        equal, awkward angles. Weighting each face by how wide it looks from where the shot came
+        from gives the shares exactly — a half and two quarters head-on, two halves corner-on —
+        and the round is rolled against them when it is fired.
+      </p>
+
+      <figure>
+        <figcaption>
+          <b>Figure 5 — What a shot can reach</b><br>
+          The same soldier, seen from two bearings thirty degrees apart. Shares are the chance a
+          round finds that plate; the angle is how far off square it arrives.
+        </figcaption>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Standing</th><th>Plate</th><th>Share</th><th>Angle</th><th>Slug arrives with</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="name" rowspan="3">Square on</td><td>Front</td><td class="n">50%</td><td class="n">0°</td><td class="n">100%</td></tr>
+              <tr><td>Front left</td><td class="n">25%</td><td class="n">60°</td><td class="n">75%</td></tr>
+              <tr><td>Front right</td><td class="n">25%</td><td class="n">60°</td><td class="n">75%</td></tr>
+              <tr><td class="name" rowspan="2">On the corner</td><td>Front</td><td class="n">50%</td><td class="n">30°</td><td class="n">93%</td></tr>
+              <tr><td>Front left</td><td class="n">50%</td><td class="n">30°</td><td class="n">93%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </figure>
+
+      <p>
+        A kinetic round meeting a plate at an angle skips off it, losing up to half at grazing
+        and a quarter off a shoulder. A beam does not: it lands where it lands and burns, and the
+        angle of the surface is not its problem. So the geometry of an approach reads differently
+        depending on what is being carried, which is one more reason a squad wants both families
+        rather than settling on one.
+      </p>
+      <p>
+        The arithmetic in the table has a consequence worth naming. Square on, half the rounds
+        find an unangled plate; on the corner, every round arrives mildly angled. Averaged, the
+        corner is the <em>better</em> shot for a slugthrower and the square approach is the
+        better place to be stood — the opposite of the tank instinct, and correct here, because
+        six thin plates are not one thick sloped one. It costs a point to turn, so choosing which
+        to present is a real use of an action point, and a reactor weighing where along a
+        committed move to catch a runner now prefers the corner without being told to.
       </p>
 
       <div class="aside">
@@ -1530,24 +1596,12 @@
           How to show six facings of two defences without a spreadsheet on screen. Likely a ring
           around the unit, segmented, with shield as an outer band and armour as an inner one —
           readable at a glance, exact on hover. Six segments is probably too fine; three arcs of
-          front, flanks and rear may carry the same decision at a fraction of the noise.
+          front, flanks and rear may carry the same decision at a fraction of the noise. The
+          spread now has to be shown as well, since a shot is never at one plate: the sandbox
+          lists all of them with their shares, which is honest and much too wordy.
         </p>
       </div>
 
-      <div class="aside">
-        <span class="tag">Open</span>
-        <p>
-          Faces are currently indexed by <em>compass</em> direction rather than by body — the
-          plate that took a hit from the north-east is still the north-east plate after the
-          soldier turns round. Flanking still works, because coming from a new angle finds a
-          different face, but "turn your good side to the threat" does not, and neither does the
-          idea that a unit runs out of sides to present. Building reactions made this visible:
-          a runner crossing an arc is shot in a different plate at tick three than at tick one
-          purely because the bearing moved, which reads right, while a unit spinning on the spot
-          under fire changes nothing, which does not. Rotating the index by facing is a small
-          change and a real balance one, so it wants doing deliberately.
-        </p>
-      </div>
     </div>
   </section>
 
@@ -1580,8 +1634,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 8</span>
-    <span>221 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 9</span>
+    <span>227 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

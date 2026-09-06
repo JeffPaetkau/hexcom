@@ -23,15 +23,22 @@ public sealed record ReactionModel
     /// Share of the points a unit did not spend that carries into its reaction reserve.
     /// </summary>
     /// <remarks>
-    /// Seven tenths is chosen against the ten point turn. Stand still and seven bank, which is
-    /// exactly an aimed shot. Spend half the turn getting somewhere and three bank, which is
-    /// exactly a snap shot. Sprint the whole ten and nothing banks at all. Every rung of the
-    /// movement economy therefore lands on a real choice about what can still be answered with,
-    /// and the choice is made before you know whether it will pay.
+    /// A share rather than a fixed number, so it scales with whatever allowance a unit actually
+    /// has. That matters: the ten point turn is provisional, and the allowance is expected to
+    /// vary by soldier once stats, training and kit feed into it. Nothing here assumes ten.
     /// <para>
-    /// Declaring an overwatch costs a point out of the same turn, so a watchman banks six and
-    /// can never take an aimed shot off an arc. That is deliberate: overwatch pays in the aim
-    /// bonus rather than in aiming time, which is what makes it land early in the window.
+    /// What <em>is</em> calibrated is the shape. Seven tenths puts the three rungs of the
+    /// movement economy — hold everything, spend about half, spend it all — on either side of
+    /// the fire mode prices, so each one is a real decision about what can still be answered
+    /// with rather than a rounding accident. Against a ten point turn that lands exactly: seven
+    /// banked is an aimed shot, three is a snap shot, and a sprint banks nothing. If the turn
+    /// size moves, this is the dial that moves with it.
+    /// </para>
+    /// <para>
+    /// The lever to watch is that fire mode prices are absolute while the allowance is not. A
+    /// unit given more points does not merely move further; it banks a larger reserve and can
+    /// afford better shots out of it. Whether that compounding is the reward a fast soldier
+    /// should get is a balance question for whenever the allowance stops being a flat ten.
     /// </para>
     /// </remarks>
     public double ReserveFraction { get; init; } = 0.7;

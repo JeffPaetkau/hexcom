@@ -354,7 +354,7 @@ public sealed class Battle
     {
         var weapon = shooter.Weapon;
         var sight = Sight.Trace(shooter.Vantage, targetPose.Vantage);
-        var face = FaceToward(targetPose, shooter.Position);
+        var aspects = FacesPresentedTo(targetPose, shooter.Position);
         var purse = paying == ApSource.Reserve ? shooter.Reserve : shooter.ActionPoints;
 
         var refusal =
@@ -371,9 +371,15 @@ public sealed class Battle
             ? Gunnery.HitChance(weapon, mode, sight, shooter.Stance, aimBonus)
             : 0;
 
+        // What survives the angle, averaged over which side the round is likely to find.
+        var glancing = 0.0;
+        foreach (var aspect in aspects)
+            glancing += aspect.Share * Gunnery.GlancingFactor(weapon.Kind, aspect.ObliquityDegrees);
+        if (aspects.Count == 0) glancing = 1.0;
+
         return new ShotPlan(
-            shooter, target, weapon, mode, sight, chance, mode.ApCost, face, refusal,
-            aimBonus, targetPose, paying);
+            shooter, target, weapon, mode, sight, chance, mode.ApCost, aspects, refusal,
+            aimBonus, targetPose, paying, glancing);
     }
 
     /// <summary>
@@ -416,7 +422,13 @@ public sealed class Battle
                 continue;
             }
 
-            var damage = target.Protection.Absorb(plan.FaceHit, plan.Weapon.Kind, plan.Weapon.Damage);
+            // Which side of them it found, weighted by how wide each looks from here.
+            var aspect = PickFace(plan.Aspects);
+            var arriving = Gunnery.DamageAt(plan.Weapon, aspect.ObliquityDegrees);
+
+            var damage = target.Protection.Absorb(
+                aspect.Face, plan.Weapon.Kind, arriving, aspect.ObliquityDegrees);
+
             target.Vitality -= damage.ToVitality;
             shots.Add(new ShotHit(true, roll, damage));
 
@@ -429,6 +441,32 @@ public sealed class Battle
         if (down) Withdraw(target);
 
         return new ShotOutcome(true, shots, plan.ApCost, plan.HitChance, down, null);
+    }
+
+    /// <summary>
+    /// Roll which of the sides in view a round actually finds, weighted by how wide each of them
+    /// looks from where the shot came from.
+    /// </summary>
+    /// <remarks>
+    /// The roll comes from the battle generator like every other, so a whole exchange still
+    /// replays from the seed. Aiming at a particular plate is deliberately not offered: you
+    /// shoot at a soldier, and the geometry decides where it lands.
+    /// </remarks>
+    private FacingAspect PickFace(IReadOnlyList<FacingAspect> aspects)
+    {
+        if (aspects.Count == 0) return new FacingAspect(BodyFace.Front, 1.0, 0);
+        if (aspects.Count == 1) return aspects[0];
+
+        var roll = _rng.NextDouble();
+        var running = 0.0;
+
+        foreach (var aspect in aspects)
+        {
+            running += aspect.Share;
+            if (roll < running) return aspect;
+        }
+
+        return aspects[^1];
     }
 
     /// <summary>
@@ -445,21 +483,20 @@ public sealed class Battle
     /// <summary>
     /// Which of <paramref name="target"/>'s faces something at <paramref name="from"/> arrives at.
     /// </summary>
-    public HexDirection FaceToward(Unit target, Unit from) => FaceToward(UnitPose.Of(target), from.Position);
+    public BodyFace FaceToward(Unit target, Unit from) => FacesPresentedTo(UnitPose.Of(target), from.Position)[0].Face;
 
     /// <summary>
-    /// Which face of a unit in a given pose something arriving from <paramref name="from"/> hits.
+    /// Which of a unit's own sides something arriving from <paramref name="from"/> can reach, and
+    /// how squarely, widest first.
     /// </summary>
-    public HexDirection FaceToward(UnitPose target, NodeId from)
-    {
-        var here = Sight.Ground(target.Position).Plane;
-        var there = Sight.Ground(from).Plane;
-
-        var offset = there - here;
-        if (offset.LengthSquared < Geometry2D.Epsilon) return target.Facing;
-
-        return HexDirectionExtensions.FromBearing(offset.Angle - Layout.RotationRadians);
-    }
+    /// <remarks>
+    /// Never one side. A body is a hexagon, so standing in front of somebody puts you in view of
+    /// their front plate and a sliver of each shoulder; standing toward a corner shows you two
+    /// plates at equal angles. Which of them a given round finds is rolled when it is fired, so
+    /// this is a distribution rather than an answer.
+    /// </remarks>
+    public IReadOnlyList<FacingAspect> FacesPresentedTo(UnitPose target, NodeId from)
+        => BodyFaces.Presented(SignedAngleOffDegrees(target.Position, target.Facing, from));
 
     /// <summary>
     /// How far off a bearing a place lies, in degrees, seen from somewhere on the map.
@@ -467,9 +504,19 @@ public sealed class Battle
     /// <remarks>
     /// One answer for two questions that keep turning out to be the same one: how much of an
     /// observer's attention a place has, and whether it falls inside a declared overwatch arc.
-    /// The grid can be drawn rotated, so the facing bearing is rotated with it.
     /// </remarks>
     public double AngleOffDegrees(NodeId from, HexDirection direction, NodeId place)
+        => Math.Abs(SignedAngleOffDegrees(from, direction, place));
+
+    /// <summary>
+    /// The same angle, signed: positive when the place lies to the left of the bearing.
+    /// </summary>
+    /// <remarks>
+    /// Which side matters once faces are body-relative — a shoulder is not the same plate as the
+    /// other shoulder. The grid can be drawn rotated, so the bearing is rotated with it, and
+    /// hex directions run counter-clockwise, so a positive step is a step to the left.
+    /// </remarks>
+    public double SignedAngleOffDegrees(NodeId from, HexDirection direction, NodeId place)
     {
         var here = Sight.Ground(from).Plane;
         var there = Sight.Ground(place).Plane;
@@ -478,7 +525,7 @@ public sealed class Battle
         if (offset.LengthSquared < Geometry2D.Epsilon) return 0;
 
         var bearing = direction.BearingRadians() + Layout.RotationRadians;
-        return Geometry2D.AngleBetween(bearing, offset.Angle) * (180.0 / Math.PI);
+        return Geometry2D.SignedAngleBetween(bearing, offset.Angle) * (180.0 / Math.PI);
     }
 
     /// <summary>Drop to a crouch, go prone, or stand back up.</summary>

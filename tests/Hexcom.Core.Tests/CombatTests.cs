@@ -161,11 +161,11 @@ public class CombatTests
     {
         var shieldOnly = new Loadout(WeaponProfile.Sidearm, ShieldPerFace: 20, ArmourPerFace: 0);
 
-        var beam = new Protection(shieldOnly).Absorb(HexDirection.NorthEast, DamageKind.Beam, 10);
+        var beam = new Protection(shieldOnly).Absorb(BodyFace.Front, DamageKind.Beam, 10);
         Assert.Equal(10, beam.StoppedByShield);
         Assert.Equal(0, beam.ToVitality);
 
-        var slug = new Protection(shieldOnly).Absorb(HexDirection.NorthEast, DamageKind.Kinetic, 10);
+        var slug = new Protection(shieldOnly).Absorb(BodyFace.Front, DamageKind.Kinetic, 10);
         Assert.Equal(2, slug.StoppedByShield); // fifteen per cent, rounded
         Assert.Equal(8, slug.ToVitality);
     }
@@ -175,11 +175,11 @@ public class CombatTests
     {
         var plateOnly = new Loadout(WeaponProfile.Sidearm, ShieldPerFace: 0, ArmourPerFace: 20);
 
-        var slug = new Protection(plateOnly).Absorb(HexDirection.NorthEast, DamageKind.Kinetic, 10);
+        var slug = new Protection(plateOnly).Absorb(BodyFace.Front, DamageKind.Kinetic, 10);
         Assert.Equal(10, slug.StoppedByArmour);
         Assert.Equal(0, slug.ToVitality);
 
-        var beam = new Protection(plateOnly).Absorb(HexDirection.NorthEast, DamageKind.Beam, 10);
+        var beam = new Protection(plateOnly).Absorb(BodyFace.Front, DamageKind.Beam, 10);
         Assert.Equal(3, beam.StoppedByArmour); // a quarter, rounded
         Assert.Equal(7, beam.ToVitality);
     }
@@ -188,7 +188,7 @@ public class CombatTests
     public void PlateAblatesAndShieldsComeBack()
     {
         var protection = new Protection(new Loadout(WeaponProfile.Sidearm, ShieldPerFace: 6, ArmourPerFace: 10, ShieldRecharge: 2));
-        var face = HexDirection.North;
+        var face = BodyFace.FrontLeft;
 
         protection.Absorb(face, DamageKind.Kinetic, 12);
         var armourAfter = protection.ArmourOn(face);
@@ -206,45 +206,176 @@ public class CombatTests
     public void EachFaceIsProtectedSeparately()
     {
         var protection = new Protection(Loadout.Beamer);
-        protection.Absorb(HexDirection.NorthEast, DamageKind.Beam, 40);
+        protection.Absorb(BodyFace.Front, DamageKind.Beam, 40);
 
-        Assert.Equal(0, protection.ShieldOn(HexDirection.NorthEast));
-        Assert.Equal(Loadout.Beamer.ShieldPerFace, protection.ShieldOn(HexDirection.SouthWest));
+        Assert.Equal(0, protection.ShieldOn(BodyFace.Front));
+        Assert.Equal(Loadout.Beamer.ShieldPerFace, protection.ShieldOn(BodyFace.Rear));
         Assert.Single(protection.BareFaces);
     }
 
     [Fact]
-    public void AShotArrivesAtTheFaceItCameFrom()
+    public void WalkingRoundASoldierNamesEachSideOfThemInTurn()
     {
         var battle = Field();
-        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0));
+        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast);
         battle.Start();
 
-        foreach (var direction in HexDirectionExtensions.All)
+        // The target is looking north-east, so a shooter out along that spoke is dead in front
+        // and the rest fall away to either side of it.
+        var expected = new[]
         {
-            var spot = new NodeId(direction.Offset() * 4, 0);
-            var shooter = new Unit(new UnitId(99), "Ghost", Side.Player, spot);
-            Assert.Equal(direction, battle.FaceToward(target, shooter));
+            (HexDirection.NorthEast, BodyFace.Front),
+            (HexDirection.North, BodyFace.FrontLeft),
+            (HexDirection.NorthWest, BodyFace.RearLeft),
+            (HexDirection.SouthWest, BodyFace.Rear),
+            (HexDirection.South, BodyFace.RearRight),
+            (HexDirection.SouthEast, BodyFace.FrontRight),
+        };
+
+        foreach (var (direction, face) in expected)
+        {
+            var shooter = new Unit(new UnitId(99), "Ghost", Side.Player, new NodeId(direction.Offset() * 4, 0));
+            Assert.Equal(face, battle.FaceToward(target, shooter));
         }
+    }
+
+    [Fact]
+    public void TurningRoundPresentsADifferentPlateToTheSameShooter()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast);
+        var shooter = battle.Deploy("Shooter", Side.Player, Node(4, 0), facing: HexDirection.SouthWest);
+        battle.Start();
+
+        // Faces are the soldier's own sides, not compass points. Nobody moves here; the target
+        // simply looks somewhere else, and a different plate is now the one in the way.
+        var pose = UnitPose.Of(target);
+
+        Assert.Equal(BodyFace.Front, Squarest(pose));
+        Assert.Equal(BodyFace.FrontRight, Squarest(pose with { Facing = HexDirection.North }));
+        Assert.Equal(BodyFace.Rear, Squarest(pose with { Facing = HexDirection.SouthWest }));
+
+        BodyFace Squarest(UnitPose looking) => battle.FacesPresentedTo(looking, shooter.Position)[0].Face;
     }
 
     [Fact]
     public void WalkingRoundTheBackFindsTheSpentSide()
     {
         var battle = Field();
-        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), loadout: Loadout.Beamer);
+        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast, loadout: Loadout.Beamer);
         var front = battle.Deploy("Front", Side.Player, Node(4, 0), facing: HexDirection.SouthWest, loadout: Loadout.Beamer);
         var behind = battle.Deploy("Behind", Side.Player, Node(-4, 0), facing: HexDirection.NorthEast, loadout: Loadout.Beamer);
         battle.Start();
 
-        // Burn the north-east shield down.
-        target.Protection.Absorb(HexDirection.NorthEast, DamageKind.Beam, 40);
+        // Burn the shield off the side they are looking over.
+        target.Protection.Absorb(BodyFace.Front, DamageKind.Beam, 40);
 
-        Assert.Equal(HexDirection.NorthEast, battle.FaceToward(target, front));
-        Assert.Equal(HexDirection.SouthWest, battle.FaceToward(target, behind));
+        Assert.Equal(BodyFace.Front, battle.FaceToward(target, front));
+        Assert.Equal(BodyFace.Rear, battle.FaceToward(target, behind));
 
         Assert.Equal(0, target.Protection.ShieldOn(battle.FaceToward(target, front)));
         Assert.True(target.Protection.ShieldOn(battle.FaceToward(target, behind)) > 0);
+
+        // And the payoff of tracking sides by body: turning about swaps which of them is exposed,
+        // so a soldier whose front is gone can put a fresh plate between itself and the threat.
+        var turned = UnitPose.Of(target) with { Facing = HexDirection.SouthWest };
+
+        Assert.True(target.Protection.ShieldOn(Squarest(turned, front.Position)) > 0);
+        Assert.Equal(0, target.Protection.ShieldOn(Squarest(turned, behind.Position)));
+
+        BodyFace Squarest(UnitPose looking, NodeId from) => battle.FacesPresentedTo(looking, from)[0].Face;
+    }
+
+    // ---- which of the six a round actually finds -------------------------------
+
+    [Fact]
+    public void StandingInFrontOfSomebodyShowsYouThreeOfTheirSides()
+    {
+        var aspects = BodyFaces.Presented(0);
+
+        // A hexagon met head-on is one full face and a shoulder either side, foreshortened to
+        // half the width each. Half the rounds find the front plate, a quarter each shoulder.
+        Assert.Equal(3, aspects.Count);
+        Assert.Equal(BodyFace.Front, aspects[0].Face);
+        Assert.Equal(0.50, aspects[0].Share, 6);
+        Assert.Equal(0.0, aspects[0].ObliquityDegrees, 6);
+
+        Assert.Equal(
+            new[] { BodyFace.FrontLeft, BodyFace.FrontRight },
+            aspects.Skip(1).Select(a => a.Face).ToArray());
+        Assert.All(aspects.Skip(1), a => Assert.Equal(0.25, a.Share, 6));
+        Assert.All(aspects.Skip(1), a => Assert.Equal(60.0, a.ObliquityDegrees, 6));
+    }
+
+    [Fact]
+    public void StandingTowardsACornerShowsYouTwoSidesEqually()
+    {
+        var aspects = BodyFaces.Presented(30);
+
+        // Thirty degrees off is a corner, so the two faces meeting at it are equally awkward and
+        // the other four are edge-on or hidden. This is the boundary case: cos of ninety degrees
+        // is not quite zero in floating point, and without slack it becomes a sliver you can hit.
+        Assert.Equal(2, aspects.Count);
+        Assert.Equal(
+            new[] { BodyFace.Front, BodyFace.FrontLeft },
+            aspects.Select(a => a.Face).ToArray());
+        Assert.All(aspects, a => Assert.Equal(0.5, a.Share, 6));
+        Assert.All(aspects, a => Assert.Equal(30.0, a.ObliquityDegrees, 6));
+    }
+
+    [Fact]
+    public void WhicheverWayYouComeAtThemTheSharesAddUp()
+    {
+        for (var angle = -180; angle <= 180; angle += 7)
+        {
+            var aspects = BodyFaces.Presented(angle);
+
+            Assert.InRange(aspects.Count, 2, 3);
+            Assert.Equal(1.0, aspects.Sum(a => a.Share), 6);
+            Assert.All(aspects, a => Assert.InRange(a.ObliquityDegrees, 0, 90));
+        }
+    }
+
+    [Fact]
+    public void ASlugSkipsOffAPlateItMeetsAtAnAngleAndABeamDoesNot()
+    {
+        var gunnery = new Gunnery();
+
+        Assert.Equal(1.0, gunnery.GlancingFactor(DamageKind.Kinetic, 0), 6);
+        Assert.True(gunnery.GlancingFactor(DamageKind.Kinetic, 60) < 1.0);
+        Assert.True(gunnery.GlancingFactor(DamageKind.Kinetic, 90)
+                    < gunnery.GlancingFactor(DamageKind.Kinetic, 60));
+
+        // A beam lands wherever it lands and burns. The angle of the surface is not its problem.
+        Assert.All(
+            new[] { 0.0, 30.0, 60.0, 90.0 },
+            a => Assert.Equal(1.0, gunnery.GlancingFactor(DamageKind.Beam, a), 6));
+    }
+
+    [Fact]
+    public void AgainstASlugthrowerCatchingSomebodyOnACornerBeatsCatchingThemSquare()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast);
+
+        // Both sit at the same distance from the target and carry the same rifle. The only
+        // difference is the bearing: (4,0) is straight down the way the target is looking, and
+        // (2,2) is sixty degrees round from it, which puts a corner in the way.
+        var square = battle.Deploy("Square", Side.Player, Node(4, 0), facing: HexDirection.SouthWest);
+        var oblique = battle.Deploy("Oblique", Side.Player, Node(2, 2), facing: HexDirection.SouthWest);
+        battle.Start();
+
+        var headOn = battle.PlanShot(square, target);
+        var cornerOn = battle.PlanShot(oblique, target);
+
+        Assert.Equal(3, headOn.Aspects.Count);
+        Assert.Equal(2, cornerOn.Aspects.Count);
+
+        // Head-on, half the rounds hit an unangled plate and half skip off a shoulder. On the
+        // corner every round arrives at a mild thirty degrees, which loses less on average.
+        Assert.True(
+            cornerOn.GlancingFactor > headOn.GlancingFactor,
+            $"corner {cornerOn.GlancingFactor:0.000} should beat square {headOn.GlancingFactor:0.000}");
     }
 
     // ---- pulling the trigger ---------------------------------------------------
