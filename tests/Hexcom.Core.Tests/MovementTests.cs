@@ -127,7 +127,7 @@ public class MovementTests
         var link = Assert.Single(graph.LinksFrom(Node(0, 0)));
         Assert.Equal(TraversalKind.Walk, link.Kind);
         Assert.Equal(Costs.Walk, link.ApCost);
-        Assert.True(WallProfile.Screen.BlocksSight);
+        Assert.True(WallProfile.Screen.Opaque);
     }
 
     [Fact]

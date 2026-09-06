@@ -17,7 +17,12 @@ public enum CoverGrade
 /// <param name="HeightMetres">Height above the floor of the tile the segment sits on.</param>
 /// <param name="Cover">Protection given to a unit hugging this segment.</param>
 /// <param name="BlocksMovement">Whether a unit is stopped by it (before considering vaulting).</param>
-/// <param name="BlocksSight">Whether it blocks line of sight for a standing unit.</param>
+/// <param name="Opaque">
+/// Whether light passes through it. This is a property of the material, not of the situation:
+/// a low wall is opaque, and whether you can see <em>over</em> it is decided by the geometry of
+/// the sight line, not by this flag. A standing soldier is visible over a waist-high wall; the
+/// same soldier prone behind it is not, and both fall out of the same trace.
+/// </param>
 /// <param name="Vaultable">Whether a unit can cross it by vaulting.</param>
 /// <param name="Climbable">Whether a unit can climb onto or over it, at climb cost.</param>
 /// <param name="Destructible">Whether fire can remove it.</param>
@@ -26,7 +31,7 @@ public sealed record WallProfile(
     double HeightMetres,
     CoverGrade Cover,
     bool BlocksMovement,
-    bool BlocksSight,
+    bool Opaque,
     bool Vaultable,
     bool Climbable,
     bool Destructible = false)
@@ -37,39 +42,39 @@ public sealed record WallProfile(
         HeightMetres: 1.0,
         Cover: CoverGrade.Half,
         BlocksMovement: true,
-        BlocksSight: false,
+        Opaque: true,
         Vaultable: true,
         Climbable: true,
         Destructible: true);
 
-    /// <summary>Head-high: a concrete barrier or a garden wall. Full cover, blocks sight, climbable.</summary>
+    /// <summary>Head-high: a concrete barrier or a garden wall. Full cover, climbable.</summary>
     public static readonly WallProfile High = new(
         Id: "high",
         HeightMetres: 2.0,
         Cover: CoverGrade.Full,
         BlocksMovement: true,
-        BlocksSight: true,
+        Opaque: true,
         Vaultable: false,
         Climbable: true,
         Destructible: true);
 
-    /// <summary>A building wall. Nothing goes through or over it at this layer.</summary>
+    /// <summary>A building wall. Nothing goes through, over or past it at this layer.</summary>
     public static readonly WallProfile Solid = new(
         Id: "solid",
         HeightMetres: 3.0,
         Cover: CoverGrade.Full,
         BlocksMovement: true,
-        BlocksSight: true,
+        Opaque: true,
         Vaultable: false,
         Climbable: false);
 
-    /// <summary>Chain link or railing: stops you walking through, hides nothing.</summary>
+    /// <summary>Chain link or railing: stops you walking through, hides nothing at all.</summary>
     public static readonly WallProfile Railing = new(
         Id: "railing",
         HeightMetres: 1.2,
         Cover: CoverGrade.Light,
         BlocksMovement: true,
-        BlocksSight: false,
+        Opaque: false,
         Vaultable: true,
         Climbable: true,
         Destructible: true);
@@ -82,7 +87,7 @@ public sealed record WallProfile(
         HeightMetres: 2.0,
         Cover: CoverGrade.Light,
         BlocksMovement: false,
-        BlocksSight: true,
+        Opaque: true,
         Vaultable: false,
         Climbable: false,
         Destructible: true);

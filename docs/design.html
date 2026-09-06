@@ -305,6 +305,17 @@
   .hx-num       { fill: var(--ink-soft); font-family: "IBM Plex Mono", monospace; font-size: 15px; font-weight: 500; }
   .hx-area      { fill: var(--ink-soft); font-family: "IBM Plex Mono", monospace; font-size: 15px; }
 
+  /* elevation diagrams: side-on cross sections of a sight line */
+  .el-ground    { stroke: var(--rule-strong); stroke-width: 2; fill: none; }
+  .el-roof      { fill: var(--sunk); stroke: var(--rule-strong); stroke-width: 1.5; }
+  .el-body      { fill: var(--ink-soft); }
+  .el-hidden    { fill: var(--alert); }
+  .el-wall      { fill: var(--ink); }
+  .el-sight     { stroke: var(--accent); stroke-width: 1.6; fill: none; stroke-dasharray: 5 3; }
+  .el-water     { stroke: var(--alert); stroke-width: 1.2; fill: none; stroke-dasharray: 2 2; }
+  .el-eye       { fill: var(--accent); }
+  .el-label     { fill: var(--ink-faint); font-family: "IBM Plex Mono", monospace; font-size: 11px; }
+
   /* ---------- AP bars ---------- */
 
   .turns { display: grid; gap: 0.85rem; }
@@ -506,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 1 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 2 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Realistic
@@ -716,14 +727,14 @@
       <div class="scroll">
         <table>
           <thead>
-            <tr><th>Profile</th><th>Height</th><th>Cover</th><th>Sight</th><th>Crossing</th></tr>
+            <tr><th>Profile</th><th>Height</th><th>Cover cap</th><th>Opacity</th><th>Crossing</th></tr>
           </thead>
           <tbody>
-            <tr><td class="name">Low</td><td class="n">1.0 m</td><td class="n">Half</td><td class="why">See over</td><td class="why">Vault, 3 AP</td></tr>
-            <tr><td class="name">High</td><td class="n">2.0 m</td><td class="n">Full</td><td class="why">Blocked</td><td class="why">Climb, 6 AP</td></tr>
-            <tr><td class="name">Solid</td><td class="n">3.0 m</td><td class="n">Full</td><td class="why">Blocked</td><td class="why">None</td></tr>
-            <tr><td class="name">Railing</td><td class="n">1.2 m</td><td class="n">Light</td><td class="why">See through</td><td class="why">Vault, 3 AP</td></tr>
-            <tr><td class="name">Screen</td><td class="n">2.0 m</td><td class="n">Light</td><td class="why">Blocked</td><td class="why">Walk through</td></tr>
+            <tr><td class="name">Low</td><td class="n">1.0 m</td><td class="n">Half</td><td class="why">Opaque</td><td class="why">Vault, 3 AP</td></tr>
+            <tr><td class="name">High</td><td class="n">2.0 m</td><td class="n">Full</td><td class="why">Opaque</td><td class="why">Climb, 6 AP</td></tr>
+            <tr><td class="name">Solid</td><td class="n">3.0 m</td><td class="n">Full</td><td class="why">Opaque</td><td class="why">None</td></tr>
+            <tr><td class="name">Railing</td><td class="n">1.2 m</td><td class="n">Light</td><td class="why">See-through</td><td class="why">Vault, 3 AP</td></tr>
+            <tr><td class="name">Screen</td><td class="n">2.0 m</td><td class="n">Light</td><td class="why">Opaque</td><td class="why">Walk through</td></tr>
           </tbody>
         </table>
       </div>
@@ -844,7 +855,128 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">06</span><span class="chip spec">Specified</span></div>
+    <div class="rail"><span class="num">06</span><span class="chip built">Built</span></div>
+    <div class="body">
+      <h2>One trace, two answers</h2>
+      <p>
+        Can I see you, and how exposed are you. Those are the same question asked at two
+        heights, so they come out of one trace. The sight line is flattened onto the ground and
+        intersected with the wall segments it crosses. At each crossing the top of the wall is
+        projected back along the line onto the target as a <strong>waterline</strong>: everything
+        below it is hidden, everything above it can be seen and shot.
+      </p>
+      <p>
+        Cover is graded by how much of the silhouette falls below that line. The target is
+        invisible when an opaque wall submerges all of it. That one construction replaces the
+        usual pile of special cases.
+      </p>
+
+      <figure class="full">
+        <figcaption>
+          <b>Figure 3 — The waterline</b><br>
+          Side-on, one metre of sandbags between a shooter and a target. Green is the sight line,
+          red dashes are the waterline the wall top projects onto the target, and the red block
+          is the share of the body it hides. Nothing changes between these three but the target
+          stance and the shooter height.
+        </figcaption>
+        <div class="panels">
+
+          <div>
+            <svg viewBox="0 0 250 200" role="img" aria-label="A standing target behind a low wall, about half hidden">
+              <path class="el-ground" d="M8 170 H242"></path>
+              <rect class="el-body" x="26" y="116" width="8" height="54"></rect>
+              <circle class="el-eye" cx="30" cy="120.5" r="3.5"></circle>
+              <rect class="el-wall" x="181" y="140" width="8" height="30"></rect>
+              <rect class="el-body" x="211" y="116" width="9" height="54"></rect>
+              <rect class="el-hidden" x="211" y="143.8" width="9" height="26.2"></rect>
+              <path class="el-sight" d="M30 120.5 L215 143"></path>
+              <path class="el-water" d="M30 120.5 L242 147.2"></path>
+              <text class="el-label" x="215" y="188" text-anchor="middle">49% hidden</text>
+            </svg>
+            <p class="panel-label">Standing</p>
+            <p class="panel-note">Half cover, and plainly in view.</p>
+          </div>
+
+          <div>
+            <svg viewBox="0 0 250 200" role="img" aria-label="A prone target behind the same wall, entirely hidden">
+              <path class="el-ground" d="M8 170 H242"></path>
+              <rect class="el-body" x="26" y="116" width="8" height="54"></rect>
+              <circle class="el-eye" cx="30" cy="120.5" r="3.5"></circle>
+              <rect class="el-wall" x="181" y="140" width="8" height="30"></rect>
+              <rect class="el-hidden" x="203" y="156.5" width="26" height="13.5"></rect>
+              <path class="el-sight" d="M30 120.5 L215 163"></path>
+              <path class="el-water" d="M30 120.5 L242 147.2"></path>
+              <text class="el-label" x="215" y="188" text-anchor="middle">100% hidden</text>
+            </svg>
+            <p class="panel-label">Prone</p>
+            <p class="panel-note">The same wall, and now there is nothing to shoot at.</p>
+          </div>
+
+          <div>
+            <svg viewBox="0 0 250 200" role="img" aria-label="A shooter on a roof looking down past the wall at a standing target">
+              <path class="el-ground" d="M8 170 H242"></path>
+              <rect class="el-roof" x="8" y="65" width="54" height="105"></rect>
+              <rect class="el-body" x="31" y="11" width="8" height="54"></rect>
+              <circle class="el-eye" cx="35" cy="15.5" r="3.5"></circle>
+              <rect class="el-wall" x="181" y="140" width="8" height="30"></rect>
+              <rect class="el-body" x="211" y="116" width="9" height="54"></rect>
+              <rect class="el-hidden" x="211" y="164.9" width="9" height="5.1"></rect>
+              <path class="el-sight" d="M35 15.5 L215 143"></path>
+              <path class="el-water" d="M35 15.5 L242 166.9"></path>
+              <text class="el-label" x="215" y="188" text-anchor="middle">9% hidden</text>
+            </svg>
+            <p class="panel-label">From the roof</p>
+            <p class="panel-note">Three and a half metres up, and the wall protects nothing.</p>
+          </div>
+
+        </div>
+      </figure>
+
+      <h3>What comes free</h3>
+      <p>
+        None of the following is written down anywhere in the rules. Each is what the geometry
+        already says, which is the test that the model is the right one.
+      </p>
+      <ul>
+        <li><strong>Stance.</strong> A standing soldier is visible over waist-high cover. The same soldier prone behind it is gone.</li>
+        <li><strong>Range.</strong> A low wall far down the line hides nothing, because the waterline it projects is below the target's feet by then.</li>
+        <li><strong>Elevation.</strong> High ground cancels low cover on its own, and leaves head-high cover mostly intact.</li>
+        <li><strong>Point blank.</strong> An attacker in the next hex shoots down over the wall their target is hugging, so cover drops to almost nothing.</li>
+        <li><strong>Storeys.</strong> A wall projects a band, not just a line, so a raised walkway can be seen underneath.</li>
+      </ul>
+
+      <h3>Materials describe matter, not situations</h3>
+      <p>
+        A wall profile says whether light passes through it and the best grade it can ever give.
+        It does <em>not</em> say whether you can see over it — that is the trace's job. So
+        sandbags are opaque and capped at half cover; chain link is transparent and capped at
+        light, however much of you is behind it; smoke is opaque, capped at light, and you can
+        walk straight through it.
+      </p>
+
+      <div class="aside">
+        <span class="tag">Bug found by a test</span>
+        <p>
+          A silhouette exactly as tall as the wall hiding it produces a hidden share of
+          0.9999999999999999, which read as a sliver of head showing over the top. A soldier was
+          visible through a solid building wall. Fixed with an epsilon, and the boundary now has
+          a test of its own.
+        </p>
+      </div>
+
+      <h3>What it hands the interface</h3>
+      <p>
+        Every trace returns the wall responsible for the grade, so the interface can point at the
+        actual sandbag instead of showing an abstract shield, and an exposure figure from zero to
+        one that will drive hit chance once shooting exists. Both are symmetric and
+        side-agnostic, because the detection model below runs the same query in the enemy's
+        direction, and the AI must be restricted to exactly what the interface can show you.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">07</span><span class="chip spec">Specified</span></div>
     <div class="body">
       <h2>Seeing first</h2>
       <p>
@@ -899,7 +1031,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">07</span><span class="chip spec">Specified</span><br><br><span class="chip open">Open</span></div>
+    <div class="rail"><span class="num">08</span><span class="chip spec">Specified</span><br><br><span class="chip open">Open</span></div>
     <div class="body">
       <h2>Initiative, and the ambush it breaks</h2>
       <p>
@@ -942,7 +1074,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">08</span><span class="chip open">Next</span></div>
+    <div class="rail"><span class="num">09</span><span class="chip open">Next</span></div>
     <div class="body">
       <h2>Build order</h2>
       <p>
@@ -953,12 +1085,12 @@
         <li class="done"><span class="idx">DONE</span><div><b>Hex geometry and the corner graph</b><p>Coordinates, layout, canonical corner identity.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Walls, chords and regions</b><p>Fifteen segments per hex, planar partition, the transit rule.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Movement graph and pathfinding</b><p>Typed priced links, AP-budgeted reachable sets.</p></div></li>
-        <li><span class="idx">04</span><div><b>Line of sight and cover resolution</b><p>Segment tracing against the wall graph, with height. Everything downstream needs it.</p></div></li>
-        <li><span class="idx">05</span><div><b>Units, initiative, the turn loop</b><p>Priority queue over act time. Enough to play a silent match.</p></div></li>
-        <li><span class="idx">06</span><div><b>Detection and awareness</b><p>The accumulation model, belief state, alert channels. The differentiating system — build it before weapons, not after.</p></div></li>
-        <li><span class="idx">07</span><div><b>Shooting, damage, suppression</b><p>Now that cover and concealment mean something.</p></div></li>
-        <li><span class="idx">08</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
-        <li><span class="idx">09</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Line of sight and cover</b><p>Waterline tracing against the wall graph, with stance and height.</p></div></li>
+        <li><span class="idx">04</span><div><b>Units, initiative, the turn loop</b><p>Priority queue over act time. Enough to play a silent match.</p></div></li>
+        <li><span class="idx">05</span><div><b>Detection and awareness</b><p>The accumulation model, belief state, alert channels. The differentiating system — build it before weapons, not after.</p></div></li>
+        <li><span class="idx">06</span><div><b>Shooting, damage, suppression</b><p>Exposure already comes out of the sight trace; this turns it into a hit chance.</p></div></li>
+        <li><span class="idx">07</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li><span class="idx">08</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
         Deliberately not started: the strategy layer, the setting, saves, audio, and anything that
@@ -968,8 +1100,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 1</span>
-    <span>85 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 2</span>
+    <span>108 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

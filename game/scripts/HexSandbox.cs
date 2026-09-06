@@ -4,6 +4,7 @@ using Godot;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Vision;
 using CoreVec2 = Hexcom.Core.Geometry.Vec2;
 
 namespace Hexcom.Game;
@@ -32,6 +33,10 @@ public partial class HexSandbox : Node2D
     private static readonly Color UnitColor = new("e8e4d8");
     private static readonly Color TextDim = new("8d96a5");
     private static readonly Color TextBright = new("dfe5ee");
+    private static readonly Color Unseen = new("0b0d10", 0.66f);
+    private static readonly Color CoverLightHue = new("6fa8c8");
+    private static readonly Color CoverHalfHue = new("d8b25a");
+    private static readonly Color CoverFullHue = new("d1743c");
 
     private readonly MovementCosts _costs = MovementCosts.Default;
 
@@ -39,6 +44,9 @@ public partial class HexSandbox : Node2D
     private HexLayout _layout = null!;
     private MovementGraph _graph = null!;
     private ReachabilityResult _reach = null!;
+    private SightSolver _sight = null!;
+    private readonly Dictionary<NodeId, SightResult> _view = [];
+    private Stance _stance = Stance.Standing;
     private Font _font = null!;
 
     private NodeId _unit;
@@ -51,16 +59,32 @@ public partial class HexSandbox : Node2D
         _layout = new HexLayout(HexSize);
         _map = DemoMaps.Compound();
         _graph = MovementGraph.Build(_map, _costs);
+        _sight = new SightSolver(_map, _layout);
 
         _unit = new NodeId(new Hex(-2, 0), 0);
         Position = GetViewportRect().Size * 0.5f;
-        RecalculateReach();
+        Recalculate();
     }
 
-    private void RecalculateReach()
+    private void Recalculate()
     {
         _reach = Pathfinder.Reachable(_graph, _unit, ActionPoints);
+        RecalculateView();
         QueueRedraw();
+    }
+
+    /// <summary>What the unit can see of the layer currently on screen.</summary>
+    private void RecalculateView()
+    {
+        _view.Clear();
+        var observer = new Vantage(_unit, _stance);
+
+        foreach (var tile in _map.Tiles.Where(t => t.Address.Layer == _layer))
+        foreach (var region in _map.RegionsOf(tile.Address))
+        {
+            var id = new NodeId(tile.Address, region.Index);
+            _view[id] = _sight.Trace(observer, new Vantage(id));
+        }
     }
 
     // ---- input -----------------------------------------------------------------
@@ -82,7 +106,7 @@ public partial class HexSandbox : Node2D
                 if (NodeUnderMouse() is { } node && _graph.CanEndTurn(node))
                 {
                     _unit = node;
-                    RecalculateReach();
+                    Recalculate();
                 }
                 break;
             }
@@ -99,29 +123,42 @@ public partial class HexSandbox : Node2D
         {
             case Key.Pageup or Key.E:
                 _layer++;
+                RecalculateView();
                 QueueRedraw();
                 break;
 
             case Key.Pagedown or Key.Q:
                 _layer--;
+                RecalculateView();
                 QueueRedraw();
                 break;
 
             case Key.Bracketleft:
                 ActionPoints = Mathf.Max(1, ActionPoints - 1);
-                RecalculateReach();
+                Recalculate();
                 break;
 
             case Key.Bracketright:
                 ActionPoints++;
-                RecalculateReach();
+                Recalculate();
+                break;
+
+            case Key.C:
+                _stance = _stance switch
+                {
+                    Stance.Standing => Stance.Crouching,
+                    Stance.Crouching => Stance.Prone,
+                    _ => Stance.Standing,
+                };
+                Recalculate();
                 break;
 
             case Key.R:
                 _layer = 0;
+                _stance = Stance.Standing;
                 ActionPoints = _costs.ActionPointsPerTurn;
                 _unit = new NodeId(new Hex(-2, 0), 0);
-                RecalculateReach();
+                Recalculate();
                 break;
         }
     }
@@ -168,12 +205,34 @@ public partial class HexSandbox : Node2D
             var polygon = RegionPolygon(tile.Address, region, inset: 0.06f);
 
             DrawColoredPolygon(polygon, FillFor(tile, region, id));
-            DrawPolyline([.. polygon, polygon[0]], RegionEdge, 1f, true);
+
+            var outline = RegionEdge;
+            var weight = 1f;
+
+            if (_view.TryGetValue(id, out var seen))
+            {
+                // Dead ground the unit has no eyes on.
+                if (!seen.CanSee) DrawColoredPolygon(polygon, Unseen);
+                else if (seen.Cover != CoverGrade.None)
+                {
+                    outline = CoverHue(seen.Cover);
+                    weight = 2.5f;
+                }
+            }
+
+            DrawPolyline([.. polygon, polygon[0]], outline, weight, true);
 
             if (_reach.CostTo(id) is { } cost && id != _unit)
                 DrawCentredText(Centroid(tile.Address, region), cost.ToString(), 15, TextDim);
         }
     }
+
+    private static Color CoverHue(CoverGrade grade) => grade switch
+    {
+        CoverGrade.Full => CoverFullHue,
+        CoverGrade.Half => CoverHalfHue,
+        _ => CoverLightHue,
+    };
 
     private Color FillFor(Tile tile, HexRegion region, NodeId id)
     {
@@ -244,19 +303,35 @@ public partial class HexSandbox : Node2D
     private void DrawHud()
     {
         var reachable = _reach.Destinations.Count();
+        var eyesOn = _view.Values.Count(v => v.CanSee);
+
         var lines = new[]
         {
-            $"layer {_layer}    {ActionPoints} AP    {reachable} tiles in reach",
+            $"layer {_layer}    {ActionPoints} AP    {_stance.ToString().ToLowerInvariant()}    "
+                + $"{reachable} tiles in reach    {eyesOn} in sight",
             _hover is { } h
-                ? $"cursor {h}    {(_reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}"
+                ? $"cursor {h}    {(_reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    {SightLine(h)}"
                 : "cursor —",
-            "click: move unit    Q/E: change layer    [ ]: change AP    R: reset",
+            "click: move unit    Q/E: change layer    C: stance    [ ]: change AP    R: reset",
         };
 
         var top = -Position + new Vector2(18, 30);
         for (var i = 0; i < lines.Length; i++)
             DrawString(_font, top + new Vector2(0, i * 20), lines[i],
                 HorizontalAlignment.Left, -1, 14, i == 2 ? TextDim : TextBright);
+    }
+
+    /// <summary>What the unit can make out at the cursor, and what is protecting it.</summary>
+    private string SightLine(NodeId node)
+    {
+        if (!_view.TryGetValue(node, out var seen)) return "no sight data";
+        if (!seen.CanSee) return $"hidden by {seen.Blocker?.Profile.Id ?? "terrain"}";
+
+        var cover = seen.Cover == CoverGrade.None
+            ? "in the open"
+            : $"{seen.Cover.ToString().ToLowerInvariant()} cover behind {seen.CoverSource?.Profile.Id}";
+
+        return $"{cover}    {seen.Exposure:P0} exposed    {seen.Distance:0.0} m";
     }
 
     // ---- geometry helpers ------------------------------------------------------

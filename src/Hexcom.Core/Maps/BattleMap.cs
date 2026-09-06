@@ -35,6 +35,12 @@ public sealed class BattleMap
     /// <summary>Share of a hex a region must hold before a unit can stand in it.</summary>
     public double OccupancyThreshold { get; init; } = HexPartition.DefaultOccupancyThreshold;
 
+    /// <summary>
+    /// Default vertical spacing between layers, used only where a wall has no tile under it
+    /// to sit on. Real floor heights come from the tiles themselves.
+    /// </summary>
+    public double LayerHeight { get; init; } = 3.0;
+
     /// <summary>Bumped whenever geometry changes, so derived structures know they are stale.</summary>
     public int Revision { get; private set; }
 
@@ -181,6 +187,26 @@ public sealed class BattleMap
             if (region.BoundsSide(direction)) return region;
         return null;
     }
+
+    /// <summary>
+    /// The height the foot of a wall sits at. A wall rests on the ground it is built on, so
+    /// where it separates tiles at different heights it stands on the higher one.
+    /// </summary>
+    public double WallBaseHeight(WallSegment wall)
+    {
+        double? highest = null;
+        foreach (var hex in wall.A.SharedHexesWith(wall.B))
+        {
+            var tile = GetTile(new TileAddress(hex, wall.Layer));
+            if (tile is null) continue;
+            highest = highest is null ? tile.FloorHeight : Math.Max(highest.Value, tile.FloorHeight);
+        }
+
+        return highest ?? wall.Layer * LayerHeight;
+    }
+
+    /// <summary>The height of the top of a wall.</summary>
+    public double WallTopHeight(WallSegment wall) => WallBaseHeight(wall) + wall.Profile.HeightMetres;
 
     private void Invalidate()
     {

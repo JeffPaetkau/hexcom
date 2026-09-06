@@ -39,13 +39,19 @@ The sandbox loads `DemoMaps.Compound` and draws the movement graph flat:
 | | |
 |---|---|
 | click | move the unit somewhere it can stand |
-| hover | show the route and what each awkward step costs |
+| hover | show the route, the cost of each awkward step, and what cover the cursor has |
 | `Q` / `E` | change layer (the roof is layer 1) |
+| `C` | cycle stance: standing, crouching, prone |
 | `[` / `]` | change the action point budget |
 | `R` | reset |
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in.
-Wall colours: white solid, orange high, yellow low, blue railing, green sight-screen.
+Blacked-out tiles are dead ground the unit has no eyes on, and outlined tiles have cover from
+where it is standing — blue light, yellow half, orange full. Wall colours: white solid, orange
+high, yellow low, blue railing, green sight-screen.
+
+Go prone on the ground floor and watch the visible area collapse; climb the ladder and watch it
+open up.
 
 ## What is built
 
@@ -64,9 +70,14 @@ Wall colours: white solid, orange high, yellow low, blue railing, green sight-sc
   from floor heights; ladders and stairs are authored.
 - **Pathfinding** — Dijkstra over action points, returning the whole reachable set. Transit
   regions are pathed through but excluded from valid destinations.
+- **Sight and cover** — one trace answers both, because they are the same question. The top of
+  each wall the line crosses is projected back onto the target as a waterline; cover is graded
+  by how much of the silhouette falls below it, and the target is invisible when an opaque wall
+  submerges all of it. Stance, elevation and range are not special cases — a prone soldier
+  behind sandbags vanishes, and a shooter on a roof negates that same cover, purely from the
+  geometry.
 
 ## What is not built yet
 
-Line of sight and cover resolution, the detection and awareness model, initiative, units,
-weapons, damage, AI, saves, and the strategy layer. See the design doc for where these are
-heading.
+The detection and awareness model, initiative, units, weapons, damage, AI, saves, and the
+strategy layer. See the design doc for where these are heading.
