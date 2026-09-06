@@ -12,7 +12,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 189 tests, ~0.5s
+dotnet test                 # 221 tests, ~0.7s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -23,7 +23,7 @@ installed on this machine, so the scene wiring has never been verified — only 
 
 | | |
 |---|---|
-| `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness |
+| `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness, Combat, Reactions |
 | `tests/Hexcom.Core.Tests/` | xUnit |
 | `game/` | Godot view layer, one script: `HexSandbox.cs` |
 | `docs/design.html` | **the design source of truth** — decisions, rationale, open questions |
@@ -68,6 +68,14 @@ one.
   broke nine awareness tests whose sentries faced the default direction. The fix was pointing the
   sentries at the approach, not weakening the model. Don't soften a model to keep a stale test
   green.
+- **Two pockets, never mixed.** `Unit.ActionPoints` is the turn allowance; `Unit.Reserve` is what
+  banked for reacting. `PlanShot` and `Resolve` take an `ApSource` saying which is being spent.
+  Zeroing the allowance at `EndTurn` is deliberate: points are spent or banked, never left lying
+  on a unit whose turn is over.
+- **A reaction moves the mover.** `ReactionWindow.Resolve` walks the unit along its committed
+  route and fires from each landing tick, so the mover is genuinely standing there. That is why
+  sight, cover and which face a round hits need no special case inside a window — but it does
+  mean anything reading a unit's position mid-window sees an intermediate one.
 - `dotnet test -v q` hides assertion messages. Use
   `--logger "console;verbosity=detailed"` and grep for `Error Message`.
 - Bash heredocs in this environment break on apostrophes in the body. Use the Write/Edit tools

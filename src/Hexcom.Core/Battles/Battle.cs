@@ -6,6 +6,7 @@ using Hexcom.Core.Geometry;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Reactions;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 
@@ -13,9 +14,21 @@ namespace Hexcom.Core.Battles;
 
 /// <summary>What happened when a unit was told to move.</summary>
 /// <param name="Refusal">Why nothing happened, in words fit to show a player.</param>
-public sealed record MoveOutcome(bool Moved, IReadOnlyList<TraversalLink> Path, int ApSpent, string? Refusal)
+/// <param name="Reactions">
+/// The window the move opened, and everything that happened inside it. Present whenever the
+/// move actually took place, even if nobody was in a position to answer it.
+/// </param>
+public sealed record MoveOutcome(
+    bool Moved,
+    IReadOnlyList<TraversalLink> Path,
+    int ApSpent,
+    string? Refusal,
+    ReactionWindow? Reactions = null)
 {
     internal static MoveOutcome Refused(string why) => new(false, [], 0, why);
+
+    /// <summary>True if the mover was stopped before it arrived — dropped en route.</summary>
+    public bool Interrupted => Reactions?.Interrupted ?? false;
 }
 
 /// <summary>
@@ -45,7 +58,8 @@ public sealed class Battle
         MovementCosts? costs = null,
         int seed = 0,
         AwarenessModel? awareness = null,
-        GunneryModel? gunnery = null)
+        GunneryModel? gunnery = null,
+        ReactionModel? reactions = null)
     {
         Map = map;
         Layout = layout;
@@ -54,6 +68,7 @@ public sealed class Battle
         Sight = new SightSolver(map, layout);
         Awareness = new AwarenessTracker(this, awareness ?? AwarenessModel.Default);
         Gunnery = new Gunnery(gunnery);
+        Reactions = reactions ?? ReactionModel.Default;
         Seed = seed;
         _rng = new Random(seed);
     }
@@ -69,6 +84,9 @@ public sealed class Battle
 
     /// <summary>Whether a shot connects.</summary>
     public Gunnery Gunnery { get; }
+
+    /// <summary>How much of a turn banks for acting out of it. The difficulty dial.</summary>
+    public ReactionModel Reactions { get; }
 
     /// <summary>The seed every roll in this battle comes from.</summary>
     public int Seed { get; }
@@ -150,6 +168,13 @@ public sealed class Battle
             Active = unit;
             unit.ActionPoints = unit.Stats.ActionPoints;
             unit.Protection.Recharge();
+
+            // Whatever was held back for reacting expires the moment its own turn comes round,
+            // spent or not, and so does any arc it was holding. A watchman that answered nothing
+            // gets its turn back; it does not get to accumulate.
+            unit.Reserve = 0;
+            unit.Overwatch = null;
+
             Book(unit, Round + 1);
             return;
         }
@@ -165,7 +190,24 @@ public sealed class Battle
     {
         var unit = RequireActive();
         Awareness.Observe(unit, Round);
+        Bank(unit);
         Advance();
+    }
+
+    /// <summary>
+    /// Turn what a unit did not spend into a reaction reserve.
+    /// </summary>
+    /// <remarks>
+    /// This is what closes the loop on the action point economy. Sprinting somewhere leaves you
+    /// with nothing to answer with; hanging back with points in hand is how you cover an
+    /// approach. The choice to reserve is made before you know whether it will pay, which is
+    /// the right shape for a decision.
+    /// </remarks>
+    private void Bank(Unit unit)
+    {
+        var carried = (int)(unit.ActionPoints * Reactions.ReserveFraction);
+        unit.Reserve = carried >= Reactions.ReserveFloor ? carried : 0;
+        unit.ActionPoints = 0;
     }
 
     /// <summary>Take a unit out of the fight. Its booked turns and everything known about it go too.</summary>
@@ -202,16 +244,52 @@ public sealed class Battle
             return MoveOutcome.Refused("Out of reach this turn.");
 
         var cost = reach.CostTo(destination)!.Value;
-        unit.Position = destination;
         unit.ActionPoints -= cost;
 
-        // You end up looking where you were going, for nothing. Looking anywhere else costs.
-        if (FinalHeading(path) is { } heading) unit.Facing = heading;
+        // The route is committed from here, which is what lets both sides read the future for
+        // its duration. The window walks the unit along it and ends it where it got to — at the
+        // destination, facing the way it was going, unless somebody stopped it en route.
+        var window = new ReactionWindow(this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance));
+        window.Run();
 
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
-        Awareness.Hear(unit, LoudnessOf(unit, cost, path), Round);
+        if (unit.InPlay) Awareness.Hear(unit, LoudnessOf(unit, cost, path), Round);
 
-        return new MoveOutcome(true, path, cost, null);
+        return new MoveOutcome(true, path, cost, null, window);
+    }
+
+    /// <summary>
+    /// Hold an arc. Anything hostile that moves inside it during someone else's turn is shot
+    /// at, out of the reserve this unit banks when the turn ends.
+    /// </summary>
+    /// <remarks>
+    /// Declaring costs almost nothing on its own; the price of overwatching is the rest of the
+    /// turn spent not advancing, and whatever is left over is what the shot comes out of. A
+    /// unit that declares an arc and then spends everything getting somewhere has declared
+    /// nothing.
+    /// </remarks>
+    public bool SetOverwatch(OverwatchArc arc, HexDirection? centre = null)
+    {
+        var unit = RequireActive();
+        var watching = centre ?? unit.Facing;
+
+        var cost = Reactions.OverwatchCost + (watching == unit.Facing ? 0 : Costs.TurnInPlace);
+        if (unit.ActionPoints < cost) return false;
+
+        unit.ActionPoints -= cost;
+        unit.Facing = watching;
+        unit.Overwatch = new OverwatchOrder(watching, arc);
+        return true;
+    }
+
+    /// <summary>Stop holding an arc. Refunds nothing.</summary>
+    public bool ClearOverwatch()
+    {
+        var unit = RequireActive();
+        if (unit.Overwatch is null) return false;
+
+        unit.Overwatch = null;
+        return true;
     }
 
     /// <summary>Turn on the spot, to watch somewhere other than where you last went.</summary>
@@ -225,19 +303,6 @@ public sealed class Battle
         unit.Facing = direction;
         unit.ActionPoints -= Costs.TurnInPlace;
         return true;
-    }
-
-    /// <summary>
-    /// Which way the last real step of a route pointed. Steps within one hex — vaulting a
-    /// barricade from one half to the other — leave the heading alone.
-    /// </summary>
-    private static HexDirection? FinalHeading(IReadOnlyList<TraversalLink> path)
-    {
-        for (var i = path.Count - 1; i >= 0; i--)
-            if (path[i].From.Hex.DirectionTo(path[i].To.Hex) is { } heading)
-                return heading;
-
-        return null;
     }
 
     /// <summary>
@@ -261,27 +326,54 @@ public sealed class Battle
     /// What a shot would look like, worked out before anyone commits to it. Nothing changes.
     /// </summary>
     public ShotPlan PlanShot(Unit shooter, Unit target, FireMode? mode = null)
+        => PlanShot(
+            shooter,
+            target,
+            mode ?? shooter.Weapon.DefaultMode,
+            aimBonus: 1.0,
+            UnitPose.Of(target),
+            ApSource.Turn);
+
+    /// <summary>
+    /// What a shot would look like against a target somewhere other than where it is standing.
+    /// </summary>
+    /// <remarks>
+    /// The reaction window asks this question constantly: not "what would this shot do to them"
+    /// but "what would it do to them three ticks from now, when it actually lands". Nothing
+    /// about the arithmetic changes — the sight trace runs to a vantage rather than a unit, and
+    /// which face the round arrives at is worked out from where they will be facing, so
+    /// catching somebody mid-run in the back is a natural consequence rather than a rule.
+    /// </remarks>
+    public ShotPlan PlanShot(
+        Unit shooter,
+        Unit target,
+        FireMode mode,
+        double aimBonus,
+        UnitPose targetPose,
+        ApSource paying)
     {
         var weapon = shooter.Weapon;
-        var firing = mode ?? weapon.DefaultMode;
-        var sight = Look(shooter, target);
-        var face = FaceToward(target, shooter);
+        var sight = Sight.Trace(shooter.Vantage, targetPose.Vantage);
+        var face = FaceToward(targetPose, shooter.Position);
+        var purse = paying == ApSource.Reserve ? shooter.Reserve : shooter.ActionPoints;
 
         var refusal =
-            !weapon.Modes.Contains(firing) ? $"{weapon.Name} cannot fire {firing.Name}." :
+            !weapon.Modes.Contains(mode) ? $"{weapon.Name} cannot fire {mode.Name}." :
             shooter == target ? "Pick somebody else." :
             !target.InPlay ? "Nothing there to shoot at." :
             !target.IsHostileTo(shooter) ? "That is one of ours." :
-            shooter.ActionPoints < firing.ApCost ? $"Needs {firing.ApCost} points, has {shooter.ActionPoints}." :
+            purse < mode.ApCost ? $"Needs {mode.ApCost} points, has {purse}." :
             !sight.CanSee ? "No line on them." :
             sight.Distance > weapon.MaxRange ? $"Out of range at {sight.Distance:0} m." :
             null;
 
         var chance = refusal is null
-            ? Gunnery.HitChance(weapon, firing, sight, shooter.Stance)
+            ? Gunnery.HitChance(weapon, mode, sight, shooter.Stance, aimBonus)
             : 0;
 
-        return new ShotPlan(shooter, target, weapon, firing, sight, chance, firing.ApCost, face, refusal);
+        return new ShotPlan(
+            shooter, target, weapon, mode, sight, chance, mode.ApCost, face, refusal,
+            aimBonus, targetPose, paying);
     }
 
     /// <summary>
@@ -289,12 +381,30 @@ public sealed class Battle
     /// replays from the seed.
     /// </summary>
     public ShotOutcome Fire(Unit target, FireMode? mode = null)
+        => Resolve(PlanShot(shooter: RequireActive(), target, mode));
+
+    /// <summary>
+    /// A reactor fires out of turn, out of its reserve, at whatever tick of the window it
+    /// placed the shot on. The mover is already standing where the timeline says it is.
+    /// </summary>
+    internal ShotOutcome FireReaction(ReactionShot shot)
+        => Resolve(PlanShot(
+            shot.Reactor,
+            shot.Target,
+            shot.Mode,
+            shot.AimBonus,
+            UnitPose.Of(shot.Target),
+            ApSource.Reserve));
+
+    private ShotOutcome Resolve(ShotPlan plan)
     {
-        var shooter = RequireActive();
-        var plan = PlanShot(shooter, target, mode);
         if (!plan.CanFire) return ShotOutcome.Refused(plan.Refusal!);
 
-        shooter.ActionPoints -= plan.ApCost;
+        var shooter = plan.Shooter;
+        var target = plan.Target;
+
+        if (plan.Paying == ApSource.Reserve) shooter.Reserve -= plan.ApCost;
+        else shooter.ActionPoints -= plan.ApCost;
 
         var shots = new List<ShotHit>(plan.Mode.Shots);
         for (var i = 0; i < plan.Mode.Shots; i++)
@@ -335,15 +445,40 @@ public sealed class Battle
     /// <summary>
     /// Which of <paramref name="target"/>'s faces something at <paramref name="from"/> arrives at.
     /// </summary>
-    public HexDirection FaceToward(Unit target, Unit from)
+    public HexDirection FaceToward(Unit target, Unit from) => FaceToward(UnitPose.Of(target), from.Position);
+
+    /// <summary>
+    /// Which face of a unit in a given pose something arriving from <paramref name="from"/> hits.
+    /// </summary>
+    public HexDirection FaceToward(UnitPose target, NodeId from)
     {
         var here = Sight.Ground(target.Position).Plane;
-        var there = Sight.Ground(from.Position).Plane;
+        var there = Sight.Ground(from).Plane;
 
         var offset = there - here;
         if (offset.LengthSquared < Geometry2D.Epsilon) return target.Facing;
 
         return HexDirectionExtensions.FromBearing(offset.Angle - Layout.RotationRadians);
+    }
+
+    /// <summary>
+    /// How far off a bearing a place lies, in degrees, seen from somewhere on the map.
+    /// </summary>
+    /// <remarks>
+    /// One answer for two questions that keep turning out to be the same one: how much of an
+    /// observer's attention a place has, and whether it falls inside a declared overwatch arc.
+    /// The grid can be drawn rotated, so the facing bearing is rotated with it.
+    /// </remarks>
+    public double AngleOffDegrees(NodeId from, HexDirection direction, NodeId place)
+    {
+        var here = Sight.Ground(from).Plane;
+        var there = Sight.Ground(place).Plane;
+
+        var offset = there - here;
+        if (offset.LengthSquared < Geometry2D.Epsilon) return 0;
+
+        var bearing = direction.BearingRadians() + Layout.RotationRadians;
+        return Geometry2D.AngleBetween(bearing, offset.Angle) * (180.0 / Math.PI);
     }
 
     /// <summary>Drop to a crouch, go prone, or stand back up.</summary>

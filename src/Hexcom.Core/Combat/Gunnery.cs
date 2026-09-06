@@ -42,6 +42,14 @@ public sealed record GunneryModel
 /// <summary>What a shot would look like, worked out before anyone commits to it.</summary>
 /// <param name="FaceHit">Which of the target's faces the round would arrive at.</param>
 /// <param name="Refusal">Why the shot cannot be taken, in words fit to show a player.</param>
+/// <param name="AimBonus">
+/// Multiplier from having the weapon already pointed the right way. One for an ordinary shot;
+/// more for one taken off an overwatch, and sharper the narrower the arc being held.
+/// </param>
+/// <param name="TargetPose">
+/// Where the target is being shot at, which inside a reaction window is where it <em>will</em>
+/// be when the round lands rather than where it stands now.
+/// </param>
 public sealed record ShotPlan(
     Unit Shooter,
     Unit Target,
@@ -51,7 +59,10 @@ public sealed record ShotPlan(
     double HitChance,
     int ApCost,
     HexDirection FaceHit,
-    string? Refusal)
+    string? Refusal,
+    double AimBonus = 1.0,
+    UnitPose? TargetPose = null,
+    ApSource Paying = ApSource.Turn)
 {
     public bool CanFire => Refusal is null;
 
@@ -109,7 +120,17 @@ public sealed class Gunnery(GunneryModel? model = null)
     /// sight trace reports more of the target exposed when a low wall stops protecting it, and
     /// paying twice for the same advantage would make high ground the only thing worth having.
     /// </remarks>
-    public double HitChance(WeaponProfile weapon, FireMode mode, SightResult sight, Stance shooterStance)
+    /// <param name="aimBonus">
+    /// What having the weapon already pointed there is worth. It multiplies rather than adds,
+    /// so overwatching pays best on a shot that was plausible anyway and does not turn a
+    /// hopeless one into a good one.
+    /// </param>
+    public double HitChance(
+        WeaponProfile weapon,
+        FireMode mode,
+        SightResult sight,
+        Stance shooterStance,
+        double aimBonus = 1.0)
     {
         if (!sight.CanSee) return 0;
         if (sight.Distance > weapon.MaxRange) return 0;
@@ -120,7 +141,8 @@ public sealed class Gunnery(GunneryModel? model = null)
                      * RangeFactor(weapon, sight.Distance)
                      * sight.Exposure
                      * CoverPenalty(sight.Cover)
-                     * Steadiness(shooterStance);
+                     * Steadiness(shooterStance)
+                     * aimBonus;
 
         return Math.Clamp(chance, Model.MinimumHitChance, Model.MaximumHitChance);
     }

@@ -7,6 +7,7 @@ using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Reactions;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 using CoreVec2 = Hexcom.Core.Geometry.Vec2;
@@ -46,6 +47,7 @@ public partial class HexSandbox : Node2D
     private static readonly Color NeutralHue = new("aab2bd");
     private static readonly Color Panel = new("1b1f26", 0.92f);
     private static readonly Color GhostHue = new("e0674a", 0.55f);
+    private static readonly Color OverwatchHue = new("f2c14e");
 
     private readonly Dictionary<NodeId, SightResult> _view = [];
 
@@ -56,6 +58,9 @@ public partial class HexSandbox : Node2D
 
     private NodeId? _hover;
     private int _layer;
+
+    /// <summary>What the last committed move got shot at with, if anything. Debug readout only.</summary>
+    private string _lastWindow = "";
 
     public override void _Ready()
     {
@@ -84,6 +89,7 @@ public partial class HexSandbox : Node2D
 
         _battle.Start();
         _layer = _battle.Active!.Position.Layer;
+        _lastWindow = "";
         Recalculate();
     }
 
@@ -124,9 +130,12 @@ public partial class HexSandbox : Node2D
             }
 
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }:
-                if (NodeUnderMouse() is { } target && _battle.Active is not null)
+                if (NodeUnderMouse() is { } target && _battle.Active is { } mover)
                 {
-                    _battle.Move(target);
+                    _lastWindow = Describe(_battle.Move(target));
+
+                    // A reaction can drop the mover part way, which hands the turn straight on.
+                    if (_battle.Active is { } next && next != mover) _layer = next.Position.Layer;
                     Recalculate();
                 }
                 break;
@@ -179,6 +188,18 @@ public partial class HexSandbox : Node2D
                 }
                 break;
 
+            case Key.V:
+                if (_battle.Active is { } watchman)
+                {
+                    // Cycle none, narrow, standard, wide. Each declaration costs a point, which
+                    // is honest: changing your mind about what you are watching is not free.
+                    var next = NextArc(watchman.Overwatch?.Arc);
+                    if (next is null) _battle.ClearOverwatch();
+                    else _battle.SetOverwatch(next);
+                    Recalculate();
+                }
+                break;
+
             case Key.Pageup or Key.E:
                 _layer++;
                 Recalculate();
@@ -193,6 +214,29 @@ public partial class HexSandbox : Node2D
                 NewBattle();
                 break;
         }
+    }
+
+    /// <summary>The next arc in the cycle, or null to stop holding one.</summary>
+    private static OverwatchArc? NextArc(OverwatchArc? held)
+    {
+        if (held is null) return OverwatchArc.All[0];
+
+        var index = OverwatchArc.All.ToList().IndexOf(held);
+        return index >= 0 && index + 1 < OverwatchArc.All.Count ? OverwatchArc.All[index + 1] : null;
+    }
+
+    /// <summary>What the reaction window did to a committed move, for the readout.</summary>
+    private static string Describe(MoveOutcome outcome)
+    {
+        if (outcome.Reactions is not { } window) return "";
+        if (window.Resolutions.Count == 0) return "";
+
+        var shots = window.Resolutions.Select(r =>
+            $"t{r.At} {r.Shot.Reactor.Name} {r.Shot.Mode.Name} at {r.Caught}: "
+            + (r.Outcome.AnyHit ? $"hit for {r.Outcome.TotalDamage}" : "missed")
+            + (r.Outcome.TargetDown ? ", down" : ""));
+
+        return "reactions — " + string.Join("    ", shots);
     }
 
     /// <summary>
@@ -331,21 +375,40 @@ public partial class HexSandbox : Node2D
     /// </summary>
     private void DrawWatchCone(Unit unit, Vector2 at, Color hue)
     {
-        var half = Mathf.DegToRad((float)_battle.Awareness.Model.FrontArcDegrees / 2f);
-        var facing = (float)(unit.Facing.BearingRadians() + _layout.RotationRadians);
-        var reach = HexSize * 3.4f;
+        var attention = Wedge(
+            at,
+            unit.Facing,
+            _battle.Awareness.Model.FrontArcDegrees,
+            HexSize * 3.4f);
 
-        const int steps = 14;
+        DrawColoredPolygon(attention, new Color(hue, unit == _battle.Active ? 0.16f : 0.10f));
+
+        // An arc being held is a different thing from an arc being attended to: anything that
+        // moves inside this one gets shot at, out of whatever the watchman banked.
+        if (unit.Overwatch is not { } order || unit.Reserve <= 0) return;
+
+        var covered = Wedge(at, order.Centre, order.Arc.Degrees, HexSize * 5.2f);
+        DrawColoredPolygon(covered, new Color(OverwatchHue, 0.12f));
+        DrawPolyline([.. covered, covered[0]], new Color(OverwatchHue, 0.55f), 1.5f, true);
+    }
+
+    /// <summary>A pie slice centred on a hex bearing, in screen space.</summary>
+    private Vector2[] Wedge(Vector2 at, HexDirection centre, double degrees, float reach)
+    {
+        var half = Mathf.DegToRad((float)degrees / 2f);
+        var bearing = (float)(centre.BearingRadians() + _layout.RotationRadians);
+
+        const int steps = 18;
         var wedge = new Vector2[steps + 2];
         wedge[0] = at;
         for (var i = 0; i <= steps; i++)
         {
-            var angle = facing - half + half * 2f * i / steps;
+            var angle = bearing - half + half * 2f * i / steps;
             // Core bearings run with +Y north; the screen runs with +Y down.
             wedge[i + 1] = at + new Vector2(Mathf.Cos(angle), -Mathf.Sin(angle)) * reach;
         }
 
-        DrawColoredPolygon(wedge, new Color(hue, unit == _battle.Active ? 0.16f : 0.10f));
+        return wedge;
     }
 
     /// <summary>
@@ -456,6 +519,12 @@ public partial class HexSandbox : Node2D
                 HorizontalAlignment.Left, -1, 13, TextBright);
             DrawString(_font, box.Position + new Vector2(120, 16), $"init {slots[i].Roll}",
                 HorizontalAlignment.Left, -1, 11, TextDim);
+
+            // What this one could still answer a move with, and whether it is holding an arc.
+            if (unit.Reserve > 0)
+                DrawString(_font, box.Position + new Vector2(80, 16),
+                    unit.Overwatch is { } held ? $"{unit.Reserve}▸{held.Arc.Name[..1]}" : $"{unit.Reserve}•",
+                    HorizontalAlignment.Left, -1, 11, OverwatchHue);
         }
     }
 
@@ -473,17 +542,37 @@ public partial class HexSandbox : Node2D
                 ? ""
                 : $"exposed {_battle.ExposureOf(active):P0}    "
                   + $"they are: {_battle.HighestAwarenessOf(active).ToString().ToUpperInvariant()}",
+            active is null ? "" : ReserveLine(active),
             _hover is { } h
                 ? $"cursor {h}    {(_reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    {SightLine(h)}"
                 : "cursor —",
             ShotLine(),
-            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    Q/E: layer    R: new battle",
+            _lastWindow,
+            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
+            + "V: overwatch arc    Q/E: layer    R: new battle",
         }.Where(line => line.Length > 0).ToArray();
 
         var top = -Position + new Vector2(18, 30);
         for (var i = 0; i < lines.Length; i++)
             DrawString(_font, top + new Vector2(0, i * 20), lines[i],
                 HorizontalAlignment.Left, -1, 14, i == lines.Length - 1 ? TextDim : TextBright);
+    }
+
+    /// <summary>
+    /// What ending the turn now would leave this unit to answer other people's moves with, and
+    /// what it is holding. The reserve is the whole reason to stop moving early.
+    /// </summary>
+    private string ReserveLine(Unit active)
+    {
+        var model = _battle.Reactions;
+        var would = (int)(active.ActionPoints * model.ReserveFraction);
+        if (would < model.ReserveFloor) would = 0;
+
+        var holding = active.Overwatch is { } order
+            ? $"holding a {order.Arc.Name} arc {order.Centre} (x{order.Arc.AimBonus:0.00} to hit)"
+            : "watching nothing in particular";
+
+        return $"reserve {active.Reserve}, {would} if you stop here    {holding}";
     }
 
     /// <summary>The shot the active unit would take at whoever is under the cursor.</summary>

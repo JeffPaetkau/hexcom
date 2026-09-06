@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 7 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 8 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 85 tests run in 70&nbsp;ms today.</li>
+        <li>The rules are unit-testable headless — 221 tests run in about half a second today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -808,8 +808,9 @@
         answer with.
       </p>
       <p>
-        Firing costs are specified but not yet built: snap shot 3, standard 5, aimed 7, reload 3,
-        change stance 1.
+        Firing costs: snap shot 3, standard 5, aimed 7, change stance 1, turn on the spot 1,
+        declare an overwatch arc 1. Reloading is specified but not built. Seven tenths of whatever
+        is left over becomes reaction potential — see section 09 for why that fraction.
       </p>
     </div>
   </section>
@@ -1138,7 +1139,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">09</span><span class="chip spec">Specified</span></div>
+    <div class="rail"><span class="num">09</span><span class="chip built">Built</span><br><br><span class="chip spec">Ambush</span><br><br><span class="chip spec">Surprise</span></div>
     <div class="body">
       <h2>Three ways to act out of turn</h2>
       <p>
@@ -1153,6 +1154,15 @@
         applies to both sides. Turned up, the whole battlefield is twitchier: every mistake gets
         answered and committing to a move becomes frightening. Turned down, turns feel more like
         turns. It changes the texture of the game rather than handing the player a handicap.
+      </p>
+      <p>
+        The dial settled at <strong>seven tenths</strong>, measured against the ten point turn
+        and the price list in section 10. Stand still and seven bank, which is exactly an aimed
+        shot. Spend half the turn getting somewhere and three bank, which is exactly a snap shot.
+        Sprint the whole ten and nothing banks. Every rung of the movement economy therefore
+        lands on a real decision about what can still be answered with. A floor cuts anything
+        below two points, on the grounds that a leftover nothing can be spent on is noise and
+        inviting the interface to offer it is worse than rounding it away.
       </p>
 
       <h3>Keeping it from becoming a cascade</h3>
@@ -1174,8 +1184,10 @@
         is a short list most of the time, and usually an empty one mid-firefight.</li>
       </ul>
       <p>
-        A floor on what banks at all is worth adding if that is not enough: leftovers below the
-        cheapest action are noise, and rounding them away costs nothing.
+        In practice the third one does most of the visible work. Building the offer list for a
+        window means asking every hostile whether it holds an arc, has anything banked, can
+        afford a shot, and would have the mover in view at some tick — and the answer is usually
+        no for everyone, so most moves open a window that resolves to nothing at all.
       </p>
 
       <div class="scroll">
@@ -1245,6 +1257,35 @@
         defeats both at once.
       </p>
 
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Arc</th><th>Width</th><th>To hit</th><th>What it is</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Narrow</td><td>60°</td><td>&times;1.35</td><td class="why">One approach, watched properly</td></tr>
+            <tr><td class="name">Standard</td><td>120°</td><td>&times;1.18</td><td class="why">The arc a unit attends to anyway</td></tr>
+            <tr><td class="name">Wide</td><td>180°</td><td>&times;1.05</td><td class="why">Most of the ground in front, and not much of a shot down any of it</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The bonus multiplies rather than adds, so overwatching pays best on a shot that was
+        plausible anyway and never turns a hopeless one into a good one. Declaring costs a single
+        point out of the turn, plus the usual price of turning if the arc is not where the unit
+        was already looking. That one point matters more than it looks: it means a watchman banks
+        <em>six</em>, so an overwatch shot is never an aimed one. Overwatch pays in the aim bonus
+        instead of in aiming time, and a narrow arc is worth roughly what taking your time is
+        worth — at snap shot speed. That is the whole reason it is strong.
+      </p>
+      <p>
+        The trigger is deliberately geometric: the mover is inside the declared arc, and visible.
+        Watching a piece of ground <em>is</em> how movement across it gets spotted, so the defence
+        against an overwatch is to break the line or go round the arc — both of which the sight
+        solver and the facing model already answer. Nothing about awareness gates it.
+      </p>
+
       <h3>Action points are time, inside the window</h3>
       <p>
         A reaction does not resolve before or after the move that triggered it. It resolves
@@ -1274,7 +1315,7 @@
             </div>
           </div>
           <div class="turn">
-            <div class="turn-name">Aimed shot<span>5 to fire, lands at tick 5</span></div>
+            <div class="turn-name">Standard shot<span>5 to fire, lands at tick 5</span></div>
             <div class="ap">
               <i class="fire">AIM</i><i class="fire"></i><i class="fire"></i><i class="fire"></i><i class="fire">✗</i>
               <i></i><i></i>
@@ -1297,10 +1338,12 @@
       </figure>
 
       <p>
-        The aimed shot is the better shot and it misses the moment: it goes off at tick five, by
-        which time the target has arrived and is behind cover. The snap shot is worse in every
+        The standard shot is the better shot and it misses the moment: it goes off at tick five,
+        by which time the target has arrived and is behind cover. The snap shot is worse in every
         respect except the one that matters here — it lands at tick three, while the target is
-        still crossing open ground, and leaves two points to duck away afterwards.
+        still crossing open ground, and leaves two points to duck away afterwards. This is what a
+        watchman actually chooses, unprompted: the recommendation weighs expected damage against
+        where the runner will be, and picks the cheap shot the moment the destination has cover.
       </p>
       <p>
         This is what makes cheap actions worth having. A snap shot that is simply a worse aimed
@@ -1320,15 +1363,46 @@
         arithmetic on data that exists. What is new is a window object that holds the committed
         route, collects each reactor's placements, and resolves them in tick order.
       </p>
+      <p>
+        It turned out cheaper still than that, because of one decision worth recording: resolving
+        a window <strong>actually walks the mover along its route</strong>, stopping at each tick
+        something lands and firing from there. The mover is genuinely standing where the timeline
+        says it is, so line of sight, cover grade, range band and which plate the round arrives at
+        all come back from the same code that answers them on anybody's turn. There is no
+        hypothetical-position path through the shooting rules and no second version of the
+        geometry to keep honest. A runner dropped three ticks into a four tick run simply stops
+        there, one hex short of the wall it was running for.
+      </p>
+      <p>
+        Only the ticks at which the mover <em>arrives</em> somewhere are worth considering — in
+        between, nothing about the target changes. So a reactor's choices are found by working
+        backwards from each arrival: to land a five point shot the moment they reach the third
+        hex, start it five ticks before they get there. That makes the option list short and
+        genuinely distinct, which is what an interface needs to show.
+      </p>
+
+      <div class="aside">
+        <span class="tag">Settled</span>
+        <p>
+          How much of this the player drives by hand: offering and resolving are separate calls.
+          A window works out who could actually act — arc, reserve, affordable shot, mover in view
+          at some tick — and hands each of them one option per way of firing plus a recommendation
+          that maximises expected damage. Taking every recommendation is what the turn loop does
+          today. Letting a player place their own, or an AI place better ones, is the same
+          interface with something else calling it.
+        </p>
+      </div>
 
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          How much of this the player drives by hand. Placing actions on a timeline is a real
-          interface, and with several reactors per move it could get slow. Likely answer: only
-          reactors who could actually act — reserve in hand, and the mover crossing their arc at
-          some point in the window — get offered the choice, and everyone else resolves on a
-          default. Worth prototyping before committing to it.
+          Whether an <em>undetected</em> mover should be able to cross an overwatch arc untouched.
+          Today it cannot: the trigger is geometric, so a watchman shoots at anything it can see
+          moving in its arc regardless of what it knew a moment earlier, and the shot itself
+          settles the awareness question. That is defensible — the defence is to break the line,
+          not to be sneaky in the open — but it is the one place in the game where something
+          happens to a hidden unit without the detection ladder being consulted. Worth revisiting
+          once surprise reactions exist, since the two overlap.
         </p>
       </div>
     </div>
@@ -1459,6 +1533,21 @@
           front, flanks and rear may carry the same decision at a fraction of the noise.
         </p>
       </div>
+
+      <div class="aside">
+        <span class="tag">Open</span>
+        <p>
+          Faces are currently indexed by <em>compass</em> direction rather than by body — the
+          plate that took a hit from the north-east is still the north-east plate after the
+          soldier turns round. Flanking still works, because coming from a new angle finds a
+          different face, but "turn your good side to the threat" does not, and neither does the
+          idea that a unit runs out of sides to present. Building reactions made this visible:
+          a runner crossing an arc is shot in a different plate at tick three than at tick one
+          purely because the bearing moved, which reads right, while a unit spinning on the spot
+          under fire changes nothing, which does not. Rotating the index by facing is a small
+          change and a real balance one, so it wants doing deliberately.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -1478,7 +1567,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Units, initiative, the turn loop</b><p>Clock-driven order, seeded and replayable. Enough to play a silent match.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
-        <li><span class="idx">04</span><div><b>Reactions</b><p>The window, the timeline, and the three kinds. Grenades and mines fold in here.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>The reaction window, and overwatch</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and declared arcs shot down.</p></div></li>
+        <li><span class="idx">04</span><div><b>Ambush and surprise</b><p>The other two kinds, on the machinery above. Grenades and mines fold in here.</p></div></li>
         <li><span class="idx">05</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
@@ -1490,8 +1580,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 7</span>
-    <span>189 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 8</span>
+    <span>221 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

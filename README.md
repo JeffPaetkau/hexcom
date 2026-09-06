@@ -44,6 +44,7 @@ the compound against three inside it, one of them holding the roof:
 | right-click | fire at whoever is under the cursor |
 | space | end the turn |
 | `C` | cycle stance: standing, crouching, prone |
+| `V` | cycle the overwatch arc: none, narrow, standard, wide |
 | `Z` / `X` | turn on the spot |
 | `Q` / `E` | change layer (the roof is layer 1) |
 | `R` | new battle |
@@ -57,13 +58,19 @@ order with each unit's initiative roll.
 The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
 alarmed they are — coarse on purpose. Your own soldier's exposure is reported exactly, in the
 HUD, because that is information about yourself. Faint red circles are where an enemy *believes*
-one of yours to be; they stop moving when you do.
+one of yours to be; they stop moving when you do. A brighter, outlined wedge is an overwatch arc
+being held, and the yellow figure in the turn order is what that unit has banked to answer with.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry's wedge and watch it stay unaware while the
 same walk in front of it does not. The spotter on the roof sees most of the map and carries the
 radio, so it is the one worth reaching first — and getting up there costs six of ten points, so
 whoever wants that position gives up their turn to take it.
+
+You drive both sides, so overwatch is easy to try: give a sentry a narrow arc with `V`, end its
+turn, then run one of yours across it. The HUD reports which tick the shot went off on and where
+the runner was standing when it landed. Run the same route again with the arc set wide and watch
+the same weapon shoot worse.
 
 ## What is built
 
@@ -112,16 +119,24 @@ whoever wants that position gives up their turn to take it.
   exposure figure, weapon range bands, fire mode and stance. Firing gives you away through the
   channel your weapon uses: a slug rifle is heard through walls, a beam paints a line back to you
   for anyone facing your way, and a powered blade does neither.
+- **The reaction window, and overwatch** — a move is committed before anyone answers it, so for
+  its duration both sides know the future. Inside the window **action points are time**: a
+  reactor placing an action at tick *t* that costs *k* resolves at *t + k*, against wherever the
+  mover will be by then. A three point snap shot catches a runner in the open; a slower, better
+  shot arrives after the same runner is behind a wall. Reactions are paid for out of what was
+  left at the end of your own turn, so sprinting somewhere leaves you nothing to answer with, and
+  the choice to hold points back is made before you know whether it will pay. Overwatch is the
+  first of the three kinds: a declared arc, an aiming bonus that sharpens as the arc narrows, and
+  a shot cheap enough to land early in the window.
 
 ## What is not built yet
 
-The three reaction types, grenades and mines, suppression, AI, saves, and the strategy layer.
-See the design doc for where these are heading.
+Ambush and surprise, grenades and mines, suppression, AI, saves, and the strategy layer. See the
+design doc for where these are heading.
 
 The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
 
-The reaction design is worth reading before touching the turn loop: all three kinds spend action
-points left over at the end of your turn, and inside a reaction window **action points are
-time**. A three point snap shot resolves three ticks into the target's committed move, while it
-is still crossing open ground; a seven point aimed shot resolves after it has reached cover. That
-is what makes cheap actions worth having.
+Ambush and surprise fold into the machinery that is already there. Both place actions on the same
+committed timeline out of the same reserve; what is new in each is only who is asked and when.
+A `ReactionWindow` already separates offering choices from resolving them, which is where the
+interface and the AI will plug in.

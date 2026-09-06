@@ -276,15 +276,7 @@ public sealed class AwarenessTracker
     /// </remarks>
     public double AttentionOn(Unit observer, NodeId place)
     {
-        var from = _battle.Sight.Ground(observer.Position).Plane;
-        var to = _battle.Sight.Ground(place).Plane;
-
-        var offset = to - from;
-        if (offset.LengthSquared < Geometry2D.Epsilon) return 1.0;
-
-        // The grid can be drawn rotated, so the facing bearing has to be rotated with it.
-        var facing = observer.Facing.BearingRadians() + _battle.Layout.RotationRadians;
-        var away = Geometry2D.AngleBetween(facing, offset.Angle) * (180.0 / Math.PI);
+        var away = _battle.AngleOffDegrees(observer.Position, observer.Facing, place);
 
         if (away <= Model.FrontArcDegrees / 2) return 1.0;
         if (away <= Model.PeripheralArcDegrees / 2) return Model.PeripheralAcuity;

@@ -1,6 +1,7 @@
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Reactions;
 using Hexcom.Core.Vision;
 
 namespace Hexcom.Core.Units;
@@ -103,6 +104,25 @@ public sealed class Unit
 
     /// <summary>Points left this turn.</summary>
     public int ActionPoints { get; internal set; }
+
+    /// <summary>
+    /// Points banked at the end of the last turn, for acting out of turn.
+    /// </summary>
+    /// <remarks>
+    /// Spent, not refreshed. Whatever goes on reacting is gone until this unit's own turn comes
+    /// round again, so a soldier answers about one move a round however many chances the enemy
+    /// hands it. That, and the fact that sprinting somewhere leaves nothing to bank, is most of
+    /// what stops a reaction window from becoming a cascade.
+    /// </remarks>
+    public int Reserve { get; internal set; }
+
+    /// <summary>
+    /// The arc this unit is holding, if it declared one. Cleared when its next turn starts.
+    /// </summary>
+    public OverwatchOrder? Overwatch { get; internal set; }
+
+    /// <summary>Whether there is anything left to react with.</summary>
+    public bool CanReact => InPlay && Reserve > 0;
 
     /// <summary>What the unit carries, and what is left of it face by face.</summary>
     public Protection Protection { get; }
