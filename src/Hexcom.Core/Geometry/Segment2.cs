@@ -81,6 +81,13 @@ public static class Geometry2D
         return sum * 0.5;
     }
 
+    /// <summary>The smaller angle between two bearings, always in [0, pi].</summary>
+    public static double AngleBetween(double a, double b)
+    {
+        var difference = Math.Abs(NormalizeAngle(a) - NormalizeAngle(b));
+        return difference > Math.PI ? Math.PI * 2 - difference : difference;
+    }
+
     /// <summary>Normalise an angle to [0, 2*pi).</summary>
     public static double NormalizeAngle(double radians)
     {

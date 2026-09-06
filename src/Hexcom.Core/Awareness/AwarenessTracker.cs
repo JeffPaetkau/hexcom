@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Geometry;
+using Hexcom.Core.Hexes;
+using Hexcom.Core.Movement;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 
@@ -213,7 +215,38 @@ public sealed class AwarenessTracker
         var range = 1.0 - closeness * closeness;
         var acuity = observer.Stats.Perception / 10.0;
         var hiding = StanceProfile.For(subject.Stance).ConcealmentBonus;
+        var attention = AttentionOn(observer, subject.Position);
 
-        return Model.LookGain * acuity * range * sight.Exposure / hiding;
+        return Model.LookGain * acuity * range * attention * sight.Exposure / hiding;
     }
+
+    /// <summary>
+    /// How much of an observer's attention a place has, from one directly ahead down to a
+    /// fraction behind.
+    /// </summary>
+    /// <remarks>
+    /// Facing changes how readily something is noticed, never whether it could be seen at all.
+    /// Line of sight stays pure geometry in the sight solver; who is paying attention to what is
+    /// a question about people, and it belongs here. Coming at a sentry from behind is worth
+    /// roughly twelve times the walk it costs.
+    /// </remarks>
+    public double AttentionOn(Unit observer, NodeId place)
+    {
+        var from = _battle.Sight.Ground(observer.Position).Plane;
+        var to = _battle.Sight.Ground(place).Plane;
+
+        var offset = to - from;
+        if (offset.LengthSquared < Geometry2D.Epsilon) return 1.0;
+
+        // The grid can be drawn rotated, so the facing bearing has to be rotated with it.
+        var facing = observer.Facing.BearingRadians() + _battle.Layout.RotationRadians;
+        var away = Geometry2D.AngleBetween(facing, offset.Angle) * (180.0 / Math.PI);
+
+        if (away <= Model.FrontArcDegrees / 2) return 1.0;
+        if (away <= Model.PeripheralArcDegrees / 2) return Model.PeripheralAcuity;
+        return Model.RearAcuity;
+    }
+
+    /// <summary>Whether a place falls inside the arc an observer is properly watching.</summary>
+    public bool IsWatching(Unit observer, NodeId place) => AttentionOn(observer, place) >= 1.0;
 }

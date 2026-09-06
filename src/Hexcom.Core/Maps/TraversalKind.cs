@@ -72,6 +72,13 @@ public sealed record MovementCosts
     /// </summary>
     public int ChangeStance { get; init; } = 1;
 
+    /// <summary>
+    /// Turning on the spot to look somewhere other than where you are going. Moving already
+    /// turns you to face your line of travel for nothing; this is the price of watching one way
+    /// while standing still, which is the decision facing is meant to create.
+    /// </summary>
+    public int TurnInPlace { get; init; } = 1;
+
     /// <summary>Height change a unit can absorb mid-stride without it counting as a climb.</summary>
     public double StepHeight { get; init; } = 0.4;
 

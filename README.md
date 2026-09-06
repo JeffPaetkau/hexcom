@@ -43,6 +43,7 @@ the compound against three inside it, one of them holding the roof:
 | hover | show the route, the cost of each awkward step, and what cover the cursor has |
 | space | end the turn |
 | `C` | cycle stance: standing, crouching, prone |
+| `Z` / `X` | turn on the spot |
 | `Q` / `E` | change layer (the roof is layer 1) |
 | `R` | new battle |
 
@@ -52,14 +53,16 @@ from where it is standing — blue light, yellow half, orange full. Wall colours
 orange high, yellow low, blue railing, green sight-screen. The strip on the right is the turn
 order with each unit's initiative roll.
 
-Under each enemy is how alarmed they are — coarse on purpose. Your own soldier's exposure is
-reported exactly, in the HUD, because that is information about yourself. Faint red circles are
-where an enemy *believes* one of yours to be; they stop moving when you do.
+The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
+alarmed they are — coarse on purpose. Your own soldier's exposure is reported exactly, in the
+HUD, because that is information about yourself. Faint red circles are where an enemy *believes*
+one of yours to be; they stop moving when you do.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
-rather than alternate. The spotter on the roof sees most of the map and carries the radio, so
-it is the one worth reaching first — and getting up there costs six of ten points, so whoever
-wants that position gives up their turn to take it.
+rather than alternate. Walk round behind a sentry's wedge and watch it stay unaware while the
+same walk in front of it does not. The spotter on the roof sees most of the map and carries the
+radio, so it is the one worth reaching first — and getting up there costs six of ten points, so
+whoever wants that position gives up their turn to take it.
 
 ## What is built
 
@@ -95,8 +98,20 @@ wants that position gives up their turn to take it.
   person), or being told by radio, by shouting, or by watching a comrade react. Only a unit with
   a radio reaches the whole side. Each enemy holds a belief about where you are, and it goes
   stale the moment you move.
+- **Facing and vision cones** — a unit looks one way: full attention across 120°, a corner of the
+  eye out to 200°, a twelfth behind. Coming at a sentry from the rear is worth an order of
+  magnitude, so a position is flankable rather than merely approachable. Facing changes how
+  readily something is *noticed*, never whether it could be seen — line of sight stays geometry.
+  Moving turns you to face your line of travel for free; watching one way while standing still
+  costs a point.
 
 ## What is not built yet
 
-Vision cones and facing, the ambush action, weapons, damage, AI, saves, and the strategy layer.
-See the design doc for where these are heading.
+Weapons, damage, the three reaction types, AI, saves, and the strategy layer. See the design doc
+for where these are heading.
+
+The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register. Beam weapons and
+slugthrowers coexist and counter different defences: force shields stop beams and shrug at solid
+objects, ablative armour stops rounds and cooks under a beam. They also give you away through
+different channels, which the detection model already has — kinetic fire is heard through walls,
+beam fire paints a bright line back to the shooter for anyone whose arc it crosses.

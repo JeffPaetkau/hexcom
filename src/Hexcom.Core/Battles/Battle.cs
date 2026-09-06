@@ -84,7 +84,12 @@ public sealed class Battle
     // ---- setting up ------------------------------------------------------------
 
     /// <summary>Put a unit on the field. Only valid before the fight starts.</summary>
-    public Unit Deploy(string name, Side side, NodeId position, UnitStats? stats = null)
+    public Unit Deploy(
+        string name,
+        Side side,
+        NodeId position,
+        UnitStats? stats = null,
+        HexDirection facing = HexDirection.NorthEast)
     {
         if (!Graph.CanEndTurn(position))
             throw new ArgumentException($"{position} is not somewhere a unit can stand.", nameof(position));
@@ -92,7 +97,7 @@ public sealed class Battle
         if (UnitAt(position) is { } sitting)
             throw new ArgumentException($"{sitting.Name} is already at {position}.", nameof(position));
 
-        var unit = new Unit(new UnitId(_nextId++), name, side, position, stats);
+        var unit = new Unit(new UnitId(_nextId++), name, side, position, stats, facing);
         _units[unit.Id] = unit;
         return unit;
     }
@@ -191,10 +196,39 @@ public sealed class Battle
         unit.Position = destination;
         unit.ActionPoints -= cost;
 
+        // You end up looking where you were going, for nothing. Looking anywhere else costs.
+        if (FinalHeading(path) is { } heading) unit.Facing = heading;
+
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
         Awareness.Hear(unit, LoudnessOf(unit, cost, path), Round);
 
         return new MoveOutcome(true, path, cost, null);
+    }
+
+    /// <summary>Turn on the spot, to watch somewhere other than where you last went.</summary>
+    public bool Face(HexDirection direction)
+    {
+        var unit = RequireActive();
+
+        if (unit.Facing == direction) return false;
+        if (unit.ActionPoints < Costs.TurnInPlace) return false;
+
+        unit.Facing = direction;
+        unit.ActionPoints -= Costs.TurnInPlace;
+        return true;
+    }
+
+    /// <summary>
+    /// Which way the last real step of a route pointed. Steps within one hex — vaulting a
+    /// barricade from one half to the other — leave the heading alone.
+    /// </summary>
+    private static HexDirection? FinalHeading(IReadOnlyList<TraversalLink> path)
+    {
+        for (var i = path.Count - 1; i >= 0; i--)
+            if (path[i].From.Hex.DirectionTo(path[i].To.Hex) is { } heading)
+                return heading;
+
+        return null;
     }
 
     /// <summary>

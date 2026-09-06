@@ -43,7 +43,7 @@ public class AwarenessTests
     {
         var battle = Field();
         var sneak = battle.Deploy("Sneak", Side.Player, Node(-2, 0));
-        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(2, 0));
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(2, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         // Deployment alone tells nobody anything, which is what leaves room for an approach.
@@ -56,7 +56,7 @@ public class AwarenessTests
     {
         var battle = Field();
         var target = battle.Deploy("Target", Side.Player, Node(0, 0));
-        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(3, 0));
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(3, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         Look(battle, sentry);
@@ -74,7 +74,7 @@ public class AwarenessTests
         var battle = Field(map);
 
         var sneak = battle.Deploy("Sneak", Side.Player, Node(0, 0));
-        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(8, 0));
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(8, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         TakeTurn(battle, sneak);
@@ -92,7 +92,7 @@ public class AwarenessTests
     {
         var open = Field();
         var exposed = open.Deploy("Exposed", Side.Player, Node(0, 0));
-        var watcher = open.Deploy("Watcher", Side.Hostile, Node(4, 0));
+        var watcher = open.Deploy("Watcher", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
         open.Start();
         Look(open, watcher);
 
@@ -100,7 +100,7 @@ public class AwarenessTests
         walled.AddSideWall(Hex.Zero, HexDirection.NorthEast, 0, WallProfile.Low);
         var covered = Field(walled);
         var hiding = covered.Deploy("Hiding", Side.Player, Node(0, 0));
-        var other = covered.Deploy("Watcher", Side.Hostile, Node(4, 0));
+        var other = covered.Deploy("Watcher", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
         covered.Start();
         Look(covered, other);
 
@@ -119,7 +119,7 @@ public class AwarenessTests
         var battle = Field(map);
 
         var quarry = battle.Deploy("Quarry", Side.Player, Node(1, 0));
-        var hunter = battle.Deploy("Hunter", Side.Hostile, Node(4, 0));
+        var hunter = battle.Deploy("Hunter", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         // Seen out in the open first.
@@ -152,7 +152,7 @@ public class AwarenessTests
         var battle = Field(map);
 
         var quarry = battle.Deploy("Quarry", Side.Player, Node(1, 0));
-        var hunter = battle.Deploy("Hunter", Side.Hostile, Node(4, 0));
+        var hunter = battle.Deploy("Hunter", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         for (var i = 0; i < 4; i++) Look(battle, hunter);
@@ -179,7 +179,7 @@ public class AwarenessTests
         var battle = Field(map);
 
         var sneak = battle.Deploy("Sneak", Side.Player, Node(0, 0));
-        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(8, 0));
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(8, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         Assert.False(battle.CanSee(sentry, sneak), "the wall was supposed to hide them");
@@ -200,7 +200,7 @@ public class AwarenessTests
         var battle = Field(map);
 
         var sneak = battle.Deploy("Sneak", Side.Player, Node(0, 0));
-        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(2, 0));
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(2, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         // Bang about right next to them, repeatedly.
@@ -224,7 +224,7 @@ public class AwarenessTests
         {
             var battle = Field(new BattleMap().FillDisc(Hex.Zero, 14, ground: ground));
             var sneak = battle.Deploy("Sneak", Side.Player, Node(-6, 0));
-            var sentry = battle.Deploy("Sentry", Side.Hostile, Node(0, 0));
+            var sentry = battle.Deploy("Sentry", Side.Hostile, Node(0, 0), facing: HexDirection.SouthWest);
             battle.Start();
 
             while (battle.Active != sneak) battle.EndTurn();
@@ -249,9 +249,9 @@ public class AwarenessTests
     {
         var battle = Field();
         var target = battle.Deploy("Target", Side.Player, Node(0, 0));
-        var spotter = battle.Deploy("Spotter", Side.Hostile, Node(3, 0));
-        var nearby = battle.Deploy("Nearby", Side.Hostile, Node(3, 3));
-        var faraway = battle.Deploy("Faraway", Side.Hostile, Node(13, 0));
+        var spotter = battle.Deploy("Spotter", Side.Hostile, Node(3, 0), facing: HexDirection.SouthWest);
+        var nearby = battle.Deploy("Nearby", Side.Hostile, Node(3, 3), facing: HexDirection.SouthWest);
+        var faraway = battle.Deploy("Faraway", Side.Hostile, Node(13, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         // Put a wall between the far one and everyone, so it cannot simply watch them react.
@@ -275,8 +275,8 @@ public class AwarenessTests
             var battle = new Battle(map, new HexLayout(size: 1.0), seed: 5);
 
             var target = battle.Deploy("Target", Side.Player, Node(0, 0));
-            var signaller = battle.Deploy("Signaller", Side.Hostile, Node(3, 0), UnitStats.Signaller);
-            var distant = battle.Deploy("Distant", Side.Hostile, Node(26, 0));
+            var signaller = battle.Deploy("Signaller", Side.Hostile, Node(3, 0), UnitStats.Signaller, facing: HexDirection.SouthWest);
+            var distant = battle.Deploy("Distant", Side.Hostile, Node(26, 0), facing: HexDirection.SouthWest);
             battle.Start();
 
             if (!signallerAlive) battle.Withdraw(signaller);
@@ -300,10 +300,10 @@ public class AwarenessTests
     {
         var battle = Field();
         var target = battle.Deploy("Target", Side.Player, Node(0, 0));
-        var spotter = battle.Deploy("Spotter", Side.Hostile, Node(3, 0));
+        var spotter = battle.Deploy("Spotter", Side.Hostile, Node(3, 0), facing: HexDirection.SouthWest);
 
         // Out of shouting range, no radio, but in plain view of the spotter.
-        var distant = battle.Deploy("Distant", Side.Hostile, Node(14, 0));
+        var distant = battle.Deploy("Distant", Side.Hostile, Node(14, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         Assert.True(
@@ -329,7 +329,7 @@ public class AwarenessTests
         var battle = Field(map);
 
         var mine = battle.Deploy("Mine", Side.Player, Node(0, 0));
-        var theirs = battle.Deploy("Theirs", Side.Hostile, Node(4, 0));
+        var theirs = battle.Deploy("Theirs", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
         battle.Start();
         Look(battle, theirs);
 
@@ -350,7 +350,7 @@ public class AwarenessTests
     {
         var battle = Field();
         var mine = battle.Deploy("Mine", Side.Player, Node(0, 0));
-        var theirs = battle.Deploy("Theirs", Side.Hostile, Node(4, 0));
+        var theirs = battle.Deploy("Theirs", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         var readout = battle.Awareness.ReadoutFor(theirs.Id, mine.Id);
@@ -363,8 +363,8 @@ public class AwarenessTests
     {
         var battle = Field();
         var mine = battle.Deploy("Mine", Side.Player, Node(0, 0));
-        var near = battle.Deploy("Near", Side.Hostile, Node(2, 0));
-        battle.Deploy("Far", Side.Hostile, Node(13, 0));
+        var near = battle.Deploy("Near", Side.Hostile, Node(2, 0), facing: HexDirection.SouthWest);
+        battle.Deploy("Far", Side.Hostile, Node(13, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         Assert.Equal(AwarenessState.Unaware, battle.HighestAwarenessOf(mine));
@@ -379,7 +379,7 @@ public class AwarenessTests
     {
         var battle = Field();
         var mine = battle.Deploy("Mine", Side.Player, Node(0, 0));
-        var theirs = battle.Deploy("Theirs", Side.Hostile, Node(3, 0));
+        var theirs = battle.Deploy("Theirs", Side.Hostile, Node(3, 0), facing: HexDirection.SouthWest);
         battle.Start();
 
         Look(battle, theirs);
@@ -399,7 +399,7 @@ public class AwarenessTests
     {
         var battle = Field();
         var sneak = battle.Deploy("Sneak", Side.Player, Node(-6, 0), UnitStats.Scout);
-        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(6, 0), UnitStats.Trooper);
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(6, 0), UnitStats.Trooper, facing: HexDirection.SouthWest);
         battle.Start();
 
         // The scout out-rolls the trooper handily, so it moves before the sentry looks.

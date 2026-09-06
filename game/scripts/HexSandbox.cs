@@ -71,11 +71,15 @@ public partial class HexSandbox : Node2D
     {
         _battle = new Battle(DemoMaps.Compound(), _layout, seed: Seed);
 
-        _battle.Deploy("Vance", Side.Player, Ground(-4, 0), UnitStats.Scout);
-        _battle.Deploy("Orsini", Side.Player, Ground(-3, 2), UnitStats.Trooper);
-        _battle.Deploy("Sentry", Side.Hostile, Ground(4, 2));
-        _battle.Deploy("Watchman", Side.Hostile, Ground(4, -2));
-        _battle.Deploy("Spotter", Side.Hostile, new NodeId(new Hex(4, 0), layer: 1), UnitStats.Signaller);
+        // Ours come from the west, looking at the compound. Theirs watch the ground we have to
+        // cross, which is what makes going the long way round the back worth the action points.
+        _battle.Deploy("Vance", Side.Player, Ground(-4, 0), UnitStats.Scout, HexDirection.NorthEast);
+        _battle.Deploy("Orsini", Side.Player, Ground(-3, 2), UnitStats.Trooper, HexDirection.NorthEast);
+        _battle.Deploy("Sentry", Side.Hostile, Ground(4, 2), facing: HexDirection.SouthWest);
+        _battle.Deploy("Watchman", Side.Hostile, Ground(4, -2), facing: HexDirection.NorthWest);
+        _battle.Deploy(
+            "Spotter", Side.Hostile, new NodeId(new Hex(4, 0), layer: 1),
+            UnitStats.Signaller, HexDirection.SouthWest);
 
         _battle.Start();
         _layer = _battle.Active!.Position.Layer;
@@ -154,6 +158,14 @@ public partial class HexSandbox : Node2D
                         Stance.Crouching => Stance.Prone,
                         _ => Stance.Standing,
                     });
+                    Recalculate();
+                }
+                break;
+
+            case Key.Z or Key.X:
+                if (_battle.Active is { } turner)
+                {
+                    _battle.Face(turner.Facing.Rotate(key == Key.Z ? 1 : -1));
                     Recalculate();
                 }
                 break;
@@ -275,6 +287,7 @@ public partial class HexSandbox : Node2D
                 _ => HexSize * 0.27f,
             };
 
+            DrawWatchCone(unit, at, hue);
             DrawCircle(at, radius, hue);
             DrawCircle(at, radius, new Color("0a0c0f", 0.7f), false, 2f);
 
@@ -295,6 +308,29 @@ public partial class HexSandbox : Node2D
                     AlarmHue(readout.State));
             }
         }
+    }
+
+    /// <summary>
+    /// The arc a unit is actually watching. Outside it things are noticed slowly, and behind it
+    /// barely at all — which is what makes a position flankable rather than merely approached.
+    /// </summary>
+    private void DrawWatchCone(Unit unit, Vector2 at, Color hue)
+    {
+        var half = Mathf.DegToRad((float)_battle.Awareness.Model.FrontArcDegrees / 2f);
+        var facing = (float)(unit.Facing.BearingRadians() + _layout.RotationRadians);
+        var reach = HexSize * 3.4f;
+
+        const int steps = 14;
+        var wedge = new Vector2[steps + 2];
+        wedge[0] = at;
+        for (var i = 0; i <= steps; i++)
+        {
+            var angle = facing - half + half * 2f * i / steps;
+            // Core bearings run with +Y north; the screen runs with +Y down.
+            wedge[i + 1] = at + new Vector2(Mathf.Cos(angle), -Mathf.Sin(angle)) * reach;
+        }
+
+        DrawColoredPolygon(wedge, new Color(hue, unit == _battle.Active ? 0.16f : 0.10f));
     }
 
     /// <summary>
@@ -417,7 +453,7 @@ public partial class HexSandbox : Node2D
                 ? $"round {_battle.Round}    nobody left to act"
                 : $"round {_battle.Round}    {active.Name} ({active.Side})    "
                   + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
-                  + $"{active.Stance.ToString().ToLowerInvariant()}    layer {_layer}",
+                  + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {_layer}",
             active is null
                 ? ""
                 : $"exposed {_battle.ExposureOf(active):P0}    "
@@ -425,7 +461,7 @@ public partial class HexSandbox : Node2D
             _hover is { } h
                 ? $"cursor {h}    {(_reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    {SightLine(h)}"
                 : "cursor —",
-            "click: move    space: end turn    C: stance    Q/E: layer    R: new battle",
+            "click: move    space: end turn    C: stance    Z/X: turn    Q/E: layer    R: new battle",
         }.Where(line => line.Length > 0).ToArray();
 
         var top = -Position + new Vector2(18, 30);

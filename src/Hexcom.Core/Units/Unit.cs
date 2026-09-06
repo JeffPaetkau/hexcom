@@ -1,3 +1,4 @@
+using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Vision;
 
@@ -63,12 +64,19 @@ public sealed record UnitStats(
 /// </remarks>
 public sealed class Unit
 {
-    public Unit(UnitId id, string name, Side side, NodeId position, UnitStats? stats = null)
+    public Unit(
+        UnitId id,
+        string name,
+        Side side,
+        NodeId position,
+        UnitStats? stats = null,
+        HexDirection facing = HexDirection.NorthEast)
     {
         Id = id;
         Name = name;
         Side = side;
         Position = position;
+        Facing = facing;
         Stats = stats ?? UnitStats.Default;
         ActionPoints = Stats.ActionPoints;
     }
@@ -79,6 +87,13 @@ public sealed class Unit
     public UnitStats Stats { get; }
 
     public NodeId Position { get; internal set; }
+
+    /// <summary>
+    /// Which way the unit is looking. Set for free by moving, and at a cost by turning on the
+    /// spot. Facing does not decide what can be seen — that stays pure geometry — but it decides
+    /// how readily anything is noticed, which is what makes a position flankable.
+    /// </summary>
+    public HexDirection Facing { get; internal set; }
     public Stance Stance { get; internal set; } = Stance.Standing;
 
     /// <summary>Points left this turn.</summary>

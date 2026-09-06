@@ -517,13 +517,18 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 4 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 5 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
-      A turn-based squad tactics game where the fight is decided by who saw whom first. Realistic
-      humans, realistic guns, hexagons, and no aggro radius anywhere.
+      A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
+      weapons against slugthrowers, force shields against armour, hexagons, and no aggro radius
+      anywhere.
     </p>
     <dl class="locked">
+      <div>
+        <dt>Setting</dt>
+        <dd>Science fiction, people not monsters</dd>
+      </div>
       <div>
         <dt>Engine</dt>
         <dd>Godot 4 · C#</dd>
@@ -1047,13 +1052,29 @@
         the thing the stealth game is actually played in.
       </p>
 
+      <h3>Facing, so a position can be flanked</h3>
+      <p>
+        A unit looks one way. Inside a hundred and twenty degrees it notices things at full rate;
+        out to two hundred it catches them in the corner of an eye; behind, at a twelfth. Coming
+        at a sentry from the rear is worth an order of magnitude, which is what makes the long way
+        round a real option rather than flavour.
+      </p>
+      <p>
+        Facing decides how readily something is <em>noticed</em>, never whether it could be seen
+        at all. Line of sight stays pure geometry in the sight solver; who is paying attention to
+        what is a question about people, and it lives in the awareness model. Moving turns you to
+        face your line of travel for nothing; watching one way while standing still costs a point,
+        and that is the whole decision.
+      </p>
+
       <div class="aside">
         <span class="tag">Still to come</span>
         <p>
-          Vision cones and facing, so an enemy can be flanked as well as avoided. Attacking from
-          concealment giving a damage and accuracy bonus, on top of the initiative payoff in the
-          next section. And noise currently ignores walls entirely — you hear people through a
-          building, which is right, but a closed door should count for something.
+          Attacking from concealment giving a damage and accuracy bonus, on top of the initiative
+          payoff in the next section. Noise currently ignores walls entirely — you hear people
+          through a building, which is right, but a closed door should count for something. And
+          crawling is free: <code>TraversalKind.Crawl</code> exists but is not yet wired to stance,
+          so going prone is pure upside.
         </p>
       </div>
     </div>
@@ -1117,7 +1138,170 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">09</span><span class="chip open">Next</span></div>
+    <div class="rail"><span class="num">09</span><span class="chip spec">Specified</span></div>
+    <div class="body">
+      <h2>Three ways to act out of turn</h2>
+      <p>
+        Reactions all draw on the same resource: <strong>action points left over at the end of
+        your turn</strong>. That closes the loop on the economy — sprinting somewhere leaves you
+        with nothing to answer with, and hanging back with points in hand is how you cover an
+        approach. The choice to reserve is made before you know whether it will pay, which is the
+        right shape for a decision.
+      </p>
+      <p>
+        How much of the leftover actually carries is a <strong>difficulty setting</strong>, and it
+        applies to both sides. Turned up, the whole battlefield is twitchier: every mistake gets
+        answered and committing to a move becomes frightening. Turned down, turns feel more like
+        turns. It changes the texture of the game rather than handing the player a handicap.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Reaction</th><th>Set up</th><th>Triggered by</th><th>What it buys</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name">Ambush</td>
+              <td class="why">Deliberate, any number of units, on one agreed trigger</td>
+              <td class="why">One member choosing the moment</td>
+              <td class="why">Every armed unit resolves in the same window, before anyone answers</td>
+            </tr>
+            <tr>
+              <td class="name">Surprise</td>
+              <td class="why">None. Everyone has it, all the time</td>
+              <td class="why">Suddenly noticing an opponent</td>
+              <td class="why">Something rather than nothing: turn, fire, drop, or call it in</td>
+            </tr>
+            <tr>
+              <td class="name">Overwatch</td>
+              <td class="why">Deliberate, one unit, a declared arc</td>
+              <td class="why">Movement inside that arc</td>
+              <td class="why">An aiming bonus, sharper the narrower the arc</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Ambush</h3>
+      <p>
+        The answer to the problem in section 08. A squad arms against an agreed trigger and waits;
+        when one of them fires, every armed unit resolves in that same window before the enemy
+        acts. Alpha strikes survive interleaved initiative, and the turn structure needs no
+        special case — the reserved points were already going to become reaction potential.
+      </p>
+      <p>
+        Arming costs points up front on top of the shot held back, so setting an ambush is a turn
+        spent not advancing. Spring it early and the coordination is wasted; wait too long and
+        somebody sees you first.
+      </p>
+
+      <h3>Surprise</h3>
+      <p>
+        The only involuntary one, and the only one nobody has to plan for. When a unit suddenly
+        registers an opponent — a contact jumping to engaged, or someone stepping into the arc it
+        was already watching — it may spend part of what it has left, immediately: turn to face,
+        fire, drop into cover, or shout.
+      </p>
+      <p>
+        Less of the reserve is available than for a deliberate reaction, because reacting is not
+        planning. The point is that ambushing a competent soldier should not be free. Walking
+        round the back of a sentry deserves a reward; catching one with nothing at all in hand
+        ought to take more than proximity.
+      </p>
+
+      <h3>Overwatch</h3>
+      <p>
+        A watchman declares an arc and holds it. Anything moving inside is shot at, at a bonus,
+        because the weapon was already pointed there. A narrower arc aims better, so the decision
+        is how much ground to try to cover against how well.
+      </p>
+      <p>
+        This is where facing earns its keep twice: the arc a unit is watching is the same arc it
+        notices things in, so an overwatch position is also a detection position — and flanking it
+        defeats both at once.
+      </p>
+
+      <div class="aside">
+        <span class="tag">Open</span>
+        <p>
+          Whether a triggered reaction interrupts the mover mid-route or resolves once the move
+          completes. Interrupting is far more dramatic and much more work: the route would have to
+          be walked node by node with a check at each, instead of resolved in one go. Worth doing
+          eventually, but not before there is shooting to interrupt.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">10</span><span class="chip spec">Specified</span></div>
+    <div class="body">
+      <h2>Beams, slugs, and what stops them</h2>
+      <p>
+        Science fiction in the register of Star Trek, Star Wars and Babylon 5 — people with
+        technology rather than monsters. What the setting buys mechanically is permission for two
+        weapon families to coexist that ought to have replaced one another, and to be held in
+        tension.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th></th><th>Beam</th><th>Kinetic</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Examples</td><td class="why">Phasers, blasters, blades at contact range</td><td class="why">Slugthrowers, railguns, autocannon</td></tr>
+            <tr><td class="name">Stopped by</td><td class="why">Force shields, sheer mass</td><td class="why">Armour plate, terrain</td></tr>
+            <tr><td class="name">Defeats</td><td class="why">Armour plate</td><td class="why">Force shields</td></tr>
+            <tr><td class="name">Gives you away by</td><td class="why">Light: a bright line pointing back at the shooter</td><td class="why">Noise: heard through walls, over a wide radius</td></tr>
+            <tr><td class="name">Against cover</td><td class="why">Burns through thin walls given time</td><td class="why">Chips at masonry, ricochets</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <strong>Force shields</strong> soak beam energy up to a capacity and recharge over a few
+        turns, and do almost nothing about a solid object arriving fast. <strong>Ablative
+        armour</strong> stops kinetic rounds and degrades as it does, and cooks under a sustained
+        beam. Neither is a general answer, so a squad wants both kinds of weapon and the enemy
+        composition decides which matters today.
+      </p>
+
+      <h3>Why this suits the systems already built</h3>
+      <p>
+        The two families give you away through different channels, and the detection model
+        already has both. Kinetic fire is a loud noise event with a radius, heard through walls,
+        reporting a place. Beam fire is a visual event: unmissable to anyone whose arc it crosses,
+        and worth nothing at all to someone facing the other way.
+      </p>
+      <p>
+        So the quiet loadout is not a settled question. A suppressed slugthrower is silent until
+        it fires, and then everyone within a hundred metres knows roughly where you are. A beam
+        makes no sound and paints a line straight back to you for anyone looking. Which one
+        belongs on a stealth mission depends on whether you expect to be heard or seen, and that
+        is a question about the map and the enemy — the kind worth asking.
+      </p>
+      <p>
+        Destructible walls are already a flag on the wall profiles, so beams burning through cover
+        needs no new structure. Neither does noise varying by surface. This is content and balance
+        on top of what exists, not a rewrite.
+      </p>
+
+      <div class="aside">
+        <span class="tag">Open</span>
+        <p>
+          Whether shields are a pool per unit or per facing. Per facing would make flanking matter
+          for damage as well as for detection, and it reuses the arc machinery that already
+          exists — but it is a lot of state to show a player legibly, and it may be more fidelity
+          than the game needs.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">11</span><span class="chip open">Next</span></div>
     <div class="body">
       <h2>Build order</h2>
       <p>
@@ -1143,8 +1327,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 4</span>
-    <span>153 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 5</span>
+    <span>166 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

@@ -34,6 +34,29 @@ public sealed record AwarenessModel
     /// <summary>Certainty shed each turn a unit fails to find what it is looking for.</summary>
     public double DecayPerTurn { get; init; } = 15;
 
+    // ---- where they are looking ------------------------------------------------
+
+    /// <summary>
+    /// Total width of the arc a unit is properly watching, in degrees, centred on its facing.
+    /// Anything inside it is noticed at full rate.
+    /// </summary>
+    public double FrontArcDegrees { get; init; } = 120;
+
+    /// <summary>
+    /// Total width of the arc a unit can see into at all. Between the front arc and this, you
+    /// are caught in the corner of an eye.
+    /// </summary>
+    public double PeripheralArcDegrees { get; init; } = 200;
+
+    /// <summary>Share of the normal rate for something in the corner of the eye.</summary>
+    public double PeripheralAcuity { get; init; } = 0.45;
+
+    /// <summary>
+    /// Share of the normal rate for something behind. Not zero — people do turn round — but low
+    /// enough that approaching from behind is worth the walk.
+    /// </summary>
+    public double RearAcuity { get; init; } = 0.08;
+
     // ---- listening -------------------------------------------------------------
 
     /// <summary>Metres a sound carries per point of loudness.</summary>
