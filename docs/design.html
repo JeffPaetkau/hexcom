@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 5 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 6 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -1222,13 +1222,90 @@
         defeats both at once.
       </p>
 
+      <h3>Action points are time, inside the window</h3>
+      <p>
+        A reaction does not resolve before or after the move that triggered it. It resolves
+        <em>during</em> it, on a shared clock, and the currency of that clock is action points.
+      </p>
+      <p>
+        The move that triggered the window is already committed, so both sides know the future
+        for its duration. A five point run is five ticks long, and the route is known: at tick
+        three the mover is three hexes along, wherever that is. A reactor spending from its
+        reserve places its actions on that same timeline. Whatever it starts at tick <em>t</em>
+        and costs <em>k</em> resolves at <em>t plus k</em> — against wherever the mover will be
+        by then, not where it is now.
+      </p>
+
+      <figure>
+        <figcaption>
+          <b>Figure 4 — Seven points against a five point run</b><br>
+          The mover is committed to five hexes and will finish behind cover. Three ways to spend
+          a seven point reserve against that, and what each one catches.
+        </figcaption>
+        <div class="turns">
+          <div class="turn">
+            <div class="turn-name">Get to cover<span>5 move, lands at tick 5</span></div>
+            <div class="ap">
+              <i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i>
+              <i></i><i></i>
+            </div>
+          </div>
+          <div class="turn">
+            <div class="turn-name">Aimed shot<span>5 to fire, lands at tick 5</span></div>
+            <div class="ap">
+              <i class="fire">AIM</i><i class="fire"></i><i class="fire"></i><i class="fire"></i><i class="fire">✗</i>
+              <i></i><i></i>
+            </div>
+          </div>
+          <div class="turn">
+            <div class="turn-name">Snap, then duck<span>3 to fire at tick 3, 2 to move</span></div>
+            <div class="ap">
+              <i class="fire">SNAP</i><i class="fire"></i><i class="fire">✓</i>
+              <i class="move"></i><i class="move"></i>
+              <i></i><i></i>
+            </div>
+          </div>
+        </div>
+        <div class="key">
+          <span class="k-move">Move</span>
+          <span class="k-fire">Fire</span>
+          <span class="k-hold">Unspent</span>
+        </div>
+      </figure>
+
+      <p>
+        The aimed shot is the better shot and it misses the moment: it goes off at tick five, by
+        which time the target has arrived and is behind cover. The snap shot is worse in every
+        respect except the one that matters here — it lands at tick three, while the target is
+        still crossing open ground, and leaves two points to duck away afterwards.
+      </p>
+      <p>
+        This is what makes cheap actions worth having. A snap shot that is simply a worse aimed
+        shot is never chosen; a snap shot that is the only one that <em>connects</em> is a real
+        decision. The same arithmetic explains why overwatch is strong: the weapon is already
+        pointed, so the shot is cheap, so it lands early in the window while the target is still
+        in the open.
+      </p>
+      <p>
+        It gives the mover something to think about too. A long run through open ground hands
+        every reactor a wide window; a two point shuffle hands them almost nothing but barely
+        gets anywhere. How far to commit becomes the question, rather than simply where to end up.
+      </p>
+      <p>
+        Structurally this costs less than it sounds. A route already arrives as a list of links
+        with an action point price on each, so "where is the mover at cumulative cost three" is
+        arithmetic on data that exists. What is new is a window object that holds the committed
+        route, collects each reactor's placements, and resolves them in tick order.
+      </p>
+
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          Whether a triggered reaction interrupts the mover mid-route or resolves once the move
-          completes. Interrupting is far more dramatic and much more work: the route would have to
-          be walked node by node with a check at each, instead of resolved in one go. Worth doing
-          eventually, but not before there is shooting to interrupt.
+          How much of this the player drives by hand. Placing actions on a timeline is a real
+          interface, and with several reactors per move it could get slow. Likely answer: only
+          reactors who could actually act — reserve in hand, and the mover crossing their arc at
+          some point in the window — get offered the choice, and everyone else resolves on a
+          default. Worth prototyping before committing to it.
         </p>
       </div>
     </div>
@@ -1268,6 +1345,53 @@
         composition decides which matters today.
       </p>
 
+      <h3>More than two families</h3>
+      <p>
+        Beam against kinetic is the spine, but it is not the whole armoury, and the others are
+        worth naming now because two of them need structure that does not exist yet.
+      </p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Weapon</th><th>What it is for</th><th>What it needs building</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name">Blades</td>
+              <td class="why">The silent kill. No report, no muzzle flash, nothing to relay. A powered blade is beam-family, so it goes through armour</td>
+              <td class="why">Adjacency and a stance check. Nothing new</td>
+            </tr>
+            <tr>
+              <td class="name">Grenades</td>
+              <td class="why">Digging people out of the cover that makes them hard to shoot</td>
+              <td class="why">An arcing trace. You lob over a wall you cannot see through, so it is a different question from line of sight</td>
+            </tr>
+            <tr>
+              <td class="name">Mines</td>
+              <td class="why">Denying ground while you are somewhere else. Shapes an approach without anybody watching it</td>
+              <td class="why">A reaction owned by the terrain rather than by a unit</td>
+            </tr>
+            <tr>
+              <td class="name">Suppression</td>
+              <td class="why">Buying a crossing by making somebody keep their head down</td>
+              <td class="why">A per-unit state that taxes action points and accuracy</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Grenades are the interesting one. Every trace so far has asked whether a straight line
+        gets through, and an arc explicitly does not: the whole point of throwing one is to put
+        it somewhere you cannot shoot. That wants a second query alongside the sight solver,
+        answering whether a lobbed object clears the intervening walls and where it lands if it
+        clips one.
+      </p>
+      <p>
+        Mines fold neatly into the reaction window in section 09 rather than needing a mechanism
+        of their own. A mine is an overwatch that a unit is not standing behind: a trigger on a
+        tile, resolved at the tick the mover enters it. Same clock, same resolution order.
+      </p>
+
       <h3>Why this suits the systems already built</h3>
       <p>
         The two families give you away through different channels, and the detection model
@@ -1288,13 +1412,28 @@
         on top of what exists, not a rewrite.
       </p>
 
+      <h3>Protection is per face</h3>
+      <p>
+        Both shields and armour are tracked per facing rather than as one pool. Flanking then
+        matters for damage as much as it does for detection, and it reuses the arc machinery that
+        already decides what a unit notices — the same walk round the back that buys you an
+        unnoticed approach also buys you the thin side of the armour.
+      </p>
+      <p>
+        It also gives the two defences different textures. A shield that has collapsed on one
+        facing can be turned away from the threat while it recharges, which makes turning a
+        combat decision and not just a looking one. Armour does not recover, so a face that has
+        been chewed through stays chewed through, and a unit slowly runs out of good sides to
+        present.
+      </p>
+
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          Whether shields are a pool per unit or per facing. Per facing would make flanking matter
-          for damage as well as for detection, and it reuses the arc machinery that already
-          exists — but it is a lot of state to show a player legibly, and it may be more fidelity
-          than the game needs.
+          How to show six facings of two defences without a spreadsheet on screen. Likely a ring
+          around the unit, segmented, with shield as an outer band and armour as an inner one —
+          readable at a glance, exact on hover. Six segments is probably too fine; three arcs of
+          front, flanks and rear may carry the same decision at a fraction of the noise.
         </p>
       </div>
     </div>
@@ -1327,7 +1466,7 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 5</span>
+    <span>Hexcom · tactics layer · revision 6</span>
     <span>166 tests green · 0 engine references in core</span>
   </footer>
 
