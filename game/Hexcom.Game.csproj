@@ -1,0 +1,20 @@
+<Project Sdk="Godot.NET.Sdk/4.4.0">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Hexcom.Game</RootNamespace>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      One-way dependency: the view knows about the rules, the rules know nothing about Godot.
+      Keep it that way. If this reference ever needs to point the other direction, something
+      has leaked into the wrong assembly.
+    -->
+    <ProjectReference Include="..\src\Hexcom.Core\Hexcom.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,26 @@
+; Engine configuration file.
+; Hexcom — the Godot presentation layer. All rules live in ../src/Hexcom.Core.
+
+config_version=5
+
+[application]
+
+config/name="Hexcom"
+config/description="Turn-based tactics on a hex grid. Rules live in the engine-independent Hexcom.Core library."
+run/main_scene="res://scenes/Sandbox.tscn"
+config/features=PackedStringArray("4.4", "C#", "Forward Plus")
+
+[dotnet]
+
+project/assembly_name="Hexcom.Game"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+anti_aliasing/quality/msaa_2d=2

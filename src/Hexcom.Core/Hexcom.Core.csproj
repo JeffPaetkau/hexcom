@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: undocumented public member. CS1573: only some record parameters documented. -->
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+    <RootNamespace>Hexcom.Core</RootNamespace>
+    <!--
+      This assembly must never reference a game engine. Everything here is plain .NET so the
+      rules can be unit tested headless, run thousands of AI-vs-AI matches for balance, and be
+      lifted to a different engine without a rewrite.
+    -->
+  </PropertyGroup>
+
+</Project>

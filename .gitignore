@@ -1,0 +1,27 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+artifacts/
+
+# Godot
+game/.godot/
+game/.import/
+game/export.cfg
+game/export_presets.cfg
+game/android/
+game/*.sln
+game/*.csproj.user
+data_*/
+mono_crash.*.json
+
+# Per-machine tool settings (absolute paths, local permission grants)
+.claude/settings.local.json
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

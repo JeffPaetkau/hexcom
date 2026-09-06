@@ -1,0 +1,975 @@
+<title>Hexcom Field Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+
+<style>
+  :root {
+    --paper:        #f1f2ee;
+    --surface:      #ffffff;
+    --sunk:         #e6e8e2;
+    --ink:          #191d1f;
+    --ink-soft:     #495157;
+    --ink-faint:    #7b848a;
+    --rule:         #d3d7cf;
+    --rule-strong:  #b3b9af;
+    --accent:       #1f6b5c;
+    --accent-soft:  #d8e6e1;
+    --alert:        #ab4720;
+    --alert-soft:   #f0ded4;
+    --warn:         #7f6218;
+    --warn-soft:    #ece3ca;
+
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+    --measure: 66ch;
+    --rail: 9rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:       #14171a;
+      --surface:     #1b1f22;
+      --sunk:        #0f1214;
+      --ink:         #e3e8e5;
+      --ink-soft:    #a1aaad;
+      --ink-faint:   #6e787c;
+      --rule:        #2a3033;
+      --rule-strong: #3c4447;
+      --accent:      #61c0a6;
+      --accent-soft: #17352f;
+      --alert:       #e18257;
+      --alert-soft:  #38231a;
+      --warn:        #c8a44f;
+      --warn-soft:   #33290f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:       #14171a;
+    --surface:     #1b1f22;
+    --sunk:        #0f1214;
+    --ink:         #e3e8e5;
+    --ink-soft:    #a1aaad;
+    --ink-faint:   #6e787c;
+    --rule:        #2a3033;
+    --rule-strong: #3c4447;
+    --accent:      #61c0a6;
+    --accent-soft: #17352f;
+    --alert:       #e18257;
+    --alert-soft:  #38231a;
+    --warn:        #c8a44f;
+    --warn-soft:   #33290f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 3.5rem 0 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1.25rem;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2.6rem, 6vw, 4rem);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    margin: 0 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 0 2rem;
+  }
+
+  .locked {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0 2.5rem;
+    border-top: 1px solid var(--rule);
+    padding-top: 1.25rem;
+  }
+
+  .locked div { padding: 0.5rem 0; }
+
+  .locked dt {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.3rem;
+  }
+
+  .locked dd {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.02rem;
+    line-height: 1.3;
+  }
+
+  /* ---------- section scaffold ---------- */
+
+  section {
+    display: grid;
+    grid-template-columns: var(--rail) minmax(0, 1fr);
+    gap: 0 2.5rem;
+    padding: 2.75rem 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .rail {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    line-height: 1.5;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    padding-top: 0.55rem;
+  }
+
+  .rail .num {
+    display: block;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    color: var(--rule-strong);
+    line-height: 1;
+    margin-bottom: 0.7rem;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 0.14em 0.5em;
+    border: 1px solid currentColor;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .chip.built    { color: var(--accent); }
+  .chip.spec     { color: var(--ink-faint); }
+  .chip.open     { color: var(--alert); }
+
+  .body > * { max-width: var(--measure); }
+  .body > .full { max-width: none; }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.018em;
+    line-height: 1.15;
+    margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.005em;
+    margin: 2.25rem 0 0.6rem;
+  }
+
+  p { margin: 0 0 1.05rem; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  code, .m {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--sunk);
+    padding: 0.08em 0.34em;
+    border-radius: 2px;
+  }
+
+  strong { font-weight: 600; }
+
+  ul { margin: 0 0 1.05rem; padding-left: 1.15rem; }
+  li { margin-bottom: 0.45rem; }
+  li::marker { color: var(--rule-strong); }
+
+  .aside {
+    border-left: 3px solid var(--alert);
+    background: var(--alert-soft);
+    padding: 0.95rem 1.15rem;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+  }
+
+  .aside p:last-child { margin-bottom: 0; }
+
+  .aside .tag {
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--alert);
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ---------- figures ---------- */
+
+  figure {
+    margin: 2rem 0;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 0.9rem;
+  }
+
+  figcaption {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--ink-faint);
+    margin-bottom: 1.2rem;
+    max-width: 72ch;
+  }
+
+  figcaption b {
+    color: var(--ink-soft);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+  }
+
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .panel-label {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 0.55rem 0 0.15rem;
+  }
+
+  .panel-note {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  svg { display: block; width: 100%; height: auto; }
+
+  .hx-face      { fill: var(--sunk); }
+  .hx-stand     { fill: var(--accent-soft); }
+  .hx-transit   { fill: var(--alert-soft); }
+  .hx-edge      { fill: none; stroke: var(--rule-strong); stroke-width: 1.5; }
+  .hx-faint     { fill: none; stroke: var(--rule-strong); stroke-width: 1; opacity: 0.55; }
+  .hx-wall      { fill: none; stroke: var(--ink); stroke-width: 7; stroke-linecap: round; }
+  .hx-dot       { fill: var(--ink-faint); }
+  .hx-num       { fill: var(--ink-soft); font-family: "IBM Plex Mono", monospace; font-size: 15px; font-weight: 500; }
+  .hx-area      { fill: var(--ink-soft); font-family: "IBM Plex Mono", monospace; font-size: 15px; }
+
+  /* ---------- AP bars ---------- */
+
+  .turns { display: grid; gap: 0.85rem; }
+
+  .turn {
+    display: grid;
+    grid-template-columns: minmax(0, 13rem) 1fr;
+    gap: 0.9rem;
+    align-items: center;
+  }
+
+  .turn-name {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+
+  .turn-name span {
+    display: block;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+  }
+
+  .ap { display: flex; gap: 3px; }
+
+  .ap i {
+    flex: 1;
+    height: 26px;
+    background: var(--sunk);
+    border: 1px solid var(--rule);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    overflow: hidden;
+  }
+
+  .ap i.move  { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .ap i.fire  { background: var(--alert-soft);  border-color: var(--alert);  color: var(--alert); }
+  .ap i.climb { background: var(--warn-soft);   border-color: var(--warn);   color: var(--warn); }
+  .ap i.hold  { background: transparent; border-style: dashed; border-color: var(--rule-strong); }
+
+  .key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+    margin-top: 1rem;
+  }
+
+  .key span::before {
+    content: "";
+    display: inline-block;
+    width: 0.7em; height: 0.7em;
+    margin-right: 0.45em;
+    border: 1px solid currentColor;
+    vertical-align: baseline;
+  }
+
+  .key .k-move  { color: var(--accent); }
+  .key .k-fire  { color: var(--alert); }
+  .key .k-climb { color: var(--warn); }
+  .key .k-hold  { color: var(--ink-faint); }
+
+  /* ---------- tables ---------- */
+
+  .scroll { overflow-x: auto; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 480px;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.52rem 1rem 0.52rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom-color: var(--rule-strong);
+    white-space: nowrap;
+  }
+
+  td.n { font-family: var(--mono); font-size: 0.84rem; white-space: nowrap; }
+  td.name { font-family: var(--display); font-weight: 600; white-space: nowrap; }
+  td.why { color: var(--ink-soft); font-size: 0.88rem; }
+
+  /* ---------- awareness ladder ---------- */
+
+  .ladder {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0;
+  }
+
+  .rung {
+    flex: 1 1 130px;
+    border: 1px solid var(--rule-strong);
+    border-top: 3px solid var(--state, var(--rule-strong));
+    padding: 0.7rem 0.8rem;
+    background: var(--surface);
+  }
+
+  .rung b {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.92rem;
+    display: block;
+    color: var(--state, var(--ink));
+    margin-bottom: 0.25rem;
+  }
+
+  .rung span {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    display: block;
+  }
+
+  .r1 { --state: var(--accent); }
+  .r2 { --state: var(--warn); }
+  .r3 { --state: var(--warn); }
+  .r4 { --state: var(--alert); }
+  .r5 { --state: var(--alert); }
+
+  /* ---------- roadmap ---------- */
+
+  .steps { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+    align-items: baseline;
+  }
+
+  .steps .idx {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+  }
+
+  .steps .done .idx { color: var(--accent); }
+  .steps b { font-family: var(--display); font-weight: 600; font-size: 0.95rem; }
+  .steps p { margin: 0.15rem 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+
+  footer {
+    border-top: 2px solid var(--ink);
+    margin-top: 3rem;
+    padding-top: 1.1rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 820px) {
+    :root { --rail: 0; }
+    .wrap { padding: 0 1.25rem 4rem; }
+    section { grid-template-columns: 1fr; gap: 0.9rem; }
+    .rail { display: flex; align-items: center; gap: 0.9rem; padding-top: 0; }
+    .rail .num { margin-bottom: 0; font-size: 1.15rem; }
+    .turn { grid-template-columns: 1fr; gap: 0.3rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 1 · 6 September 2026</p>
+    <h1>Hexcom Field Manual</h1>
+    <p class="standfirst">
+      A turn-based squad tactics game where the fight is decided by who saw whom first. Realistic
+      humans, realistic guns, hexagons, and no aggro radius anywhere.
+    </p>
+    <dl class="locked">
+      <div>
+        <dt>Engine</dt>
+        <dd>Godot 4 · C#</dd>
+      </div>
+      <div>
+        <dt>Rules live in</dt>
+        <dd>Engine-free .NET library</dd>
+      </div>
+      <div>
+        <dt>Turn structure</dt>
+        <dd>10 action points, individual initiative</dd>
+      </div>
+      <div>
+        <dt>Target</dt>
+        <dd>Desktop, Windows first</dd>
+      </div>
+    </dl>
+  </header>
+
+  <section>
+    <div class="rail"><span class="num">01</span><span class="chip built">Built</span></div>
+    <div class="body">
+      <h2>Godot, and why the engine barely matters</h2>
+      <p>
+        Turn-based tactics puts almost no load on a renderer or a physics solver, which is where
+        Unity and Unreal earn their keep. Godot 4 is MIT-licensed, starts fast, iterates fast, and
+        exports to all three desktop platforms from .NET. Desktop-only also erases its one real
+        C# limitation, which is web export.
+      </p>
+      <p>
+        Unity does win on two things that matter for <em>this</em> game specifically: the asset
+        store, and humanoid animation retargeting. Realistic soldiers with cover transitions and
+        credible weapon handling are much cheaper to build there. That risk is real, and it
+        arrives late — a year of systems work before it bites.
+      </p>
+      <p>
+        So the engine decision is deliberately made cheap to reverse. <strong>The simulation is a
+        plain C# class library with zero engine references.</strong> Hex geometry, cover,
+        movement, line of sight, detection, initiative, damage and AI all live in
+        <code>Hexcom.Core</code>. Godot reads that state and draws it.
+      </p>
+      <ul>
+        <li>The rules are unit-testable headless — 85 tests run in 70&nbsp;ms today.</li>
+        <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
+        <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
+      </ul>
+      <p>
+        This constraint is worth more than the engine choice, and it is what makes the engine
+        choice safe. The rule to enforce forever: nothing under <code>src/</code> may say
+        <code>using Godot;</code>.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">02</span><span class="chip built">Built</span></div>
+    <div class="body">
+      <h2>The grid, and the corner graph under it</h2>
+      <p>
+        Axial coordinates with cube maths, flat-top orientation. Flat-top is baked into the
+        logical model because the corner-naming scheme below depends on orientation; the view can
+        still render pointy-top by rotating the layout 30°, and the rules never notice.
+      </p>
+      <p>
+        The part that earns its complexity is corner identity. A hex has six corners, each shared
+        by three hexes — so two corners per hex, and every corner in the plane is the due-east
+        corner of exactly one hex or the due-west corner of exactly one hex. Naming them that way
+        gives each corner a single canonical identity no matter which hex you ask through, which
+        is what lets walls live on one global corner graph instead of being duplicated per tile.
+      </p>
+      <p>
+        Each corner connects to twelve others: three along hex sides, and nine interior chords,
+        three in each of the three hexes it touches.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">03</span><span class="chip built">Built</span></div>
+    <div class="body">
+      <h2>Cover is a chord, not a tile property</h2>
+      <p>
+        Because a hex's six corners each connect to the other five, a single hex can carry
+        <strong>fifteen distinct wall segments</strong>. That is the entire cover vocabulary. A
+        building face, a sandbag line clipping one corner, and a barricade running diagonally
+        across a courtyard are all the same kind of object, differing only in which two corners
+        they join.
+      </p>
+
+      <figure class="full">
+        <figcaption>
+          <b>Figure 1 — The fifteen segments</b><br>
+          Corner separation determines what a wall does to the tile. Areas are exact:
+          a minor chord cuts a hex into 1/6 and 5/6; a bisector cuts it into two halves. Green
+          regions can be stood in, red regions can only be crossed.
+        </figcaption>
+        <div class="panels">
+
+          <div>
+            <svg viewBox="0 0 200 190" role="img" aria-label="A hexagon with all fifteen possible corner-to-corner segments drawn">
+              <polygon class="hx-face" points="160,95 130,43 70,43 40,95 70,147 130,147"></polygon>
+              <g class="hx-faint">
+                <line x1="160" y1="95" x2="130" y2="43"></line>
+                <line x1="130" y1="43" x2="70" y2="43"></line>
+                <line x1="70" y1="43" x2="40" y2="95"></line>
+                <line x1="40" y1="95" x2="70" y2="147"></line>
+                <line x1="70" y1="147" x2="130" y2="147"></line>
+                <line x1="130" y1="147" x2="160" y2="95"></line>
+                <line x1="160" y1="95" x2="70" y2="43"></line>
+                <line x1="160" y1="95" x2="40" y2="95"></line>
+                <line x1="160" y1="95" x2="70" y2="147"></line>
+                <line x1="130" y1="43" x2="40" y2="95"></line>
+                <line x1="130" y1="43" x2="70" y2="147"></line>
+                <line x1="130" y1="43" x2="130" y2="147"></line>
+                <line x1="70" y1="43" x2="70" y2="147"></line>
+                <line x1="70" y1="43" x2="130" y2="147"></line>
+                <line x1="40" y1="95" x2="130" y2="147"></line>
+              </g>
+              <g class="hx-dot">
+                <circle cx="160" cy="95" r="4"></circle>
+                <circle cx="130" cy="43" r="4"></circle>
+                <circle cx="70" cy="43" r="4"></circle>
+                <circle cx="40" cy="95" r="4"></circle>
+                <circle cx="70" cy="147" r="4"></circle>
+                <circle cx="130" cy="147" r="4"></circle>
+              </g>
+              <text class="hx-num" x="171" y="100" text-anchor="middle">0</text>
+              <text class="hx-num" x="136" y="32" text-anchor="middle">1</text>
+              <text class="hx-num" x="64" y="32" text-anchor="middle">2</text>
+              <text class="hx-num" x="29" y="100" text-anchor="middle">3</text>
+              <text class="hx-num" x="64" y="167" text-anchor="middle">4</text>
+              <text class="hx-num" x="136" y="167" text-anchor="middle">5</text>
+            </svg>
+            <p class="panel-label">Every pair</p>
+            <p class="panel-note">15 segments<br>6 + 6 + 3</p>
+          </div>
+
+          <div>
+            <svg viewBox="0 0 200 190" role="img" aria-label="A hexagon with a wall along one side; the whole tile remains standable">
+              <polygon class="hx-stand" points="160,95 130,43 70,43 40,95 70,147 130,147"></polygon>
+              <polygon class="hx-edge" points="160,95 130,43 70,43 40,95 70,147 130,147"></polygon>
+              <line class="hx-wall" x1="160" y1="95" x2="130" y2="43"></line>
+              <text class="hx-area" x="100" y="102" text-anchor="middle">1</text>
+            </svg>
+            <p class="panel-label">Side · adjacent</p>
+            <p class="panel-note">Bounds the tile, does not divide it. Shared with the neighbour.</p>
+          </div>
+
+          <div>
+            <svg viewBox="0 0 200 190" role="img" aria-label="A hexagon with a minor chord clipping one corner into a small unusable offcut">
+              <polygon class="hx-stand" points="70,43 40,95 70,147 130,147 160,95"></polygon>
+              <polygon class="hx-transit" points="160,95 130,43 70,43"></polygon>
+              <polygon class="hx-edge" points="160,95 130,43 70,43 40,95 70,147 130,147"></polygon>
+              <line class="hx-wall" x1="160" y1="95" x2="70" y2="43"></line>
+              <text class="hx-area" x="93" y="112" text-anchor="middle">5/6</text>
+              <text class="hx-area" x="126" y="66" text-anchor="middle" font-size="12">1/6</text>
+            </svg>
+            <p class="panel-label">Minor · two apart</p>
+            <p class="panel-note">Clips a sixth off. Fight from the big side; the offcut is a crawlspace.</p>
+          </div>
+
+          <div>
+            <svg viewBox="0 0 200 190" role="img" aria-label="A hexagon split in half by a bisector; neither half is standable">
+              <polygon class="hx-transit" points="160,95 130,43 70,43 40,95"></polygon>
+              <polygon class="hx-transit" points="40,95 70,147 130,147 160,95"></polygon>
+              <polygon class="hx-edge" points="160,95 130,43 70,43 40,95 70,147 130,147"></polygon>
+              <line class="hx-wall" x1="160" y1="95" x2="40" y2="95"></line>
+              <text class="hx-area" x="100" y="76" text-anchor="middle">1/2</text>
+              <text class="hx-area" x="100" y="130" text-anchor="middle">1/2</text>
+            </svg>
+            <p class="panel-label">Bisector · opposite</p>
+            <p class="panel-note">Splits the tile. Vault through it; there is nowhere in it to stand.</p>
+          </div>
+
+        </div>
+      </figure>
+
+      <h3>Regions, and the transit rule</h3>
+      <p>
+        Chords cut a hex into regions, computed by walking the faces of the small planar graph the
+        chords form. A region needs <strong>60% of a hex</strong> before a unit can stand in it,
+        which puts the natural cut sizes cleanly on either side of the line: 5/6 qualifies, 1/2
+        does not.
+      </p>
+      <p>
+        Sub-60% regions become <em>transit nodes</em> — pathed through, never valid as a
+        destination. A wall bisecting a tile is therefore crossable and unoccupiable, exactly as
+        intended, and the one-unit-per-tile invariant survives intact. No special case is written
+        anywhere; it falls out of the area threshold.
+      </p>
+
+      <h3>Determining cover</h3>
+      <p>
+        Because walls are real segments in world space, cover is a geometry query rather than a
+        lookup table: trace the line from shooter to target, collect the segments it crosses,
+        take the most protective. A sandbag clipping one corner protects across a narrow arc; a
+        building face protects across a wide one. This is strictly better than the usual six
+        cover flags per tile, and it is the same code for every wall in the game.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Profile</th><th>Height</th><th>Cover</th><th>Sight</th><th>Crossing</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Low</td><td class="n">1.0 m</td><td class="n">Half</td><td class="why">See over</td><td class="why">Vault, 3 AP</td></tr>
+            <tr><td class="name">High</td><td class="n">2.0 m</td><td class="n">Full</td><td class="why">Blocked</td><td class="why">Climb, 6 AP</td></tr>
+            <tr><td class="name">Solid</td><td class="n">3.0 m</td><td class="n">Full</td><td class="why">Blocked</td><td class="why">None</td></tr>
+            <tr><td class="name">Railing</td><td class="n">1.2 m</td><td class="n">Light</td><td class="why">See through</td><td class="why">Vault, 3 AP</td></tr>
+            <tr><td class="name">Screen</td><td class="n">2.0 m</td><td class="n">Light</td><td class="why">Blocked</td><td class="why">Walk through</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:0.9rem"><span class="chip open">Open</span> &nbsp;Walls that properly cross <em>inside</em> one hex — two bisectors meeting at the centre — are currently rejected. Split the shape across neighbouring hexes. Supporting them means inserting intersection points into the planar graph, which is small work, deferred until a map actually needs it.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">04</span><span class="chip built">Built</span><br><br><span class="chip spec">Combat</span></div>
+    <div class="body">
+      <h2>Ten points a turn</h2>
+      <p>
+        Two actions in the XCOM style cannot price a ladder honestly against a footstep. Ten can.
+        Firing costs about half a turn, so the archetypal turn is <em>move a little, shoot, take
+        cover</em> — and the interesting decisions are all in what you give up to do the third
+        thing.
+      </p>
+
+      <figure>
+        <figcaption><b>Figure 2 — Four turns</b><br>Each row is one unit's ten points.</figcaption>
+        <div class="turns">
+          <div class="turn">
+            <div class="turn-name">Move up and fire<span>3 move · shoot · crouch</span></div>
+            <div class="ap">
+              <i class="move"></i><i class="move"></i><i class="move"></i>
+              <i class="fire">FIRE</i><i class="fire"></i><i class="fire"></i><i class="fire"></i><i class="fire"></i>
+              <i class="move"></i><i></i>
+            </div>
+          </div>
+          <div class="turn">
+            <div class="turn-name">Take the roof<span>ladder · 4 move</span></div>
+            <div class="ap">
+              <i class="climb">LADDER</i><i class="climb"></i><i class="climb"></i><i class="climb"></i><i class="climb"></i><i class="climb"></i>
+              <i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i>
+            </div>
+          </div>
+          <div class="turn">
+            <div class="turn-name">Cross the barricade<span>move · vault · move · shoot</span></div>
+            <div class="ap">
+              <i class="move"></i>
+              <i class="climb">VAULT</i><i class="climb"></i><i class="climb"></i>
+              <i class="move"></i>
+              <i class="fire">FIRE</i><i class="fire"></i><i class="fire"></i><i class="fire"></i><i class="fire"></i>
+            </div>
+          </div>
+          <div class="turn">
+            <div class="turn-name">Set the ambush<span>5 move · hold the rest</span></div>
+            <div class="ap">
+              <i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i>
+              <i class="hold">HELD</i><i class="hold"></i><i class="hold"></i><i class="hold"></i><i class="hold"></i>
+            </div>
+          </div>
+        </div>
+        <div class="key">
+          <span class="k-move">Move</span>
+          <span class="k-fire">Fire</span>
+          <span class="k-climb">Climb, vault, ladder</span>
+          <span class="k-hold">Held as reaction</span>
+        </div>
+      </figure>
+
+      <p>
+        Unspent points convert to <strong>reaction potential</strong> rather than evaporating.
+        That single rule ties the economy to the stealth game: hanging back with points in hand is
+        how you cover an approach, and sprinting is how you arrive somewhere with nothing left to
+        answer with.
+      </p>
+      <p>
+        Firing costs are specified but not yet built: snap shot 3, standard 5, aimed 7, reload 3,
+        change stance 1.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">05</span><span class="chip built">Built</span></div>
+    <div class="body">
+      <h2>Movement is a graph of priced links</h2>
+      <p>
+        Not a grid of equal steps. Every connection between two places carries its own type and
+        its own price, so a ladder eating most of a turn needs no special case anywhere — the
+        pathfinder is plain Dijkstra over action points, and "how far can this unit get" and "how
+        do I get there" are the same query.
+      </p>
+      <p>
+        Climbs, ledges and drops are generated automatically from floor heights. Ladders, stairs,
+        doors and ziplines are authored. Terrain surcharges come from the ground type.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Traversal</th><th>AP</th><th>Generated from</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Walk</td><td class="n">1</td><td class="why">Height change under 0.4 m</td></tr>
+            <tr><td class="name">Rough</td><td class="n">2</td><td class="why">Rubble, mud, shallow water</td></tr>
+            <tr><td class="name">Drop</td><td class="n">1</td><td class="why">Down up to 3.0 m</td></tr>
+            <tr><td class="name">Vault</td><td class="n">3</td><td class="why">A low wall or railing</td></tr>
+            <tr><td class="name">Jump</td><td class="n">4</td><td class="why">Authored gaps</td></tr>
+            <tr><td class="name">Climb</td><td class="n">6</td><td class="why">Up to 2.2 m, or a high wall</td></tr>
+            <tr><td class="name">Ladder</td><td class="n">6</td><td class="why">Authored</td></tr>
+            <tr><td class="name">Stairs</td><td class="n">2</td><td class="why">Authored</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="aside">
+        <span class="tag">Rule learned the hard way</span>
+        <p>
+          A wall never makes an otherwise impossible crossing possible, and where both a wall and
+          a height change are in the way, the harder of the two sets the price. The first version
+          let a soldier on the ground vault a rooftop parapet 3.5 m above their head. Caught by a
+          test asserting the roof was ladder-only.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">06</span><span class="chip spec">Specified</span></div>
+    <div class="body">
+      <h2>Seeing first</h2>
+      <p>
+        The thing to design away from is the aggro pull — you open on two guards and find yourself
+        fighting seven, because proximity to a trigger volume told a group of enemies about you
+        instantly and for free. The fix is to make <strong>alertness travel as information rather
+        than as a radius</strong>. Every enemy that knows about you learned it somewhere, through
+        a channel the player can see and cut.
+      </p>
+
+      <h3>Awareness is a state, held per enemy</h3>
+      <div class="ladder" role="list">
+        <div class="rung r1" role="listitem"><b>Unaware</b><span>Patrol behaviour. No idea you exist.</span></div>
+        <div class="rung r2" role="listitem"><b>Suspicious</b><span>Something registered. Stops, scans, does not commit.</span></div>
+        <div class="rung r3" role="listitem"><b>Searching</b><span>Holds a belief about where you were. Moves to check it.</span></div>
+        <div class="rung r4" role="listitem"><b>Alerted</b><span>Knows there is a threat. Takes cover, calls it in.</span></div>
+        <div class="rung r5" role="listitem"><b>Engaged</b><span>Has a live fix on a target and is shooting at it.</span></div>
+      </div>
+
+      <h3>Detection accumulates</h3>
+      <p>
+        No binary spotted check. Each enemy builds detection against each of your units per turn,
+        from distance, cover and concealment, your stance, how many points you spent moving, the
+        noise you made, light level, their perception, and whether you are inside their facing
+        cone. Crossing a threshold advances the state one rung; silence lets it decay.
+      </p>
+      <p>
+        Noise is its own channel with its own propagation — ground type has a noise factor
+        already, gravel is loud and grass is quiet — and noise produces an investigate goal at a
+        location, not a global alert.
+      </p>
+
+      <h3>Alerts propagate through channels you can cut</h3>
+      <ul>
+        <li><strong>Line of sight</strong> — an enemy who sees an alerted comrade takes on some of what they know.</li>
+        <li><strong>Voice</strong> — short range, blocked by walls.</li>
+        <li><strong>Radio</strong> — map-wide, but it belongs to specific people. Killing the radio operator quietly is a tactic, and target prioritisation becomes an information decision rather than a damage one.</li>
+      </ul>
+
+      <h3>The interface is half the mechanic</h3>
+      <p>
+        None of this reads as a stealth game unless the player can see it. Enemy vision cones as
+        currently estimated; a detection meter per one of your units, filling; last-known-position
+        ghosts showing what each enemy <em>believes</em> rather than what is true. The gap between
+        the ghost and the truth is the thing the player is actually playing.
+      </p>
+      <p>
+        Attacking from concealment gives a damage and accuracy bonus, plus the initiative payoff
+        in the next section.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">07</span><span class="chip spec">Specified</span><br><br><span class="chip open">Open</span></div>
+    <div class="body">
+      <h2>Initiative, and the ambush it breaks</h2>
+      <p>
+        Individual interleaved initiative in the D&amp;D sense: one of yours, two of theirs, one of
+        yours, and so on, ordered by a stat plus a roll, modified by gear weight. Rolled at the
+        start of a fight, re-rolled or drifting each round so the order does not calcify.
+      </p>
+
+      <div class="aside">
+        <span class="tag">The tension worth naming</span>
+        <p>
+          Interleaved initiative and stealth pull against each other. XCOM ambushes feel good
+          precisely <em>because</em> concealment breaks and all six of your units fire before
+          anyone reacts. Interleaving destroys that: the enemy acts between your shots, and a
+          coordinated opening becomes impossible to execute.
+        </p>
+      </div>
+
+      <p>
+        The fix is an explicit <strong>Ambush</strong> action. A unit spends points to hold a shot
+        against an arc. When any ambushing unit fires — by choice, or because they were spotted —
+        every other unit holding on that target resolves in the same window, before the enemy
+        acts. Alpha strikes survive; the turn structure does not need a special case; and the AP
+        economy already produces the resource it spends, because held points were going to become
+        reaction potential anyway.
+      </p>
+      <p>
+        Undetected units also take a large initiative bonus in the first round after contact,
+        which is the mechanical payoff for having played the approach well.
+      </p>
+      <p>
+        <span class="chip open">Open</span> &nbsp;Build the turn order as a <strong>priority queue
+        over next-act time</strong>, even though round-based initiative is all that ships first.
+        It costs nothing now and leaves the door open to a continuous time-unit system — the
+        Battle Brothers or Final Fantasy Tactics model, where a cheap action comes back around
+        sooner — without rewriting the loop. Whether that continuous model is <em>better</em> here
+        is genuinely unresolved; it is deeper, and it is harder to read at a glance.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">08</span><span class="chip open">Next</span></div>
+    <div class="body">
+      <h2>Build order</h2>
+      <p>
+        Headless first, greybox second, art last. Each step below is testable without a window
+        open, which is the whole point of the split in section 01.
+      </p>
+      <ol class="steps">
+        <li class="done"><span class="idx">DONE</span><div><b>Hex geometry and the corner graph</b><p>Coordinates, layout, canonical corner identity.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Walls, chords and regions</b><p>Fifteen segments per hex, planar partition, the transit rule.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Movement graph and pathfinding</b><p>Typed priced links, AP-budgeted reachable sets.</p></div></li>
+        <li><span class="idx">04</span><div><b>Line of sight and cover resolution</b><p>Segment tracing against the wall graph, with height. Everything downstream needs it.</p></div></li>
+        <li><span class="idx">05</span><div><b>Units, initiative, the turn loop</b><p>Priority queue over act time. Enough to play a silent match.</p></div></li>
+        <li><span class="idx">06</span><div><b>Detection and awareness</b><p>The accumulation model, belief state, alert channels. The differentiating system — build it before weapons, not after.</p></div></li>
+        <li><span class="idx">07</span><div><b>Shooting, damage, suppression</b><p>Now that cover and concealment mean something.</p></div></li>
+        <li><span class="idx">08</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li><span class="idx">09</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
+      </ol>
+      <p style="margin-top:1.4rem">
+        Deliberately not started: the strategy layer, the setting, saves, audio, and anything that
+        looks like a character.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Hexcom · tactics layer · revision 1</span>
+    <span>85 tests green · 0 engine references in core</span>
+  </footer>
+
+</div>
