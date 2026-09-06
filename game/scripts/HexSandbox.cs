@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
@@ -43,6 +44,7 @@ public partial class HexSandbox : Node2D
     private static readonly Color HostileHue = new("e0674a");
     private static readonly Color NeutralHue = new("aab2bd");
     private static readonly Color Panel = new("1b1f26", 0.92f);
+    private static readonly Color GhostHue = new("e0674a", 0.55f);
 
     private readonly Dictionary<NodeId, SightResult> _view = [];
 
@@ -73,7 +75,7 @@ public partial class HexSandbox : Node2D
         _battle.Deploy("Orsini", Side.Player, Ground(-3, 2), UnitStats.Trooper);
         _battle.Deploy("Sentry", Side.Hostile, Ground(4, 2));
         _battle.Deploy("Watchman", Side.Hostile, Ground(4, -2));
-        _battle.Deploy("Spotter", Side.Hostile, new NodeId(new Hex(4, 0), layer: 1), UnitStats.Scout);
+        _battle.Deploy("Spotter", Side.Hostile, new NodeId(new Hex(4, 0), layer: 1), UnitStats.Signaller);
 
         _battle.Start();
         _layer = _battle.Active!.Position.Layer;
@@ -200,6 +202,7 @@ public partial class HexSandbox : Node2D
         DrawWalls();
         DrawAuthoredLinks();
         DrawPath();
+        DrawBeliefs();
         DrawUnits();
         DrawOrderStrip();
         DrawHud();
@@ -279,8 +282,63 @@ public partial class HexSandbox : Node2D
                 DrawArc(at, radius + 6f, 0, Mathf.Tau, 32, TextBright, 2f, true);
 
             DrawCentredText(NodeCentre(unit.Position) + new CoreVec2(0, HexSize * 0.42), unit.Name, 11, hue);
+
+            // What the other side has worked out. Coarse on purpose — a rung on a ladder, never
+            // a number. Our own exposure is the figure we get to read exactly, in the HUD.
+            if (unit.Side == Side.Hostile)
+            {
+                var readout = WorstReadout(unit);
+                DrawCentredText(
+                    NodeCentre(unit.Position) + new CoreVec2(0, HexSize * 0.62),
+                    readout.State.ToString().ToUpperInvariant(),
+                    10,
+                    AlarmHue(readout.State));
+            }
         }
     }
+
+    /// <summary>
+    /// Where each enemy believes one of ours to be. The marker is what they last saw, so it
+    /// goes stale the moment that soldier moves — and the gap between marker and truth is the
+    /// thing the approach is played in.
+    /// </summary>
+    private void DrawBeliefs()
+    {
+        foreach (var hostile in _battle.InPlay.Where(u => u.Side == Side.Hostile))
+        foreach (var mine in _battle.InPlay.Where(u => u.Side == Side.Player))
+        {
+            var readout = _battle.Awareness.ReadoutFor(hostile.Id, mine.Id);
+            if (readout.State < AwarenessState.Searching) continue;
+            if (readout.LastKnownPosition is not { } believed) continue;
+            if (believed == mine.Position) continue;      // they are simply right
+            if (believed.Layer != _layer) continue;
+
+            var at = ToScreen(NodeCentre(believed));
+            DrawArc(at, HexSize * 0.30f, 0, Mathf.Tau, 24, GhostHue, 2f, true);
+            DrawCentredText(NodeCentre(believed) + new CoreVec2(0, -HexSize * 0.06), "?", 16, GhostHue);
+        }
+    }
+
+    /// <summary>The most alarmed any of ours has made this enemy.</summary>
+    private AwarenessReadout WorstReadout(Unit hostile)
+    {
+        var worst = AwarenessReadout.Nothing;
+        foreach (var mine in _battle.InPlay.Where(u => u.Side == Side.Player))
+        {
+            var readout = _battle.Awareness.ReadoutFor(hostile.Id, mine.Id);
+            if (readout.State > worst.State) worst = readout;
+        }
+        return worst;
+    }
+
+    private static Color AlarmHue(AwarenessState state) => state switch
+    {
+        AwarenessState.Engaged => new Color("ff6a4d"),
+        AwarenessState.Alerted => new Color("e0674a"),
+        AwarenessState.Searching => new Color("d8942a"),
+        AwarenessState.Suspicious => new Color("c9b04a"),
+        _ => new Color("6b7480"),
+    };
 
     private void DrawWalls()
     {
@@ -360,16 +418,20 @@ public partial class HexSandbox : Node2D
                 : $"round {_battle.Round}    {active.Name} ({active.Side})    "
                   + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
                   + $"{active.Stance.ToString().ToLowerInvariant()}    layer {_layer}",
+            active is null
+                ? ""
+                : $"exposed {_battle.ExposureOf(active):P0}    "
+                  + $"they are: {_battle.HighestAwarenessOf(active).ToString().ToUpperInvariant()}",
             _hover is { } h
                 ? $"cursor {h}    {(_reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    {SightLine(h)}"
                 : "cursor —",
             "click: move    space: end turn    C: stance    Q/E: layer    R: new battle",
-        };
+        }.Where(line => line.Length > 0).ToArray();
 
         var top = -Position + new Vector2(18, 30);
         for (var i = 0; i < lines.Length; i++)
             DrawString(_font, top + new Vector2(0, i * 20), lines[i],
-                HorizontalAlignment.Left, -1, 14, i == 2 ? TextDim : TextBright);
+                HorizontalAlignment.Left, -1, 14, i == lines.Length - 1 ? TextDim : TextBright);
     }
 
     /// <summary>What the active unit can make out at the cursor, and what is protecting it.</summary>

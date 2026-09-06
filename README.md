@@ -52,9 +52,14 @@ from where it is standing — blue light, yellow half, orange full. Wall colours
 orange high, yellow low, blue railing, green sight-screen. The strip on the right is the turn
 order with each unit's initiative roll.
 
+Under each enemy is how alarmed they are — coarse on purpose. Your own soldier's exposure is
+reported exactly, in the HUD, because that is information about yourself. Faint red circles are
+where an enemy *believes* one of yours to be; they stop moving when you do.
+
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
-rather than alternate. The spotter on the roof sees most of the map; getting up there costs six
-of ten points, so whoever wants that position gives up their turn to take it.
+rather than alternate. The spotter on the roof sees most of the map and carries the radio, so
+it is the one worth reaching first — and getting up there costs six of ten points, so whoever
+wants that position gives up their turn to take it.
 
 ## What is built
 
@@ -84,8 +89,14 @@ of ten points, so whoever wants that position gives up their turn to take it.
   of yours, two of theirs, one of yours. Initiative is a rating plus a d10, less the weight of
   your kit. Every roll comes from one seeded generator, so a whole fight replays identically
   from a seed and a list of commands — which is what makes headless balance runs possible.
+- **Detection and awareness** — no aggro radius anywhere. Every enemy that knows about you
+  learned it through a channel you can see and cut: looking (on their own turn, so a sentry that
+  has already acted leaves a window), hearing (immediate, and it reports a place rather than a
+  person), or being told by radio, by shouting, or by watching a comrade react. Only a unit with
+  a radio reaches the whole side. Each enemy holds a belief about where you are, and it goes
+  stale the moment you move.
 
 ## What is not built yet
 
-The detection and awareness model, the ambush action, weapons, damage, AI, saves, and the
-strategy layer. See the design doc for where these are heading.
+Vision cones and facing, the ambush action, weapons, damage, AI, saves, and the strategy layer.
+See the design doc for where these are heading.

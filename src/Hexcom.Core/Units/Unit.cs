@@ -30,19 +30,28 @@ public enum Side
 /// Weight of armour and kit, subtracted from initiative. The cost of being well protected is
 /// going later.
 /// </param>
+/// <param name="Radio">
+/// Whether this unit can call a contact in to its whole side. Without one, word only travels
+/// as far as a shout or a line of sight, which is what makes the radio operator the first
+/// thing worth killing quietly.
+/// </param>
 public sealed record UnitStats(
     int ActionPoints = 10,
     int Initiative = 10,
     int Perception = 10,
-    int Encumbrance = 0)
+    int Encumbrance = 0,
+    bool Radio = false)
 {
     public static readonly UnitStats Default = new();
 
-    /// <summary>Light kit, quick off the mark.</summary>
+    /// <summary>Light kit, quick off the mark, sharp eyes.</summary>
     public static readonly UnitStats Scout = new(ActionPoints: 11, Initiative: 14, Perception: 13);
 
     /// <summary>Heavy armour, slow to react.</summary>
     public static readonly UnitStats Trooper = new(ActionPoints: 9, Initiative: 8, Perception: 9, Encumbrance: 3);
+
+    /// <summary>Carries the net. Kill this one first, and the rest have to shout.</summary>
+    public static readonly UnitStats Signaller = new(Perception: 12, Encumbrance: 1, Radio: true);
 }
 
 /// <summary>

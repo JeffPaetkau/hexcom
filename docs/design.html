@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 3 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 4 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Realistic
@@ -976,7 +976,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">07</span><span class="chip spec">Specified</span></div>
+    <div class="rail"><span class="num">07</span><span class="chip built">Built</span></div>
     <div class="body">
       <h2>Seeing first</h2>
       <p>
@@ -1016,17 +1016,46 @@
         <li><strong>Radio</strong> — map-wide, but it belongs to specific people. Killing the radio operator quietly is a tactic, and target prioritisation becomes an information decision rather than a damage one.</li>
       </ul>
 
-      <h3>The interface is half the mechanic</h3>
+      <h3>The window</h3>
       <p>
-        None of this reads as a stealth game unless the player can see it. Enemy vision cones as
-        currently estimated; a detection meter per one of your units, filling; last-known-position
-        ghosts showing what each enemy <em>believes</em> rather than what is true. The gap between
-        the ghost and the truth is the thing the player is actually playing.
+        Looking happens on the observer's own turn, not continuously. A sentry that has already
+        acted this round will not notice you until it comes round again — so the turn order strip
+        is not just a readout, it is a tool. Reading it to find the gap and crossing the open
+        ground inside it is meant to be a real decision.
       </p>
       <p>
-        Attacking from concealment gives a damage and accuracy bonus, plus the initiative payoff
-        in the next section.
+        Hearing does not wait. Move loudly and everyone in earshot knows something happened
+        immediately, which is what stops the window from being a free pass.
       </p>
+
+      <h3>Asymmetric information, deliberately</h3>
+      <p>
+        The player reads their own soldiers' exposure as an <strong>exact figure</strong>, because
+        that is information about themselves and hiding it would be fog rather than tension. What
+        an enemy believes comes back <strong>coarse</strong>: a rung on the ladder above, a marker
+        for where they last had contact, and how many rounds stale it is. An exact certainty
+        number would turn the approach into arithmetic.
+      </p>
+      <p>
+        That split is enforced in the code rather than left to discipline. The full record, with
+        the certainty figure, is what the rules and the AI read. The interface goes through a
+        separate coarse readout type that has no number on it.
+      </p>
+      <p>
+        The last-known-position marker is the payoff: it is where an enemy <em>thinks</em> you
+        are, and it goes stale the moment you move. The gap between the marker and the truth is
+        the thing the stealth game is actually played in.
+      </p>
+
+      <div class="aside">
+        <span class="tag">Still to come</span>
+        <p>
+          Vision cones and facing, so an enemy can be flanked as well as avoided. Attacking from
+          concealment giving a damage and accuracy bonus, on top of the initiative payoff in the
+          next section. And noise currently ignores walls entirely — you hear people through a
+          building, which is right, but a closed door should count for something.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -1101,10 +1130,10 @@
         <li class="done"><span class="idx">DONE</span><div><b>Movement graph and pathfinding</b><p>Typed priced links, AP-budgeted reachable sets.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Line of sight and cover</b><p>Waterline tracing against the wall graph, with stance and height.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Units, initiative, the turn loop</b><p>Clock-driven order, seeded and replayable. Enough to play a silent match.</p></div></li>
-        <li><span class="idx">04</span><div><b>Detection and awareness</b><p>The accumulation model, belief state, alert channels. The differentiating system — build it before weapons, not after.</p></div></li>
-        <li><span class="idx">05</span><div><b>Shooting, damage, suppression</b><p>Exposure already comes out of the sight trace; this turns it into a hit chance.</p></div></li>
-        <li><span class="idx">06</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
-        <li><span class="idx">07</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
+        <li><span class="idx">04</span><div><b>Shooting, damage, suppression</b><p>Exposure already comes out of the sight trace; this turns it into a hit chance.</p></div></li>
+        <li><span class="idx">05</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
         Deliberately not started: the strategy layer, the setting, saves, audio, and anything that
@@ -1114,8 +1143,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 3</span>
-    <span>136 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 4</span>
+    <span>153 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

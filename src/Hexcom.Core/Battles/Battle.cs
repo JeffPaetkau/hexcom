@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
@@ -36,13 +37,19 @@ public sealed class Battle
     private readonly Random _rng;
     private int _nextId = 1;
 
-    public Battle(BattleMap map, HexLayout layout, MovementCosts? costs = null, int seed = 0)
+    public Battle(
+        BattleMap map,
+        HexLayout layout,
+        MovementCosts? costs = null,
+        int seed = 0,
+        AwarenessModel? awareness = null)
     {
         Map = map;
         Layout = layout;
         Costs = costs ?? MovementCosts.Default;
         Graph = MovementGraph.Build(map, Costs);
         Sight = new SightSolver(map, layout);
+        Awareness = new AwarenessTracker(this, awareness ?? AwarenessModel.Default);
         Seed = seed;
         _rng = new Random(seed);
     }
@@ -52,6 +59,9 @@ public sealed class Battle
     public MovementCosts Costs { get; }
     public MovementGraph Graph { get; }
     public SightSolver Sight { get; }
+
+    /// <summary>Who knows what about whom, and how they came to know it.</summary>
+    public AwarenessTracker Awareness { get; }
 
     /// <summary>The seed every roll in this battle comes from.</summary>
     public int Seed { get; }
@@ -133,18 +143,23 @@ public sealed class Battle
         Active = null;
     }
 
-    /// <summary>Hand the turn on, whether or not the active unit spent everything.</summary>
+    /// <summary>
+    /// Hand the turn on, whether or not the active unit spent everything. The unit takes a look
+    /// around before it does, which is the only moment it notices anything.
+    /// </summary>
     public void EndTurn()
     {
-        RequireActive();
+        var unit = RequireActive();
+        Awareness.Observe(unit, Round);
         Advance();
     }
 
-    /// <summary>Take a unit out of the fight. Its booked turns are cancelled.</summary>
+    /// <summary>Take a unit out of the fight. Its booked turns and everything known about it go too.</summary>
     public void Withdraw(Unit unit)
     {
         unit.InPlay = false;
         _queue.Remove(unit.Id);
+        Awareness.Forget(unit.Id);
         if (Active == unit) Advance();
     }
 
@@ -176,7 +191,25 @@ public sealed class Battle
         unit.Position = destination;
         unit.ActionPoints -= cost;
 
+        // Moving is heard immediately, unlike being seen, which waits for someone to look.
+        Awareness.Hear(unit, LoudnessOf(unit, cost, path), Round);
+
         return new MoveOutcome(true, path, cost, null);
+    }
+
+    /// <summary>
+    /// How much racket a move made. Effort, the worst surface crossed, and how low the unit was
+    /// carrying itself: sprinting over gravel carries a long way, crawling over grass barely
+    /// carries at all.
+    /// </summary>
+    private double LoudnessOf(Unit unit, int apSpent, IReadOnlyList<TraversalLink> path)
+    {
+        var surface = path
+            .Select(link => Map.GetTile(link.To.Tile)?.Ground.NoiseFactor ?? 1.0)
+            .DefaultIfEmpty(1.0)
+            .Max();
+
+        return apSpent * surface * StanceProfile.For(unit.Stance).NoiseFactor;
     }
 
     /// <summary>Drop to a crouch, go prone, or stand back up.</summary>
@@ -223,6 +256,29 @@ public sealed class Battle
         => InPlay.Where(u => u != observer && CanSee(observer, u));
 
     public IEnumerable<Unit> Enemies(Unit unit) => InPlay.Where(u => u.IsHostileTo(unit));
+
+    /// <summary>
+    /// The largest share of this unit's silhouette any enemy currently has in view, from zero
+    /// to one.
+    /// </summary>
+    /// <remarks>
+    /// This one is reported to the player exactly. It is information about their own soldier,
+    /// and hiding it would be fog rather than tension — unlike what an enemy believes, which
+    /// they only ever get coarsely.
+    /// </remarks>
+    public double ExposureOf(Unit unit)
+    {
+        var worst = 0.0;
+        foreach (var enemy in Enemies(unit))
+        {
+            var sight = Look(enemy, unit);
+            if (sight.CanSee && sight.Exposure > worst) worst = sight.Exposure;
+        }
+        return worst;
+    }
+
+    /// <summary>The highest state of alarm any enemy currently holds about this unit.</summary>
+    public AwarenessState HighestAwarenessOf(Unit unit) => Awareness.HighestAwarenessOf(unit.Id);
 
     public IEnumerable<Unit> Allies(Unit unit) => InPlay.Where(u => u != unit && u.Side == unit.Side);
 

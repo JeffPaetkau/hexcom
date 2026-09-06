@@ -1,0 +1,219 @@
+using System.Collections.Generic;
+using System.Linq;
+using Hexcom.Core.Battles;
+using Hexcom.Core.Geometry;
+using Hexcom.Core.Units;
+using Hexcom.Core.Vision;
+
+namespace Hexcom.Core.Awareness;
+
+/// <summary>
+/// Who knows what about whom, and how they came to know it.
+/// </summary>
+/// <remarks>
+/// This is the system the game is about, so it is worth being explicit about the shape of it.
+/// There is no aggro radius anywhere. Every enemy that knows about you learned it through a
+/// channel the player can see and cut:
+/// <list type="bullet">
+/// <item>Looking, which happens on the observer's own turn and depends on how much of you is
+/// actually visible — the exposure figure the sight trace already returns.</item>
+/// <item>Hearing, which happens the moment you move and reports a place rather than a person.
+/// A sound alone can never make anyone certain.</item>
+/// <item>Being told, by radio, by shouting, or by watching a comrade react. Only a unit with a
+/// radio can reach the whole side, which is what makes the radio operator worth killing first
+/// and quietly.</item>
+/// </list>
+/// <para>
+/// Observation runs on the observer's turn rather than continuously, so a sentry that has
+/// already acted this round will not notice you until it comes round again. That is a window,
+/// and reading the turn order to find it is meant to be part of the approach.
+/// </para>
+/// </remarks>
+public sealed class AwarenessTracker
+{
+    private readonly Battle _battle;
+    private readonly Dictionary<(UnitId Observer, UnitId Subject), Contact> _contacts = [];
+
+    internal AwarenessTracker(Battle battle, AwarenessModel model)
+    {
+        _battle = battle;
+        Model = model;
+    }
+
+    public AwarenessModel Model { get; }
+
+    // ---- reading ---------------------------------------------------------------
+
+    /// <summary>
+    /// The full record, certainty figure and all. For rules, AI and tests — not for the player.
+    /// </summary>
+    public Contact Of(UnitId observer, UnitId subject)
+    {
+        var key = (observer, subject);
+        if (_contacts.TryGetValue(key, out var existing)) return existing;
+
+        var fresh = new Contact(Model, observer, subject);
+        _contacts[key] = fresh;
+        return fresh;
+    }
+
+    /// <summary>What the interface is allowed to show about an enemy's state of mind.</summary>
+    public AwarenessReadout ReadoutFor(UnitId observer, UnitId subject)
+    {
+        if (!_contacts.TryGetValue((observer, subject), out var contact)) return AwarenessReadout.Nothing;
+
+        var since = contact.LastContactRound == 0 ? 0 : _battle.Round - contact.LastContactRound;
+        return new AwarenessReadout(contact.State, contact.LastKnownPosition, since, contact.EyesOn);
+    }
+
+    /// <summary>Every record this observer holds, whether or not it amounts to anything.</summary>
+    public IEnumerable<Contact> ContactsFor(UnitId observer)
+        => _contacts.Values.Where(c => c.Observer == observer);
+
+    /// <summary>Everyone currently hunting or fighting this observer's subject.</summary>
+    public IEnumerable<Contact> ContactsOn(UnitId subject)
+        => _contacts.Values.Where(c => c.Subject == subject);
+
+    /// <summary>
+    /// The worst it currently is for one unit: the highest state any enemy holds about it. This
+    /// is the number a player watches when deciding whether the approach is still working.
+    /// </summary>
+    public AwarenessState HighestAwarenessOf(UnitId subject)
+    {
+        var worst = AwarenessState.Unaware;
+        foreach (var contact in ContactsOn(subject))
+            if (contact.State > worst) worst = contact.State;
+        return worst;
+    }
+
+    /// <summary>True while nobody on the other side has so much as a suspicion.</summary>
+    public bool IsUndetected(UnitId subject) => HighestAwarenessOf(subject) == AwarenessState.Unaware;
+
+    /// <summary>Drop everything about a unit that has left the fight.</summary>
+    internal void Forget(UnitId unit)
+    {
+        foreach (var key in _contacts.Keys.Where(k => k.Observer == unit || k.Subject == unit).ToList())
+            _contacts.Remove(key);
+    }
+
+    // ---- the channels ----------------------------------------------------------
+
+    /// <summary>
+    /// One unit takes a look around, gaining on what it can make out and losing track of what
+    /// it cannot, then passes on anything it is now sure of.
+    /// </summary>
+    /// <remarks>
+    /// The turn loop calls this once as each unit ends its turn. Call it yourself only when
+    /// something other than a turn ending should prompt a look — a unit on overwatch, or an AI
+    /// weighing what it would see from somewhere else. Calling it twice for one turn hands that
+    /// observer two turns worth of certainty.
+    /// </remarks>
+    public void Observe(Unit observer, int round)
+    {
+        foreach (var subject in _battle.Enemies(observer).ToList())
+        {
+            var contact = Of(observer.Id, subject.Id);
+            var sight = _battle.Look(observer, subject);
+            contact.EyesOn = sight.CanSee;
+
+            var gain = sight.CanSee ? LookGain(observer, subject, sight) : 0;
+
+            if (gain > 0)
+            {
+                contact.Detection = Math.Min(contact.Detection + gain, Model.Ceiling);
+                contact.LastKnownPosition = subject.Position;
+                contact.LastContactRound = round;
+            }
+            else
+            {
+                contact.Detection = Math.Max(0, contact.Detection - Model.DecayPerTurn);
+            }
+        }
+
+        foreach (var contact in ContactsFor(observer.Id).Where(c => c.Detection >= Model.AlertedAt).ToList())
+            Relay(observer, contact, round);
+    }
+
+    /// <summary>
+    /// A noise at a unit position. Everyone in earshot learns roughly where it came from.
+    /// </summary>
+    /// <remarks>
+    /// Movement raises this on its own. It is public because doors, grenades and gunfire will
+    /// all want to raise it too.
+    /// </remarks>
+    public void Hear(Unit source, double loudness, int round)
+    {
+        if (loudness <= 0) return;
+
+        var radius = loudness * Model.NoiseMetresPerPoint;
+        if (radius <= 0) return;
+
+        var origin = _battle.Sight.Ground(source.Position);
+
+        foreach (var listener in _battle.Enemies(source).ToList())
+        {
+            var distance = Vec3.GroundDistance(origin, _battle.Sight.Ground(listener.Position));
+            if (distance > radius) continue;
+
+            var contact = Of(listener.Id, source.Id);
+
+            // A sound says where, not who. It can send someone to look, never make them certain.
+            var gain = Model.NoiseGain * (1 - distance / radius);
+            var raised = Math.Min(contact.Detection + gain, Model.AlertedAt - 1);
+            if (raised <= contact.Detection) continue;
+
+            contact.Detection = raised;
+            contact.LastKnownPosition = source.Position;
+            contact.LastContactRound = round;
+        }
+    }
+
+    /// <summary>Pass a contact to whoever can be reached, at a discount.</summary>
+    private void Relay(Unit caller, Contact source, int round)
+    {
+        foreach (var ally in _battle.Allies(caller))
+        {
+            if (!CanReach(caller, ally)) continue;
+
+            var theirs = Of(ally.Id, source.Subject);
+            var passed = source.Detection * Model.RelayFraction;
+            if (passed <= theirs.Detection) continue;
+
+            theirs.Detection = passed;
+            theirs.LastKnownPosition = source.LastKnownPosition;
+            theirs.LastContactRound = round;
+        }
+    }
+
+    /// <summary>
+    /// Radio reaches the whole side; a shout reaches nearby; and seeing a comrade react tells
+    /// you something even if you heard nothing. Cutting the net means killing the radios.
+    /// </summary>
+    private bool CanReach(Unit caller, Unit ally)
+    {
+        if (caller.Stats.Radio) return true;
+        if (_battle.CanSee(ally, caller)) return true;
+
+        var apart = Vec3.GroundDistance(
+            _battle.Sight.Ground(caller.Position),
+            _battle.Sight.Ground(ally.Position));
+
+        return apart <= Model.VoiceRangeMetres;
+    }
+
+    /// <summary>
+    /// What one look is worth. Range tells against you gently at first and then sharply, so
+    /// distance only starts hiding you once there is real ground between you.
+    /// </summary>
+    private double LookGain(Unit observer, Unit subject, SightResult sight)
+    {
+        if (sight.Distance >= Model.SightRangeMetres) return 0;
+
+        var closeness = sight.Distance / Model.SightRangeMetres;
+        var range = 1.0 - closeness * closeness;
+        var acuity = observer.Stats.Perception / 10.0;
+        var hiding = StanceProfile.For(subject.Stance).ConcealmentBonus;
+
+        return Model.LookGain * acuity * range * sight.Exposure / hiding;
+    }
+}
