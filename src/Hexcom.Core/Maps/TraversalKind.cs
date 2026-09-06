@@ -66,6 +66,12 @@ public sealed record MovementCosts
     public int Door { get; init; } = 2;
     public int Crawl { get; init; } = 3;
 
+    /// <summary>
+    /// Dropping to a crouch, going prone, or standing back up. Cheap on its own, but the whole
+    /// point of the stance system is that it costs you something to change your mind.
+    /// </summary>
+    public int ChangeStance { get; init; } = 1;
+
     /// <summary>Height change a unit can absorb mid-stride without it counting as a climb.</summary>
     public double StepHeight { get; init; } = 0.4;
 

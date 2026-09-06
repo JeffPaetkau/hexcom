@@ -67,7 +67,16 @@ public static class Pathfinder
     /// Everywhere reachable from <paramref name="start"/> within <paramref name="apBudget"/>
     /// action points. Pass <see cref="int.MaxValue"/> for the whole connected component.
     /// </summary>
-    public static ReachabilityResult Reachable(MovementGraph graph, NodeId start, int apBudget)
+    /// <param name="canEnter">
+    /// Optional gate on which places may be entered at all, for things the map geometry does
+    /// not know about — an enemy standing in the way, a locked door, a burning tile. The start
+    /// is always allowed, so a unit already somewhere forbidden can still walk out of it.
+    /// </param>
+    public static ReachabilityResult Reachable(
+        MovementGraph graph,
+        NodeId start,
+        int apBudget,
+        Func<NodeId, bool>? canEnter = null)
     {
         var reached = new Dictionary<NodeId, ReachedNode>();
         if (!graph.Contains(start)) return new ReachabilityResult(graph, start, apBudget, reached);
@@ -85,6 +94,7 @@ public static class Pathfinder
             {
                 var cost = priority + link.ApCost;
                 if (cost > apBudget) continue;
+                if (canEnter is not null && !canEnter(link.To)) continue;
                 if (reached.TryGetValue(link.To, out var existing) && existing.Cost <= cost) continue;
 
                 reached[link.To] = new ReachedNode(link.To, cost, link);

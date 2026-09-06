@@ -34,24 +34,27 @@ The sandbox needs **Godot 4.7 .NET edition** ([godotengine.org](https://godoteng
 press F5. If your Godot is a different 4.x, change the `Godot.NET.Sdk` version in
 `game/Hexcom.Game.csproj` to match.
 
-The sandbox loads `DemoMaps.Compound` and draws the movement graph flat:
+The sandbox runs a five-unit skirmish on `DemoMaps.Compound`, drawn flat — two of yours outside
+the compound against three inside it, one of them holding the roof:
 
 | | |
 |---|---|
-| click | move the unit somewhere it can stand |
+| click | move whoever is up |
 | hover | show the route, the cost of each awkward step, and what cover the cursor has |
-| `Q` / `E` | change layer (the roof is layer 1) |
+| space | end the turn |
 | `C` | cycle stance: standing, crouching, prone |
-| `[` / `]` | change the action point budget |
-| `R` | reset |
+| `Q` / `E` | change layer (the roof is layer 1) |
+| `R` | new battle |
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in.
-Blacked-out tiles are dead ground the unit has no eyes on, and outlined tiles have cover from
-where it is standing — blue light, yellow half, orange full. Wall colours: white solid, orange
-high, yellow low, blue railing, green sight-screen.
+Blacked-out tiles are dead ground the active unit has no eyes on, and outlined tiles have cover
+from where it is standing — blue light, yellow half, orange full. Wall colours: white solid,
+orange high, yellow low, blue railing, green sight-screen. The strip on the right is the turn
+order with each unit's initiative roll.
 
-Go prone on the ground floor and watch the visible area collapse; climb the ladder and watch it
-open up.
+Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
+rather than alternate. The spotter on the roof sees most of the map; getting up there costs six
+of ten points, so whoever wants that position gives up their turn to take it.
 
 ## What is built
 
@@ -76,8 +79,13 @@ open up.
   submerges all of it. Stance, elevation and range are not special cases — a prone soldier
   behind sandbags vanishes, and a shooter on a roof negates that same cover, purely from the
   geometry.
+- **Units and the turn loop** — a `Battle` owns the map, the units and whose turn it is. Turn
+  order is a queue over a battle clock rather than sides alternating, so play interleaves: one
+  of yours, two of theirs, one of yours. Initiative is a rating plus a d10, less the weight of
+  your kit. Every roll comes from one seeded generator, so a whole fight replays identically
+  from a seed and a list of commands — which is what makes headless balance runs possible.
 
 ## What is not built yet
 
-The detection and awareness model, initiative, units, weapons, damage, AI, saves, and the
+The detection and awareness model, the ambush action, weapons, damage, AI, saves, and the
 strategy layer. See the design doc for where these are heading.

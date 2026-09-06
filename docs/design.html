@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 2 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 3 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Realistic
@@ -1031,13 +1031,26 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">08</span><span class="chip spec">Specified</span><br><br><span class="chip open">Open</span></div>
+    <div class="rail"><span class="num">08</span><span class="chip built">Built</span><br><br><span class="chip spec">Ambush</span></div>
     <div class="body">
       <h2>Initiative, and the ambush it breaks</h2>
       <p>
         Individual interleaved initiative in the D&amp;D sense: one of yours, two of theirs, one of
-        yours, and so on, ordered by a stat plus a roll, modified by gear weight. Rolled at the
-        start of a fight, re-rolled or drifting each round so the order does not calcify.
+        yours, and so on, ordered by a stat plus a roll, modified by gear weight. Rerolled every
+        round so the order does not calcify.
+      </p>
+      <p>
+        What ships is a queue over a battle clock rather than a list of sides taking it in
+        turns. A round is a thousand ticks wide; initiative is a rating plus a ten-sided roll
+        less encumbrance, and a higher result buys a place earlier in the round. Rebooking
+        happens the moment a unit becomes active rather than when its turn ends, so the queue
+        always holds one future turn per unit and the order strip can look ahead — which the
+        player needs, because deciding whether to move now or hold depends on who acts next.
+      </p>
+      <p>
+        Every roll comes from one seeded generator owned by the battle. A whole fight replays
+        identically from a seed and a list of commands, which is the property the headless
+        balance runs depend on.
       </p>
 
       <div class="aside">
@@ -1063,12 +1076,13 @@
         which is the mechanical payoff for having played the approach well.
       </p>
       <p>
-        <span class="chip open">Open</span> &nbsp;Build the turn order as a <strong>priority queue
-        over next-act time</strong>, even though round-based initiative is all that ships first.
-        It costs nothing now and leaves the door open to a continuous time-unit system — the
-        Battle Brothers or Final Fantasy Tactics model, where a cheap action comes back around
-        sooner — without rewriting the loop. Whether that continuous model is <em>better</em> here
-        is genuinely unresolved; it is deeper, and it is harder to read at a glance.
+        <span class="chip open">Open</span> &nbsp;The clock is in place, so moving to a
+        <strong>continuous time-unit system</strong> — the Battle Brothers or Final Fantasy
+        Tactics model, where a cheap action brings you round sooner — means replacing the round
+        arithmetic in one method with <code>actAt += cost</code>. Nothing else changes. Whether
+        that model is <em>better</em> here is still unresolved: it is deeper, and it is harder to
+        read at a glance. The decision can wait until there is enough game to feel the
+        difference.
       </p>
     </div>
   </section>
@@ -1086,11 +1100,11 @@
         <li class="done"><span class="idx">DONE</span><div><b>Walls, chords and regions</b><p>Fifteen segments per hex, planar partition, the transit rule.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Movement graph and pathfinding</b><p>Typed priced links, AP-budgeted reachable sets.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Line of sight and cover</b><p>Waterline tracing against the wall graph, with stance and height.</p></div></li>
-        <li><span class="idx">04</span><div><b>Units, initiative, the turn loop</b><p>Priority queue over act time. Enough to play a silent match.</p></div></li>
-        <li><span class="idx">05</span><div><b>Detection and awareness</b><p>The accumulation model, belief state, alert channels. The differentiating system — build it before weapons, not after.</p></div></li>
-        <li><span class="idx">06</span><div><b>Shooting, damage, suppression</b><p>Exposure already comes out of the sight trace; this turns it into a hit chance.</p></div></li>
-        <li><span class="idx">07</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
-        <li><span class="idx">08</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Units, initiative, the turn loop</b><p>Clock-driven order, seeded and replayable. Enough to play a silent match.</p></div></li>
+        <li><span class="idx">04</span><div><b>Detection and awareness</b><p>The accumulation model, belief state, alert channels. The differentiating system — build it before weapons, not after.</p></div></li>
+        <li><span class="idx">05</span><div><b>Shooting, damage, suppression</b><p>Exposure already comes out of the sight trace; this turns it into a hit chance.</p></div></li>
+        <li><span class="idx">06</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li><span class="idx">07</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
         Deliberately not started: the strategy layer, the setting, saves, audio, and anything that
@@ -1100,8 +1114,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 2</span>
-    <span>108 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 3</span>
+    <span>136 tests green · 0 engine references in core</span>
   </footer>
 
 </div>
