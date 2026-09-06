@@ -28,10 +28,15 @@ installed on this machine, so the scene wiring has never been verified — only 
 | `game/` | Godot view layer, one script: `HexSandbox.cs` |
 | `docs/design.html` | **the design source of truth** — decisions, rationale, open questions |
 
-The design doc is published at
+The design doc is published as an Artifact at
 https://claude.ai/code/artifact/f7a71d6e-e493-43d7-88f7-bd569d06e201 and is republished from
 `docs/design.html` after each increment. Read it before proposing design changes; it records why
 things are the way they are, and which questions are still open.
+
+**Republishing it from a session that did not publish it** — which is every new session — needs
+that URL passed explicitly as the Artifact tool's `url` argument, and the artifact read once
+first. Publishing without it silently creates a second, competing copy instead of updating this
+one.
 
 ## Conventions actually in use
 
