@@ -3,6 +3,7 @@ using System.Linq;
 using Godot;
 using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
+using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
@@ -73,13 +74,13 @@ public partial class HexSandbox : Node2D
 
         // Ours come from the west, looking at the compound. Theirs watch the ground we have to
         // cross, which is what makes going the long way round the back worth the action points.
-        _battle.Deploy("Vance", Side.Player, Ground(-4, 0), UnitStats.Scout, HexDirection.NorthEast);
-        _battle.Deploy("Orsini", Side.Player, Ground(-3, 2), UnitStats.Trooper, HexDirection.NorthEast);
-        _battle.Deploy("Sentry", Side.Hostile, Ground(4, 2), facing: HexDirection.SouthWest);
-        _battle.Deploy("Watchman", Side.Hostile, Ground(4, -2), facing: HexDirection.NorthWest);
+        _battle.Deploy("Vance", Side.Player, Ground(-4, 0), UnitStats.Scout, HexDirection.NorthEast, Loadout.Infiltrator);
+        _battle.Deploy("Orsini", Side.Player, Ground(-3, 2), UnitStats.Trooper, HexDirection.NorthEast, Loadout.Heavy);
+        _battle.Deploy("Sentry", Side.Hostile, Ground(4, 2), facing: HexDirection.SouthWest, loadout: Loadout.Beamer);
+        _battle.Deploy("Watchman", Side.Hostile, Ground(4, -2), facing: HexDirection.NorthWest, loadout: Loadout.Rifleman);
         _battle.Deploy(
             "Spotter", Side.Hostile, new NodeId(new Hex(4, 0), layer: 1),
-            UnitStats.Signaller, HexDirection.SouthWest);
+            UnitStats.Signaller, HexDirection.SouthWest, Loadout.Beamer);
 
         _battle.Start();
         _layer = _battle.Active!.Position.Layer;
@@ -126,6 +127,14 @@ public partial class HexSandbox : Node2D
                 if (NodeUnderMouse() is { } target && _battle.Active is not null)
                 {
                     _battle.Move(target);
+                    Recalculate();
+                }
+                break;
+
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }:
+                if (HoveredUnit() is { } quarry && _battle.Active is not null)
+                {
+                    _battle.Fire(quarry);
                     Recalculate();
                 }
                 break;
@@ -203,6 +212,8 @@ public partial class HexSandbox : Node2D
 
         return new NodeId(address, regions[0].Index);
     }
+
+    private Unit? HoveredUnit() => _hover is { } node ? _battle.UnitAt(node) : null;
 
     // ---- drawing ---------------------------------------------------------------
 
@@ -294,7 +305,11 @@ public partial class HexSandbox : Node2D
             if (unit == _battle.Active)
                 DrawArc(at, radius + 6f, 0, Mathf.Tau, 32, TextBright, 2f, true);
 
-            DrawCentredText(NodeCentre(unit.Position) + new CoreVec2(0, HexSize * 0.42), unit.Name, 11, hue);
+            DrawCentredText(
+                NodeCentre(unit.Position) + new CoreVec2(0, HexSize * 0.42),
+                $"{unit.Name} {unit.Vitality}",
+                11,
+                hue);
 
             // What the other side has worked out. Coarse on purpose — a rung on a ladder, never
             // a number. Our own exposure is the figure we get to read exactly, in the HUD.
@@ -461,13 +476,30 @@ public partial class HexSandbox : Node2D
             _hover is { } h
                 ? $"cursor {h}    {(_reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    {SightLine(h)}"
                 : "cursor —",
-            "click: move    space: end turn    C: stance    Z/X: turn    Q/E: layer    R: new battle",
+            ShotLine(),
+            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    Q/E: layer    R: new battle",
         }.Where(line => line.Length > 0).ToArray();
 
         var top = -Position + new Vector2(18, 30);
         for (var i = 0; i < lines.Length; i++)
             DrawString(_font, top + new Vector2(0, i * 20), lines[i],
                 HorizontalAlignment.Left, -1, 14, i == lines.Length - 1 ? TextDim : TextBright);
+    }
+
+    /// <summary>The shot the active unit would take at whoever is under the cursor.</summary>
+    private string ShotLine()
+    {
+        if (_battle.Active is not { } shooter) return "";
+        if (HoveredUnit() is not { } quarry || !quarry.IsHostileTo(shooter)) return "";
+
+        var plan = _battle.PlanShot(shooter, quarry);
+        if (!plan.CanFire) return $"shot at {quarry.Name}: {plan.Refusal}";
+
+        var face = plan.Target.Protection;
+        return $"shot at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP    "
+               + $"{plan.Weapon.Name} ({plan.Weapon.Kind})    "
+               + $"{plan.FaceHit} face, shield {face.ShieldOn(plan.FaceHit)} plate {face.ArmourOn(plan.FaceHit)}"
+               + "    right-click to fire";
     }
 
     /// <summary>What the active unit can make out at the cursor, and what is protecting it.</summary>

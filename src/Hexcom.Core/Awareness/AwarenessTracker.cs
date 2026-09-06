@@ -170,6 +170,50 @@ public sealed class AwarenessTracker
         }
     }
 
+    /// <summary>
+    /// A unit does something visible: a muzzle flash, or the bright line a beam draws back to
+    /// whoever fired it.
+    /// </summary>
+    /// <remarks>
+    /// The counterpart to <see cref="Hear"/>, and the reason the two weapon families are not
+    /// interchangeable. A slugthrower is silent until it fires and then everyone within a
+    /// hundred metres knows roughly where you are. A beam makes no sound and is unmissable to
+    /// anyone facing your way — and worth nothing at all to anyone who is not.
+    /// </remarks>
+    public void Reveal(Unit source, double brightness, int round)
+    {
+        if (brightness <= 0) return;
+
+        foreach (var watcher in _battle.Enemies(source).ToList())
+        {
+            var sight = _battle.Look(watcher, source);
+            if (!sight.CanSee) continue;
+
+            var contact = Of(watcher.Id, source.Id);
+            var gain = Model.LookGain * brightness * AttentionOn(watcher, source.Position);
+            if (gain <= 0) continue;
+
+            contact.Detection = Math.Min(contact.Detection + gain, Model.Ceiling);
+            contact.LastKnownPosition = source.Position;
+            contact.LastContactRound = round;
+            contact.EyesOn = true;
+        }
+    }
+
+    /// <summary>
+    /// Being shot at settles the question of whether there is somebody out there. The target
+    /// knows, whatever it could or could not see a moment ago.
+    /// </summary>
+    public void TakeFireFrom(Unit target, Unit shooter, int round)
+    {
+        var contact = Of(target.Id, shooter.Id);
+        contact.Detection = Math.Max(contact.Detection, Model.AlertedAt);
+        contact.LastKnownPosition = shooter.Position;
+        contact.LastContactRound = round;
+
+        Relay(target, contact, round);
+    }
+
     /// <summary>Pass a contact to whoever can be reached, at a discount.</summary>
     private void Relay(Unit caller, Contact source, int round)
     {

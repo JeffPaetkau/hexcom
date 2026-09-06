@@ -39,8 +39,9 @@ the compound against three inside it, one of them holding the roof:
 
 | | |
 |---|---|
-| click | move whoever is up |
+| left-click | move whoever is up |
 | hover | show the route, the cost of each awkward step, and what cover the cursor has |
+| right-click | fire at whoever is under the cursor |
 | space | end the turn |
 | `C` | cycle stance: standing, crouching, prone |
 | `Z` / `X` | turn on the spot |
@@ -104,14 +105,23 @@ whoever wants that position gives up their turn to take it.
   readily something is *noticed*, never whether it could be seen — line of sight stays geometry.
   Moving turns you to face your line of travel for free; watching one way while standing still
   costs a point.
+- **Weapons, shooting and protection** — beam against kinetic, and each defeats what the other
+  cannot. Shields soak beams and shrug at solid objects; ablative plate stops rounds and cooks
+  under a beam. Both are tracked **per face**, so the walk round the back that buys an unnoticed
+  approach also buys the thin side of the armour. Hit chance comes from the sight trace's
+  exposure figure, weapon range bands, fire mode and stance. Firing gives you away through the
+  channel your weapon uses: a slug rifle is heard through walls, a beam paints a line back to you
+  for anyone facing your way, and a powered blade does neither.
 
 ## What is not built yet
 
-Weapons, damage, the three reaction types, AI, saves, and the strategy layer. See the design doc
-for where these are heading.
+The three reaction types, grenades and mines, suppression, AI, saves, and the strategy layer.
+See the design doc for where these are heading.
 
-The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register. Beam weapons and
-slugthrowers coexist and counter different defences: force shields stop beams and shrug at solid
-objects, ablative armour stops rounds and cooks under a beam. They also give you away through
-different channels, which the detection model already has — kinetic fire is heard through walls,
-beam fire paints a bright line back to the shooter for anyone whose arc it crosses.
+The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
+
+The reaction design is worth reading before touching the turn loop: all three kinds spend action
+points left over at the end of your turn, and inside a reaction window **action points are
+time**. A three point snap shot resolves three ticks into the target's committed move, while it
+is still crossing open ground; a seven point aimed shot resolves after it has reached cover. That
+is what makes cheap actions worth having.

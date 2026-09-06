@@ -61,4 +61,15 @@ public static class HexDirectionExtensions
 
     /// <summary>Bearing of this direction in radians, for a flat-top layout with +Y north.</summary>
     public static double BearingRadians(this HexDirection d) => (Math.PI / 6.0) + (Math.PI / 3.0) * (int)d;
+
+    /// <summary>
+    /// The direction whose bearing is closest to <paramref name="radians"/>. Used to work out
+    /// which face of a unit a shot arrives at.
+    /// </summary>
+    public static HexDirection FromBearing(double radians)
+    {
+        var sixths = (radians - Math.PI / 6.0) / (Math.PI / 3.0);
+        var index = (int)Math.Round(sixths);
+        return (HexDirection)(((index % 6) + 6) % 6);
+    }
 }

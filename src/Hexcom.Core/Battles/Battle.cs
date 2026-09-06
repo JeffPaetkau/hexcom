@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Hexcom.Core.Awareness;
+using Hexcom.Core.Combat;
+using Hexcom.Core.Geometry;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
@@ -42,7 +44,8 @@ public sealed class Battle
         HexLayout layout,
         MovementCosts? costs = null,
         int seed = 0,
-        AwarenessModel? awareness = null)
+        AwarenessModel? awareness = null,
+        GunneryModel? gunnery = null)
     {
         Map = map;
         Layout = layout;
@@ -50,6 +53,7 @@ public sealed class Battle
         Graph = MovementGraph.Build(map, Costs);
         Sight = new SightSolver(map, layout);
         Awareness = new AwarenessTracker(this, awareness ?? AwarenessModel.Default);
+        Gunnery = new Gunnery(gunnery);
         Seed = seed;
         _rng = new Random(seed);
     }
@@ -62,6 +66,9 @@ public sealed class Battle
 
     /// <summary>Who knows what about whom, and how they came to know it.</summary>
     public AwarenessTracker Awareness { get; }
+
+    /// <summary>Whether a shot connects.</summary>
+    public Gunnery Gunnery { get; }
 
     /// <summary>The seed every roll in this battle comes from.</summary>
     public int Seed { get; }
@@ -89,7 +96,8 @@ public sealed class Battle
         Side side,
         NodeId position,
         UnitStats? stats = null,
-        HexDirection facing = HexDirection.NorthEast)
+        HexDirection facing = HexDirection.NorthEast,
+        Loadout? loadout = null)
     {
         if (!Graph.CanEndTurn(position))
             throw new ArgumentException($"{position} is not somewhere a unit can stand.", nameof(position));
@@ -97,7 +105,7 @@ public sealed class Battle
         if (UnitAt(position) is { } sitting)
             throw new ArgumentException($"{sitting.Name} is already at {position}.", nameof(position));
 
-        var unit = new Unit(new UnitId(_nextId++), name, side, position, stats, facing);
+        var unit = new Unit(new UnitId(_nextId++), name, side, position, stats, facing, loadout);
         _units[unit.Id] = unit;
         return unit;
     }
@@ -141,6 +149,7 @@ public sealed class Battle
             Round = (int)(slot.ActAt / TicksPerRound);
             Active = unit;
             unit.ActionPoints = unit.Stats.ActionPoints;
+            unit.Protection.Recharge();
             Book(unit, Round + 1);
             return;
         }
@@ -244,6 +253,97 @@ public sealed class Battle
             .Max();
 
         return apSpent * surface * StanceProfile.For(unit.Stance).NoiseFactor;
+    }
+
+    // ---- shooting --------------------------------------------------------------
+
+    /// <summary>
+    /// What a shot would look like, worked out before anyone commits to it. Nothing changes.
+    /// </summary>
+    public ShotPlan PlanShot(Unit shooter, Unit target, FireMode? mode = null)
+    {
+        var weapon = shooter.Weapon;
+        var firing = mode ?? weapon.DefaultMode;
+        var sight = Look(shooter, target);
+        var face = FaceToward(target, shooter);
+
+        var refusal =
+            !weapon.Modes.Contains(firing) ? $"{weapon.Name} cannot fire {firing.Name}." :
+            shooter == target ? "Pick somebody else." :
+            !target.InPlay ? "Nothing there to shoot at." :
+            !target.IsHostileTo(shooter) ? "That is one of ours." :
+            shooter.ActionPoints < firing.ApCost ? $"Needs {firing.ApCost} points, has {shooter.ActionPoints}." :
+            !sight.CanSee ? "No line on them." :
+            sight.Distance > weapon.MaxRange ? $"Out of range at {sight.Distance:0} m." :
+            null;
+
+        var chance = refusal is null
+            ? Gunnery.HitChance(weapon, firing, sight, shooter.Stance)
+            : 0;
+
+        return new ShotPlan(shooter, target, weapon, firing, sight, chance, firing.ApCost, face, refusal);
+    }
+
+    /// <summary>
+    /// The active unit fires. Every roll comes from the battle generator, so the whole exchange
+    /// replays from the seed.
+    /// </summary>
+    public ShotOutcome Fire(Unit target, FireMode? mode = null)
+    {
+        var shooter = RequireActive();
+        var plan = PlanShot(shooter, target, mode);
+        if (!plan.CanFire) return ShotOutcome.Refused(plan.Refusal!);
+
+        shooter.ActionPoints -= plan.ApCost;
+
+        var shots = new List<ShotHit>(plan.Mode.Shots);
+        for (var i = 0; i < plan.Mode.Shots; i++)
+        {
+            var roll = _rng.NextDouble();
+            if (roll >= plan.HitChance)
+            {
+                shots.Add(new ShotHit(false, roll, null));
+                continue;
+            }
+
+            var damage = target.Protection.Absorb(plan.FaceHit, plan.Weapon.Kind, plan.Weapon.Damage);
+            target.Vitality -= damage.ToVitality;
+            shots.Add(new ShotHit(true, roll, damage));
+
+            if (target.IsDown) break;
+        }
+
+        AnnounceFire(shooter, target, plan);
+
+        var down = target.IsDown;
+        if (down) Withdraw(target);
+
+        return new ShotOutcome(true, shots, plan.ApCost, plan.HitChance, down, null);
+    }
+
+    /// <summary>
+    /// Firing tells people where you are, and the two weapon families tell them differently.
+    /// </summary>
+    private void AnnounceFire(Unit shooter, Unit target, ShotPlan plan)
+    {
+        if (target.InPlay) Awareness.TakeFireFrom(target, shooter, Round);
+
+        Awareness.Hear(shooter, plan.Weapon.Loudness, Round);
+        Awareness.Reveal(shooter, plan.Weapon.Flash, Round);
+    }
+
+    /// <summary>
+    /// Which of <paramref name="target"/>'s faces something at <paramref name="from"/> arrives at.
+    /// </summary>
+    public HexDirection FaceToward(Unit target, Unit from)
+    {
+        var here = Sight.Ground(target.Position).Plane;
+        var there = Sight.Ground(from.Position).Plane;
+
+        var offset = there - here;
+        if (offset.LengthSquared < Geometry2D.Epsilon) return target.Facing;
+
+        return HexDirectionExtensions.FromBearing(offset.Angle - Layout.RotationRadians);
     }
 
     /// <summary>Drop to a crouch, go prone, or stand back up.</summary>

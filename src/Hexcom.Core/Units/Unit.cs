@@ -1,3 +1,4 @@
+using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Vision;
@@ -41,7 +42,8 @@ public sealed record UnitStats(
     int Initiative = 10,
     int Perception = 10,
     int Encumbrance = 0,
-    bool Radio = false)
+    bool Radio = false,
+    int Vitality = 20)
 {
     public static readonly UnitStats Default = new();
 
@@ -70,7 +72,8 @@ public sealed class Unit
         Side side,
         NodeId position,
         UnitStats? stats = null,
-        HexDirection facing = HexDirection.NorthEast)
+        HexDirection facing = HexDirection.NorthEast,
+        Loadout? loadout = null)
     {
         Id = id;
         Name = name;
@@ -79,6 +82,8 @@ public sealed class Unit
         Facing = facing;
         Stats = stats ?? UnitStats.Default;
         ActionPoints = Stats.ActionPoints;
+        Vitality = Stats.Vitality;
+        Protection = new Protection(loadout ?? Loadout.Rifleman);
     }
 
     public UnitId Id { get; }
@@ -98,6 +103,16 @@ public sealed class Unit
 
     /// <summary>Points left this turn.</summary>
     public int ActionPoints { get; internal set; }
+
+    /// <summary>What the unit carries, and what is left of it face by face.</summary>
+    public Protection Protection { get; }
+
+    public WeaponProfile Weapon => Protection.Loadout.Weapon;
+
+    /// <summary>What is left of the soldier. Nothing stops damage once it is through.</summary>
+    public int Vitality { get; internal set; }
+
+    public bool IsDown => Vitality <= 0;
 
     /// <summary>False once a unit has left the fight. Stale turn queue entries are skipped.</summary>
     public bool InPlay { get; internal set; } = true;

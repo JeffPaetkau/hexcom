@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 6 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 7 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -1155,6 +1155,29 @@
         turns. It changes the texture of the game rather than handing the player a handicap.
       </p>
 
+      <h3>Keeping it from becoming a cascade</h3>
+      <p>
+        The failure mode is obvious enough to design against up front: every action triggering a
+        volley of responses, each of which is itself an action, and a turn taking five minutes to
+        resolve. Three things hold it back, and only the last is a rule.
+      </p>
+      <ul>
+        <li><strong>The economy does most of the work.</strong> Reactions are meant to be a
+        feature of the approach, not of the firefight. Move slowly and methodically and the bank
+        is real; once the shooting starts almost everything gets spent, and what is left is
+        usually below the price of even a snap shot.</li>
+        <li><strong>A reserve is spent, not refreshed.</strong> Points used reacting are gone
+        until that unit's next turn, so a unit reacts about once a round however many chances it
+        gets. Nobody answers the same move twice.</li>
+        <li><strong>Only units that could actually act are asked.</strong> Reserve in hand, the
+        mover crossing their arc at some point in the window, and a shot they can afford — that
+        is a short list most of the time, and usually an empty one mid-firefight.</li>
+      </ul>
+      <p>
+        A floor on what banks at all is worth adding if that is not enough: leftovers below the
+        cheapest action are noise, and rounding them away costs nothing.
+      </p>
+
       <div class="scroll">
         <table>
           <thead>
@@ -1312,7 +1335,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">10</span><span class="chip spec">Specified</span></div>
+    <div class="rail"><span class="num">10</span><span class="chip built">Built</span><br><br><span class="chip spec">Thrown</span></div>
     <div class="body">
       <h2>Beams, slugs, and what stops them</h2>
       <p>
@@ -1454,7 +1477,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Line of sight and cover</b><p>Waterline tracing against the wall graph, with stance and height.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Units, initiative, the turn loop</b><p>Clock-driven order, seeded and replayable. Enough to play a silent match.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
-        <li><span class="idx">04</span><div><b>Shooting, damage, suppression</b><p>Exposure already comes out of the sight trace; this turns it into a hit chance.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
+        <li><span class="idx">04</span><div><b>Reactions</b><p>The window, the timeline, and the three kinds. Grenades and mines fold in here.</p></div></li>
         <li><span class="idx">05</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
@@ -1466,8 +1490,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 6</span>
-    <span>166 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 7</span>
+    <span>189 tests green · 0 engine references in core</span>
   </footer>
 
 </div>
