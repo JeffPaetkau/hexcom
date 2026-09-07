@@ -19,7 +19,13 @@ If you ever find yourself adding `using Godot;` to a file under `src/`, stop.
 src/Hexcom.Core/        the rules — no engine references, ever
 tests/Hexcom.Core.Tests/  xUnit
 game/                   the Godot 4 project (view + input only)
+docs/                   design doc, and the project map the work is divided by
 ```
+
+Work is split into territories with path-based ownership so that several sessions can run at
+once without colliding. [`docs/map.md`](docs/map.md) is the constitution;
+[`docs/decisions.md`](docs/decisions.md) is the append-only log of anything that crosses a
+boundary.
 
 ## Running it
 
