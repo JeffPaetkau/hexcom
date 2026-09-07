@@ -148,15 +148,23 @@ the same weapon shoot worse.
   a shot cheap enough to land early in the window. A watchman only fires at somebody it has
   actually noticed — holding an arc buys it a look at the moment of the crossing, not certainty
   about what is there, so a careful enough approach still gets across.
+- **Surprise** — the involuntary one, that nobody sets up and everybody has. It fires on the
+  single moment a contact crosses into being noticed, so you cannot startle somebody who was
+  already tracking you and a firefight does not generate one per move. Half the reserve, no
+  aiming bonus, and it starts a beat after registering rather than at the top of the window —
+  which is where "the weapon was already pointed" stops being a claim about overwatch and starts
+  being arithmetic. Two bars, not one: something at the edge of what you can make out is enough
+  to duck or spin round and nowhere near enough to shoot at, so a crawler at forty metres makes a
+  sentry twitch without drawing fire. Behind is still behind.
 
 ## What is not built yet
 
-Ambush and surprise, grenades and mines, suppression, AI, saves, and the strategy layer. See the
-design doc for where these are heading.
+Ambush, grenades and mines, suppression, AI, saves, and the strategy layer. See the design doc
+for where these are heading.
 
 The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
 
-Ambush and surprise fold into the machinery that is already there. Both place actions on the same
-committed timeline out of the same reserve; what is new in each is only who is asked and when.
-A `ReactionWindow` already separates offering choices from resolving them, which is where the
-interface and the AI will plug in.
+Ambush is the last of the three reactions, and the only one that needs genuinely new structure:
+today a window is opened by a committed move, and an ambush opens one by a *choice*, with several
+units resolving inside it before anyone answers. A `ReactionWindow` already separates offering
+choices from resolving them, which is where the interface and the AI will plug in.

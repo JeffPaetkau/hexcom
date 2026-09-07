@@ -98,4 +98,77 @@ public sealed record ReactionModel
     /// </para>
     /// </remarks>
     public bool OverwatchLooks { get; init; } = true;
+
+    /// <summary>
+    /// Share of the reserve a unit may spend on a reaction it never planned for.
+    /// </summary>
+    /// <remarks>
+    /// Less than a deliberate one, because reacting is not planning. Half of a watchman's bank is
+    /// still a snap shot, which is the point: catching a competent soldier with <em>nothing</em>
+    /// in hand ought to take more than walking up to them. Walking round the back deserves the
+    /// reward; proximity on its own does not.
+    /// </remarks>
+    public double SurpriseFraction { get; init; } = 0.5;
+
+    /// <summary>
+    /// How far a contact has to climb before somebody reacts to suddenly registering it.
+    /// </summary>
+    /// <remarks>
+    /// A lower bar than an overwatch has to clear, because a flinch is not a considered shot. You
+    /// duck at something registering without yet knowing quite what it is, and surprise is the
+    /// reaction nobody plans for. It also has to be reachable from the corner of an eye, where a
+    /// look is worth under half of what one straight ahead is worth — set any higher and being
+    /// startled by something off to the side becomes impossible, which is the one case where
+    /// turning to face it is worth an action.
+    /// <para>
+    /// What matters is <em>crossing</em> this bar, not merely rising. The moment it clicks, once
+    /// per opponent. Somebody already being tracked climbing from searching to alerted is not a
+    /// surprise, which is what stops a firefight throwing one of these for every move made.
+    /// </para>
+    /// </remarks>
+    public Awareness.AwarenessState SurpriseRequires { get; init; } = Awareness.AwarenessState.Suspicious;
+
+    /// <summary>
+    /// How sure you have to be before a surprise reaction is allowed to be a <em>shot</em>.
+    /// </summary>
+    /// <remarks>
+    /// Higher than the bar for reacting at all, and that gap is where most of the character of
+    /// surprise lives. Something registering at the edge of what you can make out is enough to
+    /// make you duck or spin round; it is nowhere near enough to shoot at, and a soldier who
+    /// blazes away at every half-seen shape is not a competent one.
+    /// <para>
+    /// It also keeps the careful approach worth playing. A crawler at forty metres will make a
+    /// sentry twitch, and will not draw fire for it.
+    /// </para>
+    /// </remarks>
+    public Awareness.AwarenessState SurpriseFireRequires { get; init; } = Awareness.AwarenessState.Searching;
+
+    /// <summary>
+    /// The beat it takes to register something and start doing anything about it.
+    /// </summary>
+    /// <remarks>
+    /// The mechanical difference between a weapon already pointed and one that is not. An
+    /// overwatch starts its action at the top of the window; a surprise starts this much after
+    /// the moment of noticing, so the same snap shot from the same soldier lands later and
+    /// catches the mover further along a route it is already committed to.
+    /// <para>
+    /// Without it, declaring an arc buys only the aiming bonus and the fuller purse, and the
+    /// design's claim that overwatch is strong because it <em>lands early</em> is not expressed
+    /// anywhere. A stride's worth is enough to matter without being a whole action.
+    /// </para>
+    /// </remarks>
+    public int SurpriseDelay { get; init; } = 5;
+
+    /// <summary>Whether the involuntary reaction exists at all. Off makes the game much quieter.</summary>
+    public bool Surprise { get; init; } = true;
+
+    /// <summary>
+    /// What calling a contact in costs. Cheap: it is the thing you do when nothing else is worth
+    /// doing, and a reaction nobody can afford is not a reaction.
+    /// </summary>
+    /// <remarks>
+    /// Lives here rather than on the movement price list because shouting is only a reaction so
+    /// far. It moves across the moment somebody can do it on their own turn.
+    /// </remarks>
+    public int ShoutCost { get; init; } = 2;
 }

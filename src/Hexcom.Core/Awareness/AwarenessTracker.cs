@@ -214,6 +214,20 @@ public sealed class AwarenessTracker
         Relay(target, contact, round);
     }
 
+    /// <summary>
+    /// Call a contact in deliberately: tell whoever can hear or see you what you have found.
+    /// </summary>
+    /// <remarks>
+    /// The same channels as any other relay — radio to the whole side, otherwise a shout or a
+    /// comrade watching you react. What makes this one worth an action is that it happens when
+    /// <em>you</em> choose rather than when a threshold is crossed, which is what a soldier who
+    /// has just been surprised and has nothing useful to shoot at does with the moment.
+    /// </remarks>
+    public void CallOut(Unit caller, UnitId subject, int round) => Relay(caller, Of(caller.Id, subject), round);
+
+    /// <summary>Everyone who would actually hear a shout, so nobody is offered a pointless one.</summary>
+    public IEnumerable<Unit> Earshot(Unit caller) => _battle.Allies(caller).Where(ally => CanReach(caller, ally));
+
     /// <summary>Pass a contact to whoever can be reached, at a discount.</summary>
     private void Relay(Unit caller, Contact source, int round)
     {

@@ -453,17 +453,46 @@ public sealed class Battle
         => Resolve(PlanShot(shooter: RequireActive(), target, mode, calledAt));
 
     /// <summary>
-    /// A reactor fires out of turn, out of its reserve, at whatever tick of the window it
-    /// placed the shot on. The mover is already standing where the timeline says it is.
+    /// A reactor acts out of turn, out of its reserve, at whatever tick of the window it placed
+    /// the action on. The mover is already standing where the timeline says it is.
     /// </summary>
-    internal ShotOutcome FireReaction(ReactionShot shot)
-        => Resolve(PlanShot(
-            shot.Reactor,
-            shot.Target,
-            shot.Mode,
-            shot.AimBonus,
-            UnitPose.Of(shot.Target),
-            ApSource.Reserve));
+    /// <remarks>
+    /// Only a shot reports anything back; turning, dropping and shouting change the reactor
+    /// rather than the mover. All of them are paid for the same way, because the reserve is the
+    /// single resource every way of acting out of turn draws on.
+    /// </remarks>
+    internal ShotOutcome? ResolveReaction(ReactionPlacement placement)
+    {
+        var reactor = placement.Reactor;
+        if (placement.ApCost > reactor.Reserve) return null;
+
+        switch (placement.Action)
+        {
+            case ReactionAction.Fire:
+                return Resolve(PlanShot(
+                    reactor,
+                    placement.Subject,
+                    placement.Forecast!.Mode,
+                    placement.Forecast.AimBonus,
+                    UnitPose.Of(placement.Subject),
+                    ApSource.Reserve));
+
+            case ReactionAction.Turn:
+                reactor.Reserve -= placement.ApCost;
+                if (placement.Facing is { } facing) reactor.Facing = facing;
+                return null;
+
+            case ReactionAction.Drop:
+                reactor.Reserve -= placement.ApCost;
+                if (placement.Stance is { } stance) reactor.Stance = stance;
+                return null;
+
+            default:
+                reactor.Reserve -= placement.ApCost;
+                Awareness.CallOut(reactor, placement.Subject.Id, Round);
+                return null;
+        }
+    }
 
     private ShotOutcome Resolve(ShotPlan plan)
     {
@@ -564,6 +593,18 @@ public sealed class Battle
     /// </remarks>
     public IReadOnlyList<FacingAspect> FacesPresentedTo(UnitPose target, NodeId from)
         => BodyFaces.Presented(SignedAngleOffDegrees(target.Position, target.Facing, from));
+
+    /// <summary>Which way a unit would have to look to face a place.</summary>
+    public HexDirection HeadingTo(NodeId from, NodeId place)
+    {
+        var here = Sight.Ground(from).Plane;
+        var there = Sight.Ground(place).Plane;
+
+        var offset = there - here;
+        if (offset.LengthSquared < Geometry2D.Epsilon) return HexDirection.NorthEast;
+
+        return HexDirectionExtensions.FromBearing(offset.Angle - Layout.RotationRadians);
+    }
 
     /// <summary>
     /// How far off a bearing a place lies, in degrees, seen from somewhere on the map.

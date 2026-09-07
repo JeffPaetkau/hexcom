@@ -231,19 +231,29 @@ public partial class HexSandbox : Node2D
         if (outcome.Reactions is not { } window) return "";
         if (window.Resolutions.Count == 0) return "";
 
-        var shots = window.Resolutions.Select(r =>
+        var answers = window.Resolutions.Select(r =>
         {
-            var landed = r.Outcome.Shots.FirstOrDefault(s => s.Hit)?.Damage;
+            var who = $"t{r.At} {r.Placement.Reactor.Name} ({r.Placement.Kind.ToString().ToLowerInvariant()})";
+
+            if (r.Outcome is not { } shot)
+                return r.Placement.Action switch
+                {
+                    ReactionAction.Turn => $"{who} spins to {r.Placement.Facing}",
+                    ReactionAction.Drop => $"{who} goes {r.Placement.Stance}",
+                    _ => $"{who} calls it in",
+                };
+
+            var landed = shot.Shots.FirstOrDefault(s => s.Hit)?.Damage;
             var where = landed is null
                 ? ""
-                : $" {landed.Face}{(landed.WasGlancing ? " (glancing)" : "")}";
+                : $" {landed.Face}{(landed.WasGlancing ? " glancing" : "")}";
 
-            return $"t{r.At} {r.Shot.Reactor.Name} {r.Shot.Mode.Name} at {r.Caught}: "
-                   + (r.Outcome.AnyHit ? $"hit{where} for {r.Outcome.TotalDamage}" : "missed")
-                   + (r.Outcome.TargetDown ? ", down" : "");
+            return $"{who} {r.Placement.Mode?.Name} at {r.Caught}: "
+                   + (shot.AnyHit ? $"hit{where} for {shot.TotalDamage}" : "missed")
+                   + (shot.TargetDown ? ", down" : "");
         });
 
-        return "reactions — " + string.Join("    ", shots);
+        return "reactions — " + string.Join("    ", answers);
     }
 
     /// <summary>

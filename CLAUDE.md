@@ -12,7 +12,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 241 tests, ~1s
+dotnet test                 # 251 tests, ~1s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -94,6 +94,10 @@ one.
   `Func` handed to `Pathfinder.Reachable`, never baked into the graph, which is built once per
   map. `CommittedMove` must be given the same profile the route was costed with or the reaction
   clock stops matching the points actually spent.
+- **Surprise fires on a crossing, not a rise.** `seen.Before < bar && seen.After >= bar`. "Rose"
+  would re-trigger all the way up the awareness ladder; "is above" would trigger every move.
+  Reactors also get their mid-window look *only if they have reserve banked* — the reserve is
+  doubling as alertness, and removing that gate hands every hostile a free extra look per move.
 - **Arc edges are exclusive, on purpose.** Hex bearings are exact multiples of 60°, so a place
   sitting precisely on the edge of a 120° arc is the common case. Comparisons add
   `Geometry2D.AngleEpsilonDegrees` so the edge falls to the *wider* arc deterministically — one

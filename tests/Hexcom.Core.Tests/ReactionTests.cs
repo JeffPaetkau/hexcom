@@ -337,7 +337,7 @@ public class ReactionTests
 
         var resolution = Assert.Single(window.Resolutions);
         Assert.True(resolution.Outcome.Fired);
-        Assert.Equal(runner, resolution.Shot.Target);
+        Assert.Equal(runner, resolution.Placement.Subject);
     }
 
     [Fact]
@@ -352,32 +352,48 @@ public class ReactionTests
     }
 
     [Fact]
-    public void AnEnemyHoldingNoArcAtAllIsNeverEvenAsked()
+    public void AnEnemyHoldingNoArcIsStartledRatherThanReady()
     {
-        var (battle, watchman, _) = Standoff(Node(4, -2));
-        battle.EndTurn();
+        // The same soldier stepping out from behind the same wall, against a sentry that declared
+        // an arc for it and one that only had points in hand.
+        var startled = Unready().Battle.Move(IntoTheOpen).Reactions!.Offers.Single();
 
-        Assert.True(watchman.CanReact);
-
-        var outcome = battle.Move(Node(4, 2));
+        var ready = Overwatched(OverwatchArc.Standard, Node(3, 0), BehindABuilding());
+        var held = ready.Battle.Move(IntoTheOpen).Reactions!.Offers.Single();
 
         // Points in hand are not the same thing as a weapon already pointed at the ground you
-        // are crossing. Answering a move you were not watching for is a surprise reaction.
-        Assert.Empty(outcome.Reactions!.Offers);
+        // are crossing. Both of them answer; the one that planned for it answers better.
+        Assert.Equal(ReactionKind.Surprise, startled.Kind);
+        Assert.Equal(ReactionKind.Overwatch, held.Kind);
+
+        Assert.Equal(startled.Reserve / 2, startled.Purse);   // half a bank, not the whole one
+        Assert.Equal(held.Reserve, held.Purse);
+
+        Assert.Equal(1.0, startled.Recommended.Forecast!.AimBonus);
+        Assert.True(held.Recommended.Forecast!.AimBonus > 1.0);
+
+        // And it goes off later, because it starts when they register rather than at the top of
+        // the window. Overwatch is early because the weapon was already up.
+        Assert.Equal(0, held.Recommended.At);
+        Assert.True(startled.Recommended.At > 0);
     }
 
     [Fact]
-    public void AWatchmanWhoBankedOnlyScrapsHoldsAnEmptyArc()
+    public void AWatchmanWhoBankedOnlyScrapsCanFlinchButNotShoot()
     {
         var (battle, watchman, _) = Overwatched(
-            OverwatchArc.Standard, Node(4, -2), reactions: ReactionModel.Deliberate);
+            OverwatchArc.Standard, Node(3, 0), BehindABuilding(), reactions: ReactionModel.Deliberate);
 
         Assert.True(watchman.Reserve < FireMode.Snap.ApCost);
 
-        var outcome = battle.Move(Node(4, 2));
+        var offer = battle.Move(IntoTheOpen).Reactions!.Offers.Single();
 
-        // What banked is not a shot in any weapon, so there is nothing to offer.
-        Assert.Empty(outcome.Reactions!.Offers);
+        // What banked is not a shot in any weapon, so the arc is empty. Getting lower costs
+        // almost nothing, though, and something is what surprise is for.
+        Assert.Equal(ReactionKind.Surprise, offer.Kind);
+        Assert.DoesNotContain(offer.Options, o => o.Action == ReactionAction.Fire);
+        Assert.Contains(offer.Options, o => o.Action == ReactionAction.Drop);
+        Assert.Equal(ReactionAction.Drop, offer.Recommended.Action);
     }
 
     [Fact]
@@ -408,8 +424,11 @@ public class ReactionTests
         var ignored = narrow.Battle.Move(Node(2, 4));
         var caught = standard.Battle.Move(Node(2, 4));
 
+        // The narrow arc does not reach that ground, so nothing was held for it — and the runner
+        // was in plain view the whole time, so there is no startling them with it either. You
+        // cannot be surprised by somebody you were already watching.
         Assert.Empty(ignored.Reactions!.Offers);
-        Assert.Single(caught.Reactions!.Offers);
+        Assert.Equal(ReactionKind.Overwatch, caught.Reactions!.Offers.Single().Kind);
     }
 
     [Fact]
@@ -426,7 +445,8 @@ public class ReactionTests
         var outcome = battle.Move(Node(0, 6));
 
         // Cover that ground and you have to declare a wider arc, and shoot worse down all of it.
-        Assert.Empty(outcome.Reactions!.Offers);
+        // Something out there startles the watchman; nothing about it is a held shot.
+        Assert.DoesNotContain(outcome.Reactions!.Offers, o => o.Kind == ReactionKind.Overwatch);
     }
 
     // ---- noticing before shooting ----------------------------------------------
@@ -473,7 +493,7 @@ public class ReactionTests
     }
 
     [Fact]
-    public void ACarefulEnoughApproachCrossesAWatchedArcUntouched()
+    public void ACarefulEnoughApproachCrossesAWatchedArcWithoutDrawingFire()
     {
         // Wider hexes, so the runner can be most of forty metres out and still on the map. It is
         // inside the arc, inside weapon range, and in plain line of sight the whole way.
@@ -488,12 +508,15 @@ public class ReactionTests
         battle.ChangeStance(Stance.Prone);
         var outcome = battle.Move(Node(6, -1));
 
-        // Prone at that range is simply not noticed, and what is not noticed is not shot at.
-        // Nothing here is special to overwatch — it is the ordinary detection model deciding.
+        // Something out there registers — the watchman is staring straight down the arc — but not
+        // nearly enough to shoot at. It twitches and gets lower, and the crawl goes on unharmed.
         Assert.Equal(Stance.Prone, runner.Stance);
         Assert.True(battle.CanSee(watchman, runner));
         Assert.True(battle.Awareness.Of(watchman.Id, runner.Id).State < AwarenessState.Searching);
-        Assert.Empty(outcome.Reactions!.Offers);
+
+        var offer = outcome.Reactions!.Offers.Single();
+        Assert.Equal(ReactionKind.Surprise, offer.Kind);
+        Assert.DoesNotContain(offer.Options, o => o.Action == ReactionAction.Fire);
     }
 
     // ---- paying your own prices ------------------------------------------------
@@ -516,7 +539,7 @@ public class ReactionTests
         Assert.True(late.Forecast.ApCost > early.Forecast.ApCost);
         Assert.True(late.ResolvesAt > early.ResolvesAt);
 
-        static ReactionShot Snap(MoveOutcome outcome)
+        static ReactionPlacement Snap(MoveOutcome outcome)
             => outcome.Reactions!.Offers.Single().Options.Single(o => o.Mode == FireMode.Snap);
     }
 
@@ -551,6 +574,214 @@ public class ReactionTests
         var slow = battle.Destinations(gunner).Count();
 
         Assert.True(slow < quick, $"gunner reached {slow}, scout reached {quick}");
+    }
+
+    // ---- being caught out ------------------------------------------------------
+
+    /// <summary>
+    /// A sentry with points in hand and no arc declared, and somebody behind a wall about to step
+    /// out from behind it.
+    /// </summary>
+    /// <remarks>
+    /// The wall is the whole setup. Somebody standing in plain view has already been seen on the
+    /// sentry's own turn, and you cannot be surprised by a soldier you were already tracking — so
+    /// a surprise scenario needs a runner who was genuinely not there a moment ago.
+    /// </remarks>
+    private static (Battle Battle, Unit Sentry, Unit Runner) Unready(
+        HexDirection facing = HexDirection.NorthEast,
+        UnitStats? sentryStats = null,
+        Loadout? sentryKit = null,
+        Stance stance = Stance.Standing,
+        ReactionModel? reactions = null)
+    {
+        var battle = Field(BehindABuilding(), reactions: reactions);
+        var sentry = battle.Deploy(
+            "Kessel", Side.Hostile, Node(0, 0), sentryStats ?? Watchful, facing, sentryKit);
+        var runner = battle.Deploy("Vance", Side.Player, Node(3, 0), Tardy, HexDirection.North);
+
+        battle.Start();
+        Assert.Same(sentry, battle.Active);
+        if (stance != Stance.Standing) Assert.True(battle.ChangeStance(stance));
+        battle.EndTurn();
+
+        Assert.False(battle.CanSee(sentry, runner), "the wall was supposed to hide them");
+        Assert.Equal(AwarenessState.Unaware, battle.Awareness.Of(sentry.Id, runner.Id).State);
+
+        return (battle, sentry, runner);
+    }
+
+    /// <summary>Out from behind the wall, into the open ground north-east of the sentry.</summary>
+    private static NodeId IntoTheOpen => Node(3, 2);
+
+    [Fact]
+    public void WalkingIntoSomebodySFrontYardGetsYouAnswered()
+    {
+        var (battle, sentry, runner) = Unready();
+
+        var offer = battle.Move(IntoTheOpen).Reactions!.Offers.Single();
+
+        Assert.Equal(ReactionKind.Surprise, offer.Kind);
+        Assert.Same(sentry, offer.Reactor);
+        Assert.True(battle.Awareness.Of(sentry.Id, runner.Id).State >= AwarenessState.Searching);
+    }
+
+    [Fact]
+    public void WalkingRoundTheBackOfSomebodyDoesNotStartleThemAtAll()
+    {
+        var (battle, sentry, runner) = Unready(facing: HexDirection.SouthWest);
+
+        // The sentry is looking the other way entirely, so stepping out puts the runner squarely
+        // behind it.
+        var outcome = battle.Move(IntoTheOpen);
+
+        // Behind is behind. This is the reward the whole approach is played for, and it is the
+        // same rear arc that decides what gets noticed on anybody's own turn.
+        Assert.Empty(outcome.Reactions!.Offers);
+        Assert.Equal(AwarenessState.Unaware, battle.Awareness.Of(sentry.Id, runner.Id).State);
+    }
+
+    [Fact]
+    public void SomebodyYouWereAlreadyTrackingIsNotASurprise()
+    {
+        var (battle, sentry, runner) = Unready();
+
+        // The first crossing is the moment it clicks, and gets answered.
+        Assert.Single(battle.Move(Node(3, 1)).Reactions!.Offers);
+        Assert.True(battle.Awareness.Of(sentry.Id, runner.Id).State >= AwarenessState.Suspicious);
+
+        // The second is somebody already being tracked walking about in plain view. Startling is
+        // a change of mind, not a state of affairs — and this is what keeps a firefight from
+        // throwing one of these for every move anybody makes.
+        Assert.Empty(battle.Move(Node(3, 3)).Reactions!.Offers);
+        Assert.True(runner.InPlay);
+    }
+
+    [Fact]
+    public void SomebodyCaughtInTheCornerOfAnEyeIsTurnedTowardsRatherThanShotAt()
+    {
+        // Facing south-east puts the ground the runner steps onto about seventy degrees round —
+        // outside the cone the sentry is properly attending to, inside the wider one it can see
+        // into at all. It takes sharp eyes to register anything out there: a peripheral look is
+        // worth well under half a straight one, and barely clears being suspicious at all.
+        var (battle, sentry, _) = Unready(
+            facing: HexDirection.SouthEast,
+            sentryStats: Watchful with { Perception = 13 });
+
+        Assert.False(battle.Awareness.IsWatching(sentry, Node(3, 1)));
+
+        var offer = battle.Move(IntoTheOpen).Reactions!.Offers.Single();
+
+        Assert.Equal(ReactionKind.Surprise, offer.Kind);
+        Assert.Equal(AwarenessState.Suspicious, battle.Awareness.Of(sentry.Id, offer.Recommended.Subject.Id).State);
+
+        // Suspicious is enough to spin round at and nowhere near enough to shoot at.
+        Assert.DoesNotContain(offer.Options, o => o.Action == ReactionAction.Fire);
+        Assert.Equal(ReactionAction.Turn, offer.Recommended.Action);
+        Assert.Equal(HexDirection.NorthEast, offer.Recommended.Facing);
+    }
+
+    [Fact]
+    public void SomebodyAlreadyDeadAheadIsNotWorthTurningTowards()
+    {
+        var (battle, sentry, _) = Unready();
+        Assert.True(battle.Awareness.IsWatching(sentry, Node(3, 1)));
+
+        var offer = battle.Move(IntoTheOpen).Reactions!.Offers.Single();
+
+        // You cannot face something better than squarely, so it is not offered as a choice.
+        Assert.DoesNotContain(offer.Options, o => o.Action == ReactionAction.Turn);
+    }
+
+    [Fact]
+    public void ASurpriseIsPaidForOutOfHalfABankAndSpentFromTheReserve()
+    {
+        var (battle, sentry, _) = Unready();
+        var banked = sentry.Reserve;
+
+        var window = battle.Move(IntoTheOpen).Reactions!;
+        var offer = window.Offers.Single();
+
+        Assert.Equal(banked / 2, offer.Purse);
+        Assert.All(offer.Options, o => Assert.True(o.ApCost <= offer.Purse));
+
+        // Half is what may be chosen from; the whole reserve is what it comes out of.
+        var taken = window.Resolutions.Single().Placement;
+        Assert.Equal(banked - taken.ApCost, sentry.Reserve);
+    }
+
+    /// <summary>
+    /// A sentry carrying nothing that reaches past arm's length, so the only answers left to it
+    /// are the ones that cost almost nothing.
+    /// </summary>
+    [Fact]
+    public void ASoldierWithNothingWorthShootingWithStillDoesSomething()
+    {
+        var (battle, _, _) = Unready(sentryKit: Loadout.Infiltrator);
+
+        var offer = battle.Move(IntoTheOpen).Reactions!.Offers.Single();
+
+        // A powered blade does not reach across six metres, and they are already square on to
+        // the threat. Getting lower is what is left, and something is what surprise is for.
+        Assert.DoesNotContain(offer.Options, o => o.Action == ReactionAction.Fire);
+        Assert.DoesNotContain(offer.Options, o => o.Action == ReactionAction.Turn);
+        Assert.Contains(offer.Options, o => o.Action == ReactionAction.Drop);
+        Assert.Equal(ReactionAction.Drop, offer.Recommended.Action);
+    }
+
+    [Fact]
+    public void GettingLowerActuallyLeavesYouLower()
+    {
+        var (battle, sentry, _) = Unready(sentryKit: Loadout.Infiltrator);
+        Assert.Equal(Stance.Standing, sentry.Stance);
+
+        var resolution = battle.Move(IntoTheOpen).Reactions!.Resolutions.Single();
+
+        Assert.Equal(ReactionAction.Drop, resolution.Placement.Action);
+        Assert.Null(resolution.Outcome);
+        Assert.Equal(Stance.Crouching, sentry.Stance);
+    }
+
+    [Fact]
+    public void WithNothingElseLeftYouAtLeastCallItIn()
+    {
+        var battle = Field(BehindABuilding());
+
+        // Flat on their face with a knife, already looking the right way, and carrying the radio.
+        // Every other answer is gone, so the last one is telling somebody who can do better.
+        var sentry = battle.Deploy(
+            "Kessel", Side.Hostile, Node(0, 0),
+            Watchful with { Radio = true }, HexDirection.NorthEast, Loadout.Infiltrator);
+        var mate = battle.Deploy(
+            "Bruck", Side.Hostile, Node(-13, 0),
+            Watchful with { Initiative = 29 }, HexDirection.SouthWest);
+        var runner = battle.Deploy("Vance", Side.Player, Node(3, 0), Tardy, HexDirection.North);
+
+        battle.Start();
+        Assert.Same(sentry, battle.Active);
+        Assert.True(battle.ChangeStance(Stance.Prone));
+        battle.EndTurn();
+
+        while (battle.Active != runner) battle.EndTurn();
+
+        var knownBefore = battle.Awareness.Of(mate.Id, runner.Id).Detection;
+        var resolution = battle.Move(IntoTheOpen).Reactions!.Resolutions
+            .Single(r => r.Placement.Reactor == sentry);
+
+        Assert.Equal(ReactionAction.Shout, resolution.Placement.Action);
+
+        // Second hand, so it lands short of what the caller knows — enough to send somebody
+        // looking, never enough to make them certain.
+        var known = battle.Awareness.Of(mate.Id, runner.Id);
+        Assert.True(known.Detection > knownBefore, $"the shout went unheard at {known.Detection:0.0}");
+        Assert.True(known.Detection < battle.Awareness.Of(sentry.Id, runner.Id).Detection);
+    }
+
+    [Fact]
+    public void TurningSurpriseOffMakesTheBattlefieldMuchQuieter()
+    {
+        var (battle, _, _) = Unready(reactions: ReactionModel.Default with { Surprise = false });
+
+        Assert.Empty(battle.Move(IntoTheOpen).Reactions!.Offers);
     }
 
     // ---- action points are time ------------------------------------------------
@@ -605,7 +836,7 @@ public class ReactionTests
 
         Assert.NotEqual(start, resolution.Caught);
         Assert.Equal(outcome.Reactions!.Move.PositionAt(resolution.At), resolution.Caught);
-        Assert.Equal(resolution.Shot.Forecast.TargetPose!.Value.Position, resolution.Caught);
+        Assert.Equal(resolution.Placement.Forecast.TargetPose!.Value.Position, resolution.Caught);
     }
 
     [Fact]
@@ -617,7 +848,7 @@ public class ReactionTests
 
         var faceNow = battle.FaceToward(runner, watchman);
         var outcome = battle.Move(Node(4, 1));
-        var faceHit = outcome.Reactions!.Resolutions.Single().Shot.Forecast.LikeliestFace;
+        var faceHit = outcome.Reactions!.Resolutions.Single().Placement.Forecast.LikeliestFace;
 
         // Which plate the round arrives at is worked out where it lands, not where the runner
         // was standing when the window opened. Nothing special-cases this: the runner is
@@ -635,9 +866,9 @@ public class ReactionTests
         var (battle, watchman, _) = Overwatched(OverwatchArc.Standard, Node(4, -2));
         var banked = watchman.Reserve;
 
-        var shot = battle.Move(Node(4, 2)).Reactions!.Resolutions.Single().Shot;
+        var shot = battle.Move(Node(4, 2)).Reactions!.Resolutions.Single().Placement;
 
-        Assert.Equal(banked - shot.Forecast.ApCost, watchman.Reserve);
+        Assert.Equal(banked - shot.ApCost, watchman.Reserve);
         Assert.Equal(0, watchman.ActionPoints);
     }
 

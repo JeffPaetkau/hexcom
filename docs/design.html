@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 11 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 12 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 241 tests run in about a second today.</li>
+        <li>The rules are unit-testable headless — 251 tests run in about a second today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1170,7 +1170,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">09</span><span class="chip built">Built</span><br><br><span class="chip spec">Ambush</span><br><br><span class="chip spec">Surprise</span></div>
+    <div class="rail"><span class="num">09</span><span class="chip built">Built</span><br><br><span class="chip spec">Ambush</span></div>
     <div class="body">
       <h2>Three ways to act out of turn</h2>
       <p>
@@ -1272,7 +1272,7 @@
             <tr>
               <td class="name">Surprise</td>
               <td class="why">None. Everyone has it, all the time</td>
-              <td class="why">Suddenly noticing an opponent</td>
+              <td class="why">A contact crossing into being noticed at all</td>
               <td class="why">Something rather than nothing: turn, fire, drop, or call it in</td>
             </tr>
             <tr>
@@ -1301,15 +1301,69 @@
       <h3>Surprise</h3>
       <p>
         The only involuntary one, and the only one nobody has to plan for. When a unit suddenly
-        registers an opponent — a contact jumping to engaged, or someone stepping into the arc it
-        was already watching — it may spend part of what it has left, immediately: turn to face,
+        registers an opponent it may spend part of what it has left, immediately: turn to face,
         fire, drop into cover, or shout.
       </p>
       <p>
         Less of the reserve is available than for a deliberate reaction, because reacting is not
-        planning. The point is that ambushing a competent soldier should not be free. Walking
-        round the back of a sentry deserves a reward; catching one with nothing at all in hand
-        ought to take more than proximity.
+        planning — half of it, and no aiming bonus. The point is that ambushing a competent
+        soldier should not be free. Walking round the back of a sentry deserves a reward;
+        catching one with nothing at all in hand ought to take more than proximity.
+      </p>
+      <p>
+        The trigger is a <strong>crossing</strong>, and getting that right is most of what makes
+        surprise work rather than flood the game. Not "can see them" — a soldier already being
+        tracked is not a surprise however plainly they walk past. Not "learned something" either,
+        or every step of an opponent climbing your awareness ladder would startle you again. It
+        is the single moment a contact goes from below the bar to above it: once per opponent,
+        and never once the shooting has started and everybody already knows.
+      </p>
+      <p>
+        Two bars, not one, because <strong>what you may do depends on how sure you are</strong>.
+        Something registering at the edge of what you can make out is enough to duck or spin
+        round; it is nowhere near enough to shoot at, and a soldier who fires at every half-seen
+        shape is not a competent one. So a crawler at forty metres will make a sentry twitch and
+        will not draw fire for it — which is exactly the outcome the careful approach is played
+        for.
+      </p>
+      <p>
+        It reaches wider than an overwatch does, out to the whole arc a unit can see into at all
+        rather than the slice it is properly attending to. Catching something in the corner of an
+        eye is the case being modelled, and it is the only one where turning to face it is worth
+        an action. Behind is still behind: walk round the back and nothing flinches.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th></th><th>Overwatch</th><th>Surprise</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="name">Set up</td><td class="why">A declared arc, a point, and the rest of the turn</td><td class="why">None. Everybody has it</td></tr>
+            <tr><td class="name">Where it reaches</td><td class="why">The arc declared, however wide</td><td class="why">Anywhere but behind</td></tr>
+            <tr><td class="name">Trigger</td><td class="why">Noticing somebody in it</td><td class="why">The moment a contact crosses into being noticed</td></tr>
+            <tr><td class="name">Purse</td><td class="why">The whole reserve</td><td class="why">Half of it</td></tr>
+            <tr><td class="name">Starts at</td><td class="why">The top of the window</td><td class="why">A beat after registering</td></tr>
+            <tr><td class="name">To hit</td><td class="why">A bonus, sharper the narrower the arc</td><td class="why">Nothing</td></tr>
+            <tr><td class="name">Can do</td><td class="why">Shoot</td><td class="why">Shoot, turn, drop, shout</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The beat before a surprise starts is where "the weapon was already pointed" becomes
+        mechanical rather than a claim. Without it, a sentry with nothing declared answers exactly
+        as fast as one that spent a point and its whole turn watching the right ground, and
+        overwatch is left buying only the bonus. With it, the same soldier firing the same snap
+        shot lands later and catches the runner further along a route it is already committed to.
+      </p>
+      <p>
+        There is one more thing the reserve turns out to be doing, and it was not designed in so
+        much as noticed afterwards. A reactor gets its look at the crossing only if it has points
+        banked — so the reserve is <em>alertness</em> as well as reaction potential. A soldier who
+        spent the lot is head down and busy and does not clock you going past. Hanging back keeps
+        your eyes up as well as your options open, which is the same decision the whole economy
+        is built around.
       </p>
 
       <h3>Overwatch</h3>
@@ -1718,8 +1772,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Units, initiative, the turn loop</b><p>Clock-driven order, seeded and replayable. Enough to play a silent match.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
-        <li class="done"><span class="idx">DONE</span><div><b>The reaction window, and overwatch</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and declared arcs shot down.</p></div></li>
-        <li><span class="idx">04</span><div><b>Ambush and surprise</b><p>The other two kinds, on the machinery above. Grenades and mines fold in here.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>The reaction window, overwatch and surprise</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, declared arcs shot down, and being caught out.</p></div></li>
+        <li><span class="idx">04</span><div><b>Ambush</b><p>The last kind, and the only one needing new structure: a window opened by a choice rather than by a move. Grenades and mines fold in here.</p></div></li>
         <li><span class="idx">05</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
@@ -1731,8 +1785,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 11</span>
-    <span>241 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 12</span>
+    <span>251 tests green · 0 engine references in core</span>
   </footer>
 
 </div>
