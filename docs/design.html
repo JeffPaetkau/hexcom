@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 10 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 11 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -539,7 +539,7 @@
       </div>
       <div>
         <dt>Turn structure</dt>
-        <dd>10 action points, individual initiative</dd>
+        <dd>50 action points, individual initiative</dd>
       </div>
       <div>
         <dt>Target</dt>
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 238 tests run in about a second today.</li>
+        <li>The rules are unit-testable headless — 241 tests run in about a second today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -735,10 +735,10 @@
             <tr><th>Profile</th><th>Height</th><th>Cover cap</th><th>Opacity</th><th>Crossing</th></tr>
           </thead>
           <tbody>
-            <tr><td class="name">Low</td><td class="n">1.0 m</td><td class="n">Half</td><td class="why">Opaque</td><td class="why">Vault, 3 AP</td></tr>
-            <tr><td class="name">High</td><td class="n">2.0 m</td><td class="n">Full</td><td class="why">Opaque</td><td class="why">Climb, 6 AP</td></tr>
+            <tr><td class="name">Low</td><td class="n">1.0 m</td><td class="n">Half</td><td class="why">Opaque</td><td class="why">Vault, 15 AP</td></tr>
+            <tr><td class="name">High</td><td class="n">2.0 m</td><td class="n">Full</td><td class="why">Opaque</td><td class="why">Climb, 30 AP</td></tr>
             <tr><td class="name">Solid</td><td class="n">3.0 m</td><td class="n">Full</td><td class="why">Opaque</td><td class="why">None</td></tr>
-            <tr><td class="name">Railing</td><td class="n">1.2 m</td><td class="n">Light</td><td class="why">See-through</td><td class="why">Vault, 3 AP</td></tr>
+            <tr><td class="name">Railing</td><td class="n">1.2 m</td><td class="n">Light</td><td class="why">See-through</td><td class="why">Vault, 15 AP</td></tr>
             <tr><td class="name">Screen</td><td class="n">2.0 m</td><td class="n">Light</td><td class="why">Opaque</td><td class="why">Walk through</td></tr>
           </tbody>
         </table>
@@ -750,34 +750,51 @@
   <section>
     <div class="rail"><span class="num">04</span><span class="chip built">Built</span><br><br><span class="chip spec">Combat</span></div>
     <div class="body">
-      <h2>Ten points a turn</h2>
+      <h2>Fifty points a turn</h2>
       <p>
-        Two actions in the XCOM style cannot price a ladder honestly against a footstep. Ten can.
-        Firing costs about half a turn, so the archetypal turn is <em>move a little, shoot, take
-        cover</em> — and the interesting decisions are all in what you give up to do the third
-        thing.
+        Two actions in the XCOM style cannot price a ladder honestly against a footstep. A stride
+        costs five and a turn is fifty, so ten hexes of open ground is a whole turn spent doing
+        nothing else. Firing costs about half a turn, so the archetypal turn is <em>move a little,
+        shoot, take cover</em> — and the interesting decisions are all in what you give up to do
+        the third thing.
+      </p>
+      <p>
+        It started at ten, with a stride at one, and that turned out to be the wrong number for a
+        reason worth recording: <strong>the cheapest action sets the resolution of everything
+        else</strong>. Nothing could be priced below a stride, so turning on the spot cost a full
+        step; and no per-soldier multiplier could make anybody quicker over open ground, only
+        slower, because one point cannot be reduced. At five a turn is worth two, going flat is
+        worth three strides a hex, and a multiplier anywhere from three fifths to double lands on
+        a distinct number.
+      </p>
+      <p>
+        It matters twice over, because action points are also the clock a reaction window runs on.
+        A ten hex run is fifty ticks long rather than ten, so placing a shot to land just as
+        somebody clears a wall is a real choice rather than a rounding accident. Every ratio
+        survived the change untouched — the whole price list was multiplied by five — so this cost
+        nothing but the arithmetic in the tests.
       </p>
 
       <figure>
-        <figcaption><b>Figure 2 — Four turns</b><br>Each row is one unit's ten points.</figcaption>
+        <figcaption><b>Figure 2 — Four turns</b><br>Each row is one unit&rsquo;s fifty points, drawn as ten blocks of five. A stride is one block.</figcaption>
         <div class="turns">
           <div class="turn">
-            <div class="turn-name">Move up and fire<span>3 move · shoot · crouch</span></div>
+            <div class="turn-name">Move up and fire<span>3 move · shoot · 10 held</span></div>
             <div class="ap">
               <i class="move"></i><i class="move"></i><i class="move"></i>
               <i class="fire">FIRE</i><i class="fire"></i><i class="fire"></i><i class="fire"></i><i class="fire"></i>
-              <i class="move"></i><i></i>
+              <i class="hold">HELD</i><i class="hold"></i>
             </div>
           </div>
           <div class="turn">
-            <div class="turn-name">Take the roof<span>ladder · 4 move</span></div>
+            <div class="turn-name">Take the roof<span>ladder 30 · 4 move</span></div>
             <div class="ap">
               <i class="climb">LADDER</i><i class="climb"></i><i class="climb"></i><i class="climb"></i><i class="climb"></i><i class="climb"></i>
               <i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i>
             </div>
           </div>
           <div class="turn">
-            <div class="turn-name">Cross the barricade<span>move · vault · move · shoot</span></div>
+            <div class="turn-name">Cross the barricade<span>move · vault 15 · move · shoot</span></div>
             <div class="ap">
               <i class="move"></i>
               <i class="climb">VAULT</i><i class="climb"></i><i class="climb"></i>
@@ -786,7 +803,7 @@
             </div>
           </div>
           <div class="turn">
-            <div class="turn-name">Set the ambush<span>5 move · hold the rest</span></div>
+            <div class="turn-name">Set the ambush<span>5 move · hold 25</span></div>
             <div class="ap">
               <i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i>
               <i class="hold">HELD</i><i class="hold"></i><i class="hold"></i><i class="hold"></i><i class="hold"></i>
@@ -808,8 +825,8 @@
         answer with.
       </p>
       <p>
-        Firing costs: snap shot 3, standard 5, aimed 7, change stance 1, turn on the spot 1,
-        declare an overwatch arc 1. Reloading is specified but not built. Seven tenths of whatever
+        Firing costs: snap shot 15, standard 25, aimed 35. Change stance 2, turn on the spot 2,
+        declare an overwatch arc 5. Reloading is specified but not built. Seven tenths of whatever
         is left over becomes reaction potential — see section 09 for why that fraction.
       </p>
     </div>
@@ -836,14 +853,14 @@
             <tr><th>Traversal</th><th>AP</th><th>Generated from</th></tr>
           </thead>
           <tbody>
-            <tr><td class="name">Walk</td><td class="n">1</td><td class="why">Height change under 0.4 m</td></tr>
-            <tr><td class="name">Rough</td><td class="n">2</td><td class="why">Rubble, mud, shallow water</td></tr>
-            <tr><td class="name">Drop</td><td class="n">1</td><td class="why">Down up to 3.0 m</td></tr>
-            <tr><td class="name">Vault</td><td class="n">3</td><td class="why">A low wall or railing</td></tr>
-            <tr><td class="name">Jump</td><td class="n">4</td><td class="why">Authored gaps</td></tr>
-            <tr><td class="name">Climb</td><td class="n">6</td><td class="why">Up to 2.2 m, or a high wall</td></tr>
-            <tr><td class="name">Ladder</td><td class="n">6</td><td class="why">Authored</td></tr>
-            <tr><td class="name">Stairs</td><td class="n">2</td><td class="why">Authored</td></tr>
+            <tr><td class="name">Walk</td><td class="n">5</td><td class="why">Height change under 0.4 m</td></tr>
+            <tr><td class="name">Rough</td><td class="n">10</td><td class="why">Rubble, mud, shallow water</td></tr>
+            <tr><td class="name">Drop</td><td class="n">5</td><td class="why">Down up to 3.0 m</td></tr>
+            <tr><td class="name">Vault</td><td class="n">15</td><td class="why">A low wall or railing</td></tr>
+            <tr><td class="name">Jump</td><td class="n">20</td><td class="why">Authored gaps</td></tr>
+            <tr><td class="name">Climb</td><td class="n">30</td><td class="why">Up to 2.2 m, or a high wall</td></tr>
+            <tr><td class="name">Ladder</td><td class="n">30</td><td class="why">Authored</td></tr>
+            <tr><td class="name">Stairs</td><td class="n">10</td><td class="why">Authored</td></tr>
           </tbody>
         </table>
       </div>
@@ -1068,14 +1085,28 @@
         and that is the whole decision.
       </p>
 
+      <p>
+        Carrying yourself low is priced, not free. A crouch costs three fifths again on every
+        traversal and going flat costs three times, so a crawler covers three hexes where an
+        upright soldier covers ten. That is the whole trade the stealth game runs on: prone you
+        are harder to see, harder to notice, quieter and lower than most cover, and the bill is
+        the ground you do not cross. Until it was charged for there was no reason ever to stand
+        back up.
+      </p>
+      <p>
+        The trap, and it was live for a while, is pricing <em>noise</em> off what a move cost.
+        Crawling is three times the price, so a crawler spending three times the points to cross
+        one hex came out very nearly as loud as somebody strolling over it — the stance cancelling
+        itself out and the reason to go flat with it. Effort is a property of the ground crossed
+        and how it was crossed, not of the bill; a slow soldier is not a noisy one.
+      </p>
+
       <div class="aside">
         <span class="tag">Still to come</span>
         <p>
           Attacking from concealment giving a damage and accuracy bonus, on top of the initiative
           payoff in the next section. Noise currently ignores walls entirely — you hear people
-          through a building, which is right, but a closed door should count for something. And
-          crawling is free: <code>TraversalKind.Crawl</code> exists but is not yet wired to stance,
-          so going prone is pure upside.
+          through a building, which is right, but a closed door should count for something.
         </p>
       </div>
     </div>
@@ -1174,7 +1205,7 @@
         <em>this</em> trooper spends climbing one or getting one off is about them, their
         training and their kit, and it lives on the unit as a pair of multipliers. So a scout
         who is quick over ground and slow to bring a weapon to bear, and a gunner who is the
-        other way round, spend the same ten points on entirely different turns. A stabilised
+        other way round, spend the same fifty points on entirely different turns. A stabilised
         mount that takes a standard shot from five points to four is a multiplier on the wearer,
         not a change to what a standard shot is.
       </p>
@@ -1359,27 +1390,28 @@
 
       <figure>
         <figcaption>
-          <b>Figure 4 — Seven points against a five point run</b><br>
-          The mover is committed to five hexes and will finish behind cover. Three ways to spend
-          a seven point reserve against that, and what each one catches.
+          <b>Figure 4 — Thirty-five points against a five hex run</b><br>
+          The mover is committed to five hexes — twenty-five ticks — and will finish behind cover.
+          Three ways to spend a thirty-five point reserve against that, and what each one catches.
+          Blocks of five again.
         </figcaption>
         <div class="turns">
           <div class="turn">
-            <div class="turn-name">Get to cover<span>5 move, lands at tick 5</span></div>
+            <div class="turn-name">Get to cover<span>5 move, arrives at tick 25</span></div>
             <div class="ap">
               <i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i><i class="move"></i>
               <i></i><i></i>
             </div>
           </div>
           <div class="turn">
-            <div class="turn-name">Standard shot<span>5 to fire, lands at tick 5</span></div>
+            <div class="turn-name">Standard shot<span>25 to fire, lands at tick 25</span></div>
             <div class="ap">
               <i class="fire">AIM</i><i class="fire"></i><i class="fire"></i><i class="fire"></i><i class="fire">✗</i>
               <i></i><i></i>
             </div>
           </div>
           <div class="turn">
-            <div class="turn-name">Snap, then duck<span>3 to fire at tick 3, 2 to move</span></div>
+            <div class="turn-name">Snap, then duck<span>15 to fire, lands at tick 15, then 10 to move</span></div>
             <div class="ap">
               <i class="fire">SNAP</i><i class="fire"></i><i class="fire">✓</i>
               <i class="move"></i><i class="move"></i>
@@ -1395,10 +1427,11 @@
       </figure>
 
       <p>
-        The standard shot is the better shot and it misses the moment: it goes off at tick five,
-        by which time the target has arrived and is behind cover. The snap shot is worse in every
-        respect except the one that matters here — it lands at tick three, while the target is
-        still crossing open ground, and leaves two points to duck away afterwards. This is what a
+        The standard shot is the better shot and it misses the moment: it goes off at tick
+        twenty-five, by which time the target has arrived and is behind cover. The snap shot is
+        worse in every respect except the one that matters here — it lands at tick fifteen, while
+        the target is still two hexes short of the wall, and leaves ten points to duck away
+        afterwards. This is what a
         watchman actually chooses, unprompted: the recommendation weighs expected damage against
         where the runner will be, and picks the cheap shot the moment the destination has cover.
       </p>
@@ -1698,8 +1731,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 10</span>
-    <span>238 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 11</span>
+    <span>241 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

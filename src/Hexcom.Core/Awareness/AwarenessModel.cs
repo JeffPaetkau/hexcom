@@ -60,7 +60,7 @@ public sealed record AwarenessModel
     // ---- listening -------------------------------------------------------------
 
     /// <summary>Metres a sound carries per point of loudness.</summary>
-    public double NoiseMetresPerPoint { get; init; } = 2.0;
+    public double NoiseMetresPerPoint { get; init; } = 0.4;
 
     /// <summary>Certainty a sound is worth at its source.</summary>
     public double NoiseGain { get; init; } = 30;

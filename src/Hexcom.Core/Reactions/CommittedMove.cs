@@ -42,7 +42,7 @@ public sealed class CommittedMove
 {
     private readonly MoveStep[] _steps;
 
-    /// <param name="costs">
+    /// <param name="price">
     /// What the mover pays per link. The timeline has to be priced the same way the route was, or
     /// the clock a reaction lands on stops matching the points that were actually spent.
     /// </param>
@@ -51,17 +51,16 @@ public sealed class CommittedMove
         IReadOnlyList<TraversalLink> path,
         HexDirection facing,
         Stance stance,
-        CostProfile? costs = null)
+        Func<TraversalLink, int>? price = null)
     {
         Stance = stance;
-        var pricing = costs ?? CostProfile.Default;
 
         var steps = new List<MoveStep>(path.Count + 1) { new(0, start, facing) };
         var tick = 0;
 
         foreach (var link in path)
         {
-            tick += pricing.Move(link.ApCost);
+            tick += price?.Invoke(link) ?? link.ApCost;
 
             // Steps within one hex — vaulting a barricade from one half to the other — move you
             // without turning you, so the heading carries over.

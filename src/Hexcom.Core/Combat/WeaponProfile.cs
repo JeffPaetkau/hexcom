@@ -40,11 +40,11 @@ public enum DamageKind
 /// <param name="Shots">Rounds sent. Each is resolved separately.</param>
 public sealed record FireMode(string Name, int ApCost, double Accuracy, int Shots = 1)
 {
-    public static readonly FireMode Snap = new("snap", 3, 0.70);
-    public static readonly FireMode Standard = new("standard", 5, 1.00);
-    public static readonly FireMode Aimed = new("aimed", 7, 1.25);
-    public static readonly FireMode Burst = new("burst", 6, 0.62, Shots: 3);
-    public static readonly FireMode Strike = new("strike", 4, 1.10);
+    public static readonly FireMode Snap = new("snap", 15, 0.70);
+    public static readonly FireMode Standard = new("standard", 25, 1.00);
+    public static readonly FireMode Aimed = new("aimed", 35, 1.25);
+    public static readonly FireMode Burst = new("burst", 30, 0.62, Shots: 3);
+    public static readonly FireMode Strike = new("strike", 20, 1.10);
 }
 
 /// <summary>
@@ -107,7 +107,7 @@ public sealed record WeaponProfile(
         MaxRange: 55,
         Accuracy: 0.80,
         Modes: Rifle,
-        Loudness: 9,
+        Loudness: 45,
         Flash: 0.2);
 
     /// <summary>Kinetic repeater. Three rounds a burst, none of them well aimed.</summary>
@@ -120,7 +120,7 @@ public sealed record WeaponProfile(
         MaxRange: 30,
         Accuracy: 0.72,
         Modes: [FireMode.Snap, FireMode.Burst],
-        Loudness: 13,
+        Loudness: 65,
         Flash: 0.3);
 
     /// <summary>Beam sidearm. Cheap to fire, short reach, better than nothing.</summary>

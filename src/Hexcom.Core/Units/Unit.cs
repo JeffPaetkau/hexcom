@@ -39,7 +39,7 @@ public enum Side
 /// thing worth killing quietly.
 /// </param>
 public sealed record UnitStats(
-    int ActionPoints = 10,
+    int ActionPoints = 50,
     int Initiative = 10,
     int Perception = 10,
     int Encumbrance = 0,
@@ -63,10 +63,10 @@ public sealed record UnitStats(
     public static readonly UnitStats Default = new();
 
     /// <summary>Light kit, quick off the mark, sharp eyes.</summary>
-    public static readonly UnitStats Scout = new(ActionPoints: 11, Initiative: 14, Perception: 13);
+    public static readonly UnitStats Scout = new(ActionPoints: 55, Initiative: 14, Perception: 13);
 
     /// <summary>Heavy armour, slow to react.</summary>
-    public static readonly UnitStats Trooper = new(ActionPoints: 9, Initiative: 8, Perception: 9, Encumbrance: 3);
+    public static readonly UnitStats Trooper = new(ActionPoints: 45, Initiative: 8, Perception: 9, Encumbrance: 3);
 
     /// <summary>Carries the net. Kill this one first, and the rest have to shout.</summary>
     public static readonly UnitStats Signaller = new(Perception: 12, Encumbrance: 1, Radio: true);

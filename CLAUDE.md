@@ -12,7 +12,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 238 tests, ~0.9s
+dotnet test                 # 241 tests, ~1s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -81,8 +81,13 @@ one.
   *distribution* — a body is a hexagon, so a shot can always reach two or three plates — and the
   round is rolled against it in `Resolve`. Anything that wants one answer takes `Aspects[0]` or
   `ShotPlan.LikeliestFace`.
-- **Nothing may assume ten action points.** The turn allowance is provisional and expected to
-  vary per soldier. `ReserveFraction` is a share for that reason.
+- **Nothing may assume a particular turn size.** A turn is 50 and a stride is 5, but the
+  allowance is expected to vary per soldier, and the whole list was already rescaled once (10 → 50
+  so the cheapest action stopped setting the resolution of everything else). Express test
+  expectations against `MovementCosts` / `FireMode.ApCost`, never as literals.
+- **Loudness is priced off the listed cost of the ground, not what the mover paid.** Crawling
+  costs 3× so a crawler spending 3× the points would come out as loud as somebody strolling —
+  the stance cancelling itself out. `LoudnessOf` sums `link.ApCost`, deliberately.
 - **The price list is not what a soldier pays.** `MovementCosts` and `FireMode.ApCost` describe
   the world; `UnitStats.Costs` says what this soldier spends on it. Never read `FireMode.ApCost`
   or `TraversalLink.ApCost` directly in a rule — go through `CostProfile`. Movement pricing is a

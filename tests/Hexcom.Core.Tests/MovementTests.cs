@@ -24,7 +24,7 @@ public class MovementTests
     // ---- open ground -----------------------------------------------------------
 
     [Fact]
-    public void OnOpenGroundActionPointCostEqualsHexDistance()
+    public void OnOpenGroundEveryHexCostsOneStride()
     {
         var map = new BattleMap().FillDisc(Hex.Zero, 4);
         var graph = MovementGraph.Build(map);
@@ -32,20 +32,21 @@ public class MovementTests
         var reach = Pathfinder.Reachable(graph, Node(0, 0), int.MaxValue);
 
         foreach (var hex in Hex.Zero.WithinRange(4))
-            Assert.Equal(Hex.Zero.DistanceTo(hex), reach.CostTo(new NodeId(hex, 0)));
+            Assert.Equal(Hex.Zero.DistanceTo(hex) * Costs.Walk, reach.CostTo(new NodeId(hex, 0)));
     }
 
     [Fact]
     public void ATurnsWorthOfPointsReachesExactlyThatManyHexes()
     {
         // The ground must reach further than the budget, or the map is what limits the answer.
-        var map = new BattleMap().FillDisc(Hex.Zero, Costs.ActionPointsPerTurn + 2);
+        var strides = Costs.ActionPointsPerTurn / Costs.Walk;
+        var map = new BattleMap().FillDisc(Hex.Zero, strides + 2);
         var graph = MovementGraph.Build(map);
 
         var reach = Pathfinder.Reachable(graph, Node(0, 0), Costs.ActionPointsPerTurn);
         var destinations = reach.Destinations.Select(d => d.Node.Hex).ToHashSet();
 
-        Assert.Equal(Hex.Zero.WithinRange(Costs.ActionPointsPerTurn).ToHashSet(), destinations);
+        Assert.Equal(Hex.Zero.WithinRange(strides).ToHashSet(), destinations);
     }
 
     [Fact]
@@ -307,7 +308,7 @@ public class MovementTests
         map.AddLadder(new TileAddress(new Hex(0, 0), 0), new TileAddress(new Hex(0, 0), 1));
         var graph = MovementGraph.Build(map);
 
-        Assert.Equal(Costs.Ladder, Pathfinder.Reachable(graph, Node(0, 0, 1), 10).CostTo(Node(0, 0)));
+        Assert.Equal(Costs.Ladder, Pathfinder.Reachable(graph, Node(0, 0, 1), Costs.Ladder).CostTo(Node(0, 0)));
     }
 
     [Fact]
@@ -372,7 +373,7 @@ public class MovementTests
         Assert.Single(map.RegionsOf(new TileAddress(hex, 0)));
 
         var graph = MovementGraph.Build(map);
-        Assert.Equal(2, Pathfinder.Reachable(graph, Node(-1, 0), 10).CostTo(Node(1, 0)));
+        Assert.Equal(2 * Costs.Walk, Pathfinder.Reachable(graph, Node(-1, 0), 10 * Costs.Walk).CostTo(Node(1, 0)));
     }
 
     [Fact]

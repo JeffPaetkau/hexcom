@@ -232,7 +232,22 @@ public sealed class Battle
             unit.Position,
             unit.ActionPoints,
             node => CanPassThrough(unit, node),
-            link => unit.Stats.Costs.Move(link.ApCost));
+            MovementPrice(unit));
+
+    /// <summary>
+    /// What this soldier, carrying itself the way it currently is, pays per link.
+    /// </summary>
+    /// <remarks>
+    /// The one place movement gets priced. Everything that needs to agree about what a route
+    /// costs — the reachable set, the points deducted, and the tick clock a reaction window runs
+    /// on — goes through here, because if any of them disagreed the window would resolve against
+    /// a timeline the mover never paid for.
+    /// </remarks>
+    public Func<TraversalLink, int> MovementPrice(Unit unit)
+    {
+        var stance = StanceProfile.For(unit.Stance).MovementFactor;
+        return link => unit.Stats.Costs.Move(link.ApCost, stance);
+    }
 
     /// <summary>Everywhere the active unit could actually finish its move.</summary>
     public IEnumerable<ReachedNode> Destinations(Unit unit)
@@ -259,11 +274,11 @@ public sealed class Battle
         // its duration. The window walks the unit along it and ends it where it got to — at the
         // destination, facing the way it was going, unless somebody stopped it en route.
         var window = new ReactionWindow(
-            this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance, unit.Stats.Costs));
+            this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance, MovementPrice(unit)));
         window.Run();
 
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
-        if (unit.InPlay) Awareness.Hear(unit, LoudnessOf(unit, cost, path), Round);
+        if (unit.InPlay) Awareness.Hear(unit, LoudnessOf(unit, path), Round);
 
         return new MoveOutcome(true, path, cost, null, window);
     }
@@ -320,14 +335,23 @@ public sealed class Battle
     /// carrying itself: sprinting over gravel carries a long way, crawling over grass barely
     /// carries at all.
     /// </summary>
-    private double LoudnessOf(Unit unit, int apSpent, IReadOnlyList<TraversalLink> path)
+    /// <remarks>
+    /// Effort is the <b>listed</b> price of the ground crossed, not what this soldier paid for
+    /// it. Otherwise stance counts twice and cancels itself out: crawling costs three times as
+    /// much, so a crawler spending three times the points to cross one hex would be almost
+    /// exactly as loud as somebody strolling across it, which is the opposite of the point. The
+    /// same reasoning says a slow soldier is not noisier than a quick one over the same route.
+    /// </remarks>
+    private double LoudnessOf(Unit unit, IReadOnlyList<TraversalLink> path)
     {
         var surface = path
             .Select(link => Map.GetTile(link.To.Tile)?.Ground.NoiseFactor ?? 1.0)
             .DefaultIfEmpty(1.0)
             .Max();
 
-        return apSpent * surface * StanceProfile.For(unit.Stance).NoiseFactor;
+        var effort = path.Sum(link => link.ApCost);
+
+        return effort * surface * StanceProfile.For(unit.Stance).NoiseFactor;
     }
 
     // ---- shooting --------------------------------------------------------------

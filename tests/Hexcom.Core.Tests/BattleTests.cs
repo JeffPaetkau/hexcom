@@ -230,8 +230,9 @@ public class BattleTests
         var outcome = battle.Move(Node(3, 0));
 
         Assert.True(outcome.Moved);
-        Assert.Equal(3, outcome.ApSpent);
-        Assert.Equal(before - 3, unit.ActionPoints);
+        var threeStrides = 3 * battle.Costs.Walk;
+        Assert.Equal(threeStrides, outcome.ApSpent);
+        Assert.Equal(before - threeStrides, unit.ActionPoints);
         Assert.Equal(Node(3, 0), unit.Position);
         Assert.Equal(3, outcome.Path.Count);
     }
@@ -244,7 +245,7 @@ public class BattleTests
         battle.Start();
 
         battle.Move(Node(4, 0));
-        Assert.Equal(unit.Stats.ActionPoints - 4, unit.ActionPoints);
+        Assert.Equal(unit.Stats.ActionPoints - 4 * battle.Costs.Walk, unit.ActionPoints);
 
         battle.EndTurn();
         Assert.Equal(unit.Stats.ActionPoints, unit.ActionPoints);
@@ -334,6 +335,40 @@ public class BattleTests
     }
 
     // ---- stance ----------------------------------------------------------------
+
+    [Fact]
+    public void GoingProneCostsYouMostOfTheGroundItWouldHaveBoughtYouCoverOn()
+    {
+        var battle = OpenField(radius: 14);
+        var unit = battle.Deploy("Vance", Side.Player, Node(0, 0));
+        battle.Start();
+
+        var upright = Furthest(battle, unit);
+        Assert.True(battle.ChangeStance(Stance.Prone));
+        var flat = Furthest(battle, unit);
+
+        // Flat, you are harder to see, harder to notice, quieter, and lower than most cover.
+        // Until crawling cost something there was no reason ever to stand back up.
+        Assert.Equal(unit.Stats.ActionPoints / battle.Costs.Walk, upright);
+        Assert.True(flat * 3 <= upright, $"prone reached {flat} hexes, upright reached {upright}");
+
+        static int Furthest(Battle battle, Unit unit)
+            => battle.Destinations(unit).Max(d => Hex.Zero.DistanceTo(d.Node.Hex));
+    }
+
+    [Fact]
+    public void ACrouchIsThePriceBetweenTheTwo()
+    {
+        var battle = OpenField(radius: 14);
+        var unit = battle.Deploy("Vance", Side.Player, Node(0, 0));
+        battle.Start();
+
+        Assert.True(battle.ChangeStance(Stance.Crouching));
+        var crouched = battle.Reachable(unit).CostTo(Node(1, 0));
+
+        Assert.True(crouched > battle.Costs.Walk);
+        Assert.True(crouched < battle.Costs.Walk * 3);
+    }
 
     [Fact]
     public void ChangingStanceCostsAPointAndSticks()

@@ -24,21 +24,21 @@ public sealed record ReactionModel
     /// </summary>
     /// <remarks>
     /// A share rather than a fixed number, so it scales with whatever allowance a unit actually
-    /// has. That matters: the ten point turn is provisional, and the allowance is expected to
-    /// vary by soldier once stats, training and kit feed into it. Nothing here assumes ten.
+    /// has. That matters, because the allowance is expected to vary by soldier once stats,
+    /// training and kit feed into it. Nothing here may assume the standard fifty.
     /// <para>
     /// What <em>is</em> calibrated is the shape. Seven tenths puts the three rungs of the
     /// movement economy — hold everything, spend about half, spend it all — on either side of
     /// the fire mode prices, so each one is a real decision about what can still be answered
-    /// with rather than a rounding accident. Against a ten point turn that lands exactly: seven
-    /// banked is an aimed shot, three is a snap shot, and a sprint banks nothing. If the turn
-    /// size moves, this is the dial that moves with it.
+    /// with rather than a rounding accident. Against a fifty point turn it lands exactly: thirty
+    /// five banked is an aimed shot, seventeen covers a snap shot with change, and a sprint banks
+    /// nothing. If the turn size moves again, this is the dial that moves with it.
     /// </para>
     /// <para>
     /// The lever to watch is that fire mode prices are absolute while the allowance is not. A
     /// unit given more points does not merely move further; it banks a larger reserve and can
     /// afford better shots out of it. Whether that compounding is the reward a fast soldier
-    /// should get is a balance question for whenever the allowance stops being a flat ten.
+    /// should get is a balance question for whenever allowances start to differ in earnest.
     /// </para>
     /// </remarks>
     public double ReserveFraction { get; init; } = 0.7;
@@ -47,11 +47,11 @@ public sealed record ReactionModel
     /// Below this, a leftover is rounded away rather than banked.
     /// </summary>
     /// <remarks>
-    /// A cut for noise, not the price of any particular action. One or two points is never
-    /// enough to do anything with, and carrying it around invites the interface to offer
-    /// choices that are not really choices.
+    /// A cut for noise, not the price of any particular action. Anything under a couple of
+    /// strides is never enough to do something with, and carrying it around invites the interface
+    /// to offer choices that are not really choices.
     /// </remarks>
-    public int ReserveFloor { get; init; } = 2;
+    public int ReserveFloor { get; init; } = 10;
 
     /// <summary>
     /// What declaring an overwatch costs, on top of the shot being held back.
@@ -61,7 +61,7 @@ public sealed record ReactionModel
     /// not advancing, and charging much for the declaration on top of that would make holding
     /// an arc strictly worse than simply keeping points in hand.
     /// </remarks>
-    public int OverwatchCost { get; init; } = 1;
+    public int OverwatchCost { get; init; } = 5;
 
     /// <summary>
     /// How sure a watchman has to be about somebody before it will fire down its arc.

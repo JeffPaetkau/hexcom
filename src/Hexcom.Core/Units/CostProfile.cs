@@ -35,7 +35,11 @@ public sealed record CostProfile
     /// <summary>Multiplier on what every way of firing costs this soldier.</summary>
     public double Firing { get; init; } = 1.0;
 
-    public int Move(int listed) => Scale(listed, Movement);
+    /// <param name="situational">
+    /// Anything about the moment rather than the soldier — carrying yourself low, most obviously.
+    /// Folded in before rounding, so a crouching scout is not rounded twice.
+    /// </param>
+    public int Move(int listed, double situational = 1.0) => Scale(listed, Movement * situational);
 
     public int Fire(int listed) => Scale(listed, Firing);
 

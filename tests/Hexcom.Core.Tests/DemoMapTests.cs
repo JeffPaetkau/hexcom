@@ -69,12 +69,14 @@ public class DemoMapTests
         var inside = new NodeId(new Hex(2, 0), 0);
         var reach = Pathfinder.Reachable(Graph, outside, int.MaxValue);
 
-        Assert.Equal(1, reach.CostTo(inside));
+        Assert.Equal(MovementCosts.Default.Walk, reach.CostTo(inside));
 
         // One column north the wall is unbroken, so that crossing costs a detour.
         var blockedOutside = new NodeId(new Hex(1, 1), 0);
         var blockedInside = new NodeId(new Hex(2, 1), 0);
-        Assert.True(Pathfinder.Reachable(Graph, blockedOutside, int.MaxValue).CostTo(blockedInside) > 1);
+        Assert.True(
+            Pathfinder.Reachable(Graph, blockedOutside, int.MaxValue).CostTo(blockedInside)
+            > MovementCosts.Default.Walk);
     }
 
     [Fact]

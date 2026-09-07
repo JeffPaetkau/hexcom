@@ -21,6 +21,17 @@ public class ReactionTests
 {
     private static NodeId Node(int q, int r, int layer = 0) => new(new Hex(q, r), layer);
 
+    /// <summary>
+    /// The price list, so these read against the economy rather than against whatever the
+    /// numbers happen to be this month. A stride is the unit everything else is measured in.
+    /// </summary>
+    private static readonly MovementCosts Prices = MovementCosts.Default;
+
+    private static readonly ReactionModel Rules = ReactionModel.Default;
+
+    /// <summary>A full turn's allowance for an ordinary soldier.</summary>
+    private static int Turn => UnitStats.Default.ActionPoints;
+
     /// <summary>Always goes first, so the arc is declared before anyone runs across it.</summary>
     private static readonly UnitStats Watchful = UnitStats.Default with { Initiative = 30 };
 
@@ -121,16 +132,20 @@ public class ReactionTests
     // ---- the timeline ----------------------------------------------------------
 
     [Fact]
-    public void AFourPointRunPutsTheMoverThreePointsAlongAtTickThree()
+    public void AFourHexRunPutsTheMoverThreeHexesAlongAtThreeStrides()
     {
         var (battle, _, runner) = Standoff(Node(4, -2));
         var move = Route(battle, runner, Node(4, 2));
 
-        Assert.Equal(4, move.Duration);
+        Assert.Equal(4 * Prices.Walk, move.Duration);
         Assert.Equal(Node(4, -2), move.PositionAt(0));
-        Assert.Equal(Node(4, -1), move.PositionAt(1));
-        Assert.Equal(Node(4, 1), move.PositionAt(3));
-        Assert.Equal(Node(4, 2), move.PositionAt(4));
+        Assert.Equal(Node(4, -1), move.PositionAt(Prices.Walk));
+        Assert.Equal(Node(4, 1), move.PositionAt(3 * Prices.Walk));
+        Assert.Equal(Node(4, 2), move.PositionAt(4 * Prices.Walk));
+
+        // And mid-stride you are still where you set off from, which is the resolution a fifty
+        // point turn buys: a run is twenty ticks long, not four.
+        Assert.Equal(Node(4, -2), move.PositionAt(Prices.Walk - 1));
     }
 
     [Fact]
@@ -141,7 +156,7 @@ public class ReactionTests
 
         // Seven points of aiming against a four point run: the shot goes off three ticks after
         // they have arrived, which is exactly the penalty for taking too long over it.
-        Assert.Equal(move.Destination, move.PositionAt(7));
+        Assert.Equal(move.Destination, move.PositionAt(move.Duration + FireMode.Aimed.ApCost));
         Assert.Equal(move.Start, move.PositionAt(-3));
     }
 
@@ -153,12 +168,13 @@ public class ReactionTests
 
         // Walk one, vault three, walk one. The vault is a single link with a single arrival, so
         // for three ticks the runner is still standing at the foot of the wall.
-        Assert.Equal(5, move.Duration);
-        Assert.Equal(Node(1, 0), move.PositionAt(1));
-        Assert.Equal(Node(1, 0), move.PositionAt(2));
-        Assert.Equal(Node(1, 0), move.PositionAt(3));
-        Assert.Equal(Node(2, 0), move.PositionAt(4));
-        Assert.Equal(Node(3, 0), move.PositionAt(5));
+        var overTheWall = Prices.Walk + Prices.Vault;
+
+        Assert.Equal(overTheWall + Prices.Walk, move.Duration);
+        Assert.Equal(Node(1, 0), move.PositionAt(Prices.Walk));
+        Assert.Equal(Node(1, 0), move.PositionAt(overTheWall - 1));
+        Assert.Equal(Node(2, 0), move.PositionAt(overTheWall));
+        Assert.Equal(Node(3, 0), move.PositionAt(move.Duration));
     }
 
     [Fact]
@@ -177,7 +193,9 @@ public class ReactionTests
         var (battle, walker) = Barricaded();
         var move = Route(battle, walker, Node(3, 0));
 
-        Assert.Equal([0, 1, 4, 5], move.ArrivalTicks.ToArray());
+        Assert.Equal(
+            new[] { 0, Prices.Walk, Prices.Walk + Prices.Vault, Prices.Walk + Prices.Vault + Prices.Walk },
+            move.ArrivalTicks.ToArray());
     }
 
     // ---- what banks ------------------------------------------------------------
@@ -188,7 +206,7 @@ public class ReactionTests
         var (battle, watchman, _) = Standoff(Node(4, -2));
         battle.EndTurn();
 
-        Assert.Equal(7, watchman.Reserve);
+        // Seven tenths of fifty, which is exactly what taking your time over a shot costs.
         Assert.Equal(FireMode.Aimed.ApCost, watchman.Reserve);
         Assert.True(watchman.CanReact);
     }
@@ -198,12 +216,12 @@ public class ReactionTests
     {
         var (battle, watchman, _) = Standoff(Node(4, -2));
         battle.Move(Node(5, 0));
-        Assert.Equal(5, watchman.ActionPoints);
+        Assert.Equal(Turn / 2, watchman.ActionPoints);
 
         battle.EndTurn();
 
-        Assert.Equal(3, watchman.Reserve);
-        Assert.Equal(FireMode.Snap.ApCost, watchman.Reserve);
+        // Enough to get a round off in a hurry, and not enough for anything better.
+        Assert.InRange(watchman.Reserve, FireMode.Snap.ApCost, FireMode.Standard.ApCost - 1);
     }
 
     [Fact]
@@ -224,7 +242,7 @@ public class ReactionTests
     {
         var (battle, watchman, _) = Standoff(Node(4, -2));
         battle.Move(Node(0, 8));
-        Assert.Equal(2, watchman.ActionPoints);
+        Assert.Equal(Turn - 8 * Prices.Walk, watchman.ActionPoints);
 
         battle.EndTurn();
 
@@ -242,15 +260,18 @@ public class ReactionTests
         deliberate.Battle.Move(Node(3, 0));
         deliberate.Battle.EndTurn();
 
-        Assert.Equal(7, twitchy.Watchman.Reserve);
-        Assert.Equal(2, deliberate.Watchman.Reserve);
+        // Turned up, everything unspent banks and there is enough for the best shot going.
+        // Turned down, what carries will not buy even the cheapest one.
+        Assert.Equal(Turn - 3 * Prices.Walk, twitchy.Watchman.Reserve);
+        Assert.True(twitchy.Watchman.Reserve >= FireMode.Aimed.ApCost);
+        Assert.True(deliberate.Watchman.Reserve < FireMode.Snap.ApCost);
     }
 
     [Fact]
     public void TheReserveAndTheArcBothExpireWhenTheWatchmanComesRoundAgain()
     {
         var (battle, watchman, runner) = Overwatched(OverwatchArc.Standard, Node(4, -2));
-        Assert.Equal(6, watchman.Reserve);
+        Assert.True(watchman.CanReact);
         Assert.NotNull(watchman.Overwatch);
 
         battle.EndTurn();
@@ -271,7 +292,7 @@ public class ReactionTests
 
         Assert.True(battle.SetOverwatch(OverwatchArc.Narrow, HexDirection.North));
 
-        Assert.Equal(8, watchman.ActionPoints); // one to declare, one to turn on the spot
+        Assert.Equal(Turn - Rules.OverwatchCost - Prices.TurnInPlace, watchman.ActionPoints);
         Assert.Equal(HexDirection.North, watchman.Facing);
         Assert.Equal(OverwatchArc.Narrow, watchman.Overwatch!.Value.Arc);
         Assert.Equal(HexDirection.North, watchman.Overwatch!.Value.Centre);
@@ -284,7 +305,7 @@ public class ReactionTests
 
         Assert.True(battle.SetOverwatch(OverwatchArc.Narrow));
 
-        Assert.Equal(9, watchman.ActionPoints);
+        Assert.Equal(Turn - Rules.OverwatchCost, watchman.ActionPoints);
         Assert.Equal(HexDirection.NorthEast, watchman.Overwatch!.Value.Centre);
     }
 
@@ -336,7 +357,7 @@ public class ReactionTests
         var (battle, watchman, _) = Standoff(Node(4, -2));
         battle.EndTurn();
 
-        Assert.Equal(7, watchman.Reserve);
+        Assert.True(watchman.CanReact);
 
         var outcome = battle.Move(Node(4, 2));
 
@@ -351,11 +372,11 @@ public class ReactionTests
         var (battle, watchman, _) = Overwatched(
             OverwatchArc.Standard, Node(4, -2), reactions: ReactionModel.Deliberate);
 
-        Assert.Equal(2, watchman.Reserve);
+        Assert.True(watchman.Reserve < FireMode.Snap.ApCost);
 
         var outcome = battle.Move(Node(4, 2));
 
-        // Two points is not a shot in any weapon, so there is nothing to offer.
+        // What banked is not a shot in any weapon, so there is nothing to offer.
         Assert.Empty(outcome.Reactions!.Offers);
     }
 
@@ -510,7 +531,7 @@ public class ReactionTests
 
         // Six banked points buy a snap and a standard shot at list price. Knock a fifth off and
         // the aimed shot comes into reach as well, which is the whole point of the mount.
-        Assert.Equal(6, offer.Reserve);
+        Assert.True(offer.Reserve < FireMode.Aimed.ApCost);
         Assert.Contains(offer.Options, o => o.Mode == FireMode.Aimed);
         Assert.All(offer.Options, o => Assert.True(o.Forecast.ApCost < o.Mode.ApCost));
     }
@@ -612,11 +633,11 @@ public class ReactionTests
     public void AnOverwatchShotComesOutOfTheReserveAndNotOutOfNextTurn()
     {
         var (battle, watchman, _) = Overwatched(OverwatchArc.Standard, Node(4, -2));
-        Assert.Equal(6, watchman.Reserve);
+        var banked = watchman.Reserve;
 
         var shot = battle.Move(Node(4, 2)).Reactions!.Resolutions.Single().Shot;
 
-        Assert.Equal(6 - shot.Mode.ApCost, watchman.Reserve);
+        Assert.Equal(banked - shot.Forecast.ApCost, watchman.Reserve);
         Assert.Equal(0, watchman.ActionPoints);
     }
 

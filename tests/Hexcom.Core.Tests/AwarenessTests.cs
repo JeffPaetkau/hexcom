@@ -216,30 +216,55 @@ public class AwarenessTests
         Assert.True(contact.State <= AwarenessState.Searching, $"noise reached {contact.State}");
     }
 
+    /// <summary>
+    /// Cross two hexes towards the same listener, and report whether the move actually happened
+    /// as well as what was heard. Crawling costs three times as much, so a route an upright
+    /// soldier strolls can be out of a crawler's reach — and a move that never happened makes no
+    /// noise, which would pass a quietness test without proving anything.
+    /// </summary>
+    private static (bool Moved, double Heard) Approach(GroundType ground, Stance stance)
+    {
+        var battle = Field(new BattleMap().FillDisc(Hex.Zero, 14, ground: ground));
+        var sneak = battle.Deploy("Sneak", Side.Player, Node(-4, 0));
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(0, 0), facing: HexDirection.SouthWest);
+        battle.Start();
+
+        while (battle.Active != sneak) battle.EndTurn();
+        if (stance != Stance.Standing) Assert.True(battle.ChangeStance(stance));
+
+        var moved = battle.Move(Node(-2, 0)).Moved;
+        return (moved, battle.Awareness.Of(sentry.Id, sneak.Id).Detection);
+    }
+
     [Fact]
     public void CrawlingOverGrassIsMuchQuieterThanRunningOverGravel()
     {
-        // Same four hex approach, ending the same short distance from the same listener.
-        static double NoiseMade(GroundType ground, Stance stance)
-        {
-            var battle = Field(new BattleMap().FillDisc(Hex.Zero, 14, ground: ground));
-            var sneak = battle.Deploy("Sneak", Side.Player, Node(-6, 0));
-            var sentry = battle.Deploy("Sentry", Side.Hostile, Node(0, 0), facing: HexDirection.SouthWest);
-            battle.Start();
+        var loud = Approach(GroundType.Gravel, Stance.Standing);
+        var quiet = Approach(GroundType.Grass, Stance.Prone);
 
-            while (battle.Active != sneak) battle.EndTurn();
-            if (stance != Stance.Standing) battle.ChangeStance(stance);
-            battle.Move(Node(-2, 0));
+        Assert.True(loud.Moved);
+        Assert.True(quiet.Moved, "the crawl never happened, so its silence proves nothing");
 
-            return battle.Awareness.Of(sentry.Id, sneak.Id).Detection;
-        }
+        Assert.True(loud.Heard > 0, "running over gravel two hexes away went unheard");
+        Assert.Equal(0, quiet.Heard); // crawling over grass simply does not carry that far
+    }
 
-        var loud = NoiseMade(GroundType.Gravel, Stance.Standing);
-        var quiet = NoiseMade(GroundType.Grass, Stance.Prone);
+    [Fact]
+    public void ACrawlIsQuieterThanAWalkOverTheSameGroundEvenThoughItCostsFarMore()
+    {
+        var walked = Approach(GroundType.Gravel, Stance.Standing);
+        var crawled = Approach(GroundType.Gravel, Stance.Prone);
 
-        Assert.True(loud > 0, "running over gravel two hexes away went unheard");
-        Assert.Equal(0, quiet); // crawling over grass simply does not carry that far
-        Assert.True(quiet < loud);
+        Assert.True(walked.Moved);
+        Assert.True(crawled.Moved);
+
+        // The trap here is pricing noise off what the move cost. Crawling is three times the
+        // price, so a crawler spending three times the points to cross the same two hexes would
+        // come out very nearly as loud as somebody strolling over them — cancelling the whole
+        // reason to go flat. Effort is a property of the ground crossed, not of the bill.
+        Assert.True(
+            crawled.Heard < walked.Heard,
+            $"crawling was heard at {crawled.Heard:0.0} against walking at {walked.Heard:0.0}");
     }
 
     // ---- passing the word ------------------------------------------------------

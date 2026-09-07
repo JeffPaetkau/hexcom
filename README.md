@@ -64,7 +64,7 @@ being held, and the yellow figure in the turn order is what that unit has banked
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry's wedge and watch it stay unaware while the
 same walk in front of it does not. The spotter on the roof sees most of the map and carries the
-radio, so it is the one worth reaching first — and getting up there costs six of ten points, so
+radio, so it is the one worth reaching first — and the ladder costs thirty of fifty points, so
 whoever wants that position gives up their turn to take it.
 
 You drive both sides, so overwatch is easy to try: give a sentry a narrow arc with `V`, end its
@@ -86,7 +86,10 @@ the same weapon shoot worse.
   never occupied.
 - **Movement graph** — typed, individually priced links (walk, vault, climb, ladder, drop,
   stairs, door, crawl) instead of uniform grid steps. Climbs, ledges and drops are generated
-  from floor heights; ladders and stairs are authored.
+  from floor heights; ladders and stairs are authored. A stride costs five of fifty points, so
+  ten hexes of open ground is a whole turn — and how you carry yourself is priced too: a crouch
+  costs half again per hex and a crawl three times, so going flat buys its concealment with
+  ground rather than for nothing.
 - **Pathfinding** — Dijkstra over action points, returning the whole reachable set. Transit
   regions are pathed through but excluded from valid destinations.
 - **Sight and cover** — one trace answers both, because they are the same question. The top of
@@ -111,7 +114,7 @@ the same weapon shoot worse.
   magnitude, so a position is flankable rather than merely approachable. Facing changes how
   readily something is *noticed*, never whether it could be seen — line of sight stays geometry.
   Moving turns you to face your line of travel for free; watching one way while standing still
-  costs a point.
+  costs a fraction of a stride.
 - **Weapons, shooting and protection** — beam against kinetic, and each defeats what the other
   cannot. Shields soak beams and shrug at solid objects; ablative plate stops rounds and cooks
   under a beam. Both are tracked **per side of the body** — front, two shoulders, two flanks and
@@ -130,7 +133,7 @@ the same weapon shoot worse.
   a round lands; placing one on a named plate is something a soldier earns, and costs accuracy.
 - **Everyone pays their own prices** — the price list describes the world, but what a given
   soldier spends on it is about them. A scout quick over ground and slow on the trigger and a
-  gunner the other way round spend the same ten points on very different turns, and gear that
+  gunner the other way round spend the same fifty points on very different turns, and gear that
   shaves a point off firing is a multiplier on the wearer. Inside a reaction window that is not
   only economy: cost is time, so the slow shooter's round lands later and catches the runner
   further along.
