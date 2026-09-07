@@ -175,3 +175,27 @@ Each increment: build the rules with tests → wire enough of the sandbox to see
 
 Keeping the doc current is not bookkeeping. It is what lets a fresh session pick the project up
 from `CLAUDE.md`, the README, the design doc and `git log` without needing the conversation.
+
+### Say when it is a good moment to start a new session
+
+**At the end of each increment, tell the user that this is a clean point to start a new session
+if it is.** One line, no preamble, then stop — it is a note, not a ritual, and it should not turn
+into a nag or a sales pitch for ending the conversation.
+
+A point is clean when all of these hold:
+
+- `dotnet test` green and `dotnet build Hexcom.sln` succeeds
+- `README.md` and `docs/design.html` describe what now exists, not what used to
+- the artifact is republished
+- the work is committed and pushed
+- **nothing decided in conversation is still only in the conversation**
+
+The last one is the whole reason the rhythm exists and the only one that is easy to get wrong.
+A number argued down from one value to another, an alternative considered and rejected, a bug
+found and the reasoning that found it — if it shaped the code, it belongs in a `<remarks>` block
+or the design doc before the session ends. A fresh session inherits the files and `git log`. It
+inherits none of the argument.
+
+Mid-increment is **not** a clean point however tidy the tree looks: a half-built system with
+green tests is exactly the state the docs cannot describe. Neither is a point where a design
+question has been raised and not yet answered or recorded as Open.
