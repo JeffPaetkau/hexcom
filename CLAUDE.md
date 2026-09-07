@@ -23,6 +23,34 @@ is where a finding about somebody else's territory goes instead of into their co
 
 If you have not been told which territory you are in, ask before editing.
 
+## Work in a worktree
+
+**Any session that is going to write code starts a worktree, first thing.** Use `EnterWorktree`
+and name it for the branch you are about to work on — `core/utility-scoring`, `view/hud-rework`.
+Territory docs and `docs/decisions.md` prevent sessions colliding *semantically*; only a worktree
+stops two of them writing the same file in the same directory.
+
+Sessions that are only reading, or that are editing `docs/map.md` and `docs/decisions.md` as the
+master session, stay on `master` in the main directory. A worktree for a doc edit is friction
+with nothing to show for it.
+
+Three things about how it behaves here:
+
+- **It branches from `origin/master`, not your local HEAD.** So push `master` before starting a
+  worktree, or the new one will not contain your last commit.
+- **Merging happens in the main working directory.** A branch can only be checked out in one
+  worktree at a time, which is precisely what makes "one territory, one branch" true rather than
+  merely agreed — but it also means the worktree holding `core/x` cannot be the one that merges
+  it into `master`.
+- **Each worktree builds from scratch.** `bin/` and `obj/` are per-directory, so the first
+  `dotnet test` in a new worktree is slow and the rest are normal. Packages come from the global
+  cache, so nothing is re-downloaded.
+
+**Cleaning up.** Finish the increment as usual — tests green, docs updated, committed — then push
+the branch and say it is ready to merge. **Do not remove a worktree yourself.** Removing one with
+commits that are not on `master` throws work away, so exiting and removing is the user's call:
+offer it once the branch is merged, and leave it alone otherwise.
+
 ## The one rule
 
 `src/Hexcom.Core` is plain .NET and **never references a game engine**. Every rule lives there;

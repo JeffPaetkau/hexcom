@@ -21,6 +21,10 @@ mono_crash.*.json
 # Per-machine tool settings (absolute paths, local permission grants)
 .claude/settings.local.json
 
+# Worktrees created inside the repo by EnterWorktree. Their contents are a
+# checkout of this same repository, so they must never be tracked by it.
+.claude/worktrees/
+
 # OS
 Thumbs.db
 desktop.ini

@@ -1,8 +1,14 @@
 # Decisions and cross-boundary findings
 
 **Append-only.** Add entries at the bottom. Never edit or reorder one — if an entry turns out to
-be wrong, write a new entry that supersedes it and say so in both directions. Append-only is what
-lets several sessions write here on the same day without conflicting.
+be wrong, write a new entry that supersedes it and say so in both directions.
+
+**Merging two branches that both appended here conflicts, and the resolution is always the
+same: keep both hunks, in either order, and renumber if two entries took the same number.**
+Nothing here is ever lost to a merge, because nothing here is ever changed in place — which is
+the entire reason for the append-only rule. That is different from an edited file, where two
+sessions can disagree about the same line and one of them has to lose. If you hit this conflict,
+you are not doing it wrong; keep both and move on.
 
 **What belongs here:** anything that crosses a territory boundary. A decision that changes a
 frozen contract in [map.md](map.md). A finding about somebody else's territory that you must not

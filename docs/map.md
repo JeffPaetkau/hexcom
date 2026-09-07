@@ -121,15 +121,18 @@ dotnet test
 
 1. **Read every doc, write one.** Plus `decisions.md`, which is everybody's.
 2. **`decisions.md` is append-only.** Never edit or reorder an entry; supersede it with a new
-   one. Append-only is the one file shape that survives several sessions writing on the same day.
+   one. Two branches that both appended will conflict on merge — that is expected, and the
+   resolution is always to keep both hunks and renumber a collision. Nothing there is ever lost
+   to a merge, because nothing there is ever changed in place.
 3. **A finding outside your territory goes in `decisions.md`, not in the neighbour's code.**
    This is the pressure valve, and it is the whole point of the scheme. A view session *will*
    learn something about the rules. Write it down and let Core pick it up.
 4. **Only Core republishes the artifact.** One URL, one publisher; see the design doc rules in
    `CLAUDE.md`. Other territories update their own doc and leave `design.html` alone.
-5. **Concurrent sessions need separate worktrees.** These docs stop sessions colliding
-   *semantically*. They do nothing about two sessions writing the same file in the same working
-   tree — only a worktree or a branch does that.
+5. **A session that writes code works in a worktree** — standard, and set out in `CLAUDE.md`.
+   These docs stop sessions colliding *semantically*; they do nothing about two sessions writing
+   the same file in the same directory. Only a worktree does that. Master sessions editing this
+   file stay on `master`.
 6. **Say when it is a good moment to start a new session.** The rhythm in `CLAUDE.md` applies per
    territory: a territory is at a clean point when its own doc, its tests and its commits agree,
    and nothing decided in conversation is still only in the conversation.
