@@ -72,11 +72,21 @@ public static class Pathfinder
     /// not know about — an enemy standing in the way, a locked door, a burning tile. The start
     /// is always allowed, so a unit already somewhere forbidden can still walk out of it.
     /// </param>
+    /// <param name="price">
+    /// What this particular traveller pays for a link, if not the listed price.
+    /// </param>
+    /// <remarks>
+    /// Pricing is a parameter rather than a property of the graph on purpose. The graph describes
+    /// the ground — a ladder is a ladder — and gets built once for the map; what a given soldier
+    /// spends climbing it depends on them, and rebuilding the whole graph per unit to express
+    /// that would be absurd.
+    /// </remarks>
     public static ReachabilityResult Reachable(
         MovementGraph graph,
         NodeId start,
         int apBudget,
-        Func<NodeId, bool>? canEnter = null)
+        Func<NodeId, bool>? canEnter = null,
+        Func<TraversalLink, int>? price = null)
     {
         var reached = new Dictionary<NodeId, ReachedNode>();
         if (!graph.Contains(start)) return new ReachabilityResult(graph, start, apBudget, reached);
@@ -92,7 +102,7 @@ public static class Pathfinder
 
             foreach (var link in graph.LinksFrom(current))
             {
-                var cost = priority + link.ApCost;
+                var cost = priority + (price?.Invoke(link) ?? link.ApCost);
                 if (cost > apBudget) continue;
                 if (canEnter is not null && !canEnter(link.To)) continue;
                 if (reached.TryGetValue(link.To, out var existing) && existing.Cost <= cost) continue;

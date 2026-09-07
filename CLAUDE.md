@@ -12,7 +12,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 227 tests, ~0.7s
+dotnet test                 # 238 tests, ~0.9s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -82,8 +82,17 @@ one.
   round is rolled against it in `Resolve`. Anything that wants one answer takes `Aspects[0]` or
   `ShotPlan.LikeliestFace`.
 - **Nothing may assume ten action points.** The turn allowance is provisional and expected to
-  vary per soldier. `ReserveFraction` is a share for that reason. Fire mode prices are still
-  absolute, which is a recorded open question rather than an oversight.
+  vary per soldier. `ReserveFraction` is a share for that reason.
+- **The price list is not what a soldier pays.** `MovementCosts` and `FireMode.ApCost` describe
+  the world; `UnitStats.Costs` says what this soldier spends on it. Never read `FireMode.ApCost`
+  or `TraversalLink.ApCost` directly in a rule — go through `CostProfile`. Movement pricing is a
+  `Func` handed to `Pathfinder.Reachable`, never baked into the graph, which is built once per
+  map. `CommittedMove` must be given the same profile the route was costed with or the reaction
+  clock stops matching the points actually spent.
+- **Arc edges are exclusive, on purpose.** Hex bearings are exact multiples of 60°, so a place
+  sitting precisely on the edge of a 120° arc is the common case. Comparisons add
+  `Geometry2D.AngleEpsilonDegrees` so the edge falls to the *wider* arc deterministically — one
+  spoke over is the corner of the eye, not full attention. Two tests pin this; don't "fix" them.
 - `dotnet test -v q` hides assertion messages. Use
   `--logger "console;verbosity=detailed"` and grep for `Error Message`.
 - Bash heredocs in this environment break on apostrophes in the body. Use the Write/Edit tools

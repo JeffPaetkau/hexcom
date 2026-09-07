@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 9 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 10 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 227 tests run in about half a second today.</li>
+        <li>The rules are unit-testable headless — 238 tests run in about a second today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1168,15 +1168,36 @@
         than rounding it away.
       </p>
 
+      <p>
+        The price list is not the same thing as what a given soldier pays for it. A ladder is a
+        ladder and a snap shot is a snap shot — that is a fact about the world — but what
+        <em>this</em> trooper spends climbing one or getting one off is about them, their
+        training and their kit, and it lives on the unit as a pair of multipliers. So a scout
+        who is quick over ground and slow to bring a weapon to bear, and a gunner who is the
+        other way round, spend the same ten points on entirely different turns. A stabilised
+        mount that takes a standard shot from five points to four is a multiplier on the wearer,
+        not a change to what a standard shot is.
+      </p>
+      <p>
+        Pricing is applied when a route is costed rather than baked into the movement graph. The
+        graph describes the ground and is built once for the map; rebuilding it per soldier to
+        say that one of them is slow would be absurd. And because cost is time inside a reaction
+        window, none of this is only economy: a watchman slow on the trigger places its shot
+        later on the mover's timeline and catches them further along the route. Being the slow
+        one has a consequence measured in ticks.
+      </p>
+
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          Fire mode prices are absolute while the allowance is not. A soldier given more points
-          does not merely move further — they bank a larger reserve and can afford better shots
-          out of it, so the advantage compounds across three systems at once. That may be exactly
-          the reward speed should buy, or it may want a compensating mechanism. The question only
-          becomes real when the allowance stops being a flat ten, and it should be answered then
-          rather than guessed at now.
+          Two things to settle when the allowance stops being a flat ten. First, prices are
+          absolute while the allowance is not, so a soldier given more points does not merely
+          move further — they bank a larger reserve and afford better shots out of it, and the
+          advantage compounds across three systems at once. Second, the floor of one point per
+          action is where ten runs out of resolution: a walk already costs one, so no multiplier
+          can make a soldier meaningfully quicker over open ground, only slower. Both point at
+          the same answer — a bigger turn — and both should be decided together rather than
+          guessed at now.
         </p>
       </div>
 
@@ -1295,10 +1316,31 @@
         worth — at snap shot speed. That is the whole reason it is strong.
       </p>
       <p>
-        The trigger is deliberately geometric: the mover is inside the declared arc, and visible.
-        Watching a piece of ground <em>is</em> how movement across it gets spotted, so the defence
-        against an overwatch is to break the line or go round the arc — both of which the sight
-        solver and the facing model already answer. Nothing about awareness gates it.
+        A watchman only fires at somebody it has actually <strong>noticed</strong>. Geometry alone
+        is not enough: without that gate, a sentry blazes away at a prone crawler forty metres
+        out with four per cent of itself showing — someone the detection model says it has not
+        registered at all — and overwatch becomes the one place in the game where something
+        happens to a hidden soldier without the awareness ladder being consulted.
+      </p>
+      <p>
+        The gate needs a companion to be worth anything, though, and it is worth naming why.
+        Looking normally happens only on your own turn, so a soldier who was behind a building
+        when the sentry last looked could step out into a declared arc and cross it untouched —
+        the canonical overwatch situation, defeated by the turn order. So <strong>holding an arc
+        is looking down it</strong>: movement inside gets a proper detection check at the tick it
+        happens, through the ordinary model. Stance, cover, range, exposure and perception all
+        still apply, so a careful approach is as invisible to a watchman as to anybody else, and
+        a jog across the open is not. That extra look outside your own turn is precisely what the
+        point and the held reserve bought.
+      </p>
+      <p>
+        Arc edges are exclusive, and decided rather than left to arithmetic. Hex bearings are
+        exact multiples of sixty degrees, so a place sitting precisely on the edge of a hundred
+        and twenty degree arc is the common case and not a rare one — the maths that gets there
+        lands on 60.00000000000001 as readily as on 60. The edge belongs to the wider arc, in
+        declared overwatches and in attention cones alike. A standard arc held toward one spoke
+        therefore does not reach the next spoke over: cover that ground and you declare a wider
+        arc, and shoot worse down all of it.
       </p>
 
       <h3>Action points are time, inside the window</h3>
@@ -1409,15 +1451,13 @@
       </div>
 
       <div class="aside">
-        <span class="tag">Open</span>
+        <span class="tag">Settled</span>
         <p>
-          Whether an <em>undetected</em> mover should be able to cross an overwatch arc untouched.
-          Today it cannot: the trigger is geometric, so a watchman shoots at anything it can see
-          moving in its arc regardless of what it knew a moment earlier, and the shot itself
-          settles the awareness question. That is defensible — the defence is to break the line,
-          not to be sneaky in the open — but it is the one place in the game where something
-          happens to a hidden unit without the detection ladder being consulted. Worth revisiting
-          once surprise reactions exist, since the two overlap.
+          An undetected mover crosses a watched arc untouched, because a watchman shoots at
+          people rather than at bearings. The arc buys it a look at the moment of the crossing,
+          not certainty about what is there. Both halves are switchable — the bar it has to
+          clear, and whether it gets the look at all — because turning the look off is a real
+          design position, just a much weaker overwatch.
         </p>
       </div>
     </div>
@@ -1555,7 +1595,9 @@
         <figcaption>
           <b>Figure 5 — What a shot can reach</b><br>
           The same soldier, seen from two bearings thirty degrees apart. Shares are the chance a
-          round finds that plate; the angle is how far off square it arrives.
+          round finds that plate; the angle is how far off square it arrives. Both bearings
+          average 87.5% of a slug through — that is the normalisation — while the plates they
+          reach are entirely different.
         </figcaption>
         <div class="scroll">
           <table>
@@ -1566,8 +1608,8 @@
               <tr><td class="name" rowspan="3">Square on</td><td>Front</td><td class="n">50%</td><td class="n">0°</td><td class="n">100%</td></tr>
               <tr><td>Front left</td><td class="n">25%</td><td class="n">60°</td><td class="n">75%</td></tr>
               <tr><td>Front right</td><td class="n">25%</td><td class="n">60°</td><td class="n">75%</td></tr>
-              <tr><td class="name" rowspan="2">On the corner</td><td>Front</td><td class="n">50%</td><td class="n">30°</td><td class="n">93%</td></tr>
-              <tr><td>Front left</td><td class="n">50%</td><td class="n">30°</td><td class="n">93%</td></tr>
+              <tr><td class="name" rowspan="2">On the corner</td><td>Front</td><td class="n">50%</td><td class="n">30°</td><td class="n">87%</td></tr>
+              <tr><td>Front left</td><td class="n">50%</td><td class="n">30°</td><td class="n">87%</td></tr>
             </tbody>
           </table>
         </div>
@@ -1581,13 +1623,27 @@
         rather than settling on one.
       </p>
       <p>
-        The arithmetic in the table has a consequence worth naming. Square on, half the rounds
-        find an unangled plate; on the corner, every round arrives mildly angled. Averaged, the
-        corner is the <em>better</em> shot for a slugthrower and the square approach is the
-        better place to be stood — the opposite of the tank instinct, and correct here, because
-        six thin plates are not one thick sloped one. It costs a point to turn, so choosing which
-        to present is a real use of an action point, and a reactor weighing where along a
-        committed move to catch a runner now prefers the corner without being told to.
+        The averages are deliberately flattened. Left raw, the arithmetic leaks: square on, half
+        the rounds find an unangled plate and half skip off a shoulder, while on the corner every
+        round arrives mildly angled — which works out slightly better for the shooter. That is an
+        artefact of the abstraction and not something anyone should be playing around. A hexagon
+        is bookkeeping for which plate wears, not a claim that soldiers are hexagonal, so every
+        bearing is normalised against the head-on case and expects the same damage.
+      </p>
+      <p>
+        What still varies, and is the part worth having, is <em>which side</em> gets worn. Come at
+        somebody square and you are chewing one plate with a bit of spill onto both shoulders;
+        come at a corner and you split it evenly between two. Armour never recovers, so where the
+        wear lands decides how quickly they run out of good sides — and a shield that has
+        collapsed on one side can be turned away from the threat for a point, which is what makes
+        turning a combat decision rather than a looking one.
+      </p>
+      <p>
+        Ordinary soldiers do not choose. You shoot at a man and the geometry decides where it
+        lands, which is the right default and keeps the decision spatial rather than menu-driven.
+        Placing a round on a named plate is something a soldier <strong>earns</strong>: it is off
+        by default, and it costs accuracy to take the time to pick. You also cannot call a plate
+        that is not in view, so a called shot at somebody's back still means getting behind them.
       </p>
 
       <div class="aside">
@@ -1634,8 +1690,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 9</span>
-    <span>227 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 10</span>
+    <span>238 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

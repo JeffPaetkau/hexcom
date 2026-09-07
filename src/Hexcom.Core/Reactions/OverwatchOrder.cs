@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Hexcom.Core.Battles;
+using Hexcom.Core.Geometry;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
 
@@ -49,16 +50,16 @@ public sealed record OverwatchArc(string Name, double Degrees, double AimBonus)
 /// </remarks>
 public readonly record struct OverwatchOrder(HexDirection Centre, OverwatchArc Arc)
 {
-    /// <summary>
-    /// Tolerance on the arc edge. Hex bearings are exact multiples of sixty degrees, so a place
-    /// lying precisely on the edge of a sixty degree arc is a real case rather than a rare one,
-    /// and comparing the two as floats without slack decides it by rounding error.
-    /// </summary>
-    private const double EdgeTolerance = 1e-9;
-
     /// <summary>Whether a place falls inside the watched arc, seen from <paramref name="from"/>.</summary>
+    /// <remarks>
+    /// The edge is exclusive and it is decided the same way the attention cones decide theirs —
+    /// see <see cref="Geometry2D.AngleEpsilonDegrees"/>. A standard arc held toward one spoke
+    /// therefore does not reach the next spoke over: cover that ground and you declare a wider
+    /// arc, and shoot worse down all of it.
+    /// </remarks>
     public bool Covers(Battle battle, NodeId from, NodeId place)
-        => battle.AngleOffDegrees(from, Centre, place) <= Arc.HalfWidthDegrees + EdgeTolerance;
+        => battle.AngleOffDegrees(from, Centre, place) + Geometry2D.AngleEpsilonDegrees
+           <= Arc.HalfWidthDegrees;
 
     public override string ToString() => $"watching {Centre}, {Arc}";
 }

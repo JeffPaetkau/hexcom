@@ -37,8 +37,11 @@ public sealed record ReactionShot(
     double AimBonus,
     ShotPlan Forecast)
 {
-    /// <summary>The tick this lands on. Action points are time inside the window.</summary>
-    public int ResolvesAt => At + Mode.ApCost;
+    /// <summary>
+    /// The tick this lands on. Action points are time inside the window, and it is the price
+    /// <em>this</em> reactor pays that counts, not the one on the mode.
+    /// </summary>
+    public int ResolvesAt => At + Forecast.ApCost;
 
     public override string ToString()
         => $"{Reactor.Name} {Mode.Name} at t{At}, lands t{ResolvesAt} ({Forecast.HitChance:P0})";
@@ -207,6 +210,7 @@ public sealed class ReactionWindow
             if (reactor == Mover) continue;
             if (reactor.Reserve <= 0) continue;
             if (reactor.Overwatch is not { } order) continue;
+            if (!Registers(reactor, order)) continue;
 
             var options = OverwatchOptions(reactor, order);
             if (options.Count == 0) continue;
@@ -221,6 +225,44 @@ public sealed class ReactionWindow
 
             _offers.Add(new ReactionOffer(reactor, ReactionKind.Overwatch, reactor.Reserve, options, best));
         }
+    }
+
+    /// <summary>
+    /// Whether the watchman actually notices the crossing, and is sure enough to shoot at it.
+    /// </summary>
+    /// <remarks>
+    /// Holding an arc is the act of looking down it, so the crossing gets a proper look at the
+    /// tick it happens — through the ordinary detection model, which means stance, cover, range
+    /// and exposure all still protect a careful approach. What comes out of that look, on top of
+    /// whatever the watchman already believed, has to clear the bar in the reaction model before
+    /// a trigger is pulled. A soldier nobody has noticed is not shot at.
+    /// </remarks>
+    private bool Registers(Unit reactor, OverwatchOrder order)
+    {
+        var rules = _battle.Reactions;
+
+        if (rules.OverwatchLooks && TriggerTick(reactor, order) is { } tick)
+            _battle.Awareness.Notice(reactor, Mover, Move.PoseAt(tick), _battle.Round);
+
+        return _battle.Awareness.Of(reactor.Id, Mover.Id).State >= rules.OverwatchRequires;
+    }
+
+    /// <summary>
+    /// The first moment on the timeline the mover is both inside the arc and in view. Null if it
+    /// never is, in which case there was nothing to notice.
+    /// </summary>
+    private int? TriggerTick(Unit reactor, OverwatchOrder order)
+    {
+        foreach (var tick in Move.ArrivalTicks)
+        {
+            var pose = Move.PoseAt(tick);
+            if (!order.Covers(_battle, reactor.Position, pose.Position)) continue;
+            if (!_battle.Sight.CanSee(reactor.Vantage, pose.Vantage)) continue;
+
+            return tick;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -239,13 +281,16 @@ public sealed class ReactionWindow
 
         foreach (var mode in reactor.Weapon.Modes)
         {
-            if (mode.ApCost > reactor.Reserve) continue;
+            // What this watchman pays, not what the mode lists — and inside a window that price
+            // is also how long the shot takes, so a slow shooter catches the mover later.
+            var cost = reactor.Stats.Costs.Fire(mode.ApCost);
+            if (cost > reactor.Reserve) continue;
 
             ReactionShot? best = null;
 
-            foreach (var start in StartTicksFor(mode.ApCost))
+            foreach (var start in StartTicksFor(cost))
             {
-                var landing = Math.Min(start + mode.ApCost, Move.Duration);
+                var landing = Math.Min(start + cost, Move.Duration);
                 var pose = Move.PoseAt(landing);
 
                 if (!order.Covers(_battle, reactor.Position, pose.Position)) continue;

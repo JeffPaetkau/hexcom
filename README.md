@@ -123,10 +123,17 @@ the same weapon shoot worse.
   a powered blade does neither.
 - **A body is a hexagon too** — so a shot is never at one plate. Head-on you can reach half the
   front and a quarter of each shoulder; on the corner, two plates equally. Which one a round
-  finds is rolled against those shares. A slug that arrives at an angle skips off and loses up to
-  half its damage; a beam lands where it lands and burns. So catching somebody on the corner is
-  the better shot with a slugthrower, and standing square to the threat is the better place to
-  be — which makes turning on the spot worth its action point.
+  finds is rolled against those shares. A slug that arrives at an angle skips off and loses some
+  of its damage; a beam lands where it lands and burns. The averages are flattened so the
+  bearing you approach from decides *which side wears*, never how much gets through — a hexagon
+  is bookkeeping, not a claim that soldiers are hexagonal. Ordinary soldiers do not choose where
+  a round lands; placing one on a named plate is something a soldier earns, and costs accuracy.
+- **Everyone pays their own prices** — the price list describes the world, but what a given
+  soldier spends on it is about them. A scout quick over ground and slow on the trigger and a
+  gunner the other way round spend the same ten points on very different turns, and gear that
+  shaves a point off firing is a multiplier on the wearer. Inside a reaction window that is not
+  only economy: cost is time, so the slow shooter's round lands later and catches the runner
+  further along.
 - **The reaction window, and overwatch** — a move is committed before anyone answers it, so for
   its duration both sides know the future. Inside the window **action points are time**: a
   reactor placing an action at tick *t* that costs *k* resolves at *t + k*, against wherever the
@@ -135,7 +142,9 @@ the same weapon shoot worse.
   left at the end of your own turn, so sprinting somewhere leaves you nothing to answer with, and
   the choice to hold points back is made before you know whether it will pay. Overwatch is the
   first of the three kinds: a declared arc, an aiming bonus that sharpens as the arc narrows, and
-  a shot cheap enough to land early in the window.
+  a shot cheap enough to land early in the window. A watchman only fires at somebody it has
+  actually noticed — holding an arc buys it a look at the moment of the crossing, not certainty
+  about what is there, so a careful enough approach still gets across.
 
 ## What is not built yet
 

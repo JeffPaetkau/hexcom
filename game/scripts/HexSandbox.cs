@@ -232,9 +232,16 @@ public partial class HexSandbox : Node2D
         if (window.Resolutions.Count == 0) return "";
 
         var shots = window.Resolutions.Select(r =>
-            $"t{r.At} {r.Shot.Reactor.Name} {r.Shot.Mode.Name} at {r.Caught}: "
-            + (r.Outcome.AnyHit ? $"hit for {r.Outcome.TotalDamage}" : "missed")
-            + (r.Outcome.TargetDown ? ", down" : ""));
+        {
+            var landed = r.Outcome.Shots.FirstOrDefault(s => s.Hit)?.Damage;
+            var where = landed is null
+                ? ""
+                : $" {landed.Face}{(landed.WasGlancing ? " (glancing)" : "")}";
+
+            return $"t{r.At} {r.Shot.Reactor.Name} {r.Shot.Mode.Name} at {r.Caught}: "
+                   + (r.Outcome.AnyHit ? $"hit{where} for {r.Outcome.TotalDamage}" : "missed")
+                   + (r.Outcome.TargetDown ? ", down" : "");
+        });
 
         return "reactions — " + string.Join("    ", shots);
     }
@@ -592,10 +599,13 @@ public partial class HexSandbox : Node2D
             $"{a.Face} {a.Share:P0} (s{armour.ShieldOn(a.Face)}/p{armour.ArmourOn(a.Face)})"));
 
         var glancing = plan.GlancingFactor < 0.995
-            ? $"    glancing {plan.GlancingFactor:P0}"
+            ? $"    {plan.GlancingFactor:P0} of it lands"
             : "";
 
-        return $"shot at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP    "
+        // What this soldier pays, which is not always what the mode lists.
+        var listed = plan.ApCost == plan.Mode.ApCost ? "" : $" (list {plan.Mode.ApCost})";
+
+        return $"shot at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP{listed}    "
                + $"{plan.Weapon.Name} ({plan.Weapon.Kind}){glancing}    "
                + faces
                + "    right-click to fire";

@@ -17,6 +17,25 @@ public static class Geometry2D
     public const double Epsilon = 1e-9;
 
     /// <summary>
+    /// Slack for comparing an angle in degrees against the edge of an arc.
+    /// </summary>
+    /// <remarks>
+    /// Not optional on a hex grid. Bearings are exact multiples of sixty degrees and the arcs
+    /// worth declaring are sixty, a hundred and twenty, a hundred and eighty — so a place sitting
+    /// precisely on an arc edge is the common case, not a rare one, and the arithmetic that gets
+    /// there lands on 60.00000000000001 as readily as on 60. Without slack, whether a sentry is
+    /// paying full attention to the hex due north of it is decided by rounding error.
+    /// <para>
+    /// The boundary always belongs to the <em>wider</em> arc: a place exactly on the edge of a
+    /// hundred and twenty degree cone is outside it. That keeps all three attention bands doing
+    /// work for approaches along the spokes — one directly ahead at full rate, two in the corner
+    /// of the eye, three behind — where treating the edge as inside would put three spokes on
+    /// full attention and leave the peripheral band with nothing to describe.
+    /// </para>
+    /// </remarks>
+    public const double AngleEpsilonDegrees = 1e-9;
+
+    /// <summary>
     /// True when two segments cross at a point strictly interior to both. Segments that merely
     /// touch at an endpoint — which is the normal case for walls meeting at a shared corner —
     /// are <b>not</b> proper crossings.

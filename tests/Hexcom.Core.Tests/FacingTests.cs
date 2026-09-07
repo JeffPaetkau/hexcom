@@ -50,8 +50,26 @@ public class FacingTests
         var (battle, sentry, intruder) = Watch(HexDirection.North);
         var attention = battle.Awareness.AttentionOn(sentry, intruder.Position);
 
+        // The arithmetic that gets here lands on 60.00000000000001, not 60, so which side of the
+        // edge this falls is a decision the model has to make rather than one the floating point
+        // makes for it. The edge belongs to the wider arc, and this is where that is pinned.
+        Assert.Equal(60.0, battle.AngleOffDegrees(sentry.Position, sentry.Facing, intruder.Position), 6);
         Assert.Equal(battle.Awareness.Model.PeripheralAcuity, attention, 6);
         Assert.False(battle.Awareness.IsWatching(sentry, intruder.Position));
+    }
+
+    [Fact]
+    public void JustInsideTheEdgeOfTheFrontArcHasFullAttention()
+    {
+        // Forty degrees off, which is inside the cone by any reading. The pair of these says the
+        // boundary is decided deliberately rather than by whichever way the rounding fell.
+        var battle = Field();
+        var sentry = battle.Deploy("Sentry", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast);
+        battle.Start();
+
+        var justInside = Node(1, 2);
+        Assert.InRange(battle.AngleOffDegrees(sentry.Position, sentry.Facing, justInside), 40, 42);
+        Assert.Equal(1.0, battle.Awareness.AttentionOn(sentry, justInside), 6);
     }
 
     [Fact]

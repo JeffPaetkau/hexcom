@@ -46,6 +46,20 @@ public sealed record UnitStats(
     bool Radio = false,
     int Vitality = 20)
 {
+    /// <summary>What this soldier pays for moving and shooting, against the shared price list.</summary>
+    public CostProfile Costs { get; init; } = CostProfile.Default;
+
+    /// <summary>
+    /// Whether this soldier can pick which side of a target to shoot at rather than taking
+    /// whichever the geometry hands them.
+    /// </summary>
+    /// <remarks>
+    /// Off by default, and meant to stay a thing that is earned. An ordinary rifleman shoots at
+    /// a soldier and the hexagon decides where it lands; somebody who has learned to place a
+    /// round can name the plate, at a cost in accuracy for taking the time to pick it.
+    /// </remarks>
+    public bool CanCallShots { get; init; }
+
     public static readonly UnitStats Default = new();
 
     /// <summary>Light kit, quick off the mark, sharp eyes.</summary>

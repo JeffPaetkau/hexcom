@@ -49,6 +49,30 @@ public sealed record GunneryModel
     /// both families rather than settling on one.
     /// </remarks>
     public double GlancingPenalty { get; init; } = 0.5;
+
+    /// <summary>
+    /// Whether to flatten the glancing average so the bearing you approach from does not change
+    /// how much damage you expect to do.
+    /// </summary>
+    /// <remarks>
+    /// It should not. A hexagon is a bookkeeping device for which plate wears, not a claim that
+    /// soldiers are hexagonal, and without this the arithmetic leaks: met square on, half the
+    /// rounds find an unangled plate and half skip off a shoulder, while met on a corner every
+    /// round arrives mildly angled — which averages out slightly better for the shooter. That is
+    /// an artefact of the abstraction rather than anything anyone should be playing around.
+    /// <para>
+    /// Normalising against the head-on case keeps every individual hit honest — the plate you
+    /// catch square still takes the worst of it — while making the expectation the same from
+    /// every bearing. Which side gets worn still depends entirely on where you are standing,
+    /// and that is the part worth having.
+    /// </para>
+    /// </remarks>
+    public bool NormaliseGlancing { get; init; } = true;
+
+    /// <summary>
+    /// What picking your spot costs in accuracy, for the soldiers who can do it at all.
+    /// </summary>
+    public double CalledShotAccuracy { get; init; } = 0.80;
 }
 
 /// <summary>What a shot would look like, worked out before anyone commits to it.</summary>
@@ -79,23 +103,26 @@ public sealed record ShotPlan(
     double AimBonus = 1.0,
     UnitPose? TargetPose = null,
     ApSource Paying = ApSource.Turn,
-    double GlancingFactor = 1.0)
+    double GlancingFactor = 1.0,
+    double GlancingScale = 1.0,
+    BodyFace? CalledAt = null)
 {
     public bool CanFire => Refusal is null;
 
     /// <summary>The side the shot is most likely to find. What an interface points at.</summary>
-    public BodyFace LikeliestFace => Aspects.Count > 0 ? Aspects[0].Face : BodyFace.Front;
+    public BodyFace LikeliestFace => CalledAt ?? (Aspects.Count > 0 ? Aspects[0].Face : BodyFace.Front);
+
+    /// <summary>Whether the shooter picked the plate rather than taking what they were given.</summary>
+    public bool IsCalledShot => CalledAt is not null;
 
     /// <summary>
     /// Expected damage arriving at the plate, for an AI weighing options.
     /// </summary>
     /// <remarks>
     /// <see cref="GlancingFactor"/> is the average share of a round that survives the angle it
-    /// comes in at, weighted by how likely each face is to be the one hit — so it matters more
-    /// than it looks. Catching somebody toward a corner spreads every round over two plates at a
-    /// mild angle; catching them square puts half the rounds on an unangled plate and the rest on
-    /// a shoulder they skip off. For a slugthrower the corner is the better shot, and a reactor
-    /// choosing where along a committed move to catch a runner now notices.
+    /// arrives at, weighted by how likely each face is to be the one hit — normalised, so it is
+    /// the same from every bearing. Which side gets worn still depends entirely on where the
+    /// shooter is standing; how much gets through does not.
     /// </remarks>
     public double ExpectedDamage => HitChance * Mode.Shots * Weapon.Damage * GlancingFactor;
 }
@@ -215,10 +242,37 @@ public sealed class Gunnery(GunneryModel? model = null)
     }
 
     /// <summary>
-    /// What a round actually arrives with after skipping, given which face it found.
+    /// What a round actually arrives with after skipping, given which face it found and the
+    /// normalising scale for the bearing it came from.
     /// </summary>
-    public int DamageAt(WeaponProfile weapon, double obliquityDegrees)
+    public int DamageAt(WeaponProfile weapon, double obliquityDegrees, double scale = 1.0)
         => (int)Math.Round(
-            weapon.Damage * GlancingFactor(weapon.Kind, obliquityDegrees),
+            weapon.Damage * GlancingFactor(weapon.Kind, obliquityDegrees) * scale,
             MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// The glancing average of a soldier met head-on, which every other bearing is normalised to.
+    /// </summary>
+    /// <remarks>
+    /// Head-on is half the front plate square and a quarter of each shoulder at sixty degrees,
+    /// so the reference is fixed by the shape of a hexagon rather than by the situation.
+    /// </remarks>
+    public double ReferenceGlancingFactor(DamageKind kind)
+        => 0.5 * GlancingFactor(kind, 0)
+           + 0.5 * GlancingFactor(kind, BodyFaces.DegreesPerFace);
+
+    /// <summary>
+    /// Scale that makes the expected damage from this bearing match the head-on case, so which
+    /// way round a hexagonal abstraction happens to be turned costs the shooter nothing.
+    /// </summary>
+    public double NormalisingScale(DamageKind kind, IReadOnlyList<FacingAspect> aspects)
+    {
+        if (!Model.NormaliseGlancing || aspects.Count == 0) return 1.0;
+
+        var mean = 0.0;
+        foreach (var aspect in aspects)
+            mean += aspect.Share * GlancingFactor(kind, aspect.ObliquityDegrees);
+
+        return mean <= 0 ? 1.0 : ReferenceGlancingFactor(kind) / mean;
+    }
 }

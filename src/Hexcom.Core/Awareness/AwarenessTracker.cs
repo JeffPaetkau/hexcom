@@ -118,7 +118,7 @@ public sealed class AwarenessTracker
             var sight = _battle.Look(observer, subject);
             contact.EyesOn = sight.CanSee;
 
-            var gain = sight.CanSee ? LookGain(observer, subject, sight) : 0;
+            var gain = sight.CanSee ? LookGain(observer, UnitPose.Of(subject), sight) : 0;
 
             if (gain > 0)
             {
@@ -251,7 +251,7 @@ public sealed class AwarenessTracker
     /// What one look is worth. Range tells against you gently at first and then sharply, so
     /// distance only starts hiding you once there is real ground between you.
     /// </summary>
-    private double LookGain(Unit observer, Unit subject, SightResult sight)
+    private double LookGain(Unit observer, UnitPose subject, SightResult sight)
     {
         if (sight.Distance >= Model.SightRangeMetres) return 0;
 
@@ -262,6 +262,39 @@ public sealed class AwarenessTracker
         var attention = AttentionOn(observer, subject.Position);
 
         return Model.LookGain * acuity * range * attention * sight.Exposure / hiding;
+    }
+
+    /// <summary>
+    /// One observer takes a look at one subject standing somewhere in particular, rather than at
+    /// everybody at once.
+    /// </summary>
+    /// <remarks>
+    /// For looks that are not the once-per-turn sweep <see cref="Observe"/> does: a watchman
+    /// registering movement across the arc it declared, at the tick the movement happens. The
+    /// pose is passed in because inside a reaction window the interesting question is what the
+    /// watchman makes of the mover <em>at that moment on the timeline</em>, which may be several
+    /// hexes from where the move started.
+    /// <para>
+    /// Everything else about it is an ordinary look. Stance, cover, range, exposure, perception
+    /// and which way the observer is facing all apply, so a careful approach is as invisible to a
+    /// watchman as it is to anybody else.
+    /// </para>
+    /// </remarks>
+    public double Notice(Unit observer, Unit subject, UnitPose where, int round)
+    {
+        var sight = _battle.Sight.Trace(observer.Vantage, where.Vantage);
+        if (!sight.CanSee) return 0;
+
+        var gain = LookGain(observer, where, sight);
+        if (gain <= 0) return 0;
+
+        var contact = Of(observer.Id, subject.Id);
+        contact.Detection = Math.Min(contact.Detection + gain, Model.Ceiling);
+        contact.LastKnownPosition = where.Position;
+        contact.LastContactRound = round;
+        contact.EyesOn = true;
+
+        return gain;
     }
 
     /// <summary>
@@ -276,7 +309,12 @@ public sealed class AwarenessTracker
     /// </remarks>
     public double AttentionOn(Unit observer, NodeId place)
     {
-        var away = _battle.AngleOffDegrees(observer.Position, observer.Facing, place);
+        // The edges of these arcs are not hypothetical: a hex directly north of a sentry looking
+        // north-east lies at exactly sixty degrees, the edge of the front cone. One spoke over is
+        // the corner of the eye, and the slack is what makes that a decision rather than whatever
+        // 60.00000000000001 happens to compare as today.
+        var away = _battle.AngleOffDegrees(observer.Position, observer.Facing, place)
+                   + Geometry2D.AngleEpsilonDegrees;
 
         if (away <= Model.FrontArcDegrees / 2) return 1.0;
         if (away <= Model.PeripheralArcDegrees / 2) return Model.PeripheralAcuity;

@@ -222,8 +222,17 @@ public sealed class Battle
     // ---- acting ----------------------------------------------------------------
 
     /// <summary>Everywhere the active unit could get to on what it has left.</summary>
+    /// <remarks>
+    /// Priced for this soldier rather than off the graph, so a heavy trooper and a scout reading
+    /// the same ground get different answers about how far they can cross it.
+    /// </remarks>
     public ReachabilityResult Reachable(Unit unit)
-        => Pathfinder.Reachable(Graph, unit.Position, unit.ActionPoints, node => CanPassThrough(unit, node));
+        => Pathfinder.Reachable(
+            Graph,
+            unit.Position,
+            unit.ActionPoints,
+            node => CanPassThrough(unit, node),
+            link => unit.Stats.Costs.Move(link.ApCost));
 
     /// <summary>Everywhere the active unit could actually finish its move.</summary>
     public IEnumerable<ReachedNode> Destinations(Unit unit)
@@ -249,7 +258,8 @@ public sealed class Battle
         // The route is committed from here, which is what lets both sides read the future for
         // its duration. The window walks the unit along it and ends it where it got to — at the
         // destination, facing the way it was going, unless somebody stopped it en route.
-        var window = new ReactionWindow(this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance));
+        var window = new ReactionWindow(
+            this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance, unit.Stats.Costs));
         window.Run();
 
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
@@ -325,14 +335,15 @@ public sealed class Battle
     /// <summary>
     /// What a shot would look like, worked out before anyone commits to it. Nothing changes.
     /// </summary>
-    public ShotPlan PlanShot(Unit shooter, Unit target, FireMode? mode = null)
+    public ShotPlan PlanShot(Unit shooter, Unit target, FireMode? mode = null, BodyFace? calledAt = null)
         => PlanShot(
             shooter,
             target,
             mode ?? shooter.Weapon.DefaultMode,
             aimBonus: 1.0,
             UnitPose.Of(target),
-            ApSource.Turn);
+            ApSource.Turn,
+            calledAt);
 
     /// <summary>
     /// What a shot would look like against a target somewhere other than where it is standing.
@@ -350,44 +361,72 @@ public sealed class Battle
         FireMode mode,
         double aimBonus,
         UnitPose targetPose,
-        ApSource paying)
+        ApSource paying,
+        BodyFace? calledAt = null)
     {
         var weapon = shooter.Weapon;
         var sight = Sight.Trace(shooter.Vantage, targetPose.Vantage);
         var aspects = FacesPresentedTo(targetPose, shooter.Position);
         var purse = paying == ApSource.Reserve ? shooter.Reserve : shooter.ActionPoints;
 
+        // The list price is what the action is; what this soldier pays for it is about them.
+        var cost = shooter.Stats.Costs.Fire(mode.ApCost);
+
         var refusal =
             !weapon.Modes.Contains(mode) ? $"{weapon.Name} cannot fire {mode.Name}." :
             shooter == target ? "Pick somebody else." :
             !target.InPlay ? "Nothing there to shoot at." :
             !target.IsHostileTo(shooter) ? "That is one of ours." :
-            purse < mode.ApCost ? $"Needs {mode.ApCost} points, has {purse}." :
+            purse < cost ? $"Needs {cost} points, has {purse}." :
             !sight.CanSee ? "No line on them." :
             sight.Distance > weapon.MaxRange ? $"Out of range at {sight.Distance:0} m." :
+            calledAt is not null && !shooter.Stats.CanCallShots ? $"{shooter.Name} cannot place a round like that." :
+            calledAt is { } wanted && aspects.All(a => a.Face != wanted) ? $"Their {wanted} is not in view." :
             null;
 
         var chance = refusal is null
             ? Gunnery.HitChance(weapon, mode, sight, shooter.Stance, aimBonus)
+              * (calledAt is null ? 1.0 : Gunnery.Model.CalledShotAccuracy)
             : 0;
 
-        // What survives the angle, averaged over which side the round is likely to find.
-        var glancing = 0.0;
-        foreach (var aspect in aspects)
-            glancing += aspect.Share * Gunnery.GlancingFactor(weapon.Kind, aspect.ObliquityDegrees);
-        if (aspects.Count == 0) glancing = 1.0;
+        // Flattened against the head-on case, so the bearing decides which plate wears without
+        // also deciding how much gets through it.
+        var scale = Gunnery.NormalisingScale(weapon.Kind, aspects);
+        var glancing = 1.0;
+
+        if (aspects.Count > 0)
+        {
+            // A called shot takes the angle of the plate it named; anything else takes the
+            // average over the plates it might find. Normalisation makes that average the same
+            // from every bearing, so it comes out as the head-on figure whichever way they face.
+            if (calledAt is { } named && aspects.FirstOrDefault(a => a.Face == named) is { Share: > 0 } picked)
+            {
+                glancing = Gunnery.GlancingFactor(weapon.Kind, picked.ObliquityDegrees) * scale;
+            }
+            else
+            {
+                var mean = 0.0;
+                foreach (var aspect in aspects)
+                    mean += aspect.Share * Gunnery.GlancingFactor(weapon.Kind, aspect.ObliquityDegrees);
+                glancing = mean * scale;
+            }
+        }
 
         return new ShotPlan(
-            shooter, target, weapon, mode, sight, chance, mode.ApCost, aspects, refusal,
-            aimBonus, targetPose, paying, glancing);
+            shooter, target, weapon, mode, sight, chance, cost, aspects, refusal,
+            aimBonus, targetPose, paying, glancing, scale, calledAt);
     }
 
     /// <summary>
     /// The active unit fires. Every roll comes from the battle generator, so the whole exchange
     /// replays from the seed.
     /// </summary>
-    public ShotOutcome Fire(Unit target, FireMode? mode = null)
-        => Resolve(PlanShot(shooter: RequireActive(), target, mode));
+    /// <param name="calledAt">
+    /// A particular side to place the round on, for shooters who can. Left null, the geometry
+    /// decides — which is what happens for everybody else.
+    /// </param>
+    public ShotOutcome Fire(Unit target, FireMode? mode = null, BodyFace? calledAt = null)
+        => Resolve(PlanShot(shooter: RequireActive(), target, mode, calledAt));
 
     /// <summary>
     /// A reactor fires out of turn, out of its reserve, at whatever tick of the window it
@@ -422,9 +461,13 @@ public sealed class Battle
                 continue;
             }
 
-            // Which side of them it found, weighted by how wide each looks from here.
-            var aspect = PickFace(plan.Aspects);
-            var arriving = Gunnery.DamageAt(plan.Weapon, aspect.ObliquityDegrees);
+            // Which side of them it found, weighted by how wide each looks from here — unless
+            // the shooter was good enough to name one.
+            var aspect = plan.CalledAt is { } named
+                ? plan.Aspects.FirstOrDefault(a => a.Face == named, PickFace(plan.Aspects))
+                : PickFace(plan.Aspects);
+
+            var arriving = Gunnery.DamageAt(plan.Weapon, aspect.ObliquityDegrees, plan.GlancingScale);
 
             var damage = target.Protection.Absorb(
                 aspect.Face, plan.Weapon.Kind, arriving, aspect.ObliquityDegrees);

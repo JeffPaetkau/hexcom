@@ -62,4 +62,34 @@ public sealed record ReactionModel
     /// an arc strictly worse than simply keeping points in hand.
     /// </remarks>
     public int OverwatchCost { get; init; } = 1;
+
+    /// <summary>
+    /// How sure a watchman has to be about somebody before it will fire down its arc.
+    /// </summary>
+    /// <remarks>
+    /// Without this the trigger is purely geometric and a watchman shoots at anything it could
+    /// technically see — including a prone crawler at forty metres with four per cent of itself
+    /// showing, which the detection model says it has not noticed at all. Overwatch was the one
+    /// place in the game where something happened to a hidden soldier without the awareness
+    /// ladder being consulted. Now it is not.
+    /// </remarks>
+    public Awareness.AwarenessState OverwatchRequires { get; init; } = Awareness.AwarenessState.Searching;
+
+    /// <summary>
+    /// Whether holding an arc lets a watchman notice what crosses it, outside its own turn.
+    /// </summary>
+    /// <remarks>
+    /// This is what stops the gate above from gutting overwatch. Looking normally happens only
+    /// on your own turn, so a soldier who was behind a building when the sentry last looked
+    /// could step out into a watched arc and cross it untouched — the canonical overwatch
+    /// situation, defeated by the turn order. Watching a piece of ground is precisely the act of
+    /// looking at it, so the crossing gets a detection check at the tick it happens, through the
+    /// ordinary model: stance, cover, range, exposure and perception all still decide whether it
+    /// registers. A careful approach still gets through. A jog across the open does not.
+    /// <para>
+    /// Turn this off and the gate becomes a pure test of what the watchman already knew, which
+    /// is a real design position — just a much weaker overwatch.
+    /// </para>
+    /// </remarks>
+    public bool OverwatchLooks { get; init; } = true;
 }

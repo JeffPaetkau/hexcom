@@ -353,12 +353,12 @@ public class CombatTests
     }
 
     [Fact]
-    public void AgainstASlugthrowerCatchingSomebodyOnACornerBeatsCatchingThemSquare()
+    public void WhichBearingYouComeFromDecidesWhichPlateWearsAndNotHowMuchGetsThrough()
     {
         var battle = Field();
         var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast);
 
-        // Both sit at the same distance from the target and carry the same rifle. The only
+        // Both sit the same distance from the target and carry the same rifle. The only
         // difference is the bearing: (4,0) is straight down the way the target is looking, and
         // (2,2) is sixty degrees round from it, which puts a corner in the way.
         var square = battle.Deploy("Square", Side.Player, Node(4, 0), facing: HexDirection.SouthWest);
@@ -368,14 +368,99 @@ public class CombatTests
         var headOn = battle.PlanShot(square, target);
         var cornerOn = battle.PlanShot(oblique, target);
 
+        // The geometry still differs, and that is the part worth having: one shot can find three
+        // plates and the other only two, so where you stand decides which sides get worn.
         Assert.Equal(3, headOn.Aspects.Count);
         Assert.Equal(2, cornerOn.Aspects.Count);
+        Assert.NotEqual(
+            headOn.Aspects.Select(a => a.Face).ToArray(),
+            cornerOn.Aspects.Select(a => a.Face).ToArray());
 
-        // Head-on, half the rounds hit an unangled plate and half skip off a shoulder. On the
-        // corner every round arrives at a mild thirty degrees, which loses less on average.
-        Assert.True(
-            cornerOn.GlancingFactor > headOn.GlancingFactor,
-            $"corner {cornerOn.GlancingFactor:0.000} should beat square {headOn.GlancingFactor:0.000}");
+        // What must not differ is how much damage you expect to do. A hexagon is bookkeeping for
+        // which plate wears, not a claim that soldiers are hexagonal, so the bearing you happen
+        // to approach the abstraction from is worth nothing either way.
+        Assert.Equal(headOn.GlancingFactor, cornerOn.GlancingFactor, 6);
+        Assert.Equal(headOn.ExpectedDamage, cornerOn.ExpectedDamage, 6);
+    }
+
+    [Fact]
+    public void ARoundStillSkipsOffAShoulderEvenThoughTheAverageIsFlat()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Hostile, Node(0, 0), facing: HexDirection.NorthEast);
+        var shooter = battle.Deploy("Shooter", Side.Player, Node(4, 0), facing: HexDirection.SouthWest);
+        battle.Start();
+
+        var plan = battle.PlanShot(shooter, target);
+        var weapon = plan.Weapon;
+
+        // Flattening the average does not flatten the individual hits. Catch them square in the
+        // chest and the round arrives whole; clip a shoulder and it skips.
+        var square = battle.Gunnery.DamageAt(weapon, 0, plan.GlancingScale);
+        var shoulder = battle.Gunnery.DamageAt(weapon, 60, plan.GlancingScale);
+
+        Assert.Equal(DamageKind.Kinetic, weapon.Kind);
+        Assert.True(shoulder < square, $"shoulder {shoulder} should be under square {square}");
+    }
+
+    // ---- placing a round deliberately ------------------------------------------
+
+    /// <summary>Someone who has learned to put a round where they mean to.</summary>
+    private static readonly UnitStats Marksman = UnitStats.Default with { CanCallShots = true };
+
+    [Fact]
+    public void AnOrdinarySoldierShootsAtAManAndNotAtAPlate()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
+        var shooter = battle.Deploy("Shooter", Side.Player, Node(0, 0), facing: HexDirection.NorthEast);
+        battle.Start();
+        while (battle.Active != shooter) battle.EndTurn();
+
+        var plan = battle.PlanShot(shooter, target, FireMode.Standard, BodyFace.FrontLeft);
+
+        Assert.False(plan.CanFire);
+        Assert.Contains("cannot place a round", plan.Refusal);
+    }
+
+    [Fact]
+    public void AMarksmanPicksThePlateAndPaysForItInAccuracy()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
+        var shooter = battle.Deploy("Shooter", Side.Player, Node(0, 0), Marksman, HexDirection.NorthEast);
+        battle.Start();
+        while (battle.Active != shooter) battle.EndTurn();
+
+        var loose = battle.PlanShot(shooter, target, FireMode.Standard);
+        var called = battle.PlanShot(shooter, target, FireMode.Standard, BodyFace.FrontLeft);
+
+        Assert.True(called.CanFire);
+        Assert.True(called.IsCalledShot);
+        Assert.Equal(BodyFace.FrontLeft, called.LikeliestFace);
+        Assert.True(called.HitChance < loose.HitChance);
+
+        // And the round goes where it was sent rather than where the geometry would have put it.
+        var outcome = battle.Fire(target, FireMode.Standard, BodyFace.FrontLeft);
+        Assert.All(
+            outcome.Shots.Where(s => s.Hit),
+            s => Assert.Equal(BodyFace.FrontLeft, s.Damage!.Face));
+    }
+
+    [Fact]
+    public void YouCannotCallAPlateThatIsNotInView()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Hostile, Node(4, 0), facing: HexDirection.SouthWest);
+        var shooter = battle.Deploy("Shooter", Side.Player, Node(0, 0), Marksman, HexDirection.NorthEast);
+        battle.Start();
+        while (battle.Active != shooter) battle.EndTurn();
+
+        // They are facing the shooter, so their back is not something anyone out front can name.
+        var plan = battle.PlanShot(shooter, target, FireMode.Standard, BodyFace.Rear);
+
+        Assert.False(plan.CanFire);
+        Assert.Contains("not in view", plan.Refusal);
     }
 
     // ---- pulling the trigger ---------------------------------------------------

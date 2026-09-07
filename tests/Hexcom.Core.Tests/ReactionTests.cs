@@ -52,10 +52,14 @@ public class ReactionTests
         HexDirection facing = HexDirection.NorthEast,
         int seed = 1,
         ReactionModel? reactions = null,
-        UnitStats? runnerStats = null)
+        UnitStats? runnerStats = null,
+        CostProfile? watchmanCosts = null)
     {
         var battle = Field(map, seed, reactions);
-        var watchman = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, facing);
+        var watchman = battle.Deploy(
+            "Kessel", Side.Hostile, Node(0, 0),
+            Watchful with { Costs = watchmanCosts ?? CostProfile.Default },
+            facing);
         var runner = battle.Deploy(
             "Vance", Side.Player, runnerStart, (runnerStats ?? UnitStats.Default) with { Initiative = 1 },
             HexDirection.North);
@@ -74,9 +78,10 @@ public class ReactionTests
         HexDirection facing = HexDirection.NorthEast,
         int seed = 1,
         ReactionModel? reactions = null,
-        UnitStats? runnerStats = null)
+        UnitStats? runnerStats = null,
+        CostProfile? watchmanCosts = null)
     {
-        var field = Standoff(runnerStart, map, facing, seed, reactions, runnerStats);
+        var field = Standoff(runnerStart, map, facing, seed, reactions, runnerStats, watchmanCosts);
 
         Assert.True(field.Battle.SetOverwatch(arc));
         field.Battle.EndTurn();
@@ -371,31 +376,160 @@ public class ReactionTests
     }
 
     [Fact]
-    public void AWideArcCoversGroundANarrowOneNeverSees()
+    public void AWiderArcCoversGroundANarrowOneNeverSees()
     {
-        var narrow = Overwatched(OverwatchArc.Narrow, Node(0, 3));
-        var wide = Overwatched(OverwatchArc.Wide, Node(0, 3));
+        // A run out along a bearing forty degrees off where the watchman is looking: outside a
+        // sixty degree arc, inside a hundred and twenty, and well inside the cone it is actually
+        // paying attention to, so noticing it is not what is in question here.
+        var narrow = Overwatched(OverwatchArc.Narrow, Node(1, 2));
+        var standard = Overwatched(OverwatchArc.Standard, Node(1, 2));
 
-        var ignored = narrow.Battle.Move(Node(0, 6));
-        var caught = wide.Battle.Move(Node(0, 6));
+        var ignored = narrow.Battle.Move(Node(2, 4));
+        var caught = standard.Battle.Move(Node(2, 4));
 
         Assert.Empty(ignored.Reactions!.Offers);
         Assert.Single(caught.Reactions!.Offers);
     }
 
     [Fact]
-    public void AnApproachExactlyOnTheEdgeOfTheArcIsInsideIt()
+    public void AnApproachExactlyOnTheEdgeOfTheArcFallsOutsideIt()
     {
         // Hex bearings are exact multiples of sixty degrees, so a run due north of a watchman
-        // facing north-east sits precisely on the edge of a hundred and twenty degree arc.
-        // Deciding that by rounding error is the class of bug this grid is prone to.
+        // facing north-east sits precisely on the edge of a hundred and twenty degree arc. The
+        // edge belongs to the wider arc, here and in the attention cones — and it is decided
+        // that way rather than by whatever 60.00000000000001 compares as.
         var (battle, watchman, _) = Overwatched(OverwatchArc.Standard, Node(0, 3));
 
         Assert.Equal(60.0, battle.AngleOffDegrees(watchman.Position, HexDirection.NorthEast, Node(0, 4)), 6);
 
         var outcome = battle.Move(Node(0, 6));
 
+        // Cover that ground and you have to declare a wider arc, and shoot worse down all of it.
+        Assert.Empty(outcome.Reactions!.Offers);
+    }
+
+    // ---- noticing before shooting ----------------------------------------------
+
+    /// <summary>
+    /// A blank wall across the front of the hex a runner starts in, so the watchman at the
+    /// origin has never laid eyes on them. Stepping one hex sideways comes out from behind it.
+    /// </summary>
+    private static BattleMap BehindABuilding()
+    {
+        var map = new BattleMap().FillDisc(Hex.Zero, 14);
+        map.AddSideWall(new Hex(3, 0), HexDirection.SouthWest, 0, WallProfile.Solid);
+        return map;
+    }
+
+    [Fact]
+    public void SteppingOutFromCoverIntoAWatchedArcIsNoticedAndShotAt()
+    {
+        var (battle, watchman, runner) = Overwatched(OverwatchArc.Standard, Node(3, 0), BehindABuilding());
+
+        // The watchman could not see the runner when it last looked, so it knows nothing about
+        // them. Holding an arc is looking down it, so the crossing itself is what gets noticed.
+        Assert.Equal(AwarenessState.Unaware, battle.Awareness.Of(watchman.Id, runner.Id).State);
+
+        var outcome = battle.Move(Node(3, 2));
+
         Assert.Single(outcome.Reactions!.Offers);
+        Assert.True(battle.Awareness.Of(watchman.Id, runner.Id).State >= AwarenessState.Searching);
+    }
+
+    [Fact]
+    public void AWatchmanWhoOnlyGoesOnWhatItAlreadyKnewLetsThatCrossingThrough()
+    {
+        // The same run against a watchman that does not get to look outside its own turn. This
+        // is what gating purely on prior awareness costs: the canonical overwatch situation —
+        // somebody breaking cover across a held arc — goes entirely unanswered, because looking
+        // happens on your turn and the watchman has already had it.
+        var rules = ReactionModel.Default with { OverwatchLooks = false };
+        var (battle, _, _) = Overwatched(OverwatchArc.Standard, Node(3, 0), BehindABuilding(), reactions: rules);
+
+        var outcome = battle.Move(Node(3, 2));
+
+        Assert.Empty(outcome.Reactions!.Offers);
+    }
+
+    [Fact]
+    public void ACarefulEnoughApproachCrossesAWatchedArcUntouched()
+    {
+        // Wider hexes, so the runner can be most of forty metres out and still on the map. It is
+        // inside the arc, inside weapon range, and in plain line of sight the whole way.
+        var battle = new Battle(new BattleMap().FillDisc(Hex.Zero, 14), new HexLayout(size: 4.0), seed: 1);
+        var watchman = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast);
+        var runner = battle.Deploy("Vance", Side.Player, Node(6, -3), Tardy, HexDirection.North);
+        battle.Start();
+
+        Assert.True(battle.SetOverwatch(OverwatchArc.Standard));
+        battle.EndTurn();
+
+        battle.ChangeStance(Stance.Prone);
+        var outcome = battle.Move(Node(6, -1));
+
+        // Prone at that range is simply not noticed, and what is not noticed is not shot at.
+        // Nothing here is special to overwatch — it is the ordinary detection model deciding.
+        Assert.Equal(Stance.Prone, runner.Stance);
+        Assert.True(battle.CanSee(watchman, runner));
+        Assert.True(battle.Awareness.Of(watchman.Id, runner.Id).State < AwarenessState.Searching);
+        Assert.Empty(outcome.Reactions!.Offers);
+    }
+
+    // ---- paying your own prices ------------------------------------------------
+
+    [Fact]
+    public void ASlowShotLandsLaterInTheWindowThanTheSameModeFiredQuickly()
+    {
+        // A long enough run that neither shot is still in the air when it ends.
+        var quick = Overwatched(OverwatchArc.Standard, Node(4, -2));
+        var slow = Overwatched(
+            OverwatchArc.Standard, Node(4, -2),
+            watchmanCosts: new CostProfile { Firing = 1.6 });
+
+        var early = Snap(quick.Battle.Move(Node(4, 6)));
+        var late = Snap(slow.Battle.Move(Node(4, 6)));
+
+        // Cost is time inside a window, so a watchman that is slow on the trigger pays for it in
+        // ticks and catches the runner further along the route. Same weapon, same mode.
+        Assert.Equal(FireMode.Snap.ApCost, early.Forecast.ApCost);
+        Assert.True(late.Forecast.ApCost > early.Forecast.ApCost);
+        Assert.True(late.ResolvesAt > early.ResolvesAt);
+
+        static ReactionShot Snap(MoveOutcome outcome)
+            => outcome.Reactions!.Offers.Single().Options.Single(o => o.Mode == FireMode.Snap);
+    }
+
+    [Fact]
+    public void GearThatSpeedsUpTheTriggerBuysAnExtraShotOutOfTheSameReserve()
+    {
+        var (battle, watchman, _) = Overwatched(
+            OverwatchArc.Standard, Node(4, -2),
+            watchmanCosts: new CostProfile { Firing = 0.8 });
+
+        var offer = battle.Move(Node(4, 2)).Reactions!.Offers.Single();
+
+        // Six banked points buy a snap and a standard shot at list price. Knock a fifth off and
+        // the aimed shot comes into reach as well, which is the whole point of the mount.
+        Assert.Equal(6, offer.Reserve);
+        Assert.Contains(offer.Options, o => o.Mode == FireMode.Aimed);
+        Assert.All(offer.Options, o => Assert.True(o.Forecast.ApCost < o.Mode.ApCost));
+    }
+
+    [Fact]
+    public void AHeavyTrooperCoversLessGroundOnTheSamePoints()
+    {
+        var battle = Field();
+        var scout = battle.Deploy("Scout", Side.Player, Node(0, 0), UnitStats.Default with { Initiative = 30 });
+        var gunner = battle.Deploy(
+            "Gunner", Side.Player, Node(0, 6),
+            UnitStats.Default with { Initiative = 1, Costs = CostProfile.Gunner });
+        battle.Start();
+
+        // One graph, describing the same ground. What each of them pays to cross it differs.
+        var quick = battle.Destinations(scout).Count();
+        var slow = battle.Destinations(gunner).Count();
+
+        Assert.True(slow < quick, $"gunner reached {slow}, scout reached {quick}");
     }
 
     // ---- action points are time ------------------------------------------------
