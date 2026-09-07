@@ -171,4 +171,16 @@ public sealed record ReactionModel
     /// far. It moves across the moment somebody can do it on their own turn.
     /// </remarks>
     public int ShoutCost { get; init; } = 2;
+
+    /// <summary>
+    /// What arming against an agreed trigger costs, on top of the shot being held back.
+    /// </summary>
+    /// <remarks>
+    /// Dearer than declaring an overwatch, because an ambush buys more: not a shot you take on
+    /// your own but a shot the whole squad takes together, before the other side answers any of
+    /// it. Paid up front by every member, so setting one is several turns spent not advancing —
+    /// and if you spring it early, or wait until half of them have had their turn back and lost
+    /// their reserve, you paid for coordination you did not get.
+    /// </remarks>
+    public int AmbushCost { get; init; } = 10;
 }

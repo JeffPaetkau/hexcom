@@ -45,6 +45,7 @@ the compound against three inside it, one of them holding the roof:
 | space | end the turn |
 | `C` | cycle stance: standing, crouching, prone |
 | `V` | cycle the overwatch arc: none, narrow, standard, wide |
+| `B` | arm an ambush, or spring it on whoever is under the cursor |
 | `Z` / `X` | turn on the spot |
 | `Q` / `E` | change layer (the roof is layer 1) |
 | `R` | new battle |
@@ -156,15 +157,24 @@ the same weapon shoot worse.
   being arithmetic. Two bars, not one: something at the edge of what you can make out is enough
   to duck or spin round and nowhere near enough to shoot at, so a crawler at forty metres makes a
   sentry twitch without drawing fire. Behind is still behind.
+- **Ambush** — a squad arms against an agreed arc and waits; when one of them says now, every
+  armed member fires in the same window, before the target does anything about any of it. That is
+  what makes an alpha strike survive interleaved initiative. Structurally it is a committed move
+  of *zero* length — the same timeline, one instant — so the cheap shots still land before the
+  expensive ones and a squad stops spending reserves on somebody already down. Springing calls
+  the contact in first, so an ambusher has to be reachable by radio, shout or line of sight to
+  join in, and one who got bored and spent its turn moving is still armed and out of the trap.
 
 ## What is not built yet
 
-Ambush, grenades and mines, suppression, AI, saves, and the strategy layer. See the design doc
-for where these are heading.
+Grenades and mines, suppression, AI, saves, and the strategy layer. See the design doc for where
+these are heading.
 
 The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
 
-Ambush is the last of the three reactions, and the only one that needs genuinely new structure:
-today a window is opened by a committed move, and an ambush opens one by a *choice*, with several
-units resolving inside it before anyone answers. A `ReactionWindow` already separates offering
-choices from resolving them, which is where the interface and the AI will plug in.
+All three reactions are in. What is missing is anybody to play against. A `ReactionWindow` already
+separates offering choices from resolving them, and the turn loop currently takes every
+recommendation off a deliberately crude policy — shoot if you can, otherwise turn, otherwise get
+low, otherwise call it in. Ranking a shot against a dive into cover is exactly what utility
+scoring is for, so replacing that stand-in is the same job as building the enemy AI, and it is
+next.

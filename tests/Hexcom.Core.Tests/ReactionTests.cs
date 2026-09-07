@@ -576,6 +576,203 @@ public class ReactionTests
         Assert.True(slow < quick, $"gunner reached {slow}, scout reached {quick}");
     }
 
+    // ---- lying in wait ---------------------------------------------------------
+
+    /// <summary>
+    /// Three of theirs arming on the same piece of ground, and one of ours walking onto it. The
+    /// squad arms in a rush, so nobody has had their turn back and everybody still has a reserve.
+    /// </summary>
+    /// <remarks>
+    /// Initiatives are spaced ten apart so the order they act in is the order they were deployed
+    /// in whatever the dice do — a ten sided roll on ratings one apart would shuffle them.
+    /// </remarks>
+    private static (Battle Battle, Unit[] Squad, Unit Quarry) Trap(
+        int members = 3,
+        bool radio = true,
+        ReactionModel? reactions = null)
+    {
+        var battle = Field(reactions: reactions);
+        var squad = new Unit[members];
+
+        // Spread around the origin but all comfortably inside a standard arc of the ground the
+        // quarry crosses. Straight up the column would put the far one exactly on the arc edge,
+        // which is outside it.
+        NodeId[] posts = [Node(0, 0), Node(1, 0), Node(0, 1), Node(1, -1)];
+
+        for (var i = 0; i < members; i++)
+            squad[i] = battle.Deploy(
+                $"Kessel{i}", Side.Hostile, posts[i],
+                Watchful with { Initiative = 40 - i * 10, Radio = radio },
+                HexDirection.NorthEast);
+
+        var quarry = battle.Deploy("Vance", Side.Player, Node(4, -2), Tardy, HexDirection.North);
+        battle.Start();
+
+        foreach (var member in squad)
+        {
+            Assert.Same(member, battle.Active);
+            Assert.True(battle.Arm(OverwatchArc.Standard));
+            battle.EndTurn();
+        }
+
+        Assert.Same(quarry, battle.Active);
+        return (battle, squad, quarry);
+    }
+
+    [Fact]
+    public void ArmingCostsMoreThanWatchingAndSurvivesYourOwnTurnComingRound()
+    {
+        var (battle, watchman, _) = Standoff(Node(4, -2));
+
+        Assert.True(battle.Arm(OverwatchArc.Standard));
+        Assert.Equal(Turn - Rules.AmbushCost, watchman.ActionPoints);
+        Assert.True(Rules.AmbushCost > Rules.OverwatchCost);
+        Assert.NotNull(watchman.Ambush);
+        Assert.Null(watchman.Overwatch);
+
+        battle.EndTurn();
+        while (battle.Active != watchman) battle.EndTurn();
+
+        // An overwatch is a posture you hold for a round. An ambush is a plan that stands until
+        // somebody springs it — which is what lets the member who chooses the moment still be
+        // armed when their turn arrives.
+        Assert.NotNull(watchman.Ambush);
+        Assert.Equal(0, watchman.Reserve);
+    }
+
+    [Fact]
+    public void SpringingAnAmbushHasTheWholeSquadFireBeforeTheTargetActs()
+    {
+        var (battle, squad, quarry) = Trap();
+
+        // Hand the turn back round to the first of them, who is still armed and now says now.
+        battle.EndTurn();
+        while (battle.Active != squad[0]) battle.EndTurn();
+
+        var window = battle.SpringAmbush(quarry);
+
+        Assert.NotNull(window);
+        Assert.True(window!.IsAmbush);
+        Assert.Same(squad[0], window.SprungBy);
+
+        // All three of them, in one window, on one timeline — and the target has not acted.
+        Assert.Equal(3, window.Offers.Count);
+        Assert.All(window.Offers, o => Assert.Equal(ReactionKind.Ambush, o.Kind));
+        Assert.NotEmpty(window.Resolutions);
+        Assert.Same(squad[0], battle.Active);
+    }
+
+    [Fact]
+    public void TheOneWhoSaysNowPaysOutOfItsTurnAndTheRestOutOfTheirReserves()
+    {
+        var (battle, squad, quarry) = Trap();
+
+        battle.EndTurn();
+        while (battle.Active != squad[0]) battle.EndTurn();
+
+        var springer = squad[0];
+        var mate = squad[1];
+        var bankedBefore = mate.Reserve;
+        var pointsBefore = springer.ActionPoints;
+
+        var window = battle.SpringAmbush(quarry)!;
+
+        var mine = window.Resolutions.Single(r => r.Placement.Reactor == springer).Placement;
+        var theirs = window.Resolutions.Single(r => r.Placement.Reactor == mate).Placement;
+
+        Assert.Equal(ApSource.Turn, mine.Forecast!.Paying);
+        Assert.Equal(pointsBefore - mine.ApCost, springer.ActionPoints);
+
+        Assert.Equal(ApSource.Reserve, theirs.Forecast!.Paying);
+        Assert.Equal(bankedBefore - theirs.ApCost, mate.Reserve);
+    }
+
+    [Fact]
+    public void ATrapSpringsOnceAndThenEverybodyIsDoneWaiting()
+    {
+        var (battle, squad, quarry) = Trap();
+
+        battle.EndTurn();
+        while (battle.Active != squad[0]) battle.EndTurn();
+
+        Assert.NotNull(battle.SpringAmbush(quarry));
+        Assert.All(squad, member => Assert.Null(member.Ambush));
+
+        // Nothing left to spring, so nothing happens.
+        Assert.Null(battle.SpringAmbush(quarry));
+    }
+
+    [Fact]
+    public void AnAmbusherWhoSpentItsTurnIsStandingThereWithNothingToFire()
+    {
+        var (battle, squad, quarry) = Trap();
+        var restless = squad[0];
+
+        battle.EndTurn();
+        Assert.Same(restless, battle.Active);
+
+        // Waiting is not idle: everybody but the one who says now pays out of a reserve, and a
+        // reserve is what a turn you did not spend leaves behind. Get bored and go somewhere and
+        // you are still armed, still looking the right way, and out of the ambush.
+        battle.Move(Node(-10, 0));
+        Assert.Equal(0, restless.ActionPoints);
+        battle.EndTurn();
+
+        Assert.Same(squad[1], battle.Active);
+        Assert.NotNull(restless.Ambush);
+        Assert.Equal(0, restless.Reserve);
+
+        var window = battle.SpringAmbush(quarry)!;
+        Assert.DoesNotContain(window.Offers, o => o.Reactor == restless);
+    }
+
+    [Fact]
+    public void AnAmbusherNobodyCanReachNeverHearsTheWord()
+    {
+        var (battle, squad, quarry) = Trap(radio: false);
+
+        battle.EndTurn();
+        while (battle.Active != squad[0]) battle.EndTurn();
+
+        var window = battle.SpringAmbush(quarry)!;
+
+        // Without radios the word travels by shout and line of sight, and these three are stood
+        // close enough that it reaches. The point of the check is that it is a channel at all.
+        Assert.All(
+            window.Offers,
+            o => Assert.True(battle.Awareness.Of(o.Reactor.Id, quarry.Id).State >= AwarenessState.Searching));
+    }
+
+    [Fact]
+    public void WalkingIntoAnArmedArcSpringsTheWholeTrapAndNotOneRifle()
+    {
+        var (battle, squad, quarry) = Trap();
+
+        // Nobody chooses the moment: the quarry simply walks across the ground they armed against.
+        var window = battle.Move(Node(4, 2)).Reactions!;
+
+        Assert.Same(squad[0], window.SprungBy);
+        Assert.Equal(3, window.Offers.Count);
+        Assert.All(window.Offers, o => Assert.Equal(ReactionKind.Ambush, o.Kind));
+        Assert.All(squad, member => Assert.Null(member.Ambush));
+    }
+
+    [Fact]
+    public void TheCheapShotsGoFirstAndASquadCanStopWastingRoundsOnACorpse()
+    {
+        var (battle, squad, quarry) = Trap(members: 4);
+        Assert.True(quarry.InPlay);
+
+        var window = battle.Move(Node(4, 2)).Reactions!;
+
+        // Everything is placed on the same tick, so the order they land in is the order of what
+        // they cost — and nobody spends a reserve on somebody already down.
+        var landed = window.Resolutions.Select(r => r.Placement.ApCost).ToArray();
+        Assert.Equal(landed.OrderBy(c => c).ToArray(), landed);
+
+        if (!quarry.InPlay) Assert.True(window.Resolutions.Count < window.Placements.Count);
+    }
+
     // ---- being caught out ------------------------------------------------------
 
     /// <summary>

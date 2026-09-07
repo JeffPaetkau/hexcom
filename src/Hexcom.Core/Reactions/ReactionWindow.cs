@@ -138,16 +138,41 @@ public sealed class ReactionWindow
     private readonly List<ReactionPlacement> _placements = [];
     private readonly List<ReactionResolution> _resolutions = [];
     private bool _resolved;
+    private int _sprungAt;
 
-    internal ReactionWindow(Battle battle, Unit mover, CommittedMove move)
+    private ReactionWindow(Battle battle, Unit subject, CommittedMove move, Unit? springer)
     {
         _battle = battle;
-        Mover = mover;
+        Mover = subject;
         Move = move;
-        BuildOffers();
+        SprungBy = springer;
+
+        if (springer is null) BuildOffers();
+        else BuildAmbushOffers(springer, tick: 0);
     }
 
+    /// <summary>The window a committed move opens. Overwatch and surprise answer into it.</summary>
+    internal static ReactionWindow ForMove(Battle battle, Unit mover, CommittedMove move)
+        => new(battle, mover, move, springer: null);
+
+    /// <summary>
+    /// The window one member of an ambush opens by choosing the moment.
+    /// </summary>
+    /// <remarks>
+    /// The subject is standing still, so the timeline is a single instant — but it is the same
+    /// timeline, which is what makes cheap shots resolve before expensive ones. If the snap shots
+    /// put the target down, the aimed ones are never taken and their reserves are never spent.
+    /// </remarks>
+    internal static ReactionWindow ForAmbush(Battle battle, Unit target, Unit springer)
+        => new(battle, target, new CommittedMove(target.Position, [], target.Facing, target.Stance), springer);
+
+    /// <summary>The subject of the window. Moving, unless an ambush was sprung on it.</summary>
     public Unit Mover { get; }
+
+    /// <summary>Who said now, for an ambush. Null for an ordinary move window.</summary>
+    public Unit? SprungBy { get; private set; }
+
+    public bool IsAmbush => SprungBy is not null;
 
     public CommittedMove Move { get; }
 
@@ -184,10 +209,18 @@ public sealed class ReactionWindow
         _placements.Add(placement);
     }
 
-    /// <summary>Take every recommendation. This is what happens when nobody is choosing by hand.</summary>
+    /// <summary>
+    /// Take every recommendation that nobody has already answered by hand.
+    /// </summary>
+    /// <remarks>
+    /// Skipping reactors who already placed is what lets a player, or the unit springing an
+    /// ambush, choose their own action and leave the rest of the squad on the default.
+    /// </remarks>
     public void PlaceRecommended()
     {
-        foreach (var offer in _offers) Place(offer.Recommended);
+        foreach (var offer in _offers)
+            if (!_placements.Any(p => p.Reactor == offer.Reactor))
+                Place(offer.Recommended);
     }
 
     // ---- resolving -------------------------------------------------------------
@@ -264,6 +297,9 @@ public sealed class ReactionWindow
 
             if (OfferFor(reactor) is { } offer) _offers.Add(offer);
         }
+
+        // Somebody walking into an armed arc springs the trap, and the trap is not one soldier.
+        if (SprungBy is { } springer) BuildAmbushOffers(springer, _sprungAt);
     }
 
     /// <summary>
@@ -284,13 +320,26 @@ public sealed class ReactionWindow
     {
         var rules = _battle.Reactions;
 
-        if (reactor.Overwatch is { } order
+        if (reactor.Held is { } order
             && TriggerTick(reactor, place => order.Covers(_battle, reactor.Position, place)) is { } watched)
         {
             var seen = Look(reactor, watched, rules.OverwatchLooks);
 
             if (seen.After >= rules.OverwatchRequires)
             {
+                // An armed unit never answers alone. Whoever's arc was crossed earliest says now,
+                // and the whole squad is dealt with together once the loop is done.
+                if (reactor.Overwatch is null)
+                {
+                    if (SprungBy is null || watched < _sprungAt)
+                    {
+                        SprungBy = reactor;
+                        _sprungAt = watched;
+                    }
+
+                    return null;
+                }
+
                 var options = OverwatchOptions(reactor, order);
                 if (options.Count > 0)
                     return new ReactionOffer(
@@ -335,7 +384,7 @@ public sealed class ReactionWindow
     /// to start on, and anything that cannot be started before the window opens falls back to
     /// firing immediately — the weapon was already pointed, after all.
     /// </remarks>
-    private List<ReactionPlacement> OverwatchOptions(Unit reactor, OverwatchOrder order)
+    private List<ReactionPlacement> OverwatchOptions(Unit reactor, HeldArc order)
     {
         var options = new List<ReactionPlacement>();
 
@@ -366,6 +415,84 @@ public sealed class ReactionWindow
             }
 
             if (best is not null) options.Add(best);
+        }
+
+        return options;
+    }
+
+    // ---- ambush ----------------------------------------------------------------
+
+    /// <summary>
+    /// Every armed member of the springer's side that can answer, all placed on the same tick.
+    /// </summary>
+    /// <remarks>
+    /// This is the whole point of arming, and the answer to what interleaved initiative does to a
+    /// coordinated opening. Normally the other side acts between your shots; here every member
+    /// resolves inside one window, before the target does anything about any of it.
+    /// <para>
+    /// The springer pays out of the turn it is taking. Everybody else pays out of the reserve
+    /// they banked when they armed — so the trap is only fully loaded while nobody has had their
+    /// turn back yet, and the member whose turn came round is standing there with an armed arc
+    /// and nothing to fire out of it.
+    /// </para>
+    /// <para>
+    /// Being told counts. Springing calls the contact in first, so an ambusher out of earshot and
+    /// with no eyes on the target simply does not fire.
+    /// </para>
+    /// </remarks>
+    private void BuildAmbushOffers(Unit springer, int tick)
+    {
+        var bar = _battle.Reactions.OverwatchRequires;
+
+        foreach (var member in _battle.InPlay
+                     .Where(u => u.Side == springer.Side && u.Ambush is not null)
+                     .OrderBy(u => u.Id.Value))
+        {
+            if (_offers.Any(o => o.Reactor == member)) continue;
+
+            var arc = member.Ambush!.Value;
+            if (!arc.Covers(_battle, member.Position, Mover.Position)) continue;
+            if (_battle.Awareness.Of(member.Id, Mover.Id).State < bar) continue;
+
+            // Out of the turn you are taking, if you are taking one. A trap sprung by somebody
+            // walking into it is answered by everybody out of their reserves, the member whose
+            // arc they crossed included — nobody is having a turn at that moment.
+            var paying = member == springer && member == _battle.Active ? ApSource.Turn : ApSource.Reserve;
+            var purse = paying == ApSource.Turn ? member.ActionPoints : member.Reserve;
+            if (purse <= 0) continue;
+
+            var options = AmbushOptions(member, arc, paying, purse, tick);
+            if (options.Count == 0) continue;
+
+            _offers.Add(new ReactionOffer(
+                member, ReactionKind.Ambush, member.Reserve, purse, options, Best(options)));
+        }
+    }
+
+    private List<ReactionPlacement> AmbushOptions(
+        Unit member,
+        HeldArc arc,
+        ApSource paying,
+        int purse,
+        int tick)
+    {
+        var options = new List<ReactionPlacement>();
+
+        foreach (var mode in member.Weapon.Modes)
+        {
+            var cost = member.Stats.Costs.Fire(mode.ApCost);
+            if (cost > purse) continue;
+
+            // A held shot down a declared arc, so it aims like one — and it lands the moment the
+            // trap springs rather than a beat later, because it was waiting for exactly this.
+            var landing = Math.Min(tick + cost, Move.Duration);
+            var forecast = _battle.PlanShot(
+                member, Mover, mode, arc.Arc.AimBonus, Move.PoseAt(landing), paying);
+
+            if (!forecast.CanFire) continue;
+
+            options.Add(new ReactionPlacement(
+                member, Mover, ReactionKind.Ambush, ReactionAction.Fire, tick, cost, forecast));
         }
 
         return options;

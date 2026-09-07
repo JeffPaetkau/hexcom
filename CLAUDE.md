@@ -12,7 +12,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 251 tests, ~1s
+dotnet test                 # 259 tests, ~1s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -98,6 +98,10 @@ one.
   would re-trigger all the way up the awareness ladder; "is above" would trigger every move.
   Reactors also get their mid-window look *only if they have reserve banked* — the reserve is
   doubling as alertness, and removing that gate hands every hostile a free extra look per move.
+- **`Unit.Ambush` survives `Advance`; `Unit.Overwatch` does not.** An overwatch is a posture held
+  for a round; an ambush is a plan that stands until sprung, which is what lets the member who
+  chooses the moment still be armed on its own turn. `Unit.Held` is whichever one is set.
+  An ambush window is a `CommittedMove` of *zero* length — same timeline, one instant.
 - **Arc edges are exclusive, on purpose.** Hex bearings are exact multiples of 60°, so a place
   sitting precisely on the edge of a 120° arc is the common case. Comparisons add
   `Geometry2D.AngleEpsilonDegrees` so the edge falls to the *wider* arc deterministically — one

@@ -40,15 +40,20 @@ public sealed record OverwatchArc(string Name, double Degrees, double AimBonus)
 }
 
 /// <summary>
-/// A watchman holding an arc: anything hostile that moves inside it gets shot at.
+/// An arc a unit is holding a shot down, whether it declared it as an overwatch or armed it as
+/// part of an ambush.
 /// </summary>
 /// <remarks>
-/// This is where facing earns its keep twice. The arc a unit watches is the same arc it
-/// notices things in, so an overwatch position is also a detection position — and walking round
-/// behind it defeats both at once, which is the same walk that buys the thin side of the
-/// armour.
+/// This is where facing earns its keep twice. The arc a unit holds is the same arc it notices
+/// things in, so a held position is also a detection position — and walking round behind it
+/// defeats both at once, which is the same walk that buys the thin side of the armour.
+/// <para>
+/// The arc itself says nothing about what springs it. An overwatch answers on its own the moment
+/// something crosses; an ambush waits for one of the squad to choose the moment, and then
+/// everybody armed answers together.
+/// </para>
 /// </remarks>
-public readonly record struct OverwatchOrder(HexDirection Centre, OverwatchArc Arc)
+public readonly record struct HeldArc(HexDirection Centre, OverwatchArc Arc)
 {
     /// <summary>Whether a place falls inside the watched arc, seen from <paramref name="from"/>.</summary>
     /// <remarks>

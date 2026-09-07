@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 12 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 13 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 251 tests run in about a second today.</li>
+        <li>The rules are unit-testable headless — 259 tests run in about a second today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1113,7 +1113,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">08</span><span class="chip built">Built</span><br><br><span class="chip spec">Ambush</span></div>
+    <div class="rail"><span class="num">08</span><span class="chip built">Built</span></div>
     <div class="body">
       <h2>Initiative, and the ambush it breaks</h2>
       <p>
@@ -1170,7 +1170,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">09</span><span class="chip built">Built</span><br><br><span class="chip spec">Ambush</span></div>
+    <div class="rail"><span class="num">09</span><span class="chip built">Built</span></div>
     <div class="body">
       <h2>Three ways to act out of turn</h2>
       <p>
@@ -1294,8 +1294,32 @@
       </p>
       <p>
         Arming costs points up front on top of the shot held back, so setting an ambush is a turn
-        spent not advancing. Spring it early and the coordination is wasted; wait too long and
-        somebody sees you first.
+        spent not advancing — for every member of it. Spring it early and the coordination is
+        wasted; wait too long and somebody sees you first.
+      </p>
+      <p>
+        Structurally it is the one reaction that needed something new, and it turned out to need
+        less than expected. A window is built on a committed move, and an ambush has no mover: the
+        target is standing still. So it gets a route of <strong>no</strong> length — one instant,
+        the same timeline — and everything else follows. Placements still land in the order of
+        what they cost, which means the snap shots go before the aimed ones, and if the cheap ones
+        put the target down the expensive ones are never taken and those reserves are never spent.
+      </p>
+      <p>
+        There are two ways to be the one who says now. The member taking a turn can choose the
+        moment deliberately, and pays out of that turn while everybody else pays out of the
+        reserves they banked when they armed. Or somebody simply walks into an armed arc, in which
+        case nobody is having a turn and the whole squad answers out of reserve. Both open the
+        same window; the difference is only which pocket the first shot comes from.
+      </p>
+      <p>
+        Springing <strong>calls the contact in</strong> before anybody fires, which is what makes
+        the trap a squad action rather than a coincidence. An ambusher has to be told — by radio,
+        by shout, or by having eyes on the target already — or it does not fire, so the radio
+        operator is back at the centre of things and an ambusher posted somewhere nobody can reach
+        is decoration. And because everybody but the springer pays out of a reserve, an ambusher
+        who got bored and spent its turn going somewhere is still armed, still looking the right
+        way, and out of the ambush.
       </p>
 
       <h3>Surprise</h3>
@@ -1772,9 +1796,9 @@
         <li class="done"><span class="idx">DONE</span><div><b>Units, initiative, the turn loop</b><p>Clock-driven order, seeded and replayable. Enough to play a silent match.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
-        <li class="done"><span class="idx">DONE</span><div><b>The reaction window, overwatch and surprise</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, declared arcs shot down, and being caught out.</p></div></li>
-        <li><span class="idx">04</span><div><b>Ambush</b><p>The last kind, and the only one needing new structure: a window opened by a choice rather than by a move. Grenades and mines fold in here.</p></div></li>
-        <li><span class="idx">05</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player's UI uses. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Reactions</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and all three kinds: arcs held, traps sprung, and soldiers caught out.</p></div></li>
+        <li><span class="idx">04</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player&rsquo;s UI uses, and the thing that replaces the crude stand-in policy picking reactions today. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li><span class="idx">05</span><div><b>Grenades and mines</b><p>An arcing trace, and a reaction owned by the terrain rather than by a unit.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
@@ -1785,8 +1809,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 12</span>
-    <span>251 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 13</span>
+    <span>259 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

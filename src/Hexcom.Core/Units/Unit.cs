@@ -131,9 +131,29 @@ public sealed class Unit
     public int Reserve { get; internal set; }
 
     /// <summary>
-    /// The arc this unit is holding, if it declared one. Cleared when its next turn starts.
+    /// The arc this unit is watching, if it declared one. Cleared when its next turn starts.
     /// </summary>
-    public OverwatchOrder? Overwatch { get; internal set; }
+    public HeldArc? Overwatch { get; internal set; }
+
+    /// <summary>
+    /// The arc this unit armed against, if it is part of an ambush.
+    /// </summary>
+    /// <remarks>
+    /// Unlike an overwatch, this <b>survives</b> the unit's own turn coming round. An overwatch is
+    /// a posture you hold for a round; an ambush is a plan the squad committed to, and it stands
+    /// until somebody springs it or stands it down. That is also what lets the member who chooses
+    /// the moment still be armed when their turn arrives.
+    /// <para>
+    /// Standing armed is nearly worthless on its own, though, because everybody except the one
+    /// who springs it pays out of a reserve that expires every turn. The trap is only fully
+    /// loaded while the whole squad still has points banked — which is a handful of turns at
+    /// most, and the reason waiting too long costs you the coordination.
+    /// </para>
+    /// </remarks>
+    public HeldArc? Ambush { get; internal set; }
+
+    /// <summary>The arc this unit is holding a shot down, whichever way it came about.</summary>
+    public HeldArc? Held => Overwatch ?? Ambush;
 
     /// <summary>Whether there is anything left to react with.</summary>
     public bool CanReact => InPlay && Reserve > 0;

@@ -200,6 +200,16 @@ public partial class HexSandbox : Node2D
                 }
                 break;
 
+            case Key.B:
+                if (_battle.Active is { } trapper)
+                {
+                    // Arm against the arc already being watched, or spring it if already armed.
+                    if (trapper.Ambush is null) _battle.Arm(OverwatchArc.Standard);
+                    else if (HoveredUnit() is { } prey) _lastWindow = Describe(_battle.SpringAmbush(prey));
+                    Recalculate();
+                }
+                break;
+
             case Key.Pageup or Key.E:
                 _layer++;
                 Recalculate();
@@ -226,9 +236,12 @@ public partial class HexSandbox : Node2D
     }
 
     /// <summary>What the reaction window did to a committed move, for the readout.</summary>
-    private static string Describe(MoveOutcome outcome)
+    private static string Describe(MoveOutcome outcome) => Describe(outcome.Reactions);
+
+    /// <summary>What a reaction window did, whether a move opened it or somebody sprang it.</summary>
+    private static string Describe(ReactionWindow? window)
     {
-        if (outcome.Reactions is not { } window) return "";
+        if (window is null) return "";
         if (window.Resolutions.Count == 0) return "";
 
         var answers = window.Resolutions.Select(r =>
@@ -253,7 +266,8 @@ public partial class HexSandbox : Node2D
                    + (shot.TargetDown ? ", down" : "");
         });
 
-        return "reactions — " + string.Join("    ", answers);
+        var heading = window.IsAmbush ? "ambush" : "reactions";
+        return heading + " — " + string.Join("    ", answers);
     }
 
     /// <summary>
@@ -566,7 +580,7 @@ public partial class HexSandbox : Node2D
             ShotLine(),
             _lastWindow,
             "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
-            + "V: overwatch arc    Q/E: layer    R: new battle",
+            + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    R: new battle",
         }.Where(line => line.Length > 0).ToArray();
 
         var top = -Position + new Vector2(18, 30);

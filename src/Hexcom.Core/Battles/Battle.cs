@@ -273,9 +273,12 @@ public sealed class Battle
         // The route is committed from here, which is what lets both sides read the future for
         // its duration. The window walks the unit along it and ends it where it got to — at the
         // destination, facing the way it was going, unless somebody stopped it en route.
-        var window = new ReactionWindow(
+        var window = ReactionWindow.ForMove(
             this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance, MovementPrice(unit)));
         window.Run();
+
+        // A trap springs once. Whoever it caught, everybody who armed for it is done waiting.
+        if (window.SprungBy is { } springer) StandDown(springer.Side);
 
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
         if (unit.InPlay) Awareness.Hear(unit, LoudnessOf(unit, path), Round);
@@ -303,7 +306,7 @@ public sealed class Battle
 
         unit.ActionPoints -= cost;
         unit.Facing = watching;
-        unit.Overwatch = new OverwatchOrder(watching, arc);
+        unit.Overwatch = new HeldArc(watching, arc);
         return true;
     }
 
@@ -311,10 +314,80 @@ public sealed class Battle
     public bool ClearOverwatch()
     {
         var unit = RequireActive();
-        if (unit.Overwatch is null) return false;
+        if (unit.Overwatch is null && unit.Ambush is null) return false;
 
         unit.Overwatch = null;
+        unit.Ambush = null;
         return true;
+    }
+
+    /// <summary>
+    /// Arm against an agreed trigger, as part of an ambush. Anything the squad springs it on gets
+    /// answered by every member at once, before it acts.
+    /// </summary>
+    /// <remarks>
+    /// The answer to the problem interleaved initiative creates. Normally the enemy acts between
+    /// your shots and a coordinated opening is impossible to execute; armed, every member resolves
+    /// in the same window. It costs each of them a turn spent not advancing, which is what makes
+    /// setting one a commitment rather than a free posture.
+    /// </remarks>
+    public bool Arm(OverwatchArc arc, HexDirection? centre = null)
+    {
+        var unit = RequireActive();
+        var watching = centre ?? unit.Facing;
+
+        var cost = Reactions.AmbushCost + (watching == unit.Facing ? 0 : Costs.TurnInPlace);
+        if (unit.ActionPoints < cost) return false;
+
+        unit.ActionPoints -= cost;
+        unit.Facing = watching;
+        unit.Ambush = new HeldArc(watching, arc);
+        unit.Overwatch = null; // one posture at a time
+        return true;
+    }
+
+    /// <summary>
+    /// Say now. Every armed unit on this side that can see the target answers in one window,
+    /// before the target does anything about any of it.
+    /// </summary>
+    /// <remarks>
+    /// The springer fires out of its own turn; everybody else fires out of the reserve they
+    /// banked when they armed. Springing calls the contact in first, so the squad has to be able
+    /// to <em>hear</em> each other for the trap to close — which puts the radio operator back at
+    /// the centre of things, and makes an ambusher who cannot be reached simply not fire.
+    /// </remarks>
+    public ReactionWindow? SpringAmbush(Unit target, FireMode? mode = null)
+    {
+        var springer = RequireActive();
+
+        if (springer.Ambush is not { } arc) return null;
+        if (!target.InPlay || !target.IsHostileTo(springer)) return null;
+        if (!arc.Covers(this, springer.Position, target.Position)) return null;
+        if (!CanSee(springer, target)) return null;
+
+        // One of them says now, and everybody who was waiting hears it.
+        Awareness.CallOut(springer, target.Id, Round);
+
+        var window = ReactionWindow.ForAmbush(this, target, springer);
+        if (window.Offers.Count == 0) return null;
+
+        if (mode is not null &&
+            window.Offers.FirstOrDefault(o => o.Reactor == springer) is { } mine &&
+            mine.Options.FirstOrDefault(o => o.Mode == mode) is { } chosen)
+        {
+            window.Place(chosen);
+        }
+
+        window.Run();
+        StandDown(springer.Side);
+
+        return window;
+    }
+
+    /// <summary>Everybody on a side stops waiting. A trap only springs once.</summary>
+    internal void StandDown(Side side)
+    {
+        foreach (var unit in _units.Values.Where(u => u.Side == side)) unit.Ambush = null;
     }
 
     /// <summary>Turn on the spot, to watch somewhere other than where you last went.</summary>
@@ -464,7 +537,12 @@ public sealed class Battle
     internal ShotOutcome? ResolveReaction(ReactionPlacement placement)
     {
         var reactor = placement.Reactor;
-        if (placement.ApCost > reactor.Reserve) return null;
+
+        // The member who springs an ambush pays out of the turn it is taking. Everybody else, and
+        // every other kind of reaction, pays out of the reserve.
+        var paying = placement.Forecast?.Paying ?? ApSource.Reserve;
+        var purse = paying == ApSource.Reserve ? reactor.Reserve : reactor.ActionPoints;
+        if (placement.ApCost > purse) return null;
 
         switch (placement.Action)
         {
@@ -475,7 +553,7 @@ public sealed class Battle
                     placement.Forecast!.Mode,
                     placement.Forecast.AimBonus,
                     UnitPose.Of(placement.Subject),
-                    ApSource.Reserve));
+                    paying));
 
             case ReactionAction.Turn:
                 reactor.Reserve -= placement.ApCost;
