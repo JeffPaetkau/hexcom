@@ -90,6 +90,12 @@ public sealed record ReactionModel
     /// Turn this off and the gate becomes a pure test of what the watchman already knew, which
     /// is a real design position — just a much weaker overwatch.
     /// </para>
+    /// <para>
+    /// <b>Settled on reasoning, not on play.</b> This and <see cref="OverwatchRequires"/> are the
+    /// two dials to reach for first when overwatch feels wrong in testing: too strong and the
+    /// free look is the suspect, too weak and the gate is. Neither has been tried against an
+    /// actual fight yet.
+    /// </para>
     /// </remarks>
     public bool OverwatchLooks { get; init; } = true;
 }
