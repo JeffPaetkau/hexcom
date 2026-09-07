@@ -48,6 +48,7 @@ public partial class HexSandbox : Node2D
     private static readonly Color Panel = new("1b1f26", 0.92f);
     private static readonly Color GhostHue = new("e0674a", 0.55f);
     private static readonly Color OverwatchHue = new("f2c14e");
+    private static readonly Color AmbushHue = new("d95f9a");
 
     private readonly Dictionary<NodeId, SightResult> _view = [];
 
@@ -415,12 +416,16 @@ public partial class HexSandbox : Node2D
         DrawColoredPolygon(attention, new Color(hue, unit == _battle.Active ? 0.16f : 0.10f));
 
         // An arc being held is a different thing from an arc being attended to: anything that
-        // moves inside this one gets shot at, out of whatever the watchman banked.
-        if (unit.Overwatch is not { } order || unit.Reserve <= 0) return;
+        // moves inside this one gets shot at. An overwatch needs a reserve to be worth drawing;
+        // an armed ambush stands whether or not this member can still contribute to it.
+        if (unit.Held is not { } order) return;
+        if (unit.Overwatch is not null && unit.Reserve <= 0) return;
 
+        var tint = unit.Ambush is not null ? AmbushHue : OverwatchHue;
         var covered = Wedge(at, order.Centre, order.Arc.Degrees, HexSize * 5.2f);
-        DrawColoredPolygon(covered, new Color(OverwatchHue, 0.12f));
-        DrawPolyline([.. covered, covered[0]], new Color(OverwatchHue, 0.55f), 1.5f, true);
+
+        DrawColoredPolygon(covered, new Color(tint, 0.12f));
+        DrawPolyline([.. covered, covered[0]], new Color(tint, 0.55f), 1.5f, true);
     }
 
     /// <summary>A pie slice centred on a hex bearing, in screen space.</summary>

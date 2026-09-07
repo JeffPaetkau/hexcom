@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 13 · 6 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 14 · 6 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -748,7 +748,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">04</span><span class="chip built">Built</span><br><br><span class="chip spec">Combat</span></div>
+    <div class="rail"><span class="num">04</span><span class="chip built">Built</span><br><br><span class="chip spec">Reload</span></div>
     <div class="body">
       <h2>Fifty points a turn</h2>
       <p>
@@ -991,9 +991,11 @@
       <p>
         Every trace returns the wall responsible for the grade, so the interface can point at the
         actual sandbag instead of showing an abstract shield, and an exposure figure from zero to
-        one that will drive hit chance once shooting exists. Both are symmetric and
-        side-agnostic, because the detection model below runs the same query in the enemy's
-        direction, and the AI must be restricted to exactly what the interface can show you.
+        one. That figure turned out to be the load-bearing one: it drives hit chance directly, it
+        is what the detection model multiplies a look by, and it is why stance and cover need no
+        separate rules in either. Both answers are symmetric and side-agnostic, because detection
+        runs the same query in the enemy's direction — and the AI must be restricted to exactly
+        what the interface can show you.
       </p>
     </div>
   </section>
@@ -1188,15 +1190,15 @@
       </p>
       <p>
         The dial settled at <strong>seven tenths</strong>. It is a share rather than a fixed
-        number, which matters more than the number does: the ten point turn is provisional, and
-        the allowance is expected to vary by soldier once stats, training and kit feed into it,
-        so nothing here may assume ten. What is calibrated is the shape — seven tenths puts the
-        three rungs of the movement economy on either side of the fire mode prices, so each is a
-        real decision rather than a rounding accident. Against a ten point turn it lands exactly:
-        hold everything and seven bank, which is an aimed shot; spend half the turn moving and
-        three bank, which is a snap shot; sprint and nothing banks. A floor cuts anything below
-        two points, because a leftover nothing can be spent on is noise and offering it is worse
-        than rounding it away.
+        number, which matters more than the number does: the allowance is expected to vary by
+        soldier once stats, training and kit feed into it, so nothing here may assume the standard
+        fifty. What is calibrated is the shape — seven tenths puts the three rungs of the movement
+        economy on either side of the fire mode prices, so each is a real decision rather than a
+        rounding accident. Against a fifty point turn it lands exactly: hold everything and
+        thirty-five bank, which is an aimed shot; spend half the turn moving and seventeen bank,
+        which covers a snap shot with change; sprint and nothing banks. A floor cuts anything
+        under a couple of strides, because a leftover nothing can be spent on is noise and
+        offering it is worse than rounding it away.
       </p>
 
       <p>
@@ -1206,8 +1208,8 @@
         training and their kit, and it lives on the unit as a pair of multipliers. So a scout
         who is quick over ground and slow to bring a weapon to bear, and a gunner who is the
         other way round, spend the same fifty points on entirely different turns. A stabilised
-        mount that takes a standard shot from five points to four is a multiplier on the wearer,
-        not a change to what a standard shot is.
+        mount that takes a standard shot from twenty-five points to twenty is a multiplier on the
+        wearer, not a change to what a standard shot is.
       </p>
       <p>
         Pricing is applied when a route is costed rather than baked into the movement graph. The
@@ -1221,14 +1223,13 @@
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          Two things to settle when the allowance stops being a flat ten. First, prices are
-          absolute while the allowance is not, so a soldier given more points does not merely
-          move further — they bank a larger reserve and afford better shots out of it, and the
-          advantage compounds across three systems at once. Second, the floor of one point per
-          action is where ten runs out of resolution: a walk already costs one, so no multiplier
-          can make a soldier meaningfully quicker over open ground, only slower. Both point at
-          the same answer — a bigger turn — and both should be decided together rather than
-          guessed at now.
+          Prices are absolute while the allowance is not. A soldier given more points does not
+          merely move further — they bank a larger reserve, afford better shots out of it, and
+          place them earlier on a mover's timeline, so the advantage compounds across three
+          systems at once. Whether that is the right reward for being quick, or wants a
+          counterweight, is a question for whenever allowances start to differ in earnest. The
+          resolution half of this went away with the rescale: at a stride of five a multiplier
+          from three fifths to double lands on a distinct number in both directions.
         </p>
       </div>
 
@@ -1236,7 +1237,7 @@
       <p>
         The failure mode is obvious enough to design against up front: every action triggering a
         volley of responses, each of which is itself an action, and a turn taking five minutes to
-        resolve. Three things hold it back, and only the last is a rule.
+        resolve. Four things hold it back, and only the last two are rules.
       </p>
       <ul>
         <li><strong>The economy does most of the work.</strong> Reactions are meant to be a
@@ -1247,8 +1248,14 @@
         until that unit's next turn, so a unit reacts about once a round however many chances it
         gets. Nobody answers the same move twice.</li>
         <li><strong>Only units that could actually act are asked.</strong> Reserve in hand, the
-        mover crossing their arc at some point in the window, and a shot they can afford — that
-        is a short list most of the time, and usually an empty one mid-firefight.</li>
+        mover crossing the arc they care about at some point in the window, and something they
+        can afford — that is a short list most of the time, and usually an empty one
+        mid-firefight.</li>
+        <li><strong>Being startled is a crossing, not a state.</strong> The involuntary one is
+        the real risk, because nobody has to set it up and everybody has it. It fires on the
+        single moment a contact goes from below the bar to above it — so it happens at most once
+        per opponent, and never at all once the shooting has started and everybody already knows
+        where everybody is.</li>
       </ul>
       <p>
         In practice the third one does most of the visible work. Building the offer list for a
@@ -1809,7 +1816,7 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 13</span>
+    <span>Hexcom · tactics layer · revision 14</span>
     <span>259 tests green · 0 engine references in core</span>
   </footer>
 

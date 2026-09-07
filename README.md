@@ -59,8 +59,9 @@ order with each unit's initiative roll.
 The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
 alarmed they are — coarse on purpose. Your own soldier's exposure is reported exactly, in the
 HUD, because that is information about yourself. Faint red circles are where an enemy *believes*
-one of yours to be; they stop moving when you do. A brighter, outlined wedge is an overwatch arc
-being held, and the yellow figure in the turn order is what that unit has banked to answer with.
+one of yours to be; they stop moving when you do. A brighter, outlined wedge is an arc being held
+— yellow for an overwatch, pink for an armed ambush — and the figure beside it in the turn order
+is what that unit has banked to answer with.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry's wedge and watch it stay unaware while the
@@ -68,10 +69,17 @@ same walk in front of it does not. The spotter on the roof sees most of the map 
 radio, so it is the one worth reaching first — and the ladder costs thirty of fifty points, so
 whoever wants that position gives up their turn to take it.
 
-You drive both sides, so overwatch is easy to try: give a sentry a narrow arc with `V`, end its
-turn, then run one of yours across it. The HUD reports which tick the shot went off on and where
-the runner was standing when it landed. Run the same route again with the arc set wide and watch
-the same weapon shoot worse.
+You drive both sides, so the three reactions are all easy to try. The HUD reports which tick each
+shot went off on and where the target was standing when it landed.
+
+- **Overwatch** — give a sentry a narrow arc with `V`, end its turn, then run one of yours across
+  it. Run the same route again with the arc set wide and watch the same weapon shoot worse.
+- **Surprise** — walk one of yours across the front of a sentry that declared nothing. It answers
+  anyway, out of half a bank and a beat late. Do it again with the same sentry and nothing
+  happens: you cannot startle somebody twice with the same soldier.
+- **Ambush** — press `B` on two or three of theirs in a row to arm them, then walk one of yours
+  into the arc. All of them fire in one window, before you get to answer. Or hover a target and
+  press `B` again with an armed unit active to spring it deliberately.
 
 ## What is built
 

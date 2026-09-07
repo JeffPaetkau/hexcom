@@ -38,6 +38,36 @@ that URL passed explicitly as the Artifact tool's `url` argument, and the artifa
 first. Publishing without it silently creates a second, competing copy instead of updating this
 one.
 
+## How a turn runs
+
+Worth knowing before touching anything, because most of the surprises are in the order.
+
+```
+Battle.Start()      roll initiative, book everyone, hand the first turn out
+  └ Advance()       refill AP · recharge shields · clear Reserve and Overwatch
+                    (NOT Ambush) · rebook for next round
+  the active unit acts
+      Move · Fire · Face · ChangeStance · SetOverwatch · Arm · SpringAmbush
+  Battle.EndTurn()  Awareness.Observe  ← the only moment a unit looks around
+                    Bank               ← leftover AP becomes Reserve, AP zeroed
+                    Advance
+```
+
+**A reaction window is the only thing that acts out of turn**, and there are exactly two ways
+one opens:
+
+- `Battle.Move` opens one on the committed route. Overwatch, surprise, and a trap somebody
+  walked into all answer into it.
+- `Battle.SpringAmbush` opens one deliberately, on a `CommittedMove` of zero length.
+
+Either way: offers are built in the constructor, `Run()` = `PlaceRecommended()` + `Resolve()`,
+and `Resolve` walks the subject along the timeline firing at each landing tick. An interface or
+an AI plugs in by placing its own choices between those two calls instead of calling `Run`.
+
+The reaction picking policy in `ReactionWindow.Best` is a **deliberate stand-in** — shoot if you
+can, else turn, else get low, else call it in. Ranking a shot against a dive into cover is what
+utility scoring is for; replacing it is the same job as building the AI.
+
 ## Conventions actually in use
 
 - **Test names are sentences about behaviour**, not method names:
@@ -50,9 +80,21 @@ one.
   Godot concepts.
 - Records for values and config, classes for entities. Config types expose `init` properties with
   sensible defaults and a `Default` static.
-- **Balance numbers are never inline.** They live in `MovementCosts`, `AwarenessModel`, and the
-  threshold properties on `SightSolver`. If a magic number appears in a method, it belongs in a
-  config record.
+- **Balance numbers are never inline.** If a magic number appears in a method, it belongs in a
+  config record. The homes, and there are no others:
+
+  | | |
+  |---|---|
+  | `MovementCosts` | action prices and the height thresholds that pick a traversal |
+  | `AwarenessModel` | detection rates, arc widths, thresholds, how far word travels |
+  | `GunneryModel` | hit chance, cover penalties, glancing, called shots |
+  | `ReactionModel` | what banks, what springs a reaction, what each kind costs |
+  | `CostProfile` | what one soldier pays against the price list — per unit |
+  | `StanceProfile` | heights, concealment, noise and movement per stance |
+  | `OverwatchArc` | arc widths and their aiming bonuses |
+  | `Loadout` / `WeaponProfile` / `FireMode` | kit, as content |
+
+  Float epsilons are not balance numbers: `Geometry2D.Epsilon` and `AngleEpsilonDegrees`.
 - Entity state that only the battle may change uses `internal set` (see `Unit`). Tests go
   through the public API deliberately — this has already caught a bad test.
 
@@ -110,6 +152,21 @@ one.
   `--logger "console;verbosity=detailed"` and grep for `Error Message`.
 - Bash heredocs in this environment break on apostrophes in the body. Use the Write/Edit tools
   for prose-heavy files rather than `cat <<EOF`.
+
+## Where it stands
+
+Sections 01–10 of the design doc are built. Next on the build order is **enemy AI**, then
+grenades and mines, then the Godot greybox.
+
+**Every balance number in the game is set by reasoning, not by play.** Nothing has been measured,
+because there is nobody to play against yet — the sandbox drives both sides by hand. So treat the
+figures as arguments rather than findings, and when one looks wrong, check the doc for why it is
+what it is before changing it; several are load-bearing in ways their size does not advertise.
+The overwatch awareness gate is flagged in the doc and in `ReactionModel` as the first thing to
+re-examine under real play, with the two dials named.
+
+AI is what turns those arguments into measurements: it is also what unlocks the headless
+AI-vs-AI balance runs the whole engine-free split was for.
 
 ## Working rhythm
 
