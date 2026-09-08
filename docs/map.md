@@ -11,17 +11,22 @@ else. The one exception is `decisions.md`, which anybody may append to and nobod
 
 ## The territories
 
-Six, but only three have docs. A doc is created when there is real work in the territory —
-an empty one rots and, worse, looks maintained.
+Six, four with docs. A doc is created when there is a brief to put in it — an empty one rots and,
+worse, looks maintained while doing it.
 
-| Territory | Doc | Owns | State |
+| Territory | Doc | Owns | Gated by |
 |---|---|---|---|
-| **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**` (except `Maps/DemoMaps.cs`), `tests/**`, `docs/design.html` | active — enemy AI is next |
-| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | active — sandbox only |
-| **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | barely started; owns its own tooling |
-| **Art & audio** | — this file | `assets/**` when it exists | not started, and gated on a spec that does not exist |
-| **Setting & campaign** | — this file | `docs/setting.md` when it exists | not started; free to start any time |
-| **Strategy layer** | — this file | undecided | not started; arguably a second game |
+| **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**` (except `Maps/DemoMaps.cs`), `tests/**`, `docs/design.html` | nothing — it is the trunk |
+| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing for its current job |
+| **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | balance work waits on Core's AI; the format work waits on nothing |
+| **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
+| **Art & audio** | — this file | `assets/**` when it exists | the metres-per-hex figure, and an asset spec nobody has written |
+| **Strategy layer** | — this file | undecided | the campaign shape, which belongs to Setting |
+
+**Each territory doc with work in it opens with a `## The job` section** — the current brief,
+written so that a session can be pointed at that one file and need nothing else. When a job is
+finished, the session that finished it replaces that section with the next one. A brief is a work
+order, not a status line: it says what to do, not how far along somebody got.
 
 Note the carve-out: Core owns all of `src/Hexcom.Core` **except** `Maps/DemoMaps.cs`, which is
 content wearing a `.cs` extension until there is a map format to put it in.

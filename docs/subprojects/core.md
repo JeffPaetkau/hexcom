@@ -29,6 +29,49 @@ purpose, balance numbers in their seven homes, and one horizontal unit is one me
 
 ---
 
+## The job — enemy AI (build order 04)
+
+Branch `core/utility-scoring`. Read the rest of this file before starting; the turn loop below
+and the gotchas after it are the things that will bite.
+
+**The seam already exists.** `ReactionWindow` separates building offers from resolving them, and
+`ReactionWindow.Best` is a deliberate stand-in — shoot if you can, else turn, else get low, else
+call it in. Replacing that with utility scoring *is* the AI job, so start there rather than with
+a full turn planner. It is bounded, it has an obvious test story, and the rest grows out of it.
+
+**Settle these two before writing much, and record the answer in `<remarks>` or the design doc.**
+They are the decisions most likely to get made implicitly and then be expensive:
+
+1. Does one scorer serve both the reaction window and the ordinary turn, or are those different
+   problems? Build order 04 implies one — same queries, same ranking — but that is an implication
+   and not yet a decision.
+2. What is a utility score denominated in? The game already has one currency, and inside a
+   window cost is literally time. An abstract 0–1 score that does not talk to action points will
+   not survive contact with `ReactionWindow.Resolve`.
+
+**The hard constraint — contract 2 in [../map.md](../map.md).** The AI reads the same public
+queries the interface shows. If the AI wants information the interface cannot show, that is a
+finding about the interface, to be written up in `../decisions.md` — not a licence to reach into
+internals for convenience. This is the constraint an AI implementation is most likely to breach,
+and breaching it quietly is how the "one query surface" contract dies.
+
+**Out of scope.** `game/**`. If the sandbox needs a way to hand a side to the AI, append it to
+`../decisions.md` for View. Entry 002 there is an open sandbox bug; it does not affect headless
+work, so leave it alone.
+
+**Why it is first.** Every balance number in this game is an argument rather than a measurement,
+because there is nobody to play against. The AI is what unlocks the headless AI-vs-AI runs the
+engine-free split was built for, and turns those arguments into findings — starting with the
+overwatch awareness gate that `ReactionModel` already names as first for re-examination.
+
+**The test that it worked:** the ranking is *derived* from something — expected damage, exposure,
+points spent — rather than enumerated. A slightly better hard-coded ladder satisfies the letter
+of "replace the stand-in" and none of its point.
+
+After this: grenades and mines (build order 05).
+
+---
+
 ## How a turn runs
 
 Worth knowing before touching anything, because most of the surprises are in the order.
@@ -127,14 +170,6 @@ the ones that block or shape what Core does next.
 - **Whether the metres-per-hex figure was ever decided.** Tests use 1.0 throughout; nothing
   states it as intended, and the awareness distances read as though drawn against something
   larger. Raised in `../decisions.md` entry 002.
-
-## What is next
-
-**Enemy AI** — utility scoring over the same queries the interface uses, replacing the crude
-stand-in in `ReactionWindow.Best`. Then grenades and mines.
-
-AI is what turns the balance arguments into measurements: it is also what unlocks the headless
-AI-vs-AI runs the whole engine-free split was for.
 
 ## Recent work
 

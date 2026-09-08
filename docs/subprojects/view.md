@@ -33,6 +33,45 @@ reaching into `src/`.
 
 ---
 
+## The job — separate rendering scale from world scale
+
+Branch `view/world-scale`. This is `../decisions.md` entry 002; read it first, it has the
+evidence.
+
+`HexSandbox.cs:79` hands the drawing layout straight to `Battle`:
+
+```csharp
+_layout = new HexLayout(HexSize);                              // 44 — pixels
+_battle = new Battle(DemoMaps.Compound(), _layout, seed: Seed);
+```
+
+`SightSolver` builds a `Vec3` from that layout's X and Y and a floor height in **metres**, then
+takes distances across it. So the sandbox is telling the rules a hex is 44 m across while a solid
+wall is 3 m tall. Every wall is a kerb to the sight trace: cover collapses towards none, prone
+behind sandbags does not hide, and the awareness ranges in metres fall inside a single hex. Tests
+never caught it because they all pass `size: 1.0`.
+
+**The fix is two layouts.** One in metres, constructed here and handed to `Battle`; one in pixels
+for drawing. The view converts between them at the boundary — that is what a view layer is for.
+Take care that everything currently reading `_layout` is sorted into the right one: `HexAt` for
+input and `Position`/`Center` for drawing are pixel-side, and anything Core is given is
+metres-side.
+
+**Do not wait on the metres-per-hex figure.** Nobody has ever decided it, and Content owns the
+question (see [content.md](content.md)). Use the tests' `1.0` as the interim value, leave a
+comment saying it is interim and pointing at the open question, and get the *structure* right —
+that is the part that makes contract 5 enforceable rather than merely true. When Content settles
+the number, changing it becomes a one-line edit instead of an archaeology exercise.
+
+**How to know it worked.** The sandbox should start behaving like the tests: go prone behind
+sandbags and disappear, walk into a building's shadow and lose the watcher. If cover still does
+nothing, the two layouts have not actually been separated.
+
+**Then, and only if you have appetite:** the `HexSandbox.cs` split below. It is not urgent while
+one person works here, and it is a precondition for two.
+
+---
+
 ## Two territories, one doc
 
 Presentation and interface are different problems:

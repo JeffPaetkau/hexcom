@@ -45,6 +45,51 @@ the project now works — which is itself an open question below.
 
 ---
 
+## The job — decide how big a hex is, then what a map file is
+
+Branch `content/map-format`. Two pieces of work, in this order, because the first is small and
+several other people are waiting on it.
+
+### 1. How big is a hex, in metres?
+
+Nobody has ever decided. Tests use `new HexLayout(size: 1.0)` throughout — a hex 2 m across and
+1.73 m between centres — but nothing states that as intended, and it sits badly beside an
+awareness model that talks about crawlers at forty metres and rifles heard at a hundred.
+
+This is not a free parameter. `SightSolver` mixes layout units with metre heights in one `Vec3`,
+so the figure sets the scale of cover, sight and detection *together*. Work it from the fiction
+and the numbers already committed to: a soldier occupies one hex, a 1 m sandbag wall should
+protect a crouching soldier at 1.25 m and not a standing one at 1.80 m, and a stride costs 5 of
+50 points so a turn crosses ten hexes.
+
+**Write the answer and the reasoning into `../decisions.md`**, addressed to Core and View — it
+changes a frozen contract's interpretation, and two territories are waiting on it. Then Core
+adjusts test fixtures if the figure is not 1.0, and View swaps its interim constant.
+
+**Do not block on this to start** — View has been told to fix its structure using 1.0 as an
+interim, so nobody is stuck. But it does block the art spec entirely, and art cannot begin
+without it.
+
+### 2. What is a map file?
+
+The territory's real founding act. Today a map is C# built by hand against the corner graph, and
+level design is not something a person can do.
+
+Two candidates, and the choice decides whether level design is a programming task forever:
+
+- **Serialise the corner graph directly.** Honest, loses nothing, unpleasant to hand-author.
+- **A friendlier authored form that compiles down to one.** Needs a compiler nobody has written,
+  and every simplification risks making some legal map inexpressible.
+
+Whichever way it goes, the format has to express the things Depends on lists above: chords rather
+than tile edges, authored ladders and stairs as distinct from generated climbs and drops, and
+`WallProfile` as open data rather than a closed enum. `DemoMaps.Compound()` is the test — if the
+format cannot express the existing demo map, it is not finished.
+
+Record the choice and the rejected alternative in `../decisions.md`.
+
+---
+
 ## Open questions
 
 **How big is a hex, in metres?** Nothing states it. Tests use `new HexLayout(size: 1.0)`
