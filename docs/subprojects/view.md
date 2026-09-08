@@ -108,6 +108,10 @@ for whoever picks up interface work in earnest.
   `using Side = Hexcom.Core.Units.Side;`.
 - **The sandbox needs Godot 4.7 .NET edition**, not the plain build. If your Godot is a different
   4.x, change the `Godot.NET.Sdk` version in `game/Hexcom.Game.csproj` to match.
+- **`.uid` files are tracked, and Godot writes them for you.** Adding a script under
+  `game/scripts/` leaves the tree dirty the first time anyone opens the project, because Godot
+  generates a `.uid` beside each one. They belong in the repository — commit them with the script
+  rather than wondering, later, whether the untracked files in your status are yours.
 - **Build before you run.** Godot loads the assembly from `game/.godot/mono/temp/bin/Debug/`, and
   a scene launched before `dotnet build Hexcom.sln` fails with *"Cannot instantiate C# script"* —
   which reads like a broken scene file and is not one.
