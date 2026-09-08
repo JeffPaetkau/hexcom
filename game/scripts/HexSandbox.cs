@@ -107,8 +107,16 @@ public partial class HexSandbox : Node2D
             UnitStats.Signaller, HexDirection.SouthWest, Loadout.Beamer);
 
         _battle.Start();
-        _layer = _battle.Active!.Position.Layer;
+
+        // A capture takes its cursor and its turn from the command line rather than from the
+        // keyboard, which is the only way anything cursor-driven or anything belonging to a
+        // soldier other than the first gets into a picture at all. See SandboxCapture.
+        for (var i = 0; i < (_capture?.Passes ?? 0) && _battle.IsRunning; i++) _battle.EndTurn();
+
+        _layer = _battle.Active?.Position.Layer ?? 0;
         _lastWindow = "";
+        _hover = _capture?.Hover;
+
         Recalculate();
     }
 
