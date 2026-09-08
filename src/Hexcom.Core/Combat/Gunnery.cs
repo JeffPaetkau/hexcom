@@ -116,15 +116,45 @@ public sealed record ShotPlan(
     public bool IsCalledShot => CalledAt is not null;
 
     /// <summary>
-    /// Expected damage arriving at the plate, for an AI weighing options.
+    /// Expected damage arriving at the plate — <b>before</b> shields and armour.
     /// </summary>
     /// <remarks>
     /// <see cref="GlancingFactor"/> is the average share of a round that survives the angle it
     /// arrives at, weighted by how likely each face is to be the one hit — normalised, so it is
     /// the same from every bearing. Which side gets worn still depends entirely on where the
     /// shooter is standing; how much gets through does not.
+    /// <para>
+    /// This is what the shot delivers, not what the soldier feels. A beam that lands squarely on
+    /// a full force shield reads well here and does precisely nothing, so anything <em>choosing</em>
+    /// between shots wants <see cref="Gunnery.Expect"/>, which puts the rounds through the layers.
+    /// </para>
     /// </remarks>
     public double ExpectedDamage => HitChance * Mode.Shots * Weapon.Damage * GlancingFactor;
+}
+
+/// <summary>
+/// What a shot is expected to actually achieve, once the layers have had their say.
+/// </summary>
+/// <remarks>
+/// The three things worth having are separated because they are worth different amounts and
+/// nothing but the thing weighing them can say how much. Vitality is the only one that wins the
+/// fight; plate stripped never comes back, so it is progress banked; shield stripped comes back
+/// in a turn or two, so it is only worth anything to somebody who exploits it now.
+/// </remarks>
+/// <param name="Vitality">Expected damage reaching the soldier, never more than they have left.</param>
+/// <param name="PlateStripped">Expected ablative armour worn off. Permanent.</param>
+/// <param name="ShieldStripped">Expected shield soaked. Recharges.</param>
+/// <param name="DownChance">Chance this shot takes them out of the fight, from zero to one.</param>
+public readonly record struct ShotExpectation(
+    double Vitality,
+    double PlateStripped,
+    double ShieldStripped,
+    double DownChance)
+{
+    public static readonly ShotExpectation Nothing = new(0, 0, 0, 0);
+
+    public override string ToString()
+        => $"{Vitality:0.0} vitality, {PlateStripped:0.0} plate, {ShieldStripped:0.0} shield, {DownChance:P0} down";
 }
 
 /// <summary>One round, and what it did.</summary>
@@ -274,5 +304,94 @@ public sealed class Gunnery(GunneryModel? model = null)
             mean += aspect.Share * GlancingFactor(kind, aspect.ObliquityDegrees);
 
         return mean <= 0 ? 1.0 : ReferenceGlancingFactor(kind) / mean;
+    }
+
+    /// <summary>
+    /// What this shot is expected to achieve against the target as it currently stands, layers
+    /// and all.
+    /// </summary>
+    /// <remarks>
+    /// The difference between this and <see cref="ShotPlan.ExpectedDamage"/> is the whole reason
+    /// a squad carries both weapon families. Eight points of beam against a full shield is eight
+    /// points of nothing; the same eight against a face whose shield has gone is eight points
+    /// through two of plate. Anything ranking shots has to see that, and until this existed
+    /// nothing in the game could.
+    /// <para>
+    /// Worked out face by face and then averaged by how likely each face is to be the one found.
+    /// Inside a face the rounds are taken in order against layers that wear as they go, so the
+    /// <em>i</em>th round of a burst contributes only as far as it is likely to be reached — the
+    /// chance that at least <em>i</em> of them land. Anything that carries the target past what
+    /// they have left stops there, because that is what happens.
+    /// </para>
+    /// <para>
+    /// The approximation, and it is deliberate: the rounds of one volley are treated as though
+    /// they all found the same face. They do not — the face is rolled per round — so a burst is
+    /// credited with wearing one plate through rather than three plates a third of the way. That
+    /// reads the volley slightly pessimistically against a well armoured target and slightly
+    /// optimistically against a bare one, and doing it exactly means enumerating every way three
+    /// rounds can be spread over three faces for a number nobody could check.
+    /// </para>
+    /// </remarks>
+    public ShotExpectation Expect(ShotPlan plan)
+    {
+        if (!plan.CanFire || plan.Aspects.Count == 0) return ShotExpectation.Nothing;
+
+        var target = plan.Target;
+        var rounds = plan.Mode.Shots;
+        var chance = plan.HitChance;
+
+        var vitality = 0.0;
+        var plate = 0.0;
+        var shield = 0.0;
+        var down = 0.0;
+
+        foreach (var aspect in plan.Aspects)
+        {
+            var arriving = DamageAt(plan.Weapon, aspect.ObliquityDegrees, plan.GlancingScale);
+            var run = target.Protection.Preview(
+                aspect.Face, plan.Weapon.Kind, arriving, rounds, aspect.ObliquityDegrees);
+
+            var left = target.Vitality;
+
+            for (var i = 0; i < rounds; i++)
+            {
+                // The ith round is only ever fired if the i-1 before it landed and left them up,
+                // so it counts for as much as it is likely to be reached.
+                var reached = AtLeast(i + 1, rounds, chance);
+                var got = Math.Min(run[i].ToVitality, left);
+
+                vitality += aspect.Share * reached * got;
+                plate += aspect.Share * reached * run[i].StoppedByArmour;
+                shield += aspect.Share * reached * run[i].StoppedByShield;
+
+                left -= got;
+                if (left > 0) continue;
+
+                down += aspect.Share * reached;
+                break;
+            }
+        }
+
+        return new ShotExpectation(vitality, plate, shield, down);
+    }
+
+    /// <summary>Chance that at least <paramref name="k"/> of <paramref name="n"/> rounds land.</summary>
+    private static double AtLeast(int k, int n, double p)
+    {
+        if (k <= 0) return 1.0;
+        if (k > n) return 0.0;
+
+        var total = 0.0;
+        for (var i = k; i <= n; i++)
+            total += Choose(n, i) * Math.Pow(p, i) * Math.Pow(1 - p, n - i);
+
+        return total;
+    }
+
+    private static double Choose(int n, int k)
+    {
+        var result = 1.0;
+        for (var i = 1; i <= k; i++) result = result * (n - k + i) / i;
+        return result;
     }
 }

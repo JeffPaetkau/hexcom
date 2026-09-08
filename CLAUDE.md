@@ -60,7 +60,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 259 tests, ~1s
+dotnet test                 # 272 tests, ~1s
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -117,6 +117,7 @@ one.
   | `StanceProfile` | heights, concealment, noise and movement per stance |
   | `OverwatchArc` | arc widths and their aiming bonuses |
   | `Loadout` / `WeaponProfile` / `FireMode` | kit, as content |
+  | `UtilityModel` | what an action is worth — the exchange rates the AI ranks by |
 
   Float epsilons are not balance numbers: `Geometry2D.Epsilon` and `AngleEpsilonDegrees`.
 - Entity state that only the battle may change uses `internal set` (see `Unit`). Tests go
@@ -138,8 +139,9 @@ problem are in [docs/subprojects/view.md](docs/subprojects/view.md). These two a
 
 ## Where it stands
 
-Sections 01–10 of the design doc are built. Next on the build order is **enemy AI**, then
-grenades and mines, then the Godot greybox.
+Sections 01–11 of the design doc are built. Next on the build order is the **search half of the
+enemy AI** — a unit that takes its own turn, over the scorer that already exists — then grenades
+and mines, then the Godot greybox.
 
 **Every balance number in the game is set by reasoning, not by play.** Nothing has been measured,
 because there is nobody to play against yet — the sandbox drives both sides by hand. So treat the

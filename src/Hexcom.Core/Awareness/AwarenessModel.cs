@@ -76,4 +76,22 @@ public sealed record AwarenessModel
     /// rather than immediately engaged.
     /// </summary>
     public double RelayFraction { get; init; } = 0.6;
+
+    /// <summary>
+    /// Certainty a contact has to reach to stand at this rung of the ladder.
+    /// </summary>
+    /// <remarks>
+    /// The ladder read the other way round. <see cref="Contact.State"/> asks which rung a
+    /// certainty sits on; anything working out whether an <em>act</em> would carry somebody onto
+    /// a rung — passing a contact on, taking one more look — has to ask what the rung costs.
+    /// Both readings come off the same four numbers, which is the point of having them here.
+    /// </remarks>
+    public double Threshold(AwarenessState state) => state switch
+    {
+        AwarenessState.Suspicious => SuspiciousAt,
+        AwarenessState.Searching => SearchingAt,
+        AwarenessState.Alerted => AlertedAt,
+        AwarenessState.Engaged => EngagedAt,
+        _ => 0,
+    };
 }

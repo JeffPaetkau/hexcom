@@ -5,6 +5,7 @@ using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 
@@ -192,6 +193,16 @@ public sealed class ReactionWindow
     public bool Interrupted => StoppedAt < Move.Duration;
 
     public bool AnyReactions => _placements.Count > 0;
+
+    /// <summary>
+    /// What one of these options is worth, and where the worth comes from.
+    /// </summary>
+    /// <remarks>
+    /// The same call the recommendation is made with, so an interface offering the choice to a
+    /// player can show exactly what the AI would have ranked by rather than an approximation of
+    /// it. Options from other windows do not belong here; the score depends on the timeline.
+    /// </remarks>
+    public Appraisal Appraise(ReactionPlacement placement) => _battle.Tactics.Appraise(placement, Move);
 
     // ---- placing ---------------------------------------------------------------
 
@@ -411,7 +422,10 @@ public sealed class ReactionWindow
                 var shot = new ReactionPlacement(
                     reactor, Mover, ReactionKind.Overwatch, ReactionAction.Fire, start, cost, forecast);
 
-                if (best is null || shot.ExpectedDamage > best.ExpectedDamage) best = shot;
+                // Scored rather than compared on damage arriving: two ticks apart, the same shot
+                // can be the one that catches them in the open and the one that arrives after
+                // they are behind the wall, and only the forecast knows which.
+                if (best is null || Appraise(shot).Score > Appraise(best).Score) best = shot;
             }
 
             if (best is not null) options.Add(best);
@@ -609,33 +623,21 @@ public sealed class ReactionWindow
     // ---- shared --------------------------------------------------------------
 
     /// <summary>
-    /// Whichever option looks best, with a deliberate placeholder of a policy.
+    /// Whichever option is worth most, in vitality.
     /// </summary>
     /// <remarks>
-    /// Shoot if you can, otherwise turn to face them, otherwise get low, otherwise call it in.
-    /// Ranking a shot against a shove into cover is exactly the judgement utility scoring exists
-    /// to make, so this stays a stand-in until the AI arrives rather than pretending to be one.
-    /// Among shots, best expected damage wins and ties go to whichever lands soonest, because a
-    /// shot in hand beats the same shot later.
+    /// This used to be a ladder — shoot if you can, otherwise turn, otherwise get low, otherwise
+    /// call it in — which got the common case right and had nothing whatever to say about the
+    /// interesting ones. A beam into a full force shield sat at the top of it because the shield
+    /// was invisible to a figure taken before the armour; a dive into cover could never beat a
+    /// hopeless shot, because they were never on the same scale.
+    /// <para>
+    /// They are now, and the scale is vitality. See <see cref="Tactician"/> for what each option
+    /// is worth and why.
+    /// </para>
     /// </remarks>
-    private static ReactionPlacement Best(IReadOnlyList<ReactionPlacement> options)
-    {
-        var shots = options.Where(o => o.Action == ReactionAction.Fire).ToList();
-
-        if (shots.Count > 0)
-            return shots
-                .OrderByDescending(o => o.ExpectedDamage)
-                .ThenBy(o => o.ResolvesAt)
-                .ThenBy(o => o.ApCost)
-                .First();
-
-        return options.OrderBy(o => o.Action switch
-        {
-            ReactionAction.Turn => 0,
-            ReactionAction.Drop => 1,
-            _ => 2,
-        }).First();
-    }
+    private ReactionPlacement Best(IReadOnlyList<ReactionPlacement> options)
+        => _battle.Tactics.Best(options, Move);
 
     /// <summary>
     /// The first moment on the timeline the mover is both inside the arc that matters and in
