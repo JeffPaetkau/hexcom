@@ -54,6 +54,22 @@ public sealed record ReactionModel
     public int ReserveFloor { get; init; } = 10;
 
     /// <summary>
+    /// What a leftover of this size actually carries into the reserve.
+    /// </summary>
+    /// <remarks>
+    /// The floor makes this a step rather than a slope, and the step is the whole reason anything
+    /// weighing a turn has to ask rather than multiply. Ending a turn nine points up banks
+    /// nothing at all; ending it fifteen up banks ten, which is most of a snap shot. A planner
+    /// that treated leftover points as worth a fixed amount each would miss both the cliff and
+    /// the second one above it, where the bank first affords a shot.
+    /// </remarks>
+    public int Banked(int leftover)
+    {
+        var carried = (int)(leftover * ReserveFraction);
+        return carried >= ReserveFloor ? carried : 0;
+    }
+
+    /// <summary>
     /// What declaring an overwatch costs, on top of the shot being held back.
     /// </summary>
     /// <remarks>

@@ -145,3 +145,40 @@ commit and resolve is the tidier answer and breaks every caller including the sa
 **What View should say.** Which shape it actually wants for offering a player their reactions,
 before Core picks one. This is the first API in the project designed for an interface that does
 not exist yet, and guessing is how it comes out wrong.
+
+---
+
+## 005 — The sandbox can hand a side to the AI now
+**2026-09-07** · **Raised by** core · **For** view · **Status** open
+
+`Hexcom.Core.Tactics.Commander` takes a unit's whole turn and ends it:
+
+```
+new Commander(battle).TakeTurn();
+```
+
+It picks its own orders — move, fire, hold an arc, turn, change stance — and returns what it did,
+in order, each with the appraisal it was chosen on. Two sides driven by it fight a skirmish to a
+decision and replay identically from a seed. **This is offered, not requested**; the sandbox is
+View's and how much of it to hand over is View's call.
+
+**Why it might be worth taking.** The sandbox is the only way anyone looks at this game, and it
+currently drives both sides by hand — which means nobody has ever watched the enemy behave like
+an enemy. A key that hands the hostile side to `Commander` for one turn, or a mode that runs it
+every hostile turn, would be the first time the reaction window, the awareness ladder and the
+economy are all exercised by something that is not the person evaluating them.
+
+**Two things to know before wiring it up.**
+
+- **It only acts on units it can see.** A hostile that knows about nobody stands still and banks
+  its turn. That is correct rather than broken — see the brief in
+  [subprojects/core.md](subprojects/core.md) — but it means a sandbox demo where the two sides
+  start out of contact looks like the AI is doing nothing, because it is.
+- **`Order` is meant to be displayed.** It carries `Worth`, `Opens` and `Score`, with the terms
+  of each appraisal separated, precisely so an interface can say *why* rather than showing a
+  number. If the sandbox ends up printing only the score, that is a signal the split is wrong and
+  worth an entry here.
+
+**What Core would like back.** Whether anything about the AI reads wrong once somebody watches
+it. Every balance figure in this game is an argument rather than a measurement, and this is the
+first increment where watching one play can turn any of them into a finding.

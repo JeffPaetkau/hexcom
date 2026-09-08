@@ -193,11 +193,36 @@ shot went off on and where the target was standing when it landed.
   are already holding. Action points are priced in the same currency, which is what lets a cheap
   bad option be compared with an expensive good one at all.
 
+  Firing is priced as the loudest thing a soldier does. A shot is worth its damage *less* what it
+  tells everybody — the man you shot at knows for certain, everyone in earshot of a slug hears
+  roughly where, everyone facing a beam sees exactly where — measured by how much closer each of
+  them comes to acting on it, times what they would then do about you. Somebody who already has a
+  live fix learns nothing and costs nothing.
+
   Nothing in it is a ladder. The old policy for picking a reaction was one — shoot if you can,
   otherwise turn, otherwise get low, otherwise call it in — and it could not tell a shot that
   would be soaked from one that would not, because it ranked shots on damage arriving rather than
   damage arriving anywhere. That is gone. The AI and the interface rank by the same call, and it
   returns its terms separately so a player can be told *why* rather than shown a number.
+
+- **A soldier that takes its own turn** — the search half, over the same judgement. Every hex it
+  could stand in crossed with everybody it could shoot from there, plus turning, getting lower,
+  and holding an arc. Greedy, with one step of lookahead on moves, because walking is not an
+  achievement: a move to a firing position is worth nothing on its own and a great deal because
+  of the shot at the far end of it, so the two are ranked together and carried out separately.
+  What falls out is a soldier that goes round a man in cover rather than shooting through it —
+  nobody wrote that down; the sight trace reports less of a target behind sandbags and the
+  arithmetic does the rest.
+
+  Doing nothing is a candidate with a real score. Points left at the end of a turn become the
+  reserve you answer somebody else's move with, so holding is worth whatever it could afford to
+  do about the threats you know about — which has a cliff in it, because a bank too small to fire
+  from is worth nothing to fire with. An action has to beat holding rather than beat zero. It is
+  also why declaring an arc is ever chosen, and why *which* arc comes out of the arithmetic
+  rather than off a preference list.
+
+  Two sides driven by it fight a skirmish to a decision with no window open, and replay
+  identically from a seed. That is the thing the engine-free split was built for.
 
 ## What is not built yet
 
@@ -206,9 +231,11 @@ are heading.
 
 The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
 
-The judgement is built; the thing that uses it on its own turn is not. A hostile unit ranks its
-reactions properly and still does nothing whatever when its own turn comes round, so the sandbox
-drives both sides by hand. What is missing is the search — over where a unit could go, what it
-could shoot from there, and what it should hold back — with the same scorer at the bottom of it.
-That, and the fact that firing gives you away and nothing prices that yet, is what stands between
-here and a headless AI-versus-AI match.
+**Nobody goes and looks.** A soldier reasons only about enemies it can currently see, which is
+deliberate — acting on the real position of a unit you have lost track of is exactly the cheating
+the whole scheme exists to prevent — but it leaves a hole with three faces. A unit that knows
+about nobody stands still all battle. No unit can move to *gain* a line of sight, only to improve
+one it has. And being heard costs the shooter nothing when the listener is behind a wall, because
+what giving yourself away is worth is measured by what the person you gave it to could do from
+where they stand. All three are the same missing piece: threats built from a remembered position
+rather than a live one. That is next.

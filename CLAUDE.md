@@ -60,7 +60,7 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 272 tests, ~1s
+dotnet test                 # 289 tests, ~6s (the AI search is most of it)
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
@@ -71,7 +71,7 @@ installed on this machine, so the scene wiring has never been verified — only 
 
 | | |
 |---|---|
-| `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness, Combat, Reactions |
+| `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness, Combat, Reactions, Tactics |
 | `tests/Hexcom.Core.Tests/` | xUnit |
 | `game/` | Godot view layer, one script: `HexSandbox.cs` |
 | `docs/map.md` | territories, ownership, frozen contracts |
@@ -139,9 +139,9 @@ problem are in [docs/subprojects/view.md](docs/subprojects/view.md). These two a
 
 ## Where it stands
 
-Sections 01–11 of the design doc are built. Next on the build order is the **search half of the
-enemy AI** — a unit that takes its own turn, over the scorer that already exists — then grenades
-and mines, then the Godot greybox.
+Sections 01–11 of the design doc are built. Next on the build order is **going to look** — an AI
+that acts on a remembered position and not only on what it can currently see — then grenades and
+mines, then the Godot greybox.
 
 **Every balance number in the game is set by reasoning, not by play.** Nothing has been measured,
 because there is nobody to play against yet — the sandbox drives both sides by hand. So treat the

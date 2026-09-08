@@ -231,6 +231,142 @@ public class TacticsTests
         Assert.False(word.WorthDoing);
     }
 
+    // ---- what firing tells everybody ---------------------------------------------
+
+    [Fact]
+    public void ASlugRifleIsHeardThroughAWallAndABeamIsNotHeardAtAll()
+    {
+        var (battle, gunner, watched, hidden) = Overheard(Loadout.Rifleman);
+
+        var told = battle.Awareness
+            .WouldAnnounce(gunner, UnitPose.Of(gunner), gunner.Weapon, watched)
+            .ToList();
+
+        // Forty-five points of noise carries eighteen metres and does not care about the
+        // building in the way.
+        Assert.False(battle.CanSee(gunner, hidden), "the wall was supposed to hide them");
+        Assert.Contains(told, t => t.Learner == hidden);
+        Assert.Contains(told, t => t.Learner == watched);
+    }
+
+    [Fact]
+    public void ABeamTellsOnlyThePeopleWhoCanSeeWhereItCameFrom()
+    {
+        var (battle, beamer, watched, hidden) = Overheard(Loadout.Beamer);
+
+        var told = battle.Awareness
+            .WouldAnnounce(beamer, UnitPose.Of(beamer), beamer.Weapon, watched)
+            .ToList();
+
+        // Silent, so the man behind the building learns nothing. The one with a line on the
+        // shooter gets a bright arrow pointing straight back down it.
+        Assert.DoesNotContain(told, t => t.Learner == hidden);
+        Assert.Contains(told, t => t.Learner == watched);
+    }
+
+    [Fact]
+    public void AShotIsWorthLessWhenItBringsHisMateDownOnYouAsWell()
+    {
+        var (battle, gunner, target, _) = Pairing();
+        var alone = Alone(Loadout.Rifleman);
+
+        var seen = battle.Tactics.Appraise(battle.PlanShot(gunner, target));
+        var quiet = alone.Battle.Tactics.Appraise(alone.Battle.PlanShot(alone.Gunner, alone.Target));
+
+        // The same soldier, the same weapon, the same target at the same range. The only
+        // difference is that somebody who can shoot back is watching.
+        Assert.Equal(quiet.Harm, seen.Harm, 6);
+        Assert.True(seen.Score < quiet.Score);
+
+        // Shooting a man who did not know you were there tells him, whoever else is about, so
+        // even the shot taken in private costs something.
+        Assert.True(quiet.Spared < 0, $"the target learns, so {quiet.Spared:0.00} should be negative");
+        Assert.True(seen.Spared < quiet.Spared, $"{seen.Spared:0.00} should be worse than {quiet.Spared:0.00}");
+    }
+
+    [Fact]
+    public void SomebodyWhoHearsTheShotAndCannotReachYouCostsYouNothingYet()
+    {
+        var (battle, gunner, watched, hidden) = Overheard(Loadout.Rifleman);
+
+        // He hears it, and it tells him roughly where you are.
+        Assert.Contains(
+            battle.Awareness.WouldAnnounce(gunner, UnitPose.Of(gunner), gunner.Weapon, watched),
+            t => t.Learner == hidden);
+
+        // And it costs the gunner nothing, because what being given away is worth is measured by
+        // what the person you gave yourself away to could do about it — and from inside a shed
+        // that is nothing. Somebody who would come looking is worth something and is scored at
+        // nothing, because there is not yet anything in the game that goes and looks. This test
+        // exists to pin the gap rather than to approve of it.
+        var told = battle.Tactics.GivenAway(battle.PlanShot(gunner, watched));
+        var alone = Alone(Loadout.Rifleman);
+
+        Assert.Equal(alone.Battle.Tactics.GivenAway(alone.Battle.PlanShot(alone.Gunner, alone.Target)), told, 6);
+    }
+
+    [Fact]
+    public void TellingPeopleWhatTheyAlreadyKnowCostsNothing()
+    {
+        var (battle, gunner, watched, hidden) = Overheard(Loadout.Rifleman);
+
+        // Both of them already have a live fix on the gunner, so the shot settles nothing.
+        foreach (var knower in new[] { watched, hidden })
+            for (var i = 0; i < 60 && battle.Awareness.Of(knower.Id, gunner.Id).Detection < 100; i++)
+                battle.Awareness.Notice(knower, gunner, UnitPose.Of(gunner), battle.Round);
+
+        Assert.Equal(0, battle.Tactics.GivenAway(battle.PlanShot(gunner, watched)), 6);
+    }
+
+    // ---- what holding back is worth ----------------------------------------------
+
+    [Fact]
+    public void NothingBanksBelowTheFloorAndTheFloorIsAStep()
+    {
+        var rules = ReactionModel.Default;
+
+        Assert.Equal(0, rules.Banked(rules.ReserveFloor));
+        Assert.True(rules.Banked(15) >= rules.ReserveFloor);
+        Assert.Equal(35, rules.Banked(UnitStats.Default.ActionPoints));
+    }
+
+    [Fact]
+    public void PointsHeldBackAreWorthWhateverTheyCouldAnswerWith()
+    {
+        var (battle, sentry, runner) = Facing();
+        var threats = new[] { Threat.At(runner) };
+
+        var whole = battle.Tactics.AppraiseHolding(sentry, sentry.Stats.ActionPoints, threats);
+        var scraps = battle.Tactics.AppraiseHolding(sentry, battle.Reactions.ReserveFloor, threats);
+
+        Assert.True(whole.Prospect > 0);
+        Assert.Equal(0, scraps.Prospect, 6);
+    }
+
+    [Fact]
+    public void AReserveIsWorthNothingWhenThereIsNobodyToAnswer()
+    {
+        var (battle, sentry, _) = Facing();
+
+        Assert.Equal(Appraisal.Nothing, battle.Tactics.AppraiseHolding(sentry, sentry.Stats.ActionPoints, []));
+    }
+
+    [Fact]
+    public void HoldingAnArcIsWorthMoreThanHoldingThePointsAlone()
+    {
+        var (battle, sentry, runner) = Facing();
+        var threats = new[] { Threat.At(runner) };
+
+        var loose = battle.Tactics.AppraiseHolding(sentry, 40, threats);
+        var narrow = battle.Tactics.AppraiseHolding(sentry, 40, threats, OverwatchArc.Narrow.AimBonus);
+        var wide = battle.Tactics.AppraiseHolding(sentry, 40, threats, OverwatchArc.Wide.AimBonus);
+
+        // The whole decision an arc offers, and it comes out of the arithmetic rather than off a
+        // preference list: narrow shoots best, wide barely beats not declaring at all.
+        Assert.True(narrow.Prospect > wide.Prospect);
+        Assert.True(wide.Prospect > loose.Prospect);
+    }
+
     // ---- and what gets chosen because of it --------------------------------------
 
     [Fact]
@@ -291,6 +427,60 @@ public class TacticsTests
     }
 
     // ---- scaffolding --------------------------------------------------------------
+
+    /// <summary>
+    /// A gunner with somebody in plain sight and somebody else round the back of a building —
+    /// close enough to hear a shot, with no line on where it came from.
+    /// </summary>
+    private static (Battle Battle, Unit Gunner, Unit Watched, Unit Hidden) Overheard(Loadout kit)
+    {
+        // Four walls of a shed, so there is no line into it from anywhere the gunner might be.
+        var map = new BattleMap().FillDisc(Hex.Zero, 14);
+        foreach (var side in System.Enum.GetValues<HexDirection>())
+            map.AddSideWall(new Hex(0, 4), side, 0, WallProfile.Solid);
+
+        var battle = Field(map);
+        var gunner = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast, kit);
+        var watched = battle.Deploy("Vance", Side.Player, Node(4, 0), Tardy, HexDirection.SouthWest);
+        var hidden = battle.Deploy("Idris", Side.Player, Node(0, 4), Tardy, HexDirection.North);
+        battle.Start();
+
+        return (battle, gunner, watched, hidden);
+    }
+
+    /// <summary>A gunner, a target, and the target's mate standing in the open beside him.</summary>
+    private static (Battle Battle, Unit Gunner, Unit Target, Unit Mate) Pairing()
+    {
+        var battle = Field();
+        var gunner = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast);
+        var target = battle.Deploy("Vance", Side.Player, Node(4, 0), Tardy, HexDirection.SouthWest);
+        var mate = battle.Deploy("Idris", Side.Player, Node(4, -1), Tardy, HexDirection.SouthWest);
+        battle.Start();
+
+        return (battle, gunner, target, mate);
+    }
+
+    /// <summary>The same gunner and target, with nobody else on the field to overhear it.</summary>
+    private static (Battle Battle, Unit Gunner, Unit Target) Alone(Loadout kit)
+    {
+        var battle = Field();
+        var gunner = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast, kit);
+        var target = battle.Deploy("Vance", Side.Player, Node(4, 0), Tardy, HexDirection.SouthWest);
+        battle.Start();
+
+        return (battle, gunner, target);
+    }
+
+    /// <summary>A sentry looking straight at a runner four hexes off, in the open.</summary>
+    private static (Battle Battle, Unit Sentry, Unit Runner) Facing()
+    {
+        var battle = Field();
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast);
+        var runner = battle.Deploy("Vance", Side.Player, Node(4, 0), Tardy, HexDirection.SouthWest);
+        battle.Start();
+
+        return (battle, sentry, runner);
+    }
 
     /// <summary>Two hostiles side by side, and a player unit in plain view of both of them.</summary>
     private static (Battle Battle, Unit Spotter, Unit Mate, Unit Runner) Pair()
