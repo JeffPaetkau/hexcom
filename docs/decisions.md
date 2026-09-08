@@ -145,3 +145,87 @@ commit and resolve is the tidier answer and breaks every caller including the sa
 **What View should say.** Which shape it actually wants for offering a player their reactions,
 before Core picks one. This is the first API in the project designed for an interface that does
 not exist yet, and guessing is how it comes out wrong.
+---
+
+## 005 — The scale split is done, and 002 was wrong about what it broke
+**2026-09-07** · **Raised by** view · **For** core and content · **Status** resolved (view's half)
+
+The sandbox now builds two layouts. `SandboxScale.World`, in metres, is the only one handed to
+`Battle`; `SandboxScale.Canvas`, in pixels, is the only one that reaches a draw call. Nothing
+converts between them, because nothing needs to — the rules never hand a position back to be
+drawn, only distances to be read. Contract 5 in [map.md](map.md) is enforceable again.
+
+**Entry 002 mis-stated the damage, and the correction matters more than the fix.** 002 says that
+at the wrong scale cover grades collapse towards none and a prone soldier behind sandbags is not
+hidden. Measured on `DemoMaps.Compound` at size 44 and size 1, side by side: the cover grades are
+*identical*, node for node, and so is every visibility answer.
+
+That is not luck. `SightSolver` projects a wall top onto the target using `along`, the fraction
+of the way down the sight line the wall sits at — and a fraction has no units, so the whole
+waterline construction is invariant under horizontal scaling. `CoverRadius` defaults to
+`layout.Pitch`, so even the question of which walls are close enough to count as a target's cover
+scales with the grid. **Sight and cover were never affected by this bug at all.**
+
+**What was actually broken is detection, which is worse.** Everything priced in metres —
+`SightRangeMetres` 45, `VoiceRangeMetres` 15, `NoiseMetresPerPoint`, weapon range bands — is an
+absolute figure compared against a distance that was not. At size 44 the demo compound is 914 m
+across and every soldier on it sits far outside all of them. Six turns into the demo scenario:
+
+| | size 44 | size 1 |
+|---|---|---|
+| Sentry, Watchman and Spotter on the player scout | all `Unaware` | Spotter `Searching` |
+| Spotter to that scout | 609.7 m | 14.5 m |
+| Cover grades over 129 nodes | `None` x72 | `None` x72 |
+
+So the sandbox was not showing a game with weak cover. It was showing a **stealth game with
+detection switched off**, which looks very much like a stealth game being played well. That is
+the part worth carrying forward: the bug was invisible precisely because its symptom was hard to
+tell apart from success.
+
+**For core, to confirm:** that sight and cover really are meant to be scale-free, and that this
+is a property to keep rather than an accident to be surprised by later. If it is deliberate it
+belongs in a `<remarks>` block on `SightSolver`, which currently explains the waterline without
+saying that it is dimensionless.
+
+**For content, as evidence on metres-per-hex.** The figure is still open and still yours; the
+sandbox uses the tests' 1.0 as an interim value and says so at `SandboxScale.MetresPerHexSize`.
+What the measurement adds is that 1.0 makes the *range* terms nearly inert on a map this size:
+
+| hex size | pitch | radius-6 map |
+|---|---|---|
+| 1.0 | 1.73 m | 20.8 m across |
+| 2.0 | 3.46 m | 41.6 m across |
+| 5.0 | 8.66 m | 103.9 m across |
+
+At 1.0 a 45 m sight range covers the whole compound twice over, so arc, stance and cover carry
+all of the detection model and distance carries none of it. At 2.0 the map and the sight range
+are roughly the same size, which is where range starts discriminating. This is an observation,
+not a recommendation — it may equally mean the demo map is too small rather than the hex too
+little, and that is your call, not view's.
+
+---
+
+## 006 — The interface cannot show the range the rules judge by
+**2026-09-07** · **Raised by** view · **For** view (later), gated on content · **Status** open
+
+The attention cone each soldier is drawn with is 3.4 hex radii long, and the held-arc wedge 5.2.
+Both are legibility figures picked because they look right. Neither has any relationship to
+`AwarenessModel.SightRangeMetres`. The cone therefore reports a soldier's *direction* honestly
+and its *range* not at all.
+
+Before the scale split this could not even be stated, because there was no conversion from a
+figure in metres to a length on the canvas. There is now — `SandboxScale.MetresToPixels` — so the
+cone *could* be drawn at its true reach. It is not, because at the interim scale that reach is
+1980 px against a 1600 px viewport: the honest cone is a screen-filling wash that shows nothing.
+
+**Why this is not merely a drawing preference.** Contract 2 says the view and the AI read one
+query surface, and the build order's rule is that if the AI needs information the interface
+cannot show, the interface is wrong. An enemy AI is being built now. Range is one of the first
+things a utility score will weigh, and at present a player looking at this screen cannot see the
+quantity the AI is deciding on. That is the contract failing, quietly, in the direction it was
+written to catch.
+
+**What to do, and when.** Not yet. The right cone depends on the metres-per-hex figure (005), and
+drawing a truthful cone at the wrong scale is not progress. When that figure is settled, revisit
+this with the option of a graded falloff or a marked band at the range threshold rather than a
+hard-edged wedge — the model does not have a hard edge either.

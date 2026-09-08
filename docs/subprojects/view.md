@@ -28,63 +28,77 @@ reaching into `src/`.
 - **Information asymmetry** (contract 3). Your own soldier's exposure is reported exactly,
   because that is information about yourself. An enemy's alarm is coarse on purpose. Do not
   render a number Core deliberately blurred, even when you can compute it.
-- **One horizontal world unit is one metre** (contract 5) — *currently violated here*. See
-  `../decisions.md` entry 002; this is the first thing for a View session to fix.
+- **One horizontal world unit is one metre** (contract 5). Held by `SandboxScale`, which builds
+  the metres layout `Battle` is given and the pixels layout everything is drawn with. See
+  `../decisions.md` entries 002 and 005.
 
 ---
 
-## The job — separate rendering scale from world scale
+## The job — check the interface against what the AI is about to need
 
-Branch `view/world-scale`. This is `../decisions.md` entry 002; read it first, it has the
-evidence.
+Branch `view/interface-audit`. Read `../decisions.md` entry 006 first; it is the first finding of
+this job, written down before the job existed.
 
-`HexSandbox.cs:79` hands the drawing layout straight to `Battle`:
+Contract 2 says the view and the AI read one query surface, and the build order's rule is
+sharper than that: *if the AI needs information the interface cannot show, the interface is
+wrong.* Nobody has ever checked the HUD against that standard, because until now there was no AI
+to check it against. There is one being built on `core/utility-scoring` right now, which makes
+this the moment the rule can actually be enforced rather than merely asserted.
 
-```csharp
-_layout = new HexLayout(HexSize);                              // 44 — pixels
-_battle = new Battle(DemoMaps.Compound(), _layout, seed: Seed);
-```
+**The work is an audit with a fix list, not a rework.** Go through what a utility score will
+weigh — range to target, exposure, cover grade, arc coverage, reserve, what is known about whom,
+what a move would cost — and for each one ask whether a player looking at this screen can see it.
+Where they cannot, either add it or write down why it is deliberately withheld. Contract 3 makes
+that second answer a real one: an enemy's alarm is coarse *on purpose*, and "the AI reads a number
+the player is shown a rung of" is the intended asymmetry, not a gap. Distinguishing those two
+cases is most of the job.
 
-`SightSolver` builds a `Vec3` from that layout's X and Y and a floor height in **metres**, then
-takes distances across it. So the sandbox is telling the rules a hex is 44 m across while a solid
-wall is 3 m tall. Every wall is a kerb to the sight trace: cover collapses towards none, prone
-behind sandbags does not hide, and the awareness ranges in metres fall inside a single hex. Tests
-never caught it because they all pass `size: 1.0`.
+Two things are already known to be on the list:
 
-**The fix is two layouts.** One in metres, constructed here and handed to `Battle`; one in pixels
-for drawing. The view converts between them at the boundary — that is what a view layer is for.
-Take care that everything currently reading `_layout` is sorted into the right one: `HexAt` for
-input and `Position`/`Center` for drawing are pixel-side, and anything Core is given is
-metres-side.
+- **Range is not shown at all.** Entry 006. Gated on the metres-per-hex figure — do not close it
+  by drawing a truthful cone at an interim scale.
+- **The top HUD lines collide with the map.** Visible in any capture: the help line runs
+  underneath the tile-cost labels and both become unreadable. That one is unblocked, small, and
+  worth doing first because every subsequent screenshot is easier to read afterwards.
 
-**Do not wait on the metres-per-hex figure.** Nobody has ever decided it, and Content owns the
-question (see [content.md](content.md)). Use the tests' `1.0` as the interim value, leave a
-comment saying it is interim and pointing at the open question, and get the *structure* right —
-that is the part that makes contract 5 enforceable rather than merely true. When Content settles
-the number, changing it becomes a one-line edit instead of an archaeology exercise.
-
-**How to know it worked.** The sandbox should start behaving like the tests: go prone behind
-sandbags and disappear, walk into a building's shadow and lose the watcher. If cover still does
-nothing, the two layouts have not actually been separated.
-
-**Then, and only if you have appetite:** the `HexSandbox.cs` split below. It is not urgent while
-one person works here, and it is a precondition for two.
+**How to know it worked.** A written list, in this doc or in `../decisions.md`, of every query
+the AI weighs and where the interface shows it. The deliverable is the list; the code changes
+fall out of it.
 
 ---
 
-## Two territories, one doc
+## Two territories, one doc — now with a boundary
 
 Presentation and interface are different problems:
 
 - **Presentation** is drawing, cameras, input plumbing, and eventually animation. It consumes
-  Core.
+  Core. It lives in `BattleView.cs`.
 - **Interface** is what the player is allowed to know and how they ask for it. It *constrains*
   Core — the design doc's build order puts it plainly: if the AI needs information the interface
   cannot show, the interface is wrong. Section 06 ("What it hands the interface") and section 07
-  ("Asymmetric information, deliberately") are interface design as much as rules design.
+  ("Asymmetric information, deliberately") are interface design as much as rules design. It lives
+  in `BattleHud.cs`.
 
-They share this doc because they share a single file, `game/scripts/HexSandbox.cs`, so there is
-no path boundary to enforce. Splitting that file is what earns interface a doc of its own.
+They shared this doc because they shared a single 705-line file. They no longer do:
+
+| | |
+|---|---|
+| `HexSandbox.cs` | the Godot node — lifecycle, the demo scenario, input, and assembling a frame |
+| `SandboxScale.cs` | metres against pixels, and the only place that knows the difference |
+| `SandboxGeometry.cs` | where things sit on the canvas — centroids, region polygons, hit tests |
+| `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves |
+| `BattleView.cs` | **presentation** — ground, walls, links, path, beliefs, soldiers |
+| `BattleHud.cs` | **interface** — turn order, exposure, the shot under the cursor, reactions |
+| `SandboxPalette.cs` | colours, shared because a side is one colour in both halves |
+| `SandboxCapture.cs` | render some frames, write a PNG, quit |
+
+`BattleView` and `BattleHud` are separate classes rather than partials of the node deliberately:
+partials would have kept every private field reachable from both, which is a path boundary with
+no boundary behind it. They each take a `SandboxFrame` and a `CanvasItem` and can reach nothing
+else. Two sessions can now work one on each.
+
+This doc still covers both, because one of them has no brief yet. Splitting the doc is a decision
+for whoever picks up interface work in earnest.
 
 ---
 
@@ -92,25 +106,63 @@ no path boundary to enforce. Splitting that file is what earns interface a doc o
 
 - **Godot defines its own `Side` enum.** `game/` files need
   `using Side = Hexcom.Core.Units.Side;`.
-- **Godot is not installed on this machine.** The scene wiring has never been verified — only the
-  C#. `dotnet build Hexcom.sln` typechecks `game/` against Godot 4.7.2 and that is the whole of
-  the assurance available here. Say so rather than implying a change was seen working.
 - **The sandbox needs Godot 4.7 .NET edition**, not the plain build. If your Godot is a different
   4.x, change the `Godot.NET.Sdk` version in `game/Hexcom.Game.csproj` to match.
-- **Drawing scale and world scale are the same variable today, and must not be.** `HexSize = 44`
-  is a pixel figure and it is being handed to `Battle`. See above.
+- **Build before you run.** Godot loads the assembly from `game/.godot/mono/temp/bin/Debug/`, and
+  a scene launched before `dotnet build Hexcom.sln` fails with *"Cannot instantiate C# script"* —
+  which reads like a broken scene file and is not one.
+- **A picture is not proof of a rules change.** Sight and cover are scale-invariant (entry 005),
+  so the opening frame is byte-identical before and after the world-scale fix. What changed was
+  detection, which no still image shows. When a change is about distance, measure it; when it is
+  about layout, capture it.
+- **A picture is exactly the proof of a drawing change, and the render is deterministic.** The
+  same build captures byte-identically across runs and across frame counts, so a refactor of
+  drawing code can be held to *zero* changed pixels against the commit before it. The split that
+  created these files was checked that way and it earned its keep immediately: the vision wedge
+  came out of the move with `steps = 14` where the original had `18`, a coarser arc that nothing
+  else would have caught — it is a translucent overlay whose silhouette nobody has memorised, the
+  build was clean and all 259 tests passed. 546 pixels on one arc were the entire evidence.
+  **Diff the capture against the previous commit whenever you move drawing code.**
+- **Drawing scale and world scale are different variables and must stay that way.** `HexSize` is
+  pixels and is exported; `SandboxScale.MetresPerHexSize` is metres and is a constant. That
+  asymmetry is the contract, not an oversight.
+
+---
+
+## Seeing it
+
+Godot 4.7.2 .NET is installed on this machine and the scene wiring runs — that is no longer an
+open question. `winget install GodotEngine.GodotEngine.Mono` puts it under
+`%LOCALAPPDATA%\Microsoft\WinGet\Packages`.
+
+```bash
+dotnet build Hexcom.sln && godot --path game
+```
+
+To capture the sandbox without anyone at the keyboard — which is how a session with no human
+watching can check its own work:
+
+```bash
+godot --path game -- --shot out.png
+```
+
+`--shot-after N` waits N frames first, default 4; the first frame is drawn before the font atlas
+is resident and loses every label. **Not with `--headless`** — the headless driver does not
+rasterise and the capture comes back blank. `--headless --quit-after 30` is still the cheapest
+way to check that the scene loads and `_Ready` survives, which catches most wiring breaks.
 
 ---
 
 ## Open questions
 
-- **Splitting `HexSandbox.cs`.** It is presentation, interface, input handling and scenario setup
-  in one file. The split is what makes the two territories separable; it is not urgent while one
-  person is working here, and it is a precondition for two.
 - **The greybox.** Build order puts a 3D blockout after the AI and after grenades — *only once
   the rules are settled*. The flat sandbox stays the working view until then.
-- **What the interface owes the AI.** Every query the AI wants must be showable. Nobody has
-  checked the existing HUD against that standard, and the AI does not exist yet to test it.
+- **Whether the demo scenario belongs in `game/`.** `HexSandbox.NewBattle` hard-codes five
+  deployments. That is content wearing a view extension, the same way `DemoMaps.cs` is content
+  wearing a `.cs` one, and it should probably move when there is a scenario format to move it to.
+- **Splitting this doc.** Presentation and interface now have a real boundary in the code; they
+  still share one doc, because interface has no separate brief yet. Whoever takes interface work
+  in earnest should split it.
 
 ## Recent work
 

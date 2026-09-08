@@ -36,9 +36,24 @@ dotnet test
 ```
 
 The sandbox needs **Godot 4.7 .NET edition** ([godotengine.org](https://godotengine.org/download)
-— the build labelled ".NET", not the plain one). Open `game/project.godot` in the editor and
-press F5. If your Godot is a different 4.x, change the `Godot.NET.Sdk` version in
-`game/Hexcom.Game.csproj` to match.
+— the build labelled ".NET", not the plain one; `winget install GodotEngine.GodotEngine.Mono` on
+Windows). Open `game/project.godot` in the editor and press F5, or from a shell:
+
+```bash
+dotnet build Hexcom.sln && godot --path game
+```
+
+Build first — Godot loads the C# assembly from `game/.godot/mono/temp/bin/`, and a scene launched
+before it exists fails with a message about not being able to instantiate the script. If your
+Godot is a different 4.x, change the `Godot.NET.Sdk` version in `game/Hexcom.Game.csproj` to
+match.
+
+To render a frame and write it to a file rather than watch it — useful in CI, and the only way an
+automated session can check its own drawing:
+
+```bash
+godot --path game -- --shot out.png
+```
 
 The sandbox runs a five-unit skirmish on `DemoMaps.Compound`, drawn flat — two of yours outside
 the compound against three inside it, one of them holding the roof:
