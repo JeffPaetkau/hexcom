@@ -17,8 +17,8 @@ worse, looks maintained while doing it.
 | Territory | Doc | Owns | Gated by |
 |---|---|---|---|
 | **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**` (except `Maps/DemoMaps.cs`), `tests/**`, `docs/design.html` | nothing — it is the trunk |
-| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing for its current job |
-| **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | balance work waits on Core's AI; the format work waits on nothing |
+| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — its current job reads `Tactics`, which has landed. One item on the list waits on the hex figure |
+| **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | nothing — Core's AI has landed, so balance work is unblocked too |
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
 | **Art & audio** | — this file | `assets/**` when it exists | the metres-per-hex figure, and an asset spec nobody has written |
 | **Strategy layer** | — this file | undecided | the campaign shape, which belongs to Setting |
@@ -79,8 +79,13 @@ Float epsilons are not balance numbers.
 **5. One horizontal world unit is one metre.** `SightSolver` builds a `Vec3` from a
 `HexLayout` position (X, Y) and a floor height (Z, metres) and takes distances across it, so the
 layout's units *are* metres, necessarily. Rendering scale is a separate concern and must not be
-fed into `Battle`. **This contract is currently violated** — see
-[decisions.md](decisions.md), entry 002.
+fed into `Battle`. The view keeps the two apart in `SandboxScale`, which owns both layouts and
+hands out only the metres one — see [decisions.md](decisions.md), entries 002 and 005.
+
+What 005 also establishes, because the obvious guess is wrong: breaking this contract does *not*
+disturb sight or cover, which are scale-free by construction. It breaks everything priced in
+metres — detection, noise, voice, weapon range. A violation therefore shows up as a stealth game
+where nobody is ever detected, and not as a game where cover looks weak.
 
 **6. The physical constants art must match.** Verified against the source, not remembered:
 
