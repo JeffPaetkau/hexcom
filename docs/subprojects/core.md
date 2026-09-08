@@ -184,11 +184,19 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   `Order.Opens` — the shot a move sets up. A move's own `Worth` is almost always negative, because
   walking costs points and buys nothing; ranking on it means never taking a firing position.
   Anything reading an order for display wants both halves.
-- **The AI search is the slow part of the test suite.** It went from one second to six, all of it
-  in `Commander`: every decision is a reachable set crossed with every known threat crossed with
-  every fire mode, and every one of those is a sight trace. It is fine for tests and it is not
-  fine for the thousands of headless matches this was built to enable. The cheap win when that
-  bites is caching the sight trace per (destination, threat) within one decision.
+- **A three-a-side match costs a second or two.** Measured, on a radius-sixteen disc with both
+  sides driven by `Commander`: the two skirmish tests run one and two matches respectively, at
+  about two seconds each, while every other test in the file is under a fifth of a second. So a
+  thousand headless matches is twenty to thirty-five minutes rather than the *seconds* section 01
+  of the design doc claims the engine-free split buys. Nothing needs doing about it until
+  somebody actually runs a batch, which is what the overwatch gate is waiting for; the figure is
+  here so that whoever does is not surprised.
+  <br>**Where the time goes has not been profiled.** The shape of the search says it should be
+  the sight traces — a decision crosses the reachable set with every known threat and every fire
+  mode, and a full allowance reaches a few hundred nodes on open ground — but that is arithmetic
+  about the code rather than a measurement of it, and the obvious fix (cache the trace per
+  destination and threat within one decision) is a guess at the right one. Profile before
+  optimising.
 - **A blade carrier will not walk across open ground to reach you.** Greedy with one step of
   lookahead cannot see a knife going in two turns from now, so it correctly works out that this
   turn's walk into rifle range is worse than standing still, and stands still forever. Not a bug
