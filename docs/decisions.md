@@ -229,3 +229,99 @@ written to catch.
 drawing a truthful cone at the wrong scale is not progress. When that figure is settled, revisit
 this with the option of a graded falloff or a marked band at the range threshold rather than a
 hard-edged wedge — the model does not have a hard edge either.
+
+---
+
+## 007 — A hex is one metre of radius: 2.00 m corner to corner, 1.73 m between centres
+**2026-09-07** · **Raised by** content · **For** core, view and art · **Status** resolved
+
+`HexLayout(size: 1.0)`. The figure the tests have always used, now chosen rather than inherited.
+This closes the open question in [subprojects/content.md](subprojects/content.md), the one in
+entry 002, and the gate on the art spec.
+
+**The figure cannot be derived from cover, which is the first thing one tries.** Entry 005
+established that sight and cover are scale-free: the waterline construction works in a fraction
+of the way along the sight line, so a 1 m wall protects a 1.25 m crouch and not a 1.80 m stand at
+*any* horizontal scale. The vertical scale is already pinned absolutely by the stance heights and
+wall bands. So the horizontal figure has to come from what a hex is *for*.
+
+**What it is for settles it.** One soldier occupies one hex, and walls sit on hex edges. A hex
+therefore has to be one soldier's standing space and no more: two metres corner to corner, 1.73 m
+between centres. The alternative that the range numbers seem to argue for — a hex 4 m across —
+breaks both readings at once. Four metres of floor is a small room, so "one unit per hex" stops
+describing anything physical, and a wall on a hex side becomes a four-metre panel where the low
+band is meant to be a sandbag emplacement you can vault.
+
+The movement economy agrees without being asked to. A stride is 5 of 50 points, so a turn crosses
+ten hexes — 17.3 m walking, 5.8 m at a crawl. Those are the right size for one beat of a
+firefight, and they are not figures anybody tuned against this decision.
+
+**The consequence, stated plainly: the ranges are not too long. The demo map is too small.** This
+is the tension entry 005 measured and content.md flagged, and it resolves against the map:
+
+| | at 1.73 m pitch |
+|---|---|
+| `SightRangeMetres` 45 | 26 hexes |
+| Slug rifle, optimal 20 / max 55 | 12 / 32 hexes |
+| Beam sidearm, optimal 8 / max 20 | 5 / 12 hexes |
+| `VoiceRangeMetres` 15 | 9 hexes |
+| `DemoMaps.Compound`, radius 6 | **12 hexes across — 20.8 m** |
+
+Every range in the game overshoots the only map in the game, several of them by a factor of
+three. The design doc talks about a crawler at forty metres and gunfire heard at a hundred, and
+neither fits on a compound you can cross in a turn and a half. A map on which these numbers
+discriminate is radius 20 to 30 — 70 to 105 m across. **That is Content's own next job**, and it
+is now a requirement on the map format rather than an aesthetic preference: whatever the format
+is, hand-authoring a 2000-tile map through it has to be tolerable, which the corner-graph-in-C#
+approach already is not.
+
+**Nothing has to move to adopt this.** All 272 tests already construct layouts at 1.0. The two
+follow-ups are one line each:
+
+- **View** — `SandboxScale.MetresPerHexSize` is already 1.0 and documented as interim pending
+  this entry. Only the wording needs to change: it is now decided, and it should point here.
+- **Core** — nothing, unless entry 008 changes your mind about the blade.
+
+**For art**, the row this unblocks: a hex is 2.00 m corner to corner and 1.73 m flat to flat, a
+standing soldier is 1.80 m tall in a 2 m hex, and the wall bands at 1.0 / 1.2 / 2.0 / 3.0 m are
+edges of that hex.
+
+---
+
+## 008 — Melee is priced in metres, and at the hex size just chosen it does not reach
+**2026-09-07** · **Raised by** content · **For** core · **Status** open
+
+`PowerBlade` has `OptimalRange: 2.0, MaxRange: 2.0`, and `Gunnery` treats that like any other
+weapon: `if (sight.Distance > weapon.MaxRange) return 0`, where `Distance` is a three-dimensional
+measurement from the attacker's eye to the target's centre of mass. Nothing special-cases melee.
+
+At the hex size settled in 007, measured on two adjacent soldiers on flat ground:
+
+| attacker | target | distance | blade reaches |
+|---|---|---|---|
+| standing | standing | 1.887 m | yes |
+| standing | crouching | 2.013 m | **no** |
+| standing | prone | 2.243 m | **no** |
+| crouching | anything | 1.74–1.94 m | yes |
+| prone | anything | 1.74–1.82 m | yes |
+
+So a soldier standing over an adjacent prone enemy cannot knife them, and has to crouch first —
+and the standing-versus-crouching case fails by thirteen millimetres. That is not a rule anybody
+designed; it is an artefact of measuring a knife along the same line as a rifle. The eye-to-centre
+line gets *longer* as the target gets lower, so the blade reaches worst exactly when the target is
+least able to avoid it.
+
+It also quietly constrains the hex. Standing-to-standing works up to size 1.07 and no further, so
+melee, alone among the systems, was silently voting on 007 — and if the vote had been counted the
+answer would have been a smaller hex for a bad reason.
+
+**What Core should consider.** Melee means *adjacent*; it does not mean two metres. Either derive
+the reach from `layout.Pitch` so it follows the grid, or compare melee horizontally rather than
+eye-to-centre, or give `WeaponProfile` a flag that says this weapon is an adjacency weapon and
+let the graph answer instead of the geometry. Content has no view on which, only that a number in
+metres is the wrong instrument.
+
+One thing to preserve, whichever way it goes: reaching a *storey* up should still fail. Measured
+at a 2 m floor the blade reaches through it (1.25 m) and at a 3 m floor it does not (2.25 m),
+which is accidental but roughly right — you can stab someone on a low ledge and not someone on a
+roof.

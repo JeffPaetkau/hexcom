@@ -50,30 +50,26 @@ the project now works — which is itself an open question below.
 Branch `content/map-format`. Two pieces of work, in this order, because the first is small and
 several other people are waiting on it.
 
-### 1. How big is a hex, in metres?
+### 1. ~~How big is a hex?~~ Settled: `size: 1.0`
 
-Nobody has ever decided. Tests use `new HexLayout(size: 1.0)` throughout — a hex 2 m across and
-1.73 m between centres — but nothing states that as intended, and it sits badly beside an
-awareness model that talks about crawlers at forty metres and rifles heard at a hundred.
+Answered in `../decisions.md` entry 007 — 2.00 m corner to corner, 1.73 m between centres,
+because a hex is one soldier's standing space and walls sit on its edges. Nothing had to move:
+every test already used it. The art spec is unblocked.
 
-This is not a free parameter. `SightSolver` mixes layout units with metre heights in one `Vec3`,
-so the figure sets the scale of cover, sight and detection *together*. Work it from the fiction
-and the numbers already committed to: a soldier occupies one hex, a 1 m sandbag wall should
-protect a crouching soldier at 1.25 m and not a standing one at 1.80 m, and a stride costs 5 of
-50 points so a turn crosses ten hexes.
-
-**Write the answer and the reasoning into `../decisions.md`**, addressed to Core and View — it
-changes a frozen contract's interpretation, and two territories are waiting on it. Then Core
-adjusts test fixtures if the figure is not 1.0, and View swaps its interim constant.
-
-**Do not block on this to start** — View has been told to fix its structure using 1.0 as an
-interim, so nobody is stuck. But it does block the art spec entirely, and art cannot begin
-without it.
+**Read 007 before starting the map format, because it lands a requirement on it.** The figure
+resolved the long-standing tension against the *map* rather than against the ranges: every range
+in the game overshoots `DemoMaps.Compound` several times over, and a map on which they
+discriminate is radius 20 to 30 — 70 to 105 m, some two thousand tiles. That is now a hard
+constraint on part 2 rather than a nice-to-have.
 
 ### 2. What is a map file?
 
-The territory's real founding act. Today a map is C# built by hand against the corner graph, and
-level design is not something a person can do.
+The territory's real founding act, and now the only thing in this brief. Today a map is C# built
+by hand against the corner graph, and level design is not something a person can do.
+
+**Size is the constraint that decides it.** Hand-authoring twenty tiles in C# is tedious; hand-
+authoring two thousand is not a thing anybody will do, and entry 007 says two thousand is the
+real target. Weigh both candidates below against that number, not against the demo map.
 
 Two candidates, and the choice decides whether level design is a programming task forever:
 
@@ -92,13 +88,11 @@ Record the choice and the rejected alternative in `../decisions.md`.
 
 ## Open questions
 
-**How big is a hex, in metres?** Nothing states it. Tests use `new HexLayout(size: 1.0)`
-throughout, which makes a hex 2 m across and 1.73 m between centres — small for a soldier to
-occupy, and hard to square with an awareness model that talks about crawlers at forty metres and
-shots heard at a hundred. Because `SightSolver` mixes layout units with metre heights in one
-`Vec3`, this is not a free parameter: it sets the scale of cover, sight and detection together.
-**This blocks the art spec**, which cannot size a model against an unknown hex. See
-`../decisions.md` entry 002.
+**How big is a map?** Settled downwards from entry 007 rather than chosen: if the ranges are
+right and the hex is one soldier wide, a map that lets a rifle's 55 m and a sentry's 45 m mean
+anything is 70 to 105 m across — radius 20 to 30, one to three thousand tiles. Nothing that size
+exists, and `DemoMaps.Compound` at radius 6 is a tenth of it. Whether that is one map size or a
+range of them, and what a mission needs beyond ground, is open.
 
 **What is a map file?** The two candidates: serialise the corner graph directly, which is honest
 and unpleasant to hand-author; or a friendlier authored form that compiles down to one, which

@@ -17,10 +17,10 @@ worse, looks maintained while doing it.
 | Territory | Doc | Owns | Gated by |
 |---|---|---|---|
 | **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**` (except `Maps/DemoMaps.cs`), `tests/**`, `docs/design.html` | nothing — it is the trunk |
-| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — its current job reads `Tactics`, which has landed. One item on the list waits on the hex figure |
+| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — its current job reads `Tactics`, which has landed, and the hex figure it wanted is settled |
 | **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | nothing — Core's AI has landed, so balance work is unblocked too |
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
-| **Art & audio** | — this file | `assets/**` when it exists | the metres-per-hex figure, and an asset spec nobody has written |
+| **Art & audio** | — this file | `assets/**` when it exists | an asset spec nobody has written. The hex figure it was waiting on is settled — see entry 007 |
 | **Strategy layer** | — this file | undecided | the campaign shape, which belongs to Setting |
 
 **Each territory doc with work in it opens with a `## The job` section** — the current brief,
@@ -33,9 +33,11 @@ content wearing a `.cs` extension until there is a map format to put it in.
 
 **View is two territories sharing one doc.** Presentation (drawing, cameras, input plumbing) and
 interface (what the player is allowed to know, and how they ask) are different problems, and the
-second one constrains the rules rather than consuming them. They share a doc because they share
-a single file — `game/scripts/HexSandbox.cs` — so there is no path boundary to enforce yet.
-Splitting that file is what earns interface its own doc.
+second one constrains the rules rather than consuming them. They no longer share a file:
+presentation is `game/scripts/BattleView.cs` and interface is `game/scripts/BattleHud.cs`,
+separate classes rather than partials so that neither can reach into the other's state. They
+still share a doc, because interface has no brief of its own yet. Giving it one is what earns it
+the doc.
 
 ### The two territories not yet given paths
 
@@ -94,9 +96,11 @@ where nobody is ever detected, and not as a game where cover looks weak.
 | Stance heights (eye / body) | standing 1.65 / 1.80 m · crouching 1.10 / 1.25 m · prone 0.35 / 0.45 m |
 | Wall bands | low 1.0 m · railing 1.2 m · high 2.0 m · screen 2.0 m · solid 3.0 m |
 | Body faces | six — front, two shoulders, two flanks, back |
-| Hex size | **unpinned.** Tests use 1.0 (2 m across, 1.73 m between centres); nothing states the intended figure |
+| Hex size | `HexLayout(size: 1.0)` — 2.00 m corner to corner, 1.73 m flat to flat and between centres |
 
-The last row is an open question, not a fact. It belongs to Content and it blocks the art spec.
+All six rows are now facts. The hex size was the one open question here and it was settled by
+[decisions.md](decisions.md) entry 007: a hex is one soldier's standing space, because a soldier
+occupies exactly one and walls sit on its edges. **The art spec is no longer gated.**
 
 ---
 
