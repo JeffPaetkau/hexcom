@@ -29,44 +29,54 @@ purpose, balance numbers in their seven homes, and one horizontal unit is one me
 
 ---
 
-## The job — enemy AI (build order 04)
+## The job — the AI takes a turn (build order 04, second half)
 
-Branch `core/utility-scoring`. Read the rest of this file before starting; the turn loop below
-and the gotchas after it are the things that will bite.
+Branch `core/turn-planner`. Read the rest of this file before starting; the turn loop below and
+the gotchas after it are the things that will bite.
 
-**The seam already exists.** `ReactionWindow` separates building offers from resolving them, and
-`ReactionWindow.Best` is a deliberate stand-in — shoot if you can, else turn, else get low, else
-call it in. Replacing that with utility scoring *is* the AI job, so start there rather than with
-a full turn planner. It is bounded, it has an obvious test story, and the rest grows out of it.
+**What exists.** `Tactician` scores one action, in vitality, and `ReactionWindow` now ranks by it
+instead of by a ladder. What does not exist is anything that generates candidates for an ordinary
+turn. A hostile unit still does nothing whatever when its turn comes round; the sandbox drives
+both sides by hand.
 
-**Settle these two before writing much, and record the answer in `<remarks>` or the design doc.**
-They are the decisions most likely to get made implicitly and then be expensive:
+**The decision already taken, so do not retake it.** One scorer, two searches. `Tactician`
+appraises a single action and knows nothing about where the candidates came from; what differs
+between picking a reaction and taking a turn is which options get generated and how they chain,
+not what any one of them is worth. So this job is a *search* over `Battle.Destinations`,
+`PlanShot`, `SetOverwatch` and `Arm`, calling `Appraise` — not a second scoring model. If you find
+yourself adding terms to `Appraisal`, ask first whether the reaction window would want them too;
+if it would not, the split is being drawn in the wrong place.
 
-1. Does one scorer serve both the reaction window and the ordinary turn, or are those different
-   problems? Build order 04 implies one — same queries, same ranking — but that is an implication
-   and not yet a decision.
-2. What is a utility score denominated in? The game already has one currency, and inside a
-   window cost is literally time. An abstract 0–1 score that does not talk to action points will
-   not survive contact with `ReactionWindow.Resolve`.
+**Two things the scorer is missing that a turn planner will feel immediately.**
+
+1. **Firing gives you away, and nothing prices that.** `Battle.AnnounceFire` raises every enemy
+   in earshot or facing your way; `Worth` counts none of it. In a stealth-first game that is the
+   biggest single hole in the model — an AI scored this way blazes away and blows its own
+   approach. The derivation is the inverse of `AppraiseWord`: for each enemy the shot would carry
+   over the bar, subtract what they would then do about you. It needs a preview of `Hear` and
+   `Reveal` in the way `WouldNotice` previews a look, which is the same shape and about as much
+   work.
+2. **Chaining.** Two actions in one turn are not worth the sum of their scores — moving somewhere
+   changes what the shot from there is worth, and the reaction reserve is what is left at the end.
+   `ReserveFraction` means the last unspent points are worth more than `PointValue` says, because
+   they are what the unit answers the next move with.
 
 **The hard constraint — contract 2 in [../map.md](../map.md).** The AI reads the same public
 queries the interface shows. If the AI wants information the interface cannot show, that is a
 finding about the interface, to be written up in `../decisions.md` — not a licence to reach into
-internals for convenience. This is the constraint an AI implementation is most likely to breach,
-and breaching it quietly is how the "one query surface" contract dies.
+internals for convenience. This held through the scorer and it is worth saying that it *paid*:
+`Gunnery.Expect`, `AwarenessTracker.WouldNotice` and `Battle.PlanThreat` were all added because
+the AI needed them, and every one of them is a figure a player should have been able to see and
+could not.
 
-**Out of scope.** `game/**`. If the sandbox needs a way to hand a side to the AI, append it to
-`../decisions.md` for View. Entry 002 there is an open sandbox bug; it does not affect headless
-work, so leave it alone.
+**Out of scope.** `game/**`. Entry 004 in `../decisions.md` is a Core API gap the interface needs
+and the AI does not; it is not this job. Entry 002 is an open sandbox bug; leave it alone.
 
-**Why it is first.** Every balance number in this game is an argument rather than a measurement,
-because there is nobody to play against. The AI is what unlocks the headless AI-vs-AI runs the
-engine-free split was built for, and turns those arguments into findings — starting with the
-overwatch awareness gate that `ReactionModel` already names as first for re-examination.
-
-**The test that it worked:** the ranking is *derived* from something — expected damage, exposure,
-points spent — rather than enumerated. A slightly better hard-coded ladder satisfies the letter
-of "replace the stand-in" and none of its point.
+**The test that it worked:** a hostile side, given nothing but `Battle` and a seed, plays a
+skirmish to a decision without being told anything about the map. That is what unlocks the
+headless AI-versus-AI runs the engine-free split was built for, and turns every balance number in
+this game from an argument into a finding — starting with the overwatch awareness gate that
+`ReactionModel` already names as first for re-examination.
 
 After this: grenades and mines (build order 05).
 
@@ -98,9 +108,10 @@ Either way: offers are built in the constructor, `Run()` = `PlaceRecommended()` 
 and `Resolve` walks the subject along the timeline firing at each landing tick. An interface or
 an AI plugs in by placing its own choices between those two calls instead of calling `Run`.
 
-The reaction picking policy in `ReactionWindow.Best` is a **deliberate stand-in** — shoot if you
-can, else turn, else get low, else call it in. Ranking a shot against a dive into cover is what
-utility scoring is for; replacing it is the same job as building the AI.
+`ReactionWindow.Best` hands the whole list to `Tactician.Best`, which scores each option in
+vitality. Nothing about the ordering is written down as a ladder any more, which means a change to
+`UtilityModel` can silently change which reaction a unit takes — that is the point, and it is also
+the thing to suspect when a reaction test starts failing for no reason you can see.
 
 ---
 
@@ -152,6 +163,19 @@ utility scoring is for; replacing it is the same job as building the AI.
   sitting precisely on the edge of a 120° arc is the common case. Comparisons add
   `Geometry2D.AngleEpsilonDegrees` so the edge falls to the *wider* arc deterministically — one
   spoke over is the corner of the eye, not full attention. Two tests pin this; don't "fix" them.
+- **`ShotPlan.ExpectedDamage` is damage arriving at the plate, not damage done.** It ignores
+  shields and armour entirely, so a beam landing squarely on a full force shield reads well and
+  achieves nothing. Anything *choosing* between shots wants `Gunnery.Expect`, which puts the
+  rounds through the layers they will actually meet. This is the single easiest mistake to make
+  in this codebase and the old reaction policy made it.
+- **A window's scores are only true before it resolves.** `Appraise` reads live state — the
+  target's remaining vitality, who has noticed whom — so appraising an option after `Resolve` has
+  run gives a different number than the one it was recommended on. A unit that fired has been
+  noticed for firing. See entry 004 in `../decisions.md`.
+- **Cover works in both directions and the scorer knows it.** Going flat behind a knee-high wall
+  takes you out of sight of the man in front of you, and takes him out of yours: `Spared` goes up
+  and `Prospect` goes *negative* in the same appraisal. A posture score that only ever improves
+  is a posture score with a bug in it.
 
 ---
 
@@ -160,6 +184,19 @@ utility scoring is for; replacing it is the same job as building the AI.
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
 the ones that block or shape what Core does next.
 
+- **Firing gives you away and the scorer does not price it.** Named in the brief above because a
+  turn planner hits it first, but it is a hole in the model as it stands: a soaked beam and a slug
+  rifle that tells the whole compound are scored on what they do to the target and nothing else.
+  The first of the two omissions that will make an AI play badly in a way anyone can see.
+- **Nothing may decline a reaction.** `ReactionOffer.Recommended` is not nullable, so a reactor
+  always takes its best option even when every option scores below zero — which happens: a beam
+  that will be soaked entirely is worth about what it costs, and the model correctly says all the
+  answers are bad and then picks one anyway. Making it nullable is a handful of lines and a real
+  behaviour change, so it wants doing deliberately rather than in passing.
+- **`ShieldValue` is the dial to watch first.** At 0.15 a fully soaked eight point beam scores
+  0.72 against a snap shot costing 0.75 — near enough break-even that the ordering between firing
+  pointlessly and doing something else is decided by noise. Either the shield term is too generous
+  or a point of reserve is too cheap, and only matches will say which.
 - **The overwatch awareness gate is the first thing to re-examine under real play.** Flagged in
   the doc and in `ReactionModel`, with the two dials named. It cannot be settled until there is
   an AI to run matches with, which is the argument for doing the AI first.

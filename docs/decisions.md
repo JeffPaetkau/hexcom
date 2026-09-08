@@ -85,3 +85,63 @@ rather than merely true.
 actually made. Tests use 1.0 — a hex 2 m across and 1.73 m between centres — but nothing states
 that as intended, and the awareness distances read as though drawn against something larger. See
 the open question in [subprojects/content.md](subprojects/content.md).
+
+---
+
+## 003 — There is an eighth home for balance numbers, and it is denominated in vitality
+**2026-09-07** · **Raised by** core · **For** all · **Status** resolved
+
+Contract 4 in [map.md](map.md) says balance numbers live in exactly seven homes. There are now
+eight: `UtilityModel`, in `src/Hexcom.Core/Tactics`, holding the exchange rates the AI ranks
+actions by. Whoever next edits `map.md` should add it to the list.
+
+**What it holds.** `PointValue`, `PlateValue`, `ShieldValue`, `RemovalBonus`, `FutureDiscount`,
+`ActsOn` — one number each for what an action point, a point of ablative plate, a point of shield,
+a soldier removed, a thing happening next round rather than now, and the bar somebody has to clear
+before a shot they could take counts as a shot they will take.
+
+**Why it is a new home rather than an extension of an existing one.** Every other model describes
+what the world does. `GunneryModel` says what a shot is; `AwarenessModel` says what a look is
+worth. This one says what any of that is *worth to somebody deciding*, which is a different kind
+of number — the others are physics, this one is preference. Putting the preference dials inside
+`GunneryModel` would mean a shot's definition changed depending on who was weighing it.
+
+**The decision that matters more than the file.** A utility score is denominated in **vitality**,
+not in an abstract nought-to-one. Everything the scorer values gets converted into points of
+soldier: plate worn off is future vitality banked, a soldier removed is a whole soldier again, and
+an action point is priced at what it eventually buys. That is what lets the scorer be used inside
+a reaction window, where cost is already time on the mover's timeline and a ranking that could not
+put a point against a wound would have nothing to say about the choice the window actually poses.
+
+**What it means for the view.** `Battle.Tactics.Appraise` returns an `Appraisal` with its terms
+separated — harm, spared, prospect, spent — precisely so an interface can say *why* one option
+beats another rather than showing a bare number. `ReactionWindow.Appraise(placement)` scores one
+option against that window's timeline. Contract 2 holds: the AI ranks by the same call the
+interface can display, and there is no private one.
+
+---
+
+## 004 — `Battle.Move` gives nobody a chance to place a reaction by hand
+**2026-09-07** · **Raised by** core · **For** core (with view to say what it needs) · **Status** open
+
+`ReactionWindow` splits building offers from resolving them, and the design says an interface or
+an AI plugs in by placing its own choices between `PlaceRecommended()` and `Resolve()`. There is
+no public way to get there. `Battle.Move` constructs the window and calls `Run()`, which does
+both, so by the time a caller holds the `ReactionWindow` every reaction has already gone off.
+
+**What it costs today.** Nothing to the AI, which is now the recommendation. It costs the
+interface the whole feature: a player cannot be shown their own soldier's options and asked to
+choose, which is the interesting half of reactions. It also makes the offer-time scores
+untestable — appraising an option after the window has resolved reads a battle that has moved on
+(a unit that has fired has been noticed for firing), so a test cannot check that the
+recommendation was the highest-scoring option at the moment it was recommended. That test is
+missing for exactly this reason.
+
+**What Core should do about it.** Give `Move` a seam. The shape that costs least is an optional
+argument taking the unresolved window — `battle.Move(destination, window => ...)` — which leaves
+every existing call site alone and lets a caller place before resolution. Splitting `Move` into
+commit and resolve is the tidier answer and breaks every caller including the sandbox.
+
+**What View should say.** Which shape it actually wants for offering a player their reactions,
+before Core picks one. This is the first API in the project designed for an interface that does
+not exist yet, and guessing is how it comes out wrong.

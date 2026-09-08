@@ -98,15 +98,53 @@ public sealed class Protection
     public DamageTaken Absorb(BodyFace face, DamageKind kind, int damage, double obliquityDegrees = 0)
     {
         var index = (int)face;
+        return Through(ref _shield[index], ref _armour[index], face, kind, damage, obliquityDegrees);
+    }
 
+    /// <summary>
+    /// What a run of identical hits on one face would get through, if every one of them landed.
+    /// Changes nothing.
+    /// </summary>
+    /// <remarks>
+    /// The question anyone weighing a shot has to ask, and it cannot be answered a round at a
+    /// time: layers wear as they work, so the first round of a burst into a fresh face is stopped
+    /// almost entirely and the second walks through the hole the first made. A model that priced
+    /// every round against untouched plate would rate a burst at three times nothing.
+    /// <para>
+    /// Public because the interface needs it as much as the AI does — a player looking at a
+    /// shielded target should be able to see that their beam will be soaked, rather than firing
+    /// to find out. It is the same question, so it is the same query.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<DamageTaken> Preview(
+        BodyFace face, DamageKind kind, int damage, int rounds, double obliquityDegrees = 0)
+    {
+        var shield = ShieldOn(face);
+        var armour = ArmourOn(face);
+        var run = new List<DamageTaken>(rounds);
+
+        for (var i = 0; i < rounds; i++)
+            run.Add(Through(ref shield, ref armour, face, kind, damage, obliquityDegrees));
+
+        return run;
+    }
+
+    /// <summary>
+    /// One hit through the two layers, wearing them as it goes. The arithmetic that
+    /// <see cref="Absorb"/> and <see cref="Preview"/> share, so a forecast cannot drift from
+    /// what actually happens.
+    /// </summary>
+    private static DamageTaken Through(
+        ref int shield, ref int armour, BodyFace face, DamageKind kind, int damage, double obliquityDegrees)
+    {
         // Away from zero, not the default banker's rounding: half a point of damage going
         // one way on even numbers and the other on odd is not something to explain to a player.
-        var byShield = Math.Min(_shield[index], Round(damage * Mitigation.ShieldAgainst(kind)));
-        _shield[index] -= byShield;
+        var byShield = Math.Min(shield, Round(damage * Mitigation.ShieldAgainst(kind)));
+        shield -= byShield;
         var through = damage - byShield;
 
-        var byArmour = Math.Min(_armour[index], Round(through * Mitigation.ArmourAgainst(kind)));
-        _armour[index] -= byArmour;
+        var byArmour = Math.Min(armour, Round(through * Mitigation.ArmourAgainst(kind)));
+        armour -= byArmour;
         through -= byArmour;
 
         return new DamageTaken(face, kind, damage, byShield, byArmour, Math.Max(0, through), obliquityDegrees);

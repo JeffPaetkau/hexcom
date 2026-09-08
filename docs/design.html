@@ -1517,8 +1517,9 @@
         worse in every respect except the one that matters here — it lands at tick fifteen, while
         the target is still two hexes short of the wall, and leaves ten points to duck away
         afterwards. This is what a
-        watchman actually chooses, unprompted: the recommendation weighs expected damage against
-        where the runner will be, and picks the cheap shot the moment the destination has cover.
+        watchman actually chooses, unprompted: the recommendation scores each shot against where
+        the runner will be when it lands, and picks the cheap one the moment the destination has
+        cover. See section 11 for what &ldquo;scores&rdquo; means.
       </p>
       <p>
         This is what makes cheap actions worth having. A snap shot that is simply a worse aimed
@@ -1560,11 +1561,13 @@
         <span class="tag">Settled</span>
         <p>
           How much of this the player drives by hand: offering and resolving are separate calls.
-          A window works out who could actually act — arc, reserve, affordable shot, mover in view
-          at some tick — and hands each of them one option per way of firing plus a recommendation
-          that maximises expected damage. Taking every recommendation is what the turn loop does
-          today. Letting a player place their own, or an AI place better ones, is the same
-          interface with something else calling it.
+          A window works out who could actually act &mdash; arc, reserve, affordable shot, mover
+          in view at some tick &mdash; and hands each of them one option per way of firing plus a
+          recommendation, which is whichever option is worth most by section 11. Taking every
+          recommendation is what the turn loop does today. Letting a player place their own is the
+          same interface with something else calling it &mdash; though there is currently no
+          public way to reach in between the two calls, which is a gap the interface will hit
+          before anything else does.
         </p>
       </div>
 
@@ -1788,7 +1791,166 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">11</span><span class="chip open">Next</span></div>
+    <div class="rail"><span class="num">11</span><span class="chip built">Built</span><br><br><span class="chip spec">Judged</span></div>
+    <div class="body">
+      <h2>What an action is worth</h2>
+      <p>
+        Every decision in this game is the same decision: several things you could do, one purse
+        to do them out of, and no way to tell which is better without a common scale. Until now
+        there was no scale. The reaction window picked what to do off a ladder — shoot if you can,
+        otherwise turn to face them, otherwise get low, otherwise call it in — which got the
+        obvious case right and had nothing whatever to say about the interesting ones.
+      </p>
+
+      <h3>The scale is vitality</h3>
+      <p>
+        Not an abstract number between nought and one. A score answers <em>how many points of
+        soldier is this worth</em>, and everything that is not vitality is converted into vitality
+        so that it can be compared with something that is. That choice is forced by where the
+        scorer has to work: inside a reaction window the currency is already action points, and
+        an action point is already a tick of the mover&rsquo;s timeline. A ranking that could not
+        price a point against a wound would have nothing to say about the one decision a window
+        actually poses &mdash; a cheap poor shot now against a good slow one that arrives after
+        they reach cover.
+      </p>
+      <table>
+        <thead>
+          <tr><th>Term</th><th>What it is</th><th>Where it comes from</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Harm</td><td class="why">Vitality off them, now</td><td class="why">The shot, put through the layers it will actually meet</td></tr>
+          <tr><td class="name">Spared</td><td class="why">Vitality kept on us</td><td class="why">The shot coming back, asked twice &mdash; once about the soldier as they are, once as they would be</td></tr>
+          <tr><td class="name">Prospect</td><td class="why">Vitality this sets up</td><td class="why">The share of a look a facing buys, or the shot you hand somebody by calling it in</td></tr>
+          <tr><td class="name">Spent</td><td class="why">The points it burns</td><td class="why">Priced in the same currency, so cheap bad and dear good are comparable at all</td></tr>
+        </tbody>
+      </table>
+      <p>
+        They are kept apart rather than summed away because an interface has to be able to say
+        <em>why</em>. &ldquo;He shoots because the shot is worth four and the dive is worth
+        one&rdquo; is a sentence a player can argue with; &ldquo;he shoots because 4.1 &gt;
+        1.2&rdquo; is not. It is also the honest way to keep one query surface: if a term cannot
+        be shown to a player it should not be in there, and if it can be shown then both sides
+        have it.
+      </p>
+
+      <h3>What a shot is worth is not what a shot delivers</h3>
+      <p>
+        The single most important thing the old ladder could not see. Expected damage is worked
+        out before shields and plate, so eight points of beam landing squarely on a full force
+        shield reads beautifully and achieves precisely nothing &mdash; and the ladder would take
+        that shot over anything else on offer, every time, because shots outranked postures and
+        damage arriving was how shots were ranked.
+      </p>
+      <p>
+        Now the rounds are put through the layers they are going to meet, face by face, in order,
+        against layers that wear as they go. That matters more than it sounds: a repeater round
+        against a fresh face is stopped entirely, one point into the shield and five into the
+        plate, and the plate is only eight thick &mdash; so the second round of the burst walks
+        through the hole the first one made and the third walks through unopposed. A model that
+        priced each round against untouched armour would rate the whole burst at three times
+        nothing.
+      </p>
+      <p>
+        Three things come back rather than one, because they are worth different amounts. Vitality
+        is the only one that wins the fight. Ablative plate stripped never comes back, so it is
+        progress banked &mdash; and counting it is what stops the scorer rating the opening
+        exchange of every firefight at nearly zero and preferring almost any posture to shooting.
+        Shield soaked comes back in a turn or two, so it is worth very little, and what keeps it
+        above nothing is the ambush: inside one window the second shot really does walk through
+        the hole the first made, and a scorer that valued the first at nothing would never set
+        that up.
+      </p>
+
+      <h3>Posture is derived, not ranked</h3>
+      <p>
+        Nothing says turning is better than dropping, or the other way round. Both are worked out
+        by asking the ordinary questions twice, once about the soldier as they are and once about
+        the soldier as they would be, and the geometry answers differently every time.
+      </p>
+      <p>
+        <strong>Turning</strong> earns almost nothing from armour. Every face starts with the same
+        plate and the same shield, and the glancing average is deliberately flattened so that the
+        bearing decides which side wears and not how much gets through &mdash; so on an unworn
+        soldier, which way round they stand changes nothing at all about the round they catch.
+        What turning buys is <em>seeing them</em>. A facing is worth the share of a look it gains
+        times what you would do with what you saw, because you cannot shoot what you have not
+        noticed. Staring harder at somebody you already hold a live fix on buys nothing, and the
+        scoring says so by scaling on how far short of that fix the contact still is.
+      </p>
+      <p>
+        <strong>Getting low</strong> earns its keep twice over, and the two halves are not the
+        same half. Cover and a smaller silhouette come through the shot itself, which is worth
+        less against somebody hard to hit. Being harder to <em>find</em> is separate: a concealed
+        silhouette divides what a look is worth, so flat in the open is exactly as easy to hit as
+        upright and half as likely to be the thing anybody is aiming at. On bare ground that
+        second half is the only one that moves &mdash; which is precisely right, and is why going
+        flat in the open is worth doing and not worth much.
+      </p>
+      <p>
+        The result nobody wrote down: <strong>cover works in both directions and the score knows
+        it</strong>. Diving flat behind a knee-high wall takes you out of sight of the man in
+        front of you and takes him out of yours, so the appraisal comes back with what you saved
+        and, alongside it, a <em>negative</em> figure for the shot you gave up to save it. That
+        fell out of asking the same question about the same geometry from the other end. It was
+        not a rule anybody added.
+      </p>
+
+      <h3>One scorer, two searches</h3>
+      <p>
+        The decision worth recording, because it is the one most likely to be made by accident.
+        What varies between picking a reaction and taking a turn is which candidates get generated
+        and how they chain together &mdash; not what any one of them is worth. A snap shot at
+        somebody crossing your arc is worth what it is worth whether the points come out of a
+        reserve or an allowance. So the arithmetic lives in one place and is called once per
+        candidate, and the search lives with whatever is doing the searching.
+      </p>
+      <p>
+        The constraint that shaped everything: <strong>the scorer reads only what its soldier
+        knows</strong>. Threats come from that unit&rsquo;s own contacts rather than from the
+        field, so an AI cannot stand well against a flanker it has never seen. That is the same
+        constraint the interface works under, and holding to it is what produced most of the new
+        code &mdash; the armour-aware forecast, the look that has not been taken yet, the shot a
+        threat could take if it had the points. Every one of them is a figure a player should have
+        been able to see and could not.
+      </p>
+
+      <div class="aside">
+        <span class="tag">Open</span>
+        <p>
+          <strong>Firing gives you away, and nothing prices that.</strong> A slug rifle tells the
+          whole compound and a beam paints a line back to you; the score counts what the shot does
+          to the target and nothing else. In a stealth-first game that is the biggest hole in the
+          model, and an AI scored this way will blaze away and blow its own approach. The
+          derivation is the inverse of the one for calling a contact in: for every enemy the shot
+          would carry over the bar, subtract what they would then do about you.
+        </p>
+        <p>
+          <strong>Nothing may decline a reaction.</strong> A reactor always takes its best option
+          even when every option scores below zero &mdash; which happens. A beam that will be
+          soaked entirely is worth about what it costs, so the model correctly reports that all
+          the answers are bad and then picks one anyway.
+        </p>
+        <p>
+          <strong>Removing a signaller is worth no more than removing the rifleman beside
+          them.</strong> A soldier put down is valued at their own vitality again &mdash;
+          everything they would have gone on to do &mdash; which is measured against how tough
+          they are and not against what they were for. Weighting it by what the soldier does for
+          its side is the obvious next thing and is not yet derived from anything.
+        </p>
+        <p>
+          <strong>Every rate here is an argument.</strong> Like every other number in this game
+          &mdash; but unlike the others, these are the ones the AI-versus-AI runs will actually
+          settle, because a scorer that plays badly loses matches and says so. The one to watch
+          first is what a soaked shield is worth: at the figure set today, a fully soaked beam
+          scores near enough exactly what the shot costs that the ordering between firing
+          pointlessly and doing something else is decided by noise.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="rail"><span class="num">12</span><span class="chip open">Next</span></div>
     <div class="body">
       <h2>Build order</h2>
       <p>
@@ -1804,7 +1966,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Reactions</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and all three kinds: arcs held, traps sprung, and soldiers caught out.</p></div></li>
-        <li><span class="idx">04</span><div><b>Enemy AI</b><p>Utility scoring over the same queries the player&rsquo;s UI uses, and the thing that replaces the crude stand-in policy picking reactions today. If the AI needs information the interface cannot show, the interface is wrong.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Judgement</b><p>What an action is worth, in vitality, over the same queries the interface shows. The crude stand-in policy picking reactions is gone.</p></div></li>
+        <li><span class="idx">04</span><div><b>Enemy AI, the search half</b><p>A unit that takes its own turn: where to go, what to shoot from there, what to hold back. Same scorer underneath &mdash; what is missing is the candidates. Firing has to start costing you your concealment first.</p></div></li>
         <li><span class="idx">05</span><div><b>Grenades and mines</b><p>An arcing trace, and a reaction owned by the terrain rather than by a unit.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
@@ -1816,8 +1979,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 14</span>
-    <span>259 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 15</span>
+    <span>272 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

@@ -935,7 +935,12 @@ public class ReactionTests
 
         Assert.Equal(ReactionAction.Drop, resolution.Placement.Action);
         Assert.Null(resolution.Outcome);
-        Assert.Equal(Stance.Crouching, sentry.Stance);
+
+        // All the way down rather than to a crouch. Both cost the same two points and both are
+        // offered, so there is nothing to be said for stopping halfway — a scored choice takes
+        // the one that hides more. The old stand-in took whichever was listed first, which was
+        // the crouch for no reason anybody could have defended.
+        Assert.Equal(Stance.Prone, sentry.Stance);
     }
 
     [Fact]

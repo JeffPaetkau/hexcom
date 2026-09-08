@@ -179,16 +179,36 @@ shot went off on and where the target was standing when it landed.
   the contact in first, so an ambusher has to be reachable by radio, shout or line of sight to
   join in, and one who got bored and spent its turn moving is still armed and out of the trap.
 
+- **Judgement, in vitality** — every action a soldier could take is scored in the only currency
+  that ends a fight: points of soldier. What a shot is worth is what gets through the shields and
+  the plate it will actually meet, so a beam landing squarely on a full force shield reads as the
+  nothing it is, and wearing eight points off a plate that never comes back reads as the progress
+  it is. What a *posture* is worth is worked out by asking the ordinary questions twice, once
+  about the soldier as they are and once about the soldier as they would be: turning earns its
+  keep by buying a look rather than by presenting a better plate, going flat earns its keep by
+  being harder to find as much as by being harder to hit, and diving behind a knee-high wall
+  scores the shot it costs you as well as the shot it saves you. What calling a contact in is
+  worth is whatever the people who can hear it could then do about it — nothing if they already
+  knew, a great deal if one of them was a rung short of being allowed to fire down the arc they
+  are already holding. Action points are priced in the same currency, which is what lets a cheap
+  bad option be compared with an expensive good one at all.
+
+  Nothing in it is a ladder. The old policy for picking a reaction was one — shoot if you can,
+  otherwise turn, otherwise get low, otherwise call it in — and it could not tell a shot that
+  would be soaked from one that would not, because it ranked shots on damage arriving rather than
+  damage arriving anywhere. That is gone. The AI and the interface rank by the same call, and it
+  returns its terms separately so a player can be told *why* rather than shown a number.
+
 ## What is not built yet
 
-Grenades and mines, suppression, AI, saves, and the strategy layer. See the design doc for where
-these are heading.
+Grenades and mines, suppression, saves, and the strategy layer. See the design doc for where these
+are heading.
 
 The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
 
-All three reactions are in. What is missing is anybody to play against. A `ReactionWindow` already
-separates offering choices from resolving them, and the turn loop currently takes every
-recommendation off a deliberately crude policy — shoot if you can, otherwise turn, otherwise get
-low, otherwise call it in. Ranking a shot against a dive into cover is exactly what utility
-scoring is for, so replacing that stand-in is the same job as building the enemy AI, and it is
-next.
+The judgement is built; the thing that uses it on its own turn is not. A hostile unit ranks its
+reactions properly and still does nothing whatever when its own turn comes round, so the sandbox
+drives both sides by hand. What is missing is the search — over where a unit could go, what it
+could shoot from there, and what it should hold back — with the same scorer at the bottom of it.
+That, and the fact that firing gives you away and nothing prices that yet, is what stands between
+here and a headless AI-versus-AI match.

@@ -7,6 +7,7 @@ using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
+using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 
@@ -59,7 +60,8 @@ public sealed class Battle
         int seed = 0,
         AwarenessModel? awareness = null,
         GunneryModel? gunnery = null,
-        ReactionModel? reactions = null)
+        ReactionModel? reactions = null,
+        UtilityModel? utility = null)
     {
         Map = map;
         Layout = layout;
@@ -69,6 +71,7 @@ public sealed class Battle
         Awareness = new AwarenessTracker(this, awareness ?? AwarenessModel.Default);
         Gunnery = new Gunnery(gunnery);
         Reactions = reactions ?? ReactionModel.Default;
+        Tactics = new Tactician(this, utility);
         Seed = seed;
         _rng = new Random(seed);
     }
@@ -87,6 +90,15 @@ public sealed class Battle
 
     /// <summary>How much of a turn banks for acting out of it. The difficulty dial.</summary>
     public ReactionModel Reactions { get; }
+
+    /// <summary>
+    /// What an action is worth. What the AI ranks by, and what an interface can show a player.
+    /// </summary>
+    /// <remarks>
+    /// One judgement, available to both sides and to whatever is drawing the screen, because the
+    /// alternative is an AI reasoning from something the player cannot be shown.
+    /// </remarks>
+    public Tactician Tactics { get; }
 
     /// <summary>The seed every roll in this battle comes from.</summary>
     public int Seed { get; }
@@ -460,10 +472,53 @@ public sealed class Battle
         UnitPose targetPose,
         ApSource paying,
         BodyFace? calledAt = null)
+        => Plan(shooter, UnitPose.Of(shooter), target, targetPose, mode, aimBonus, paying, calledAt, affordable: true);
+
+    /// <summary>
+    /// What <paramref name="shooter"/> could do to a soldier standing like that, if it had the
+    /// points. The question you ask about a <em>threat</em> rather than about this moment.
+    /// </summary>
+    /// <remarks>
+    /// Two things are deliberately left out that
+    /// <see cref="PlanShot(Unit, Unit, FireMode, double, UnitPose, ApSource, BodyFace?)"/> insists
+    /// on, and both for the same reason: posture is a bet on the next round, not this one.
+    /// <para>
+    /// The affordability test goes, because turning to face somebody who has just spent their
+    /// whole turn walking past you is worth exactly what turning to face somebody who has not is
+    /// worth — the round after, they both have a full allowance again. A threat with an empty
+    /// purse is still a threat.
+    /// </para>
+    /// <para>
+    /// And the shooter gets a pose of its own, because the soldier you are weighing up is often
+    /// not where it will be shooting from. Inside a reaction window the mover is halfway along a
+    /// route; the question worth asking is what it does to you from the end of it.
+    /// </para>
+    /// </remarks>
+    public ShotPlan PlanThreat(
+        Unit shooter,
+        UnitPose shooterPose,
+        Unit target,
+        UnitPose targetPose,
+        FireMode? mode = null)
+        => Plan(
+            shooter, shooterPose, target, targetPose,
+            mode ?? shooter.Weapon.DefaultMode,
+            aimBonus: 1.0, ApSource.Turn, calledAt: null, affordable: false);
+
+    private ShotPlan Plan(
+        Unit shooter,
+        UnitPose shooterPose,
+        Unit target,
+        UnitPose targetPose,
+        FireMode mode,
+        double aimBonus,
+        ApSource paying,
+        BodyFace? calledAt,
+        bool affordable)
     {
         var weapon = shooter.Weapon;
-        var sight = Sight.Trace(shooter.Vantage, targetPose.Vantage);
-        var aspects = FacesPresentedTo(targetPose, shooter.Position);
+        var sight = Sight.Trace(shooterPose.Vantage, targetPose.Vantage);
+        var aspects = FacesPresentedTo(targetPose, shooterPose.Position);
         var purse = paying == ApSource.Reserve ? shooter.Reserve : shooter.ActionPoints;
 
         // The list price is what the action is; what this soldier pays for it is about them.
@@ -474,7 +529,7 @@ public sealed class Battle
             shooter == target ? "Pick somebody else." :
             !target.InPlay ? "Nothing there to shoot at." :
             !target.IsHostileTo(shooter) ? "That is one of ours." :
-            purse < cost ? $"Needs {cost} points, has {purse}." :
+            affordable && purse < cost ? $"Needs {cost} points, has {purse}." :
             !sight.CanSee ? "No line on them." :
             sight.Distance > weapon.MaxRange ? $"Out of range at {sight.Distance:0} m." :
             calledAt is not null && !shooter.Stats.CanCallShots ? $"{shooter.Name} cannot place a round like that." :
@@ -482,7 +537,7 @@ public sealed class Battle
             null;
 
         var chance = refusal is null
-            ? Gunnery.HitChance(weapon, mode, sight, shooter.Stance, aimBonus)
+            ? Gunnery.HitChance(weapon, mode, sight, shooterPose.Stance, aimBonus)
               * (calledAt is null ? 1.0 : Gunnery.Model.CalledShotAccuracy)
             : 0;
 

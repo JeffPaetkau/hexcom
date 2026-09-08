@@ -118,7 +118,9 @@ public sealed class AwarenessTracker
             var sight = _battle.Look(observer, subject);
             contact.EyesOn = sight.CanSee;
 
-            var gain = sight.CanSee ? LookGain(observer, UnitPose.Of(subject), sight) : 0;
+            var gain = sight.CanSee
+                ? LookGain(observer, UnitPose.Of(observer), UnitPose.Of(subject), sight)
+                : 0;
 
             if (gain > 0)
             {
@@ -265,7 +267,7 @@ public sealed class AwarenessTracker
     /// What one look is worth. Range tells against you gently at first and then sharply, so
     /// distance only starts hiding you once there is real ground between you.
     /// </summary>
-    private double LookGain(Unit observer, UnitPose subject, SightResult sight)
+    private double LookGain(Unit observer, UnitPose from, UnitPose subject, SightResult sight)
     {
         if (sight.Distance >= Model.SightRangeMetres) return 0;
 
@@ -273,9 +275,30 @@ public sealed class AwarenessTracker
         var range = 1.0 - closeness * closeness;
         var acuity = observer.Stats.Perception / 10.0;
         var hiding = StanceProfile.For(subject.Stance).ConcealmentBonus;
-        var attention = AttentionOn(observer, subject.Position);
+        var attention = AttentionOn(from, subject.Position);
 
         return Model.LookGain * acuity * range * attention * sight.Exposure / hiding;
+    }
+
+    /// <summary>
+    /// What one look at a soldier standing like that would be worth to this observer, without
+    /// taking the look.
+    /// </summary>
+    /// <remarks>
+    /// The other half of the exposure readout, and the honest measure of what going flat behind
+    /// something buys. Exposure says how much of you can be hit; this says how likely anybody is
+    /// to be shooting at you in the first place, which for most of a stealth game is the figure
+    /// that matters. Going prone in the open changes nothing about the first and halves the
+    /// second.
+    /// <para>
+    /// Both poses are handed in because the question is always about somewhere nobody is standing
+    /// yet — a stance not taken up, seen from a hex not reached.
+    /// </para>
+    /// </remarks>
+    public double WouldNotice(Unit observer, UnitPose from, UnitPose subject)
+    {
+        var sight = _battle.Sight.Trace(from.Vantage, subject.Vantage);
+        return sight.CanSee ? LookGain(observer, from, subject, sight) : 0;
     }
 
     /// <summary>
@@ -299,7 +322,7 @@ public sealed class AwarenessTracker
         var sight = _battle.Sight.Trace(observer.Vantage, where.Vantage);
         if (!sight.CanSee) return 0;
 
-        var gain = LookGain(observer, where, sight);
+        var gain = LookGain(observer, UnitPose.Of(observer), where, sight);
         if (gain <= 0) return 0;
 
         var contact = Of(observer.Id, subject.Id);
@@ -321,7 +344,17 @@ public sealed class AwarenessTracker
     /// a question about people, and it belongs here. Coming at a sentry from behind is worth
     /// roughly twelve times the walk it costs.
     /// </remarks>
-    public double AttentionOn(Unit observer, NodeId place)
+    public double AttentionOn(Unit observer, NodeId place) => AttentionOn(UnitPose.Of(observer), place);
+
+    /// <summary>
+    /// The same, for a soldier standing some way other than the way they are standing.
+    /// </summary>
+    /// <remarks>
+    /// What turning is worth is exactly the difference between these two answers, so anything
+    /// weighing a turn — an AI, or an interface showing a player what a point would buy — has to
+    /// be able to ask about a facing nobody has taken up yet.
+    /// </remarks>
+    public double AttentionOn(UnitPose observer, NodeId place)
     {
         // The edges of these arcs are not hypothetical: a hex directly north of a sentry looking
         // north-east lies at exactly sixty degrees, the edge of the front cone. One spoke over is
