@@ -1,7 +1,15 @@
 # Decisions and cross-boundary findings
 
-**Append-only.** Add entries at the bottom. Never edit or reorder one — if an entry turns out to
-be wrong, write a new entry that supersedes it and say so in both directions.
+**Append-only, with exactly one exception.** Add entries at the bottom. Never edit or reorder
+one — if an entry turns out to be wrong, write a new entry that supersedes it and say so in both
+directions.
+
+**The exception is the `Status` field, which may be flipped in place.** It must name the entry
+that resolved it. Nothing else in an entry ever changes: not the text, not the number, not the
+date, not who it was addressed to. The exception exists because a log in which nothing can be
+closed becomes a list nobody can act on — it grows, everything reads as open, and the one
+instrument for seeing what is outstanding stops working. Closing an entry is not rewriting
+history; the finding, the reasoning and the mistake all stay exactly as they were written.
 
 **Merging two branches that both appended here conflicts, and the resolution is always the
 same: keep both hunks, in either order, and renumber if two entries took the same number.**
@@ -52,7 +60,8 @@ if you find yourself typing "in progress" into a doc, that is the erosion.
 ---
 
 ## 002 — The sandbox feeds a rendering scale into the rules
-**2026-09-06** · **Raised by** master · **For** view (with core to confirm) · **Status** open
+**2026-09-06** · **Raised by** master · **For** view (with core to confirm) · **Status** resolved
+by 005 (the split) and 007 (the figure) — and see 005 for what this entry got wrong
 
 `game/scripts/HexSandbox.cs:79` constructs the battle with the same `HexLayout` it draws with:
 

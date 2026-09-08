@@ -11,8 +11,8 @@ else. The one exception is `decisions.md`, which anybody may append to and nobod
 
 ## The territories
 
-Six, four with docs. A doc is created when there is a brief to put in it — an empty one rots and,
-worse, looks maintained while doing it.
+Seven, five with docs. A doc is created when there is a brief to put in it — an empty one rots
+and, worse, looks maintained while doing it.
 
 | Territory | Doc | Owns | Gated by |
 |---|---|---|---|
@@ -20,8 +20,9 @@ worse, looks maintained while doing it.
 | **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — its current job reads `Tactics`, which has landed, and the hex figure it wanted is settled |
 | **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | nothing — Core's AI has landed, so balance work is unblocked too |
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
-| **Art & audio** | — this file | `assets/**` when it exists | an asset spec nobody has written. The hex figure it was waiting on is settled — see entry 007 |
+| **Art & audio** | — this file | `assets/**` when it exists | the setting's visual register, and an asset spec nobody has written. The hex figure it was waiting on is settled — see entry 007 |
 | **Strategy layer** | — this file | undecided | the campaign shape, which belongs to Setting |
+| **Master** | [subprojects/master.md](subprojects/master.md) | `CLAUDE.md`, `docs/map.md`, `docs/decisions.md`, `docs/subprojects/*.md` | nothing — but it writes no code, ever |
 
 **Each territory doc with work in it opens with a `## The job` section** — the current brief,
 written so that a session can be pointed at that one file and need nothing else. When a job is
@@ -138,10 +139,13 @@ dotnet test
 ## Rules of the scheme
 
 1. **Read every doc, write one.** Plus `decisions.md`, which is everybody's.
-2. **`decisions.md` is append-only.** Never edit or reorder an entry; supersede it with a new
-   one. Two branches that both appended will conflict on merge — that is expected, and the
-   resolution is always to keep both hunks and renumber a collision. Nothing there is ever lost
-   to a merge, because nothing there is ever changed in place.
+2. **`decisions.md` is append-only, with one exception: the `Status` field.** Never edit or
+   reorder an entry's text; supersede it with a new one. But an entry's Status may be flipped in
+   place, naming the entry that resolved it — otherwise the log grows, everything reads as open,
+   and the one instrument for seeing what is outstanding stops working. Two branches that both
+   appended will conflict on merge — that is expected, and the resolution is always to keep both
+   hunks and renumber a collision. Nothing there is ever lost, because nothing but a Status is
+   ever changed in place.
 3. **A finding outside your territory goes in `decisions.md`, not in the neighbour's code.**
    This is the pressure valve, and it is the whole point of the scheme. A view session *will*
    learn something about the rules. Write it down and let Core pick it up.
@@ -159,8 +163,15 @@ dotnet test
 
 ## Master session
 
-One session at a time acts as master: it owns `docs/map.md`, curates `docs/decisions.md`, and is
-where the breakdown itself gets argued about. It does not own any code. If you are not the master
-session, you may still append to `decisions.md` — that is what it is for.
+One session at a time acts as master: it keeps this file true, curates `docs/decisions.md`,
+writes the briefs other territories are pointed at, and is where the breakdown itself gets argued
+about. It writes no code, ever, and it works on `master` rather than in a worktree — which is
+also what makes it the session that can merge branches.
+
+Its own brief is [subprojects/master.md](subprojects/master.md), including how to derive status
+without reading it out of a file. **Point a new session at that one file to pick the role up.**
+
+If you are not the master session, you may still append to `decisions.md` — that is what it is
+for, and routing those entries into briefs is most of what Master does with them.
 
 Whether a master session is currently live is not recorded here, because that would be status.
