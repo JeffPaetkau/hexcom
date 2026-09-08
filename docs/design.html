@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 15 · 7 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 16 · 7 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 272 tests run in about a second today.</li>
+        <li>The rules are unit-testable headless — 289 tests run in a few seconds today.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -602,6 +602,16 @@
       <p>
         Each corner connects to twelve others: three along hex sides, and nine interior chords,
         three in each of the three hexes it touches.
+      </p>
+      <p>
+        <strong>A hex is one metre of radius</strong> &mdash; two metres corner to corner, 1.73 m
+        between centres. One horizontal world unit is one metre, necessarily rather than by
+        choice: the sight solver builds a vector from a layout position and a floor height in
+        metres and takes distances across the result, so the layout&rsquo;s units <em>are</em>
+        metres. Rendering scale is a separate number that must never reach the rules. The figure
+        itself is the one the tests had always used, chosen at last rather than inherited: it puts
+        a soldier and their kit in a tile without crowding, and it makes a stride across a hex a
+        stride.
       </p>
     </div>
   </section>
@@ -1793,7 +1803,7 @@
   <section>
     <div class="rail"><span class="num">11</span><span class="chip built">Built</span><br><br><span class="chip spec">Judged</span></div>
     <div class="body">
-      <h2>What an action is worth</h2>
+      <h2>What an action is worth, and what to do about it</h2>
       <p>
         Every decision in this game is the same decision: several things you could do, one purse
         to do them out of, and no way to tell which is better without a common scale. Until now
@@ -1895,6 +1905,24 @@
         not a rule anybody added.
       </p>
 
+      <h3>Firing is the loudest thing a soldier does</h3>
+      <p>
+        A shot is not worth its damage. In a game whose whole first act is about not being found,
+        pulling a trigger is the most expensive thing you can do with a point: a slug rifle is
+        heard through walls for eighteen metres, a beam paints a bright line straight back down
+        its own path, and the man you shot at knows for certain that somebody is out there
+        whatever he could make out a moment before. All three channels already existed; nothing
+        could ask about them without firing.
+      </p>
+      <p>
+        So the score of a shot carries a second term, and it is the exact inverse of what calling
+        a contact in is worth. For everybody the shot carries closer to acting: how much closer,
+        times what they would then do about you. Somebody who already has a live fix learns
+        nothing and costs nothing. Somebody who had no idea you existed learns the most and costs
+        the most. It sits in the same place as diving into cover, because it is the same
+        quantity with the sign reversed — vitality that will not be staying on us.
+      </p>
+
       <h3>One scorer, two searches</h3>
       <p>
         The decision worth recording, because it is the one most likely to be made by accident.
@@ -1910,19 +1938,56 @@
         field, so an AI cannot stand well against a flanker it has never seen. That is the same
         constraint the interface works under, and holding to it is what produced most of the new
         code &mdash; the armour-aware forecast, the look that has not been taken yet, the shot a
-        threat could take if it had the points. Every one of them is a figure a player should have
-        been able to see and could not.
+        threat could take if it had the points, what a shot would tell everybody. Every one of
+        them is a figure a player should have been able to see and could not.
+      </p>
+
+      <h3>The search: greedy, with one step of lookahead on moves</h3>
+      <p>
+        Each pass picks the best single action, does it, and looks again from where that left the
+        soldier. The candidates are everywhere it could stand crossed with everybody it could
+        shoot from there, plus turning, getting lower, and declaring an arc. Not optimal play and
+        not meant to be &mdash; a soldier deciding what to do next from what it can currently see
+        is a fair model of a soldier, and searching whole turns costs combinatorially more for a
+        game whose numbers have never been measured against anything.
+      </p>
+      <p>
+        The lookahead exists for one reason: <strong>walking is not an achievement</strong>. A
+        move to a firing position is worth nothing on its own &mdash; it costs points and leaves
+        you standing somewhere marginally worse &mdash; and it is worth a great deal because of
+        the shot at the far end of it. Rank a move on itself and no unit ever takes a firing
+        position; fold the shot into the move&rsquo;s own appraisal and you have claimed the walk
+        did something it did not. So they are carried separately, and what falls out is a soldier
+        that goes round a man in cover rather than shooting through it &mdash; nobody wrote that
+        down, the sight trace reports less of a target behind sandbags and the arithmetic does
+        the rest.
+      </p>
+      <p>
+        <strong>Doing nothing is a candidate with a real score.</strong> Points left at the end of
+        a turn become a reserve, and the reserve is what you answer somebody else's move with, so
+        holding is worth whatever it could afford to do about the threats you know about. That has
+        a cliff in it and the cliff is the point: below the floor a leftover banks nothing at all,
+        and a bank that cannot afford the cheapest way of firing is worth nothing to shoot with
+        either. An action has to beat holding rather than merely beat zero, which is what stops a
+        soldier shuffling all turn for a tenth of a point and arriving at the end of it with
+        nothing to answer anybody with. It is also why declaring an arc is ever chosen: all of an
+        overwatch's value is in the reserve it leaves and the bonus that reserve now shoots at, so
+        which arc to declare comes out of the same arithmetic as everything else rather than off a
+        preference list.
       </p>
 
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          <strong>Firing gives you away, and nothing prices that.</strong> A slug rifle tells the
-          whole compound and a beam paints a line back to you; the score counts what the shot does
-          to the target and nothing else. In a stealth-first game that is the biggest hole in the
-          model, and an AI scored this way will blaze away and blow its own approach. The
-          derivation is the inverse of the one for calling a contact in: for every enemy the shot
-          would carry over the bar, subtract what they would then do about you.
+          <strong>Nobody ever goes and looks.</strong> Threats are the contacts a soldier
+          currently has eyes on, so a unit that knows about nobody stands still for the whole
+          battle, and no unit can move to gain a line of sight &mdash; only to improve one it
+          already has. It is also why being heard costs the shooter nothing when the listener is
+          behind a wall: what giving yourself away is worth is measured by what the person you
+          gave it to could do from where they stand, and from behind a wall that is nothing. All
+          three are the same hole. The fix is to build threats out of a remembered position rather
+          than only out of a live one, discounted for how stale the memory is, and let a move
+          toward a belief earn its keep the way every other move does.
         </p>
         <p>
           <strong>Nothing may decline a reaction.</strong> A reactor always takes its best option
@@ -1936,6 +2001,19 @@
           everything they would have gone on to do &mdash; which is measured against how tough
           they are and not against what they were for. Weighting it by what the soldier does for
           its side is the obvious next thing and is not yet derived from anything.
+        </p>
+        <p>
+          <strong>A shot that kills its target still gives you away to the target.</strong> The
+          man being shot at is counted among the people who now know where you are, and if he goes
+          down he is not anybody. That is the entire argument for the quiet kill, and the model
+          does not make it.
+        </p>
+        <p>
+          <strong>A blade carrier will not cross open ground to reach you.</strong> One step of
+          lookahead cannot see a knife going in two turns from now, so it correctly concludes that
+          this turn's walk into rifle range is worse than standing still &mdash; and then stands
+          still forever. That is a limit of the search rather than a fault in the scoring, and it
+          is the first thing a deeper one would fix.
         </p>
         <p>
           <strong>Every rate here is an argument.</strong> Like every other number in this game
@@ -1966,8 +2044,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Reactions</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and all three kinds: arcs held, traps sprung, and soldiers caught out.</p></div></li>
-        <li class="done"><span class="idx">DONE</span><div><b>Judgement</b><p>What an action is worth, in vitality, over the same queries the interface shows. The crude stand-in policy picking reactions is gone.</p></div></li>
-        <li><span class="idx">04</span><div><b>Enemy AI, the search half</b><p>A unit that takes its own turn: where to go, what to shoot from there, what to hold back. Same scorer underneath &mdash; what is missing is the candidates. Firing has to start costing you your concealment first.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Enemy AI</b><p>What an action is worth, in vitality, over the same queries the interface shows &mdash; and a search that takes a turn with it. Two sides driven by the same judgement fight to a decision headless. Nobody goes looking for anybody yet.</p></div></li>
+        <li><span class="idx">04</span><div><b>Going to look</b><p>Threats built from a remembered position rather than a live one, so a soldier who has heard something can go and find it. Until this lands, a unit that can see nobody does nothing.</p></div></li>
         <li><span class="idx">05</span><div><b>Grenades and mines</b><p>An arcing trace, and a reaction owned by the terrain rather than by a unit.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
@@ -1979,8 +2057,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 15</span>
-    <span>272 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 16</span>
+    <span>289 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

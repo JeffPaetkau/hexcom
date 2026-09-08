@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Hexcom.Core.Battles;
+using Hexcom.Core.Combat;
 using Hexcom.Core.Geometry;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
@@ -149,27 +150,36 @@ public sealed class AwarenessTracker
     {
         if (loudness <= 0) return;
 
-        var radius = loudness * Model.NoiseMetresPerPoint;
-        if (radius <= 0) return;
-
-        var origin = _battle.Sight.Ground(source.Position);
-
         foreach (var listener in _battle.Enemies(source).ToList())
         {
-            var distance = Vec3.GroundDistance(origin, _battle.Sight.Ground(listener.Position));
-            if (distance > radius) continue;
-
             var contact = Of(listener.Id, source.Id);
-
-            // A sound says where, not who. It can send someone to look, never make them certain.
-            var gain = Model.NoiseGain * (1 - distance / radius);
-            var raised = Math.Min(contact.Detection + gain, Model.AlertedAt - 1);
+            var raised = AfterHearing(contact.Detection, listener, source.Position, loudness);
             if (raised <= contact.Detection) continue;
 
             contact.Detection = raised;
             contact.LastKnownPosition = source.Position;
             contact.LastContactRound = round;
         }
+    }
+
+    /// <summary>
+    /// What a noise of this loudness, made there, would leave one listener holding.
+    /// </summary>
+    /// <remarks>
+    /// A sound says where, not who. It can send somebody to look and it can never make them
+    /// certain, which is why it stops one short of the rung where people start shooting back.
+    /// </remarks>
+    private double AfterHearing(double held, Unit listener, NodeId place, double loudness)
+    {
+        var radius = loudness * Model.NoiseMetresPerPoint;
+        if (radius <= 0) return held;
+
+        var distance = Vec3.GroundDistance(
+            _battle.Sight.Ground(place), _battle.Sight.Ground(listener.Position));
+        if (distance > radius) return held;
+
+        var gain = Model.NoiseGain * (1 - distance / radius);
+        return Math.Max(held, Math.Min(held + gain, Model.AlertedAt - 1));
     }
 
     /// <summary>
@@ -188,18 +198,27 @@ public sealed class AwarenessTracker
 
         foreach (var watcher in _battle.Enemies(source).ToList())
         {
-            var sight = _battle.Look(watcher, source);
-            if (!sight.CanSee) continue;
-
             var contact = Of(watcher.Id, source.Id);
-            var gain = Model.LookGain * brightness * AttentionOn(watcher, source.Position);
-            if (gain <= 0) continue;
+            var raised = AfterSeeing(contact.Detection, watcher, UnitPose.Of(source), brightness);
+            if (raised <= contact.Detection) continue;
 
-            contact.Detection = Math.Min(contact.Detection + gain, Model.Ceiling);
+            contact.Detection = raised;
             contact.LastKnownPosition = source.Position;
             contact.LastContactRound = round;
             contact.EyesOn = true;
         }
+    }
+
+    /// <summary>What a flash of this brightness, from there, would leave one watcher holding.</summary>
+    private double AfterSeeing(double held, Unit watcher, UnitPose source, double brightness)
+    {
+        var sight = _battle.Sight.Trace(watcher.Vantage, source.Vantage);
+        if (!sight.CanSee) return held;
+
+        var gain = Model.LookGain * brightness * AttentionOn(watcher, source.Position);
+        if (gain <= 0) return held;
+
+        return Math.Min(held + gain, Model.Ceiling);
     }
 
     /// <summary>
@@ -229,6 +248,43 @@ public sealed class AwarenessTracker
 
     /// <summary>Everyone who would actually hear a shout, so nobody is offered a pointless one.</summary>
     public IEnumerable<Unit> Earshot(Unit caller) => _battle.Allies(caller).Where(ally => CanReach(caller, ally));
+
+    /// <summary>
+    /// What firing that weapon from there would tell each of the shooter's enemies about the
+    /// shooter, without firing it.
+    /// </summary>
+    /// <remarks>
+    /// The question a soldier asks before pulling a trigger in a game that is mostly about not
+    /// being found, and until this existed nothing could ask it. All three channels at once,
+    /// because that is what a shot does: the target learns for certain that somebody is out
+    /// there, everyone in earshot of a slug hears roughly where, and everyone facing a beam sees
+    /// exactly where.
+    /// <para>
+    /// Both poses are hypothetical, so a unit can weigh a shot it would take from somewhere it
+    /// has not walked to yet. Only the shooter's own side of it is previewed — what the target
+    /// then passes on to <em>its</em> friends is a second relay, and at the default fractions a
+    /// relayed contact arrives below the rung where anybody acts on it. That is a thin margin
+    /// resting on two numbers, so it is worth rechecking if either moves.
+    /// </para>
+    /// </remarks>
+    /// <param name="at">Who is being shot at, whose certainty a shot settles outright. Null for a shot at nobody.</param>
+    public IEnumerable<Announcement> WouldAnnounce(
+        Unit shooter, UnitPose from, WeaponProfile weapon, Unit? at = null)
+    {
+        foreach (var enemy in _battle.Enemies(shooter))
+        {
+            var held = Of(enemy.Id, shooter.Id).Detection;
+            var after = held;
+
+            // Being shot at settles it, whatever they could or could not see a moment ago.
+            if (enemy == at) after = Math.Max(after, Model.AlertedAt);
+
+            after = Math.Max(after, AfterHearing(held, enemy, from.Position, weapon.Loudness));
+            after = Math.Max(after, AfterSeeing(held, enemy, from, weapon.Flash));
+
+            if (after > held) yield return new Announcement(enemy, held, after);
+        }
+    }
 
     /// <summary>Pass a contact to whoever can be reached, at a discount.</summary>
     private void Relay(Unit caller, Contact source, int round)

@@ -73,10 +73,14 @@ neither gets a private back door.
 enemy's alarm is reported coarsely. The view must not render a number Core deliberately blurred,
 and Core must not blur a number about your own soldier.
 
-**4. Balance numbers live in exactly seven homes.** `MovementCosts`, `AwarenessModel`,
-`GunneryModel`, `ReactionModel`, `CostProfile`, `StanceProfile`, `OverwatchArc`, plus
-`Loadout` / `WeaponProfile` / `FireMode` as content. A magic number in a method body is a bug.
-Float epsilons are not balance numbers.
+**4. Balance numbers live in exactly eight homes.** `MovementCosts`, `AwarenessModel`,
+`GunneryModel`, `ReactionModel`, `CostProfile`, `StanceProfile`, `OverwatchArc`, `UtilityModel`,
+plus `Loadout` / `WeaponProfile` / `FireMode` as content. A magic number in a method body is a
+bug. Float epsilons are not balance numbers.
+
+The eighth is newer than the rest and different in kind: the other seven say what the world does,
+`UtilityModel` says what any of it is *worth to somebody deciding*. See
+[decisions.md](decisions.md) entry 003.
 
 **5. One horizontal world unit is one metre.** `SightSolver` builds a `Vec3` from a
 `HexLayout` position (X, Y) and a floor height (Z, metres) and takes distances across it, so the

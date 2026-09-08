@@ -29,54 +29,58 @@ purpose, balance numbers in their seven homes, and one horizontal unit is one me
 
 ---
 
-## The job — the AI takes a turn (build order 04, second half)
+## The job — going to look (build order 04, the part that is left)
 
-Branch `core/turn-planner`. Read the rest of this file before starting; the turn loop below and
-the gotchas after it are the things that will bite.
+Branch `core/beliefs`. Read the rest of this file before starting; the turn loop below and the
+gotchas after it are the things that will bite.
 
-**What exists.** `Tactician` scores one action, in vitality, and `ReactionWindow` now ranks by it
-instead of by a ladder. What does not exist is anything that generates candidates for an ordinary
-turn. A hostile unit still does nothing whatever when its turn comes round; the sandbox drives
-both sides by hand.
+**What exists.** `Tactician` scores one action in vitality; `Commander` generates the actions and
+takes a turn with them; `ReactionWindow` ranks by the same scorer. Two sides driven by
+`Commander.TakeTurn` fight a skirmish to a decision, replayably, with no window open. That is
+build order 04 working.
 
-**The decision already taken, so do not retake it.** One scorer, two searches. `Tactician`
-appraises a single action and knows nothing about where the candidates came from; what differs
-between picking a reaction and taking a turn is which options get generated and how they chain,
-not what any one of them is worth. So this job is a *search* over `Battle.Destinations`,
-`PlanShot`, `SetOverwatch` and `Arm`, calling `Appraise` — not a second scoring model. If you find
-yourself adding terms to `Appraisal`, ask first whether the reaction window would want them too;
-if it would not, the split is being drawn in the wrong place.
+**The one thing it cannot do, and it is a big one: nobody ever goes and looks.**
+`Tactician.Seen` returns only contacts with `EyesOn`, deliberately — a marker left two rounds ago
+is a belief about somewhere the threat has probably left, and letting an AI act on the real
+position of a unit it cannot see is precisely the cheating the whole scheme exists to prevent.
+The consequences are visible in three places and they are all the same hole:
 
-**Two things the scorer is missing that a turn planner will feel immediately.**
+- A unit that knows about nobody stands still for the entire battle. There is nothing for it to
+  want, so every option scores nothing and holding wins.
+- A unit **cannot move to gain a line of sight**, only to improve one it already has. Flanking a
+  man in cover works; stepping round a building to find him does not.
+- Being heard costs the shooter nothing when the listener has no line, because what giving
+  yourself away is worth is measured by what the person you gave it to could do *from where they
+  stand* — and from behind a wall that is nothing. `SomebodyWhoHearsTheShotAndCannotReachYouCostsYouNothingYet`
+  pins this rather than approving of it.
 
-1. **Firing gives you away, and nothing prices that.** `Battle.AnnounceFire` raises every enemy
-   in earshot or facing your way; `Worth` counts none of it. In a stealth-first game that is the
-   biggest single hole in the model — an AI scored this way blazes away and blows its own
-   approach. The derivation is the inverse of `AppraiseWord`: for each enemy the shot would carry
-   over the bar, subtract what they would then do about you. It needs a preview of `Hear` and
-   `Reveal` in the way `WouldNotice` previews a look, which is the same shape and about as much
-   work.
-2. **Chaining.** Two actions in one turn are not worth the sum of their scores — moving somewhere
-   changes what the shot from there is worth, and the reaction reserve is what is left at the end.
-   `ReserveFraction` means the last unspent points are worth more than `PointValue` says, because
-   they are what the unit answers the next move with.
+**So the job is beliefs.** A `Threat` can already carry a pose that is not where anybody is
+standing — that is what it was built for. What is missing is generating threats from
+`Contact.LastKnownPosition` rather than from `EyesOn`, discounted for staleness, and letting
+`AppraisePosture` do what it already does: a move toward a believed position raises `Noticing`,
+because you would be closer and facing the right way. Approach behaviour should fall out of the
+scorer that exists rather than needing a second one — if it does not, say so in `../decisions.md`
+before building a second one.
+
+**Settle this before writing much.** What a stale belief is worth. A contact three rounds old is
+somewhere the enemy *was*; `AwarenessReadout.IsStale` already draws a line at two rounds and
+nothing uses it for scoring. Whatever you pick, it wants a `<remarks>` block arguing for it,
+because it is the dial that decides whether the AI hunts sensibly or chases ghosts round the map.
 
 **The hard constraint — contract 2 in [../map.md](../map.md).** The AI reads the same public
 queries the interface shows. If the AI wants information the interface cannot show, that is a
 finding about the interface, to be written up in `../decisions.md` — not a licence to reach into
-internals for convenience. This held through the scorer and it is worth saying that it *paid*:
-`Gunnery.Expect`, `AwarenessTracker.WouldNotice` and `Battle.PlanThreat` were all added because
-the AI needed them, and every one of them is a figure a player should have been able to see and
-could not.
+internals for convenience. It has held through two increments and it is worth saying that it
+*paid*: `Gunnery.Expect`, `AwarenessTracker.WouldNotice`, `AwarenessTracker.WouldAnnounce`,
+`ReactionModel.Banked` and `Battle.PlanThreat` were all added because the AI needed them, and
+every one is a figure a player should have been able to see and could not.
 
-**Out of scope.** `game/**`. Entry 004 in `../decisions.md` is a Core API gap the interface needs
-and the AI does not; it is not this job. Entry 002 is an open sandbox bug; leave it alone.
+**Out of scope.** `game/**`. Entry 009 in `../decisions.md` offers View a way to hand a side to
+the AI in the sandbox; the API is there and wiring it up is theirs. Entry 004 is a Core API gap
+the interface needs and the AI does not. Entry 002 is an open sandbox bug; leave it alone.
 
-**The test that it worked:** a hostile side, given nothing but `Battle` and a seed, plays a
-skirmish to a decision without being told anything about the map. That is what unlocks the
-headless AI-versus-AI runs the engine-free split was built for, and turns every balance number in
-this game from an argument into a finding — starting with the overwatch awareness gate that
-`ReactionModel` already names as first for re-examination.
+**The test that it worked:** two sides that start out of contact find each other and fight,
+without either being told where the other is.
 
 After this: grenades and mines (build order 05).
 
@@ -176,6 +180,20 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   takes you out of sight of the man in front of you, and takes him out of yours: `Spared` goes up
   and `Prospect` goes *negative* in the same appraisal. A posture score that only ever improves
   is a posture score with a bug in it.
+- **`Order.Worth` is not what the order was picked on.** `Order.Score` is, and it adds
+  `Order.Opens` — the shot a move sets up. A move's own `Worth` is almost always negative, because
+  walking costs points and buys nothing; ranking on it means never taking a firing position.
+  Anything reading an order for display wants both halves.
+- **The AI search is the slow part of the test suite.** It went from one second to six, all of it
+  in `Commander`: every decision is a reachable set crossed with every known threat crossed with
+  every fire mode, and every one of those is a sight trace. It is fine for tests and it is not
+  fine for the thousands of headless matches this was built to enable. The cheap win when that
+  bites is caching the sight trace per (destination, threat) within one decision.
+- **A blade carrier will not walk across open ground to reach you.** Greedy with one step of
+  lookahead cannot see a knife going in two turns from now, so it correctly works out that this
+  turn's walk into rifle range is worse than standing still, and stands still forever. Not a bug
+  in the scoring; a limit of the search, and the first thing a deeper one would fix. Note that it
+  would still not stab anybody when it arrived — see entry 008 in `../decisions.md`.
 
 ---
 
@@ -184,10 +202,13 @@ the thing to suspect when a reaction test starts failing for no reason you can s
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
 the ones that block or shape what Core does next.
 
-- **Firing gives you away and the scorer does not price it.** Named in the brief above because a
-  turn planner hits it first, but it is a hole in the model as it stands: a soaked beam and a slug
-  rifle that tells the whole compound are scored on what they do to the target and nothing else.
-  The first of the two omissions that will make an AI play badly in a way anyone can see.
+- **Nobody goes and looks.** The whole of the brief above, and the largest thing standing between
+  what exists and an AI anybody would call one.
+- **A shot that kills its target still gives you away to the target.** `GivenAway` counts the man
+  being shot at among the people who now know where you are, and if he goes down he is not
+  anybody. That is the entire argument for the quiet kill and the model does not make it. Fixing
+  it means the announcement preview knowing which enemies survive the shot it is previewing,
+  which is a small change to `WouldAnnounce` and a fiddly one to get right.
 - **Nothing may decline a reaction.** `ReactionOffer.Recommended` is not nullable, so a reactor
   always takes its best option even when every option scores below zero — which happens: a beam
   that will be soaked entirely is worth about what it costs, and the model correctly says all the
@@ -197,16 +218,18 @@ the ones that block or shape what Core does next.
   0.72 against a snap shot costing 0.75 — near enough break-even that the ordering between firing
   pointlessly and doing something else is decided by noise. Either the shield term is too generous
   or a point of reserve is too cheap, and only matches will say which.
-- **The overwatch awareness gate is the first thing to re-examine under real play.** Flagged in
-  the doc and in `ReactionModel`, with the two dials named. It cannot be settled until there is
-  an AI to run matches with, which is the argument for doing the AI first.
-- **Every balance number is set by reasoning, not measurement.** Nothing has been played, because
-  there is nobody to play against. Treat the figures as arguments rather than findings, and check
-  the design doc for why one is what it is before changing it — several are load-bearing in ways
-  their size does not advertise.
-- **Whether the metres-per-hex figure was ever decided.** Tests use 1.0 throughout; nothing
-  states it as intended, and the awareness distances read as though drawn against something
-  larger. Raised in `../decisions.md` entry 002.
+- **Melee does not reach.** `../decisions.md` entry 008, addressed here and open: `PowerBlade`
+  carries a 2.0 m range and `Gunnery` measures eye to centre of mass in three dimensions, so at
+  the hex size settled in entry 007 two adjacent soldiers are further apart than a blade can
+  cover. Nothing special-cases melee and something has to — either a reach measured along the
+  ground, or an adjacency test, and which one is a design question rather than a number.
+- **The overwatch awareness gate can now be re-examined.** Flagged in the doc and in
+  `ReactionModel`, with the two dials named. It was gated on having an AI to run matches with;
+  there is one, so this is the first thing to point a batch of headless matches at.
+- **Every balance number is set by reasoning, not measurement.** Treat the figures as arguments
+  rather than findings, and check the design doc for why one is what it is before changing it —
+  several are load-bearing in ways their size does not advertise. This is now *testable* rather
+  than merely true, which is the whole reason the AI came before grenades.
 
 ## Recent work
 

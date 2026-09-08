@@ -90,6 +90,12 @@ public sealed record GunneryModel
 /// Where the target is being shot at, which inside a reaction window is where it <em>will</em>
 /// be when the round lands rather than where it stands now.
 /// </param>
+/// <param name="ShooterPose">
+/// Where the shot is taken <em>from</em>. Usually where the shooter is standing, and deliberately
+/// not always: anything weighing up a position it has not walked to yet needs to ask what it
+/// could do once it got there, and a plan that did not record the answer could not be scored
+/// afterwards.
+/// </param>
 public sealed record ShotPlan(
     Unit Shooter,
     Unit Target,
@@ -105,8 +111,12 @@ public sealed record ShotPlan(
     ApSource Paying = ApSource.Turn,
     double GlancingFactor = 1.0,
     double GlancingScale = 1.0,
-    BodyFace? CalledAt = null)
+    BodyFace? CalledAt = null,
+    UnitPose? ShooterPose = null)
 {
+    /// <summary>Where the shot comes from. The shooter as it stands, unless told otherwise.</summary>
+    public UnitPose From => ShooterPose ?? UnitPose.Of(Shooter);
+
     public bool CanFire => Refusal is null;
 
     /// <summary>The side the shot is most likely to find. What an interface points at.</summary>

@@ -74,9 +74,99 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
                + Model.RemovalBonus * expected.DownChance * plan.Target.Stats.Vitality;
     }
 
-    /// <summary>A shot, appraised. Everything it is worth is delivered now, so there is one term.</summary>
+    /// <summary>
+    /// A shot, appraised: what it does to them, less what it tells everybody about you.
+    /// </summary>
+    /// <remarks>
+    /// The second term is why a stealth game cannot score a shot on its damage alone. Pulling a
+    /// trigger is the loudest thing a soldier does — a slug rifle is heard through walls for
+    /// forty metres and a beam paints a line straight back down its own path — and a scorer blind
+    /// to that will empty a magazine into the first sentry it sees and bring the compound down on
+    /// itself. It goes in <see cref="Appraisal.Spared"/> as a negative, because it is exactly
+    /// that: vitality that will not be staying on us.
+    /// </remarks>
     public Appraisal Appraise(ShotPlan plan)
-        => plan.CanFire ? new Appraisal(Worth(plan), 0, 0, Price(plan.ApCost)) : Appraisal.Nothing;
+        => plan.CanFire
+            ? new Appraisal(
+                Worth(plan),
+                -Model.FutureDiscount * GivenAway(plan),
+                0,
+                Price(plan.ApCost))
+            : Appraisal.Nothing;
+
+    /// <summary>
+    /// What firing this shot hands the other side, in vitality.
+    /// </summary>
+    /// <remarks>
+    /// The inverse of <see cref="AppraiseWord"/>, and derived the same way: for everybody the shot
+    /// carries closer to acting, how much closer, times what they would do about you once they
+    /// were. A soldier who already has a live fix on you learns nothing worth having and costs
+    /// nothing; one who had no idea you existed learns the most and costs the most.
+    /// <para>
+    /// A shot that puts the target down still gives you away to everybody else — the noise
+    /// happened — but the target itself is no longer anybody. That is not modelled here, and it
+    /// should be: it is the whole argument for the quiet kill, and it needs the announcement
+    /// preview to know which enemies survive the shot it is previewing.
+    /// </para>
+    /// </remarks>
+    public double GivenAway(ShotPlan plan)
+    {
+        var bar = battle.Awareness.Model.Threshold(Model.ActsOn);
+        if (bar <= 0) return 0;
+
+        var told = 0.0;
+
+        foreach (var word in battle.Awareness.WouldAnnounce(
+                     plan.Shooter, plan.From, plan.Weapon, plan.Target))
+        {
+            var closer = Math.Clamp(word.After / bar, 0, 1) - Math.Clamp(word.Before / bar, 0, 1);
+            if (closer <= 0) continue;
+
+            told += closer * BestShot(word.Learner, UnitPose.Of(word.Learner), new Threat(plan.Shooter, plan.From));
+        }
+
+        return told;
+    }
+
+    /// <summary>
+    /// What ending a turn with points still in hand is worth.
+    /// </summary>
+    /// <remarks>
+    /// Not the same as the points being unspent, which <see cref="Price"/> already accounts for.
+    /// This is the other side of that: leftover points <em>become</em> something — a reserve, and
+    /// with it the ability to answer somebody else's move — and what the reserve is worth is
+    /// whatever it can afford to do about the threats this soldier knows about.
+    /// <para>
+    /// It has a cliff in it, on purpose, and the cliff is the reason this is a query rather than a
+    /// multiplication. Below the floor a leftover banks nothing whatever; above it, a bank that
+    /// cannot afford the cheapest way of firing is worth nothing to shoot with either. Holding
+    /// back is worth a great deal or nothing much, and rarely anything in between.
+    /// </para>
+    /// </remarks>
+    /// <param name="aimBonus">
+    /// What the weapon being already pointed is worth, for a unit that is holding an arc or
+    /// weighing up whether to declare one. One for a soldier simply keeping points in hand.
+    /// </param>
+    public Appraisal AppraiseHolding(
+        Unit unit, int leftover, IReadOnlyList<Threat> threats, double aimBonus = 1.0)
+    {
+        var banked = battle.Reactions.Banked(leftover);
+        if (banked <= 0) return Appraisal.Nothing;
+
+        var pose = UnitPose.Of(unit);
+        var best = 0.0;
+
+        foreach (var threat in threats)
+            foreach (var mode in unit.Weapon.Modes)
+            {
+                if (unit.Stats.Costs.Fire(mode.ApCost) > banked) continue;
+
+                var plan = battle.PlanThreat(unit, pose, threat.Unit, threat.Where, mode, aimBonus);
+                if (plan.CanFire) best = Math.Max(best, Worth(plan));
+            }
+
+        return new Appraisal(0, 0, Model.FutureDiscount * best, 0);
+    }
 
     // ---- how you are left standing ---------------------------------------------
 
@@ -252,8 +342,10 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
 
         return placement.Action switch
         {
+            // A held shot gives you away exactly as a deliberate one does. An overwatch that
+            // fires has stopped being an ambush position.
             ReactionAction.Fire => placement.Forecast is { } forecast
-                ? new Appraisal(Worth(forecast), 0, 0, Price(placement.ApCost))
+                ? Appraise(forecast)
                 : Appraisal.Nothing,
 
             ReactionAction.Shout => AppraiseWord(reactor, placement.Subject, mover.Where, placement.ApCost),

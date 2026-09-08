@@ -217,8 +217,7 @@ public sealed class Battle
     /// </remarks>
     private void Bank(Unit unit)
     {
-        var carried = (int)(unit.ActionPoints * Reactions.ReserveFraction);
-        unit.Reserve = carried >= Reactions.ReserveFloor ? carried : 0;
+        unit.Reserve = Reactions.Banked(unit.ActionPoints);
         unit.ActionPoints = 0;
     }
 
@@ -499,11 +498,12 @@ public sealed class Battle
         UnitPose shooterPose,
         Unit target,
         UnitPose targetPose,
-        FireMode? mode = null)
+        FireMode? mode = null,
+        double aimBonus = 1.0)
         => Plan(
             shooter, shooterPose, target, targetPose,
             mode ?? shooter.Weapon.DefaultMode,
-            aimBonus: 1.0, ApSource.Turn, calledAt: null, affordable: false);
+            aimBonus, ApSource.Turn, calledAt: null, affordable: false);
 
     private ShotPlan Plan(
         Unit shooter,
@@ -566,7 +566,7 @@ public sealed class Battle
 
         return new ShotPlan(
             shooter, target, weapon, mode, sight, chance, cost, aspects, refusal,
-            aimBonus, targetPose, paying, glancing, scale, calledAt);
+            aimBonus, targetPose, paying, glancing, scale, calledAt, shooterPose);
     }
 
     /// <summary>

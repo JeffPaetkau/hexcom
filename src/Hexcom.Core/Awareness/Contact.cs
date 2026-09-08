@@ -94,6 +94,23 @@ public sealed class Contact
 }
 
 /// <summary>
+/// What one act would tell one person, before anybody does it.
+/// </summary>
+/// <remarks>
+/// Certainty rather than a rung, because the interesting quantity is how much closer to acting
+/// somebody gets, and a rung cannot express "most of the way there". This is a figure about
+/// <em>your own</em> soldier — how far you are giving yourself away — so reporting it exactly is
+/// the same call as reporting exposure exactly.
+/// </remarks>
+public readonly record struct Announcement(Unit Learner, double Before, double After)
+{
+    /// <summary>How much certainty this hands them.</summary>
+    public double Gained => After - Before;
+
+    public override string ToString() => $"{Learner.Name} {Before:0} to {After:0}";
+}
+
+/// <summary>
 /// Everything the player is allowed to infer about how aware an enemy is.
 /// </summary>
 /// <remarks>
