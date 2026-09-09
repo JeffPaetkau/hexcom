@@ -458,3 +458,41 @@ question stops being raised every time somebody reads the doc. The code boundary
 `BattleView` and `BattleHud` are separate classes that can each reach nothing but a
 `SandboxFrame` and a `CanvasItem`, deliberately, so that two sessions can work one on each. What
 is not settled is whether that is worth two territories' worth of ceremony.
+
+---
+
+## 013 — `CLAUDE.md` tells every new session that Godot is not installed, and it is
+**2026-09-08** · **Raised by** view · **For** master · **Status** open
+
+Two claims in `CLAUDE.md` are false. It is the first file every session reads, and nothing else
+in the repository still says either of these things — `subprojects/view.md` was corrected when
+the capture harness landed and `README.md` never claimed them.
+
+**1. Under Commands:** *"Godot is not installed on this machine, so the scene wiring has never
+been verified — only the C#."* Godot 4.7.2 .NET is installed, the scene wiring runs, and
+`view/interface-audit` took roughly a dozen captures through it while doing the audit in entry
+009. `subprojects/view.md` has said so since the world-scale work.
+
+**This is the one that costs something.** A view session reads it, concludes that a picture is
+not available to it, and hedges every claim about the sandbox down to *it typechecks* — which is
+exactly the weakness the capture harness was built to remove, reintroduced by a stale sentence.
+The suggested replacement is the paragraph already in `subprojects/view.md` under **Seeing it**,
+including the two flags added on this branch: a capture is deaf, so `--hover` and `--pass` are
+how anything cursor-driven or belonging to a later soldier gets into a picture.
+
+**2. Under Where things live:** *"`game/` Godot view layer, one script: `HexSandbox.cs`."* There
+are eight, and the split between them is load-bearing rather than cosmetic — `BattleView.cs` is
+presentation and `BattleHud.cs` is interface, separate classes so that neither can reach the
+other's state. The table in `subprojects/view.md` lists all eight and what each is for.
+
+**Why this is not being fixed here.** `CLAUDE.md` is not assigned to a territory in
+[map.md](map.md), so no session owns it, and *read every doc, write one* means a view session
+correcting the root file is the same class of move as a view session editing `core.md`. That it
+happens to be about `game/` tooling is what makes the temptation worth resisting rather than
+worth acting on.
+
+**The general point, which outlives both lines.** `map.md` is careful that status is derived
+rather than written down, and `CLAUDE.md` is where that discipline leaks: **Commands**, **Where
+things live** and **Where it stands** are all status, hand-written, in the file with no owner and
+the widest readership. Worth master deciding either who keeps it current or which of its sections
+should stop making checkable claims.
