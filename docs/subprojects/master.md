@@ -74,6 +74,12 @@ The things that rot, in the order they rot:
   that finishes a job is supposed to replace its brief with the next one; assume it did not.
 - **Territories with no doc that now need one.** A doc is created when there is a brief to put in
   it. When a gate lifts, the territory behind it usually needs one the same day.
+- **Checkable claims in `CLAUDE.md`.** Every section of it that describes the present is a status
+  line wearing a disguise, and it is the one file no territory session may correct — so it rots
+  unopposed, in front of the widest readership. It told every new session for weeks that Godot
+  was not installed, which cost real work: sessions concluded no picture was available to them
+  and hedged down to *it typechecks*. Re-read it whole, against the repository, on a schedule.
+  See entries 015 and 016.
 - **Contracts that have quietly stopped being true.** Contract 5 was violated by the sandbox for
   the whole of the project's life before anybody checked. Re-read the six in `map.md` against the
   code occasionally; that is the only thing that makes them contracts rather than wishes.

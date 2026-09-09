@@ -1934,7 +1934,8 @@
       </p>
       <p>
         The constraint that shaped everything: <strong>the scorer reads only what its soldier
-        knows</strong>. Threats come from that unit&rsquo;s own contacts rather than from the
+        knows</strong> &mdash; with one exception it should not have, found by the interface audit
+        and recorded below. Threats come from that unit&rsquo;s own contacts rather than from the
         field, so an AI cannot stand well against a flanker it has never seen. That is the same
         constraint the interface works under, and holding to it is what produced most of the new
         code &mdash; the armour-aware forecast, the look that has not been taken yet, the shot a
@@ -1978,6 +1979,26 @@
 
       <div class="aside">
         <span class="tag">Open</span>
+        <p>
+          <strong>One term is computed from a number the player may never see, so it cannot be
+          shown.</strong> Working out what a posture saves you means asking how likely each threat
+          is to be shooting at you at all, and that is read straight off the enemy&rsquo;s contact
+          file as a raw certainty. Contract 3 blurs that figure on purpose. So
+          <em>Spared</em> fails the test set out at the top of this section &mdash; a term that
+          cannot be shown to a player should not be in there &mdash; and the interface has had to
+          leave the whole posture half of the model off the screen rather than render a score with
+          a blurred number folded into it.
+        </p>
+        <p>
+          The worse half is not the display. A soldier is being told exactly how spotted they are,
+          in a game whose entire subject is not knowing, and the advantage runs one way: an AI
+          that knows precisely when it has been made breaks cover at the right moment and never a
+          moment early, which reads as uncanny rather than as a bug. The repair fixes both at
+          once, by quantising to the rung the interface already shows before the number enters the
+          arithmetic. It will coarsen posture scores and move some reaction orderings, so it wants
+          doing deliberately. Found by the interface audit, not by Core, which is the argument for
+          having had somebody audit it.
+        </p>
         <p>
           <strong>Nobody ever goes and looks.</strong> Threats are the contacts a soldier
           currently has eyes on, so a unit that knows about nobody stands still for the whole

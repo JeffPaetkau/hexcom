@@ -60,12 +60,16 @@ wrong. This is what makes the rules testable headless and the engine choice reve
 ## Commands
 
 ```bash
-dotnet test                 # 289 tests, ~6s (the AI search is most of it)
+dotnet test                 # the AI search is most of the runtime
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
-The sandbox needs Godot 4.7 **.NET edition**; open `game/project.godot`, press F5. Godot is not
-installed on this machine, so the scene wiring has never been verified — only the C#.
+**Godot 4.7.2 .NET is installed and the scene wiring runs.** You can take a picture of the
+sandbox without anyone at the keyboard, which means a session with no human watching can check
+its own drawing rather than hedging down to *it typechecks*. How — the capture flags, what a
+capture cannot see, and what a picture does and does not prove — is in
+[docs/subprojects/view.md](docs/subprojects/view.md) under **Seeing it**. Read that before
+claiming anything about the sandbox either way.
 
 ## Where things live
 
@@ -73,7 +77,7 @@ installed on this machine, so the scene wiring has never been verified — only 
 |---|---|
 | `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness, Combat, Reactions, Tactics |
 | `tests/Hexcom.Core.Tests/` | xUnit |
-| `game/` | Godot view layer, one script: `HexSandbox.cs` |
+| `game/` | Godot view layer. `BattleView.cs` draws and `BattleHud.cs` reads out, separate classes so neither reaches the other's state; `view.md` has the table of the rest |
 | `docs/map.md` | territories, ownership, frozen contracts |
 | `docs/decisions.md` | append-only log of cross-boundary decisions and findings |
 | `docs/subprojects/` | one doc per active territory |
@@ -139,9 +143,11 @@ problem are in [docs/subprojects/view.md](docs/subprojects/view.md). These two a
 
 ## Where it stands
 
-Sections 01–11 of the design doc are built. Next on the build order is **going to look** — an AI
-that acts on a remembered position and not only on what it can currently see — then grenades and
-mines, then the Godot greybox.
+**What is built and what is next are in the build order at the end of `docs/design.html`, and
+what each territory is doing next is the `## The job` section of its own doc.** Both are kept by
+the sessions doing the work. This section deliberately no longer lists them: it was three lines
+of hand-written status in the file with the widest readership, and it went stale twice before
+anybody noticed — see [docs/decisions.md](docs/decisions.md) entry 015.
 
 **Every balance number in the game is set by reasoning, not by play.** Nothing has been measured,
 because there is nobody to play against yet — the sandbox drives both sides by hand. So treat the
