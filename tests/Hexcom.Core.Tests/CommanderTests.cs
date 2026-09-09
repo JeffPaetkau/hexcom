@@ -24,6 +24,18 @@ public class CommanderTests
     private static readonly UnitStats Quick = UnitStats.Default with { Initiative = 30 };
     private static readonly UnitStats Slow = UnitStats.Default with { Initiative = 1 };
 
+    /// <summary>
+    /// The standard rifleman with an empty grenade pouch.
+    /// </summary>
+    /// <remarks>
+    /// Used wherever the situation is one a grenade answers — somebody behind cover, somebody
+    /// heard round a corner — and the behaviour under test is not the grenade. A commander given
+    /// a charge and a man behind a wall throws it, which is correct and is asserted in
+    /// <see cref="OrdnanceTests"/>; here it would mean a test named after flanking that quietly
+    /// stopped exercising the flank. One mechanism per situation.
+    /// </remarks>
+    private static readonly Loadout Barehanded = Loadout.Rifleman with { Charges = 0 };
+
     private static Battle Field(BattleMap? map = null, int seed = 1)
         => new(map ?? new BattleMap().FillDisc(Hex.Zero, 16), new HexLayout(size: 1.0), seed: seed);
 
@@ -231,10 +243,13 @@ public class CommanderTests
         Barrier(map, 3, -2, 2);
         var battle = Field(map);
 
+        // Nobody carries a charge, because the thing under test is the hunt. Given one, the side
+        // that heard something lobs it over the barrier at the noise instead of walking round —
+        // which is right, and is asserted where it belongs, in OrdnanceTests.
         for (var i = 0; i < 3; i++)
         {
-            battle.Deploy($"Red {i}", Side.Hostile, Node(0, i - 1), UnitStats.Default, HexDirection.NorthEast);
-            battle.Deploy($"Blue {i}", Side.Player, Node(5, i - 1), UnitStats.Default, HexDirection.SouthWest);
+            battle.Deploy($"Red {i}", Side.Hostile, Node(0, i - 1), UnitStats.Default, HexDirection.NorthEast, Barehanded);
+            battle.Deploy($"Blue {i}", Side.Player, Node(5, i - 1), UnitStats.Default, HexDirection.SouthWest, Barehanded);
         }
 
         battle.Start();
@@ -396,8 +411,8 @@ public class CommanderTests
         map.AddSideWall(new Hex(4, 0), facing, 0, WallProfile.Low);
 
         var battle = Field(map);
-        var gunner = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Quick, HexDirection.NorthEast);
-        var target = battle.Deploy("Vance", Side.Player, Node(4, 0), Slow, HexDirection.SouthWest);
+        var gunner = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Quick, HexDirection.NorthEast, Barehanded);
+        var target = battle.Deploy("Vance", Side.Player, Node(4, 0), Slow, HexDirection.SouthWest, Barehanded);
         battle.Start();
 
         for (var i = 0; i < 12 && battle.Awareness.Of(gunner.Id, target.Id).State < AwarenessState.Searching; i++)
@@ -432,8 +447,8 @@ public class CommanderTests
         Barrier(map, 3, -2, 2);
 
         var battle = Field(map);
-        var kessel = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Quick, HexDirection.NorthEast);
-        var vance = battle.Deploy("Vance", Side.Player, Node(5, 0), Slow, HexDirection.SouthWest);
+        var kessel = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Quick, HexDirection.NorthEast, Barehanded);
+        var vance = battle.Deploy("Vance", Side.Player, Node(5, 0), Slow, HexDirection.SouthWest, Barehanded);
         battle.Start();
 
         Assert.Same(kessel, battle.Active);

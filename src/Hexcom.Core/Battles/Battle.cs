@@ -50,6 +50,7 @@ public sealed class Battle
 
     private readonly Dictionary<UnitId, Unit> _units = [];
     private readonly TurnQueue _queue = new();
+    private readonly List<Mine> _mines = [];
     private readonly Random _rng;
     private int _nextId = 1;
 
@@ -61,15 +62,18 @@ public sealed class Battle
         AwarenessModel? awareness = null,
         GunneryModel? gunnery = null,
         ReactionModel? reactions = null,
-        UtilityModel? utility = null)
+        UtilityModel? utility = null,
+        BlastModel? blast = null)
     {
         Map = map;
         Layout = layout;
         Costs = costs ?? MovementCosts.Default;
         Graph = MovementGraph.Build(map, Costs);
         Sight = new SightSolver(map, layout);
+        Lob = new LobSolver(Sight, map, layout);
         Awareness = new AwarenessTracker(this, awareness ?? AwarenessModel.Default);
         Gunnery = new Gunnery(gunnery);
+        Ordnance = new Ordnance(blast);
         Reactions = reactions ?? ReactionModel.Default;
         Tactics = new Tactician(this, utility);
         Seed = seed;
@@ -82,11 +86,17 @@ public sealed class Battle
     public MovementGraph Graph { get; }
     public SightSolver Sight { get; }
 
+    /// <summary>Whether a thrown object clears what is in the way, and where it comes down.</summary>
+    public LobSolver Lob { get; }
+
     /// <summary>Who knows what about whom, and how they came to know it.</summary>
     public AwarenessTracker Awareness { get; }
 
     /// <summary>Whether a shot connects.</summary>
     public Gunnery Gunnery { get; }
+
+    /// <summary>What a charge going off does to whoever is standing near it.</summary>
+    public Ordnance Ordnance { get; }
 
     /// <summary>How much of a turn banks for acting out of it. The difficulty dial.</summary>
     public ReactionModel Reactions { get; }
@@ -117,6 +127,20 @@ public sealed class Battle
 
     /// <summary>Turns booked but not yet taken, soonest first. This is the order strip.</summary>
     public IReadOnlyList<TurnSlot> TurnOrder => _queue.Upcoming;
+
+    /// <summary>
+    /// Every charge still lying on the field.
+    /// </summary>
+    /// <remarks>
+    /// Reported plainly, and contract 3 is why that is not a leak. A mine is a fact about the
+    /// ground rather than a belief anybody holds, so the asymmetry the interface has to honour is
+    /// not here but in what it chooses to draw: <see cref="MinesOf"/> is the query a player
+    /// interface wants, and it is the one an enemy commander must not ask.
+    /// </remarks>
+    public IEnumerable<Mine> Mines => _mines.Where(m => !m.Spent);
+
+    /// <summary>The charges one side laid, which is the set that side is allowed to see.</summary>
+    public IEnumerable<Mine> MinesOf(Side side) => Mines.Where(m => m.LaidBy == side);
 
     // ---- setting up ------------------------------------------------------------
 
@@ -402,15 +426,50 @@ public sealed class Battle
     }
 
     /// <summary>Turn on the spot, to watch somewhere other than where you last went.</summary>
+    /// <remarks>
+    /// Priced through the soldier own <see cref="CostProfile"/> like moving and firing. It was
+    /// not, for a while, and that was the one rule about prices this project states plainly being
+    /// broken in the two places nobody read — see <c>docs/decisions.md</c> entry 012.
+    /// </remarks>
     public bool Face(HexDirection direction)
     {
         var unit = RequireActive();
+        var cost = unit.Stats.Costs.Posturing(Costs.TurnInPlace);
 
         if (unit.Facing == direction) return false;
-        if (unit.ActionPoints < Costs.TurnInPlace) return false;
+        if (unit.ActionPoints < cost) return false;
 
         unit.Facing = direction;
-        unit.ActionPoints -= Costs.TurnInPlace;
+        unit.ActionPoints -= cost;
+        return true;
+    }
+
+    /// <summary>
+    /// Call a contact in on your own turn, so somebody who can do something about it knows.
+    /// </summary>
+    /// <remarks>
+    /// The turn action behind a thing the scorer could already price and nobody could do.
+    /// <see cref="Tactician.AppraiseWord"/> has always said what shouting is worth and
+    /// <see cref="ReactionAction.Shout"/> has always been placeable inside a window, so for a
+    /// while the AI ranked an action it had no way to take and the interface had nothing to offer
+    /// a player. See <c>docs/decisions.md</c> entry 012.
+    /// <para>
+    /// Word travels the ordinary way and arrives at a discount, so this is worth a great deal to a
+    /// watchman one rung short of firing down the arc it is already holding, and worth nothing at
+    /// all to a squad that already has the contact. It is not a free look: what is passed on is
+    /// what the caller holds, and calling in somebody you have merely heard passes on a rumour.
+    /// </para>
+    /// </remarks>
+    public bool Shout(Unit about)
+    {
+        var unit = RequireActive();
+        var cost = unit.Stats.Costs.Posturing(Costs.Shout);
+
+        if (unit.ActionPoints < cost) return false;
+        if (Awareness.Of(unit.Id, about.Id).State == AwarenessState.Unaware) return false;
+
+        unit.ActionPoints -= cost;
+        Awareness.CallOut(unit, about.Id, Round);
         return true;
     }
 
@@ -442,6 +501,38 @@ public sealed class Battle
 
         return effort * surface * StanceProfile.For(unit.Stance).NoiseFactor;
     }
+
+    // ---- reach -----------------------------------------------------------------
+
+    /// <summary>
+    /// Whether a weapon carried from one place could touch somebody standing at another.
+    /// </summary>
+    /// <remarks>
+    /// Two instruments, because there are two kinds of weapon. Anything fired or thrown is
+    /// measured in metres along the sight line, and anything with
+    /// <see cref="WeaponReach.Adjacent"/> reach is not measured at all: it asks the movement
+    /// graph, which already knows about the wall in between and the storey above.
+    /// <para>
+    /// The graph is the right authority and not merely a convenient one. A blade reaches over a
+    /// sandbag line because a soldier can vault it, does not reach through a building wall because
+    /// nothing crosses one, and does not reach a man on a three metre roof because nobody climbs
+    /// that — which is the behaviour <c>docs/decisions.md</c> entry 008 asked to keep, arrived at
+    /// on purpose rather than by accident of measuring a knife along the line of a rifle.
+    /// </para>
+    /// </remarks>
+    public bool InReach(WeaponProfile weapon, NodeId from, NodeId at, SightResult sight)
+        => weapon.Reach == WeaponReach.Adjacent ? Adjacent(from, at) : weapon.Reaches(sight.Distance);
+
+    /// <summary>
+    /// Whether two places are one traversal apart, which is what adjacency means here.
+    /// </summary>
+    /// <remarks>
+    /// The graph rather than the grid, so it is adjacency a soldier could actually act across
+    /// rather than adjacency on paper. The same place counts: two soldiers cannot share a node,
+    /// but a pose weighed up before the walk can sit on one somebody else is standing in.
+    /// </remarks>
+    public bool Adjacent(NodeId a, NodeId b)
+        => a == b || Graph.LinksFrom(a).Any(link => link.To == b);
 
     // ---- shooting --------------------------------------------------------------
 
@@ -529,6 +620,8 @@ public sealed class Battle
         // The list price is what the action is; what this soldier pays for it is about them.
         var cost = shooter.Stats.Costs.Fire(mode.ApCost);
 
+        var reaches = InReach(weapon, shooterPose.Position, targetPose.Position, sight);
+
         var refusal =
             !weapon.Modes.Contains(mode) ? $"{weapon.Name} cannot fire {mode.Name}." :
             shooter == target ? "Pick somebody else." :
@@ -536,13 +629,14 @@ public sealed class Battle
             !target.IsHostileTo(shooter) ? "That is one of ours." :
             affordable && purse < cost ? $"Needs {cost} points, has {purse}." :
             !sight.CanSee ? "No line on them." :
-            sight.Distance > weapon.MaxRange ? $"Out of range at {sight.Distance:0} m." :
+            !reaches && weapon.Reach == WeaponReach.Adjacent ? "Not close enough to reach them." :
+            !reaches ? $"Out of range at {sight.Distance:0} m." :
             calledAt is not null && !shooter.Stats.CanCallShots ? $"{shooter.Name} cannot place a round like that." :
             calledAt is { } wanted && aspects.All(a => a.Face != wanted) ? $"Their {wanted} is not in view." :
             null;
 
         var chance = refusal is null
-            ? Gunnery.HitChance(weapon, mode, sight, shooterPose.Stance, aimBonus)
+            ? Gunnery.HitChance(weapon, mode, sight, shooterPose.Stance, aimBonus, reaches)
               * (calledAt is null ? 1.0 : Gunnery.Model.CalledShotAccuracy)
             : 0;
 
@@ -714,6 +808,202 @@ public sealed class Battle
         Awareness.Reveal(shooter, plan.Weapon.Flash, Round);
     }
 
+    // ---- things that go off ----------------------------------------------------
+
+    /// <summary>
+    /// What lobbing a charge at a place would do, worked out before anyone commits to it.
+    /// </summary>
+    /// <remarks>
+    /// Two things about this are deliberately unlike <see cref="PlanShot(Unit, Unit, FireMode, BodyFace?)"/>.
+    /// <para>
+    /// It is aimed at a <b>place</b>, so it can be aimed at somewhere nobody can see and somewhere
+    /// nobody turns out to be. That is the whole point of a grenade and it is also what keeps a
+    /// throw at a remembered position honest: the plan is made against what the thrower believes
+    /// is there, and <see cref="Throw"/> resolves against whoever really is.
+    /// </para>
+    /// <para>
+    /// And it takes the people it might catch as an argument. Left null they are everybody on the
+    /// field, which is what actually going off means; a commander weighing one up passes the
+    /// enemies it believes in and the allies it can see, so that it cannot discover a marker has
+    /// gone stale by noticing that the grenade it was about to throw would catch nobody.
+    /// </para>
+    /// </remarks>
+    public BlastPlan PlanThrow(
+        Unit thrower,
+        NodeId at,
+        ThrownProfile? charge = null,
+        IEnumerable<BlastCandidate>? against = null,
+        ApSource paying = ApSource.Turn)
+    {
+        var item = charge ?? thrower.Thrown;
+        var cost = item is null ? 0 : thrower.Stats.Costs.Fire(item.ApCost);
+        var purse = paying == ApSource.Reserve ? thrower.Reserve : thrower.ActionPoints;
+
+        if (item is null)
+            return new BlastPlan(thrower, thrower.Side, ThrownProfile.FragGrenade, at, at, [], 0, $"{thrower.Name} is carrying nothing to throw.");
+
+        var lob = Graph.Contains(at) ? Lob.Trace(thrower.Vantage, at, item.MaxArc) : null;
+
+        var refusal =
+            !Graph.Contains(at) ? "There is nothing there to throw at." :
+            thrower.ThrownLeft <= 0 ? $"{thrower.Name} has no {item.Name} left." :
+            purse < cost ? $"Needs {cost} points, has {purse}." :
+            lob!.Distance > item.MaxThrow ? $"Too far to throw at {lob.Distance:0} m." :
+            null;
+
+        var landing = lob?.Landing ?? at;
+        var caught = refusal is null ? Caught(item, landing, thrower.Side, against) : [];
+
+        return new BlastPlan(thrower, thrower.Side, item, at, landing, caught, cost, refusal, lob);
+    }
+
+    /// <summary>What a mine under that tile would do to the people currently near it.</summary>
+    public BlastPlan PlanBlast(Mine mine, IEnumerable<BlastCandidate>? against = null)
+        => new(
+            mine.Layer is { } id ? GetUnit(id) : null,
+            mine.LaidBy,
+            mine.Charge,
+            mine.Node,
+            mine.Node,
+            Caught(mine.Charge, mine.Node, mine.LaidBy, against),
+            0,
+            null);
+
+    /// <summary>
+    /// Everybody near enough to a burst to feel it, and what it is expected to do to each.
+    /// </summary>
+    /// <remarks>
+    /// The trace runs from the burst point outwards, which is what makes cover work in the
+    /// direction it should. A soldier flat behind a knee-high wall is sheltered from a charge on
+    /// the far side of it and not at all from the same charge lobbed over — same wall, same
+    /// waterline arithmetic, opposite answer, and nothing had to be written down about explosions
+    /// and cover to get it.
+    /// </remarks>
+    private IReadOnlyList<BlastEffect> Caught(
+        ThrownProfile item,
+        NodeId landing,
+        Side from,
+        IEnumerable<BlastCandidate>? against)
+    {
+        var candidates = against?.ToList() ?? InPlay.Select(BlastCandidate.At).ToList();
+        var burst = Sight.Ground(landing).Raised(Ordnance.Model.BurstHeight);
+        var effects = new List<BlastEffect>();
+
+        foreach (var candidate in candidates.OrderBy(c => c.Unit.Id.Value))
+        {
+            var pose = candidate.Where;
+            var sight = Sight.TraceFrom(burst, burst.Z, pose.Vantage);
+            var distance = Vec3.Distance(
+                burst, Sight.Ground(pose.Position).Raised(pose.Vantage.Profile.CentreHeight));
+
+            var share = Ordnance.Share(distance, item, sight, pose.Stance);
+            if (share <= 0) continue;
+
+            var arriving = (int)Math.Round(item.Damage * share, MidpointRounding.AwayFromZero);
+            if (arriving <= 0) continue;
+
+            var aspects = FacesPresentedTo(pose, landing);
+            var expectation = Ordnance.Expect(candidate.Unit, item, arriving, aspects);
+
+            effects.Add(new BlastEffect(
+                candidate.Unit, pose, distance, share, arriving, aspects, expectation,
+                Friendly: candidate.Unit.Side == from, candidate.Credence));
+        }
+
+        return effects;
+    }
+
+    /// <summary>The active unit throws a charge at a place.</summary>
+    /// <remarks>
+    /// Resolved against whoever is actually standing there, which is the point: a grenade lobbed
+    /// at where somebody was last seen catches them if they stayed and wastes itself if they did
+    /// not. The decision was made on a belief and the world answers it, so nothing here corrects
+    /// the thrower guess for free.
+    /// </remarks>
+    public BlastOutcome Throw(NodeId at, ThrownProfile? charge = null)
+    {
+        var thrower = RequireActive();
+        var plan = PlanThrow(thrower, at, charge);
+        if (!plan.CanThrow) return BlastOutcome.Refused(plan.Refusal!);
+
+        thrower.ActionPoints -= plan.ApCost;
+        thrower.ThrownLeft--;
+
+        return Detonate(plan);
+    }
+
+    /// <summary>
+    /// Leave a charge on the ground under your own feet, armed.
+    /// </summary>
+    /// <remarks>
+    /// A turn spent buying a piece of ground for the rest of the fight. There is no arc to solve
+    /// and nothing to clear, because it goes exactly where the soldier is standing.
+    /// </remarks>
+    public bool LayMine(ThrownProfile? charge = null)
+    {
+        var unit = RequireActive();
+        var item = charge ?? unit.Thrown;
+        if (item is null || unit.ThrownLeft <= 0) return false;
+
+        var cost = unit.Stats.Costs.Fire(item.ApCost);
+        if (unit.ActionPoints < cost) return false;
+        if (_mines.Any(m => !m.Spent && m.Node == unit.Position)) return false;
+
+        unit.ActionPoints -= cost;
+        unit.ThrownLeft--;
+        _mines.Add(new Mine(unit.Position, unit.Side, item, unit.Id));
+        return true;
+    }
+
+    /// <summary>Set a mine off, on whoever is standing near it now.</summary>
+    internal BlastOutcome Detonate(Mine mine)
+    {
+        if (mine.Spent) return BlastOutcome.Refused("Already gone off.");
+        mine.Spent = true;
+
+        return Detonate(PlanBlast(mine));
+    }
+
+    /// <summary>
+    /// Put a blast through everybody it caught.
+    /// </summary>
+    /// <remarks>
+    /// Which plate the wave finds is rolled from the battle generator like every other roll, so a
+    /// whole exchange still replays from the seed. What it does not roll is whether it lands: a
+    /// charge going off does not miss, and the only uncertainty is where on a body it arrives.
+    /// <para>
+    /// The bang is heard from <b>where it went off</b>, not from where it was thrown. Everybody
+    /// in earshot learns that there is somebody about and marks them at the crater, which is
+    /// wrong and is meant to be — a grenade is the one way in this game to make a great deal of
+    /// noise somewhere you are not standing. Nothing else about a burst gives the thrower away:
+    /// being blown up does not tell you who did it, unlike being shot at.
+    /// </para>
+    /// </remarks>
+    private BlastOutcome Detonate(BlastPlan plan)
+    {
+        var hits = new List<BlastHit>();
+
+        foreach (var effect in plan.Caught)
+        {
+            var caught = effect.Caught;
+            if (!caught.InPlay) continue;
+
+            var aspect = PickFace(effect.Aspects);
+            var damage = caught.Protection.Absorb(aspect.Face, plan.Item.Kind, effect.Arriving);
+
+            caught.Vitality -= damage.ToVitality;
+            var down = caught.IsDown;
+            hits.Add(new BlastHit(caught, damage, down));
+
+            if (down) Withdraw(caught);
+        }
+
+        if (plan.Thrower is { InPlay: true } thrower)
+            Awareness.Hear(thrower, plan.Landing, plan.Item.Loudness, Round);
+
+        return new BlastOutcome(true, plan.Landing, hits, plan.ApCost, null);
+    }
+
     /// <summary>
     /// Which of <paramref name="target"/>'s faces something at <paramref name="from"/> arrives at.
     /// </summary>
@@ -731,6 +1021,24 @@ public sealed class Battle
     /// </remarks>
     public IReadOnlyList<FacingAspect> FacesPresentedTo(UnitPose target, NodeId from)
         => BodyFaces.Presented(SignedAngleOffDegrees(target.Position, target.Facing, from));
+
+    /// <summary>
+    /// What taking this shot would tell each of the shooter enemies, without taking it.
+    /// </summary>
+    /// <remarks>
+    /// Contract 2 in the ordinary direction: the scorer has always priced what a shot gives away
+    /// and nothing let an interface show it, so a player could see what a shot would do to the
+    /// target and not what it would cost them in attention. It is one call rather than a new
+    /// model — the preview was already there on the tracker; nothing said so.
+    /// </remarks>
+    public IEnumerable<Announcement> WouldAnnounce(ShotPlan plan)
+        => Awareness.WouldAnnounce(plan.Shooter, plan.From, plan.Weapon, plan.Target);
+
+    /// <summary>The same, for a charge, which is heard from where it lands rather than thrown.</summary>
+    public IEnumerable<Announcement> WouldAnnounce(BlastPlan plan)
+        => plan.Thrower is { } thrower
+            ? Awareness.WouldHear(thrower, plan.Landing, plan.Item.Loudness)
+            : [];
 
     /// <summary>Which way a unit would have to look to face a place.</summary>
     public HexDirection HeadingTo(NodeId from, NodeId place)
@@ -778,12 +1086,13 @@ public sealed class Battle
     public bool ChangeStance(Stance stance)
     {
         var unit = RequireActive();
+        var cost = unit.Stats.Costs.Posturing(Costs.ChangeStance);
 
         if (unit.Stance == stance) return false;
-        if (unit.ActionPoints < Costs.ChangeStance) return false;
+        if (unit.ActionPoints < cost) return false;
 
         unit.Stance = stance;
-        unit.ActionPoints -= Costs.ChangeStance;
+        unit.ActionPoints -= cost;
         return true;
     }
 

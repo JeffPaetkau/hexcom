@@ -48,6 +48,34 @@ public sealed record FireMode(string Name, int ApCost, double Accuracy, int Shot
 }
 
 /// <summary>
+/// How far a weapon reaches, and by what instrument the question is settled.
+/// </summary>
+/// <remarks>
+/// Nearly everything is measured in metres, eye to centre of mass, along the same line the sight
+/// trace runs. A blade is not, and measuring one that way was a bug rather than a rule: the line
+/// gets <em>longer</em> as the target gets lower, so a two metre reach covered an adjacent
+/// standing soldier at 1.89 m and failed against the same soldier prone at 2.24 m. The blade
+/// reached worst exactly when the target was least able to avoid it, and the hex size was
+/// silently voting on whether melee worked at all.
+/// <para>
+/// So melee means <b>adjacent</b> and not two metres. The movement graph already answers that
+/// question, and answers it with the walls and the storeys included: there is no link through a
+/// building wall, and none up a three metre face, so a blade cannot reach through either. A low
+/// ledge you could climb is a low ledge you could stab somebody on, which is roughly where
+/// measuring in metres landed by accident and is now there on purpose. See
+/// <c>docs/decisions.md</c>, entry 008.
+/// </para>
+/// </remarks>
+public enum WeaponReach
+{
+    /// <summary>Metres, from the eye to the centre of mass. Everything that is fired or thrown.</summary>
+    Ranged,
+
+    /// <summary>One traversal away. Not a distance at all — the graph decides.</summary>
+    Adjacent,
+}
+
+/// <summary>
 /// A weapon, as data. Content and balance, not rules.
 /// </summary>
 /// <param name="Damage">Damage a single round does before anything stops it.</param>
@@ -62,6 +90,10 @@ public sealed record FireMode(string Name, int ApCost, double Accuracy, int Shot
 /// Visual signature. A beam draws a line back to the shooter for anyone looking that way; a
 /// slugthrower shows a muzzle flash and little else.
 /// </param>
+/// <param name="Reach">
+/// Which instrument settles whether the weapon can reach. Metres for everything that is fired;
+/// adjacency for a blade, whose ranges below are then descriptive rather than load-bearing.
+/// </param>
 public sealed record WeaponProfile(
     string Id,
     string Name,
@@ -72,8 +104,20 @@ public sealed record WeaponProfile(
     double Accuracy,
     IReadOnlyList<FireMode> Modes,
     double Loudness,
-    double Flash)
+    double Flash,
+    WeaponReach Reach = WeaponReach.Ranged)
 {
+    /// <summary>
+    /// Whether a target that far away is one this weapon could reach, as far as metres can say.
+    /// </summary>
+    /// <remarks>
+    /// An adjacency weapon always passes here, because metres are the wrong instrument for it and
+    /// this is the only one available: the graph test that actually decides lives on
+    /// <see cref="Battles.Battle.InReach"/>, which has the map to hand. Anything asking this
+    /// question about a blade without going through the battle is asking the wrong question.
+    /// </remarks>
+    public bool Reaches(double metres) => Reach == WeaponReach.Adjacent || metres <= MaxRange;
+
     /// <summary>The mode used when the caller does not name one.</summary>
     public FireMode DefaultMode => Modes.FirstOrDefault(m => m.Name == "standard") ?? Modes[0];
 
@@ -140,6 +184,10 @@ public sealed record WeaponProfile(
     /// A powered blade. Beam family, so it goes straight through plate, and the only way to kill
     /// somebody without telling anyone — though a lit blade is not nothing to look at.
     /// </summary>
+    /// <remarks>
+    /// The two ranges are what an arm is, roughly, and nothing reads them: a blade reaches what
+    /// is adjacent, and <see cref="WeaponReach.Adjacent"/> says why the metres had to go.
+    /// </remarks>
     public static readonly WeaponProfile PowerBlade = new(
         Id: "power_blade",
         Name: "Power blade",
@@ -150,5 +198,6 @@ public sealed record WeaponProfile(
         Accuracy: 0.92,
         Modes: [FireMode.Strike],
         Loudness: 0,
-        Flash: 0.25);
+        Flash: 0.25,
+        Reach: WeaponReach.Adjacent);
 }

@@ -138,6 +138,8 @@ public sealed class ReactionWindow
     private readonly List<ReactionOffer> _offers = [];
     private readonly List<ReactionPlacement> _placements = [];
     private readonly List<ReactionResolution> _resolutions = [];
+    private readonly List<MineTrigger> _mines = [];
+    private readonly List<BlastResolution> _detonations = [];
     private bool _resolved;
     private int _sprungAt;
 
@@ -150,6 +152,8 @@ public sealed class ReactionWindow
 
         if (springer is null) BuildOffers();
         else BuildAmbushOffers(springer, tick: 0);
+
+        BuildMineTriggers();
     }
 
     /// <summary>The window a committed move opens. Overwatch and surprise answer into it.</summary>
@@ -186,13 +190,26 @@ public sealed class ReactionWindow
     /// <summary>What each placement did, in the order the ticks ran.</summary>
     public IReadOnlyList<ReactionResolution> Resolutions => _resolutions;
 
+    /// <summary>
+    /// Charges on the route, and the ticks the mover steps on them.
+    /// </summary>
+    /// <remarks>
+    /// Not offers, because there is nobody to offer them to. Everything else in a window is a
+    /// choice somebody makes out of a reserve; a mine is already decided, and the only thing left
+    /// to work out is when.
+    /// </remarks>
+    public IReadOnlyList<MineTrigger> Mines => _mines;
+
+    /// <summary>What each of those did.</summary>
+    public IReadOnlyList<BlastResolution> Detonations => _detonations;
+
     /// <summary>The tick the mover got no further than. The full duration unless it was dropped.</summary>
     public int StoppedAt { get; private set; }
 
     /// <summary>True if the mover never reached where it was going.</summary>
     public bool Interrupted => StoppedAt < Move.Duration;
 
-    public bool AnyReactions => _placements.Count > 0;
+    public bool AnyReactions => _placements.Count > 0 || _mines.Count > 0;
 
     /// <summary>
     /// What one of these options is worth, and where the worth comes from.
@@ -251,17 +268,34 @@ public sealed class ReactionWindow
         if (_resolved) throw new InvalidOperationException("This window has already resolved.");
         _resolved = true;
 
+        // One timeline, two kinds of thing on it. The terrain goes first where they land
+        // together: a mine is the mover own foot arriving, and everybody else had to decide.
         var ordered = _placements
-            .OrderBy(p => p.ResolvesAt)
-            .ThenBy(p => p.Reactor.Id.Value)
+            .Select(p => (At: p.ResolvesAt, Terrain: 0, Tie: p.Reactor.Id.Value, Placement: (ReactionPlacement?)p, Trigger: (MineTrigger?)null))
+            .Concat(_mines.Select(m => (At: m.At, Terrain: -1, Tie: 0, Placement: (ReactionPlacement?)null, Trigger: (MineTrigger?)m)))
+            .OrderBy(e => e.At)
+            .ThenBy(e => e.Terrain)
+            .ThenBy(e => e.Tie)
             .ToList();
 
-        foreach (var placement in ordered)
+        foreach (var (at, _, _, placement, trigger) in ordered)
         {
             if (!Mover.InPlay) break;
-            if (!placement.Reactor.InPlay) continue;
 
-            var tick = Math.Min(placement.ResolvesAt, Move.Duration);
+            var tick = Math.Min(at, Move.Duration);
+
+            if (trigger is not null)
+            {
+                if (trigger.Mine.Spent) continue;
+
+                StepTo(tick);
+                var went = _battle.Detonate(trigger.Mine);
+                _detonations.Add(new BlastResolution(trigger.Mine, tick, Mover.Position, went));
+                continue;
+            }
+
+            if (!placement!.Reactor.InPlay) continue;
+
             StepTo(tick);
 
             var outcome = _battle.ResolveReaction(placement);
@@ -288,6 +322,38 @@ public sealed class ReactionWindow
         Mover.Position = step.Node;
         Mover.Facing = step.Facing;
         StoppedAt = tick;
+    }
+
+    // ---- mines -----------------------------------------------------------------
+
+    /// <summary>
+    /// Every charge the route runs over, and when.
+    /// </summary>
+    /// <remarks>
+    /// The step the mover starts on is skipped, because it is already standing there: a mine does
+    /// not go off under somebody who has been on top of it all along, and a window opened by
+    /// springing an ambush has no steps but that one. Otherwise the tick is simply the arrival
+    /// tick of the step, which is what makes a mine resolve at the moment the foot lands rather
+    /// than at the end of the move.
+    /// </remarks>
+    private void BuildMineTriggers()
+    {
+        var mines = _battle.Mines.ToList();
+        if (mines.Count == 0) return;
+
+        for (var i = 1; i < Move.Steps.Count; i++)
+        {
+            var step = Move.Steps[i];
+
+            foreach (var mine in mines)
+            {
+                if (mine.Node != step.Node) continue;
+                if (mine.LaidBy == Mover.Side) continue;
+                if (_mines.Any(t => t.Mine == mine)) continue;
+
+                _mines.Add(new MineTrigger(mine, step.Tick));
+            }
+        }
     }
 
     // ---- working out who could do what -----------------------------------------
@@ -579,22 +645,29 @@ public sealed class ReactionWindow
             options.Add(Placed(ReactionAction.Fire, cost, forecast));
         }
 
+        // Posture is priced for this soldier like everything else. A reaction is where that
+        // matters most: what a reactor pays is also how long it takes, so somebody slow to come
+        // round is caught further along the route by their own turn.
+        var turning = reactor.Stats.Costs.Posturing(prices.TurnInPlace);
+        var dropping = reactor.Stats.Costs.Posturing(prices.ChangeStance);
+        var calling = reactor.Stats.Costs.Posturing(prices.Shout);
+
         // Turning is only worth offering to somebody who caught this in the corner of an eye.
         // Anything already dead ahead cannot be faced any better than it is.
         var caught = Move.PositionAt(tick);
-        if (!_battle.Awareness.IsWatching(reactor, caught) && prices.TurnInPlace <= purse)
+        if (!_battle.Awareness.IsWatching(reactor, caught) && turning <= purse)
         {
             var toward = _battle.HeadingTo(reactor.Position, caught);
             if (toward != reactor.Facing)
-                options.Add(Placed(ReactionAction.Turn, prices.TurnInPlace, facing: toward));
+                options.Add(Placed(ReactionAction.Turn, turning, facing: toward));
         }
 
-        if (prices.ChangeStance <= purse)
+        if (dropping <= purse)
             foreach (var lower in Lower(reactor.Stance))
-                options.Add(Placed(ReactionAction.Drop, prices.ChangeStance, stance: lower));
+                options.Add(Placed(ReactionAction.Drop, dropping, stance: lower));
 
-        if (rules.ShoutCost <= purse && _battle.Awareness.Earshot(reactor).Any())
-            options.Add(Placed(ReactionAction.Shout, rules.ShoutCost));
+        if (calling <= purse && _battle.Awareness.Earshot(reactor).Any())
+            options.Add(Placed(ReactionAction.Shout, calling));
 
         return options;
     }

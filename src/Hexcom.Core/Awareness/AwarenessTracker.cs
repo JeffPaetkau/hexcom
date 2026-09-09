@@ -143,21 +143,40 @@ public sealed class AwarenessTracker
     /// A noise at a unit position. Everyone in earshot learns roughly where it came from.
     /// </summary>
     /// <remarks>
-    /// Movement raises this on its own. It is public because doors, grenades and gunfire will
-    /// all want to raise it too.
+    /// Movement raises this on its own. It is public because doors, grenades and gunfire all want
+    /// to raise it too.
     /// </remarks>
     public void Hear(Unit source, double loudness, int round)
+        => Hear(source, source.Position, loudness, round);
+
+    /// <summary>
+    /// A noise made by somebody, somewhere that is not necessarily where they are standing.
+    /// </summary>
+    /// <remarks>
+    /// A sound says where, not who, and until there was something that made a noise at a distance
+    /// the two were the same place. A charge going off is the first thing that separates them,
+    /// and separating them is most of why one is worth throwing for reasons other than damage:
+    /// everybody in earshot marks the thrower at the crater, and the thrower is thirty metres
+    /// away watching them come and look at it.
+    /// <para>
+    /// The contact is still <em>about</em> the source, because the model holds beliefs per pair
+    /// and a noise with no subject has nowhere to live. That is a real limit and it shows up
+    /// first with a mine whose layer has gone down: nobody hears it, because there is no longer
+    /// anybody for the bang to be about.
+    /// </para>
+    /// </remarks>
+    public void Hear(Unit source, NodeId place, double loudness, int round)
     {
         if (loudness <= 0) return;
 
         foreach (var listener in _battle.Enemies(source).ToList())
         {
             var contact = Of(listener.Id, source.Id);
-            var raised = AfterHearing(contact.Detection, listener, source.Position, loudness);
+            var raised = AfterHearing(contact.Detection, listener, place, loudness);
             if (raised <= contact.Detection) continue;
 
             contact.Detection = raised;
-            contact.LastKnownPosition = source.Position;
+            contact.LastKnownPosition = place;
             contact.LastContactRound = round;
         }
     }
@@ -187,7 +206,7 @@ public sealed class AwarenessTracker
     /// whoever fired it.
     /// </summary>
     /// <remarks>
-    /// The counterpart to <see cref="Hear"/>, and the reason the two weapon families are not
+    /// The counterpart to <see cref="Hear(Unit, double, int)"/>, and the reason the two weapon families are not
     /// interchangeable. A slugthrower is silent until it fires and then everyone within a
     /// hundred metres knows roughly where you are. A beam makes no sound and is unmissable to
     /// anyone facing your way — and worth nothing at all to anyone who is not.
@@ -291,7 +310,7 @@ public sealed class AwarenessTracker
     /// about the source, without making it.
     /// </summary>
     /// <remarks>
-    /// The preview of <see cref="Hear"/>, in the shape <see cref="WouldAnnounce"/> already has —
+    /// The preview of <see cref="Hear(Unit, double, int)"/>, in the shape <see cref="WouldAnnounce"/> already has —
     /// and the query that was missing from both sides of contract 2. A move's loudness was worked
     /// out inside the move, after the route was committed, so neither the AI choosing a route
     /// nor a player looking at one could ask what it would cost them in attention; in a game

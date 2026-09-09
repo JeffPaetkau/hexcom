@@ -8,19 +8,43 @@ namespace Hexcom.Core.Combat;
 /// <param name="ShieldPerFace">Force shield capacity on each of the six faces.</param>
 /// <param name="ArmourPerFace">Ablative plate on each face. Does not come back.</param>
 /// <param name="ShieldRecharge">Shield returned to every face at the start of the unit's turn.</param>
+/// <param name="Thrown">
+/// The charge this soldier carries, if any. One kind: a soldier picking between a frag and a
+/// plasma charge mid-firefight is a decision nothing in the game is ready to present.
+/// </param>
+/// <param name="Charges">
+/// How many of them. Counted rather than assumed infinite, and that is load-bearing on the AI
+/// rather than on realism — a commander that could throw every turn would, because a grenade
+/// beats a rifle against anybody in cover, and the whole shape of a firefight would change.
+/// Two is a soldier stock: enough that one is worth spending and not enough to lead with.
+/// </param>
 public sealed record Loadout(
     WeaponProfile Weapon,
     int ShieldPerFace = 0,
     int ArmourPerFace = 0,
-    int ShieldRecharge = 2)
+    int ShieldRecharge = 2,
+    ThrownProfile? Thrown = null,
+    int Charges = 0)
 {
-    public static readonly Loadout Rifleman = new(WeaponProfile.SlugRifle, ShieldPerFace: 6, ArmourPerFace: 8);
+    public static readonly Loadout Rifleman = new(
+        WeaponProfile.SlugRifle, ShieldPerFace: 6, ArmourPerFace: 8,
+        Thrown: ThrownProfile.FragGrenade, Charges: 2);
 
-    public static readonly Loadout Beamer = new(WeaponProfile.PulseCarbine, ShieldPerFace: 10, ArmourPerFace: 3);
+    /// <summary>Beams and a shaped charge: the whole kit is the answer to armour.</summary>
+    public static readonly Loadout Beamer = new(
+        WeaponProfile.PulseCarbine, ShieldPerFace: 10, ArmourPerFace: 3,
+        Thrown: ThrownProfile.PlasmaCharge, Charges: 1);
 
-    public static readonly Loadout Heavy = new(WeaponProfile.Repeater, ShieldPerFace: 8, ArmourPerFace: 14, ShieldRecharge: 1);
+    public static readonly Loadout Heavy = new(
+        WeaponProfile.Repeater, ShieldPerFace: 8, ArmourPerFace: 14, ShieldRecharge: 1,
+        Thrown: ThrownProfile.FragGrenade, Charges: 1);
 
-    public static readonly Loadout Infiltrator = new(WeaponProfile.PowerBlade, ShieldPerFace: 4, ArmourPerFace: 2, ShieldRecharge: 3);
+    /// <summary>
+    /// A blade and a satchel of mines. Nothing here makes a noise until it is meant to.
+    /// </summary>
+    public static readonly Loadout Infiltrator = new(
+        WeaponProfile.PowerBlade, ShieldPerFace: 4, ArmourPerFace: 2, ShieldRecharge: 3,
+        Thrown: ThrownProfile.Claymore, Charges: 2);
 
     public static readonly Loadout Sidearm = new(WeaponProfile.Sidearm, ShieldPerFace: 5, ArmourPerFace: 4);
 }

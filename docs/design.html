@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 18 · 8 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 19 · 8 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 296 tests run in about ten seconds today, most of it the AI.</li>
+        <li>The rules are unit-testable headless — 321 tests run in about ten seconds today, most of it the AI.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1606,7 +1606,7 @@
   </section>
 
   <section>
-    <div class="rail"><span class="num">10</span><span class="chip built">Built</span><br><br><span class="chip spec">Thrown</span></div>
+    <div class="rail"><span class="num">10</span><span class="chip built">Built</span><br><br><span class="chip spec">Suppression</span></div>
     <div class="body">
       <h2>Beams, slugs, and what stops them</h2>
       <p>
@@ -1653,17 +1653,17 @@
             <tr>
               <td class="name">Blades</td>
               <td class="why">The silent kill. No report, no muzzle flash, nothing to relay. A powered blade is beam-family, so it goes through armour</td>
-              <td class="why">Adjacency and a stance check. Nothing new</td>
+              <td class="why"><b>Built.</b> Adjacency, and the movement graph answers it &mdash; walls and storeys included. Reach is deliberately not a number of metres</td>
             </tr>
             <tr>
               <td class="name">Grenades</td>
               <td class="why">Digging people out of the cover that makes them hard to shoot</td>
-              <td class="why">An arcing trace. You lob over a wall you cannot see through, so it is a different question from line of sight</td>
+              <td class="why"><b>Built.</b> A second trace beside the sight solver, over the same wall crossings, asking whether each top is above the parabola rather than above the line</td>
             </tr>
             <tr>
               <td class="name">Mines</td>
               <td class="why">Denying ground while you are somewhere else. Shapes an approach without anybody watching it</td>
-              <td class="why">A reaction owned by the terrain rather than by a unit</td>
+              <td class="why"><b>Built.</b> A trigger on the reaction timeline with nobody behind it, resolving at the tick the foot lands</td>
             </tr>
             <tr>
               <td class="name">Suppression</td>
@@ -1674,16 +1674,57 @@
         </table>
       </div>
       <p>
-        Grenades are the interesting one. Every trace so far has asked whether a straight line
-        gets through, and an arc explicitly does not: the whole point of throwing one is to put
-        it somewhere you cannot shoot. That wants a second query alongside the sight solver,
-        answering whether a lobbed object clears the intervening walls and where it lands if it
-        clips one.
+        Grenades were the interesting one, and the second query is built. Every other trace asks
+        whether a straight line gets through and an arc explicitly does not: the whole point of
+        throwing one is to put it somewhere you cannot shoot. So the lob solver crosses exactly
+        the walls the sight solver crosses and asks a different question of each &mdash; whether
+        the top is above the <em>parabola</em> rather than above the line. The free parameter is
+        the apex above the straight line from hand to landing point, and a soldier throws as flat
+        as the obstacles allow, so the answer is the lowest apex that clears everything. On open
+        ground that is nought and the arc degenerates back into the sight line.
       </p>
       <p>
-        Mines fold neatly into the reaction window in section 09 rather than needing a mechanism
-        of their own. A mine is an overwatch that a unit is not standing behind: a trigger on a
-        tile, resolved at the tick the mover enters it. Same clock, same resolution order.
+        Two consequences worth having are arithmetic rather than rules. <b>The closer you stand to
+        the wall, the higher you must throw</b>, because the divisor collapses toward the ends of
+        the throw: hugging a three metre wall and throwing seventeen metres wants seven and a half
+        metres of arc and fails, where the same wall halfway along wants about two. And a throw
+        that cannot clear <b>clips and drops short</b>, on the near side of the wall it caught,
+        which is how a grenade ends up at your own feet.
+      </p>
+      <p>
+        Where it lands, the wave reaches each soldier by three things the game already had:
+        distance from the burst, what stands between, and how much of them is standing up in it.
+        The burst traces <em>outward</em> through the same waterline arithmetic, so a wall
+        shelters you from a charge on its far side and does nothing about one lobbed over; and
+        going flat quarters what you catch, because a prone silhouette is a quarter the height of
+        a standing one. Neither needed a rule about explosions and cover. A blast then hits the
+        faces a round hits and goes through the layers a round goes through, so fragmentation is
+        kinetic and is the answer to a shielded soldier exactly as a beam is the answer to an
+        armoured one.
+      </p>
+      <p>
+        A charge is <b>the first thing in this game that runs out</b>, which turns out to be the
+        load-bearing part. A scorer that priced only the action points threw both grenades at the
+        first soldier it saw; what it was missing was that still having one is worth something.
+        Priced at about one clean rifle shot, the distinction the design wants falls out: against
+        a man in the open the rifle is nearly as good and free, and against a man behind a wall
+        the rifle is worth nothing at all. A grenade is for the shot you cannot take.
+      </p>
+      <p>
+        Mines folded into the reaction window in section 09 rather than needing a mechanism of
+        their own, exactly as forecast. A mine is an overwatch that a unit is not standing behind:
+        a trigger on a tile, resolved at the tick the mover enters it, on the same clock and in
+        the same resolution order &mdash; the terrain going first where a mine and a held shot land
+        together, because the mine is the mover&rsquo;s own foot arriving and everybody else had
+        to decide. What it needed was not a mechanism but an <em>owner</em>, since everything else
+        in a window is offered to a unit out of that unit&rsquo;s reserve.
+      </p>
+      <p>
+        And an explosion is heard from <b>where it went off</b> rather than from who set it off,
+        which is the one way in this game to make a great deal of noise somewhere you are not
+        standing. Everybody in earshot marks the thrower at the crater, which is wrong and is
+        meant to be. Being blown up does not tell you who did it, unlike being shot at, which
+        settles the question.
       </p>
 
       <h3>Why this suits the systems already built</h3>
@@ -1926,6 +1967,35 @@
         quantity with the sign reversed — vitality that will not be staying on us.
       </p>
 
+      <h3>The one thing that runs out</h3>
+      <p>
+        Everything else a soldier spends comes back. Points refill every turn, shields recharge,
+        and even a plate worn through is only ever worn through once by the man wearing it. A
+        charge thrown is gone, and that is a kind of cost the scorer had no way to express: the
+        first version of it, given two grenades and an enemy, threw both at the first soldier it
+        saw. It was not wrong about what a grenade does. It was wrong about what it costs.
+      </p>
+      <p>
+        So a charge is worth something while it is still on the belt, in the same currency as
+        everything else, and spending one pays that as well as the points. Set at about what one
+        clean rifle shot achieves, it draws exactly the line the design wants and no rule states:
+        <b>a grenade is for the shot you cannot take</b>. Against a soldier standing in the open a
+        rifle is nearly as good and costs nothing, so the charge stays on the belt; against one
+        behind a wall the rifle is worth nothing at all, so it comes off. What it does not yet
+        model is that the last one should be dearer than the first, and that a charge carried out
+        of the battle was worth nothing &mdash; both need a notion of how much fight is left, which
+        nothing in the rules has.
+      </p>
+      <p>
+        A blast is also the first action in the game that can be worth a <em>negative</em> number
+        because of who else was standing there. It catches your own side as readily as theirs, so
+        the score sums over everybody in the radius and signs each by whose they are. A commander
+        will therefore decline a grenade that would catch its own squad. It will not go looking
+        for the throw that avoids them: offsetting the landing point is a search &mdash; every
+        node in range crossed with everybody in the blast &mdash; and it is the same shape of
+        limit as everything else a one-step search cannot see.
+      </p>
+
       <h3>One scorer, two searches</h3>
       <p>
         The decision worth recording, because it is the one most likely to be made by accident.
@@ -2112,7 +2182,9 @@
         <li class="done"><span class="idx">DONE</span><div><b>Reactions</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and all three kinds: arcs held, traps sprung, and soldiers caught out.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Enemy AI</b><p>What an action is worth, in vitality, over the same queries the interface shows &mdash; and a search that takes a turn with it. Two sides driven by the same judgement fight to a decision headless.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Going to look</b><p>Threats built from a marker as well as a sighting, discounted for how long the marker has gone unconfirmed. Two sides that start out of contact find each other and fight. Hunting reaches one move; nothing draws a soldier who knows about nobody.</p></div></li>
-        <li><span class="idx">05</span><div><b>Grenades and mines</b><p>An arcing trace, and a reaction owned by the terrain rather than by a unit.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Grenades and mines</b><p>An arcing trace, a blast through the ordinary layers, and a reaction owned by the terrain rather than by a unit. Melee reach settled as adjacency, and a shout you can do on your own turn.</p></div></li>
+        <li><span class="idx">05a</span><div><b>The open window</b><p>A reaction window a person can look at, answer by hand and decline, rather than one that opens and resolves in a single call. Without it a player never gets the interesting half of reactions.</p></div></li>
+        <li><span class="idx">05b</span><div><b>Objectives, and a battle that ends</b><p>Elimination is the end condition this design makes hardest to reach, and the only one there is. Withdrawal needs no new rules and is readable off the awareness tracker today. It is also the first thing that gives a soldier who can see nobody something to want.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
@@ -2123,8 +2195,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 18</span>
-    <span>296 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 19</span>
+    <span>321 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

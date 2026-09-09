@@ -203,7 +203,10 @@ shot went off on and where the target was standing when it landed.
   threat for a point. Hit chance comes from the sight trace's exposure figure, weapon range
   bands, fire mode and stance. Firing gives you away through the channel your weapon uses: a slug
   rifle is heard through walls, a beam paints a line back to you for anyone facing your way, and
-  a powered blade does neither.
+  a powered blade does neither. Reach is metres for everything that is fired and is deliberately
+  not metres for a blade: melee means *adjacent*, and the movement graph answers it, walls and
+  storeys included. Measuring a knife along a rifle's line made it reach worst exactly when the
+  target was lowest and least able to avoid it.
 - **A body is a hexagon too** — so a shot is never at one plate. Head-on you can reach half the
   front and a quarter of each shoulder; on the corner, two plates equally. Which one a round
   finds is rolled against those shares. A slug that arrives at an angle skips off and loses some
@@ -289,6 +292,43 @@ shot went off on and where the target was standing when it landed.
   Two sides driven by it fight a skirmish to a decision with no window open, and replay
   identically from a seed. That is the thing the engine-free split was built for.
 
+- **Grenades, and the second trace** — everything else the map is asked is whether a *straight
+  line* gets through, and the whole point of throwing something is that it does not have to. So
+  there is a second query beside the sight solver: it crosses exactly the same walls and asks a
+  different question of each, whether the top is above the *parabola* rather than above the line.
+  A soldier throws as flat as the obstacles allow, so the arc is the lowest one that clears
+  everything in the way — nought on open ground, where it degenerates back into the sight line.
+  When the arc a wall demands is more than an arm can manage the throw clips it and drops short,
+  which is how a grenade ends up at your own feet.
+
+  Where it lands, the wave reaches each soldier by distance, by what is between them and the
+  burst, and by how much of them is standing up in it. All three are geometry already in the
+  game: the burst traces outward through the same waterline arithmetic, so a wall shelters you
+  from a charge on the far side of it and does nothing about one lobbed over — and going flat
+  quarters what you catch, because a prone silhouette is a quarter the height of a standing one.
+  Nothing about explosions and cover had to be written down. A blast hits the faces a round would
+  hit and goes through the layers a round goes through, so fragmentation is the answer to a
+  shielded soldier exactly as a beam is the answer to an armoured one.
+
+  A charge is the first thing in this game that runs out, which is the whole of what stops the
+  scorer leading with grenades: it is worth about one clean rifle shot to still have one, so
+  against a man in the open the rifle wins and against a man behind a wall it does not. And a
+  grenade is aimed at a *place*, so it may be thrown at a remembered one — the decision is made
+  on the belief and the world answers it, and if he moved, the grenade is wasted.
+
+- **Mines** — an overwatch that nobody is standing behind. Not a metaphor: a mine resolves inside
+  the same window an overwatch fires in, at the tick the mover's foot lands on its tile, on the
+  same clock and in the same order. What it needed was not a mechanism but an owner, because
+  everything else in a window is offered to a unit out of that unit's reserve. It is the only way
+  to shape an approach nobody is watching — an overwatch expires when its owner's turn comes
+  round and an ambush is spent the moment it springs, so both of them cost somebody standing
+  there.
+
+  An explosion is heard from *where it went off* rather than from who set it off, which is the
+  one way in this game to make a great deal of noise somewhere you are not. Everybody in earshot
+  marks you at the crater, and being blown up does not tell you who did it — unlike being shot at,
+  which settles the question.
+
 - **Maps are text** — `content/maps/*.hexmap`, and `MapLibrary.Load("compound")` from anywhere.
   The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
   an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
@@ -300,17 +340,31 @@ shot went off on and where the target was standing when it landed.
 
 ## What is not built yet
 
-Grenades and mines, suppression, saves, and the strategy layer. See the design doc for where these
-are heading.
+Suppression, saves, the greybox interface, and the strategy layer. See the design doc for where
+these are heading.
 
-**Nobody goes and looks.** A soldier reasons only about enemies it can currently see, which is
-deliberate — acting on the real position of a unit you have lost track of is exactly the cheating
-the whole scheme exists to prevent — but it leaves a hole with three faces. A unit that knows
-about nobody stands still all battle. No unit can move to *gain* a line of sight, only to improve
-one it has. And being heard costs the shooter nothing when the listener is behind a wall, because
-what giving yourself away is worth is measured by what the person you gave it to could do from
-where they stand. All three are the same missing piece: threats built from a remembered position
-rather than a live one. That is next.
+**A battle can only end one way, and it is elimination.** Nothing draws a soldier who knows about
+nobody: a unit with no contact scores every option at nothing and banks its turn, which is correct
+— there is nothing in the game for it to want — and it means two survivors who lose each other
+out of hunting range are a stalemate rather than a result. Ground to hold, a route to patrol, a
+place to reach: an objective is the largest thing between this AI and one a player would call an
+enemy, and it is not a search-depth problem, because a deeper search would still have nothing to
+search for.
+
+**A player never gets the interesting half of a reaction.** A move opens its window and resolves
+it in one call, taking every recommendation, so there is nowhere for a human to place their own
+answer or to decline one. The pieces are all there — offers are built separately from resolution
+precisely so an interface can step between them — and the seam is not yet exposed through the
+turn loop.
+
+**Acting on the real position of a unit you have lost track of** is exactly the cheating the whole
+scheme exists to prevent, and for a long time the answer to it was that nobody went and looked at
+all. That is no longer the answer. A soldier now builds a threat from a *marker* — where contact
+was last made — discounted by how long it has gone unconfirmed, so it will walk round a corner it
+heard something behind and lob a charge over a wall it cannot see through, and it does both on
+its own belief rather than on the field. What it will not do is walk two turns to get there: the
+search is one step deep, and a soldier that will not cross open ground for a knife will not cross
+it for a marker either.
 
 ## The setting
 

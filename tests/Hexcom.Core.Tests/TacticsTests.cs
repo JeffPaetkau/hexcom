@@ -278,7 +278,7 @@ public class TacticsTests
         Assert.Equal(AwarenessState.Unaware, battle.Awareness.Of(mate.Id, runner.Id).State);
 
         var word = battle.Tactics.AppraiseWord(
-            spotter, runner, UnitPose.Of(runner), battle.Reactions.ShoutCost);
+            spotter, runner, UnitPose.Of(runner), battle.Costs.Shout);
 
         Assert.True(word.Prospect > 0);
         Assert.True(word.WorthDoing);
@@ -294,7 +294,7 @@ public class TacticsTests
                 battle.Awareness.Notice(watcher, runner, UnitPose.Of(runner), battle.Round);
 
         var word = battle.Tactics.AppraiseWord(
-            spotter, runner, UnitPose.Of(runner), battle.Reactions.ShoutCost);
+            spotter, runner, UnitPose.Of(runner), battle.Costs.Shout);
 
         Assert.Equal(0, word.Prospect, 6);
         Assert.False(word.WorthDoing);

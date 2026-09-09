@@ -114,14 +114,30 @@ public sealed class SightSolver
 
     /// <summary>Trace between two vantages, returning both visibility and cover.</summary>
     public SightResult Trace(Vantage observer, Vantage target)
+        => TraceFrom(Eye(observer), Ground(observer.Node).Z, target);
+
+    /// <summary>
+    /// The same trace, from a point that is not anybody eye.
+    /// </summary>
+    /// <remarks>
+    /// A charge going off has a position, no stance, and the same question to ask: how much of
+    /// that soldier can it get at from here. Everything below this line was always working on a
+    /// point and a target rather than on two soldiers, so exposing it costs nothing and saves the
+    /// blast model from either duplicating the waterline arithmetic or pretending a grenade is
+    /// crouching.
+    /// </remarks>
+    /// <param name="sourceFloor">
+    /// Floor height at the far end, for <see cref="SightResult.HeightAdvantage"/>. Only high
+    /// ground reads it, so anything that is not a soldier can pass its own height and ignore it.
+    /// </param>
+    public SightResult TraceFrom(Vec3 eye, double sourceFloor, Vantage target)
     {
-        var eye = Eye(observer);
         var footing = Ground(target.Node);
         var body = target.Profile.BodyHeight;
         var crown = footing.Z + body;
 
         var distance = Vec3.Distance(eye, footing.Raised(target.Profile.CentreHeight));
-        var heightAdvantage = Ground(observer.Node).Z - footing.Z;
+        var heightAdvantage = sourceFloor - footing.Z;
 
         // The same place, or near enough: nothing can be in between.
         if (Vec2.Distance(eye.Plane, footing.Plane) < Geometry2D.Epsilon)
@@ -135,7 +151,7 @@ public sealed class SightSolver
         WallSegment? coverSource = null;
         WallSegment? blocker = null;
 
-        foreach (var (wall, point, along) in Crossings(sightLine))
+        foreach (var (wall, point, along) in Intersections(sightLine))
         {
             var top = _map.WallTopHeight(wall);
             var hidden = HiddenFraction(wall, top, along, eye.Z, footing.Z, crown, body);
@@ -220,14 +236,27 @@ public sealed class SightSolver
     }
 
     /// <summary>
-    /// Every wall the ground projection of the sight line runs into, with how far along it sits.
+    /// Every wall the ground projection of a line runs into, with how far along it each one sits.
     /// </summary>
     /// <remarks>
     /// Linear in the wall count, narrowed by a bounding box reject. Ample for the map sizes in
     /// play; if detection ever makes this hot, the walls want a spatial index rather than a
     /// cleverer loop here.
+    /// <para>
+    /// Public because a straight line is not the only thing that has to get past a wall. An arc
+    /// crosses exactly the same walls in exactly the same order and asks a different question of
+    /// each — not whether the top is above the sight line but whether it is above the parabola —
+    /// so the two queries share the crossing and part company after it. See
+    /// <see cref="LobSolver"/>.
+    /// </para>
     /// </remarks>
-    private IEnumerable<(WallSegment Wall, Vec2 Point, double Along)> Crossings(Segment2 sightLine)
+    public IEnumerable<WallCrossing> Crossings(Segment2 line)
+    {
+        foreach (var (wall, point, along) in Intersections(line))
+            yield return new WallCrossing(wall, point, along, _map.WallTopHeight(wall));
+    }
+
+    private IEnumerable<(WallSegment Wall, Vec2 Point, double Along)> Intersections(Segment2 sightLine)
     {
         var loX = Math.Min(sightLine.A.X, sightLine.B.X);
         var hiX = Math.Max(sightLine.A.X, sightLine.B.X);

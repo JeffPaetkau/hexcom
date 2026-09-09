@@ -35,6 +35,23 @@ public sealed record CostProfile
     /// <summary>Multiplier on what every way of firing costs this soldier.</summary>
     public double Firing { get; init; } = 1.0;
 
+    /// <summary>
+    /// Multiplier on turning on the spot and on changing stance.
+    /// </summary>
+    /// <remarks>
+    /// Added because it was missing and the gap was a bug rather than a decision. Moving and
+    /// firing went through this profile and posture did not, so a scout at four fifths movement
+    /// paid list price to turn and to drop — the one rule <c>core.md</c> states plainly about
+    /// prices, broken in the two places nobody looked. See <c>docs/decisions.md</c> entry 012.
+    /// <para>
+    /// One by default, and one on every archetype, deliberately: the point of the dial is that
+    /// posture <em>can</em> be priced per soldier, not that anybody currently is. Turning it is a
+    /// balance decision and wants making on purpose, with powered armour that is slow to come
+    /// round, or a scout who goes flat in half the time.
+    /// </para>
+    /// </remarks>
+    public double Posture { get; init; } = 1.0;
+
     /// <param name="situational">
     /// Anything about the moment rather than the soldier — carrying yourself low, most obviously.
     /// Folded in before rounding, so a crouching scout is not rounded twice.
@@ -42,6 +59,9 @@ public sealed record CostProfile
     public int Move(int listed, double situational = 1.0) => Scale(listed, Movement * situational);
 
     public int Fire(int listed) => Scale(listed, Firing);
+
+    /// <summary>What turning on the spot, or getting up or down, costs this soldier.</summary>
+    public int Posturing(int listed) => Scale(listed, Posture);
 
     /// <summary>
     /// Nothing free, nothing fractional.

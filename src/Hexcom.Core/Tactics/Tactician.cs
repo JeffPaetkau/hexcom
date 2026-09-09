@@ -179,6 +179,74 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     }
 
     /// <summary>
+    /// What a charge going off is worth, in vitality, counting everybody it catches.
+    /// </summary>
+    /// <remarks>
+    /// The same four terms a shot is worth, summed over the soldiers in the radius and signed by
+    /// whose they are. That is the whole of what makes a blast different to score: it is the only
+    /// action in the game that can be worth a negative number because of who else was standing
+    /// there, and a scorer that counted only the enemy would lob grenades into its own squad.
+    /// <para>
+    /// Each enemy is counted at the credence of the belief that put them there, exactly as a shot
+    /// at a marker is. A grenade thrown at where somebody was three rounds ago is worth a quarter
+    /// of a grenade thrown at somebody in view, which is usually not worth the one you have.
+    /// </para>
+    /// </remarks>
+    public double Worth(BlastPlan plan)
+    {
+        if (!plan.CanThrow) return 0;
+
+        var worth = 0.0;
+
+        foreach (var effect in plan.Caught)
+        {
+            var got = effect.Expectation;
+            var value = got.Vitality
+                        + Model.PlateValue * got.PlateStripped
+                        + Model.ShieldValue * got.ShieldStripped
+                        + Model.RemovalBonus * got.DownChance * effect.Caught.Stats.Vitality;
+
+            worth += effect.Friendly
+                ? -Model.FriendlyHarm * value
+                : effect.Credence * value;
+        }
+
+        return worth;
+    }
+
+    /// <summary>
+    /// A charge, appraised: what it does to everybody it catches, less what the bang costs you.
+    /// </summary>
+    /// <remarks>
+    /// The noise term is the same one a shot pays and it is louder, because an explosion is the
+    /// loudest thing on the field. What is different is <em>where</em> it is paid from: a burst is
+    /// heard at the crater rather than at the thrower, so what it hands the other side is priced
+    /// against a place the thrower is not standing in. Making a great deal of noise somewhere else
+    /// is cheap, and the scorer can see that it is.
+    /// <para>
+    /// What is spent is not only the points. A charge thrown is a charge gone, and
+    /// <see cref="UtilityModel.ChargeValue"/> is the whole of what stops a commander leading with
+    /// grenades — measurably, because before it was there one did.
+    /// </para>
+    /// </remarks>
+    public Appraisal Appraise(BlastPlan plan)
+        => plan.CanThrow
+            ? new Appraisal(
+                Worth(plan),
+                -Model.FutureDiscount * GivenAway(plan),
+                0,
+                Price(plan.ApCost) + Model.ChargeValue)
+            : Appraisal.Nothing;
+
+    /// <summary>What the bang hands the other side, in vitality.</summary>
+    public double GivenAway(BlastPlan plan)
+        => plan.Thrower is { } thrower
+            ? Told(
+                battle.WouldAnnounce(plan),
+                new Threat(thrower, UnitPose.Of(thrower)))
+            : 0;
+
+    /// <summary>
     /// What ending a turn with points still in hand is worth.
     /// </summary>
     /// <remarks>

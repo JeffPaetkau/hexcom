@@ -1,7 +1,7 @@
 # Core — the rules
 
 Everything the game is, as plain .NET. Hex geometry, cover, movement, sight, detection,
-initiative, damage, reactions, and — next — the AI.
+initiative, damage, reactions, the AI, and the things that go off.
 
 Read [../map.md](../map.md) first, then this. `../design.html` is the source of truth for *why*
 any of it is the way it is; this file is how to work on it without breaking something.
@@ -25,86 +25,56 @@ it anyway, or note in your commit exactly what you changed there and why it coul
 Nothing. Core is the trunk. Everything else depends on it, which is why the contracts in
 [../map.md](../map.md) are mostly about not moving the ground under other territories:
 no engine references, one query surface for the view and the AI alike, information asymmetric on
-purpose, balance numbers in their eight homes, and one horizontal unit is one metre.
+purpose, balance numbers in their homes — nine of them since `BlastModel`, see
+[../decisions.md](../decisions.md) entry 031 — and one horizontal unit is one metre.
 
 ---
 
-## The job — grenades and mines (build order 05)
+## The job — the open window, and a battle that can end (build order 05a)
 
-Branch `core/grenades`. Read the rest of this file before starting; the turn loop below and the
-gotchas after it are the things that will bite, and the reaction timeline is the thing a mine
-has to fit into.
+Branch `core/open-window`. Read the rest of this file before starting; the turn loop below and
+the gotchas after it are the things that will bite, and the reaction timeline is the thing this
+job has to cut in half without breaking.
 
-**What exists.** The AI is complete for what the game can currently express: `Tactician` scores
-one action in vitality over the same queries the interface shows, `Commander` takes a turn with
-it, and a soldier that hears something goes round the corner to look — `Tactician.Known` builds
-threats from a marker as well as from a sighting, discounted by `Tactician.Credence` for how
-long the marker has gone unconfirmed. Two sides that start out of contact find each other and
-fight. What it cannot do is priced in the gotchas and open questions below, and none of it is
-blocking.
+**What exists.** The whole weapons table bar suppression. Ten systems, an AI that plays both
+sides, maps as text, and — new — an arcing trace, blasts through the ordinary layers, mines on the
+reaction timeline, a blade that reaches what it can step to, and a shout you can do on your own
+turn. `docs/decisions.md` entries 030 to 033 are the argument for all of it.
 
-**The job is the two items the design doc's weapons table (section 10) leaves for later.** Its
-own words on each are the brief:
+**The job is the two things entry 029 says come before the greybox is worth starting**, in that
+order, because the second is what the first is for.
 
-- **Grenades — an arcing trace.** *Every trace so far has asked whether a straight line gets
-  through, and an arc explicitly does not: the whole point of throwing one is to put it
-  somewhere you cannot shoot.* A second query beside `SightSolver`, answering whether a lobbed
-  object clears the intervening walls and where it lands if it clips one. Damage is an area, so
-  it wants a shape of its own rather than a `ShotPlan`; the layers it meets per face are what
-  `Protection` already does. A grenade is the loudest thing after a slug rifle, and
-  `AwarenessTracker.Hear` is public precisely so it can raise the noise.
-- **Mines — a reaction owned by the terrain.** *A mine is an overwatch that a unit is not
-  standing behind: a trigger on a tile, resolved at the tick the mover enters it. Same clock,
-  same resolution order.* `ReactionWindow` already walks the mover along a `CommittedMove` and
-  fires at landing ticks; a mine is an offer with no reactor, placed by the map.
+- **The open window — entries 004 and 022.** `Battle.Move` opens a `ReactionWindow` and runs it
+  in one call, so nothing between `PlaceRecommended` and `Resolve` is reachable from outside.
+  Split it: `Battle.Commit` returning the window with its offers built, `Battle.Resolve` closing
+  it, `Move` as the two in sequence for everything that does not care. A way to decline — which
+  means `ReactionOffer.Recommended` becoming nullable, and that is a real behaviour change on its
+  own, because the model already produces windows where every option scores below zero and takes
+  one anyway. And `Commander.TakeTurn` stopping at a window rather than running past it, handing
+  back the outcomes beside its orders, so the enemy's move can be answered by a person.
+  Entry 022 is View's own account of the shape it wants; read it before designing.
 
-**And one shared-file debt, first thing on the branch: entry 028.** The last paragraph of
-`README.md` still says *nobody goes and looks* and *that is next*. Entry 021 says they do. The
-paragraph is Core's, and the sentence about why the hole was deliberate is worth keeping in the
-past tense as the argument for markers with a credence.
+- **A battle that can end some way other than elimination — entries 021 and 026.** What an
+  objective *is*, in the rules. Withdrawal first, because entry 026 shows it is readable off
+  `AwarenessTracker` today and needs nothing new: a side that has broken contact and reached its
+  exit has won something. It is also the first thing that gives a soldier who can see nobody
+  something to want, which is the hole named in every open question below and in entry 033.
+  Which objective a mission carries is Content's; what one is, is here. The build order in
+  `design.html` has the item.
 
-**Three older findings ride on this branch, routed here by entry 020 in `../decisions.md`.**
+**Settle before writing much.** Whether declining is a null recommendation or an explicit
+`ReactionAction.Nothing`. The first is fewer lines and the second is a thing the interface can
+draw and the scorer can price at zero; entry 004 assumed neither. And whether a committed window
+holds the mover mid-route between `Commit` and `Resolve` — it currently does not, because the two
+run back to back, and an interface will be looking at the field while the window is open.
 
-- **Entry 008 — melee does not reach.** `PowerBlade` carries a 2.0 m range and `Gunnery`
-  measures eye to centre of mass, so a standing soldier cannot knife an adjacent prone one.
-  Settle it *before* the arc: reach along the ground, or an adjacency test, is a design question
-  before it is a number, and a grenade is the second weapon that is not a rifle and must not
-  inherit the same mistake.
-- **Entry 012, items 2 and 3.** There is no way to shout on your own turn — `AppraiseWord`
-  scores it, `ReactionAction.Shout` places it in a window, and no `Battle` method lets a unit do
-  it. Needs the turn action and a price in `MovementCosts`, and then `Commander` can generate it.
-  And a firing preview for the interface in the shape `WouldAnnounce` already has, which is
-  mostly a matter of saying so.
-- **`Battle.Face` and `Battle.ChangeStance` charge list price** where `Move` and `Fire` go through
-  `CostProfile`, against this file's own rule. Either say it is deliberate in a `<remarks>`
-  block or give `CostProfile` a dial for posture.
+**Out of scope.** `game/**` as ever. Objective *content* — a mission file is Content's, and it
+waits on this job for what an objective is. Suppression, which is the last row of the weapons
+table and wants a per-unit state that taxes points and accuracy; nothing depends on it.
 
-**Settle before writing much.** Whether a grenade is a `FireMode` on a `WeaponProfile` or a thing
-of its own. The weapon table makes it a weapon; `Gunnery.HitChance` and the reaction timeline
-assume a shooter, a target and a face, and a grenade has a landing point and a radius instead.
-Whichever way it goes, the AI has to be able to weigh one — `Tactician` scores what
-`Gunnery.Expect` returns, so a grenade wants an `Expect` of its own — and the interface has to
-be able to show the arc. Contract 2 applies as ever.
-
-**Out of scope.** `game/**`. The open questions below are real and none of them are this job;
-the one most likely to tempt is the search depth, because a soldier that will not walk two turns
-toward a marker will not walk two turns toward a grenade target either. Record, do not build.
-
-**The test that it worked:** a soldier behind a wall it cannot be shot through is dug out by a
-grenade lobbed over it, and a mine on the approach fires on the mover at the tick it steps on
-the tile, out of nobody's reserve.
-
-After this, and before the greybox (build order 06) is worth starting, Core owes two things
-that no brief carries yet — entry 029 says why they come first:
-
-- **The open window — entries 004 and 022.** `Battle.Commit` and `Battle.Resolve` around the
-  `ReactionWindow`, `Move` as the two in sequence, a way to decline, and `Commander.TakeTurn`
-  stopping at a window and handing back outcomes beside its orders. Without it a player never
-  gets the interesting half of reactions, and the enemy's move runs straight past the seam.
-- **A battle that can end some way other than elimination — entries 021 and 026.** The
-  withdrawal condition is readable off `AwarenessTracker` today, and it is also the first thing
-  that gives a hostile side something to want when it can see nobody. What an objective *is* in
-  the rules is Core's; which one a mission has is Content's.
+**The test that it worked:** a window opened by an enemy move can be inspected, answered by hand
+with something other than the recommendation, declined outright, and then resolved — and a
+skirmish ends because one side withdrew rather than because everybody on it was killed.
 
 ---
 
@@ -117,7 +87,8 @@ Battle.Start()      roll initiative, book everyone, hand the first turn out
   └ Advance()       refill AP · recharge shields · clear Reserve and Overwatch
                     (NOT Ambush) · rebook for next round
   the active unit acts
-      Move · Fire · Face · ChangeStance · SetOverwatch · Arm · SpringAmbush
+      Move · Fire · Throw · LayMine · Shout
+      Face · ChangeStance · SetOverwatch · Arm · SpringAmbush
   Battle.EndTurn()  Awareness.Observe  ← the only moment a unit looks around
                     Bank               ← leftover AP becomes Reserve, AP zeroed
                     Advance
@@ -126,13 +97,17 @@ Battle.Start()      roll initiative, book everyone, hand the first turn out
 **A reaction window is the only thing that acts out of turn**, and there are exactly two ways one
 opens:
 
-- `Battle.Move` opens one on the committed route. Overwatch, surprise, and a trap somebody walked
-  into all answer into it.
+- `Battle.Move` opens one on the committed route. Overwatch, surprise, a trap somebody walked
+  into, and any mine on the route all answer into it.
 - `Battle.SpringAmbush` opens one deliberately, on a `CommittedMove` of zero length.
 
 Either way: offers are built in the constructor, `Run()` = `PlaceRecommended()` + `Resolve()`,
 and `Resolve` walks the subject along the timeline firing at each landing tick. An interface or
 an AI plugs in by placing its own choices between those two calls instead of calling `Run`.
+
+**A mine is on that timeline and is not an offer**, because there is nobody to offer it to.
+`Mines` and `Detonations` sit beside `Offers` and `Resolutions`; `Resolve` merges the two lists
+and the terrain goes first where a mine and a placement land on the same tick.
 
 `ReactionWindow.Best` hands the whole list to `Tactician.Best`, which scores each option in
 vitality. Nothing about the ordering is written down as a ladder any more, which means a change to
@@ -224,8 +199,8 @@ the thing to suspect when a reaction test starts failing for no reason you can s
 - **A blade carrier will not walk across open ground to reach you.** Greedy with one step of
   lookahead cannot see a knife going in two turns from now, so it correctly works out that this
   turn's walk into rifle range is worse than standing still, and stands still forever. Not a bug
-  in the scoring; a limit of the search, and the first thing a deeper one would fix. Note that it
-  would still not stab anybody when it arrived — see entry 008 in `../decisions.md`.
+  in the scoring; a limit of the search, and the first thing a deeper one would fix. It would at
+  least stab somebody when it arrived, which it would not have before entry 030.
 - **A threat is a belief, and `Tactician.Known` is the only place one is made.** `Threat` carries
   `Credence` and `EyesOn`. A contact the soldier looked at last and can still see stands where
   it really is; anything else stands at the marker, upright, with a placeholder facing, and is
@@ -258,6 +233,46 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   the argument for either a deeper search or an objective system; it is not a beliefs problem.
 
 ---
+
+- **A charge is aimed at a place, and that is what makes it different to score.** A shot resolves
+  against where the target really is, so the Commander never fires at a marker; a throw resolves
+  against a piece of ground, so it may be thrown at one. The forecast is built from
+  `BlastCandidate`s the caller supplies — believed enemies at their markers, your own squad where
+  it stands — and never from the field, because reading the field would let a commander discover
+  that a marker has gone stale by noticing that the grenade would catch nobody. `PlanThrow` with
+  no candidates reads the field and is what `Throw` uses; anything *deciding* must pass a list.
+- **A charge is the only thing in the game that runs out**, and `UtilityModel.ChargeValue` is what
+  stops the scorer leading with grenades. Without it a commander threw both at the first soldier
+  it saw, measurably: four Commander tests changed behaviour and that is how it was found. It is
+  set at about one clean rifle shot, which is what makes a grenade the answer to the shot you
+  cannot take rather than a better version of the one you can. If grenade behaviour ever looks
+  wrong, suspect this before suspecting the blast model.
+- **Four Commander tests deploy a rifleman with an empty pouch**, through `Barehanded`. Given a
+  charge and a man behind a wall, a commander throws it — correctly — and a test named after
+  flanking or after going to look stops exercising either. One mechanism per situation; the
+  grenade behaviour is asserted in `OrdnanceTests`, where it belongs.
+- **The arc gets harder the closer you stand to the wall.** `4·s·(1-s)` collapses toward both
+  ends of the throw, so hugging a three metre wall and throwing seventeen metres wants seven and a
+  half metres of arc and fails, where the same wall halfway along wants about two. That is
+  arithmetic rather than a rule and it is the right behaviour, but it is the first thing that
+  looks like a bug when a throw refuses from what seems like an easy position.
+- **A throw that clips lands at the thrower feet**, or on the near side of the wall it caught.
+  `LobResult` carries which wall and how much arc was wanted, so a preview can say why — and a
+  preview that does not show a clipped throw is a preview that lets a player grenade themselves.
+- **A blast traces outward from the burst, not inward from a shooter.** `SightSolver.TraceFrom`
+  takes a point rather than a vantage for exactly this. It is why a wall shelters you from a
+  charge on its far side and does nothing about one lobbed over, with no rule written down about
+  explosions and cover — and it is why the burst height on `BlastModel` is load-bearing rather
+  than flavour.
+- **Nothing glances in a blast.** Obliquity models a solid object skipping off a plate it met
+  edge-on. A blast is not one object along one line, and crediting it with deflection off a
+  shoulder would be borrowing arithmetic that is about something else.
+- **A mine does not go off under the side that laid it**, and that is a simplification standing in
+  for the awareness ladder having no opinion about objects. See [../decisions.md](../decisions.md)
+  entry 033, item 2 — and item 1, which is the same hole from the other side: a noise has to be
+  about a person, so a mine whose layer has gone down is heard by nobody.
+- **`Battle.Mines` is the ground and `Battle.MinesOf` is what one side may see.** Contract 3
+  lives in the second. An interface drawing the first shows a player where the enemy mined.
 
 ## Open questions
 
@@ -296,14 +311,23 @@ the ones that block or shape what Core does next.
   0.72 against a snap shot costing 0.75 — near enough break-even that the ordering between firing
   pointlessly and doing something else is decided by noise. Either the shield term is too generous
   or a point of reserve is too cheap, and only matches will say which.
-- **Melee does not reach.** `../decisions.md` entry 008, addressed here and open: `PowerBlade`
-  carries a 2.0 m range and `Gunnery` measures eye to centre of mass in three dimensions, so at
-  the hex size settled in entry 007 two adjacent soldiers are further apart than a blade can
-  cover. Nothing special-cases melee and something has to — either a reach measured along the
-  ground, or an adjacency test, and which one is a design question rather than a number.
 - **The overwatch awareness gate can now be re-examined.** Flagged in the doc and in
   `ReactionModel`, with the two dials named. It was gated on having an AI to run matches with;
   there is one, so this is the first thing to point a batch of headless matches at.
+- **`UtilityModel.ChargeValue` prices a charge at a flat figure however much fight is left.**
+  The last one should be dearer than the first, and one carried out of the battle was worth
+  nothing at all — both are real and both need a notion of how far through the fight this is,
+  which nothing in the rules has. It is also the one new dial that a batch of matches would
+  settle quickly, because a commander that spends its grenades badly loses and says so.
+- **Nothing spots a mine, and nothing lays one but a player.** Both are the same hole seen twice:
+  the awareness ladder holds beliefs about soldiers and has no way to hold one about a place, and
+  a soldier with nothing to want cannot pick ground to deny. See [../decisions.md](../decisions.md)
+  entry 033, items 1 to 3. The first wants a contact about a place — which an explosion, a door
+  and a falling body all are; the third waits on objectives rather than on a deeper search.
+- **A throw is only ever aimed at the tile under somebody.** Offsetting to catch two at once, or
+  to keep one of your own out of the radius, is a search — every node in range crossed with
+  everybody in the blast, per candidate, per decision. What is built will decline a grenade that
+  catches its own and will not go looking for the one that avoids them. Entry 033, item 4.
 - **Every balance number is set by reasoning, not measurement.** Treat the figures as arguments
   rather than findings, and check the design doc for why one is what it is before changing it —
   several are load-bearing in ways their size does not advertise. This is now *testable* rather
