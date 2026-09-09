@@ -53,16 +53,33 @@ the reaction line saying what the sentry did about it. Keep it deaf and reproduc
 the whole bargain the harness rests on, and keep `HexSandbox` the only thing that calls `Battle`
 — the script is an argument list, not a second input system.
 
-**Two other jobs are waiting on other territories, and whichever gate lifts first jumps the
-queue.** Each has its readout already designed in the audit below; what is missing is the query.
+On the waystation the script has further to walk than it did on the compound, which is the point
+of the map and worth allowing for: the sentry outside the west gate is twenty hexes from where
+ours start, and a turn is about ten. A scripted approach is two turns of moves before anything
+reacts to anything.
+
+**One other job is waiting on another territory**, with its readout already designed in the audit
+below; what is missing is the query.
 
 - **Placing your own reactions**, when Core lands the seam asked for in entry 004 and answered in
   entry 022: an open `ReactionWindow` whose offers the HUD can list, appraise and let the player
   pick from before it resolves.
-- **The attention cone at its true reach** — entry 006, and its gate has lifted: the map it
-  waited on is `content/maps/waystation.hexmap`, radius 24 at the scale 007 fixed, and entry 024
-  says `MapLibrary.Load("waystation")` is one project reference away. Loading it in the sandbox
-  is the first half of the job and drawing the cone honestly against it is the second.
+
+**The waystation is loaded and the attention cone is drawn at its true reach.** Entry 006 is
+closed and entry 030 is the reasoning. What it left behind, so that nobody re-derives it:
+
+- The sandbox opens on `content/maps/waystation.hexmap` through `MapLibrary.Load`, and `game/`
+  no longer calls `DemoMaps` at all. The compound survives as `--scenario compound`, loaded by
+  name like everything else.
+- The map and the deployments live in `SandboxScenario` rather than in `HexSandbox.NewBattle`.
+  That does not answer the open question about whether the scenario belongs in `game/` — see
+  below, it is still open — it only makes the answer a deletion when it comes.
+- The cone is now a graded field over four arcs and six rings, out to
+  `AwarenessModel.SightRangeMetres`, because `AttentionOn` grades attention and `LookGain` grades
+  range. The held arc reaches `WeaponProfile.MaxRange`, because an overwatch has no range of its
+  own and just needs a shot.
+- **`SandboxCamera` is what made it possible**, and is the thing to read first if you are
+  changing any of this. 45 metres is a screen-filling wash only from four metres away.
 
 **Two things watched on `view/interface-readouts` are for Core and are written up in entry 023.**
 Do not re-find them: a stance change is scored on what it spares and never on the shot it
@@ -160,11 +177,12 @@ The interface audit found it and Core did not, which is contract 2 paying for it
 | who would hear you call it in | `Awareness.Earshot` | nowhere — and there is no way to shout | gap, and a Core gap with it |
 | how much survives being passed on | `AwarenessModel.RelayFraction` | nowhere | gap |
 
-The attention row was worth closing on its own. The watch cone on the map answers this question
-as a yes or a no; the model does not — a place is attended to fully, at the corner of the eye, or
-barely, and the gap between the last two is the entire reason flanking works. The cone's *range*
-is still a lie and is still blocked by entry 006; its *resolution* never was, and nobody had
-noticed the two were separate problems.
+The attention row was worth closing on its own. The watch cone on the map used to answer this
+question as a yes or a no; the model does not — a place is attended to fully, at the corner of
+the eye, or barely, and the gap between the last two is the entire reason flanking works. The
+cone's *range* was a lie as well, and blocked by entry 006 where its *resolution* never had been;
+nobody had noticed the two were separate problems. Both are closed now: the cone is a graded
+field out to the sight range, and entry 030 says how.
 
 The second row is left open on purpose. Your own soldier's certainty about an enemy is neither of
 the two cases contract 3 names — it is not your exposure and it is not the enemy's alarm — and
@@ -241,8 +259,10 @@ They shared this doc because they shared a single 705-line file. They no longer 
 
 | | |
 |---|---|
-| `HexSandbox.cs` | the Godot node — lifecycle, the demo scenario, input, handing turns to the AI, and assembling a frame |
+| `HexSandbox.cs` | the Godot node — lifecycle, input, handing turns to the AI, and assembling a frame |
+| `SandboxScenario.cs` | which map and who is standing on it. Content wearing a view extension, gathered in one place against the day there is a mission file |
 | `SandboxScale.cs` | metres against pixels, and the only place that knows the difference |
+| `SandboxCamera.cs` | where the map is looked at from and how close. Owns the scale, because zooming rebuilds it |
 | `SandboxGeometry.cs` | where things sit on the canvas — centroids, region polygons, hit tests |
 | `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves |
 | `BattleView.cs` | **presentation** — ground, walls, links, path, beliefs, soldiers |
@@ -291,7 +311,11 @@ greybox (build order 06) rewrites `game/` substantially and is the moment to loo
   came out of the move with `steps = 14` where the original had `18`, a coarser arc that nothing
   else would have caught — it is a translucent overlay whose silhouette nobody has memorised, the
   build was clean and all 259 tests passed. 546 pixels on one arc were the entire evidence.
-  **Diff the capture against the previous commit whenever you move drawing code.** It cuts the
+  **Diff the capture against the previous commit whenever you move drawing code.** Pin the scene
+  when you do — `--scenario compound --zoom 44 --look 0,0` is the frame every capture taken
+  before the waystation was taken at, and the default is now a different map at a different zoom
+  centred on a different thing. A diff against an unpinned default is a diff of the deployment.
+  It cuts the
   other way too: the HUD rework on `view/interface-audit` changed 78,110 pixels in exactly two
   horizontal bands — rows 14–112 and 862–891, the two panels — and every row of map between them
   came out byte-identical. `view/interface-readouts` was held to the same test before it touched
@@ -312,7 +336,22 @@ greybox (build order 06) rewrites `game/` substantially and is the moment to loo
   `HexSandbox.Settle` does.
 - **Drawing scale and world scale are different variables and must stay that way.** `HexSize` is
   pixels and is exported; `SandboxScale.MetresPerHexSize` is metres and is a constant. That
-  asymmetry is the contract, not an oversight.
+  asymmetry is the contract, not an oversight. The camera moves the first one on every wheel
+  notch and must never move the second — which is why zooming rebuilds a whole `SandboxScale`
+  rather than assigning to a field: an immutable pair of layouts cannot drift apart.
+- **Anything drawn in hex radii vanishes when you zoom out, and text does not.** A label set at
+  11 points stays 11 points at any zoom, so an offset quoted in hex radii puts the name on top of
+  the dot; a box width quoted in hex radii clips the last characters off every label on the map
+  at once. Offsets and text boxes are therefore in pixels, footprints and wedges in hex radii,
+  and anything the rules quote in metres goes through `SandboxScale.MetresToPixels`. Three units
+  in one file is not a mess, it is three different questions.
+- **A map that brings its own kit brings no colour with it.** `BattleView.StyleFor` switches on
+  well-known wall ids, so a profile a `.hexmap` declares for itself — the waystation's `hedge`,
+  say — draws in the default grey until somebody adds a case. Entry 030.
+- **The sandbox draws one storey and the units on the others are still there.** They come out as
+  hollow rings labelled *above* or *below*, with their attention field drawn all the same, since
+  a soldier four metres up is watching this ground and not some other ground. Leaving the field
+  out was tried and it hid the most interesting fact on the waystation.
 
 ---
 
@@ -361,10 +400,31 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0
 - `--ai` hands every hostile turn to `Commander` during the passes, so each pass is one of ours
   standing still while the other side does what it decides to. This is the first way a capture
   has had of showing a situation rather than a starting position, and it is what puts the orders
-  readout in a picture. The command above is the one that proved this branch: by the sixth pass
+  readout in a picture. The command above is the one that proved that branch: by the sixth pass
   the Spotter has crawled along the roof, put an aimed shot into the scout at 95 % and gone prone,
   and the bottom block says so with every term. Interactively the same thing is `H`, and `A`
   gives one turn — anybody's — to the AI.
+
+**A map 85 metres across needs the camera told about, so four more flags do that.**
+
+```bash
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot map.png --fit
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --zoom 44
+```
+
+- `--fit` pulls back until the whole map is in one picture, working the figure out rather than
+  being told it. This is the flag to reach for: the waystation at the 44-pixel hex the compound
+  was drawn with is nearly four screens wide, so without it every picture is of one corner.
+- `--zoom N` sets the hex radius in pixels directly. Below 22 the tile detail switches off, which
+  is deliberate and is what the status line means by *zoomed out*.
+- `--look q,r` centres on a hex instead of on whoever is up.
+- `--scenario name` picks from `SandboxScenario.All` — `waystation`, the default, or `compound`.
+  A name that matches nothing gets you the default and says so in the status line, rather than a
+  scene that fails to load.
+
+Interactively it is the wheel or `+`/`-` to zoom, a middle-drag or the arrows to pan, `F` for the
+whole map and `G` for whoever is up. The camera never re-asks the rules anything, so none of it
+can change what is true — only what is on screen.
 
 ---
 
@@ -372,9 +432,16 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0
 
 - **The greybox.** Build order puts a 3D blockout after the AI and after grenades — *only once
   the rules are settled*. The flat sandbox stays the working view until then.
-- **Whether the demo scenario belongs in `game/`.** `HexSandbox.NewBattle` hard-codes five
-  deployments. That is content wearing a view extension, the same way `DemoMaps.cs` is content
-  wearing a `.cs` one, and it should probably move when there is a scenario format to move it to.
+- **Whether the scenarios belong in `game/`.** Still open, and now smaller: the ground comes
+  from `content/` and only the deployments do not. `SandboxScenario` holds two of them, seven
+  soldiers and five, which is content wearing a view extension the same way `DemoMaps.cs` was
+  content wearing a `.cs` one. Entry 024 says the map format leaves out who starts where on
+  purpose and entry 029 makes the mission file Content's job; when it exists this file is a
+  deletion.
+- **Whether the camera should be a `Camera2D`.** It is an offset on the node, which is what the
+  one line it replaced already was, and it costs nothing while there is a single flat view. A
+  real camera node would give smoothing, limits and a viewport for free, and the greybox will
+  want all three.
 - **What the player's own soldiers did during the enemy's turn is invisible.** A hostile move
   opens a window in which our units react automatically, and the sandbox cannot report it:
   `Commander.TakeTurn` returns orders with their appraisals and not what carrying them out did,

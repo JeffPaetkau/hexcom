@@ -90,6 +90,10 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
 
         var lines = new List<string>
         {
+            // Which map and which deployment, because there is more than one now and a picture
+            // that does not say which it is of cannot be checked against anything.
+            $"{frame.Scenario.Name}    {frame.Scenario.Situation}    {battle.Map.Tiles.Count} tiles"
+                + (frame.TileDetail ? "" : "    zoomed out: tile detail off"),
             active is null
                 ? $"round {battle.Round}    nobody left to act    {hostiles}"
                 : $"round {battle.Round}    {active.Name} ({active.Side})    "
@@ -163,7 +167,8 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         const string keys =
             "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
             + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    A: AI takes this turn    "
-            + "H: hostiles to AI    R: new battle";
+            + "H: hostiles to AI    R: new battle    "
+            + "wheel/+-: zoom    drag or arrows: pan    F: whole map    G: whoever is up";
 
         var at = Origin + new Vector2(18, viewport.Y - 22);
         Panel(at, [keys]);

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Godot;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Tactics;
@@ -32,11 +33,27 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// Empty until somebody hands it a turn.
 /// </param>
 /// <param name="HostilesAutomatic">Whether every hostile turn goes to <see cref="Commander"/>.</param>
+/// <param name="Scenario">The map and the deployment this battle was opened with.</param>
+/// <param name="Visible">
+/// The canvas rectangle on screen, in the space drawing works in, already grown by a margin.
+/// Anything outside it is skipped.
+/// </param>
+/// <param name="TileDetail">
+/// Whether a tile is currently drawn big enough to carry its own labels and outlines. See
+/// <see cref="SandboxCamera.LegibleAt"/>.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
 /// it is drawn from the same answers — which is also what stops the map and the readouts
 /// disagreeing about a unit that a reaction moved half way through the frame.
+/// <para>
+/// The last three came in with the camera, and the last two are the same fact twice: a map of
+/// eighteen hundred tiles cannot all be on screen at a size anybody can read, so drawing has to
+/// know both what is in shot and how close it is. Both are camera answers rather than rules
+/// answers, which is why they arrive the same way every other answer does — assembled once, on
+/// the frame, rather than read off a node the drawing is not allowed to reach.
+/// </para>
 /// </remarks>
 public sealed record SandboxFrame(
     Battle Battle,
@@ -46,4 +63,7 @@ public sealed record SandboxFrame(
     IReadOnlyDictionary<NodeId, SightResult> View,
     string LastWindow,
     IReadOnlyList<TakenTurn> Turns,
-    bool HostilesAutomatic);
+    bool HostilesAutomatic,
+    SandboxScenario Scenario,
+    Rect2 Visible,
+    bool TileDetail);
