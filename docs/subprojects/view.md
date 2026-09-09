@@ -34,10 +34,29 @@ reaching into `src/`.
 
 ---
 
-## The job — work the interface fix list
+## The job — watch the AI play, then work the interface fix list
 
 Branch `view/interface-readouts`. Read **The interface audit** below first: it is the list this
 job works from, and every item in it says what to do and what is stopping it.
+
+**Two things come before the list, because without them nothing on it can be checked.**
+
+- **Make the capture command run as written** — entry 017, with its cause in entry 019. The
+  WinGet package directory is already on the PATH, but the only executables in it are
+  `Godot_v4.7.2-stable_mono_win64.exe` and `Godot_v4.7.2-stable_mono_win64_console.exe`;
+  nothing on this machine is called `godot`. Fix every command in **Seeing it** so a fresh session
+  can paste it and get a picture, whether by naming the executable or by saying what shim to make
+  and where. Prove it with one capture taken from the doc.
+- **Hand the hostile side to `Commander`** — entry 009. `new Commander(battle).TakeTurn()` takes a
+  unit's whole turn and returns its `Order`s, each carrying the appraisal it was chosen on. A key
+  that gives one hostile turn to it, or a mode that gives it every hostile turn, is the first time
+  anybody watches the enemy behave like an enemy — and it is what makes the fix list below
+  checkable against something, because every readout it adds becomes a readout of a quantity the
+  AI is visibly acting on. Show `Worth`, `Opens` and `Score` with their terms separated, never a
+  bare number; 009 says why, and if the HUD ends up printing only the score that is itself a
+  finding. Know that a `Commander` with no contacts stands still and banks its turn, so the demo
+  scenario as it opens will look like nothing is happening. That is correct, it is Core's current
+  brief, and it is not yours to fix.
 
 The audit is finished. Four rows of it were closed while it was being written, because the fix
 was a line of text once the question had been asked; the rest are still open and are ordered here
@@ -60,8 +79,21 @@ by what they cost against what they buy.
    demo compound is too small, so an honest cone still fills the viewport. Wait for content's
    larger map rather than drawing a cone against this one.
 
-**How to know it worked.** Same standard as the audit: every row either closed with a readout you
-can point at in a capture, or annotated with what is blocking it and where that is written down.
+**Answer entry 004 while you are in `BattleHud`.** Core asked which shape View wants for letting
+a player place their own reaction between `PlaceRecommended()` and `Resolve()` — an optional
+callback on `Battle.Move`, or `Move` split into commit and resolve. It is the first API in the
+project designed for an interface that does not exist yet, and Core is waiting so as not to
+guess. Append the answer to `../decisions.md`; do not build it, since `Battle` is Core's.
+
+**Two passages in this doc are stale and are yours to fix.** *Two territories, one doc* below
+still ends by saying the split is a decision for whoever picks up interface work, and the open
+question about splitting still says the condition is met and raised as 013. Entry 014 answered
+013: one territory, because the paths do not divide. Say so, point at 014, and stop the question
+being re-raised by every reader.
+
+**How to know it worked.** A capture, taken with a command pasted from **Seeing it**, in which the
+hostile side has acted on its own — and every audit row either closed with a readout you can
+point at in that capture, or annotated with what is blocking it and where that is written down.
 
 ---
 

@@ -88,6 +88,21 @@ every one is a figure a player should have been able to see and could not.
   them either. What a move would announce and who would hear it is the one that touches this
   job: going to look is worth less if the going gives you away.
 
+**Two smaller debts, a paragraph each, to clear on the same branch.**
+
+- **Entry 005 asked for a `<remarks>` block on `SightSolver`** saying that sight and cover are
+  scale-free by construction — the waterline works in a fraction of the way along the sight line,
+  so nothing in it has horizontal units — and that this is a property to keep rather than an
+  accident. Nothing in that file mentions scale. Write it: it is the reason a contract 5 violation
+  shows up as detection failing and never as cover looking weak, and the next person to be
+  surprised by that will look in `SightSolver` first.
+- **`README.md` says balance can be tuned by "thousands of AI-vs-AI matches in seconds".** Your
+  own measurement, in the gotchas below, is about two seconds per three-a-side match, so a
+  thousand is twenty to thirty-five minutes. The README is shared and that paragraph is about your
+  measurement, so correct it to what was measured — see entry 019. While there, `Depends on` at
+  the top of this file still says seven homes for balance numbers; it has been eight since entry
+  003.
+
 **Out of scope.** `game/**`. Entry 009 offers View a way to hand a side to the AI in the sandbox;
 the API is there and wiring it up is theirs. Entry 004 is a Core API gap the interface needs and
 the AI does not.

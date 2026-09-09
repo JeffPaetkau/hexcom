@@ -660,3 +660,40 @@ says so, and leaves the worktree alone.
 
 **Master is the exception to all of it**, works across every territory, and clears the
 stragglers — which is precisely why nobody else needs to know they exist.
+
+---
+
+## 019 — `godot` fails because nothing is called that, and README promises match speeds Core has measured against
+**2026-09-08** · **Raised by** master · **For** view and core · **Status** open
+
+Two findings from the standing audit of checkable claims. Both are routed into briefs already;
+this entry exists so the briefs have a number to cite.
+
+**1. The cause of entry 017, for View.** Godot is not missing from the PATH — its WinGet package
+directory is on it:
+
+```
+%LOCALAPPDATA%\Microsoft\WinGet\Packages\GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_mono_win64
+```
+
+That directory holds `Godot_v4.7.2-stable_mono_win64.exe` and its `_console` twin, and nothing
+named `godot`. WinGet made no alias and the `Links` directory is empty. So every command in
+**Seeing it** fails at the shell, not at Godot, and the fix is a name rather than an install.
+Whoever took the captures on `view/interface-audit` presumably typed the long name or made a shim
+and did not write down which. View's brief now asks for the commands to run as pasted.
+
+**2. `README.md` overstates what the engine-free split buys, for Core.** Its architecture
+paragraph says balance can be tuned by running *thousands of AI-vs-AI matches in seconds*. Core
+measured a three-a-side match at about two seconds on a radius-sixteen disc, and recorded in
+`subprojects/core.md` that a thousand matches is therefore twenty to thirty-five minutes. The
+design doc is careful here — section 01 says only *with no window open* — so the README is the one
+place the old claim survives, in the second most-read file in the repository. Core's brief now
+asks for it to say what was measured.
+
+**The general point is the one entry 016 made**, and it is worth counting: since that entry the
+audit has found stale checkable claims in `CLAUDE.md`, in `README.md`, twice in
+`subprojects/view.md` (the split that 014 settled) and once in `subprojects/core.md` (seven homes
+for balance numbers, eight since 003). None was written carelessly. Every one was true when
+written and was overtaken by a later entry that nobody carried back to the sentence it
+invalidated. The cure is not more care; it is re-reading the docs against the log whenever an entry
+is closed, which is now in Master's standing list.

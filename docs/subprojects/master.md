@@ -88,6 +88,11 @@ The things that rot, in the order they rot:
 - **Contracts that have quietly stopped being true.** Contract 5 was violated by the sandbox for
   the whole of the project's life before anybody checked. Re-read the six in `map.md` against the
   code occasionally; that is the only thing that makes them contracts rather than wishes.
+- **Sentences a closed entry invalidated and nobody went back for.** Every stale claim found so
+  far was true when written and overtaken by a later entry — 014 settled the doc split and two
+  passages in `view.md` still argued for it; 003 made an eighth home and `core.md` still said
+  seven. So whenever an entry is flipped to `resolved`, grep the docs for what it superseded
+  before moving on. See entry 019 for the count.
 
 ### 3. Curate `decisions.md`
 
