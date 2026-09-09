@@ -195,6 +195,75 @@ public class TacticsTests
         Assert.Equal(0, appraisal.Prospect, 6);
     }
 
+    [Fact]
+    public void HowSpottedYouAreIsWeighedAsARungAndNeverAsTheNumberBehindIt()
+    {
+        // A sentry behind sandbags, so that going flat takes it out of view altogether and what
+        // that saves is the whole of the shot, weighed by how likely the shot is to come. And a
+        // dim-sighted watcher, so each look moves the certainty by a little and several looks fit
+        // inside one rung of the ladder.
+        var battle = Field(BehindABuilding(sandbags: true));
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast);
+        var watcher = battle.Deploy(
+            "Vance", Side.Player, Node(3, 2),
+            UnitStats.Default with { Initiative = 1, Perception = 2 },
+            HexDirection.SouthWest);
+        battle.Start();
+
+        var flat = UnitPose.Of(sentry) with { Stance = Stance.Prone };
+        Assert.False(battle.Sight.Trace(watcher.Vantage, flat.Vantage).CanSee, "flat behind the wall is the point");
+
+        double Spared() => battle.Tactics.AppraisePosture(sentry, flat, battle.Costs.ChangeStance, [Threat.At(watcher)]).Spared;
+
+        void LookUntil(AwarenessState state)
+        {
+            for (var i = 0; i < 40 && battle.Awareness.Of(watcher.Id, sentry.Id).State < state; i++)
+                battle.Awareness.Notice(watcher, sentry, UnitPose.Of(sentry), battle.Round);
+            Assert.Equal(state, battle.Awareness.Of(watcher.Id, sentry.Id).State);
+        }
+
+        var unaware = Spared();
+
+        LookUntil(AwarenessState.Suspicious);
+        var barely = Spared();
+        var before = battle.Awareness.Of(watcher.Id, sentry.Id).Detection;
+
+        battle.Awareness.Notice(watcher, sentry, UnitPose.Of(sentry), battle.Round);
+        Assert.Equal(AwarenessState.Suspicious, battle.Awareness.Of(watcher.Id, sentry.Id).State);
+        Assert.True(battle.Awareness.Of(watcher.Id, sentry.Id).Detection > before, "the look was supposed to count");
+
+        // One more look, same rung: the sentry cannot tell the difference, so neither may the
+        // scorer. The player is shown the rung and nothing behind it, and a soldier who could
+        // read the number would break cover at exactly the right moment every time.
+        Assert.Equal(barely, Spared(), 9);
+        Assert.True(barely > unaware, "but a new rung is a real change in how much there is to fear");
+    }
+
+    // ---- what a walk tells everybody ---------------------------------------------
+
+    [Fact]
+    public void ALoudRouteIsPricedOnWhoWouldHearItBeforeAnybodyTakesIt()
+    {
+        var (battle, sneak, listener) = Overheard(Loadout.Rifleman) is var (b, gunner, _, hidden)
+            ? (b, gunner, hidden)
+            : throw new System.InvalidOperationException();
+
+        // A short walk and a long one to the same place: the route decides the racket, and the
+        // man in the shed cannot see the sneak but can hear both.
+        var quiet = new UnitPose(Node(0, 1), sneak.Stance, HexDirection.North);
+        var reach = battle.Reachable(sneak);
+        Assert.True(reach.TryGetPath(quiet.Position, out var path));
+
+        var soft = battle.Loudness(sneak, path!);
+        Assert.True(soft > 0);
+
+        var whisper = battle.Tactics.AppraiseMove(sneak, quiet, reach.CostTo(quiet.Position)!.Value, 0, []);
+        var stamping = battle.Tactics.AppraiseMove(sneak, quiet, reach.CostTo(quiet.Position)!.Value, soft * 40, []);
+
+        Assert.Contains(battle.Awareness.WouldHear(sneak, quiet.Position, soft * 40), a => a.Learner == listener);
+        Assert.True(whisper.Spared > stamping.Spared, $"{stamping} should cost more than {whisper}");
+    }
+
     // ---- passing it on -----------------------------------------------------------
 
     [Fact]
@@ -296,9 +365,10 @@ public class TacticsTests
 
         // And it costs the gunner nothing, because what being given away is worth is measured by
         // what the person you gave yourself away to could do about it — and from inside a shed
-        // that is nothing. Somebody who would come looking is worth something and is scored at
-        // nothing, because there is not yet anything in the game that goes and looks. This test
-        // exists to pin the gap rather than to approve of it.
+        // that is nothing. He will come looking now, a unit acts on a marker; but what that is
+        // worth is the best shot he could reach in a turn, and pricing it means a search inside
+        // every shot the scorer weighs. This test exists to pin the gap rather than to approve
+        // of it.
         var told = battle.Tactics.GivenAway(battle.PlanShot(gunner, watched));
         var alone = Alone(Loadout.Rifleman);
 

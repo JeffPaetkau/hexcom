@@ -292,7 +292,7 @@ public sealed class Battle
         if (window.SprungBy is { } springer) StandDown(springer.Side);
 
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
-        if (unit.InPlay) Awareness.Hear(unit, LoudnessOf(unit, path), Round);
+        if (unit.InPlay) Awareness.Hear(unit, Loudness(unit, path), Round);
 
         return new MoveOutcome(true, path, cost, null, window);
     }
@@ -425,8 +425,13 @@ public sealed class Battle
     /// much, so a crawler spending three times the points to cross one hex would be almost
     /// exactly as loud as somebody strolling across it, which is the opposite of the point. The
     /// same reasoning says a slow soldier is not noisier than a quick one over the same route.
+    /// <para>
+    /// Public so a route can be priced before it is taken. <see cref="Move"/> uses exactly this
+    /// figure afterwards, so what an AI or a cursor line was told a route would make is what it
+    /// makes; pair it with <see cref="AwarenessTracker.WouldHear"/> for who would hear it.
+    /// </para>
     /// </remarks>
-    private double LoudnessOf(Unit unit, IReadOnlyList<TraversalLink> path)
+    public double Loudness(Unit unit, IReadOnlyList<TraversalLink> path)
     {
         var surface = path
             .Select(link => Map.GetTile(link.To.Tile)?.Ground.NoiseFactor ?? 1.0)

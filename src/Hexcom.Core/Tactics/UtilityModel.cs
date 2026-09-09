@@ -114,6 +114,26 @@ public sealed record UtilityModel
     public double FutureDiscount { get; init; } = 0.35;
 
     /// <summary>
+    /// What a remembered position is worth, per round it goes unconfirmed past the fresh ones,
+    /// as a share of what it was worth the round before.
+    /// </summary>
+    /// <remarks>
+    /// A marker is where somebody was when contact was last made, and it is right until they
+    /// move, which they do on their own turn. This is the chance they did not. A half, because a
+    /// soldier who has stayed put through one whole turn — a sentry, a man in cover, somebody who
+    /// has just fired and is watching for the answer — is about as likely as not to stay through
+    /// the next, and there is nothing yet to say which kind of soldier the marker belongs to.
+    /// Applied by <see cref="Tactician.Credence"/>, which says which rounds count as fresh and
+    /// why; the argument for the shape of the curve is there too.
+    /// <para>
+    /// Turned up, the AI walks to old news and finds nobody; turned down, it forgets a contact
+    /// the moment it loses the line and never goes round the corner. It is the dial to reach for
+    /// when a unit either chases ghosts or gives up the hunt too soon.
+    /// </para>
+    /// </remarks>
+    public double MarkerDecay { get; init; } = 0.5;
+
+    /// <summary>
     /// How sure somebody has to be before a shot they could take counts as a shot they will take.
     /// </summary>
     /// <remarks>

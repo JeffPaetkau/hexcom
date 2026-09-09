@@ -10,8 +10,9 @@ cover, movement, line of sight, detection, initiative, damage, AI — lives ther
 presentation and input layer that queries the core and draws the answer.
 
 That buys three things: the rules are unit-testable headless, balance can be tuned by running
-thousands of AI-vs-AI matches in seconds, and if the art pipeline ever forces a move off Godot,
-only the view layer is lost.
+AI-vs-AI matches with no window open — a three-a-side match on a radius-sixteen map takes about
+two seconds, so a thousand of them is a lunch break rather than an afternoon — and if the art
+pipeline ever forces a move off Godot, only the view layer is lost.
 
 If you ever find yourself adding `using Godot;` to a file under `src/`, stop.
 

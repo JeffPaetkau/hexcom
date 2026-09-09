@@ -286,6 +286,32 @@ public sealed class AwarenessTracker
         }
     }
 
+    /// <summary>
+    /// What a noise of that loudness, made at that place, would tell each of the source's enemies
+    /// about the source, without making it.
+    /// </summary>
+    /// <remarks>
+    /// The preview of <see cref="Hear"/>, in the shape <see cref="WouldAnnounce"/> already has —
+    /// and the query that was missing from both sides of contract 2. A move's loudness was worked
+    /// out inside the move, after the route was committed, so neither the AI choosing a route
+    /// nor a player looking at one could ask what it would cost them in attention; in a game
+    /// that is mostly about not being found, that is one of the two or three things worth
+    /// knowing about a route before taking it. The place is passed in rather than read off the
+    /// unit because a move is heard from where it ends.
+    /// </remarks>
+    public IEnumerable<Announcement> WouldHear(Unit source, NodeId place, double loudness)
+    {
+        if (loudness <= 0) yield break;
+
+        foreach (var listener in _battle.Enemies(source))
+        {
+            var held = Of(listener.Id, source.Id).Detection;
+            var after = AfterHearing(held, listener, place, loudness);
+
+            if (after > held) yield return new Announcement(listener, held, after);
+        }
+    }
+
     /// <summary>Pass a contact to whoever can be reached, at a discount.</summary>
     private void Relay(Unit caller, Contact source, int round)
     {
