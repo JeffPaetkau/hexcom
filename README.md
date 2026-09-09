@@ -72,8 +72,14 @@ those passes, so the picture shows a situation the enemy made rather than the op
 Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0 --pass 6 --ai
 ```
 
-The sandbox runs a five-unit skirmish on `DemoMaps.Compound`, drawn flat — two of yours outside
-the compound against three inside it, one of them holding the roof:
+`--fit` pulls back until the whole map is in one picture, `--zoom N` sets the hex size in pixels,
+`--look q,r` centres on a hex, and `--scenario name` picks which battle to open.
+
+The sandbox runs a seven-unit skirmish over `content/maps/waystation.hexmap`, drawn flat — three
+of yours on the west road against a garrison holding the crossroads, one on the house roof with
+the radio and one in the watchtower. `--scenario compound` opens the older and much smaller
+fight instead: two of yours outside a walled compound against three inside it. Both maps are read
+from `content/`, by name.
 
 | | |
 |---|---|
@@ -89,6 +95,9 @@ the compound against three inside it, one of them holding the roof:
 | `A` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
 | `H` | hand the hostile side to the AI for every turn, or take it back |
 | `R` | new battle |
+| wheel, `+` / `-` | zoom |
+| middle-drag, arrows | pan |
+| `F` / `G` | see the whole map / go back to whoever is up |
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in.
 Blacked-out tiles are dead ground the active unit has no eyes on, and outlined tiles have cover
@@ -115,15 +124,23 @@ any hex in the active weapon's range bands, whose figures sit beside the weapon 
 line, so you can see the long stretch where a rifle still fires and fires worse before a shot is
 refused — and says how loud the walk there would be and who would hear it.
 
-The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
-alarmed they are — coarse on purpose, though the HUD now names the rung at which they will act on
-it, because a rung nobody can place means nothing. Your own soldier's exposure is reported
-exactly, in the HUD, because that is information about yourself; so is how much of their
-attention the place under the cursor has, which is the figure the wedge can only answer yes or no
-to. Faint red circles are where an enemy *believes*
-one of yours to be; they stop moving when you do. A brighter, outlined wedge is an arc being held
-— yellow for an overwatch, pink for an armed ambush — and the figure beside it in the turn order
-is what that unit has banked to answer with.
+The translucent field round each unit is how much of its attention each part of the ground has,
+drawn at the reach the rules actually judge by. It is graded twice over, because the model is:
+across the arc, from the front through the corner of the eye to the little that gets noticed
+behind, and outwards, gently at first and then sharply, to the forty-five metres past which a
+look is worth nothing at all. The circle is where that happens. It is the reason the map is
+eighty-five metres across and the reason the view can be pulled back — a soldier's attention is
+half the width of this map, and on a compound you can cross in a turn and a half it reached off
+the edge in every direction and told you nothing.
+
+Under each enemy is how alarmed they are — coarse on purpose, though the HUD names the rung at
+which they will act on it, because a rung nobody can place means nothing. Your own soldier's
+exposure is reported exactly, in the HUD, because that is information about yourself; so is how
+much of their attention the place under the cursor has, which is the figure the field draws in
+colour. Faint red circles are where an enemy *believes* one of yours to be; they stop moving when
+you do. An outlined wedge is an arc being held — yellow for an overwatch, pink for an armed
+ambush — drawn out to the weapon's maximum range, with the optimal band marked inside it, and the
+figure beside it in the turn order is what that unit has banked to answer with.
 
 Press `H` and the other side plays itself. Every turn it takes is written up in the block at the
 bottom of the screen, one line per order with the score broken into the terms it was ranked on —
@@ -135,10 +152,12 @@ what it thought. A soldier that can see nobody does nothing, and the block says 
 current limit of the AI, not a fault in the display.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
-rather than alternate. Walk round behind a sentry's wedge and watch it stay unaware while the
-same walk in front of it does not. The spotter on the roof sees most of the map and carries the
-radio, so it is the one worth reaching first — and the ladder costs thirty of fifty points, so
-whoever wants that position gives up their turn to take it.
+rather than alternate. Walk round behind a sentry and watch it stay unaware while the same walk
+in front of it does not. Press `F` and look at the rifleman in the watchtower: it can see all
+three of yours and its circle stops six metres short of them, so it knows nothing and will do
+nothing until somebody walks closer or somebody tells it. The one who would tell it is the
+signaller on the house roof, whose radio reaches the whole side — which is what makes the roof
+the position worth reaching first, and the scout's blade the only thing that takes it quietly.
 
 You drive both sides, so the three reactions are all easy to try. The HUD reports which tick each
 shot went off on and where the target was standing when it landed.
@@ -336,7 +355,8 @@ shot went off on and where the target was standing when it landed.
   shorthand can be shown to add nothing. The demo compound is thirteen statements and comes out
   identical to the version built in C#; the first map at the size the ranges need, 85 m across
   and eighteen hundred tiles, is forty. A map brings its own wall profiles and ground types
-  if it wants them. `content/README.md` is the reference.
+  if it wants them. `content/README.md` is the reference. The sandbox reads its maps this way and
+  no other, so what the game draws and what a headless test loads are the same file.
 
 ## What is not built yet
 

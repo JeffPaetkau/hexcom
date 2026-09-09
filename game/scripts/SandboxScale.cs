@@ -46,23 +46,29 @@ namespace Hexcom.Game;
 public sealed class SandboxScale
 {
     /// <summary>
-    /// How many metres one hex radius is worth. <b>Interim.</b>
+    /// How many metres one hex radius is worth. <b>Decided.</b>
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Nobody has decided this number. 1.0 is what every test in <c>tests/</c> uses — a hex two
-    /// metres corner to corner and 1.73 metres between centres — so adopting it here makes the
-    /// sandbox agree with the only other place the question is answered, which is the most
-    /// defensible thing to do while the question is open. It is an interim value, not a
-    /// decision: the figure belongs to the content territory, and the open question is recorded
-    /// in <c>docs/subprojects/content.md</c> and <c>docs/decisions.md</c> entry 002.
+    /// 1.0 — a hex two metres corner to corner and 1.73 metres between centres. It was an interim
+    /// value here, inherited from what every test in <c>tests/</c> happened to use; it is now the
+    /// chosen figure, and <c>docs/decisions.md</c> entry 007 is where it was chosen and why. The
+    /// short version is that the number cannot be derived from cover, because sight and cover are
+    /// scale-free, so it has to come from what a hex is <i>for</i>: one soldier occupies one and
+    /// walls sit on its edges, which makes it one soldier's standing space and no more.
+    /// </para>
+    /// <para>
+    /// The consequence entry 007 draws is that the ranges were never too long — the map was too
+    /// small. Every range in the game overshot the demo compound by up to a factor of three, and
+    /// <c>content/maps/waystation.hexmap</c> is the map drawn at a size they discriminate on.
     /// </para>
     /// <para>
     /// It is deliberately a constant and not an <c>[Export]</c>, unlike the pixel size beside it.
     /// Rendering scale is a matter of taste and may be fiddled with per scene; world scale is a
     /// rule that the tests, the awareness ranges and eventually the art all have to agree on, and
-    /// a value the inspector can quietly override is not a rule. When content settles the figure
-    /// this is the one line that changes.
+    /// a value the inspector can quietly override is not a rule. The camera moves the pixel one
+    /// every time somebody turns a wheel and must never touch this one — see
+    /// <see cref="SandboxCamera"/>.
     /// </para>
     /// </remarks>
     public const double MetresPerHexSize = 1.0;
@@ -91,7 +97,10 @@ public sealed class SandboxScale
 
     /// <summary>
     /// A length quoted in hex radii, as a length on the canvas. For figures chosen because they
-    /// read well rather than because they mean anything — see <c>BattleView.ConeHexRadii</c>.
+    /// read well rather than because they mean anything — a soldier's footprint by stance, the
+    /// dot on a ladder. Anything the rules quote in metres uses <see cref="MetresToPixels"/>
+    /// instead, and the attention field's reach used to be the loudest thing on this side of the
+    /// line: <c>docs/decisions.md</c> entry 006.
     /// </summary>
     /// <remarks>
     /// Takes and returns <c>float</c>, the width the drawing figures are written in, so that the

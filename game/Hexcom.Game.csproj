@@ -15,6 +15,12 @@
       has leaked into the wrong assembly.
     -->
     <ProjectReference Include="..\src\Hexcom.Core\Hexcom.Core.csproj" />
+    <!--
+      Maps come from content, embedded in that assembly, so the sandbox can ask for one by name
+      without knowing where the repository is on disk. Content is plain .NET for the same reason
+      the core is: a map has to load in a headless test exactly as it loads in a scene.
+    -->
+    <ProjectReference Include="..\content\Hexcom.Content\Hexcom.Content.csproj" />
   </ItemGroup>
 
 </Project>

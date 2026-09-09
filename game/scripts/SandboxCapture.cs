@@ -22,7 +22,16 @@ namespace Hexcom.Game;
 /// <code>
 /// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png
 /// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 4,2 --pass 3 --ai
+/// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot map.png --fit
+/// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --zoom 44
 /// </code>
+/// <para>
+/// The camera flags came in with the waystation and they are not decoration: a map 85 metres
+/// across drawn at 44 pixels to the metre is four screens wide, so without <c>--fit</c> or
+/// <c>--zoom</c> every picture of it is a picture of one corner. <c>--fit</c> is the one to reach
+/// for, because it works the figure out from the map rather than being told it, and it is what
+/// puts an attention field at its true reach in a frame that shows what the reach is against.
+/// </para>
 /// <para>
 /// Not with <c>--headless</c>. The headless driver does not rasterise, so the capture comes back
 /// blank — a window has to open for there to be anything to save. The wait exists because the
@@ -37,17 +46,27 @@ public sealed class SandboxCapture
     private const string HoverFlag = "--hover";
     private const string PassFlag = "--pass";
     private const string AiFlag = "--ai";
+    private const string ScenarioFlag = "--scenario";
+    private const string ZoomFlag = "--zoom";
+    private const string LookFlag = "--look";
+    private const string FitFlag = "--fit";
 
     private readonly string _path;
     private int _framesLeft;
 
-    private SandboxCapture(string path, int framesLeft, NodeId? hover, int passes, bool automatic)
+    private SandboxCapture(
+        string path, int framesLeft, NodeId? hover, int passes, bool automatic,
+        string? scenario, float? hexPixels, Hex? look, bool fit)
     {
         _path = path;
         _framesLeft = framesLeft;
         Hover = hover;
         Passes = passes;
         Automatic = automatic;
+        Scenario = scenario;
+        HexPixels = hexPixels;
+        Look = look;
+        Fit = fit;
     }
 
     /// <summary>
@@ -91,6 +110,27 @@ public sealed class SandboxCapture
     /// </remarks>
     public bool Automatic { get; }
 
+    /// <summary>Which of <see cref="SandboxScenario.All"/> to open, or null for the default.</summary>
+    public string? Scenario { get; }
+
+    /// <summary>
+    /// Hex radius in pixels, or null for the scene's own setting.
+    /// </summary>
+    /// <remarks>
+    /// The one flag here that changes nothing about the battle and everything about the picture.
+    /// At the 44 pixels the compound was drawn with, the honest attention field reaches 1980
+    /// pixels across a 1600 pixel viewport and the whole waystation is 3700 across — so every
+    /// picture of either is a picture of a corner of one. About 18 puts the whole map on screen;
+    /// <see cref="Fit"/> works it out rather than being told.
+    /// </remarks>
+    public float? HexPixels { get; }
+
+    /// <summary>Which hex to centre the picture on, or null to follow whoever is up.</summary>
+    public Hex? Look { get; }
+
+    /// <summary>Whether to pull back far enough to get the whole storey in one picture.</summary>
+    public bool Fit { get; }
+
     /// <summary>The capture this run was asked for, or null for an ordinary interactive run.</summary>
     public static SandboxCapture? Requested()
     {
@@ -101,13 +141,18 @@ public sealed class SandboxCapture
 
         var delay = ValueOf(args, DelayFlag);
         var passes = ValueOf(args, PassFlag);
+        var zoom = ValueOf(args, ZoomFlag);
 
         return new SandboxCapture(
             path,
             int.TryParse(delay, out var frames) ? frames : 4,
             ParseNode(ValueOf(args, HoverFlag)),
             int.TryParse(passes, out var turns) ? turns : 0,
-            args.Contains(AiFlag));
+            args.Contains(AiFlag),
+            ValueOf(args, ScenarioFlag),
+            float.TryParse(zoom, out var pixels) ? pixels : null,
+            ParseNode(ValueOf(args, LookFlag))?.Tile.Hex,
+            args.Contains(FitFlag));
     }
 
     /// <summary>

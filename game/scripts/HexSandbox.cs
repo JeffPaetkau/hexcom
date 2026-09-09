@@ -25,11 +25,12 @@ namespace Hexcom.Game;
 /// testable headless.
 /// </para>
 /// <para>
-/// The node keeps the scenario, the input handling and the state of the moment; the drawing is
-/// split between <see cref="BattleView"/> (the world) and <see cref="BattleHud"/> (the
-/// readouts), which are presentation and interface respectively and are separate types so that
-/// two people can work on them at once. Between the node and both of them sits
-/// <see cref="SandboxScale"/>, which is the only place that knows the difference between a metre
+/// The node keeps the input handling and the state of the moment; the map and the deployments
+/// are <see cref="SandboxScenario"/>'s, and the drawing is split between
+/// <see cref="BattleView"/> (the world) and <see cref="BattleHud"/> (the readouts), which are
+/// presentation and interface respectively and are separate types so that two people can work on
+/// them at once. Between the node and both of them sits <see cref="SandboxCamera"/>, which holds
+/// the <see cref="SandboxScale"/> that is the only place knowing the difference between a metre
 /// and a pixel.
 /// </para>
 /// </remarks>
@@ -48,11 +49,21 @@ public partial class HexSandbox : Node2D
 
     [Export] public int Seed { get; set; } = 7;
 
+    /// <summary>
+    /// Which of <see cref="SandboxScenario.All"/> to open with. Blank takes the first.
+    /// </summary>
+    /// <remarks>
+    /// The waystation, by default. The compound is still here and still reachable, but every
+    /// range in the game overshoots it by a factor of three — <c>docs/decisions.md</c> entry 007
+    /// — so a sandbox that opens on it is a sandbox in which none of the distances mean anything.
+    /// </remarks>
+    [Export] public string Scenario { get; set; } = "";
+
     private readonly Dictionary<NodeId, SightResult> _sight = [];
 
     private Battle _battle = null!;
-    private SandboxScale _scale = null!;
-    private SandboxGeometry _geometry = null!;
+    private SandboxScenario _scenario = null!;
+    private SandboxCamera _camera = null!;
     private BattleView _view = null!;
     private BattleHud _hud = null!;
     private SandboxCapture? _capture;
@@ -60,6 +71,9 @@ public partial class HexSandbox : Node2D
     private ReachabilityResult _reach = null!;
     private NodeId? _hover;
     private int _layer;
+
+    /// <summary>Where a middle-button drag started, while one is in progress.</summary>
+    private Vector2? _dragging;
 
     /// <summary>What the last committed move got shot at with, if anything. Debug readout only.</summary>
     private string _lastWindow = "";
@@ -82,13 +96,10 @@ public partial class HexSandbox : Node2D
     {
         var font = ThemeDB.FallbackFont;
 
-        _scale = new SandboxScale(HexSize);
-        _geometry = new SandboxGeometry(_scale);
-        _view = new BattleView(this, _scale, _geometry, font);
-        _hud = new BattleHud(this, font);
         _capture = SandboxCapture.Requested();
-
-        Position = GetViewportRect().Size * 0.5f;
+        _camera = new SandboxCamera(_capture?.HexPixels ?? HexSize);
+        _view = new BattleView(this, _camera, font);
+        _hud = new BattleHud(this, font);
 
         // A capture has to be reproducible, and input is the one thing here that is not: the
         // window opens under whatever the pointer was already doing, so the cursor readout and
@@ -103,24 +114,20 @@ public partial class HexSandbox : Node2D
     public override void _Process(double delta) => _capture?.Tick(this);
 
     /// <summary>
-    /// Two of ours outside the compound, three of theirs inside it, one holding the roof.
+    /// Load the scenario asked for and put everybody on it.
     /// </summary>
+    /// <remarks>
+    /// The map comes from <c>content/</c> and the deployments do not, because there is nowhere
+    /// yet to put them. Both are <see cref="SandboxScenario"/>'s problem; this method's job is
+    /// only to hand the rules the metres layout and never the pixels one, which is the single
+    /// mistake this file has actually made. See <see cref="SandboxScale"/>.
+    /// </remarks>
     private void NewBattle()
     {
-        // The metres layout, never the pixels one. Handing the drawing scale to the rules is the
-        // one mistake this file has actually made; see SandboxScale.
-        _battle = new Battle(DemoMaps.Compound(), _scale.World, seed: Seed);
+        _scenario = SandboxScenario.ByName(_capture?.Scenario ?? (Scenario.Length > 0 ? Scenario : null));
 
-        // Ours come from the west, looking at the compound. Theirs watch the ground we have to
-        // cross, which is what makes going the long way round the back worth the action points.
-        _battle.Deploy("Vance", Side.Player, Ground(-4, 0), UnitStats.Scout, HexDirection.NorthEast, Loadout.Infiltrator);
-        _battle.Deploy("Orsini", Side.Player, Ground(-3, 2), UnitStats.Trooper, HexDirection.NorthEast, Loadout.Heavy);
-        _battle.Deploy("Sentry", Side.Hostile, Ground(4, 2), facing: HexDirection.SouthWest, loadout: Loadout.Beamer);
-        _battle.Deploy("Watchman", Side.Hostile, Ground(4, -2), facing: HexDirection.NorthWest, loadout: Loadout.Rifleman);
-        _battle.Deploy(
-            "Spotter", Side.Hostile, new NodeId(new Hex(4, 0), layer: 1),
-            UnitStats.Signaller, HexDirection.SouthWest, Loadout.Beamer);
-
+        _battle = new Battle(_scenario.LoadMap(), _camera.Scale.World, seed: Seed);
+        _scenario.DeployInto(_battle);
         _battle.Start();
 
         // A capture takes its cursor, its turn and whether the enemy plays itself from the
@@ -140,6 +147,17 @@ public partial class HexSandbox : Node2D
         _lastWindow = "";
         _hover = _capture?.Hover;
 
+        // The waystation is 85 metres across and does not fit on a screen at a size anybody can
+        // read a tile at, so a battle opens looking at whoever is up rather than at the origin,
+        // which is only where the compound happened to be centred. A capture can ask for either,
+        // and for the whole map at once.
+        var fit = _capture?.Fit ?? false;
+        if (fit) _camera.Fit(_battle.Map, GetViewportRect().Size);
+
+        if (_capture?.Look is { } look) _camera.LookAt(look);
+        else if (!fit && _battle.Active is { } up) _camera.LookAt(up.Position.Tile.Hex);
+
+        CameraMoved();
         Recalculate();
     }
 
@@ -184,14 +202,20 @@ public partial class HexSandbox : Node2D
         Settle(keepRecord);
         if (_battle.Active is { } next && next != before) _layer = next.Position.Layer;
         Recalculate();
+        FollowActive();
     }
-
-    private static NodeId Ground(int q, int r) => new(new Hex(q, r), 0);
 
     /// <summary>
     /// Re-ask the rules everything the next frame will be drawn from. Called after anything that
     /// could have changed an answer, which is every committed action.
     /// </summary>
+    /// <remarks>
+    /// The sight sweep is the expensive part and it is proportional to the storey, not to what
+    /// is on screen: eighteen hundred traces on the waystation's ground floor, measured at 25 ms
+    /// once the code is warm. That is well inside a frame for something that runs on an action
+    /// rather than on a redraw, which is why moving the camera does not trigger it — the camera
+    /// changes what is drawn and never what is true, so panning and zooming only queue a redraw.
+    /// </remarks>
     private void Recalculate()
     {
         var active = _battle.Active;
@@ -215,7 +239,9 @@ public partial class HexSandbox : Node2D
 
     /// <summary>The moment as the drawing sees it. Assembled once, read by both halves.</summary>
     private SandboxFrame Frame()
-        => new(_battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto);
+        => new(
+            _battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto,
+            _scenario, _camera.Visible(GetViewportRect().Size), _camera.ShowsTileDetail);
 
     // ---- input -----------------------------------------------------------------
 
@@ -223,12 +249,35 @@ public partial class HexSandbox : Node2D
     {
         switch (@event)
         {
-            case InputEventMouseMotion:
+            case InputEventMouseMotion motion:
             {
+                // A drag moves the map under the cursor and does not move the cursor's readout
+                // with it: while the middle button is down the pointer is holding ground, not
+                // pointing at it.
+                if (_dragging is { } from)
+                {
+                    _camera.Pan(motion.Position - from);
+                    _dragging = motion.Position;
+                    CameraMoved();
+                    break;
+                }
+
                 var node = NodeUnderMouse();
                 if (node != _hover) { _hover = node; QueueRedraw(); }
                 break;
             }
+
+            case InputEventMouseButton { ButtonIndex: MouseButton.Middle } drag:
+                _dragging = drag.Pressed ? drag.Position : null;
+                break;
+
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown } wheel:
+                _camera.ZoomAbout(
+                    wheel.ButtonIndex == MouseButton.WheelUp ? 1 : -1,
+                    SandboxScale.FromScreen(GetLocalMousePosition()));
+                CameraMoved();
+                _hover = NodeUnderMouse();
+                break;
 
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }:
                 if (NodeUnderMouse() is { } target && _battle.Active is { } mover)
@@ -339,10 +388,83 @@ public partial class HexSandbox : Node2D
                 Recalculate();
                 break;
 
+            case Key.Left or Key.Right or Key.Up or Key.Down:
+                _camera.Pan(PanStep * key switch
+                {
+                    Key.Left => Vector2.Right,      // the map goes right, so the view goes left
+                    Key.Right => Vector2.Left,
+                    Key.Up => Vector2.Down,
+                    _ => Vector2.Up,
+                });
+                CameraMoved();
+                break;
+
+            case Key.Equal or Key.KpAdd:
+                _camera.ZoomBy(1);
+                CameraMoved();
+                break;
+
+            case Key.Minus or Key.KpSubtract:
+                _camera.ZoomBy(-1);
+                CameraMoved();
+                break;
+
+            case Key.F:
+                _camera.Fit(_battle.Map, GetViewportRect().Size);
+                CameraMoved();
+                break;
+
+            case Key.G:
+                if (_battle.Active is { } here)
+                {
+                    _camera.LookAt(here.Position.Tile.Hex);
+                    CameraMoved();
+                }
+                break;
+
             case Key.R:
                 NewBattle();
                 break;
         }
+    }
+
+    /// <summary>How far one arrow key moves the view, in pixels.</summary>
+    private const float PanStep = 160f;
+
+    /// <summary>Point the node at wherever the camera now is, and redraw.</summary>
+    /// <remarks>
+    /// The node's own <c>Position</c> is the pan: the grid runs in both directions from the
+    /// origin, so putting a canvas point in the middle of the viewport is a matter of offsetting
+    /// the whole node. That is what the single <c>Position = viewport / 2</c> in <c>_Ready</c>
+    /// used to do, for a map whose middle was the origin and which fitted on the screen anyway.
+    /// The hit test reads <c>GetLocalMousePosition</c>, which is relative to this same offset,
+    /// so it needs nothing said to it.
+    /// </remarks>
+    private void CameraMoved()
+    {
+        Position = _camera.ScreenOffset(GetViewportRect().Size);
+        QueueRedraw();
+    }
+
+    /// <summary>
+    /// Keep whoever is up on screen, and only if they are not already.
+    /// </summary>
+    /// <remarks>
+    /// A camera that recentres after every action takes the map away from a player who was
+    /// deliberately looking somewhere else — at the ground they are about to cross, usually. So
+    /// the test is whether the next soldier is comfortably in shot rather than whether they are
+    /// in the middle of it, and the margin is negative for that reason.
+    /// </remarks>
+    private void FollowActive()
+    {
+        if (_battle.Active is not { } up) return;
+        if (up.Position.Layer != _layer) return;
+
+        var at = SandboxScale.ToScreen(_camera.Geometry.NodeCentre(_battle.Map, up.Position));
+        if (_camera.Visible(GetViewportRect().Size, marginHexRadii: -3f).HasPoint(at)) return;
+
+        _camera.LookAt(up.Position.Tile.Hex);
+        CameraMoved();
     }
 
     /// <summary>The next arc in the cycle, or null to stop holding one.</summary>
@@ -363,12 +485,12 @@ public partial class HexSandbox : Node2D
         // Pixels throughout: the cursor is a screen thing, and the canvas layout is what turns
         // it into a hex. The rules are never asked where the mouse is.
         var screen = GetLocalMousePosition();
-        var address = new TileAddress(_scale.Canvas.HexAt(SandboxScale.FromScreen(screen)), _layer);
+        var address = new TileAddress(_camera.Scale.Canvas.HexAt(SandboxScale.FromScreen(screen)), _layer);
         if (!_battle.Map.HasTile(address)) return null;
 
         var regions = _battle.Map.RegionsOf(address);
         foreach (var region in regions)
-            if (SandboxGeometry.ContainsPoint(_geometry.RegionPolygon(address, region, inset: 0f), screen))
+            if (SandboxGeometry.ContainsPoint(_camera.Geometry.RegionPolygon(address, region, inset: 0f), screen))
                 return new NodeId(address, region.Index);
 
         return new NodeId(address, regions[0].Index);
@@ -386,8 +508,9 @@ public partial class HexSandbox : Node2D
 
         _view.Draw(frame);
 
-        // The node is centred on the viewport so the grid can run in both directions, so the
-        // panels have to be pushed back out to the corners they belong in.
+        // The node is offset by the camera so the grid can run in both directions, so the panels
+        // have to be pushed back out to the corners they belong in. They are the one thing on
+        // screen the camera must not move.
         _hud.Origin = -Position;
         _hud.Draw(frame, GetViewportRect().Size);
     }

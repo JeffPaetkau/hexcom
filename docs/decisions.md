@@ -215,7 +215,7 @@ little, and that is your call, not view's.
 ---
 
 ## 006 — The interface cannot show the range the rules judge by
-**2026-09-07** · **Raised by** view · **For** view (later), gated on content · **Status** open — the gate lifted with 024; View to draw it
+**2026-09-07** · **Raised by** view · **For** view (later), gated on content · **Status** resolved by 035 — the gate lifted with 024 and the field is drawn at its true reach
 
 The attention cone each soldier is drawn with is 3.4 hex radii long, and the held-arc wedge 5.2.
 Both are legibility figures picked because they look right. Neither has any relationship to
@@ -931,8 +931,8 @@ nought against a contact already held `Engaged`.
 ---
 
 ## 024 — A map is a text file: the corner graph written down, plus shorthand that lowers to it
-**2026-09-08** · **Raised by** content · **For** view, core and master · **Status** open (view's
-and core's halves; the decision itself is made; master's half resolved by 029)
+**2026-09-08** · **Raised by** content · **For** view, core and master · **Status** open (core's half;
+the decision itself is made; master's half resolved by 029 and view's by 035)
 
 The `.hexmap` format exists, in `content/`, with a reader, a writer and two maps. The brief in
 `subprojects/content.md` posed two candidates and asked for the choice and the rejected
@@ -1506,3 +1506,105 @@ per decision. What is built counts allies inside the radius at what they are wor
 will *decline* a grenade that would catch its own; it will not go looking for the throw that
 avoids them. Same shape as every other limit of a one-step search, and the same profile-first
 advice applies.
+
+---
+
+## 035 — The waystation is loaded and the attention cone is drawn at its true reach, because the view learned to move
+**2026-09-08** · **Raised by** view · **For** view, content and core · **Status** resolved; closes 006, and 024's half for View
+
+Entry 006 said the attention cone reported a soldier's direction honestly and its range not at
+all — 3.4 hex radii, picked because it looked right, against an `AwarenessModel.SightRangeMetres`
+of 45 metres it had no relation to. It said the honest version could not be drawn, because at the
+viewing distance of the day 45 metres was 1980 pixels against a 1600 pixel viewport, a
+screen-filling wash showing nothing. It said to come back when the metres-per-hex figure was
+settled. Entry 007 settled it and entry 024 supplied a map big enough for it to matter.
+
+**Both were necessary and neither was sufficient. The missing half was a camera.** 45 metres is
+only a wash if you insist on standing four metres from the map, and the sandbox did, because it
+had never needed to do otherwise — the demo compound is radius 6 and fits on a screen twice over.
+Seen at the zoom the whole waystation fits in, the honest field is about half the width of the
+map, which is what it is. The cone was never too long. The view was too close.
+
+**What is drawn now.** Not a wedge with a different number in it. `AwarenessTracker` says two
+things the old shape said neither of:
+
+- **Attention is graded.** `AttentionOn` gives the front arc its full rate, the peripheral band
+  `PeripheralAcuity` of 0.45, and everything behind `RearAcuity` of 0.08 — not nought, because
+  people do turn round. The gap between the last two is the entire reason flanking works.
+- **Range tells against you gently and then sharply.** `LookGain` scales by `1 - (d/range)²`.
+
+So the field is the product of those two terms, in six rings across four arcs, out to the sight
+range, with a circle marking where a look stops being worth anything at all. Nested sectors
+rather than annuli, outermost first, each filled at the alpha that brings the composite to the
+model's value for that ring — sectors are convex and Godot fills them exactly, and the
+arithmetic is one line. The held arc gets the same treatment against a different number: an
+overwatch has no range of its own, it just needs a shot, so it is drawn to
+`WeaponProfile.MaxRange` with the optimal band marked inside it. A slug rifle holds an arc 55 m
+deep and a pulse carbine 42. On the compound both reached clean off the map.
+
+**The camera is `SandboxCamera`, and it holds the scale.** Zoom is `SandboxScale.HexPixels` and
+is rebuilt on every notch; `MetresPerHexSize` is a constant and is never touched, which is
+contract 5 restated as a class boundary. The node's own `Position` is the pan, which is what the
+single `Position = viewport / 2` in `_Ready` already was for a map whose middle was the origin.
+Wheel, middle-drag, arrows, `+`/`-`, `F` for the whole map, `G` for whoever is up. The camera
+changes what is drawn and never what is true, so moving it queues a redraw and re-asks the rules
+nothing.
+
+**Two legibility judgements are in here and they are judgements, not physics.** Eighteen hundred
+tiles cannot all carry a cost label at a size anybody can read, so below 22 pixels to the hex the
+tile detail goes — labels, the grid, the dead-ground wash — and the ground, the walls, the cover
+outlines and the soldiers stay. And every soldier attends to everything within 45 m at some rate,
+so seven fields at one weight is a wash whatever the falloff does: the active soldier and every
+hostile are drawn at full weight, our own idle soldiers faintly. Both are about which of several
+true things a reader is being asked to read, which is interface work. Neither changes a number.
+
+**The waystation is what the sandbox opens with.** `Hexcom.Game` references `Hexcom.Content` and
+the map is `MapLibrary.Load`, so `DemoMaps` is no longer called from `game/` at all — the
+compound is still there, still reachable as `--scenario compound`, and now loaded by name from
+`content/maps/compound.hexmap` rather than built in C#. That is 024's *For View* paragraph done.
+The deployments are still hard-coded, because 024 says the map format deliberately does not hold
+them and 029 makes the mission file Content's once Core has said what an objective is. They are
+gathered into `SandboxScenario` so that when there is a file to move them to, the move is a
+deletion rather than surgery on the node.
+
+**The fight, measured on the opening frame at seed 7.** Three of ours on the west road about 20
+hexes out, a garrison holding the crossroads:
+
+| | |
+|---|---|
+| sentry outside the west gate | 25–27 m; one look at any of ours is worth 35–37 against a `Searching` bar of 50 |
+| signaller on the house roof | 35–37 m, and it has the radio, so `CanReach` gives whatever it works out to the whole side |
+| rifleman in the watchtower | sees all three of ours and one look is worth **nought** — 54–56 m is past the 45 m sight range |
+| the ridge, 1.5 m up | the step onto it is a climb: five hexes and 50 AP of 50, a whole turn, for a firing position that sees the tower at 46 m |
+| the bridge | 5 m from the sentry, out of sight of both the roof and the barn, and the loudest ground on the map |
+
+The third row is the one worth keeping. A capture shows the tower's 45-metre circle stopping six
+metres short of three soldiers it can see perfectly well; eight passes of `--ai` later the sentry
+has gone `ALERTED` and the man in the barn `SUSPICIOUS` off the radio, while the bottom block
+says *Watchman (AI): nothing worth doing, banked 35*. What made the tower sit still has not been
+traced through the scorer and is not claimed here — the measured fact is the range, and the
+readout is what a reader sees beside it. Either way it is a detection model doing something a
+smaller map could not have shown, which is what entry 006 was asking for.
+
+**For Content.** Row 5 of 029's table is the waystation fought over. This is a fight on it, and
+the figures above are the first taken from one — but they are opening-frame geometry, who can see
+whom and what it costs to get somewhere, and not balance findings. Two things did come out of
+drawing it that belong to whoever authors the next map. The ridge is reachable in one turn only
+at its eastern foot, because the 1.5 m step is a climb everywhere else and the one cut path at
+`-8,-6` is well forward; that is a good shape and it is not obvious from the file. And a profile
+a map declares for itself gets the default grey wall style, because `BattleView.StyleFor`
+switches on well-known ids — the waystation's `hedge` now has a case, and the next map to invent
+a profile will be grey until somebody adds one. **A map that brings its own kit brings no colour
+with it.**
+
+**For Core.** Nothing needed, one figure recorded. A sight sweep over the waystation's ground
+floor is 1804 traces; four consecutive sweeps in one process took 192, 141, 40 and 25 ms, so call
+it 25 ms warm and most of the rest jitting. Loading the map is about 140 ms and building the
+battle about 50. All of that is comfortable for something that runs on an action rather than on a
+redraw, and it is why the sandbox still asks about every tile on the storey rather than only
+about the ones on screen.
+
+**What this does not do.** It does not make the capture able to act — that is still the job
+`view.md` had, and a picture of one of ours mid-approach with a sentry reacting to it still needs
+a hand on the keyboard. It does not touch the greybox, which rewrites `game/` and will want a
+camera that is a `Camera2D` rather than an offset on a node.
