@@ -27,6 +27,12 @@ public enum OrderKind
 
     /// <summary>Change how you are carrying yourself.</summary>
     Stance,
+
+    /// <summary>Lob a charge at a piece of ground.</summary>
+    Throw,
+
+    /// <summary>Call a contact in, so somebody who can act on it knows.</summary>
+    Shout,
 }
 
 /// <summary>
@@ -49,7 +55,9 @@ public sealed record Order(
     OverwatchArc? Arc = null,
     HexDirection? Facing = null,
     Stance? Stance = null,
-    Appraisal? Opens = null)
+    Appraisal? Opens = null,
+    BlastPlan? Throw = null,
+    Unit? About = null)
 {
     /// <summary>What this was ranked on: what it does, plus what it sets up.</summary>
     public double Score => Worth.Score + (Opens?.Score ?? 0);
@@ -60,6 +68,8 @@ public sealed record Order(
         OrderKind.Fire => $"{Shot?.Mode.Name} at {Shot?.Target.Name} ({Score:+0.00;-0.00})",
         OrderKind.Overwatch => $"watch {Facing} on a {Arc?.Name} arc ({Score:+0.00;-0.00})",
         OrderKind.Face => $"turn to {Facing} ({Score:+0.00;-0.00})",
+        OrderKind.Throw => $"{Throw?.Item.Name} at {Throw?.Aimed} ({Score:+0.00;-0.00})",
+        OrderKind.Shout => $"call {About?.Name} in ({Score:+0.00;-0.00})",
         _ => $"go {Stance} ({Score:+0.00;-0.00})",
     };
 }
@@ -170,9 +180,11 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
         var inView = threats.Where(t => t.EyesOn).ToList();
 
         foreach (var order in Shots(unit, UnitPose.Of(unit), inView, ApSource.Turn)) yield return order;
+        foreach (var order in Throws(unit, threats)) yield return order;
         foreach (var order in Moves(unit, threats)) yield return order;
         foreach (var order in Postures(unit, threats)) yield return order;
         foreach (var order in Watches(unit, threats)) yield return order;
+        foreach (var order in Words(unit, threats)) yield return order;
     }
 
     // ---- what is on the table --------------------------------------------------
@@ -197,6 +209,74 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
 
                 yield return new Order(OrderKind.Fire, _judge.Appraise(plan) * threat.Credence, Shot: plan);
             }
+    }
+
+    /// <summary>
+    /// Every charge worth lobbing, which is one per threat: at the ground under it.
+    /// </summary>
+    /// <remarks>
+    /// A grenade is aimed at a place rather than a person, and that changes two things about the
+    /// search.
+    /// <para>
+    /// <b>It may be thrown at a marker</b>, unlike a shot. The reason a commander never fires at
+    /// one is that <see cref="Battle.Fire"/> resolves against where the target really is, so
+    /// carrying the shot out would have the battle correcting the guess for free. A throw has no
+    /// such problem: it is aimed at a piece of ground, the ground does not move, and if the
+    /// soldier who was standing on it has gone then the grenade is simply wasted. The forecast is
+    /// built against the believed threats and counted at their credence, so the decision is made
+    /// on the belief and the world answers it.
+    /// </para>
+    /// <para>
+    /// <b>Only the tile under each threat is considered.</b> Offsetting the landing point to
+    /// catch two enemies at once, or to keep one of your own out of the radius, is a real
+    /// decision and a real search — every node within throwing range crossed with everybody in
+    /// the blast — and it is not here. What is here counts allies inside the radius at what they
+    /// are worth, so the commander will decline a grenade that would catch its own; it will not
+    /// go looking for the throw that avoids them.
+    /// </para>
+    /// </remarks>
+    private IEnumerable<Order> Throws(Unit unit, IReadOnlyList<Threat> threats)
+    {
+        if (unit.ThrownLeft <= 0 || unit.Thrown is null) yield break;
+
+        // Believed enemies where they are believed to be, and your own squad where it is. A
+        // soldier knows where its own side is standing; that is not a leak, it is a radio.
+        var candidates = threats
+            .Select(t => new BlastCandidate(t.Unit, t.Where, t.Credence))
+            .Concat(battle.Allies(unit).Select(BlastCandidate.At))
+            .Append(BlastCandidate.At(unit))
+            .ToList();
+
+        foreach (var threat in threats)
+        {
+            var plan = battle.PlanThrow(unit, threat.Where.Position, unit.Thrown, candidates);
+            if (!plan.CanThrow) continue;
+
+            yield return new Order(OrderKind.Throw, _judge.Appraise(plan), Throw: plan);
+        }
+    }
+
+    /// <summary>
+    /// Calling a contact in, which is worth what somebody else could do about it.
+    /// </summary>
+    /// <remarks>
+    /// Scored by <see cref="Tactician.AppraiseWord"/>, which has been able to price this since
+    /// before there was any way to do it — for a while the search ranked an action the battle had
+    /// no method for. It is worth a great deal to a watchman one rung short of firing down an arc
+    /// it is already holding, and nothing at all to a squad that already has the contact, so it
+    /// generates a candidate that is usually beaten and occasionally the best thing available.
+    /// </remarks>
+    private IEnumerable<Order> Words(Unit unit, IReadOnlyList<Threat> threats)
+    {
+        var cost = unit.Stats.Costs.Posturing(battle.Costs.Shout);
+        if (cost > unit.ActionPoints || threats.Count == 0) yield break;
+        if (!battle.Awareness.Earshot(unit).Any()) yield break;
+
+        foreach (var threat in threats)
+            yield return new Order(
+                OrderKind.Shout,
+                _judge.AppraiseWord(unit, threat.Unit, threat.Where, cost),
+                About: threat.Unit);
     }
 
     /// <summary>
@@ -351,6 +431,8 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
         OrderKind.Fire => battle.Fire(order.Shot!.Target, order.Shot.Mode).Fired,
         OrderKind.Overwatch => battle.SetOverwatch(order.Arc!, order.Facing),
         OrderKind.Face => battle.Face(order.Facing!.Value),
+        OrderKind.Throw => battle.Throw(order.Throw!.Aimed, order.Throw.Item).Went,
+        OrderKind.Shout => battle.Shout(order.About!),
         _ => battle.ChangeStance(order.Stance!.Value),
     };
 }

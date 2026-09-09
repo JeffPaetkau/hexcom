@@ -101,6 +101,18 @@ public sealed record MovementCosts
     /// </summary>
     public int TurnInPlace { get; init; } = 2;
 
+    /// <summary>
+    /// Calling a contact in to whoever can hear you, on your own turn.
+    /// </summary>
+    /// <remarks>
+    /// Cheap, because it is the thing you do when nothing else is worth doing and a shout nobody
+    /// can afford is not a shout. It lived on <c>ReactionModel</c> while shouting was only ever a
+    /// reaction, and that record said in as many words that it would move here the moment somebody
+    /// could do it on their own turn. Somebody now can — <c>Battle.Shout</c> — so it has, and
+    /// there is still exactly one of it. See <c>docs/decisions.md</c> entry 012.
+    /// </remarks>
+    public int Shout { get; init; } = 2;
+
     /// <summary>Height change a unit can absorb mid-stride without it counting as a climb.</summary>
     public double StepHeight { get; init; } = 0.4;
 

@@ -179,16 +179,6 @@ public sealed record ReactionModel
     public bool Surprise { get; init; } = true;
 
     /// <summary>
-    /// What calling a contact in costs. Cheap: it is the thing you do when nothing else is worth
-    /// doing, and a reaction nobody can afford is not a reaction.
-    /// </summary>
-    /// <remarks>
-    /// Lives here rather than on the movement price list because shouting is only a reaction so
-    /// far. It moves across the moment somebody can do it on their own turn.
-    /// </remarks>
-    public int ShoutCost { get; init; } = 2;
-
-    /// <summary>
     /// What arming against an agreed trigger costs, on top of the shot being held back.
     /// </summary>
     /// <remarks>

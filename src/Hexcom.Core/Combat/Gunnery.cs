@@ -222,15 +222,22 @@ public sealed class Gunnery(GunneryModel? model = null)
     /// so overwatching pays best on a shot that was plausible anyway and does not turn a
     /// hopeless one into a good one.
     /// </param>
+    /// <param name="inReach">
+    /// Whether the weapon can reach at all, for the weapons whose reach is not a number of
+    /// metres. Left null the question is settled by <see cref="WeaponProfile.Reaches"/>, which is
+    /// the right answer for everything that is fired and no answer at all for a blade — that one
+    /// is adjacency, the graph knows it, and <see cref="Battles.Battle.InReach"/> asks.
+    /// </param>
     public double HitChance(
         WeaponProfile weapon,
         FireMode mode,
         SightResult sight,
         Stance shooterStance,
-        double aimBonus = 1.0)
+        double aimBonus = 1.0,
+        bool? inReach = null)
     {
         if (!sight.CanSee) return 0;
-        if (sight.Distance > weapon.MaxRange) return 0;
+        if (!(inReach ?? weapon.Reaches(sight.Distance))) return 0;
         if (sight.Exposure <= 0) return 0;
 
         var chance = weapon.Accuracy
@@ -245,8 +252,13 @@ public sealed class Gunnery(GunneryModel? model = null)
     }
 
     /// <summary>Full accuracy out to the optimal range, then falling away to a floor at maximum.</summary>
+    /// <remarks>
+    /// An adjacency weapon has no falloff to describe. Everything it can reach is point blank,
+    /// and the metres on its profile are a description of an arm rather than a range band.
+    /// </remarks>
     public double RangeFactor(WeaponProfile weapon, double distance)
     {
+        if (weapon.Reach == WeaponReach.Adjacent) return 1.0;
         if (distance <= weapon.OptimalRange) return 1.0;
         if (distance >= weapon.MaxRange) return Model.LongRangeFloor;
 

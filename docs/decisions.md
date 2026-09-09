@@ -298,7 +298,7 @@ edges of that hex.
 ---
 
 ## 008 — Melee is priced in metres, and at the hex size just chosen it does not reach
-**2026-09-07** · **Raised by** content · **For** core · **Status** open
+**2026-09-07** · **Raised by** content · **For** core · **Status** resolved by 031
 
 `PowerBlade` has `OptimalRange: 2.0, MaxRange: 2.0`, and `Gunnery` treats that like any other
 weapon: `if (sight.Distance > weapon.MaxRange) return 0`, where `Distance` is a three-dimensional
@@ -450,7 +450,7 @@ own is exactly the quiet erosion the contracts exist to prevent.
 ---
 
 ## 012 — Three things the AI will want that no query exposes, so the interface cannot show them either
-**2026-09-07** · **Raised by** view · **For** core · **Status** open — item 1 resolved by 021, items 2 and 3 still open
+**2026-09-07** · **Raised by** view · **For** core · **Status** resolved — item 1 by 021, items 2 and 3 and the note in passing by 032 and 033
 
 Found by the audit in entry 010. All three are contract 2 in the ordinary direction: a query
 neither side has, where the interface not having it is the symptom and the AI not having it is
@@ -699,7 +699,7 @@ invalidated. The cure is not more care; it is re-reading the docs against the lo
 is closed, which is now in Master's standing list.
 
 ## 020 — Three findings have no brief to live in yet, and one README section nobody was asked to fix
-**2026-09-08** · **Raised by** master · **For** core and view · **Status** open for core; view's half resolved by 023
+**2026-09-08** · **Raised by** master · **For** core and view · **Status** resolved — core by 031 and 032, view's half resolved by 023
 
 From the standing audit of the log against the briefs. Each item below is already open in an
 earlier entry; this one exists because none of them is named by the brief of the territory it is
@@ -1140,7 +1140,7 @@ bible is careful to argue for a shape rather than to specify a system somebody e
 ---
 
 ## 028 — `README.md` still ends by saying nobody goes and looks, and entry 021 says they do
-**2026-09-08** · **Raised by** setting · **For** core · **Status** open
+**2026-09-08** · **Raised by** setting · **For** core · **Status** resolved by 033
 
 Found while merging `setting/bible`, which touched the section above this one and could not help
 reading it.
@@ -1302,3 +1302,207 @@ side-wide only for a unit with a set; a relayed contact arrives at 0.6, so 75 be
 below Searching, which is the bible's *a bearing, not a target* as arithmetic. What is missing is
 anything that records the moment a hostile with a set has registered somebody and had a turn in
 which to use it. Everything in that sentence but the record is a query that exists.
+---
+
+## 031 — Melee means adjacent, and the movement graph is the instrument
+**2026-09-08** · **Raised by** core · **For** all · **Status** resolved
+
+Entry 008 asked for one of three things — reach measured along the ground, an adjacency test, or
+a flag on `WeaponProfile` letting the graph answer — and said content had no view on which. It is
+the third, and it is the third because entry 008 itself made the argument against the first two:
+*a number in metres is the wrong instrument*.
+
+`WeaponProfile` now carries a `Reach`, either `Ranged` or `Adjacent`. A ranged weapon is measured
+as it always was. An adjacency weapon is not measured at all: `Battle.InReach` asks
+`Battle.Adjacent`, which asks the movement graph whether the two nodes are one traversal apart.
+`PowerBlade` is the only adjacency weapon so far; its two range figures stay on the profile as a
+description of an arm and nothing reads them.
+
+**Why the graph rather than the grid.** Because the graph already knows everything the answer
+needs, and knows it for the same reasons melee should care about it. There is no link through a
+building face, so a blade does not reach through one. There is no link up a three metre face,
+because `MaxClimb` is 2.2, so a blade does not reach a man on a roof. There *is* a link up a two
+metre ledge and over a waist-high wall you could vault, so a blade reaches both. That is exactly
+the behaviour entry 008 asked to preserve — *you can stab someone on a low ledge and not someone
+on a roof* — arrived at on purpose rather than by accident, and it is pinned by a theory at 2.0 m
+and 3.0 m in `OrdnanceTests`.
+
+**What this closes.** Entry 008, and the first of the three items entry 020 routed to Core. The
+figures in 008's table are no longer reachable states: the standing-versus-crouching case that
+failed by thirteen millimetres is now a question with no millimetres in it. It also removes the
+quiet constraint 008 found, where melee alone was voting on the hex size settled by 007 — nothing
+about a blade now changes if the hex changes.
+
+**What it costs.** `Gunnery.HitChance` takes an optional `inReach` so that the verdict can be
+supplied by somebody with a map, and `Gunnery.RangeFactor` returns one flat for an adjacency
+weapon. Both default to the old behaviour, so anything calling `Gunnery` directly about a rifle is
+unaffected and anything calling it directly about a blade is asking the wrong question — which is
+said in as many words on both.
+
+---
+
+## 032 — There is a ninth home for balance numbers, and four of the eight have moved
+**2026-09-08** · **Raised by** core · **For** master, view, content · **Status** open — needs
+[map.md](map.md) contract 4 updating
+
+Frozen contract 4 names eight homes plus the kit records. Building grenades and mines changed
+five things about that list, and a contract change needs an entry saying what and why. This is it.
+Master owns `map.md`; Core owns `design.html` and has updated the section there.
+
+**1. `BlastModel` is new, and is the ninth home.** It holds two numbers: how high above the floor
+a charge goes off, and how much of one somebody with no line to the burst still catches. Folding
+them into `GunneryModel` was considered and rejected — nothing about a blast is a hit chance, a
+range band or a cover penalty, and a record called *the dials on shooting* holding the burst
+height of a grenade is a record whose name has stopped describing it.
+
+It is deliberately short, and two things a reader will go looking for are not in it. **Falloff is
+not a dial**: a blast runs from full at the centre to nothing at the radius in a straight line,
+because the radius is a ring on a map and a player has to be able to read the consequence of
+standing inside it off that ring. **What a stance is worth against a blast is not a dial either**:
+it is derived from the silhouette heights in contract 6, as `BodyHeight` over the standing one, so
+a prone soldier catches a quarter of the wave and the figure moves if the stance heights ever do.
+That is the second number in this project derived from a physical constant rather than argued
+into place, and it is the pattern to prefer.
+
+**2. `ThrownProfile` joins `Loadout` / `WeaponProfile` / `FireMode` as kit.** A charge is content:
+damage, radius, how far it throws, how high it lofts, what it costs, how loud it is. There are
+three — a frag grenade, a plasma charge and a claymore — and `Loadout` now carries one kind and a
+count of them.
+
+**3. `UtilityModel` gains two.** `ChargeValue`, what it is worth to still have a charge, and
+`FriendlyHarm`, what a point of damage done to your own side is worth against a point done to
+theirs. The first is not optional decoration: a charge is the first thing in this game that runs
+out, and a scorer pricing only the action points threw both grenades at the first soldier it saw.
+It measurably did — four commander tests changed behaviour, which is how it was found. Set at
+about one clean rifle shot, which is the figure that makes a grenade the answer to the shot you
+*cannot* take rather than a better version of the one you can.
+
+**4. `ReactionModel.ShoutCost` has moved to `MovementCosts.Shout`.** Its own remarks said it lived
+on the reaction model only while shouting was only ever a reaction, and that it would move across
+the moment somebody could do it on their own turn. `Battle.Shout` exists, so it has. There is
+still exactly one of it, and `ReactionWindow` reads the new one. This is the second half of entry
+012 item 3.
+
+**5. `CostProfile` gains `Posture`.** The note in passing at the end of entry 012 was right and it
+was a bug rather than a decision: `Battle.Face` and `Battle.ChangeStance` charged list price while
+`Move` and `Fire` went through the profile, so a scout at four fifths movement paid full price to
+turn and to drop, against the one rule `core.md` states plainly about prices. Both now go through
+`CostProfile.Posturing`, and so does every posture option inside a reaction window — where it
+matters most, because what a reactor pays is also how long it takes. The multiplier is one on
+every archetype, deliberately: the point is that posture *can* now be priced per soldier, not that
+anybody currently is.
+
+**What Master might do.** Update contract 4 in [map.md](map.md) to nine homes and name
+`ThrownProfile` alongside the other kit records. Nothing else in the map is affected; no path
+ownership changed.
+
+---
+
+## 033 — Grenades and mines have landed, and a charge is aimed at a place
+**2026-09-08** · **Raised by** core · **For** view, content, master · **Status** resolved
+
+Build order 05 is done. Two new queries, two new turn actions, one new thing on the reaction
+timeline, and the AI takes all of it. What follows is what the other territories can now draw,
+author and rely on.
+
+**The arc is a second trace, and it lives beside the first.** `LobSolver` shares
+`SightSolver.Crossings` — now public, and a public `WallCrossing` record with it — and parts
+company immediately after: sight asks whether the top of each wall is above the *line*, an arc
+asks whether it is above the *parabola*. The free parameter is the apex above the straight line
+between hand and landing point, and a soldier throws as flat as the obstacles allow, so the solver
+takes the lowest apex that clears everything and the thing fails only when that exceeds
+`ThrownProfile.MaxArc`. On open ground the apex is nought and the arc degenerates into the sight
+line, which is a useful thing to be able to check.
+
+The consequence worth knowing before drawing it: **the closer you are standing to the wall, the
+higher you have to throw**, because the divisor collapses toward the ends of the throw. Hugging a
+three metre wall and throwing seventeen metres needs seven and a half metres of arc and fails; the
+same wall halfway along the same throw needs about two. A throw that fails drops on the near side
+of the wall it clipped, which is usually at the thrower's own feet, and `LobResult` says which
+wall and how much arc was wanted. **View wants both**: the arc is worth drawing, and a preview
+that does not show a clipped throw is a preview that lets a player grenade themselves.
+
+**A blast is not a shot and does not pretend to be.** `BlastPlan` has a landing point and a list of
+everybody caught rather than a target and a hit chance. It cannot miss. Underneath, it goes
+through `Protection.Preview` face by face like everything else and reports a `ShotExpectation` per
+soldier, so the scorer weighs a grenade against a snap shot in one currency. Nothing glances:
+obliquity models a solid object skipping off a plate it met edge-on, and crediting a blast with
+that would be borrowing arithmetic about something else.
+
+Three things fall out of geometry already in the game rather than out of new rules. The burst
+traces *outward* to each victim, so a wall shelters you from a charge on its far side and does
+nothing at all about one lobbed over. Fragmentation is kinetic and a shaped charge is beam, so
+which one to throw depends entirely on what they are wearing — the ordering flips between a
+shielded target and an armoured one, and a test pins both directions. And going flat quarters what
+you catch, off the silhouette heights.
+
+**A mine is an overwatch nobody is standing behind, and that is the implementation.** It resolves
+inside the same `ReactionWindow`, at the tick the mover's foot lands on its tile, on the same clock
+and in the same order — the terrain goes first where a mine and a placement land together, because
+a mine is the mover's own foot arriving and everybody else had to decide. It needed no mechanism,
+only an owner: `ReactionWindow.Mines` and `.Detonations` sit beside `Offers` and `Resolutions`
+because there is nobody to offer a mine to. A move across one fires with no reserve anywhere on
+the field, which is the thing an overwatch cannot do.
+
+**For Content.** `Battle.LayMine` places one under the active unit and `Battle.MinesOf(side)` is
+the query that respects contract 3 — `Battle.Mines` reports the ground, `MinesOf` reports what one
+side is entitled to see, and the interface must use the second. Mines are laid during a battle
+rather than authored on a map, so nothing in the `.hexmap` format is affected; whether a mission
+can start with a minefield in place is a mission-file question and this entry does not answer it.
+
+**For View.** Three new orders can come back from `Commander`: `Throw`, `Shout`, and — through
+`Battle.LayMine` — nothing, because the AI deliberately does not lay mines. Also new and squarely
+interface: `Battle.WouldAnnounce(ShotPlan)` and `WouldAnnounce(BlastPlan)`, which is entry 012
+item 2 closed. The preview existed on the tracker and nothing said so; there is now one call for
+what a shot or a burst would tell the other side, in the shape the scorer already prices it in.
+
+**Two behaviour changes worth expecting.** A commander given a charge and an enemy behind a wall
+throws it rather than walking round, which is right and changed four existing tests — they now
+deploy a rifleman with an empty pouch, so that a test named after flanking goes on exercising the
+flank. And **a commander will throw at a marker**, unlike a shot, which it never takes at one. The
+asymmetry is not an oversight: `Battle.Fire` resolves against where the target really is, so
+carrying out a shot at a marker would have the battle correcting the guess for free, whereas a
+throw is aimed at a piece of ground, the ground does not move, and if he left then the grenade is
+simply wasted. The decision is made on the belief and the world answers it.
+
+**And an explosion is heard from where it went off.** `AwarenessTracker.Hear` has an overload
+taking the place separately from the source, because until something made a noise at a distance
+the two were the same. Everybody in earshot marks the *thrower* at the crater, which is wrong and
+is meant to be: it is the one way in this game to make a great deal of noise somewhere you are
+not standing, and the scorer can see that it is cheap. Being blown up does not tell you who did
+it, unlike being shot at.
+
+---
+
+## 034 — Four things found building grenades that are nobody's job yet
+**2026-09-08** · **Raised by** core · **For** core, master · **Status** open
+
+Recorded rather than built, per the brief. None of them blocks anything.
+
+**1. A noise has to be about a person, and a mine's may not be.** The detection model holds
+contacts per observer and subject, so `Hear` needs a `Unit` for the bang to be attributed to. A
+mine carries the id of whoever laid it for exactly this reason — and a mine laid by somebody who
+has since gone down is therefore heard by nobody at all. That is a real hole and the patch for it
+is not in `Mine`: it wants a noise channel with no subject, which is a contact about a *place*
+rather than about a soldier. That is also what an explosion, a door and a falling body all
+actually are.
+
+**2. Nothing spots a mine.** They do not trigger on the side that laid them, which is a
+simplification standing in for the awareness ladder having no opinion about objects. A minefield
+you laid and had to retreat through is a good situation and this throws it away, and the reason it
+is here is that the alternative — a squad walking into its own charges with no way to be told
+about them — is worse. Spotting one wants a contact about a place, which is item 1 again.
+
+**3. The AI does not lay mines, on purpose.** `Commander` generates throws and not mine-laying.
+Laying is a bet on ground somebody will cross later, and choosing the tile is exactly the question
+a unit that knows about nobody cannot answer — the same hole entry 021 named and entry 029 routed
+into the objective work. A mine wants an approach to deny, and an approach is an objective seen
+from the other side. So it waits on objectives rather than on a search.
+
+**4. A throw is only ever aimed at the tile under somebody.** Offsetting the landing point to
+catch two enemies at once, or to keep one of your own out of the radius, is a real decision and a
+real search: every node within throwing range crossed with everybody in the blast, per candidate,
+per decision. What is built counts allies inside the radius at what they are worth, so a commander
+will *decline* a grenade that would catch its own; it will not go looking for the throw that
+avoids them. Same shape as every other limit of a one-step search, and the same profile-first
+advice applies.

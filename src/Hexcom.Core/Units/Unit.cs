@@ -99,6 +99,7 @@ public sealed class Unit
         ActionPoints = Stats.ActionPoints;
         Vitality = Stats.Vitality;
         Protection = new Protection(loadout ?? Loadout.Rifleman);
+        ThrownLeft = Protection.Loadout.Charges;
     }
 
     public UnitId Id { get; }
@@ -162,6 +163,19 @@ public sealed class Unit
     public Protection Protection { get; }
 
     public WeaponProfile Weapon => Protection.Loadout.Weapon;
+
+    /// <summary>The charge this soldier carries, if any.</summary>
+    public ThrownProfile? Thrown => Protection.Loadout.Thrown;
+
+    /// <summary>
+    /// How many are left.
+    /// </summary>
+    /// <remarks>
+    /// The only thing in the game that runs out. Points come back every turn and shields recharge;
+    /// a grenade thrown is gone, which is what makes deciding to throw one different in kind from
+    /// deciding to shoot. It is also the whole of what stops the scorer leading with grenades.
+    /// </remarks>
+    public int ThrownLeft { get; internal set; }
 
     /// <summary>What is left of the soldier. Nothing stops damage once it is through.</summary>
     public int Vitality { get; internal set; }

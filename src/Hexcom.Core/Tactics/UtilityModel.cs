@@ -134,6 +134,47 @@ public sealed record UtilityModel
     public double MarkerDecay { get; init; } = 0.5;
 
     /// <summary>
+    /// What having a charge still on your belt is worth, in vitality.
+    /// </summary>
+    /// <remarks>
+    /// The first thing in this game that runs out, and therefore the first thing whose
+    /// <em>opportunity</em> cost has to be written down. Points come back every turn and shields
+    /// recharge; a grenade thrown is gone, and a scorer that priced only the action points would
+    /// throw both of them at the first soldier it saw. It measurably did.
+    /// <para>
+    /// Set at about what one clean rifle shot achieves in this economy. That is the figure that
+    /// makes the distinction the design wants: against a soldier standing in the open a rifle is
+    /// nearly as good and costs nothing, so the charge stays on the belt; against one behind a
+    /// wall the rifle is worth nothing at all, so it comes off. A grenade is for the shot you
+    /// cannot take, and this number and no rule is what says so.
+    /// </para>
+    /// <para>
+    /// What it does not model is that the <em>last</em> one should be dearer than the first, and
+    /// that a charge you carry out of the fight was worth nothing. Both are real and both need a
+    /// notion of how much fight is left, which nothing here has.
+    /// </para>
+    /// </remarks>
+    public double ChargeValue { get; init; } = 3.5;
+
+    /// <summary>
+    /// What a point of damage done to your own side is worth, against a point done to theirs.
+    /// </summary>
+    /// <remarks>
+    /// One, and symmetry is the honest default rather than a failure to think about it: a point
+    /// of soldier is a point of soldier, and the arithmetic already knows that hurting one of
+    /// yours gains you none of the enemy. Nothing in the game could tell the difference until
+    /// something could catch both sides at once, which is what a blast radius is and what nothing
+    /// before it was.
+    /// <para>
+    /// It is the dial to turn up the moment a commander starts making trades a squad would not:
+    /// at one, a grenade that takes one and a bit off them and one off you scores positive, and
+    /// whether that is a decision or a bug is a question only matches can answer. Turned up, it
+    /// is the difference between troops who will accept casualties and troops who will not.
+    /// </para>
+    /// </remarks>
+    public double FriendlyHarm { get; init; } = 1.0;
+
+    /// <summary>
     /// How sure somebody has to be before a shot they could take counts as a shot they will take.
     /// </summary>
     /// <remarks>
