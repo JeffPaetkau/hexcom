@@ -59,8 +59,10 @@ queue.** Each has its readout already designed in the audit below; what is missi
 - **Placing your own reactions**, when Core lands the seam asked for in entry 004 and answered in
   entry 022: an open `ReactionWindow` whose offers the HUD can list, appraise and let the player
   pick from before it resolves.
-- **The attention cone at its true reach**, when content's larger map lands — entry 006, gated
-  on 007's finding that the demo compound is too small for any honest range figure.
+- **The attention cone at its true reach** — entry 006, and its gate has lifted: the map it
+  waited on is `content/maps/waystation.hexmap`, radius 24 at the scale 007 fixed, and entry 024
+  says `MapLibrary.Load("waystation")` is one project reference away. Loading it in the sandbox
+  is the first half of the job and drawing the cone honestly against it is the second.
 
 **Two things watched on `view/interface-readouts` are for Core and are written up in entry 023.**
 Do not re-find them: a stance change is scored on what it spares and never on the shot it

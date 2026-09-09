@@ -101,7 +101,8 @@ claiming anything about the sandbox either way.
 | | |
 |---|---|
 | `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness, Combat, Reactions, Tactics |
-| `tests/Hexcom.Core.Tests/` | xUnit |
+| `tests/Hexcom.Core.Tests/` | xUnit, Core's |
+| `content/` | maps as `.hexmap` text, the library that reads them, and its own tests beside it — Content's, not Core's |
 | `game/` | Godot view layer. `BattleView.cs` draws and `BattleHud.cs` reads out, separate classes so neither reaches the other's state; `view.md` has the table of the rest |
 | `docs/map.md` | territories, ownership, frozen contracts |
 | `docs/decisions.md` | append-only log of cross-boundary decisions and findings |
@@ -174,10 +175,11 @@ the sessions doing the work. This section deliberately no longer lists them: it 
 of hand-written status in the file with the widest readership, and it went stale twice before
 anybody noticed — see [docs/decisions.md](docs/decisions.md) entry 015.
 
-**Every balance number in the game is set by reasoning, not by play.** Nothing has been measured,
-because there is nobody to play against yet — the sandbox drives both sides by hand. So treat the
-figures as arguments rather than findings, and when one looks wrong, check the doc for why it is
-what it is before changing it; several are load-bearing in ways their size does not advertise.
+**Every balance number in the game is set by reasoning, not by play.** It can be measured now —
+`Commander` drives either side headless, and the sandbox hands the hostile side to it — but
+until an entry in `docs/decisions.md` says a figure *was* measured, treat it as an argument
+rather than a finding. When one looks wrong, check the doc for why it is what it is before
+changing it; several are load-bearing in ways their size does not advertise.
 
 Do not record status in any of these files. It is derived — `git log`, `git branch -a`,
 `dotnet test`. A status line written by hand outlives the session that wrote it and then lies to

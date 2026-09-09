@@ -131,7 +131,7 @@ interface can display, and there is no private one.
 ---
 
 ## 004 — `Battle.Move` gives nobody a chance to place a reaction by hand
-**2026-09-07** · **Raised by** core · **For** core (with view to say what it needs) · **Status** open
+**2026-09-07** · **Raised by** core · **For** core (with view to say what it needs) · **Status** open — the shape is answered by 022; open until Core builds it
 
 `ReactionWindow` splits building offers from resolving them, and the design says an interface or
 an AI plugs in by placing its own choices between `PlaceRecommended()` and `Resolve()`. There is
@@ -215,7 +215,7 @@ little, and that is your call, not view's.
 ---
 
 ## 006 — The interface cannot show the range the rules judge by
-**2026-09-07** · **Raised by** view · **For** view (later), gated on content · **Status** open
+**2026-09-07** · **Raised by** view · **For** view (later), gated on content · **Status** open — the gate lifted with 024; View to draw it
 
 The attention cone each soldier is drawn with is 3.4 hex radii long, and the held-arc wedge 5.2.
 Both are legibility figures picked because they look right. Neither has any relationship to
@@ -932,7 +932,7 @@ nought against a contact already held `Engaged`.
 
 ## 024 — A map is a text file: the corner graph written down, plus shorthand that lowers to it
 **2026-09-08** · **Raised by** content · **For** view, core and master · **Status** open (view's
-and core's halves; the decision itself is made)
+and core's halves; the decision itself is made; master's half resolved by 029)
 
 The `.hexmap` format exists, in `content/`, with a reader, a writer and two maps. The brief in
 `subprojects/content.md` posed two candidates and asked for the choice and the rejected
@@ -1100,7 +1100,7 @@ it goes instead of into anybody's code.
 ---
 
 ## 027 — The campaign is a thin frame, and the strategy layer is the same game one level up
-**2026-09-08** · **Raised by** setting · **For** master · **Status** open
+**2026-09-08** · **Raised by** setting · **For** master · **Status** resolved by 029
 
 [map.md](map.md) gates the strategy layer on *the campaign shape, which belongs to Setting*.
 Section 8 of [setting.md](setting.md) answers it, so the gate can lift whenever Master judges
@@ -1173,3 +1173,58 @@ re-read has to happen when the entry is flipped, not later.
 scheme exists to prevent* — is still true, and is now the argument for why threats are built from
 a marker with a credence rather than from the field. It is worth keeping the sentence and changing
 its tense.
+
+## 029 — After four merges: the map caught up, and what stands between here and a playable greybox
+**2026-09-08** · **Raised by** master · **For** all · **Status** resolved
+
+Four branches merged on one day — `core/beliefs`, `view/interface-readouts`,
+`content/map-format`, `setting/bible` — and each left something for Master. This entry records
+what was done about them, and one shape decision the build order did not have.
+
+**The map, brought up to date.** Content's Owns column now lists what exists under `content/`,
+and says its tests live there rather than in `tests/` (entry 024). `README.md` and `Hexcom.sln`
+are named as the two shared files. Art's gate is down to the asset spec alone, since 025 gave it
+the visual register. Strategy's gate is no longer the campaign shape, which 027 answered, but the
+two things a campaign frame needs underneath it: a battle that can end some way other than
+elimination, and a mission file. No strategy doc yet, because there is no brief to put in one.
+
+**Statuses.** 004 stays open with its shape answered by 022. 006 stays open with its gate
+lifted by 024. 024 and 027 are resolved for Master here. The rest were flipped by the sessions
+that closed them, which is the scheme working.
+
+**Routed.** 028 into Core's brief, first thing on the branch. 022 and 026 into the paragraph
+after Core's brief, so they are the next Core job rather than the greybox. 006 in View's brief now
+says the map has landed and loading it is the first half.
+
+**The shape decision: objectives go in the build order between 05 and 06.** Entry 021 found that
+the AI has nothing to search for once it can see nobody, and named an objective system as the
+thing it most needs next. Entry 026 found the current end condition — elimination — is the
+one the design makes hardest to reach, and that the withdrawal condition needs no new rules.
+Those are the same finding from two sides, and the build order has no item for it. A greybox
+with no way to win in it is a blockout of a sandbox, not of a game. So: **what an objective is,
+and how a battle ends, is Core's, as rules. Which objective a mission carries, and where, is
+Content's, as content, and the mission file is the second thing the `.hexmap` format
+deliberately left out.** Core owns `design.html` and should add the item; this entry is the
+argument for it.
+
+**The road to a playable greybox, written down once so the briefs can cite it.** Playable means:
+a person drives one side against `Commander`, on a map loaded from `content/`, with somewhere to
+start and something to win, placing their own reactions, with the whole weapons table in play.
+In dependency order:
+
+| | Territory | What it produces | Entry |
+|---|---|---|---|
+| 1 | Core | grenades and mines, melee reach, the shout action | 008, 012, 020 |
+| 2 | Core | the open window: `Commit` / `Resolve`, declining, `TakeTurn` handing back outcomes | 004, 022 |
+| 3 | Core | a battle that ends on an objective, withdrawal first | 021, 026 |
+| 4 | Setting | the mission book, so the mission file is written from fiction | 026 |
+| 5 | Content | the waystation fought over, and the first measured balance findings | 007, 024 |
+| 6 | Content | a mission file: deployments, facing, objective, exit | 024, 026 |
+| 7 | View | a capture that can act; the waystation loaded; the cone at its true reach | 006, 024 |
+| 8 | View | placing your own reactions, once 2 lands | 022 |
+| 9 | View | the greybox, build order 06 | — |
+
+Rows 1 to 3 are sequential on Core. Rows 4 to 6 run beside them; 6 waits on 4 and on 3 for what
+an objective is. Rows 7 and 8 run beside everything; 8 waits on 2. Row 9 waits on all of it, and
+`view.md` already says the greybox rewrites `game/` substantially, which is why nothing in rows 7
+and 8 should be built as though it will survive that rewrite untouched.

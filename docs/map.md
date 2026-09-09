@@ -17,11 +17,11 @@ and, worse, looks maintained while doing it.
 | Territory | Doc | Owns | Gated by |
 |---|---|---|---|
 | **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**` (except `Maps/DemoMaps.cs`), `tests/**`, `docs/design.html` | nothing — it is the trunk |
-| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — its current job reads `Tactics`, which has landed, and the hex figure it wanted is settled |
-| **Content** | [subprojects/content.md](subprojects/content.md) | `src/Hexcom.Core/Maps/DemoMaps.cs`, `content/**` when it exists | nothing — Core's AI has landed, so balance work is unblocked too |
+| **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — and the larger map entry 006 waited on has landed, see entry 024 |
+| **Content** | [subprojects/content.md](subprojects/content.md) | `content/**` — the `.hexmap` maps, `Hexcom.Content`, its tests, and `content/README.md` — plus `src/Hexcom.Core/Maps/DemoMaps.cs` until nothing in `tests/` calls it | nothing |
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
-| **Art & audio** | — this file | `assets/**` when it exists | the setting's visual register, and an asset spec nobody has written. The hex figure it was waiting on is settled — see entry 007 |
-| **Strategy layer** | — this file | undecided | the campaign shape, which belongs to Setting |
+| **Art & audio** | — this file | `assets/**` when it exists | an asset spec nobody has written. The hex figure (entry 007) and the visual register (entry 025) it was waiting on are both settled |
+| **Strategy layer** | — this file | undecided | a battle that can end some way other than elimination, in Core, and a mission file, in Content — entries 026 and 027. The campaign shape it was waiting on is settled: a thin frame, see 027 |
 | **Master** | [subprojects/master.md](subprojects/master.md) | `CLAUDE.md`, `docs/map.md`, `docs/decisions.md`, and the doc *set* — each territory owns its own doc's contents | nothing — but it writes no code, ever |
 
 **Each territory doc with work in it opens with a `## The job` section** — the current brief,
@@ -30,7 +30,15 @@ finished, the session that finished it replaces that section with the next one. 
 order, not a status line: it says what to do, not how far along somebody got.
 
 Note the carve-out: Core owns all of `src/Hexcom.Core` **except** `Maps/DemoMaps.cs`, which is
-content wearing a `.cs` extension until there is a map format to put it in.
+content wearing a `.cs` extension. The map format exists now (entry 024) and the file stays only
+until Core's tests stop calling it.
+
+**Content's tests live under `content/`, not `tests/`**, because `tests/**` is Core's. Do not
+move them.
+
+**Two files are shared and have no owner.** `README.md`: each territory updates the parts its
+own work changed, and Master owns its shape and the territory paragraph. `Hexcom.sln`: a
+territory adds its own projects and touches nothing else in it.
 
 **View is two territories sharing one doc.** Presentation (drawing, cameras, input plumbing) and
 interface (what the player is allowed to know, and how they ask) are different problems, and the

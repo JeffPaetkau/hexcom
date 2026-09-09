@@ -58,6 +58,11 @@ own words on each are the brief:
   same resolution order.* `ReactionWindow` already walks the mover along a `CommittedMove` and
   fires at landing ticks; a mine is an offer with no reactor, placed by the map.
 
+**And one shared-file debt, first thing on the branch: entry 028.** The last paragraph of
+`README.md` still says *nobody goes and looks* and *that is next*. Entry 021 says they do. The
+paragraph is Core's, and the sentence about why the hole was deliberate is worth keeping in the
+past tense as the argument for markers with a credence.
+
 **Three older findings ride on this branch, routed here by entry 020 in `../decisions.md`.**
 
 - **Entry 008 — melee does not reach.** `PowerBlade` carries a 2.0 m range and `Gunnery`
@@ -89,7 +94,17 @@ toward a marker will not walk two turns toward a grenade target either. Record, 
 grenade lobbed over it, and a mine on the approach fires on the mover at the tick it steps on
 the tile, out of nobody's reserve.
 
-After this: the Godot greybox (build order 06), which is View's.
+After this, and before the greybox (build order 06) is worth starting, Core owes two things
+that no brief carries yet — entry 029 says why they come first:
+
+- **The open window — entries 004 and 022.** `Battle.Commit` and `Battle.Resolve` around the
+  `ReactionWindow`, `Move` as the two in sequence, a way to decline, and `Commander.TakeTurn`
+  stopping at a window and handing back outcomes beside its orders. Without it a player never
+  gets the interesting half of reactions, and the enemy's move runs straight past the seam.
+- **A battle that can end some way other than elimination — entries 021 and 026.** The
+  withdrawal condition is readable off `AwarenessTracker` today, and it is also the first thing
+  that gives a hostile side something to want when it can see nobody. What an objective *is* in
+  the rules is Core's; which one a mission has is Content's.
 
 ---
 
