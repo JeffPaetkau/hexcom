@@ -3,33 +3,93 @@
 # Radius 24 — 49 hexes and 85 m across, eighteen hundred tiles — so a rifle at 55 m and a sentry
 # at 45 m have somewhere to be different from each other. Open ground with a walled compound on
 # the main road, a stream crossed by one bridge, a barn, a pair of cottages, a ridge, a
-# watchtower and two stands of trees. Nothing here has been fought over yet; it exists to show
-# that a map this size is forty statements rather than two thousand lines of C#.
+# watchtower and two stands of trees.
+#
+# ---- the mission --------------------------------------------------------------------------
+#
+# The map format holds ground and nothing else (entry 024), so until there is a mission file
+# (entry 036, row 5) the mission lives here as prose, in the six-part shape the mission book
+# gives a briefing. The sandbox (game/scripts/SandboxScenario.cs) and the test harness
+# (content/Hexcom.Content.Tests/Waystation) both deploy exactly what this says. Keep the three
+# agreeing.
+#
+# The instrument.  Instrument 4-11 continues in force and this is an inspection of the
+#                  waystation on the north road, filed accordingly. A walk.
+#
+# What is there.   A detail of four, we think, holding the crossroads. One outside the west gate
+#                  watching the road. One on the roof of the house inside the compound, and that
+#                  is the one with the set. A rifle in the tower to the south-east, four metres
+#                  up, and one more in the barn on the east road. They have held this place a
+#                  fortnight and nobody has come up the road in that time.
+#
+# The task.        Enter the compound, confirm what is stored in the house, and come out.
+#
+# The restraint.   You will not be seen and you will not fire. The people who live in the
+#                  cottages are not part of this.
+#
+# Where you start. On the west road, twenty hexes out, before first light:
+#                    Vance   -21,3    facing se   scout, blade and sidearm, two claymores
+#                    Orsini  -20,0    facing ne   trooper, repeater and a frag
+#                    Bekker  -19,-3   facing ne   slug rifle and two frags
+#                  Theirs, so that a test can say the same thing:
+#                    Sentry    -5,0      facing sw   pulse carbine
+#                    Spotter    0,1@1    facing nw   signaller, on the house roof, the set
+#                    Watchman  16,-14@1  facing nw   slug rifle, in the tower
+#                    Hollis    14,-6     facing sw   pulse carbine, in the barn
+#
+# The way off.     The cottages, west of the stream and north of the road — a named place and
+#                  not an edge, because whoever meets you there has to be able to find it. Not
+#                  the road you came in by: the sentry has had all night to watch it.
+#
+# The stop.        If one of them properly registers you — Searching, not a dog barking — and
+#                  lives to keep it, or has already passed it to the roof, the task is over.
+#                  Come home by the cottages. There is nothing here worth the second half of
+#                  the night.
+#
+# What the ground offers this: the sentry looks straight down the west road through the gap in
+# the trees, so the road is a queue and the fields are the approach; the stream is too deep to
+# wade, and the two ways over it are the bridge, in full view of the gate, and the ford below
+# the compound, slow and loud and unwatched; the drain under the south wall, five hexes from
+# the ford, is the way into the compound that nobody is watching; and the barn and the tower
+# are outside earshot of the compound, so if the roof goes quiet, so do they.
 
 map Waystation
 
-# Kit the built-ins do not have. A hedge you can push through but not see through, and the
-# planking of the bridge, which is louder underfoot than the road either side of it.
+# Kit the built-ins do not have. A hedge you can push through but not see through; the
+# planking of the bridge, which is louder underfoot than the road either side of it; and the
+# stream itself, which is too deep to wade. The first twelve matches fought here had everybody
+# wading straight across and nobody using the bridge, which made the one crossing on the map a
+# decoration. Now it is a crossing.
 profile hedge height 1.5 cover light passable opaque destructible
 ground boardwalk cost 0 noise 1.4
+ground deep noise 2 impassable
 
 # ---- ground ------------------------------------------------------------------------------
 
 fill disc 0,0 r 24 grass
-
-# The stream runs north-west to south-east, west of the compound; the roads are painted after
-# it, so where the main road crosses it there is a bridge.
-fill line -20,24 to 4,-24 shallow_water
-fill line -24,0 to 24,0 gravel
-fill line 10,-24 to 10,14 gravel
-fill hex -8,0 boardwalk
-
 fill disc -10,6 r 3 rubble
 fill disc 6,-16 r 2 shallow_water
 
 # A ridge, high enough that getting up it is a climb, with one cut path on the road side.
 fill disc -12,-6 r 3 h 1.5
 stairs -8,-6 -9,-6
+
+# The stream runs north-west to south-east, west of the compound, and cuts the map in two. Two
+# ways over it: the bridge, where the main road crosses in full view of the west gate, and a
+# ford below the compound, slow and loud and watched by nobody.
+fill line -20,24 to 4,-24 deep
+fill line -24,0 to 24,0 gravel
+fill line 10,-24 to 10,14 gravel
+fill hex -8,0 boardwalk
+fill hex -6,-4 shallow_water
+
+# A line of trees along the field boundary west of the stream, with the road running through
+# a gap in it. Without it the west road was a firing lane: in twelve matches out of twelve the
+# rifleman on the road shot the sentry at the gate from 35 m on the second round, before
+# anybody on either side had so much as a suspicion. The road is still a queue; the fields on
+# either side of it are now an approach.
+wall screen line -12,-2 to -12,5 ne se
+breach -12,0 ne se
 
 # ---- the compound -------------------------------------------------------------------------
 
@@ -41,8 +101,10 @@ breach 4,0 ne
 breach -4,0 sw
 link crawl -1,-3 -1,-4
 
-# Sandbags outside the east gate, covering the road.
+# Sandbags outside both gates, covering the road. The west line runs across the road itself, so
+# the sentry standing behind it has half cover from the way we are coming and traffic vaults.
 wall low hexes 5,-1 5,1 ne
+wall low hexes -5,-1 -5,0 -5,1 sw
 
 # The house in the middle: a door on the south side, a flat roof with a parapet, and a ladder
 # up from the yard on the east.
@@ -59,11 +121,12 @@ fill disc 14,-6 r 2 floor
 enclose high disc 14,-6 r 2
 breach 12,-6 sw
 
-# Two cottages in the rubble, sharing a wall, door facing the road.
-fill hexes -12,8 -12,9 -11,8 floor
-enclose solid hexes -12,8 -12,9 -11,8
-wall solid hex -12,8 n
-breach -11,8 se
+# Two cottages on the west bank, sharing a wall, door facing the road. They used to stand in
+# the stream, which nobody noticed until the stream stopped being wadable.
+fill hexes -14,6 -14,7 -13,6 floor
+enclose solid hexes -14,6 -14,7 -13,6
+wall solid hex -14,6 n
+breach -13,6 se
 
 # The watchtower: a platform four metres up, railed, ladder only.
 fill hex 16,-14 layer 1 h 4

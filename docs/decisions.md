@@ -1655,3 +1655,167 @@ genuinely new thing the six mission shapes want — a record of the moment a hos
 has registered somebody and had a turn to use it. Core's brief leaves it to the judgement of
 whoever picks the brief up. If it is left out of 05b, it becomes the item after, and the denial
 and extraction missions wait on it; the withdrawal mission does not.
+
+---
+
+## 037 — A rifle shot is heard at 18 metres, and the design doc says a hundred
+**2026-09-08** · **Raised by** content · **For** core · **Status** open
+
+Measured on the waystation, not worked out from the model: a slug rifle fired at the west gate,
+`(-5,0)`, is heard by the sentry standing there and by the spotter on the house roof ten metres
+away, and by nobody else. Not by the barn at 24 m, not by the tower at 28 m. The test
+`ARifleShotAtTheWestGateIsHeardInTheCompoundAndNowhereFurther` in
+`content/Hexcom.Content.Tests/Waystation` pins it, through `AwarenessTracker.WouldHear`.
+
+**The arithmetic behind it.** `WeaponProfile.SlugRifle.Loudness` is 45 and
+`AwarenessModel.NoiseMetresPerPoint` is 0.4, so a rifle carries 18 m; the repeater at 65 carries
+26 m. A shout (`VoiceRangeMetres`) carries 15. So the loudest weapon in the game is heard about
+as far as a man calling out, and the design doc — section 07, and entry 007 quoting it — talks
+about *gunfire heard at a hundred*. Two figures, one of them wrong by a factor of five.
+
+**What it does to a fight, seen twelve times.** The garrison at the waystation is split exactly
+as the mission book says a detail should be (entry 030): the compound, the barn and the tower are
+all outside each other's earshot. So a firefight at the west gate — and in twelve matches out of
+twelve there was one, by round 3 — is *silent* in the barn and the tower. Hollis and the Watchman
+learn of it only from the roof's radio at `RelayFraction` 0.6, and in the seeds where the spotter
+went down early they learned of it not at all: seed 6, Sentry down round 3, Spotter round 10,
+Hollis never above Alerted and never moved. That is the radio doing exactly what the bible wants
+it to, and it is also a rifle fight at fifty paces that nobody heard.
+
+**Which figure is right is Core's to say, and it is a design question rather than a typo.**
+Eighteen metres makes a slug rifle nearly a silent weapon on a map this size, which flattens the
+beam-against-slug trade the weapons table is built on: the one cost the design gives a rifle over
+a carbine is that it is heard, and at 18 m it is heard by people who could already see the
+muzzle flash. A hundred metres makes every shot on an 85 m map heard by everybody, which is the
+compound problem entry 030 describes, at scale. Somewhere between — forty to sixty metres, a
+loudness of 100 to 150 at the current 0.4, or a `NoiseMetresPerPoint` of 1.0 — is where a shot
+at the gate wakes the barn and not the tower, and the *split detail depends on its set* claim in
+entry 030 stays true because the set is faster, not because it is the only channel. Content has
+no dial to turn here; the number is in `WeaponProfile` and `AwarenessModel`, both Core's.
+
+**One more thing the same factor does, measured the same way.** A move's loudness is the listed
+cost of the whole route times the noisiest ground on it (`Battle.Loudness`), through the same
+0.4. So nine strides along the gravel road — 45 AP at `noise 1.6` — come to 72, and are heard at
+29 m: a soldier *walking down the road* is heard further than a soldier *firing a rifle* on it.
+`AWalkDownTheRoadIsHeardFurtherThanARifleShot` pins that. It is not obviously wrong — a turn's
+walk is a long noise and a shot is a short one — but it is the kind of thing that should be true
+on purpose, and the weapons table reads as though the shot were the louder of the two.
+
+---
+
+## 038 — The waystation has been fought over: twelve matches, none decided, and a map redrawn from the routes
+**2026-09-08** · **Raised by** content · **For** core, view and master · **Status** open (core's half); the map is redrawn and the brief is done
+
+Row 2 of entry 036's road. `Commander` on both sides, the sandbox's deployments (entry 035),
+sixty rounds or a decision, whichever first. The recorder is
+`content/Hexcom.Content.Tests/Waystation/MatchRecorder`; `HEXCOM_SEEDS=12 dotnet test` reruns
+what follows and prints the routes.
+
+**Twelve of twelve were undecided at round 60, and every one of them was over by round 21.**
+The last shot or throw in any match fell between rounds 3 and 21; after that, the survivors
+stood where they were for forty rounds. `core.md` predicts this — a search one step deep with
+nothing to want is a stalemate once contact is lost — and this is it happening on real ground,
+with buildings, at scale. **So the answer to the brief's question, what a match on this map
+ends on, is: nothing.** A round cap would be theatre; a cap at 25 would have caught every fight
+seen and decided none of them. The ending is the objective, which is Core's 05b, and this entry
+is the measurement that says it is not optional.
+
+**What it cost.** A sixty-round match with seven soldiers on 1801 tiles took 11 to 80 seconds,
+43 on average, over 270 to 420 turns — call it 130 ms a turn, five to ten times `core.md`'s
+figure for three a side on a radius-sixteen disc. A dozen seeds is nine minutes on this machine.
+Usable for reading routes; not for a thousand matches, which at this rate is half a day. Nothing
+was profiled, per `core.md`'s advice; the number is here so whoever does is not surprised.
+
+**What the routes said about the map, and what was done about it.**
+
+- **The west road was a firing lane.** In twelve matches out of twelve the first shot was
+  Bekker's, on round 2 or 3, at the sentry standing outside the west gate 35 m down the open
+  road, at a score of +4.35, with every hostile still `Unaware` — the rifle's 55 m outreaches
+  the 45 m sight range, and at 35 m a slug rifle announces itself to nobody but the man it is
+  fired at (entry 037). *Redrawn:* a tree line along the field boundary at `q = -12` with the
+  road through a gap in it, and a sandbag line across the road at the gate. Rerun on six seeds:
+  first fire moved from round 2 to round 4 in six of six, and its target moved from the sentry
+  at the gate, now hidden, to the spotter *standing on the house roof*, which is visible over
+  two-metre trees from 38 m. That is correct — a signaller upright on a roof is a target — and
+  it is the roof's problem now, not the road's.
+- **The stream was a decoration.** It was one hex of `shallow_water` everywhere, so in every
+  match where anybody crossed, they waded — the bridge was used once in twelve. *Redrawn:* the
+  stream is `deep`, impassable, and has two crossings: the bridge on the road, in full view of
+  the gate, and a ford five hexes from the drain. The cottages, it turned out, stood in the
+  stream, and have moved to the west bank.
+- **Nobody used the drain, the ridge, the woods or the bridge**, and after the redraw nobody
+  uses the ford either. Not a map finding: a commander with no objective has no reason to go
+  anywhere it cannot shoot from, and the drain is a route to somewhere, not a firing position.
+  Entry 034 item 3 and `core.md`'s first open question, from the map's side.
+- **The tower and the barn never move.** Hollis, in the barn, made 0 moves in eleven of twelve
+  and the Watchman 0 in twelve of twelve, on the first map; on the redrawn one the Watchman
+  came down the ladder in three of six to get a shot at Vance. Both are the *nothing to want*
+  hole again, and the only cure the map has is putting a target in their view.
+- **Vance never advances.** The blade carrier: 0 to 5 moves a match, all of them dithering at
+  the west edge. `core.md` records why; the map cannot help.
+
+**Two things about the AI that the transcripts show and the summaries did not**, each with the
+match it was seen in, are entry 039.
+
+**The mission is in the map.** The header of `waystation.hexmap` now carries it in the six-part
+shape `docs/setting/missions.md` gives a briefing: an inspection of the compound; a detail of
+four, one with a set; enter, confirm what is in the house, come out; not seen, not fired;
+starting on the west road with facing, leaving by the cottages, over when somebody properly
+registers you and lives to keep it. The deployments are the sandbox's to the hex and the
+facing, and the harness deploys the same. **Three copies of one fact, and this entry is the
+only thing that says they must agree** until there is a mission file (entry 036, row 5).
+
+**For View.** The map changed under the sandbox: the cottages moved, the stream is impassable
+except at `(-8,0)` and `(-6,-4)`, there is a tree line at `q = -12` from `r = -2` to `5`, and
+sandbags across the road at `(-5,-1)`, `(-5,0)`, `(-5,1)`. The deployments did not change. The
+`deep` ground and `hedge` profile are map-declared kit, and entry 035 says a declared profile is
+drawn grey; `deep` is a ground, and whether the view colours grounds by id or by figure is
+yours.
+
+**For Core.** Entry 037 and entry 039. And a figure for the brief you have: whatever ends a
+battle on an objective, the fights on this map are done by round 21 and would need to be judged
+by then.
+
+**For Master.** Row 2 of 036's road is done, and its finding routes to Core rather than back to
+Content: the map can be redrawn any number of times and no match on it will end until 05b lands.
+Content's next brief is a second battlefield of a different shape, so that the mission file has
+two maps to be argued from rather than one — `content.md` says so.
+
+---
+
+## 039 — Two things a search one step deep does on real ground: throws at the crater, and paces
+**2026-09-08** · **Raised by** content · **For** core · **Status** open
+
+Both from the transcript of seed 1 on the first map, both visible in the counts across all
+twelve, both reproducible with `HEXCOM_TRANSCRIPT=1 dotnet test` in `content/`.
+
+**1. Every charge in the match lands on one empty hex.** Round 3: the sentry steps back from
+the gate at `(-5,0)` to `(0,-1)` after Bekker's look. Round 4: Bekker throws a frag at `(-5,0)`,
+the marker, and so does Orsini — correct per entry 033, a throw is aimed at a belief. Round 5:
+the *spotter* throws a plasma charge at `(-5,0)`, and so does the *sentry*, from five hexes
+away, at a hex nobody of ours had ever stood on. They could only have a contact there through
+`AwarenessTracker.Hear`'s crater rule: everybody in earshot marks the thrower at the crater
+(entry 033, *wrong and meant to be*). Then round 5 again: Bekker's second frag, at `(-5,0)`.
+Five charges, one hex, nobody on it after round 3; and *five throws* is the count in nine of
+the twelve matches, three or four in the rest, because five is what the two sides carry within
+throwing range of that hex. The crater rule was built so that a charge could make noise
+somewhere you are not; on this ground it makes each side's charges bait for the other side's,
+and a garrison that empties its pouch at a crater on round 5 has nothing left when Bekker walks
+through the gate on round 8. On the redrawn map the pattern broke — one to four throws a match,
+at places where somebody actually was — because the tree line meant the first grenade was
+thrown at a soldier in view rather than at a marker at a gate. Which is to say the map fixed it
+by accident, and it is waiting on the next map to come back.
+
+**2. A soldier paces between two tiles on a shot it never takes.** Seed 1, rounds 13 to 18,
+Bekker at `(-1,1)` and `(-1,2)` inside the compound: seven moves a turn, alternating between
+the two, scored +25, +12, +22, +9, +17, +4 and falling — every move ranked on the shot at the
+spotter it would open, and from the new tile the best option is the move back, ranked on the
+same shot. No shot fired in six rounds. Orsini did the same at `(-8,-2)` and `(-9,-2)` in the
+same match, rounds 13 to 15, while the Watchman shot him from the tower every round until he
+went down. `Order.Opens` is the lookahead crediting a move with a shot; what is missing is the
+move *costing* the shot it displaces, or the shot being taken when it is the thing the last move
+was chosen for. The recorder counts these as *pacing* turns — four or more moves and nothing
+fired — and on the redrawn map they nearly vanished (two turns in six matches), which says the
+geometry that produces them is specific and not that the search is fixed.
+
+Neither is a balance number. Both are the search's, and both were invisible on a disc.
