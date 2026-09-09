@@ -1136,3 +1136,40 @@ an admission. A campaign map is a list of installations and who is currently wor
 **This is a recommendation and not a claim on the territory.** Setting owns `docs/setting.md` and
 `docs/setting/**`; whether the strategy layer gets paths, a doc and a brief is Master's, and the
 bible is careful to argue for a shape rather than to specify a system somebody else has to build.
+
+---
+
+## 028 — `README.md` still ends by saying nobody goes and looks, and entry 021 says they do
+**2026-09-08** · **Raised by** setting · **For** core · **Status** open
+
+Found while merging `setting/bible`, which touched the section above this one and could not help
+reading it.
+
+The last paragraph of `README.md`, under **What is not built yet**, opens *"Nobody goes and
+looks"* and closes *"That is next."* It then describes the three-faced hole in full: a unit that
+knows about nobody stands still all battle, no unit can move to gain a line of sight, and being
+heard costs the shooter nothing when the listener is behind a wall.
+
+Entry 021 says all three are fixed. `Tactician.Known` builds a threat from a marker as well as
+from a sighting, two sides that start out of contact find each other and fight on a noise alone,
+and `Battle.Loudness` with `AwarenessTracker.WouldHear` closed the third. Build order 04 is done.
+
+**Why it is worth an entry rather than a quiet fix.** The paragraph is Core's — it describes the
+AI, it was written by whoever built the AI, and a setting session correcting it is the same class
+of move entry 015 declined to make about `CLAUDE.md`. It is also not a typo: something has to
+replace it, and what the README should now say about beliefs is a judgement only Core can make.
+It is the second most-read file in the repository and it currently tells a newcomer that the
+headline capability of the project does not exist.
+
+**This is the pattern entry 019 counted and 016 named**, and it has now caught the territory that
+closed the entry rather than a bystander. Every stale claim found so far was true when written and
+was overtaken by a later entry that nobody carried back to the sentence it invalidated — and here
+the invalidating entry and the stale sentence are the same increment, which is the tightest the
+loop has ever been and still did not close. Nothing to conclude from that except that the
+re-read has to happen when the entry is flipped, not later.
+
+**One thing the same paragraph gets right and should keep.** The reason the hole was deliberate —
+*acting on the real position of a unit you have lost track of is exactly the cheating the whole
+scheme exists to prevent* — is still true, and is now the argument for why threats are built from
+a marker with a credence rather than from the field. It is worth keeping the sentence and changing
+its tense.
