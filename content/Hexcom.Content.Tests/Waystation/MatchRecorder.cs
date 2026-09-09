@@ -90,10 +90,14 @@ public static class MatchRecorder
             var round = battle.Round;
             var standingBefore = everyone.Where(u => u.InPlay).ToList();
 
-            var orders = commander.TakeTurn();
+            // Core change, kept to one line: TakeTurn hands back an Act per order now, with the
+            // outcome beside it. The record still wants only the orders; see decisions.md entry
+            // 040, and note that Act carries what each one did if this recorder ever wants it.
+            var acts = commander.TakeTurn();
             turns++;
 
-            log.Add(new TurnRecord(round, mover.Name, mover.Side, from, mover.Position, orders));
+            log.Add(new TurnRecord(
+                round, mover.Name, mover.Side, from, mover.Position, [.. acts.Select(a => a.Order)]));
 
             foreach (var fallen in standingBefore.Where(u => !u.InPlay))
                 casualties.Add(new Casualty(round, fallen.Name, fallen.Side, fallen.Position, mover.Name));

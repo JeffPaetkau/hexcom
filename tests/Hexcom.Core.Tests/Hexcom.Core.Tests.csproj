@@ -22,6 +22,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hexcom.Core\Hexcom.Core.csproj" />
+
+    <!-- Content, for the shipped maps only. The library under test still depends on nothing;
+         it is the fixtures that come from a file now rather than from a hand-built map in
+         src/. See docs/decisions.md entry 024. -->
+    <ProjectReference Include="..\..\content\Hexcom.Content\Hexcom.Content.csproj" />
   </ItemGroup>
 
 </Project>

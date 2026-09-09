@@ -33,6 +33,9 @@ public enum OrderKind
 
     /// <summary>Call a contact in, so somebody who can act on it knows.</summary>
     Shout,
+
+    /// <summary>Walk off the field, having done what you came to do.</summary>
+    Leave,
 }
 
 /// <summary>
@@ -70,8 +73,76 @@ public sealed record Order(
         OrderKind.Face => $"turn to {Facing} ({Score:+0.00;-0.00})",
         OrderKind.Throw => $"{Throw?.Item.Name} at {Throw?.Aimed} ({Score:+0.00;-0.00})",
         OrderKind.Shout => $"call {About?.Name} in ({Score:+0.00;-0.00})",
+        OrderKind.Leave => $"walk off the field ({Score:+0.00;-0.00})",
         _ => $"go {Stance} ({Score:+0.00;-0.00})",
     };
+}
+
+/// <summary>
+/// What answers the reaction windows this commander's moves open.
+/// </summary>
+/// <remarks>
+/// The seam has to reach through the commander or an interface never gets to use it, because the
+/// case a player cares about most is the <em>enemy's</em> move: a hostile walks across our
+/// sentry's arc and our sentry is the one being offered a shot. A commander that called
+/// <see cref="Battle.Move"/> would run straight past a seam on the battle alone.
+/// <para>
+/// A pause rather than a callback, and that is forced rather than chosen. Input in a game engine
+/// arrives across frames — a click is a later event, not a return value — so a callback invoked
+/// from inside the turn loop would have to block the whole engine until the player chose, which
+/// is not a thing a callback can do. What works is a state the battle sits in. See
+/// <c>docs/decisions.md</c> entry 022.
+/// </para>
+/// <para>
+/// The alternative View considered and argued against was making the dispatch public and letting
+/// callers drive the turn themselves. That makes every interface re-implement which order goes to
+/// which battle method and when a turn ends, which is how a sandbox and a headless match stop
+/// replaying identically.
+/// </para>
+/// </remarks>
+public enum WindowAnswer
+{
+    /// <summary>
+    /// Every reactor takes its recommendation and the window resolves at once. What a headless
+    /// match wants, and what the turn loop did before there was a choice.
+    /// </summary>
+    Recommended,
+
+    /// <summary>
+    /// The turn stops with the window open, for somebody else to answer and resolve.
+    /// </summary>
+    HandedOut,
+}
+
+/// <summary>
+/// An order the commander carried out, and what happened when it did.
+/// </summary>
+/// <remarks>
+/// An <see cref="Order"/> records what an action was <em>chosen</em> on and nothing about what it
+/// did, which was fine while the only thing reading the list was a test of the search. It stopped
+/// being fine the moment an interface wanted to narrate the enemy's turn: when the AI moves and
+/// our sentries answer, there was no window, no outcome and no shot to point at, so the only
+/// trace of our own soldiers reacting was that somebody's vitality label had changed. See
+/// <c>docs/decisions.md</c> entry 022, which is View asking for exactly this.
+/// </remarks>
+/// <param name="Carried">
+/// False when the battle refused the order, which ends the turn. Rare, and worth reporting rather
+/// than swallowing: an order the search offered and the rules would not take is a disagreement
+/// between the two, and those are bugs.
+/// </param>
+public sealed record Act(
+    Order Order,
+    bool Carried = true,
+    MoveOutcome? Moved = null,
+    ShotOutcome? Fired = null,
+    BlastOutcome? Threw = null)
+{
+    public OrderKind Kind => Order.Kind;
+
+    /// <summary>The window this act opened, if it opened one. Where reactions are read from.</summary>
+    public ReactionWindow? Reactions => Moved?.Reactions;
+
+    public override string ToString() => Carried ? Order.ToString() : $"refused: {Order}";
 }
 
 /// <summary>
@@ -111,37 +182,111 @@ public sealed record Order(
 /// window the design says the found soldier is owed.
 /// </para>
 /// </remarks>
-public sealed class Commander(Battle battle, UtilityModel? model = null)
+public sealed class Commander(
+    Battle battle,
+    UtilityModel? model = null,
+    WindowAnswer windows = WindowAnswer.Recommended)
 {
     private readonly Tactician _judge = model is null ? battle.Tactics : new Tactician(battle, model);
+    private readonly List<Act> _taken = [];
+    private MoveCommitment? _open;
+    private Unit? _driving;
 
     /// <summary>What this commander ranks by. The battle's own judgement unless told otherwise.</summary>
     public Tactician Judge => _judge;
 
     /// <summary>
-    /// Take the active unit's whole turn and end it.
+    /// The window this commander stopped at, waiting for somebody else to answer it.
     /// </summary>
     /// <remarks>
-    /// Returns what it did, in order, so a test or an interface can read the reasoning rather than
-    /// the wreckage. The turn ends however it went, including when the answer was to do nothing at
-    /// all — which banks the lot, and is frequently the right answer for a soldier who has not
-    /// seen anybody.
+    /// Only ever set when it was built with <see cref="WindowAnswer.HandedOut"/>. Place into it,
+    /// or place nothing at all, and then call <see cref="Resume"/>.
     /// </remarks>
-    public IReadOnlyList<Order> TakeTurn()
+    public ReactionWindow? Waiting => _open?.Window;
+
+    /// <summary>Everything the active unit has done this turn, across however many pauses.</summary>
+    public IReadOnlyList<Act> Taken => _taken;
+
+    /// <summary>
+    /// Take the active unit's turn, and end it.
+    /// </summary>
+    /// <remarks>
+    /// Returns what it did, in order and with what each one did beside it, so a test or an
+    /// interface can read the reasoning rather than the wreckage. The turn ends however it went,
+    /// including when the answer was to do nothing at all — which banks the lot, and is frequently
+    /// the right answer for a soldier who has not seen anybody.
+    /// <para>
+    /// A commander handing windows out stops instead of ending the turn, as often as it has to.
+    /// See <see cref="WindowAnswer"/> for why that shape and not a callback.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<Act> TakeTurn()
     {
-        var taken = new List<Order>();
+        if (_open is not null)
+            throw new InvalidOperationException("There is a window open. Resolve it with Resume first.");
 
-        while (battle.Active is { } unit && Next() is { } order)
+        _taken.Clear();
+        _driving = battle.Active;
+
+        return _driving is null ? _taken : Run();
+    }
+
+    /// <summary>
+    /// Resolve the window this commander stopped at, however it was answered, and carry on.
+    /// </summary>
+    /// <remarks>
+    /// The other half of handing a window out. Whatever was placed by now is what answers the
+    /// move; placing nothing at all is a real answer and means every reactor holds its fire.
+    /// </remarks>
+    public IReadOnlyList<Act> Resume()
+    {
+        if (_open is not { } commitment)
+            throw new InvalidOperationException("Nothing is waiting. Call TakeTurn first.");
+
+        _open = null;
+
+        var order = _taken[^1].Order;
+        var outcome = battle.Resolve(commitment);
+        _taken[^1] = new Act(order, outcome.Moved, Moved: outcome);
+
+        return Run();
+    }
+
+    /// <summary>
+    /// Pick and carry out one action at a time until the turn is over or a window opens.
+    /// </summary>
+    /// <remarks>
+    /// Every step is conditional on the soldier this commander set out to drive still being the
+    /// one whose turn it is, and that is load-bearing rather than defensive. Three things hand
+    /// the turn on without the loop asking: being dropped mid-move, having an ambush sprung on
+    /// you, and — new — walking off the field, which is the first of the three a unit does to
+    /// itself deliberately.
+    /// <para>
+    /// <b>Ending the turn is conditional on the same test</b>, and it was not, which was a bug
+    /// nobody had noticed. A mover dropped mid-move left the loop with the turn already passed to
+    /// somebody else, and the unconditional call then ended <em>their</em> turn — banking their
+    /// allowance and handing it on before they had done anything with it. It went unseen because
+    /// the only thing driving whole turns was a headless match, where a soldier that silently
+    /// lost a turn looks like a soldier that decided to do nothing.
+    /// </para>
+    /// </remarks>
+    private IReadOnlyList<Act> Run()
+    {
+        while (battle.Active is { } unit && unit == _driving)
         {
-            if (!Carry(unit, order)) break;
-            taken.Add(order);
+            if (Next() is not { } order) break;
 
-            // Being shot at, or dropped mid-move, ends the turn for you.
-            if (!unit.InPlay || battle.Active != unit) break;
+            var act = Carry(unit, order);
+            _taken.Add(act);
+
+            if (_open is not null) return _taken;
+            if (!act.Carried) break;
         }
 
-        if (battle.IsRunning) battle.EndTurn();
-        return taken;
+        if (battle.Active == _driving && battle.IsRunning) battle.EndTurn();
+
+        _driving = null;
+        return _taken;
     }
 
     /// <summary>
@@ -181,10 +326,31 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
 
         foreach (var order in Shots(unit, UnitPose.Of(unit), inView, ApSource.Turn)) yield return order;
         foreach (var order in Throws(unit, threats)) yield return order;
+        foreach (var order in Leaving(unit)) yield return order;
         foreach (var order in Moves(unit, threats)) yield return order;
         foreach (var order in Postures(unit, threats)) yield return order;
         foreach (var order in Watches(unit, threats)) yield return order;
         foreach (var order in Words(unit, threats)) yield return order;
+    }
+
+    /// <summary>
+    /// Walking off the field, for a soldier standing somewhere its side can leave from.
+    /// </summary>
+    /// <remarks>
+    /// Worth the whole of what the objective is worth, because it is the objective — for this
+    /// soldier there is nothing further to do about it. That is a very large number beside
+    /// anything a shot can score, deliberately: a squad told to get out and not be seen should
+    /// walk out through fire rather than stop to trade, and the design's complaint about
+    /// elimination was that the rules made the fight the only thing worth wanting.
+    /// </remarks>
+    private IEnumerable<Order> Leaving(Unit unit)
+    {
+        if (battle.ObjectiveOf(unit.Side) is not Withdrawal way) yield break;
+        if (!way.IsExit(unit.Position)) yield break;
+
+        yield return new Order(
+            OrderKind.Leave,
+            new Appraisal(0, 0, _judge.TowardObjective(unit, unit.Position), 0));
     }
 
     // ---- what is on the table --------------------------------------------------
@@ -298,8 +464,10 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
     /// </remarks>
     private IEnumerable<Order> Moves(Unit unit, IReadOnlyList<Threat> threats)
     {
-        if (threats.Count == 0) yield break;
+        var objective = battle.ObjectiveOf(unit.Side);
+        if (threats.Count == 0 && objective is null) yield break;
 
+        var here = objective?.Progress(battle, unit.Position) ?? 0;
         var reach = battle.Reachable(unit);
 
         foreach (var reached in reach.Destinations)
@@ -309,7 +477,12 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
             // Facing follows the line of travel, for free, exactly as a real move would leave it.
             var arriving = Arriving(unit, reached);
             var seen = threats.Where(t => battle.Sight.CanSee(arriving.Vantage, t.Where.Vantage)).ToList();
-            if (seen.Count == 0) continue;
+
+            // Somewhere a threat can be seen from, or somewhere nearer to what the squad came
+            // for. Ground that is neither is still just ground, and there are hundreds of hexes
+            // of it — pricing all of them is a sight trace per hex per threat, per decision.
+            var nearer = objective is not null && objective.Progress(battle, reached.Node) > here;
+            if (seen.Count == 0 && !nearer) continue;
 
             // What the walk itself would tell everybody. The same route the move will take, so
             // the figure it is ranked on is the figure it makes.
@@ -424,15 +597,55 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
         return new UnitPose(reached.Node, unit.Stance, facing);
     }
 
-    /// <summary>Carry an order out. False if the battle refused it, which ends the turn.</summary>
-    private bool Carry(Unit unit, Order order) => order.Kind switch
+    /// <summary>
+    /// Carry an order out and report what happened.
+    /// </summary>
+    /// <remarks>
+    /// A move is the one that can stop here. Committing it pays for the route and builds the
+    /// window; whether this commander then resolves the window itself or leaves it open for
+    /// somebody else is the whole of what <see cref="WindowAnswer"/> decides, and it is the only
+    /// place in the turn loop that differs between the two.
+    /// </remarks>
+    private Act Carry(Unit unit, Order order)
     {
-        OrderKind.Move => battle.Move(order.MoveTo!.Value).Moved,
-        OrderKind.Fire => battle.Fire(order.Shot!.Target, order.Shot.Mode).Fired,
-        OrderKind.Overwatch => battle.SetOverwatch(order.Arc!, order.Facing),
-        OrderKind.Face => battle.Face(order.Facing!.Value),
-        OrderKind.Throw => battle.Throw(order.Throw!.Aimed, order.Throw.Item).Went,
-        OrderKind.Shout => battle.Shout(order.About!),
-        _ => battle.ChangeStance(order.Stance!.Value),
-    };
+        switch (order.Kind)
+        {
+            case OrderKind.Move:
+                var commitment = battle.Commit(order.MoveTo!.Value);
+                if (!commitment.Committed) return new Act(order, Carried: false);
+
+                if (windows == WindowAnswer.HandedOut)
+                {
+                    _open = commitment;
+                    return new Act(order);
+                }
+
+                commitment.Window!.PlaceRecommended();
+                var moved = battle.Resolve(commitment);
+                return new Act(order, moved.Moved, Moved: moved);
+
+            case OrderKind.Fire:
+                var fired = battle.Fire(order.Shot!.Target, order.Shot.Mode);
+                return new Act(order, fired.Fired, Fired: fired);
+
+            case OrderKind.Throw:
+                var threw = battle.Throw(order.Throw!.Aimed, order.Throw.Item);
+                return new Act(order, threw.Went, Threw: threw);
+
+            case OrderKind.Overwatch:
+                return new Act(order, battle.SetOverwatch(order.Arc!, order.Facing));
+
+            case OrderKind.Face:
+                return new Act(order, battle.Face(order.Facing!.Value));
+
+            case OrderKind.Shout:
+                return new Act(order, battle.Shout(order.About!));
+
+            case OrderKind.Leave:
+                return new Act(order, battle.Extract());
+
+            default:
+                return new Act(order, battle.ChangeStance(order.Stance!.Value));
+        }
+    }
 }
