@@ -16,6 +16,8 @@ Then read the doc for the territory you have been told you are working in:
 | [docs/subprojects/core.md](docs/subprojects/core.md) | the rules and the AI — `src/Hexcom.Core`, `tests/` |
 | [docs/subprojects/view.md](docs/subprojects/view.md) | Godot presentation and interface — `game/` |
 | [docs/subprojects/content.md](docs/subprojects/content.md) | maps, kit, and the tools to author them |
+| [docs/subprojects/setting.md](docs/subprojects/setting.md) | the fiction — `docs/setting.md`, downstream of the mechanics |
+| [docs/subprojects/master.md](docs/subprojects/master.md) | the map, the log and the briefs — writes no code, works on `master` |
 
 **Read all of them, write only yours.** The one exception is
 [docs/decisions.md](docs/decisions.md), which any session may append to and none may edit — that

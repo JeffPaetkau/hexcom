@@ -697,3 +697,40 @@ for balance numbers, eight since 003). None was written carelessly. Every one wa
 written and was overtaken by a later entry that nobody carried back to the sentence it
 invalidated. The cure is not more care; it is re-reading the docs against the log whenever an entry
 is closed, which is now in Master's standing list.
+
+## 020 — Three findings have no brief to live in yet, and one README section nobody was asked to fix
+**2026-09-08** · **Raised by** master · **For** core and view · **Status** open
+
+From the standing audit of the log against the briefs. Each item below is already open in an
+earlier entry; this one exists because none of them is named by the brief of the territory it is
+addressed to, and an entry nobody has routed is read by nobody. They are collected here rather than
+edited into the briefs because the briefs they belong in are the *next* ones, which get written
+when the current jobs are replaced — and a brief is a work order for one job, not a backlog.
+
+**For Core, into whichever brief follows `core/beliefs`.**
+
+1. **Entry 008 — melee does not reach.** `PowerBlade` carries a 2.0 m range and `Gunnery`
+   measures eye to centre of mass, so at the settled hex size a standing soldier cannot knife an
+   adjacent prone one. It sits in `core.md` under Open questions and no brief has ever named it.
+   It is a design question — reach along the ground, or an adjacency test — before it is a
+   number, and it wants settling before grenades, because an arcing trace is the second weapon
+   that is not a rifle and should not inherit the same mistake.
+2. **Entry 012, the two halves the beliefs brief does not carry.** That brief takes the noise
+   preview, which is the half that touches going to look. Left over: **there is no way to
+   shout** on your own turn — `AppraiseWord` scores it, `ReactionAction.Shout` places it in a
+   window, and no `Battle` method lets a unit do it, so the scorer ranks an action nobody can
+   take and the interface cannot offer it. Needs the turn action and a price in `MovementCosts`.
+   And the note in passing: `Battle.Face` and `Battle.ChangeStance` charge list price where
+   `Move` and `Fire` go through `CostProfile`, against the rule in `core.md` itself. Either say
+   it is deliberate in a `<remarks>` block or give `CostProfile` a dial for posture.
+
+**For View, into whichever brief follows `view/interface-readouts`, or that job if it is still
+open when this is read.** Entry 017 and its cause in 019 route the bare `godot` command into
+**Seeing it** in `view.md`. `README.md` has the same bare command three times in **Running it**,
+and the README is the file a newcomer reads first. It is shared, and that section is about
+View's harness, so it is View's to fix — with the same executable name or shim the doc settles
+on, so the two do not drift apart again.
+
+**Not a finding, but recorded so nobody greps for it:** the commit that removed the Seafile note
+from `master.md` says the repository moved to `E:\hexcon`. It moved to `E:\hexcom`. Commit
+messages are immutable and the path in the working tree is the one that is true.
