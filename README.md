@@ -316,7 +316,10 @@ rather than a live one. That is next.
 
 Science fiction, people rather than monsters, and written downstream of the rules — the systems
 were built first, so the fiction earns its place by explaining them rather than by inventing
-freely. [`docs/setting.md`](docs/setting.md) is the bible.
+freely. [`docs/setting.md`](docs/setting.md) is the bible, and
+[`docs/setting/missions.md`](docs/setting/missions.md) is the mission book: six shapes a mission
+can take, the words a squad is briefed in, and what winning each one is in quantities the rules
+already have.
 
 The short version. A power that administered this region has withdrawn and left its automated
 interdiction still running overhead, which destroys anything that announces itself: no aircraft,
@@ -330,3 +333,9 @@ Both weapon families survive because neither answer is general. Force fields sto
 at solid objects, ablative plate stops slugs and cooks under a beam, so every soldier carries the
 right answer to half of what is shooting at them. Nobody wins a frontal exchange, which is why
 both sides teach the same doctrine and why the game is about seeing first.
+
+A mission is therefore about possession and information rather than casualties, and a battle
+wants three endings rather than two: the objective achieved, the objective settled against you,
+or the objective out of reach and everybody home anyway. The cheapest of the six shapes is a
+withdrawal — get in, do the thing, and leave with nobody on the other side above a suspicion —
+which is readable off the awareness ladder that already exists.
