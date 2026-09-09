@@ -123,6 +123,56 @@ distinction is the whole reason the doc set does not rot.
 
 ---
 
+## Pending — stop Seafile syncing this repository
+
+*A one-off, not part of the standing job. **Delete this section once it is done**, or it becomes
+exactly the kind of stale claim the list above exists to hunt.*
+
+This repository lives inside a synced Seafile library, and it should not. Git and GitHub are the
+source of truth for every file here; Seafile is a second, dumber copy of the same history that
+nobody reads and that nothing depends on.
+
+**It is not merely redundant — it actively interferes.** Removing a merged worktree failed on
+`.claude/worktrees/view+interface-audit`: git emptied the directory, then could not delete it,
+and the empty folder was still locked minutes later.
+
+```
+error: failed to delete '...view+interface-audit': Permission denied
+```
+
+That is a sync client holding handles on files as they appear and vanish. Worktrees are now
+standard for every session that writes code, so directories full of build output will be created
+and destroyed constantly, and each one is a chance for the same failure — or worse, for a handle
+held on something inside `.git` during a write.
+
+**What was verified**, so the next session need not re-derive it:
+
+| | |
+|---|---|
+| library root | `E:\Seafile\Personal` — `Personal` is one of six libraries under `E:\Seafile` |
+| this repo | `E:\Seafile\Personal\Games\hexcom`, so `Games/hexcom/` relative to the root |
+| existing ignore file | none, at the library root or any directory above the repo |
+| client | `seafile-applet` was running |
+
+**Two ways to fix it, and the second is cleaner.**
+
+1. **Ignore it in place.** Seafile reads a `seafile-ignore.txt` at the library root, with
+   gitignore-like patterns. Adding `Games/hexcom/` there is the small change. **Verify the
+   behaviour before trusting it** — the pattern syntax is more restricted than gitignore's, and
+   an ignore rule may only stop future uploads rather than withdraw what is already synced. The
+   Seafile documentation is the authority, not this paragraph.
+2. **Move the repository out of the library**, to something like `E:\code\hexcom`. No ignore
+   semantics to get right and no sync client involved at all.
+
+**If you move it, the path changes and some things are pinned to the old one** — the per-project
+memory directory is named after the absolute path, `.claude/` may hold machine-local settings
+with absolute paths in them, and any worktree registered under the old location must be pruned
+first. Check `git worktree list` is empty, and expect to re-point rather than assume nothing
+noticed.
+
+Ask before doing either. Moving a repository out from under a sync client is the user's call,
+not a tidy-up.
+
 ## What Master must not do
 
 - **Do not write status into any file.** The temptation arrives disguised as helpfulness — one
