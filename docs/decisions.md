@@ -697,3 +697,147 @@ for balance numbers, eight since 003). None was written carelessly. Every one wa
 written and was overtaken by a later entry that nobody carried back to the sentence it
 invalidated. The cure is not more care; it is re-reading the docs against the log whenever an entry
 is closed, which is now in Master's standing list.
+
+---
+
+## 020 — The setting is written down, and here is what it commits to
+**2026-09-08** · **Raised by** setting · **For** all · **Status** resolved
+
+[setting.md](setting.md) exists. It answers who is fighting, why at squad scale, what a mission
+is, what the kit is called, what a campaign is, and what the tone is. It was written downstream
+of the code rather than beside it: every load-bearing claim in it names the mechanic it explains,
+and section 1 is a table of what the rules already assert, read out of the source.
+
+**What other territories may now lean on.**
+
+- **A vocabulary.** Section 7 gives the world's words for what already exists — the field, plate,
+  the net, the lamp, the edge — and it is deliberately *additive*. Nothing in it asks for an
+  identifier to be renamed. `Loadout.Beamer` and `UnitStats.Signaller` are already the world's
+  words and the bible says so rather than replacing them.
+- **A visual register**, which is the thing Art was waiting on along with the physical constants
+  entry 007 settled. Nothing is new; everything is eleven years old and maintained. Low industrial
+  buildings, hard standing, perimeter walls, sandbags somebody put up a decade ago. Nobody is a
+  monster and nobody is having an adventure.
+- **A palette of places** for Content: pumping stations, relay masts, freight sheds, a refinery.
+  What gets built is Content's; the bible does not name a single map.
+
+**The two claims everything else rests on**, so that whoever wants to change one knows what they
+are paying for:
+
+1. **An automated interdiction layer left over from the vanished power still destroys anything
+   that announces itself.** It is the only thing paying for squad scale, for no air or artillery
+   or drones, for no sensor net — and therefore no aggro radius — and for one radio a squad
+   carried by somebody specific.
+2. **Neither side can admit this is a war**, because each claims to be the same state's
+   continuation. It pays for objectives that are not elimination, for both sides carrying
+   identical kit out of the same armoury eleven years apart, and for the whole political register.
+
+**Section 10 is the part to read if you only read one.** It splits the setting into load-bearing
+and free, so a later session knows what it may throw away. Every proper noun is free. The
+field-and-plate loop is not.
+
+**One correction to something the fiction nearly asserted, recorded because the arithmetic is
+worth having.** A first pass concluded there was no quiet kill in this game — a power blade does
+4 to 10 vitality of 20, so knifing a sentry looked like three to five strikes at 20 AP each. That
+is wrong, and it is wrong in the way the design doc's own section 11 warns about: layers wear as
+they work, so a run of hits into one face is nothing like a run of separate hits. Simulated
+properly, into one face, with recharge between turns:
+
+| Kit on the face | Blade strikes | Turns behind them |
+|---|---|---|
+| Infiltrator — field 4, plate 2 | 10 + 16 | one |
+| Rifleman — field 6, plate 8 | 7 + 12 + 13 | two |
+| Beamer — field 10, plate 3 | 4 + 15 + 14 | two |
+
+**The field stops the first blow and the second one kills**, which is a better piece of fiction
+than anything that was going to be invented for it. The setting now has a stake in melee working:
+entry 008 says a blade does not reach an adjacent standing soldier who is crouching or prone, and
+that is the one open entry the bible actively depends on.
+
+---
+
+## 021 — Elimination is the worst-fitting objective in the game, and one better one needs no new rules
+**2026-09-08** · **Raised by** setting · **For** core and content · **Status** open
+
+A battle currently ends when one side has nobody left in play. The setting's second question was
+what a mission is, and the answer that came back is that the rules as they stand ask for the one
+outcome they make hardest to reach.
+
+**Why elimination fits badly, in figures.** Fields recharge one to three a face every turn, so a
+squad that breaks contact for three turns is whole again; only plate and vitality carry. And a
+frontal exchange between two prepared soldiers achieves close to nothing — a pulse carbine into a
+fresh 10-point field is stopped entirely, a slug rifle into 8 points of plate puts one through.
+So a fight nobody can start on their own terms tends towards a long exchange decided by whose
+plate runs out, which is precisely the game the stealth-first design was built to avoid.
+
+**Six mission shapes fit the machinery**, ordered by what they cost:
+
+| Mission | What it needs that does not exist |
+|---|---|
+| **Withdrawal** — be there, do the thing, leave unnoticed | **nothing** |
+| **Reconnaissance** — put eyes on a place and get out | an objective node, and a record of whether it was ever traced |
+| **Sabotage** — reach a thing and spend points on it | an interactable at a node, and a price in action points |
+| **Extraction** — bring a person or object off the map | a carried thing, an exit region, a neutral who follows |
+| **Denial** — stop them doing it to you | the mirror of the others, plus a clock |
+| **Capture** — take somebody alive | subdual: a way to put a soldier down that is not damage |
+
+**The first row is the finding.** A win condition of the form *leave with the whole hostile side
+still at Unaware or Suspicious* is readable off `AwarenessTracker` today, against thresholds
+`AwarenessModel` already owns. It needs no objective system, no new geometry and no new state —
+and it is the purest statement of what this game is about. It is also the first thing that would
+make the awareness ladder a scoreboard rather than an input, which is worth something on its own.
+
+**What each territory might do.** Core owns whether a battle can end any way but elimination;
+this is not a request for all six, only a note that the cheapest one is nearly free and that the
+current condition is actively fighting the design. Content owns what a mission file says, and
+entry 007 already put a 70 to 105 m map on its plate — a map that size is the one on which these
+objectives have room to mean anything, since a shot is heard 18 m and the whole demo compound is
+20.8 m across.
+
+**And one small thing, mentioned here rather than given its own number.** `Side.Neutral` is in
+the enum, `IsHostileTo` already excludes it and `Battle.Sides` already filters it out of the win
+check, and nothing in the project uses it. The setting wants it: these installations are places
+where people work, neither side can be seen to kill them, and a worker who sees you will go and
+tell somebody. A neutral is a detection channel with legs. Nothing about that is asserted in
+[setting.md](setting.md) as though it worked — it is written there as a want, and this is where
+it goes instead of into anybody's code.
+
+---
+
+## 022 — The campaign is a thin frame, and the strategy layer is the same game one level up
+**2026-09-08** · **Raised by** setting · **For** master · **Status** open
+
+[map.md](map.md) gates the strategy layer on *the campaign shape, which belongs to Setting*.
+Section 8 of [setting.md](setting.md) answers it, so the gate can lift whenever Master judges
+there is a brief to put in a doc.
+
+**The answer is a thin frame rather than a second game**, and the argument is that the
+interesting campaign decision already exists in the tactical layer:
+
+- **Soldiers persist and can be lost.** Vitality 20 against a hardest-blow-in-the-game of 16
+  means people usually survive, so a name that comes back next mission is credible without any
+  new rule.
+- **Plate never recovers and fields always do.** What carries across missions is equipment wear,
+  not wounds. Resupply is a real decision; healing is not one.
+- **`CostProfile` and `UnitStats` already make one soldier different from another.** A veteran is
+  a set of numbers that exist today.
+
+**The decision that makes it a campaign is the loadout guess.** A field stops all of a beam and a
+seventh of a slug; plate stops all of a slug and a quarter of a beam. Every soldier therefore
+carries the right answer to half of what is shooting at them, and the question before every
+mission is what they are going to meet. That answer is bought with reconnaissance and with what
+the last mission saw. **So intelligence is the campaign currency and loadout is what it is spent
+on** — the strategy layer turns out to be the same game one level up, acquiring information under
+uncertainty and committing to a guess before knowing whether it was right.
+
+What such a layer wants: a roster, a list of sites, a clock, a market for what you carry, and a
+record of what each side has been seen fielding. What it does not want: a second combat model, an
+economy, or a research tree.
+
+**Ground changes hands as sites and never as a front**, because the setting forbids a front twice
+over — the interdiction layer makes anything large a target and the deniability premise makes it
+an admission. A campaign map is a list of installations and who is currently working them.
+
+**This is a recommendation and not a claim on the territory.** Setting owns `docs/setting.md` and
+`docs/setting/**`; whether the strategy layer gets paths, a doc and a brief is Master's, and the
+bible is careful to argue for a shape rather than to specify a system somebody else has to build.

@@ -19,7 +19,7 @@ If you ever find yourself adding `using Godot;` to a file under `src/`, stop.
 src/Hexcom.Core/        the rules — no engine references, ever
 tests/Hexcom.Core.Tests/  xUnit
 game/                   the Godot 4 project (view + input only)
-docs/                   design doc, and the project map the work is divided by
+docs/                   design doc, setting bible, and the project map the work is divided by
 ```
 
 Work is split into territories with path-based ownership so that several sessions can run at
@@ -263,8 +263,6 @@ shot went off on and where the target was standing when it landed.
 Grenades and mines, suppression, saves, and the strategy layer. See the design doc for where these
 are heading.
 
-The setting is science fiction — Star Trek, Star Wars, Babylon 5 in register.
-
 **Nobody goes and looks.** A soldier reasons only about enemies it can currently see, which is
 deliberate — acting on the real position of a unit you have lost track of is exactly the cheating
 the whole scheme exists to prevent — but it leaves a hole with three faces. A unit that knows
@@ -273,3 +271,22 @@ one it has. And being heard costs the shooter nothing when the listener is behin
 what giving yourself away is worth is measured by what the person you gave it to could do from
 where they stand. All three are the same missing piece: threats built from a remembered position
 rather than a live one. That is next.
+
+## The setting
+
+Science fiction, people rather than monsters, and written downstream of the rules — the systems
+were built first, so the fiction earns its place by explaining them rather than by inventing
+freely. [`docs/setting.md`](docs/setting.md) is the bible.
+
+The short version. A power that administered this region has withdrawn and left its automated
+interdiction still running overhead, which destroys anything that announces itself: no aircraft,
+no artillery, no drones, no sensor net, and one radio a squad carried by somebody specific. What
+is left of its apparatus has split into two claimants who each say they are its continuation, and
+who therefore cannot admit that what they are doing is a war. So it is fought twelve people at a
+time, over installations rather than ground, by professionals with identical kit out of the same
+armoury eleven years apart.
+
+Both weapon families survive because neither answer is general. Force fields stop beams and shrug
+at solid objects, ablative plate stops slugs and cooks under a beam, so every soldier carries the
+right answer to half of what is shooting at them. Nobody wins a frontal exchange, which is why
+both sides teach the same doctrine and why the game is about seeing first.
