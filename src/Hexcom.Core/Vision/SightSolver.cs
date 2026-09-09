@@ -25,6 +25,26 @@ namespace Hexcom.Core.Vision;
 /// hugging. And height advantage cancels low cover by itself: from a roof the line comes in so
 /// steeply that a one-metre wall stops protecting anything more than a pace behind it.
 /// </para>
+/// <para>
+/// <b>Sight and cover are scale-free, by construction, and that is a property to keep.</b> The
+/// waterline is built from <c>along</c> — the fraction of the way down the sight line at which
+/// the wall sits — and a fraction has no units, so nothing in the visibility or cover answer
+/// depends on how many metres a hex is. Stretch the layout by any factor and every grade and
+/// every hidden share comes out identical, node for node; this was measured, not assumed, when
+/// the sandbox was found feeding a pixel layout into the rules (see <c>docs/decisions.md</c>,
+/// entries 002 and 005). Only two things here carry horizontal units at all: the
+/// <see cref="SightResult.Distance"/> handed back for range and detection to price, and
+/// <see cref="CoverRadius"/>, which defaults to the layout's own pitch so that even the question
+/// of which walls count as a target's cover scales with the grid.
+/// </para>
+/// <para>
+/// The consequence is the one worth remembering, because the obvious guess is wrong. A
+/// violation of the one-metre contract does <em>not</em> show up as weak cover or as men seen
+/// through walls — those cannot change. It shows up in everything priced in metres: detection,
+/// noise, voice, weapon range. The symptom is a stealth game in which nobody is ever found,
+/// which looks very like a stealth game being played well. Anybody surprised by that will look
+/// here first, which is why it is written here.
+/// </para>
 /// </remarks>
 public sealed class SightSolver
 {
