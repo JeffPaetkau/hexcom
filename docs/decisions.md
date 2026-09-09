@@ -371,3 +371,136 @@ economy are all exercised by something that is not the person evaluating them.
 **What Core would like back.** Whether anything about the AI reads wrong once somebody watches
 it. Every balance figure in this game is an argument rather than a measurement, and this is the
 first increment where watching one play can turn any of them into a finding.
+
+---
+
+## 010 — The interface has been audited against the scorer, and the list lives in view.md
+**2026-09-07** · **Raised by** view · **For** all · **Status** resolved
+
+Every quantity `Tactician` weighs, against where the interface shows it, is now written down in
+[subprojects/view.md](subprojects/view.md) under **The interface audit**. It is organised by the
+four terms of an `Appraisal`, because that is how the AI reasons and therefore what an interface
+has to be able to explain.
+
+**Four rows were closed while writing it**, all in the sandbox HUD: what a shot actually achieves
+once the layers have had their say (`Gunnery.Expect`, four figures) and what the scorer therefore
+makes of it (`Tactics.Appraise`); the bar an enemy acts from, named beside the alarm rung so that
+the rung means something; and how much of the active soldier's attention the place under the
+cursor has. Entry 003 asked for the first of those in as many words — the terms of an `Appraisal`
+are kept apart *so that an interface can say why* — and nothing had ever shown one of them.
+
+**Two rows could not be closed and are entries 011 and 011 below.** Two more are blocked on
+things already recorded here: the attention cone still misreports range (006, still gated — 007
+settled the hex but says the demo map is too small, so an honest cone still fills the viewport),
+and the entire posture half of the model is blocked by 010.
+
+**The finding worth carrying whatever else happens:** the exercise works. Contract 2 was written
+on the theory that making the AI and the interface read one surface would expose gaps in both,
+and it did — the largest thing the audit found is a place the *AI* reads something it should not,
+and it was found by asking whether a player could be shown it. Nobody was looking for that.
+
+---
+
+## 011 — `Tactician.Aimed` reads how much the enemy has detected you, exactly
+**2026-09-07** · **Raised by** view · **For** core · **Status** open
+
+`Tactics/Tactician.cs`, in `Aimed`:
+
+```
+var held = battle.Awareness.Of(threat.Unit.Id, target.Id).Detection;
+var coming = battle.Awareness.WouldNotice(threat.Unit, threat.Where, pose);
+return Math.Clamp((held + coming) / bar, 0, 1);
+```
+
+`target` is the soldier doing the deciding and `threat.Unit` is the enemy, so `held` is **the
+enemy's contact file on you, read as a raw certainty**. `AppraisePosture` multiplies every
+threat's expected damage by it, so it sits inside `Appraisal.Spared` on every posture the AI
+weighs.
+
+**Two things are wrong with that, and they point in opposite directions.**
+
+*Against contract 3.* An enemy's alarm is reported coarsely on purpose; the interface shows a rung
+and never the number behind it. So an appraisal carrying this term cannot be displayed without
+leaking what the contract blurs — and against a single threat it is invertible with effort,
+because every other factor is something the player is already shown. That costs the interface the
+whole posture half of the model: `Spared` and `Prospect` are two of the four terms in an
+`Appraisal` and neither has ever been on screen. It is the one row of the audit that had to be
+left open rather than either fixed or justified.
+
+*Against `Tactician`'s own promise, which is worse.* Its class comment says: *"It reads only what
+its soldier knows. Threats are drawn from that unit's own contacts, not from the field, so an AI
+cannot lean into a flank it has not noticed."* Every other read in the file honours that. This one
+does not — a soldier is being told exactly how spotted they are, in a game whose entire subject is
+not knowing. Note which way the advantage runs: an AI that knows precisely when it has been made
+will break cover at exactly the right moment and never a moment early, which will read as uncanny
+competence rather than as a bug.
+
+**What Core might do.** The obvious repair fixes both at once: quantise `held` to the rung the
+interface already shows — `Awareness.ReadoutFor(...).State` against `Model.Threshold(...)` —
+before it enters the arithmetic. Then the AI decides on the same information the player is given,
+`Spared` becomes displayable, and the asymmetry stops being something the scorer quietly opts out
+of. It will move numbers: `Aimed` varies continuously today and would go to four steps, so
+posture scores coarsen and some reaction orderings change. That is a behaviour change and wants
+doing deliberately rather than in passing.
+
+**What View is doing meanwhile.** Not showing the posture appraisal. Rendering a score with a
+blurred number folded into it and calling the row fixed because the number is not visible on its
+own is exactly the quiet erosion the contracts exist to prevent.
+
+---
+
+## 012 — Three things the AI will want that no query exposes, so the interface cannot show them either
+**2026-09-07** · **Raised by** view · **For** core · **Status** open
+
+Found by the audit in entry 010. All three are contract 2 in the ordinary direction: a query
+neither side has, where the interface not having it is the symptom and the AI not having it is
+the cost.
+
+**1. A move's noise is computed and thrown away.** `Battle.LoudnessOf` is private and runs inside
+`Move`, after the route is committed. In a stealth-first game the loudness of a route is one of
+the two or three things worth knowing about it *before* taking it — and `core.md` already has the
+turn planner needing exactly this shape of preview for firing. A public `Loudness(unit, path)`
+would serve the planner and give the interface something to put beside the AP cost on the cursor
+line, where there is currently a price and no consequence.
+
+**2. Nothing previews what firing would announce.** Already an open question in `core.md`; the
+interface half is worth adding to it, because there is no way to show a player what a shot would
+cost them in attention either. The two are the same missing query — a preview of `Hear` and
+`Reveal` in the shape `WouldNotice` already has.
+
+**3. There is no way to shout.** `Tactician.AppraiseWord` scores calling a contact in,
+`ReactionAction.Shout` places it inside a window, and no `Battle` method lets a unit do it on its
+own turn. So the interface cannot offer it to a player and the turn planner being built now
+cannot generate it as a candidate — a scored action with no way to take it. `Awareness.CallOut`
+exists and charges nothing; what is missing is the turn action around it and a price in
+`MovementCosts`.
+
+**And one thing noticed in passing, which is not an interface finding.** `Battle.Face` and
+`Battle.ChangeStance` charge `Costs.TurnInPlace` and `Costs.ChangeStance` straight off the price
+list, while `Move` and `Fire` go through `CostProfile`. So a Scout at `Movement: 0.8` pays list
+price to turn and to drop, and `core.md`'s own rule — *never read a listed cost directly in a
+rule, go through `CostProfile`* — is broken in two places. It may well be deliberate, since a
+`CostProfile` has no dial that obviously covers posture. Flagged rather than asserted.
+
+---
+
+## 013 — Interface has earned its own doc, and cannot give itself one
+**2026-09-07** · **Raised by** view · **For** master · **Status** open
+
+[map.md](map.md) says View is two territories sharing one doc, and that interface earns a doc of
+its own once it has a brief of its own. It now has one: the audit in entry 010 and the fix list
+that came out of it are entirely interface, and presentation has had no brief at all since the
+scale split landed.
+
+The split was not done on `view/interface-audit` because it is two files in two territories.
+`map.md` names `subprojects/view.md` as View's doc and lists the paths each territory owns, and
+`map.md` belongs to master. A session that split the doc unilaterally would leave the map pointing
+at a file that no longer holds the brief, which is the failure the map exists to prevent.
+
+**What master might do.** Either split it — `subprojects/interface.md` for
+`game/scripts/BattleHud.cs` and the audit, `subprojects/view.md` for `BattleView.cs` and the
+drawing — or decide the two are close enough to stay one territory and say so, so that the
+question stops being raised every time somebody reads the doc. The code boundary is already real:
+`BattleView` and `BattleHud` are separate classes that can each reach nothing but a
+`SandboxFrame` and a `CanvasItem`, deliberately, so that two sessions can work one on each. What
+is not settled is whether that is worth two territories' worth of ceremony.

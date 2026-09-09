@@ -55,6 +55,15 @@ automated session can check its own drawing:
 godot --path game -- --shot out.png
 ```
 
+A capture ignores the mouse and the keyboard, so that two runs of it agree. `--hover q,r[,layer]`
+parks the cursor on a node and `--pass N` hands the turn on N times first, which between them put
+the readouts that depend on either back into the picture — the route preview, the cover and
+sight figures, and the shot under the cursor:
+
+```bash
+godot --path game -- --shot out.png --hover 4,0,1 --pass 2
+```
+
 The sandbox runs a five-unit skirmish on `DemoMaps.Compound`, drawn flat — two of yours outside
 the compound against three inside it, one of them holding the roof:
 
@@ -77,9 +86,19 @@ from where it is standing — blue light, yellow half, orange full. Wall colours
 orange high, yellow low, blue railing, green sight-screen. The strip on the right is the turn
 order with each unit's initiative roll.
 
+Point at an enemy and the HUD gives you the shot twice over: once as a physical event — the
+chance, the price, which plates it can reach and what each still carries — and once as a
+decision, which is the vitality, plate and shield it is actually expected to take off, the chance
+it puts them down, and what the scorer therefore makes of it. The two are further apart than they
+look. A beam landing squarely on a full shield reads beautifully on the first line and achieves
+nothing on the second, and the second is the one the AI ranks by.
+
 The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
-alarmed they are — coarse on purpose. Your own soldier's exposure is reported exactly, in the
-HUD, because that is information about yourself. Faint red circles are where an enemy *believes*
+alarmed they are — coarse on purpose, though the HUD now names the rung at which they will act on
+it, because a rung nobody can place means nothing. Your own soldier's exposure is reported
+exactly, in the HUD, because that is information about yourself; so is how much of their
+attention the place under the cursor has, which is the figure the wedge can only answer yes or no
+to. Faint red circles are where an enemy *believes*
 one of yours to be; they stop moving when you do. A brighter, outlined wedge is an arc being held
 — yellow for an overwatch, pink for an armed ambush — and the figure beside it in the turn order
 is what that unit has banked to answer with.

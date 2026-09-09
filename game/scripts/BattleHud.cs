@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using Hexcom.Core.Battles;
@@ -5,6 +6,7 @@ using Hexcom.Core.Combat;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
+using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 
@@ -41,6 +43,7 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         DrawOrderStrip(frame, viewport);
         DrawLines(frame);
+        DrawLegend(viewport);
     }
 
     /// <summary>The next few bookings, so the player can see the interleaving coming.</summary>
@@ -71,6 +74,10 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         }
     }
 
+    /// <summary>Point size every readout is set in, and the step between two of them.</summary>
+    private const int LineSize = 14;
+    private const int LineHeight = 20;
+
     private void DrawLines(SandboxFrame frame)
     {
         var battle = frame.Battle;
@@ -83,25 +90,95 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                 : $"round {battle.Round}    {active.Name} ({active.Side})    "
                   + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
                   + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}",
-            active is null
-                ? ""
-                : $"exposed {battle.ExposureOf(active):P0}    "
-                  + $"they are: {battle.HighestAwarenessOf(active).ToString().ToUpperInvariant()}",
+            active is null ? "" : AlarmLine(frame, active),
             active is null ? "" : ReserveLine(frame, active),
             frame.Hover is { } h
-                ? $"cursor {h}    {(frame.Reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    {SightLine(frame, h)}"
+                ? $"cursor {h}    {(frame.Reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    "
+                  + $"{SightLine(frame, h)}{AttentionLine(frame, h)}"
                 : "cursor —",
             ShotLine(frame),
+            WorthLine(frame),
             frame.LastWindow,
-            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
-            + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    R: new battle",
         }.Where(line => line.Length > 0).ToArray();
 
         var top = Origin + new Vector2(18, 30);
+        Panel(top, lines);
+
         for (var i = 0; i < lines.Length; i++)
-            _canvas.DrawString(_font, top + new Vector2(0, i * 20), lines[i],
-                HorizontalAlignment.Left, -1, 14,
-                i == lines.Length - 1 ? SandboxPalette.TextDim : SandboxPalette.TextBright);
+            _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), lines[i],
+                HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextBright);
+    }
+
+    /// <summary>
+    /// The keys, parked along the bottom edge where there is nothing else to read.
+    /// </summary>
+    /// <remarks>
+    /// It used to be the last line of the status block, which put it straight through the top
+    /// row of tile-cost labels: both were legible on their own and neither was legible together,
+    /// in every capture anyone has ever taken. Moving it costs nothing — a legend is the one
+    /// readout that never changes and so never needs to be near anything.
+    /// </remarks>
+    private void DrawLegend(Vector2 viewport)
+    {
+        const string keys =
+            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
+            + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    R: new battle";
+
+        var at = Origin + new Vector2(18, viewport.Y - 22);
+        Panel(at, [keys]);
+        _canvas.DrawString(_font, at, keys, HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextDim);
+    }
+
+    /// <summary>
+    /// A backing plate under a run of lines, sized to the widest of them.
+    /// </summary>
+    /// <remarks>
+    /// The readouts sit over the map rather than beside it, so without this they are drawn on
+    /// top of whatever the map happens to have there — which for the top block is the tile-cost
+    /// labels, and the two together were unreadable in every capture anyone ever took.
+    /// <para>
+    /// It is <see cref="SandboxPalette.Panel"/>, the same plate the turn-order strip is on, so
+    /// the two blocks read as the same furniture. Nearly opaque rather than fully: the map still
+    /// shows through faintly, which is enough to say the panel is floating over the world and
+    /// not a hole cut in it, and nowhere near enough to compete with the text.
+    /// </para>
+    /// </remarks>
+    private void Panel(Vector2 top, IReadOnlyList<string> lines)
+    {
+        var widest = 0f;
+        foreach (var line in lines)
+            widest = Mathf.Max(widest, _font.GetStringSize(line, HorizontalAlignment.Left, -1, LineSize).X);
+
+        _canvas.DrawRect(
+            new Rect2(
+                top + new Vector2(-10, -LineSize - 2),
+                new Vector2(widest + 20, lines.Count * LineHeight + 10)),
+            SandboxPalette.Panel);
+    }
+
+    /// <summary>
+    /// How exposed this soldier is, and how alarmed the other side has become about them.
+    /// </summary>
+    /// <remarks>
+    /// The two halves of contract 3 in <c>docs/map.md</c>, side by side, which is the clearest
+    /// place to see what the asymmetry actually is. Exposure is our own soldier's silhouette and
+    /// is quoted to the percent; the alarm is what the enemy has worked out and is quoted as a
+    /// rung, never as the certainty behind it.
+    /// <para>
+    /// The bar is named because a rung on its own does not say what it means. <c>SEARCHING</c>
+    /// is not a mood: it is the point at which <see cref="Hexcom.Core.Tactics.UtilityModel.ActsOn"/>
+    /// says a soldier who could shoot at you will. A player who cannot see where that line falls
+    /// is reading the one number this screen shows about the enemy without being told what it
+    /// is for.
+    /// </para>
+    /// </remarks>
+    private static string AlarmLine(SandboxFrame frame, Unit active)
+    {
+        var bar = frame.Battle.Tactics.Model.ActsOn;
+
+        return $"exposed {frame.Battle.ExposureOf(active):P0}    "
+               + $"they are: {frame.Battle.HighestAwarenessOf(active).ToString().ToUpperInvariant()}    "
+               + $"(they act from {bar.ToString().ToUpperInvariant()})";
     }
 
     /// <summary>
@@ -121,13 +198,31 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         return $"reserve {active.Reserve}, {would} if you stop here    {holding}";
     }
 
+    /// <summary>
+    /// How much of the active soldier's attention the place under the cursor has.
+    /// </summary>
+    /// <remarks>
+    /// Our own soldier's attention, so contract 3 says it is reported exactly. The watch cone on
+    /// the map answers this as a yes or a no; the model does not — a place is attended to fully,
+    /// at the corner of the eye, or barely, and the difference between the last two is what makes
+    /// a flank worth walking. Entry 006 in <c>docs/decisions.md</c> blocks drawing the cone at
+    /// its true reach until the ranges and the map agree; it does not block quoting the figure,
+    /// which is the half of the gap that was never gated on anything.
+    /// </remarks>
+    private static string AttentionLine(SandboxFrame frame, NodeId node)
+    {
+        if (frame.Battle.Active is not { } active) return "";
+        if (node == active.Position) return "";
+
+        return $"    your attention {frame.Battle.Awareness.AttentionOn(active, node):P0}";
+    }
+
     /// <summary>The shot the active unit would take at whoever is under the cursor.</summary>
     private static string ShotLine(SandboxFrame frame)
     {
-        if (frame.Battle.Active is not { } shooter) return "";
-        if (HoveredUnit(frame) is not { } quarry || !quarry.IsHostileTo(shooter)) return "";
+        if (HoveredShot(frame) is not { } plan) return "";
 
-        var plan = frame.Battle.PlanShot(shooter, quarry);
+        var quarry = plan.Target;
         if (!plan.CanFire) return $"shot at {quarry.Name}: {plan.Refusal}";
 
         var armour = plan.Target.Protection;
@@ -148,6 +243,54 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                + $"{plan.Weapon.Name} ({plan.Weapon.Kind}){glancing}    "
                + faces
                + "    right-click to fire";
+    }
+
+    /// <summary>
+    /// What that shot is expected to <i>achieve</i>, and what the scorer therefore makes of it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The line above it is the shot as a physical event — a chance, a price, a spread of plates.
+    /// This one is the shot as a decision, and the two come apart much further than they look.
+    /// <c>ShotPlan.ExpectedDamage</c> is damage arriving at the plate; a beam landing squarely on
+    /// a full shield reads beautifully there and achieves precisely nothing.
+    /// <see cref="Hexcom.Core.Combat.Gunnery.Expect"/> puts the rounds through the layers they
+    /// will actually meet, and it is the figure the AI ranks by.
+    /// </para>
+    /// <para>
+    /// Showing the appraisal beside it is the point of entry 003 in <c>docs/decisions.md</c>:
+    /// the terms are kept apart in <see cref="Appraisal"/> so that an interface can say
+    /// <em>why</em> one option beats another. Until this line existed nothing in the interface
+    /// showed a single term of the model the AI decides on, which is contract 2 failing in the
+    /// direction it was written to catch.
+    /// </para>
+    /// <para>
+    /// A shot's appraisal is <b>Harm</b> against <b>Spent</b> and nothing else, and both are
+    /// facts about our own soldier and their target's armour, which this screen already quotes
+    /// plate by plate. The other two terms are not shown here and one of them cannot be — see
+    /// the audit in <c>docs/subprojects/view.md</c>.
+    /// </para>
+    /// </remarks>
+    private static string WorthLine(SandboxFrame frame)
+    {
+        if (HoveredShot(frame) is not { CanFire: true } plan) return "";
+
+        var expect = frame.Battle.Gunnery.Expect(plan);
+        var worth = frame.Battle.Tactics.Appraise(plan);
+
+        return $"it achieves: {expect.Vitality:0.0} vitality    {expect.PlateStripped:0.0} plate    "
+               + $"{expect.ShieldStripped:0.0} shield    {expect.DownChance:P0} down    "
+               + $"— worth {worth.Score:+0.00;-0.00} "
+               + $"(harm {worth.Harm:0.00} less spent {worth.Spent:0.00})";
+    }
+
+    /// <summary>The shot the active unit would take at the cursor, planned once for both lines.</summary>
+    private static ShotPlan? HoveredShot(SandboxFrame frame)
+    {
+        if (frame.Battle.Active is not { } shooter) return null;
+        if (HoveredUnit(frame) is not { } quarry || !quarry.IsHostileTo(shooter)) return null;
+
+        return frame.Battle.PlanShot(shooter, quarry);
     }
 
     /// <summary>
