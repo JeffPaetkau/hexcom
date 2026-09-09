@@ -75,9 +75,22 @@ internals for convenience. It has held through two increments and it is worth sa
 `ReactionModel.Banked` and `Battle.PlanThreat` were all added because the AI needed them, and
 every one is a figure a player should have been able to see and could not.
 
-**Out of scope.** `game/**`. Entry 009 in `../decisions.md` offers View a way to hand a side to
-the AI in the sandbox; the API is there and wiring it up is theirs. Entry 004 is a Core API gap
-the interface needs and the AI does not. Entry 002 is an open sandbox bug; leave it alone.
+**Two entries the interface audit raised against Core, both open, and the first is not optional.**
+
+- **Entry 011 — `Tactician.Aimed` reads the enemy's contact file on your own soldier as a raw
+  certainty.** It breaks the promise in `Tactician`'s own class comment that it reads only what
+  its soldier knows, and it is a live cheat rather than a display problem: an AI that knows
+  exactly how spotted it is breaks cover at precisely the right moment and never a moment early.
+  **Deal with this as part of beliefs**, because it is the same bug — acting on a fact the
+  soldier has no way of holding. Fixing beliefs around it and leaving `Aimed` reading the truth
+  would be building the honest half on top of the dishonest one.
+- **Entry 012 — three queries the AI will want that do not exist**, so the interface cannot show
+  them either. What a move would announce and who would hear it is the one that touches this
+  job: going to look is worth less if the going gives you away.
+
+**Out of scope.** `game/**`. Entry 009 offers View a way to hand a side to the AI in the sandbox;
+the API is there and wiring it up is theirs. Entry 004 is a Core API gap the interface needs and
+the AI does not.
 
 **The test that it worked:** two sides that start out of contact find each other and fight,
 without either being told where the other is.

@@ -22,7 +22,7 @@ and, worse, looks maintained while doing it.
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
 | **Art & audio** | — this file | `assets/**` when it exists | the setting's visual register, and an asset spec nobody has written. The hex figure it was waiting on is settled — see entry 007 |
 | **Strategy layer** | — this file | undecided | the campaign shape, which belongs to Setting |
-| **Master** | [subprojects/master.md](subprojects/master.md) | `CLAUDE.md`, `docs/map.md`, `docs/decisions.md`, `docs/subprojects/*.md` | nothing — but it writes no code, ever |
+| **Master** | [subprojects/master.md](subprojects/master.md) | `CLAUDE.md`, `docs/map.md`, `docs/decisions.md`, and the doc *set* — each territory owns its own doc's contents | nothing — but it writes no code, ever |
 
 **Each territory doc with work in it opens with a `## The job` section** — the current brief,
 written so that a session can be pointed at that one file and need nothing else. When a job is
@@ -36,9 +36,17 @@ content wearing a `.cs` extension until there is a map format to put it in.
 interface (what the player is allowed to know, and how they ask) are different problems, and the
 second one constrains the rules rather than consuming them. They no longer share a file:
 presentation is `game/scripts/BattleView.cs` and interface is `game/scripts/BattleHud.cs`,
-separate classes rather than partials so that neither can reach into the other's state. They
-still share a doc, because interface has no brief of its own yet. Giving it one is what earns it
-the doc.
+separate classes rather than partials so that neither can reach into the other's state.
+
+**They stay one territory anyway, and that is settled — see [decisions.md](decisions.md) entry
+014.** An earlier version of this file said interface earns its own doc once it has a brief of
+its own. That test was wrong. Having a brief is what earns a *doc*; having **paths** is what
+earns a *territory*, and only the second was ever the question. The paths do not divide: the two
+classes are 648 lines of `game/`, and the entry point, input handling, scenario setup, scale
+contract and capture harness are 726 lines belonging to both and to neither. Two territories
+sharing over half a directory is the ambiguity path ownership exists to remove.
+
+The greybox (build order 06) rewrites `game/` substantially and is the moment to look again.
 
 ### The two territories not yet given paths
 

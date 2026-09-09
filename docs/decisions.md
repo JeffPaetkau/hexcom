@@ -485,7 +485,7 @@ rule, go through `CostProfile`* — is broken in two places. It may well be deli
 ---
 
 ## 013 — Interface has earned its own doc, and cannot give itself one
-**2026-09-07** · **Raised by** view · **For** master · **Status** open
+**2026-09-07** · **Raised by** view · **For** master · **Status** resolved by 014
 
 [map.md](map.md) says View is two territories sharing one doc, and that interface earns a doc of
 its own once it has a brief of its own. It now has one: the audit in entry 010 and the fix list
@@ -504,3 +504,37 @@ question stops being raised every time somebody reads the doc. The code boundary
 `BattleView` and `BattleHud` are separate classes that can each reach nothing but a
 `SandboxFrame` and a `CanvasItem`, deliberately, so that two sessions can work one on each. What
 is not settled is whether that is worth two territories' worth of ceremony.
+
+---
+
+## 014 — Interface and presentation stay one territory, and the test is the shared middle
+**2026-09-08** · **Raised by** master · **For** view · **Status** resolved
+
+Answering 013. They stay one territory. The question is settled rather than deferred, so it stops
+being raised every time somebody reads the doc.
+
+**The reason is not that the code boundary is unreal — it is real.** `BattleHud` and `BattleView`
+are separate classes that can each reach nothing but a `SandboxFrame` and a `CanvasItem`, and
+that was good work. The reason is that a territory is defined by paths, and the paths do not
+divide:
+
+| | |
+|---|---|
+| interface | `BattleHud.cs` — 354 lines |
+| presentation | `BattleView.cs` — 294 lines |
+| **neither** | `HexSandbox.cs`, `SandboxFrame`, `SandboxScale`, `SandboxGeometry`, `SandboxPalette`, `SandboxCapture` — **726 lines, over half of `game/`** |
+
+The entry point, the input handling, the scenario setup, the scale contract and the capture
+harness belong to both and to neither. Splitting the doc would create two territories that share
+six files, and shared ownership of the majority of a directory is precisely the ambiguity
+path-based ownership exists to remove. Rule 1 would be unenforceable on its first day.
+
+**What would change the answer:** the shared middle shrinking, or acquiring an owner of its own.
+The greybox (build order 06) rewrites `game/` substantially and is the natural moment to look
+again — if `HexSandbox` decomposes into something each half can own, the split becomes free.
+Until then, one territory whose current brief happens to be interface work is an accurate
+description rather than a compromise.
+
+**One thing does change now.** `map.md` said interface earns its own doc once it has a brief of
+its own. That test was wrong: having a brief is what earns a doc, but having *paths* is what
+earns a territory, and only the second one was ever the real question. `map.md` now says so.

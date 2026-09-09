@@ -12,8 +12,15 @@ Read [../map.md](../map.md) first — this territory exists to keep that file tr
 CLAUDE.md                      the router, the conventions, the worktree policy
 docs/map.md                    territories, path ownership, frozen contracts
 docs/decisions.md              curation only — see the rules below
-docs/subprojects/*.md          the doc set: creating, retiring, and structuring them
+docs/subprojects/*.md          the doc *set* — creating, retiring, restructuring
 ```
+
+**A territory owns the contents of its own doc.** Master creates it, may write or replace its
+`## The job` brief, and owns the header sections that make the scheme work — Owns, Must not
+touch, Depends on. Everything a territory learns and writes down for its successors is that
+territory's. In practice the sessions doing the work keep their own docs current without being
+asked, which is the scheme working rather than a boundary being crossed; Master's job here is
+routing findings into briefs, not editing other people's notes.
 
 `README.md` is shared. Each territory updates the parts its own work changed; Master owns only
 its shape, and the territory paragraph near the top.
