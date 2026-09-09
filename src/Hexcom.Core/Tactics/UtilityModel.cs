@@ -175,6 +175,46 @@ public sealed record UtilityModel
     public double FriendlyHarm { get; init; } = 1.0;
 
     /// <summary>
+    /// What doing what you came to do is worth, in vitality.
+    /// </summary>
+    /// <remarks>
+    /// The one exchange rate an objective needs, and it lives here rather than on the objective
+    /// for the reason every other rate does: an objective is a <b>win condition</b>, not a
+    /// scoring model, and the moment a mission type starts carrying its own price the campaign
+    /// and the tactics layer begin disagreeing about what a soldier is worth.
+    /// <para>
+    /// A whole squad, near enough. Six soldiers at twenty vitality apiece is a hundred and
+    /// twenty, and the mission is why they came — so getting it done outweighs any single
+    /// exchange on the field, and getting it done outweighs a soldier's own skin, which is what
+    /// makes a unit walk out through fire rather than stand and trade. It is deliberately larger
+    /// than anything a shot can score, and that is the point rather than a mistake: the fight is
+    /// what happens on the way, and the design's whole complaint about elimination is that the
+    /// rules made the fight the only thing worth wanting.
+    /// </para>
+    /// </remarks>
+    public double ObjectiveValue { get; init; } = 120.0;
+
+    /// <summary>
+    /// How many turns of walking away from the objective still counts as being on the way to it.
+    /// </summary>
+    /// <remarks>
+    /// The slope, and therefore how far an objective reaches. Progress runs from all of it at the
+    /// objective to nothing this many turns of ordinary ground away, so each stride toward it is
+    /// worth a stride's share of <see cref="ObjectiveValue"/> — which is what lets a search one
+    /// step deep set off toward something it cannot reach this turn. Set it to nothing and an
+    /// objective becomes a flag rather than a gradient: worth everything from inside it and
+    /// nothing one pace outside, which nobody would ever walk to.
+    /// <para>
+    /// Four turns at fifty points is two hundred points of ground, or about forty hexes of open
+    /// floor — the width of the largest map anybody has drawn. Turned down, soldiers ignore the
+    /// mission until they are nearly on top of it; turned up, they set off from anywhere and the
+    /// objective drowns out everything happening in front of them. It is the dial to reach for if
+    /// a squad walks past a firefight to reach an exit, or stands in one ignoring the exit.
+    /// </para>
+    /// </remarks>
+    public double ObjectiveHorizon { get; init; } = 4.0;
+
+    /// <summary>
     /// How sure somebody has to be before a shot they could take counts as a shot they will take.
     /// </summary>
     /// <remarks>

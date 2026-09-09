@@ -1,4 +1,5 @@
 using System.Linq;
+using Hexcom.Content;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
@@ -248,7 +249,7 @@ public class SightTests
     [Fact]
     public void TheCompoundWallBlocksSightJustAsItBlocksMovement()
     {
-        var map = DemoMaps.Compound();
+        var map = MapLibrary.Load("compound");
         var sight = new SightSolver(map, Layout);
 
         // Level with the unbroken part of the wall.
@@ -261,7 +262,7 @@ public class SightTests
     [Fact]
     public void TheHedgeBlocksSightWhileLettingPeopleThrough()
     {
-        var map = DemoMaps.Compound();
+        var map = MapLibrary.Load("compound");
         var sight = new SightSolver(map, Layout);
         var graph = MovementGraph.Build(map);
 
@@ -275,7 +276,7 @@ public class SightTests
     [Fact]
     public void TheRoofOverlooksTheGroundItStandsOver()
     {
-        var map = DemoMaps.Compound();
+        var map = MapLibrary.Load("compound");
         var sight = new SightSolver(map, Layout);
 
         var ground = Hex.Zero.WithinRange(6)

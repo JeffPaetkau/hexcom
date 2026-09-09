@@ -341,6 +341,32 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     }
 
     /// <summary>
+    /// What being somewhere is worth toward what this soldier came to do.
+    /// </summary>
+    /// <remarks>
+    /// The whole of the objective system as the scorer sees it, and it is deliberately one
+    /// multiplication. The objective says how much of itself a place represents, from nothing to
+    /// all of it; this says what all of it is worth. Nothing about which mission it is reaches
+    /// here, which is what keeps a win condition from turning into a scoring model.
+    /// <para>
+    /// It goes in <see cref="Appraisal.Prospect"/>, undiscounted, and both halves of that are
+    /// deliberate. Prospect, because getting closer to the exit delivers nothing at all this turn
+    /// and is worth having entirely because of what it sets up — the same term a move to a firing
+    /// position is ranked on. Undiscounted, because the mission is not a bet on next round the
+    /// way a posture is: it is the reason the squad is on the map, and the future it belongs to
+    /// is the one after the battle.
+    /// </para>
+    /// <para>
+    /// A soldier with no objective scores nothing here and behaves exactly as it always did,
+    /// which is what makes this safe to add to every appraisal rather than to a special path.
+    /// </para>
+    /// </remarks>
+    public double TowardObjective(Unit unit, NodeId at)
+        => battle.ObjectiveOf(unit.Side) is { } objective
+            ? Model.ObjectiveValue * objective.Progress(battle, at)
+            : 0;
+
+    /// <summary>
     /// What walking a route is worth: how it leaves you standing, less what the walk told
     /// everybody.
     /// </summary>
@@ -357,7 +383,11 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     public Appraisal AppraiseMove(
         Unit unit, UnitPose arriving, int apCost, double loudness, IReadOnlyList<Threat> threats)
         => AppraisePosture(unit, arriving, apCost, threats)
-           + new Appraisal(0, -Model.FutureDiscount * GivenAway(unit, arriving, loudness), 0, 0);
+           + new Appraisal(
+               0,
+               -Model.FutureDiscount * GivenAway(unit, arriving, loudness),
+               TowardObjective(unit, arriving.Position) - TowardObjective(unit, unit.Position),
+               0);
 
     /// <summary>
     /// The worst one shot from this threat would do to a soldier standing like that, weighed by
@@ -525,6 +555,10 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
             ReactionAction.Fire => placement.Forecast is { } forecast
                 ? Appraise(forecast)
                 : Appraisal.Nothing,
+
+            // Exactly nothing, in every term. That is what makes it beat a shot that will be
+            // soaked entirely, without anything anywhere saying that it should.
+            ReactionAction.Nothing => Appraisal.Nothing,
 
             ReactionAction.Shout => AppraiseWord(reactor, placement.Subject, mover.Where, placement.ApCost),
 

@@ -556,7 +556,9 @@ public class ReactionTests
         // the aimed shot comes into reach as well, which is the whole point of the mount.
         Assert.True(offer.Reserve < FireMode.Aimed.ApCost);
         Assert.Contains(offer.Options, o => o.Mode == FireMode.Aimed);
-        Assert.All(offer.Options, o => Assert.True(o.Forecast.ApCost < o.Mode.ApCost));
+        Assert.All(
+            offer.Options.Where(o => o.Action == ReactionAction.Fire),
+            o => Assert.True(o.Forecast!.ApCost < o.Mode!.ApCost));
     }
 
     [Fact]
@@ -1149,11 +1151,17 @@ public class ReactionTests
         var (battle, _, _) = Overwatched(OverwatchArc.Standard, Node(4, -2), CoverAtTheEnd());
 
         var offer = battle.Move(Node(4, 2)).Reactions!.Offers.Single();
+        var shots = offer.Options.Where(o => o.Action == ReactionAction.Fire).ToList();
 
-        Assert.Equal(offer.Options.Count, offer.Options.Select(o => o.Mode).Distinct().Count());
+        Assert.Equal(shots.Count, shots.Select(o => o.Mode).Distinct().Count());
         Assert.Contains(offer.Recommended, offer.Options);
-        Assert.All(offer.Options, o => Assert.True(o.Mode.ApCost <= offer.Reserve));
-        Assert.All(offer.Options, o => Assert.True(o.Forecast.CanFire));
+        Assert.All(shots, o => Assert.True(o.Mode!.ApCost <= offer.Reserve));
+        Assert.All(shots, o => Assert.True(o.Forecast!.CanFire));
+
+        // And one option that is not a shot at all. A held shot is one somebody chose to hold, so
+        // choosing not to spend it has to be on the list a player is offered.
+        var decline = Assert.Single(offer.Options, o => o.Action == ReactionAction.Nothing);
+        Assert.Equal(0, decline.ApCost);
     }
 
     [Fact]

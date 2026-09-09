@@ -1,4 +1,5 @@
 using System.Linq;
+using Hexcom.Content;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
@@ -10,9 +11,15 @@ namespace Hexcom.Core.Tests;
 /// The demo map is the greybox the view layer loads, so it doubles as an end-to-end check that
 /// the whole pipeline — tiles, walls, regions, graph, pathfinding — holds together.
 /// </summary>
+/// <remarks>
+/// Read from <c>content/maps/compound.hexmap</c> rather than built in C#, which is what entry 024
+/// asked for and the last thing holding <c>DemoMaps.cs</c> in <c>src/</c>. It is a better fixture
+/// as well as a tidier one: the pipeline it checks end to end now starts at the text a person
+/// actually writes.
+/// </remarks>
 public class DemoMapTests
 {
-    private static readonly BattleMap Map = DemoMaps.Compound();
+    private static readonly BattleMap Map = MapLibrary.Load("compound");
     private static readonly MovementGraph Graph = MovementGraph.Build(Map);
 
     [Fact]

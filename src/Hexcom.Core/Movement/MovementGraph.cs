@@ -33,6 +33,7 @@ public sealed class MovementGraph
 {
     private readonly Dictionary<NodeId, MovementNode> _nodes;
     private readonly Dictionary<NodeId, List<TraversalLink>> _outgoing;
+    private readonly Dictionary<NodeId, List<TraversalLink>> _incoming;
 
     private MovementGraph(
         Dictionary<NodeId, MovementNode> nodes,
@@ -44,6 +45,13 @@ public sealed class MovementGraph
         _outgoing = outgoing;
         Costs = costs;
         MapRevision = mapRevision;
+
+        _incoming = [];
+        foreach (var link in outgoing.Values.SelectMany(l => l))
+        {
+            if (!_incoming.TryGetValue(link.To, out var list)) _incoming[link.To] = list = [];
+            list.Add(link);
+        }
     }
 
     public MovementCosts Costs { get; }
@@ -63,6 +71,20 @@ public sealed class MovementGraph
 
     public IReadOnlyList<TraversalLink> LinksFrom(NodeId id)
         => _outgoing.TryGetValue(id, out var links) ? links : [];
+
+    /// <summary>
+    /// Every link that <em>arrives</em> at a node.
+    /// </summary>
+    /// <remarks>
+    /// The graph is directed and not always symmetric — a drop you can take is not a climb you
+    /// can make — so walking it backwards needs the reverse adjacency rather than the forward
+    /// one read the other way. Built once beside the forward index, because the only thing that
+    /// wants it wants the whole of it: asking what it costs to reach a place from everywhere is
+    /// one search backwards from that place, and doing it forwards would be one search per
+    /// starting point.
+    /// </remarks>
+    public IReadOnlyList<TraversalLink> LinksTo(NodeId id)
+        => _incoming.TryGetValue(id, out var links) ? links : [];
 
     /// <summary>The largest region of a tile, which is where a unit normally stands.</summary>
     public NodeId PrimaryNode(TileAddress address) => new(address, 0);

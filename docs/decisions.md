@@ -131,7 +131,7 @@ interface can display, and there is no private one.
 ---
 
 ## 004 — `Battle.Move` gives nobody a chance to place a reaction by hand
-**2026-09-07** · **Raised by** core · **For** core (with view to say what it needs) · **Status** open — the shape is answered by 022; open until Core builds it
+**2026-09-07** · **Raised by** core · **For** core (with view to say what it needs) · **Status** resolved by 037
 
 `ReactionWindow` splits building offers from resolving them, and the design says an interface or
 an AI plugs in by placing its own choices between `PlaceRecommended()` and `Resolve()`. There is
@@ -800,7 +800,7 @@ two — has an argument on it and no measurement yet.
 ---
 
 ## 022 — What View wants from `Move`: a window it can hold open, and the same seam through `Commander`
-**2026-09-08** · **Raised by** view · **For** core · **Status** open
+**2026-09-08** · **Raised by** view · **For** core · **Status** resolved by 037
 
 Answering 004, which asked which shape the interface wants before Core picks one. **The split,
 not the callback** — and it turns out the choice is not a matter of taste.
@@ -852,7 +852,7 @@ is the first of three gated jobs in `subprojects/view.md`.
 ---
 
 ## 023 — The sandbox has watched the AI play: 017 and 019 closed for View, 009 taken up, and what read wrong
-**2026-09-08** · **Raised by** view · **For** core, and master for the statuses · **Status** resolved for View; the items for Core are open
+**2026-09-08** · **Raised by** view · **For** core, and master for the statuses · **Status** resolved — View's half by this entry, Core's by 039
 
 **017 and 019, View's half.** The commands in **Seeing it** and in `README.md` now name the
 executable — `Godot_v4.7.2-stable_mono_win64_console` — and say why: the WinGet package puts its
@@ -931,8 +931,8 @@ nought against a contact already held `Engaged`.
 ---
 
 ## 024 — A map is a text file: the corner graph written down, plus shorthand that lowers to it
-**2026-09-08** · **Raised by** content · **For** view, core and master · **Status** open (core's half;
-the decision itself is made; master's half resolved by 029 and view's by 035)
+**2026-09-08** · **Raised by** content · **For** view, core and master · **Status** resolved — core's half by 040;
+the decision itself was always made, master's half by 029 and view's by 035
 
 The `.hexmap` format exists, in `content/`, with a reader, a writer and two maps. The brief in
 `subprojects/content.md` posed two candidates and asked for the choice and the rejected
@@ -1052,7 +1052,7 @@ that is the one open entry the bible actively depends on.
 ---
 
 ## 026 — Elimination is the worst-fitting objective in the game, and one better one needs no new rules
-**2026-09-08** · **Raised by** setting · **For** core and content · **Status** open
+**2026-09-08** · **Raised by** setting · **For** core and content · **Status** resolved by 038 for core; content's half open
 
 A battle currently ends when one side has nobody left in play. The setting's second question was
 what a mission is, and the answer that came back is that the rules as they stand ask for the one
@@ -1232,7 +1232,7 @@ and 8 should be built as though it will survive that rewrite untouched.
 ---
 
 ## 030 — The mission book is written, and the withdrawal condition needs two things entry 026 did not see
-**2026-09-08** · **Raised by** setting · **For** core and content · **Status** open
+**2026-09-08** · **Raised by** setting · **For** core and content · **Status** resolved by 038 for core; content's half open
 
 [setting/missions.md](setting/missions.md) exists: the six shapes of entry 026 turned into what
 a soldier is actually told, what winning is in quantities the rules already have, and what the
@@ -1655,3 +1655,184 @@ genuinely new thing the six mission shapes want — a record of the moment a hos
 has registered somebody and had a turn to use it. Core's brief leaves it to the judgement of
 whoever picks the brief up. If it is left out of 05b, it becomes the item after, and the denial
 and extraction missions wait on it; the withdrawal mission does not.
+
+---
+
+## 037 — The window is a state the battle sits in, and holding fire is an action
+**2026-09-09** · **Raised by** core · **For** view, master · **Status** resolved
+
+Entry 004 asked which shape the interface wanted and 022 answered: the split, not the callback.
+Built as asked, with two things settled that 022 left to whoever picked it up.
+
+**`Battle.Commit` and `Battle.Resolve`, with `Move` as the two in sequence.** Committing prices
+the route, spends the points and builds the window with its offers made and nothing placed. The
+mover has **not stepped** — it stands at the start until the window resolves and walks it along —
+so anything reading the field while a window is open sees a soldier who has paid for a walk it
+has not taken. `Move` is the two with `PlaceRecommended` between them, so every existing caller,
+including the turn loop and every headless match, is where it was.
+
+**It returns a `MoveCommitment` rather than the bare `ReactionWindow` 022 named**, and that is the
+one deviation from what View asked for. Two reasons, both practical: a refusal has to come back
+from somewhere, and `null` loses the sentence a player should be shown; and `Resolve` needs the
+route and the price to build the `MoveOutcome`, which the window does not carry. The commitment is
+the window plus the receipt, and `commitment.Window` is the thing the HUD draws. **If View would
+rather have the window itself, say so and it is a small change** — but a `Commit` that cannot say
+*out of reach this turn* did not look like an improvement.
+
+**Declining is an explicit `ReactionAction.Nothing`, not a nullable `Recommended`.** 022 offered
+either and `core.md` asked for the choice to be made deliberately. The action wins on three
+counts: it is a thing the interface can draw beside the other options rather than a hole in the
+list; a player can pick it on purpose; and the scorer prices it at exactly nothing, so *hold fire*
+beats every option that scores below zero **by arithmetic**, with no rule anywhere saying it
+should. That closes the open question `core.md` carried — a reactor no longer takes a bad answer
+because it had to take one. `Recommended` stays non-null, because with holding fire on the list
+there is always something to recommend.
+
+**And it is offered only to the deliberate reactions.** An overwatch and an ambush are held shots:
+somebody chose to hold them and may choose to keep them, which is exactly the case entry 004
+named. Surprise is the involuntary one, and the whole of what it models is that a soldier caught
+out does *something* rather than nothing — offering it the chance to do nothing is offering it the
+chance not to flinch. Measured rather than assumed: with declining on the surprise list, a
+startled sentry stands still, because a dive costs two points and buys a discounted share of one
+shot, which on open ground comes out just under nothing. Two existing tests pin the old behaviour
+and both were right to.
+
+**The seam reaches through `Commander`, which is what 022 said it had to.** A commander built with
+`WindowAnswer.HandedOut` stops its turn with the window open, exposes it as `Commander.Waiting`,
+and carries on from `Resume()`. The default is unchanged. `TakeTurn` now returns an `Act` per
+order — the order it was chosen on, plus the `MoveOutcome`, `ShotOutcome` or `BlastOutcome` it
+produced — which is 022's last item, the one about the sandbox being unable to narrate the
+enemy's turn.
+
+**One line changed in `game/`**, at the single call site that reads `TakeTurn`, so the solution
+still builds; it maps the acts back to their orders and says why in a comment. Nothing else under
+`game/` was touched.
+
+**And a bug that predates all of this, found by building it.** `Commander.TakeTurn` ended the turn
+unconditionally when its loop stopped. Three things hand the turn on without the loop asking —
+being dropped mid-move, having an ambush sprung on you, and now walking off the field — and in
+every one of those the call ended **somebody else's** turn, banking their allowance and passing it
+on before they had done anything with it. It went unseen because the only thing driving whole
+turns was a headless match, where a soldier that silently loses a turn looks like a soldier that
+decided to do nothing. Ending the turn is now conditional on the soldier the commander set out to
+drive still being the one whose turn it is, and a test pins it.
+
+---
+
+## 038 — A battle can end three ways, and an objective is a gradient
+**2026-09-09** · **Raised by** core · **For** content, setting, view, master · **Status** resolved
+
+Build order 05b. Entry 026 asked whether a battle could end any way but elimination and entry 030
+said what the answer had to account for. Both are built, with the withdrawal shape as the one
+concrete mission.
+
+**Three endings, and casualties are not a term in any of them.** `Verdict` is `Undecided`,
+`Achieved`, `Failed` or `Abandoned` — done, settled against you, or out of reach with everybody
+home. The third is the one entry 030 argued for and it is the commonest honest outcome of quiet
+work: a squad that is seen has lost the mission and has not lost the squad, and a win-or-die model
+reports those identically. Nothing weighs a dead rifleman, because the campaign holds the roster
+and already has that measurement.
+
+**Both of entry 030's warnings were real and both are handled.** `Unit.Left` is a `Departure`
+carrying how the soldier went — `Down` or `Extracted` — the round, and the reading. Leaving and
+dying are no longer the same state. And the reading is **sampled at the moment of departure**
+inside `Battle.Withdraw`, before the forgetting, because a condition asked afterwards reads
+Unaware for everybody, trivially and always. It is a sample per departure rather than a mark held
+across the battle, which is what keeps the counter-play 030 asked to preserve: silencing a witness
+takes his contact out of the world, and a test pins that too.
+
+**What an objective is.** An abstract `Objective` with a side, a `Judge` that returns a verdict,
+and a `Progress` that says how much of it a place represents. It is the only polymorphism in these
+rules and it earns it: the shapes are open, entry 026 lists six, and a record with a field per
+kind would rot while a switch over a kind enum would put every future mission type inside
+`Battle`. `Withdrawal(side, exit, unnoticed)` is the one concrete kind.
+
+**What it deliberately does not do is put a price on anything.** An objective is a win condition,
+not a scoring model — 030's words — so the one exchange rate lives in `UtilityModel` with every
+other: `ObjectiveValue`, what doing what you came for is worth, and `ObjectiveHorizon`, how far
+away still counts as being on the way. Nothing about which mission it is reaches the arithmetic.
+
+**Progress is a gradient and that is the load-bearing part.** A flag is worth everything from
+inside the exit and nothing a pace outside it, and a search one step deep cannot see a place three
+turns away, so nobody would ever set off. Sloped over the approach, every stride toward it scores
+— the same trick that makes a move to a firing position worth taking. It is measured in action
+points along the movement graph rather than in metres across the map, so the far side of a river
+reads as far away where the water is narrow, and it is **one backward search from the exit** over
+the whole graph rather than one per candidate destination. That needed `MovementGraph.LinksTo` and
+`Pathfinder.CostToReach`, both new, both general.
+
+**For Content.** `Battle.SetObjective` before `Start`, and `Withdrawal` takes a collection of exit
+nodes — a named place rather than a map edge, as 030 asked. `Battle.Extract()` is the turn action
+and it is free: the price of leaving is having walked there. A battle with no objective behaves
+exactly as it always did, so nothing existing changed. The scenario file entry 036 says waits on
+*what an objective is* is unblocked.
+
+**For Setting.** Of the six shapes, withdrawal is done. Reconnaissance and sabotage want an
+objective at a node; extraction wants something carried; denial and capture want the clock and
+subdual. The clock is still the one genuinely new thing and is still nobody's — see below.
+
+**For View.** `Battle.VerdictFor(side)`, `Battle.ObjectiveOf(side)`, `Objective.Brief` for words
+to show, and `Unit.Left` for why somebody is off the field. `IsDecided` is now true when an
+objective settles, however many soldiers are still standing, and falls back on the last-side-
+standing rule for a battle nobody gave an objective to.
+
+---
+
+## 039 — Contract 3 has a third case, and it reads exactly
+**2026-09-09** · **Raised by** core · **For** view, master · **Status** resolved
+
+Entry 023 asked, and it is in section 07 of the design doc now. Contract 3 named two cases: your
+own exposure, exact; the enemy's alarm, a rung. **What your own soldier holds on an enemy is a
+third, and it is read exactly.**
+
+The principle underneath the split is not what the number is *about*, it is **whose knowledge it
+is**. Your side's knowledge is yours, in both directions, and blurring what your own soldier has
+worked out would be fog about yourself — which contract 3 already rejects in as many words for
+exposure. The other side's knowledge stays coarse in both directions, and the marker they hold on
+you is the one thing of theirs you see at all.
+
+So View may draw *how much is still left to learn about this contact* as a figure. `map.md`'s
+contract 3 is a sentence short of saying this and Master may want to add it.
+
+---
+
+## 040 — `DemoMaps` has no callers in `tests/` and Content may delete it
+**2026-09-09** · **Raised by** core · **For** content · **Status** resolved for core
+
+Entry 024's half for Core. `DemoMapTests` and the three tests in `SightTests` now read
+`MapLibrary.Load("compound")`, so `tests/Hexcom.Core.Tests` references `Hexcom.Content` and
+nothing in `tests/` calls `DemoMaps` any more.
+
+**The choice between the two offers.** Entry 024 offered either this or keeping a hand-built map
+in Core with the two held equal by test. Loading won on a reason beyond tidiness: the pipeline
+`DemoMapTests` checks end to end now starts at the text a person actually writes, which is a
+strictly better fixture. The test *assembly* referencing Content does not touch *Core is the
+trunk*, which is a statement about the library.
+
+**Content's move.** `src/Hexcom.Core/Maps/DemoMaps.cs` is untouched here, because deleting it
+would also break the Content test that holds the two maps equal, and both of those are yours. Both
+can go together whenever you like.
+
+**Also from 024:** the masthead in `design.html` counted one test assembly and now names both.
+
+---
+
+## 041 — Two things this branch found and did not build
+**2026-09-09** · **Raised by** core · **For** core · **Status** open
+
+**1. An objective is worth more than any fight, and that is set by argument.**
+`UtilityModel.ObjectiveValue` is a whole squad's worth of vitality, deliberately larger than
+anything a shot can score, so a squad told to get out walks out through fire rather than stopping
+to trade. That is the behaviour the complaint about elimination was asking for, and it is also the
+first number in this game that can make a soldier ignore what is happening in front of it.
+`ObjectiveHorizon` decides how far the pull reaches. Neither has been measured, both are exactly
+the sort a batch of headless matches settles, and the failure modes are legible: a squad that
+walks past a firefight to reach an exit means the value is too high, and one that stands in a
+firefight ignoring the exit means the horizon is too short.
+
+**2. Nothing between an objective and the marker.** The gradient fixes *reaching* for a soldier
+with somewhere to be; it does nothing for one hunting a contact, which still reaches about one
+move because a marker is a point and not a slope. The two are the same shape of problem seen from
+either end, and the fix for the second is a deeper search rather than another gradient — a marker
+that sloped would send soldiers walking at ghosts from across the map, which is the thing
+`MarkerDecay` exists to prevent.

@@ -1,3 +1,4 @@
+using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
@@ -182,8 +183,21 @@ public sealed class Unit
 
     public bool IsDown => Vitality <= 0;
 
+    /// <summary>
+    /// How this soldier left the field, or null while it is still on it.
+    /// </summary>
+    /// <remarks>
+    /// Carries the reading the other side held at the moment of departure, because by the time
+    /// anybody could ask, the tracker has forgotten. See <see cref="Battles.Departure"/>, which
+    /// is where the argument for sampling rather than polling is written down.
+    /// </remarks>
+    public Departure? Left { get; internal set; }
+
     /// <summary>False once a unit has left the fight. Stale turn queue entries are skipped.</summary>
-    public bool InPlay { get; internal set; } = true;
+    public bool InPlay => Left is null;
+
+    /// <summary>Whether this soldier walked off the field rather than being carried off it.</summary>
+    public bool GotOut => Left?.Kind == DepartureKind.Extracted;
 
     /// <summary>Where this unit is and how it is carrying itself, for the sight solver.</summary>
     public Vantage Vantage => new(Position, Stance);

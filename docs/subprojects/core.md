@@ -30,71 +30,61 @@ purpose, balance numbers in their homes — nine of them since `BlastModel`, see
 
 ---
 
-## The job — the open window, and a battle that can end (build order 05a)
+## The job — the rest of the mission shapes, and something to measure them with
 
-Branch `core/open-window`. Read the rest of this file before starting; the turn loop below and
-the gotchas after it are the things that will bite, and the reaction timeline is the thing this
-job has to cut in half without breaking.
+Branch `core/objectives`. Read the rest of this file before starting; the turn loop below and the
+gotchas after it are the things that will bite, and the two new ones about windows and objectives
+are the two most likely to.
 
-**What exists.** The whole weapons table bar suppression. Ten systems, an AI that plays both
-sides, maps as text, and — new — an arcing trace, blasts through the ordinary layers, mines on the
-reaction timeline, a blade that reaches what it can step to, and a shout you can do on your own
-turn. `docs/decisions.md` entries 031 to 034 are the argument for all of it.
+**What exists.** Every system the design doc describes bar suppression. Ten of them, an AI that
+plays both sides, maps as text, grenades and mines, a reaction window a person can answer, and a
+battle that ends because a squad did what it came for. `docs/decisions.md` entries 037 to 041 are
+the argument for the last two.
 
-**The job is the two things entry 029 says come before the greybox is worth starting**, in that
-order, because the second is what the first is for.
+**The job is the mission shapes the fiction describes and the rules cannot yet express.** Entry
+026 lists six and one is built. In the order they cost:
 
-- **The open window — entries 004 and 022.** `Battle.Move` opens a `ReactionWindow` and runs it
-  in one call, so nothing between `PlaceRecommended` and `Resolve` is reachable from outside.
-  Split it: `Battle.Commit` returning the window with its offers built, `Battle.Resolve` closing
-  it, `Move` as the two in sequence for everything that does not care. A way to decline — which
-  means `ReactionOffer.Recommended` becoming nullable, and that is a real behaviour change on its
-  own, because the model already produces windows where every option scores below zero and takes
-  one anyway. And `Commander.TakeTurn` stopping at a window rather than running past it, handing
-  back the outcomes beside its orders, so the enemy's move can be answered by a person.
-  Entry 022 is View's own account of the shape it wants; read it before designing.
+- **An objective at a place — reconnaissance and sabotage.** Both want the same two things: a
+  node that means something, and a record of whether anybody got what they came for at it. Entry
+  030 costed the reconnaissance half down to two calls that already exist, `SightSolver.Trace` to
+  a vantage at the place and `AwarenessTracker.IsWatching` for the front cone rather than the
+  corner of the eye. Sabotage is that plus a price in action points and a thing to spend them on.
+  Both are new `Objective` kinds and neither needs new geometry.
 
-- **A battle that can end some way other than elimination — entries 021, 026 and 030.** What an
-  objective *is*, in the rules. Withdrawal first, because entry 026 shows it is readable off
-  `AwarenessTracker` today and needs nothing new: a side that has broken contact and reached its
-  exit has won something. It is also the first thing that gives a soldier who can see nobody
-  something to want, which is the hole named in every open question below and in entry 034.
-  Which objective a mission carries is Content's; what one is, is here. The build order in
-  `design.html` has the item.
+- **The mission clock — denial, and every shape that can run out.** Entry 030 named it as the one
+  genuinely new thing the six shapes want, and entry 036 says it is nobody's until somebody picks
+  it up. What is missing is a record of the moment a hostile **with a set** has registered
+  somebody and then had a turn in which to use it. Everything else in that sentence is a query
+  that exists: `Relay` fires at `AlertedAt`, `CanReach` sends it side-wide only for a unit with a
+  radio, and a relayed contact arrives at 0.6 of what the caller held. A round limit that ends a
+  battle is `Battle.Round` and a comparison.
 
-  **Entry 030 landed while this branch was open and it changes the shape of this half**, so read
-  it before designing. A battle wants **three** endings rather than two — achieved, settled
-  against you, and stopped being reachable with everybody home — and the third is the commonest
-  honest outcome of quiet work rather than an edge case. Casualties are deliberately *not* one of
-  them: the campaign grades those and already has the data, so nothing tactical should be made to
-  weigh a dead rifleman against a records core. The entry also names one genuinely new thing the
-  six mission shapes want and this brief does not carry: a **mission clock**, which needs a record
-  of the moment a hostile with a radio has registered somebody and then had a turn in which to use
-  it. Every other part of that sentence is a query that already exists. Whether the clock belongs
-  in this job or the one after it is a judgement for whoever picks this up.
+- **Extraction and capture, if the first two go quickly.** A thing that can be carried, and a way
+  to put a soldier down that is not damage. Both are real new state and neither is needed for a
+  playable greybox, so they are the half of this brief to drop if it runs long.
 
-**Two small debts to clear on the same branch, a paragraph each.** Entry 024, Core's half:
-`DemoMapTests` and three tests in `SightTests` still call `DemoMaps.Compound()`, and Content
-deletes the file the day they load `"compound"` from `Hexcom.Content` instead — or say in
-`../decisions.md` that a hand-built map stays in Core for the tests, and Content keeps the two
-equal by test as now. And entry 023's question for section 07 of the design doc: your own
-soldier's certainty about an enemy is a third case contract 3 does not name — not your exposure,
-not their alarm — and View will not quote *how much is left to learn about this contact* until
-the doc says whether a player reads it exactly or coarsely. Say which.
+**And one measurement, which is the point of doing this now.** Every number in this game is an
+argument and two of the newest are the most load-bearing yet: `UtilityModel.ObjectiveValue` makes
+a squad walk out through fire, and `ObjectiveHorizon` decides from how far away. Entry 041 says
+what the failure modes look like. `Commander` drives both sides headless and a three-a-side match
+costs a second or two, so a few hundred matches is minutes — **run some, and write down what they
+said in `../decisions.md`**. It would be the first entry in this project to record a figure that
+was measured rather than reasoned, which is worth more than any one of the numbers.
 
-**Settle before writing much.** Whether declining is a null recommendation or an explicit
-`ReactionAction.Nothing`. The first is fewer lines and the second is a thing the interface can
-draw and the scorer can price at zero; entry 004 assumed neither. And whether a committed window
-holds the mover mid-route between `Commit` and `Resolve` — it currently does not, because the two
-run back to back, and an interface will be looking at the field while the window is open.
+**Settle before writing much.** Whether an objective at a place is one kind with a flag or two
+kinds — reconnaissance is *did anybody see it* and sabotage is *did anybody spend on it*, and the
+temptation to unify them into a node with a predicate should be resisted or taken deliberately.
+And whether the clock belongs to the battle or to an objective: a round limit is a property of the
+mission, but *the alarm went out* is a fact about the awareness model, and putting it in the wrong
+one makes the other awkward for good.
 
-**Out of scope.** `game/**` as ever. Objective *content* — a mission file is Content's, and it
-waits on this job for what an objective is. Suppression, which is the last row of the weapons
-table and wants a per-unit state that taxes points and accuracy; nothing depends on it.
+**Out of scope.** `game/**` as ever. Which objective a mission carries and where — that is
+Content's, and entry 038 unblocked it. Suppression: nothing depends on it, and it is the last row
+of the weapons table rather than the next one.
 
-**The test that it worked:** a window opened by an enemy move can be inspected, answered by hand
-with something other than the recommendation, declined outright, and then resolved — and a
-skirmish ends because one side withdrew rather than because everybody on it was killed.
+**The test that it worked:** a squad that reaches a place, looks at it, and leaves has achieved
+something the rules can name; a squad that is still on the map when the alarm has been out for
+three rounds has not.
 
 ---
 
@@ -107,8 +97,8 @@ Battle.Start()      roll initiative, book everyone, hand the first turn out
   └ Advance()       refill AP · recharge shields · clear Reserve and Overwatch
                     (NOT Ambush) · rebook for next round
   the active unit acts
-      Move · Fire · Throw · LayMine · Shout
-      Face · ChangeStance · SetOverwatch · Arm · SpringAmbush
+      Move (= Commit · PlaceRecommended · Resolve) · Fire · Throw · LayMine · Shout
+      Face · ChangeStance · SetOverwatch · Arm · SpringAmbush · Extract
   Battle.EndTurn()  Awareness.Observe  ← the only moment a unit looks around
                     Bank               ← leftover AP becomes Reserve, AP zeroed
                     Advance
@@ -121,9 +111,15 @@ opens:
   into, and any mine on the route all answer into it.
 - `Battle.SpringAmbush` opens one deliberately, on a `CommittedMove` of zero length.
 
-Either way: offers are built in the constructor, `Run()` = `PlaceRecommended()` + `Resolve()`,
-and `Resolve` walks the subject along the timeline firing at each landing tick. An interface or
-an AI plugs in by placing its own choices between those two calls instead of calling `Run`.
+Either way: offers are built in the constructor and `Resolve` walks the subject along the
+timeline firing at each landing tick.
+
+**`Battle.Move` is `Commit` then `PlaceRecommended` then `Resolve`**, and the middle one is the
+seam. `Commit` prices the route, spends the points and hands back a `MoveCommitment` — the window
+with its offers made and nothing placed. **The mover has not stepped**: it stands at the start
+until `Resolve` walks it along, so anything reading the field while a window is open sees a
+soldier who has paid for a walk it has not taken. Place what you like in the gap, or nothing at
+all, which means everybody held their fire.
 
 **A mine is on that timeline and is not an offer**, because there is nobody to offer it to.
 `Mines` and `Detonations` sit beside `Offers` and `Resolutions`; `Resolve` merges the two lists
@@ -294,18 +290,51 @@ the thing to suspect when a reaction test starts failing for no reason you can s
 - **`Battle.Mines` is the ground and `Battle.MinesOf` is what one side may see.** Contract 3
   lives in the second. An interface drawing the first shows a player where the enemy mined.
 
+- **A committed move has been paid for and not taken.** `Battle.Commit` spends the points and
+  builds the window; the mover stands at the start until `Resolve` walks it along. So anything
+  reading the field between the two — an interface drawing the choices, a test asserting mid-window
+  — sees a soldier whose allowance is gone and whose feet have not moved. That is the state the
+  whole seam exists to make available, and it is the one nothing before this could produce.
+- **`Commander` only ever ends the turn of the soldier it set out to drive.** Three things hand
+  the turn on without the loop asking: being dropped mid-move, having an ambush sprung on you, and
+  walking off the field. Ending it again banks somebody else's allowance and passes it on before
+  they have done anything with it, which was a live bug until entry 037. If a soldier ever seems
+  to silently lose a turn, suspect this shape first.
+- **An objective slopes and a marker does not.** `Objective.Progress` is a gradient measured in
+  action points along the graph, which is what lets a search one step deep set off toward
+  something three turns away. A marker is a point, so hunting still reaches about one move — the
+  same limit as ever. Do not be tempted to slope a marker: soldiers would walk at ghosts from
+  across the map, which is what `MarkerDecay` exists to prevent.
+- **The approach field is priced off the listed cost of the ground**, not off what any particular
+  soldier pays for it, and it is cached per map revision. It describes the ground, like
+  `Battle.Loudness` does; how quickly a given soldier crosses it is about them. One backward
+  search over the whole graph, not one per candidate destination — which is the difference between
+  an objective a commander can afford to want and one it cannot.
+- **The departure reading is sampled, never polled.** `Battle.Withdraw` takes it before
+  `Awareness.Forget` runs, because after that there is nothing to read: a condition of the form
+  *leave with nobody above a suspicion*, asked afterwards, answers Unaware for everybody, always.
+  It is a sample per departure rather than a mark held across the battle, deliberately — a
+  monotone mark would forbid silencing a witness, which is the best move in the game and works
+  today with no rule saying so.
+- **A battle with no objective behaves exactly as it always did.** `VerdictFor` falls back on last
+  side standing and `TowardObjective` returns nothing, so every scenario and every test that
+  predates objectives is untouched. That is what made this safe to add to every appraisal rather
+  than to a special path, and it is worth preserving.
+
 ## Open questions
 
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
 the ones that block or shape what Core does next.
 
-- **Nothing draws a soldier who knows about nobody.** A unit with no contact at or above
-  `UtilityModel.ActsOn` scores every option at nothing and banks its turn, and a lost contact
-  decays back to that state. Correct, and the reason a fight that loses contact is a stalemate.
-  An objective system — ground to hold, a route to patrol, a place to reach — is what gives such
-  a unit something to want, and it is the largest thing between this AI and one a player would
-  call an enemy. Not a search-depth problem: a deeper search would still have nothing to search
-  for.
+- **An objective is worth more than any fight, and nobody has measured that.**
+  `UtilityModel.ObjectiveValue` is a whole squad's worth of vitality, deliberately larger than
+  anything a shot can score, so a squad told to get out walks out through fire rather than
+  stopping to trade — which is the behaviour the complaint about elimination was asking for, and
+  is also the first number in this game that can make a soldier ignore what is in front of it.
+  `ObjectiveHorizon` decides from how far away it pulls. The failure modes are legible and named
+  in `../decisions.md` entry 041: walking past a firefight to reach an exit means the value is
+  too high, standing in one ignoring the exit means the horizon is too short. Both are exactly
+  what a batch of matches settles.
 - **Being come looking for costs the shooter nothing.** `GivenAway` prices what a listener could
   do from where they stand, and from behind a wall that is nothing — the pinned test
   `SomebodyWhoHearsTheShotAndCannotReachYouCostsYouNothingYet` still holds. A unit now does come
@@ -322,11 +351,13 @@ the ones that block or shape what Core does next.
   three rounds old is worth a quarter of a sighting, and the trace of the acceptance test shows
   it fading to nothing in five. Whether that is too quick to hunt with or too slow to stop
   chasing ghosts is a question only a batch of matches can answer, and the batch can run now.
-- **Nothing may decline a reaction.** `ReactionOffer.Recommended` is not nullable, so a reactor
-  always takes its best option even when every option scores below zero — which happens: a beam
-  that will be soaked entirely is worth about what it costs, and the model correctly says all the
-  answers are bad and then picks one anyway. Making it nullable is a handful of lines and a real
-  behaviour change, so it wants doing deliberately rather than in passing.
+- **A startled soldier still cannot decline.** Holding fire is offered to overwatch and to an
+  ambush and not to surprise, on the argument in `../decisions.md` entry 037: surprise is the
+  involuntary one and offering it the chance to do nothing is offering it the chance not to
+  flinch. Measured, it takes the offer — a dive costs two points and buys a discounted share of
+  one shot, which on open ground comes out just under nothing. That is a defensible line and it
+  is not obviously the right one for a *player*, who may want their own startled soldier to keep
+  its points. It is one line if View asks.
 - **`ShieldValue` is the dial to watch first.** At 0.15 a fully soaked eight point beam scores
   0.72 against a snap shot costing 0.75 — near enough break-even that the ordering between firing
   pointlessly and doing something else is decided by noise. Either the shield term is too generous

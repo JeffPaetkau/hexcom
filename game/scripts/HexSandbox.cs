@@ -188,8 +188,11 @@ public partial class HexSandbox : Node2D
     /// <summary>Let <see cref="Commander"/> take the active unit's whole turn, and remember why.</summary>
     private void TakeTurnWithAi(Unit unit)
     {
-        var orders = new Commander(_battle).TakeTurn();
-        _turns.Add(new TakenTurn(unit, orders, unit.Reserve));
+        // Core change, kept to one line here: TakeTurn hands back an Act per order now, with the
+        // outcome beside it. The readout still wants only the orders; see decisions.md entry 022,
+        // which is where View asked for the outcomes in the first place.
+        var acts = new Commander(_battle).TakeTurn();
+        _turns.Add(new TakenTurn(unit, [.. acts.Select(a => a.Order)], unit.Reserve));
     }
 
     /// <summary>

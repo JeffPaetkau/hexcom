@@ -44,6 +44,25 @@ public enum ReactionAction
 
     /// <summary>Call it in, so somebody who <em>can</em> do something about it knows.</summary>
     Shout,
+
+    /// <summary>
+    /// Hold fire, and keep the points.
+    /// </summary>
+    /// <remarks>
+    /// Offered wherever there was already something to choose between, and it settles a question
+    /// that had been open since reactions were built: nothing could decline one. A reactor always
+    /// took its best option even when every option scored below zero — which happens, because a
+    /// beam that will be soaked entirely is worth about what it costs, so the model correctly
+    /// reported that all the answers were bad and then picked one anyway.
+    /// <para>
+    /// An explicit action rather than a nullable recommendation, and that was the choice worth
+    /// making rather than the cheaper one. A null is a hole in a list; this is a thing the
+    /// interface can draw beside the others, a player can pick on purpose, and the scorer prices
+    /// at exactly nothing — so <em>hold fire</em> wins by arithmetic whenever every answer is
+    /// worse than nothing, with no rule anywhere saying it should.
+    /// </para>
+    /// </remarks>
+    Nothing,
 }
 
 /// <summary>
@@ -83,6 +102,7 @@ public sealed record ReactionPlacement(
         ReactionAction.Fire => $"{Reactor.Name} {Mode?.Name} at t{At}, lands t{ResolvesAt} ({Forecast?.HitChance:P0})",
         ReactionAction.Turn => $"{Reactor.Name} turns to {Facing} at t{At}",
         ReactionAction.Drop => $"{Reactor.Name} goes {Stance} at t{At}",
+        ReactionAction.Nothing => $"{Reactor.Name} holds fire",
         _ => $"{Reactor.Name} calls it in at t{At}",
     };
 }
@@ -419,8 +439,11 @@ public sealed class ReactionWindow
 
                 var options = OverwatchOptions(reactor, order);
                 if (options.Count > 0)
+                {
+                    options.Add(Decline(reactor, ReactionKind.Overwatch, tick: 0));
                     return new ReactionOffer(
                         reactor, ReactionKind.Overwatch, reactor.Reserve, reactor.Reserve, options, Best(options));
+                }
             }
 
             return SurpriseFrom(reactor, watched, seen);
@@ -543,6 +566,7 @@ public sealed class ReactionWindow
 
             var options = AmbushOptions(member, arc, paying, purse, tick);
             if (options.Count == 0) continue;
+            options.Add(Decline(member, ReactionKind.Ambush, tick));
 
             _offers.Add(new ReactionOffer(
                 member, ReactionKind.Ambush, member.Reserve, purse, options, Best(options)));
@@ -711,6 +735,31 @@ public sealed class ReactionWindow
     /// </remarks>
     private ReactionPlacement Best(IReadOnlyList<ReactionPlacement> options)
         => _battle.Tactics.Best(options, Move);
+
+    /// <summary>
+    /// Holding fire, as an option like any other.
+    /// </summary>
+    /// <remarks>
+    /// Added only where there was already a real choice, which keeps every test of <em>was
+    /// anything offered at all</em> answering what it always answered: a reactor with nothing it
+    /// could do is still offered nothing, rather than being offered the chance to do nothing.
+    /// That distinction matters more than it looks — it is what decides whether a watchman with
+    /// no affordable shot falls through to being merely startled.
+    /// <para>
+    /// <b>And only to the deliberate reactions.</b> An overwatch and an ambush are held shots:
+    /// somebody chose to hold them and may choose not to spend them, which is exactly the case
+    /// that made declining worth having — a beam that will be soaked entirely is worth about what
+    /// it costs, so the model reports that every answer is bad and then has to pick one. Surprise
+    /// is not that. It is the involuntary one, the flinch, and the whole of what it models is that
+    /// a soldier caught out does <em>something</em> rather than nothing; offering it the chance to
+    /// do nothing is offering it the chance not to flinch. Measured, it takes it: a drop costs two
+    /// points and buys a discounted share of one shot, and on open ground that comes out just
+    /// under nothing, so a startled sentry would stand still — which is not a better model of
+    /// being startled, only a quieter one.
+    /// </para>
+    /// </remarks>
+    private ReactionPlacement Decline(Unit reactor, ReactionKind kind, int tick)
+        => new(reactor, Mover, kind, ReactionAction.Nothing, tick, 0);
 
     /// <summary>
     /// The first moment on the timeline the mover is both inside the arc that matters and in

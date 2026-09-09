@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 19 · 8 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 20 · 8 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 321 tests run in about ten seconds today, most of it the AI.</li>
+        <li>The rules are unit-testable headless — 339 of them, run in about ten seconds today, most of it the AI. The map format brings 24 more.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1084,6 +1084,18 @@
         are, and it goes stale the moment you move. The gap between the marker and the truth is
         the thing the stealth game is actually played in.
       </p>
+      <p>
+        <strong>There is a third case, and the rule above did not name it.</strong> Your own
+        exposure is exact and the enemy&rsquo;s alarm is a rung &mdash; but what <em>your</em>
+        soldier holds on an enemy is neither, and the interface would like to quote it: how much
+        is still left to learn about this contact. <b>It is read exactly.</b> The principle
+        underneath the split is not what the number is about, it is <em>whose knowledge it is</em>:
+        your side&rsquo;s knowledge is yours, in both directions, and blurring what your own
+        soldier has worked out would be fog about yourself. The other side&rsquo;s knowledge, in
+        both directions, stays coarse. So the contract reads: <b>you get your own side&rsquo;s
+        certainty as a figure and theirs as a rung</b>, and the marker they hold on you is the one
+        thing of theirs you see at all.
+      </p>
 
       <h3>Facing, so a position can be flanked</h3>
       <p>
@@ -1570,19 +1582,47 @@
         genuinely distinct, which is what an interface needs to show.
       </p>
 
-      <div class="aside">
-        <span class="tag">Settled</span>
-        <p>
-          How much of this the player drives by hand: offering and resolving are separate calls.
-          A window works out who could actually act &mdash; arc, reserve, affordable shot, mover
-          in view at some tick &mdash; and hands each of them one option per way of firing plus a
-          recommendation, which is whichever option is worth most by section 11. Taking every
-          recommendation is what the turn loop does today. Letting a player place their own is the
-          same interface with something else calling it &mdash; though there is currently no
-          public way to reach in between the two calls, which is a gap the interface will hit
-          before anything else does.
-        </p>
-      </div>
+      <h3>A window a person can answer</h3>
+      <p>
+        Offering and resolving are separate calls, and the gap between them is now reachable. A
+        move is <strong>committed</strong> &mdash; the route priced, the points spent, the offers
+        made, nothing placed &mdash; and stays that way until somebody resolves it. Moving is those
+        two with every recommendation taken in between, which is what a headless match and the
+        turn loop want; an interface calls them separately and does its own placing in the gap.
+      </p>
+      <p>
+        It has to be a <em>state the battle sits in</em> rather than a question asked inside a
+        call, and that is forced rather than preferred. Input in a game engine arrives across
+        frames: a click is a later event, not a return value, so a callback invoked from inside
+        the move would have to stop the whole engine until the player chose. A committed move is
+        something the interface can draw for as many frames as it likes.
+      </p>
+      <p>
+        <strong>The seam reaches through the AI as well</strong>, because the case a player cares
+        about most is the enemy&rsquo;s move: a hostile walks across your sentry&rsquo;s arc and
+        your sentry is the one being offered the shot. A commander that resolved its own windows
+        would run straight past the seam, so it can be told to hand them out instead &mdash; the
+        turn stops with the window open and resumes once it has been answered. And what it hands
+        back is what each order <em>did</em> as well as what it was chosen on, so the enemy&rsquo;s
+        turn can be narrated rather than inferred from a vitality label changing.
+      </p>
+      <p>
+        <strong>Holding fire is now an option like any other</strong>, offered wherever there was
+        already a choice. It settles a question that had been open since reactions were built:
+        nothing could decline one, so a reactor took its best option even when every option scored
+        below zero &mdash; which happens, because a beam that will be soaked entirely is worth
+        about what it costs. An explicit action rather than an empty recommendation, because it is
+        a thing a player picks on purpose and the scorer prices at exactly nothing, so it wins by
+        arithmetic whenever every answer is worse than nothing.
+      </p>
+      <p>
+        It is offered to the <em>deliberate</em> reactions only. An overwatch and an ambush are
+        held shots and may be kept. Surprise is the involuntary one, and the whole of what it
+        models is that a soldier caught out does something rather than nothing &mdash; offering it
+        the chance to do nothing is offering it the chance not to flinch, and measured, it takes
+        it: a dive costs two points and buys a discounted share of one shot, which on open ground
+        comes out just under nothing.
+      </p>
 
       <div class="aside">
         <span class="tag">Settled, but watch it</span>
@@ -2096,21 +2136,51 @@
         five hexes long and the far side is found and the fight happens; eleven and nobody moves.
         <strong>Hunting reaches one move.</strong> Past about five hexes the walk costs more than
         the one discounted shot it might open, and a search one step deep cannot see the turn of
-        shooting beyond it &mdash; the blade-carrier limit again. The same limit makes two
-        survivors who lose contact out of reach of each other a stalemate: markers decay, nobody
+        shooting beyond it &mdash; the blade-carrier limit again. The same limit made two
+        survivors who lost contact out of reach of each other a stalemate: markers decay, nobody
         walks. So the test that beliefs work asserts a fight and does not promise a decision.
+        <b>A soldier with an objective is not subject to that limit</b>, because an objective
+        slopes and a marker does not: it is worth walking toward from anywhere within about four
+        turns of it. Hunting still reaches one move.
+      </p>
+
+      <h3>Something to want</h3>
+      <p>
+        The largest hole in this scorer was that a unit which knew about nobody scored every
+        option at nothing and banked its turn. That was correct rather than convenient &mdash;
+        there was genuinely nothing in the game for it to want &mdash; and it is why a fight that
+        loses contact used to be a stalemate. It is also not a search-depth problem: a deeper
+        search would have had nothing to search for.
+      </p>
+      <p>
+        An objective fills it with <strong>one multiplication</strong>. The objective says how
+        much of itself a place represents, from nothing to all of it; the scorer says what all of
+        it is worth. Nothing about which mission it is reaches the arithmetic, which is what keeps
+        a win condition from quietly becoming a scoring model &mdash; the campaign grades
+        casualties and the tactics layer must not be made to disagree with it about what a soldier
+        is worth.
+      </p>
+      <p>
+        The part that makes it <em>work</em> is that progress is a <strong>gradient and not a
+        flag</strong>. Worth everything from inside the exit and nothing one pace outside it, and
+        a search one step deep would never set off: it cannot see a place three turns away. Sloped
+        over the approach, every stride toward it scores, which is the same trick that makes a
+        move to a firing position worth taking. The slope is measured in action points along the
+        movement graph rather than in metres across the map, so the far side of a river reads as
+        far away even where the water is narrow, and it is one search backwards from the objective
+        rather than one per candidate destination.
+      </p>
+      <p>
+        It goes in the term that carries what an action sets up rather than what it delivers, and
+        it is <em>not</em> discounted the way a posture is. A posture is a bet on next round; the
+        mission is the reason the squad is on the map, and the future it belongs to is the one
+        after the battle. So it is deliberately larger than anything a shot can score: a squad
+        told to get out and not be seen walks out through fire rather than stopping to trade,
+        which is the behaviour the whole complaint about elimination was asking for.
       </p>
 
       <div class="aside">
         <span class="tag">Open</span>
-        <p>
-          <strong>Nothing draws a soldier who knows about nobody.</strong> A unit with no contact
-          worth acting on banks its turn, and a lost contact decays back to that. Correct, and
-          the reason a fight that loses contact is a stalemate. An objective system &mdash;
-          ground to hold, a route to patrol, a place to reach &mdash; is what gives such a unit
-          something to want, and it is the largest thing between this AI and one a player would
-          call an enemy. A deeper search would still have nothing to search for.
-        </p>
         <p>
           <strong>Being come looking for costs the shooter nothing.</strong> What giving yourself
           away is worth is measured by what the listener could do from where they stand, and
@@ -2124,12 +2194,6 @@
           round a marker three rounds old is worth a quarter of a sighting and fades to nothing in
           five. Too quick to hunt with, or too slow to stop chasing ghosts, is a question a batch
           of matches answers, and the batch can run now.
-        </p>
-        <p>
-          <strong>Nothing may decline a reaction.</strong> A reactor always takes its best option
-          even when every option scores below zero &mdash; which happens. A beam that will be
-          soaked entirely is worth about what it costs, so the model correctly reports that all
-          the answers are bad and then picks one anyway.
         </p>
         <p>
           <strong>Removing a signaller is worth no more than removing the rifleman beside
@@ -2183,8 +2247,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Enemy AI</b><p>What an action is worth, in vitality, over the same queries the interface shows &mdash; and a search that takes a turn with it. Two sides driven by the same judgement fight to a decision headless.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Going to look</b><p>Threats built from a marker as well as a sighting, discounted for how long the marker has gone unconfirmed. Two sides that start out of contact find each other and fight. Hunting reaches one move; nothing draws a soldier who knows about nobody.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Grenades and mines</b><p>An arcing trace, a blast through the ordinary layers, and a reaction owned by the terrain rather than by a unit. Melee reach settled as adjacency, and a shout you can do on your own turn.</p></div></li>
-        <li><span class="idx">05a</span><div><b>The open window</b><p>A reaction window a person can look at, answer by hand and decline, rather than one that opens and resolves in a single call. Without it a player never gets the interesting half of reactions.</p></div></li>
-        <li><span class="idx">05b</span><div><b>Objectives, and a battle that ends</b><p>Elimination is the end condition this design makes hardest to reach, and the only one there is. Withdrawal needs no new rules and is readable off the awareness tracker today. It is also the first thing that gives a soldier who can see nobody something to want.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>The open window</b><p>A move committed and not yet resolved, which a person can look at, answer by hand and decline &mdash; and the same seam through the AI, so the enemy&rsquo;s move is the one you get to answer.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Objectives, and a battle that ends</b><p>Three endings rather than two, off a reading sampled as each soldier leaves. Withdrawal needed no new measurement. It is also the first thing that gives a soldier who can see nobody something to want.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
@@ -2195,8 +2259,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 19</span>
-    <span>321 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 20</span>
+    <span>363 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

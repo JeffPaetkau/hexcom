@@ -348,6 +348,45 @@ shot went off on and where the target was standing when it landed.
   marks you at the crater, and being blown up does not tell you who did it — unlike being shot at,
   which settles the question.
 
+- **A window a person can answer** — a move is *committed* and not yet resolved: the route priced,
+  the points spent, the offers made, nothing placed. It stays that way until somebody resolves it,
+  so an interface can draw the choices, let a player place their own over as many frames as they
+  like, and only then run it. Moving is those two halves with every recommendation taken between
+  them, which is what a headless match wants and what every existing caller still gets.
+
+  It had to be a state the battle sits in rather than a question asked inside a call, and that is
+  forced rather than preferred: input arrives across frames, so a callback would have to stop the
+  engine until the player chose. The seam reaches through the AI as well, because the window worth
+  answering is the one the *enemy's* move opens — a commander can be told to hand its windows out,
+  stopping the turn with one open and resuming once it is answered, and it reports what each order
+  did as well as what it was chosen on.
+
+  **Holding fire is an option like any other**, wherever there was already a choice. Nothing could
+  decline a reaction before, so a reactor took its best option even when every option scored below
+  zero — which happens, because a beam that will be soaked entirely is worth about what it costs.
+  It is priced at exactly nothing, so it wins by arithmetic whenever every answer is worse than
+  nothing. Not offered to surprise: that one is the flinch, and the whole of what it models is
+  that a soldier caught out does *something*.
+
+- **A battle that ends because somebody did what they came for** — three endings rather than two.
+  The mission achieved, the mission settled against you, or the mission out of reach and everybody
+  home anyway; the third is the commonest honest outcome of quiet work. Casualties are not a term
+  in any of them, deliberately: the campaign holds the roster and grades those, and nothing
+  tactical should be made to weigh a dead rifleman against what the squad came for.
+
+  The first mission shape needed no new measurement. *Leave with nobody above a suspicion* is
+  readable off the awareness ladder against thresholds that already existed — what it needed was
+  somewhere to leave from, a way to tell walking off the field from being carried off it, and the
+  reading taken **as each soldier goes** rather than afterwards, because leaving makes the tracker
+  forget and a condition asked after the fact reads *unaware* for everybody, trivially and always.
+  Sampling per departure rather than keeping a high-water mark is also what preserves the best
+  move in the game: silencing a witness really does take his contact out of the world.
+
+  It is the first thing that gives a soldier who can see nobody something to want, and the way it
+  does that is a gradient rather than a flag. Worth everything from inside the exit and nothing a
+  pace outside, and a search one step deep would never set off; sloped over the approach, measured
+  in action points along the movement graph, every stride toward it scores.
+
 - **Maps are text** — `content/maps/*.hexmap`, and `MapLibrary.Load("compound")` from anywhere.
   The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
   an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
@@ -363,19 +402,20 @@ shot went off on and where the target was standing when it landed.
 Suppression, saves, the greybox interface, and the strategy layer. See the design doc for where
 these are heading.
 
-**A battle can only end one way, and it is elimination.** Nothing draws a soldier who knows about
-nobody: a unit with no contact scores every option at nothing and banks its turn, which is correct
-— there is nothing in the game for it to want — and it means two survivors who lose each other
-out of hunting range are a stalemate rather than a result. Ground to hold, a route to patrol, a
-place to reach: an objective is the largest thing between this AI and one a player would call an
-enemy, and it is not a search-depth problem, because a deeper search would still have nothing to
-search for.
+**There is one mission shape and the fiction describes six.** Withdrawal is built. Reconnaissance
+wants an objective node and a record of whether anybody ever traced it; sabotage wants something
+at a place and a price in action points; extraction wants a thing that can be carried; denial and
+capture want a clock and a way to put somebody down that is not damage. None needs new geometry,
+and what an objective *is* now exists to hang them on.
 
-**A player never gets the interesting half of a reaction.** A move opens its window and resolves
-it in one call, taking every recommendation, so there is nowhere for a human to place their own
-answer or to decline one. The pieces are all there — offers are built separately from resolution
-precisely so an interface can step between them — and the seam is not yet exposed through the
-turn loop.
+**Nothing hangs a clock on.** A mission that runs out of time needs a record of the moment a
+hostile with a radio has registered somebody and then had a turn in which to use it. Every part
+of that sentence but the record is a query that already exists.
+
+**A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from
+several turns away; a marker does not, so hunting still reaches about one move and two survivors
+who lose each other out of that range still stand still. That is the search rather than the
+scoring, and it is the same limit that stops a blade carrier crossing open ground.
 
 **Acting on the real position of a unit you have lost track of** is exactly the cheating the whole
 scheme exists to prevent, and for a long time the answer to it was that nobody went and looked at

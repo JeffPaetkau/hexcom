@@ -115,6 +115,59 @@ public static class Pathfinder
         return new ReachabilityResult(graph, start, apBudget, reached);
     }
 
+    /// <summary>
+    /// What it costs to reach the nearest of <paramref name="goals"/> from everywhere that can
+    /// reach one at all.
+    /// </summary>
+    /// <remarks>
+    /// The inverse of <see cref="Reachable"/>, and it exists because an objective needs a
+    /// <em>gradient</em> rather than a destination. A place worth walking to is worth walking
+    /// toward, and a search one step deep can only see that if every stride along the way scores
+    /// — so something has to say how far off the goal each place is. One backward search over
+    /// the whole graph answers it for every node at once, which is the difference between a
+    /// commander that can afford to want something and one that cannot.
+    /// <para>
+    /// Walked backwards along <see cref="MovementGraph.LinksTo"/>, because the graph is directed:
+    /// reading the forward links in reverse would let a soldier walk up a drop.
+    /// </para>
+    /// <para>
+    /// Priced off the listed cost of the ground unless told otherwise. That is deliberate for the
+    /// caller this was written for: the field describes the ground, once, and how quickly a
+    /// particular soldier crosses it is about them.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyDictionary<NodeId, int> CostToReach(
+        MovementGraph graph,
+        IEnumerable<NodeId> goals,
+        Func<TraversalLink, int>? price = null)
+    {
+        var cost = new Dictionary<NodeId, int>();
+        var frontier = new PriorityQueue<NodeId, int>();
+
+        foreach (var goal in goals)
+        {
+            if (!graph.Contains(goal) || cost.ContainsKey(goal)) continue;
+            cost[goal] = 0;
+            frontier.Enqueue(goal, 0);
+        }
+
+        while (frontier.TryDequeue(out var current, out var priority))
+        {
+            if (priority > cost[current]) continue;
+
+            foreach (var link in graph.LinksTo(current))
+            {
+                var reaching = priority + (price?.Invoke(link) ?? link.ApCost);
+                if (cost.TryGetValue(link.From, out var existing) && existing <= reaching) continue;
+
+                cost[link.From] = reaching;
+                frontier.Enqueue(link.From, reaching);
+            }
+        }
+
+        return cost;
+    }
+
     /// <summary>The cheapest route between two nodes, ignoring any turn budget.</summary>
     public static bool TryFindPath(
         MovementGraph graph,

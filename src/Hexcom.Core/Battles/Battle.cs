@@ -33,6 +33,40 @@ public sealed record MoveOutcome(
 }
 
 /// <summary>
+/// A move that has been paid for and not yet resolved.
+/// </summary>
+/// <remarks>
+/// The state an interface needs and a single call cannot give it. Input arrives across frames —
+/// a click is a later event, not a return value — so a player cannot answer a question asked from
+/// inside <see cref="Battle.Move"/>, and no callback can wait for them without stopping the
+/// engine. What works is a state the battle sits in: a window built and not yet run, which the
+/// interface can draw for as many frames as it likes, place into, and resolve when the player is
+/// done. See <c>docs/decisions.md</c> entries 004 and 022, the second of which is View saying
+/// which of the two shapes it can actually use.
+/// <para>
+/// It carries the receipt as well as the window because <see cref="Battle.Resolve(MoveCommitment)"/> needs both
+/// and so does the caller: the route was priced and paid for at <see cref="Battle.Commit"/>, and
+/// a refusal has to come back from somewhere.
+/// </para>
+/// </remarks>
+/// <param name="Window">The window the move opened, with its offers built and nothing placed.</param>
+/// <param name="Refusal">Why nothing was committed, in words fit to show a player.</param>
+public sealed record MoveCommitment(
+    ReactionWindow? Window,
+    IReadOnlyList<TraversalLink> Path,
+    int ApCost,
+    string? Refusal)
+{
+    internal static MoveCommitment Refused(string why) => new(null, [], 0, why);
+
+    /// <summary>True when the move is paid for and waiting to be resolved.</summary>
+    public bool Committed => Refusal is null;
+
+    /// <summary>The outcome this commitment turns into if it is refused rather than resolved.</summary>
+    internal MoveOutcome AsRefusal() => MoveOutcome.Refused(Refusal!);
+}
+
+/// <summary>
 /// One fight: the map, the units on it, and whose turn it is.
 /// </summary>
 /// <remarks>
@@ -51,6 +85,7 @@ public sealed class Battle
     private readonly Dictionary<UnitId, Unit> _units = [];
     private readonly TurnQueue _queue = new();
     private readonly List<Mine> _mines = [];
+    private readonly List<Objective> _objectives = [];
     private readonly Random _rng;
     private int _nextId = 1;
 
@@ -127,6 +162,27 @@ public sealed class Battle
 
     /// <summary>Turns booked but not yet taken, soonest first. This is the order strip.</summary>
     public IReadOnlyList<TurnSlot> TurnOrder => _queue.Upcoming;
+
+    /// <summary>
+    /// What each side is on the field to do. Empty means the old rule: last side standing.
+    /// </summary>
+    public IReadOnlyList<Objective> Objectives => _objectives;
+
+    /// <summary>Give a side something to do. Only valid before the fight starts.</summary>
+    /// <remarks>
+    /// Content decides which objective a mission carries and where; these rules decide what one
+    /// <em>is</em>. A battle with none behaves exactly as it always did, which is what keeps
+    /// every existing scenario and every test that predates objectives honest.
+    /// </remarks>
+    public void SetObjective(Objective objective)
+    {
+        if (Round != 0) throw new InvalidOperationException("Objectives are set before the fight starts.");
+        _objectives.RemoveAll(o => o.Side == objective.Side);
+        _objectives.Add(objective);
+    }
+
+    /// <summary>What this side came to do, if anything.</summary>
+    public Objective? ObjectiveOf(Side side) => _objectives.FirstOrDefault(o => o.Side == side);
 
     /// <summary>
     /// Every charge still lying on the field.
@@ -245,13 +301,43 @@ public sealed class Battle
         unit.ActionPoints = 0;
     }
 
-    /// <summary>Take a unit out of the fight. Its booked turns and everything known about it go too.</summary>
-    public void Withdraw(Unit unit)
+    /// <summary>
+    /// Take a unit out of the fight. Its booked turns and everything known about it go too.
+    /// </summary>
+    /// <remarks>
+    /// The reading the other side held is sampled <b>here</b>, before the forgetting, and kept on
+    /// the unit. Asking afterwards is not an option: the next line wipes every contact about this
+    /// soldier, so a win condition of the form <em>get out with nobody above a suspicion</em>
+    /// would read Unaware for everybody, trivially and always. See <see cref="Departure"/>.
+    /// </remarks>
+    /// <param name="kind">
+    /// Whether the soldier walked off or was carried off. Nothing before objectives had to tell
+    /// the two apart, and a win condition is exactly the thing that does.
+    /// </param>
+    public void Withdraw(Unit unit, DepartureKind kind = DepartureKind.Down)
     {
-        unit.InPlay = false;
+        unit.Left = new Departure(kind, Round, HighestAwarenessOf(unit));
         _queue.Remove(unit.Id);
         Awareness.Forget(unit.Id);
         if (Active == unit) Advance();
+    }
+
+    /// <summary>
+    /// The active unit walks off the field, from somewhere its side may leave.
+    /// </summary>
+    /// <remarks>
+    /// Free, and the price is having walked there. Charging for the last step out would be
+    /// charging twice for the whole approach that got the soldier to it.
+    /// </remarks>
+    public bool Extract()
+    {
+        var unit = RequireActive();
+
+        if (ObjectiveOf(unit.Side) is not Withdrawal way) return false;
+        if (!way.IsExit(unit.Position)) return false;
+
+        Withdraw(unit, DepartureKind.Extracted);
+        return true;
     }
 
     // ---- acting ----------------------------------------------------------------
@@ -288,37 +374,83 @@ public sealed class Battle
     public IEnumerable<ReachedNode> Destinations(Unit unit)
         => Reachable(unit).Destinations.Where(d => CanStopAt(unit, d.Node));
 
-    /// <summary>Move the active unit, spending the action points the route costs.</summary>
-    public MoveOutcome Move(NodeId destination)
+    /// <summary>
+    /// Commit the active unit to a route and pay for it, without resolving what answers it.
+    /// </summary>
+    /// <remarks>
+    /// The first half of <see cref="Move"/>, and the seam an interface needs. Everything up to
+    /// and including building the window happens here — the route is priced, the points are
+    /// spent, the offers are made — and nothing is placed. The caller may then draw the window,
+    /// place into it over as long as it likes, and hand it back to <see cref="Resolve(MoveCommitment)"/>.
+    /// <para>
+    /// The move is genuinely committed at this point, which is the property the whole reaction
+    /// timeline rests on: both sides know the future for its duration precisely because it is no
+    /// longer in doubt. The mover has not stepped yet — it stands at the start until
+    /// <see cref="Resolve(MoveCommitment)"/> walks it along — so anything reading the field while the window is
+    /// open sees a soldier who has paid for a walk it has not taken.
+    /// </para>
+    /// </remarks>
+    public MoveCommitment Commit(NodeId destination)
     {
         var unit = RequireActive();
 
-        if (unit.Position == destination) return MoveOutcome.Refused("Already there.");
-        if (!Graph.Contains(destination)) return MoveOutcome.Refused("There is nothing there to move to.");
-        if (UnitAt(destination) is { } sitting) return MoveOutcome.Refused($"{sitting.Name} is standing there.");
-        if (!Graph.CanEndTurn(destination)) return MoveOutcome.Refused("No room to stand there.");
+        if (unit.Position == destination) return MoveCommitment.Refused("Already there.");
+        if (!Graph.Contains(destination)) return MoveCommitment.Refused("There is nothing there to move to.");
+        if (UnitAt(destination) is { } sitting) return MoveCommitment.Refused($"{sitting.Name} is standing there.");
+        if (!Graph.CanEndTurn(destination)) return MoveCommitment.Refused("No room to stand there.");
 
         var reach = Reachable(unit);
         if (!reach.TryGetPath(destination, out var path))
-            return MoveOutcome.Refused("Out of reach this turn.");
+            return MoveCommitment.Refused("Out of reach this turn.");
 
         var cost = reach.CostTo(destination)!.Value;
         unit.ActionPoints -= cost;
 
-        // The route is committed from here, which is what lets both sides read the future for
-        // its duration. The window walks the unit along it and ends it where it got to — at the
-        // destination, facing the way it was going, unless somebody stopped it en route.
         var window = ReactionWindow.ForMove(
             this, unit, new CommittedMove(unit.Position, path, unit.Facing, unit.Stance, MovementPrice(unit)));
-        window.Run();
+
+        return new MoveCommitment(window, path, cost, null);
+    }
+
+    /// <summary>
+    /// Run a committed move: resolve the window, walk the mover, and make the noise.
+    /// </summary>
+    /// <remarks>
+    /// The second half. Whatever was placed into the window by then is what answers the move —
+    /// the recommendations, a player's own choices, or nothing at all.
+    /// </remarks>
+    public MoveOutcome Resolve(MoveCommitment commitment)
+    {
+        if (!commitment.Committed) return commitment.AsRefusal();
+
+        var window = commitment.Window!;
+        var unit = window.Mover;
+
+        window.Resolve();
 
         // A trap springs once. Whoever it caught, everybody who armed for it is done waiting.
         if (window.SprungBy is { } springer) StandDown(springer.Side);
 
         // Moving is heard immediately, unlike being seen, which waits for someone to look.
-        if (unit.InPlay) Awareness.Hear(unit, Loudness(unit, path), Round);
+        if (unit.InPlay) Awareness.Hear(unit, Loudness(unit, commitment.Path), Round);
 
-        return new MoveOutcome(true, path, cost, null, window);
+        return new MoveOutcome(true, commitment.Path, commitment.ApCost, null, window);
+    }
+
+    /// <summary>Move the active unit, spending the action points the route costs.</summary>
+    /// <remarks>
+    /// The two halves in sequence with every recommendation taken between them, which is what
+    /// every caller that does not want to answer a window by hand wants — the turn loop, a
+    /// headless match, and a test. An interface calls <see cref="Commit"/> and
+    /// <see cref="Resolve(MoveCommitment)"/> instead and does its own placing in the gap.
+    /// </remarks>
+    public MoveOutcome Move(NodeId destination)
+    {
+        var commitment = Commit(destination);
+        if (!commitment.Committed) return commitment.AsRefusal();
+
+        commitment.Window!.PlaceRecommended();
+        return Resolve(commitment);
     }
 
     /// <summary>
@@ -700,6 +832,10 @@ public sealed class Battle
 
         switch (placement.Action)
         {
+            // Held fire. Nothing happens and nothing is spent, which is the whole of it.
+            case ReactionAction.Nothing:
+                return null;
+
             case ReactionAction.Fire:
                 return Resolve(PlanShot(
                     reactor,
@@ -766,7 +902,7 @@ public sealed class Battle
         AnnounceFire(shooter, target, plan);
 
         var down = target.IsDown;
-        if (down) Withdraw(target);
+        if (down) Withdraw(target, DepartureKind.Down);
 
         return new ShotOutcome(true, shots, plan.ApCost, plan.HitChance, down, null);
     }
@@ -1157,8 +1293,33 @@ public sealed class Battle
     public IEnumerable<Side> SidesInPlay
         => InPlay.Select(u => u.Side).Where(s => s != Side.Neutral).Distinct();
 
-    /// <summary>True once at most one side is left with anyone on the field.</summary>
-    public bool IsDecided => SidesInPlay.Count() <= 1;
+    /// <summary>
+    /// How the battle stands for one side.
+    /// </summary>
+    /// <remarks>
+    /// Its objective decides, if it has one. A side with none falls back on the rule that was the
+    /// only rule until objectives existed: last one standing.
+    /// </remarks>
+    public Verdict VerdictFor(Side side)
+    {
+        if (ObjectiveOf(side) is { } objective) return objective.Judge(this);
+
+        var standing = SidesInPlay.ToList();
+        if (standing.Count > 1) return Verdict.Undecided;
+        return standing.Contains(side) ? Verdict.Achieved : Verdict.Failed;
+    }
+
+    /// <summary>
+    /// True once the battle has an answer.
+    /// </summary>
+    /// <remarks>
+    /// An objective settling ends it, however many soldiers are still on the field — which is the
+    /// whole point of having one, since a squad that got what it came for and left has finished
+    /// whether or not anybody was killed. Elimination still ends a battle nobody gave an
+    /// objective to.
+    /// </remarks>
+    public bool IsDecided
+        => _objectives.Any(o => o.Judge(this) != Verdict.Undecided) || SidesInPlay.Count() <= 1;
 
     private Unit RequireActive()
         => Active ?? throw new InvalidOperationException("No turn is in progress. Call Start first.");
