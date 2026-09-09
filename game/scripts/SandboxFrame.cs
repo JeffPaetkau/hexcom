@@ -15,7 +15,7 @@ namespace Hexcom.Game;
 /// <see cref="Order"/> already carries the reasoning; this only remembers whose it was, because
 /// by the time the frame is drawn the unit has finished and the battle has moved on to somebody
 /// else. What it does <b>not</b> carry is what the orders <em>did</em> — a move's reaction window,
-/// a shot's outcome — because <c>Commander.TakeTurn</c> does not return those. See entry 020 in
+/// a shot's outcome — because <c>Commander.TakeTurn</c> does not return those. See entry 022 in
 /// <c>docs/decisions.md</c>.
 /// </remarks>
 public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banked);

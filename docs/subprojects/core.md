@@ -25,92 +25,71 @@ it anyway, or note in your commit exactly what you changed there and why it coul
 Nothing. Core is the trunk. Everything else depends on it, which is why the contracts in
 [../map.md](../map.md) are mostly about not moving the ground under other territories:
 no engine references, one query surface for the view and the AI alike, information asymmetric on
-purpose, balance numbers in their seven homes, and one horizontal unit is one metre.
+purpose, balance numbers in their eight homes, and one horizontal unit is one metre.
 
 ---
 
-## The job — going to look (build order 04, the part that is left)
+## The job — grenades and mines (build order 05)
 
-Branch `core/beliefs`. Read the rest of this file before starting; the turn loop below and the
-gotchas after it are the things that will bite.
+Branch `core/grenades`. Read the rest of this file before starting; the turn loop below and the
+gotchas after it are the things that will bite, and the reaction timeline is the thing a mine
+has to fit into.
 
-**What exists.** `Tactician` scores one action in vitality; `Commander` generates the actions and
-takes a turn with them; `ReactionWindow` ranks by the same scorer. Two sides driven by
-`Commander.TakeTurn` fight a skirmish to a decision, replayably, with no window open. That is
-build order 04 working.
+**What exists.** The AI is complete for what the game can currently express: `Tactician` scores
+one action in vitality over the same queries the interface shows, `Commander` takes a turn with
+it, and a soldier that hears something goes round the corner to look — `Tactician.Known` builds
+threats from a marker as well as from a sighting, discounted by `Tactician.Credence` for how
+long the marker has gone unconfirmed. Two sides that start out of contact find each other and
+fight. What it cannot do is priced in the gotchas and open questions below, and none of it is
+blocking.
 
-**The one thing it cannot do, and it is a big one: nobody ever goes and looks.**
-`Tactician.Seen` returns only contacts with `EyesOn`, deliberately — a marker left two rounds ago
-is a belief about somewhere the threat has probably left, and letting an AI act on the real
-position of a unit it cannot see is precisely the cheating the whole scheme exists to prevent.
-The consequences are visible in three places and they are all the same hole:
+**The job is the two items the design doc's weapons table (section 10) leaves for later.** Its
+own words on each are the brief:
 
-- A unit that knows about nobody stands still for the entire battle. There is nothing for it to
-  want, so every option scores nothing and holding wins.
-- A unit **cannot move to gain a line of sight**, only to improve one it already has. Flanking a
-  man in cover works; stepping round a building to find him does not.
-- Being heard costs the shooter nothing when the listener has no line, because what giving
-  yourself away is worth is measured by what the person you gave it to could do *from where they
-  stand* — and from behind a wall that is nothing. `SomebodyWhoHearsTheShotAndCannotReachYouCostsYouNothingYet`
-  pins this rather than approving of it.
+- **Grenades — an arcing trace.** *Every trace so far has asked whether a straight line gets
+  through, and an arc explicitly does not: the whole point of throwing one is to put it
+  somewhere you cannot shoot.* A second query beside `SightSolver`, answering whether a lobbed
+  object clears the intervening walls and where it lands if it clips one. Damage is an area, so
+  it wants a shape of its own rather than a `ShotPlan`; the layers it meets per face are what
+  `Protection` already does. A grenade is the loudest thing after a slug rifle, and
+  `AwarenessTracker.Hear` is public precisely so it can raise the noise.
+- **Mines — a reaction owned by the terrain.** *A mine is an overwatch that a unit is not
+  standing behind: a trigger on a tile, resolved at the tick the mover enters it. Same clock,
+  same resolution order.* `ReactionWindow` already walks the mover along a `CommittedMove` and
+  fires at landing ticks; a mine is an offer with no reactor, placed by the map.
 
-**So the job is beliefs.** A `Threat` can already carry a pose that is not where anybody is
-standing — that is what it was built for. What is missing is generating threats from
-`Contact.LastKnownPosition` rather than from `EyesOn`, discounted for staleness, and letting
-`AppraisePosture` do what it already does: a move toward a believed position raises `Noticing`,
-because you would be closer and facing the right way. Approach behaviour should fall out of the
-scorer that exists rather than needing a second one — if it does not, say so in `../decisions.md`
-before building a second one.
+**Three older findings ride on this branch, routed here by entry 020 in `../decisions.md`.**
 
-**Settle this before writing much.** What a stale belief is worth. A contact three rounds old is
-somewhere the enemy *was*; `AwarenessReadout.IsStale` already draws a line at two rounds and
-nothing uses it for scoring. Whatever you pick, it wants a `<remarks>` block arguing for it,
-because it is the dial that decides whether the AI hunts sensibly or chases ghosts round the map.
+- **Entry 008 — melee does not reach.** `PowerBlade` carries a 2.0 m range and `Gunnery`
+  measures eye to centre of mass, so a standing soldier cannot knife an adjacent prone one.
+  Settle it *before* the arc: reach along the ground, or an adjacency test, is a design question
+  before it is a number, and a grenade is the second weapon that is not a rifle and must not
+  inherit the same mistake.
+- **Entry 012, items 2 and 3.** There is no way to shout on your own turn — `AppraiseWord`
+  scores it, `ReactionAction.Shout` places it in a window, and no `Battle` method lets a unit do
+  it. Needs the turn action and a price in `MovementCosts`, and then `Commander` can generate it.
+  And a firing preview for the interface in the shape `WouldAnnounce` already has, which is
+  mostly a matter of saying so.
+- **`Battle.Face` and `Battle.ChangeStance` charge list price** where `Move` and `Fire` go through
+  `CostProfile`, against this file's own rule. Either say it is deliberate in a `<remarks>`
+  block or give `CostProfile` a dial for posture.
 
-**The hard constraint — contract 2 in [../map.md](../map.md).** The AI reads the same public
-queries the interface shows. If the AI wants information the interface cannot show, that is a
-finding about the interface, to be written up in `../decisions.md` — not a licence to reach into
-internals for convenience. It has held through two increments and it is worth saying that it
-*paid*: `Gunnery.Expect`, `AwarenessTracker.WouldNotice`, `AwarenessTracker.WouldAnnounce`,
-`ReactionModel.Banked` and `Battle.PlanThreat` were all added because the AI needed them, and
-every one is a figure a player should have been able to see and could not.
+**Settle before writing much.** Whether a grenade is a `FireMode` on a `WeaponProfile` or a thing
+of its own. The weapon table makes it a weapon; `Gunnery.HitChance` and the reaction timeline
+assume a shooter, a target and a face, and a grenade has a landing point and a radius instead.
+Whichever way it goes, the AI has to be able to weigh one — `Tactician` scores what
+`Gunnery.Expect` returns, so a grenade wants an `Expect` of its own — and the interface has to
+be able to show the arc. Contract 2 applies as ever.
 
-**Two entries the interface audit raised against Core, both open, and the first is not optional.**
+**Out of scope.** `game/**`. The open questions below are real and none of them are this job;
+the one most likely to tempt is the search depth, because a soldier that will not walk two turns
+toward a marker will not walk two turns toward a grenade target either. Record, do not build.
 
-- **Entry 011 — `Tactician.Aimed` reads the enemy's contact file on your own soldier as a raw
-  certainty.** It breaks the promise in `Tactician`'s own class comment that it reads only what
-  its soldier knows, and it is a live cheat rather than a display problem: an AI that knows
-  exactly how spotted it is breaks cover at precisely the right moment and never a moment early.
-  **Deal with this as part of beliefs**, because it is the same bug — acting on a fact the
-  soldier has no way of holding. Fixing beliefs around it and leaving `Aimed` reading the truth
-  would be building the honest half on top of the dishonest one.
-- **Entry 012 — three queries the AI will want that do not exist**, so the interface cannot show
-  them either. What a move would announce and who would hear it is the one that touches this
-  job: going to look is worth less if the going gives you away.
+**The test that it worked:** a soldier behind a wall it cannot be shot through is dug out by a
+grenade lobbed over it, and a mine on the approach fires on the mover at the tick it steps on
+the tile, out of nobody's reserve.
 
-**Two smaller debts, a paragraph each, to clear on the same branch.**
-
-- **Entry 005 asked for a `<remarks>` block on `SightSolver`** saying that sight and cover are
-  scale-free by construction — the waterline works in a fraction of the way along the sight line,
-  so nothing in it has horizontal units — and that this is a property to keep rather than an
-  accident. Nothing in that file mentions scale. Write it: it is the reason a contract 5 violation
-  shows up as detection failing and never as cover looking weak, and the next person to be
-  surprised by that will look in `SightSolver` first.
-- **`README.md` says balance can be tuned by "thousands of AI-vs-AI matches in seconds".** Your
-  own measurement, in the gotchas below, is about two seconds per three-a-side match, so a
-  thousand is twenty to thirty-five minutes. The README is shared and that paragraph is about your
-  measurement, so correct it to what was measured — see entry 019. While there, `Depends on` at
-  the top of this file still says seven homes for balance numbers; it has been eight since entry
-  003.
-
-**Out of scope.** `game/**`. Entry 009 offers View a way to hand a side to the AI in the sandbox;
-the API is there and wiring it up is theirs. Entry 004 is a Core API gap the interface needs and
-the AI does not.
-
-**The test that it worked:** two sides that start out of contact find each other and fight,
-without either being told where the other is.
-
-After this: grenades and mines (build order 05).
+After this: the Godot greybox (build order 06), which is View's.
 
 ---
 
@@ -176,7 +155,9 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   expectations against `MovementCosts` / `FireMode.ApCost`, never as literals.
 - **Loudness is priced off the listed cost of the ground, not what the mover paid.** Crawling
   costs 3× so a crawler spending 3× the points would come out as loud as somebody strolling —
-  the stance cancelling itself out. `LoudnessOf` sums `link.ApCost`, deliberately.
+  the stance cancelling itself out. `Battle.Loudness` sums `link.ApCost`, deliberately — and it
+  is public so a route can be priced before it is taken; `AwarenessTracker.WouldHear` says who
+  would hear it, and `Tactician.AppraiseMove` puts the two into a move's score.
 - **The price list is not what a soldier pays.** `MovementCosts` and `FireMode.ApCost` describe
   the world; `UnitStats.Costs` says what this soldier spends on it. Never read `FireMode.ApCost`
   or `TraversalLink.ApCost` directly in a rule — go through `CostProfile`. Movement pricing is a
@@ -230,6 +211,36 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   turn's walk into rifle range is worse than standing still, and stands still forever. Not a bug
   in the scoring; a limit of the search, and the first thing a deeper one would fix. Note that it
   would still not stab anybody when it arrived — see entry 008 in `../decisions.md`.
+- **A threat is a belief, and `Tactician.Known` is the only place one is made.** `Threat` carries
+  `Credence` and `EyesOn`. A contact the soldier looked at last and can still see stands where
+  it really is; anything else stands at the marker, upright, with a placeholder facing, and is
+  worth `Credence(roundsSince)` of a sighting — one for two rounds, then halving. Never build a
+  `Threat` from the field for the AI; `Threat.At(unit)` exists for tests and for the mover inside
+  a reaction window, which really is standing there.
+- **The Commander never fires at a marker.** `Options` offers shots only at threats with
+  `EyesOn`. The forecast of a shot at a marker is what a move toward it is *ranked* on
+  (`Order.Opens`, scaled by credence), but `Battle.Fire` resolves against where the target really
+  is, and carrying that shot out would have the battle correcting the soldier's guess for free.
+  So a unit walks to where it can see the marker, looks at the end of its turn like everybody
+  else, and shoots next turn — which also means a soldier who is shot from somewhere it has not
+  looked at cannot shoot straight back. It turns to look first. That is the ladder working, not
+  a bug.
+- **What the enemy holds on you is read as a rung.** `Tactician.Aimed` quantises the enemy's
+  detection to `Threshold(ReadoutFor(...).State)` before it enters the arithmetic. Two certainty
+  figures on the same rung give identical posture scores, and a test pins it. This is entry 011
+  in `../decisions.md`, and it is what lets `Appraisal.Spared` go on screen.
+- **Against a marker, the look he would get is averaged over six facings.** Assuming the man you
+  cannot see is looking straight at where you would arrive was measured, and it prices going
+  round a corner above the shot it opens on every geometry tried, so nobody ever goes. An
+  expected look is how the scorer treats the plates a round might find, too.
+- **Hunting reaches one move, and not further.** A soldier walks to a spot with a line on a fresh
+  marker when that spot is within about five hexes; further than that the walk costs more than
+  the one discounted shot it might open, and a search one step deep cannot see the turn of
+  shooting beyond it. Measured on a solid wall: five hexes long and the far side gets found,
+  eleven and nobody moves. The same limit means two survivors who lose contact out of reach of
+  each other are a stalemate — markers decay, nobody walks — which is why the acceptance test for
+  beliefs asserts a fight and not a decision. This is the blade-carrier limit again, and it is
+  the argument for either a deeper search or an objective system; it is not a beliefs problem.
 
 ---
 
@@ -238,13 +249,29 @@ the thing to suspect when a reaction test starts failing for no reason you can s
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
 the ones that block or shape what Core does next.
 
-- **Nobody goes and looks.** The whole of the brief above, and the largest thing standing between
-  what exists and an AI anybody would call one.
+- **Nothing draws a soldier who knows about nobody.** A unit with no contact at or above
+  `UtilityModel.ActsOn` scores every option at nothing and banks its turn, and a lost contact
+  decays back to that state. Correct, and the reason a fight that loses contact is a stalemate.
+  An objective system — ground to hold, a route to patrol, a place to reach — is what gives such
+  a unit something to want, and it is the largest thing between this AI and one a player would
+  call an enemy. Not a search-depth problem: a deeper search would still have nothing to search
+  for.
+- **Being come looking for costs the shooter nothing.** `GivenAway` prices what a listener could
+  do from where they stand, and from behind a wall that is nothing — the pinned test
+  `SomebodyWhoHearsTheShotAndCannotReachYouCostsYouNothingYet` still holds. A unit now does come
+  looking, so the figure is wrong, and the right one is the best shot the listener could reach in
+  a turn: their reachable set and a trace per node, inside every shot appraisal, per destination.
+  A search inside a score. `AppraiseWord` has the same gap from the other side. Profile before
+  attempting it; the obvious fix is caching the reachable set per unit per decision.
 - **A shot that kills its target still gives you away to the target.** `GivenAway` counts the man
   being shot at among the people who now know where you are, and if he goes down he is not
   anybody. That is the entire argument for the quiet kill and the model does not make it. Fixing
   it means the announcement preview knowing which enemies survive the shot it is previewing,
   which is a small change to `WouldAnnounce` and a fiddly one to get right.
+- **`MarkerDecay` is the second dial to watch.** At a half per round past the fresh two, a marker
+  three rounds old is worth a quarter of a sighting, and the trace of the acceptance test shows
+  it fading to nothing in five. Whether that is too quick to hunt with or too slow to stop
+  chasing ghosts is a question only a batch of matches can answer, and the batch can run now.
 - **Nothing may decline a reaction.** `ReactionOffer.Recommended` is not nullable, so a reactor
   always takes its best option even when every option scores below zero — which happens: a beam
   that will be soaked entirely is worth about what it costs, and the model correctly says all the

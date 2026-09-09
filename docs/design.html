@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 17 · 8 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 18 · 8 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 289 tests run in a few seconds today.</li>
+        <li>The rules are unit-testable headless — 296 tests run in about ten seconds today, most of it the AI.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1073,8 +1073,11 @@
       </p>
       <p>
         That split is enforced in the code rather than left to discipline. The full record, with
-        the certainty figure, is what the rules and the AI read. The interface goes through a
-        separate coarse readout type that has no number on it.
+        the certainty figure, is what the rules read, and what the AI reads about its <em>own</em>
+        soldier&rsquo;s contacts. What the AI reads about the enemy&rsquo;s contacts on its
+        soldier is the same coarse readout the interface goes through, with no number on it
+        &mdash; it read the number for two increments, the interface audit caught it, and section
+        11 says what it cost.
       </p>
       <p>
         The last-known-position marker is the payoff: it is where an enemy <em>thinks</em> you
@@ -1934,9 +1937,10 @@
       </p>
       <p>
         The constraint that shaped everything: <strong>the scorer reads only what its soldier
-        knows</strong> &mdash; with one exception it should not have, found by the interface audit
-        and recorded below. Threats come from that unit&rsquo;s own contacts rather than from the
-        field, so an AI cannot stand well against a flanker it has never seen. That is the same
+        knows</strong>. Threats come from that unit&rsquo;s own contact file rather than from the
+        field, so an AI cannot stand well against a flanker it has never seen, and what the enemy
+        holds on it is read at the rung the player is shown &mdash; it was read as the number for
+        two increments, and the interface audit found it rather than Core. That is the same
         constraint the interface works under, and holding to it is what produced most of the new
         code &mdash; the armour-aware forecast, the look that has not been taken yet, the shot a
         threat could take if it had the points, what a shot would tell everybody. Every one of
@@ -1977,38 +1981,79 @@
         preference list.
       </p>
 
+      <h3>Going to look</h3>
+      <p>
+        A threat is a belief, and the scorer says how good a belief it is. A contact the soldier
+        looked at last and can still see stands where it really is. Anything else stands at the
+        <strong>marker</strong> &mdash; where contact was last made, upright, because the question
+        a marker answers is whether the place can be seen &mdash; and counts for a
+        <strong>credence</strong>: all of a sighting for the two rounds in which the man may not
+        have had a turn to leave, then half as much per round, because a soldier who stayed put
+        through one turn is about as likely as not to stay through the next. That is a separate
+        dial from the awareness ladder and it does a separate job: the ladder says how sure you
+        are that somebody is out there, the credence says how sure you are that they are still
+        <em>there</em>, and it is the second that stops a unit chasing ghosts round the map.
+      </p>
+      <p>
+        Nothing new was added to the search to make a unit hunt. A marker in view from the far
+        end of a walk is a place a shot could be taken at, and the same one-step lookahead that
+        sends a soldier round a man in cover sends it round a corner it heard something behind,
+        with the shot it opens counted at the credence. Two things had to change in the scorer
+        before that walk was ever worth taking, and both were measured rather than argued: the
+        look a marker would get at the arrival is averaged over every way the man could be facing
+        &mdash; assuming he is looking straight at you priced the walk above the shot on every
+        geometry tried &mdash; and a look that finds a marker is worth the whole shot, because
+        what is missing about a man you cannot see is where he is, not whether he exists.
+      </p>
+      <p>
+        <strong>The commander never fires at a marker.</strong> A shot is offered only at a
+        threat in view. The battle resolves a shot against where the target really is, so
+        firing at a guess would have the battle correcting the soldier&rsquo;s aim for free. A
+        unit walks to where it can see the marker, looks at the end of its turn like everybody
+        else, and shoots on the next one &mdash; and the man it found looks at the end of
+        <em>his</em> turn too, so whichever of them comes round first fires first. Going to look
+        costs a turn, and that turn is the window section 07 says the found soldier is owed.
+      </p>
+      <p>
+        The walk itself is priced now, too. A route&rsquo;s loudness used to be worked out after
+        the move and thrown away; it is a public query, with who would hear it beside it, and a
+        move&rsquo;s score carries what the walk tells everybody exactly as a shot&rsquo;s carries
+        what the trigger does. Going to look is worth less when the going gives you away, which
+        is the argument for the long quiet way round.
+      </p>
+      <p>
+        Measured on a solid wall with three a side either side of it and one loud noise:
+        five hexes long and the far side is found and the fight happens; eleven and nobody moves.
+        <strong>Hunting reaches one move.</strong> Past about five hexes the walk costs more than
+        the one discounted shot it might open, and a search one step deep cannot see the turn of
+        shooting beyond it &mdash; the blade-carrier limit again. The same limit makes two
+        survivors who lose contact out of reach of each other a stalemate: markers decay, nobody
+        walks. So the test that beliefs work asserts a fight and does not promise a decision.
+      </p>
+
       <div class="aside">
         <span class="tag">Open</span>
         <p>
-          <strong>One term is computed from a number the player may never see, so it cannot be
-          shown.</strong> Working out what a posture saves you means asking how likely each threat
-          is to be shooting at you at all, and that is read straight off the enemy&rsquo;s contact
-          file as a raw certainty. Contract 3 blurs that figure on purpose. So
-          <em>Spared</em> fails the test set out at the top of this section &mdash; a term that
-          cannot be shown to a player should not be in there &mdash; and the interface has had to
-          leave the whole posture half of the model off the screen rather than render a score with
-          a blurred number folded into it.
+          <strong>Nothing draws a soldier who knows about nobody.</strong> A unit with no contact
+          worth acting on banks its turn, and a lost contact decays back to that. Correct, and
+          the reason a fight that loses contact is a stalemate. An objective system &mdash;
+          ground to hold, a route to patrol, a place to reach &mdash; is what gives such a unit
+          something to want, and it is the largest thing between this AI and one a player would
+          call an enemy. A deeper search would still have nothing to search for.
         </p>
         <p>
-          The worse half is not the display. A soldier is being told exactly how spotted they are,
-          in a game whose entire subject is not knowing, and the advantage runs one way: an AI
-          that knows precisely when it has been made breaks cover at the right moment and never a
-          moment early, which reads as uncanny rather than as a bug. The repair fixes both at
-          once, by quantising to the rung the interface already shows before the number enters the
-          arithmetic. It will coarsen posture scores and move some reaction orderings, so it wants
-          doing deliberately. Found by the interface audit, not by Core, which is the argument for
-          having had somebody audit it.
+          <strong>Being come looking for costs the shooter nothing.</strong> What giving yourself
+          away is worth is measured by what the listener could do from where they stand, and
+          from behind a wall that is nothing. A unit now does come looking, so the figure is
+          wrong; the right one is the best shot the listener could reach in a turn, which is a
+          search inside a score, run inside every shot the scorer weighs. Calling a contact in
+          to an ally with no line has the same gap from the other side.
         </p>
         <p>
-          <strong>Nobody ever goes and looks.</strong> Threats are the contacts a soldier
-          currently has eyes on, so a unit that knows about nobody stands still for the whole
-          battle, and no unit can move to gain a line of sight &mdash; only to improve one it
-          already has. It is also why being heard costs the shooter nothing when the listener is
-          behind a wall: what giving yourself away is worth is measured by what the person you
-          gave it to could do from where they stand, and from behind a wall that is nothing. All
-          three are the same hole. The fix is to build threats out of a remembered position rather
-          than only out of a live one, discounted for how stale the memory is, and let a move
-          toward a belief earn its keep the way every other move does.
+          <strong>The marker&rsquo;s decay is the second dial to watch.</strong> At a half per
+          round a marker three rounds old is worth a quarter of a sighting and fades to nothing in
+          five. Too quick to hunt with, or too slow to stop chasing ghosts, is a question a batch
+          of matches answers, and the batch can run now.
         </p>
         <p>
           <strong>Nothing may decline a reaction.</strong> A reactor always takes its best option
@@ -2065,8 +2110,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Detection and awareness</b><p>Accumulation, belief state, and alert channels you can cut.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Weapons, shooting and protection</b><p>Beam against kinetic, shields and plate per face, exposure turned into a hit chance.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Reactions</b><p>Committed moves read as a timeline, a reserve banked from what a turn did not spend, and all three kinds: arcs held, traps sprung, and soldiers caught out.</p></div></li>
-        <li class="done"><span class="idx">DONE</span><div><b>Enemy AI</b><p>What an action is worth, in vitality, over the same queries the interface shows &mdash; and a search that takes a turn with it. Two sides driven by the same judgement fight to a decision headless. Nobody goes looking for anybody yet.</p></div></li>
-        <li><span class="idx">04</span><div><b>Going to look</b><p>Threats built from a remembered position rather than a live one, so a soldier who has heard something can go and find it. Until this lands, a unit that can see nobody does nothing.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Enemy AI</b><p>What an action is worth, in vitality, over the same queries the interface shows &mdash; and a search that takes a turn with it. Two sides driven by the same judgement fight to a decision headless.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Going to look</b><p>Threats built from a marker as well as a sighting, discounted for how long the marker has gone unconfirmed. Two sides that start out of contact find each other and fight. Hunting reaches one move; nothing draws a soldier who knows about nobody.</p></div></li>
         <li><span class="idx">05</span><div><b>Grenades and mines</b><p>An arcing trace, and a reaction owned by the terrain rather than by a unit.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
@@ -2078,8 +2123,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 17</span>
-    <span>289 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 18</span>
+    <span>296 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

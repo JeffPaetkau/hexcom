@@ -83,11 +83,22 @@ public sealed record Order(
 /// walk itself is worth nothing.
 /// </para>
 /// <para>
-/// <b>It reads only what its soldier knows.</b> Threats come from that unit's own contacts, so a
-/// commander cannot walk around a flank it has not seen. The consequence, and it is a real one:
-/// a unit that knows about nobody scores every option at nothing and stands still. That is
-/// correct rather than convenient — there is nothing in the game for it to want yet — and it is
-/// the argument for an objective system rather than for cheating.
+/// <b>It reads only what its soldier knows.</b> Threats come from that unit's own contact file —
+/// in view where they stand, or remembered where they were — so a commander cannot walk around
+/// a flank it has not seen, and it goes to look at a marker rather than at the man. The
+/// consequence, and it is a real one: a unit that knows about nobody scores every option at
+/// nothing and stands still. That is correct rather than convenient — there is nothing in the
+/// game for it to want yet — and it is the argument for an objective system rather than for
+/// cheating.
+/// </para>
+/// <para>
+/// <b>It never fires at a marker.</b> A shot is offered only at a threat in view. The forecast of
+/// a shot at a marker is what a move toward it is ranked on, but carrying that shot out would
+/// hand the aim to <see cref="Battle.Fire"/>, which resolves against where the target really
+/// is, and that would be the battle correcting the soldier's guess for free. So a unit that
+/// walks to where it can see the marker looks at the end of its turn, like everybody else, and
+/// shoots on the next one if the look found anything. Going to look costs a turn, which is the
+/// window the design says the found soldier is owed.
 /// </para>
 /// </remarks>
 public sealed class Commander(Battle battle, UtilityModel? model = null)
@@ -136,7 +147,7 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
     {
         if (battle.Active is not { } unit) return null;
 
-        var threats = _judge.Seen(unit).ToList();
+        var threats = _judge.Known(unit).ToList();
         var holding = _judge.AppraiseHolding(unit, unit.ActionPoints, threats);
 
         Order? best = null;
@@ -156,7 +167,9 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
     /// </remarks>
     public IEnumerable<Order> Options(Unit unit, IReadOnlyList<Threat> threats)
     {
-        foreach (var order in Shots(unit, UnitPose.Of(unit), threats, ApSource.Turn)) yield return order;
+        var inView = threats.Where(t => t.EyesOn).ToList();
+
+        foreach (var order in Shots(unit, UnitPose.Of(unit), inView, ApSource.Turn)) yield return order;
         foreach (var order in Moves(unit, threats)) yield return order;
         foreach (var order in Postures(unit, threats)) yield return order;
         foreach (var order in Watches(unit, threats)) yield return order;
@@ -164,7 +177,10 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
 
     // ---- what is on the table --------------------------------------------------
 
-    /// <summary>Every shot this unit could take from a pose, one per target per way of firing.</summary>
+    /// <summary>
+    /// Every shot this unit could take from a pose, one per target per way of firing, each
+    /// counted at the credence of the threat it is at.
+    /// </summary>
     private IEnumerable<Order> Shots(
         Unit unit, UnitPose from, IReadOnlyList<Threat> threats, ApSource paying, int purse = int.MaxValue)
     {
@@ -179,7 +195,7 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
 
                 if (!plan.CanFire) continue;
 
-                yield return new Order(OrderKind.Fire, _judge.Appraise(plan), Shot: plan);
+                yield return new Order(OrderKind.Fire, _judge.Appraise(plan) * threat.Credence, Shot: plan);
             }
     }
 
@@ -187,30 +203,45 @@ public sealed class Commander(Battle battle, UtilityModel? model = null)
     /// Everywhere worth walking to, and what the unit would do on arrival.
     /// </summary>
     /// <remarks>
-    /// Destinations are pruned to somewhere the unit can see something from, or somewhere that
-    /// gets it closer to what it knows about. Everything else is ground, and there are a hundred
-    /// hexes of ground on a small map — scoring all of them means a sight trace per hex per
-    /// threat, per decision, several decisions a turn, which is the difference between a headless
-    /// match taking a second and taking a minute.
+    /// Destinations are pruned to somewhere the unit can see a threat from — where the threat
+    /// stands, or the marker it is remembered at. Everything else is ground, and there are a
+    /// hundred hexes of ground on a small map — scoring all of them means a sight trace per hex
+    /// per threat, per decision, several decisions a turn, which is the difference between a
+    /// headless match taking a second and taking a minute.
+    /// <para>
+    /// A marker in view from the far end is what going to look <em>is</em>, and it is ranked the
+    /// way a flank is: on the shot the position would open, counted at the chance they are still
+    /// there. Nothing about the search changed to make a unit hunt; a remembered position is a
+    /// place a shot could be taken at, and the lookahead that already sends a soldier round a
+    /// man in cover sends it round a corner it heard something behind.
+    /// </para>
     /// </remarks>
     private IEnumerable<Order> Moves(Unit unit, IReadOnlyList<Threat> threats)
     {
         if (threats.Count == 0) yield break;
 
-        foreach (var reached in battle.Destinations(unit))
+        var reach = battle.Reachable(unit);
+
+        foreach (var reached in reach.Destinations)
         {
-            if (reached.Node == unit.Position) continue;
+            if (reached.Node == unit.Position || !battle.CanStopAt(unit, reached.Node)) continue;
 
             // Facing follows the line of travel, for free, exactly as a real move would leave it.
             var arriving = Arriving(unit, reached);
             var seen = threats.Where(t => battle.Sight.CanSee(arriving.Vantage, t.Where.Vantage)).ToList();
             if (seen.Count == 0) continue;
 
-            var worth = _judge.AppraisePosture(unit, arriving, reached.Cost, threats);
+            // What the walk itself would tell everybody. The same route the move will take, so
+            // the figure it is ranked on is the figure it makes.
+            if (!reach.TryGetPath(reached.Node, out var path)) continue;
+            var loudness = battle.Loudness(unit, path);
+
+            var worth = _judge.AppraiseMove(unit, arriving, reached.Cost, loudness, threats);
 
             // What the unit would do once it got there, out of what the walk left it. This is
             // ranking only: the order carried out is the move, and the shot is found again next
-            // time round from a position the unit is actually standing in.
+            // time round from a position the unit is actually standing in — or, for a marker,
+            // after the look at the end of the turn says whether there was anybody to shoot.
             var left = unit.ActionPoints - reached.Cost;
             var opens = Shots(unit, arriving, seen, ApSource.Turn, left)
                 .Select(o => o.Worth)

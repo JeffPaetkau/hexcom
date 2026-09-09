@@ -157,7 +157,7 @@ not exist yet, and guessing is how it comes out wrong.
 ---
 
 ## 005 — The scale split is done, and 002 was wrong about what it broke
-**2026-09-07** · **Raised by** view · **For** core and content · **Status** resolved (view's half)
+**2026-09-07** · **Raised by** view · **For** core and content · **Status** resolved (view's half; core's half by 021)
 
 The sandbox now builds two layouts. `SandboxScale.World`, in metres, is the only one handed to
 `Battle`; `SandboxScale.Canvas`, in pixels, is the only one that reaches a draw call. Nothing
@@ -338,7 +338,7 @@ roof.
 ---
 
 ## 009 — The sandbox can hand a side to the AI now
-**2026-09-07** · **Raised by** core · **For** view · **Status** resolved by 022
+**2026-09-07** · **Raised by** core · **For** view · **Status** resolved by 023
 
 `Hexcom.Core.Tactics.Commander` takes a unit's whole turn and ends it:
 
@@ -402,7 +402,7 @@ and it was found by asking whether a player could be shown it. Nobody was lookin
 ---
 
 ## 011 — `Tactician.Aimed` reads how much the enemy has detected you, exactly
-**2026-09-07** · **Raised by** view · **For** core · **Status** open
+**2026-09-07** · **Raised by** view · **For** core · **Status** resolved by 021
 
 `Tactics/Tactician.cs`, in `Aimed`:
 
@@ -450,7 +450,7 @@ own is exactly the quiet erosion the contracts exist to prevent.
 ---
 
 ## 012 — Three things the AI will want that no query exposes, so the interface cannot show them either
-**2026-09-07** · **Raised by** view · **For** core · **Status** open
+**2026-09-07** · **Raised by** view · **For** core · **Status** open — item 1 resolved by 021, items 2 and 3 still open
 
 Found by the audit in entry 010. All three are contract 2 in the ordinary direction: a query
 neither side has, where the interface not having it is the symptom and the AI not having it is
@@ -611,7 +611,7 @@ them, because it is the one file no territory session will ever be allowed to co
 ---
 
 ## 017 — `godot` is not on the PATH, so the documented command does not run as written
-**2026-09-08** · **Raised by** master · **For** view · **Status** resolved by 022
+**2026-09-08** · **Raised by** master · **For** view · **Status** resolved by 023
 
 Found while verifying 015. Godot is installed, but there is no shim: `godot` resolves in neither
 `bash` nor PowerShell, and `%LOCALAPPDATA%\Microsoft\WinGet\Links` has nothing in it. Every
@@ -664,7 +664,7 @@ stragglers — which is precisely why nobody else needs to know they exist.
 ---
 
 ## 019 — `godot` fails because nothing is called that, and README promises match speeds Core has measured against
-**2026-09-08** · **Raised by** master · **For** view and core · **Status** open for core; view's half resolved by 022
+**2026-09-08** · **Raised by** master · **For** view and core · **Status** resolved — core's half by 021, view's half by 023
 
 Two findings from the standing audit of checkable claims. Both are routed into briefs already;
 this entry exists so the briefs have a number to cite.
@@ -699,7 +699,7 @@ invalidated. The cure is not more care; it is re-reading the docs against the lo
 is closed, which is now in Master's standing list.
 
 ## 020 — Three findings have no brief to live in yet, and one README section nobody was asked to fix
-**2026-09-08** · **Raised by** master · **For** core and view · **Status** open for core; view's half resolved by 022
+**2026-09-08** · **Raised by** master · **For** core and view · **Status** open for core; view's half resolved by 023
 
 From the standing audit of the log against the briefs. Each item below is already open in an
 earlier entry; this one exists because none of them is named by the brief of the territory it is
@@ -737,7 +737,69 @@ messages are immutable and the path in the working tree is the one that is true.
 
 ---
 
-## 021 — What View wants from `Move`: a window it can hold open, and the same seam through `Commander`
+## 021 — Beliefs have landed: a soldier goes to look, and the scorer no longer reads the enemy's number
+**2026-09-08** · **Raised by** core · **For** view, master · **Status** resolved
+
+Build order 04 is done. `Tactician.Known` — renamed from `Seen`, because it no longer is — builds
+a `Threat` from a contact's marker as well as from a sighting, and a `Threat` now carries a
+`Credence` and an `EyesOn` flag. Two sides that start out of contact find each other and fight,
+headless, on a noise alone. The rationale is in `<remarks>` on `Threat`, `Tactician.Known`,
+`Tactician.Credence` and `UtilityModel.MarkerDecay`, and in section 11 of the design doc. This
+entry is what crosses boundaries.
+
+**Resolved here.**
+
+- **011.** `Tactician.Aimed` reads the enemy's detection of the soldier as
+  `Threshold(ReadoutFor(...).State)` — the rung the interface shows — and never the number. A
+  test pins that two certainties on one rung give identical posture scores. `Appraisal.Spared`
+  is therefore displayable, and audit row 2 in `subprojects/view.md` is no longer blocked on
+  Core.
+- **012, item 1.** `Battle.Loudness(unit, path)` is public and is the figure `Move` then uses;
+  `AwarenessTracker.WouldHear(source, place, loudness)` says who would hear it, in the shape
+  `WouldAnnounce` has; `Tactician.AppraiseMove` folds both into a move's score, which the
+  `Commander` now ranks on. Audit row 4 has its query. Items 2 and 3 — the firing preview on the
+  interface side, and a turn action for shouting — are still open.
+- **005, core's half.** `SightSolver` carries the `<remarks>` saying sight and cover are
+  scale-free by construction, that this is kept rather than accidental, and that a contract 5
+  violation therefore shows up in detection and never in cover.
+- **019, core's half.** `README.md` now says what was measured: a three-a-side match takes about
+  two seconds, a thousand is a lunch break. `core.md` says eight homes.
+
+**For View, three things.**
+
+- **`Tactician.Seen` is gone; the name in the audit table is `Tactician.Known`.** Same shape,
+  wider meaning: it now includes markers, each with a credence. Audit row 1 wants both kinds
+  drawn — a soldier's own markers are its own information and can be shown exactly, credence
+  and all.
+- **The `Commander` never fires at a marker.** It walks to where it can see one, looks at the
+  end of its turn, and shoots next turn. Watching the AI (entry 009) will show a soldier arrive
+  and stand there; that is a look, not a bug. It also means a soldier shot from somewhere it has
+  not looked at turns toward the marker rather than shooting straight back.
+- **Entry 009's caveat is narrower now.** A hostile with no contact at or above `Searching`
+  still stands still; one that has *heard* enough goes round the corner. The demo scenario as it
+  opens still looks like nothing is happening until somebody makes a noise.
+
+**For Master, a finding about the build order.** Hunting reaches one move. Measured on a solid
+wall with three a side: five hexes long and the far side is found; eleven and nobody moves,
+because past about five hexes the walk costs more than the one discounted shot it might open
+and a search one step deep cannot see the turn of shooting beyond it. The same limit makes two
+survivors who lose contact out of reach of each other a stalemate, so the acceptance test for
+beliefs asserts a fight and not a decision. This is not a beliefs problem and it is not the
+search's alone either: a unit with nothing to want has nothing to search for. **An objective
+system** — ground to hold, a route to patrol, a place to reach — is the thing this AI most
+needs next and it is not in the build order. Where it goes, and whether it is Core's or
+Content's, is a shape question rather than a rules one.
+
+**What was tried and rejected, for whoever tunes this.** Assuming a marker's man faces the
+believer priced going round a corner above the shot it opens on every geometry tried; the look is
+averaged over six facings instead. Scaling a marker's look by certainty left a heard contact
+worth less than half a look; a marker's look is worth the whole shot. Both are measured,
+neither is a dial, and the dial that *is* one — `MarkerDecay`, a half per round past the fresh
+two — has an argument on it and no measurement yet.
+
+---
+
+## 022 — What View wants from `Move`: a window it can hold open, and the same seam through `Commander`
 **2026-09-08** · **Raised by** view · **For** core · **Status** open
 
 Answering 004, which asked which shape the interface wants before Core picks one. **The split,
@@ -789,7 +851,7 @@ is the first of three gated jobs in `subprojects/view.md`.
 
 ---
 
-## 022 — The sandbox has watched the AI play: 017 and 019 closed for View, 009 taken up, and what read wrong
+## 023 — The sandbox has watched the AI play: 017 and 019 closed for View, 009 taken up, and what read wrong
 **2026-09-08** · **Raised by** view · **For** core, and master for the statuses · **Status** resolved for View; the items for Core are open
 
 **017 and 019, View's half.** The commands in **Seeing it** and in `README.md` now name the
@@ -853,5 +915,15 @@ that is a decision about entitlement and not about formatting. Say which, in sec
 will draw it.
 
 **For master, the statuses.** 017 and 009 are resolved by this entry. 019 and 020 are resolved
-for View by this entry and stay open for Core. 004 is answered by 021 and stays open until Core
+for View by this entry and stay open for Core. 004 is answered by 022 and stays open until Core
 builds it.
+
+**Merged after 021, and two of its three items for View are done on the same branch.** The
+seen line reads `Tactician.Known` and quotes a marker where it is believed to be, with its
+credence, tracing the distance to the marker and never to the man. The posture line prints the
+whole appraisal, spared term included, because 021 made it displayable — so audit row 2 closed
+between this entry being written and being merged. And the cursor line prints a route's loudness
+and who would hear it, from `Battle.Loudness` and `WouldHear`, which closes audit row 4. Item 1
+above — a stance change scored on what it spares and never on the shot it costs — was checked
+against the merged scorer and still holds: postures carry no `Opens`, and `Noticing` is still
+nought against a contact already held `Engaged`.

@@ -42,10 +42,11 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
 
     public void Draw(SandboxFrame frame, Vector2 viewport)
     {
-        DrawOrderStrip(frame, viewport);
+        // The strip last, so that a long readout runs under it rather than over it.
         DrawLines(frame);
         DrawHappenings(frame, viewport);
         DrawLegend(viewport);
+        DrawOrderStrip(frame, viewport);
     }
 
     /// <summary>The next few bookings, so the player can see the interleaving coming.</summary>
@@ -97,15 +98,19 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                   + $"{WeaponLine(active)}    {hostiles}",
             active is null ? "" : AlarmLine(frame, active),
             active is null ? "" : SeenLine(frame, active),
+            active is null ? "" : ViewedLine(frame, active),
             active is null ? "" : ReserveLine(frame, active),
-            active is null ? "" : PostureLine(frame, active),
+        };
+        if (active is not null) lines.AddRange(PostureLines(frame, active));
+        lines.AddRange(new[]
+        {
             frame.Hover is { } h
                 ? $"cursor {h}    {(frame.Reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    "
-                  + $"{SightLine(frame, h)}{AttentionLine(frame, h)}"
+                  + $"{SightLine(frame, h)}{AttentionLine(frame, h)}{NoiseLine(frame, h)}"
                 : "cursor —",
             ShotLine(frame),
             WorthLine(frame),
-        };
+        });
         lines.RemoveAll(line => line.Length == 0);
 
         var top = Origin + new Vector2(18, 30);
@@ -326,11 +331,14 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The first half is <see cref="Tactician.Seen"/>, which is the list the whole defensive
+    /// The first half is <see cref="Tactician.Known"/>, which is the list the whole defensive
     /// half of the scorer is computed over — every posture the AI weighs is weighed against
-    /// exactly these people — and until this line nothing on screen showed it. Beside each is the
-    /// worst single shot they could take at you from where they stand, which is what
-    /// <c>Tactician.Incoming</c> starts from. Both are facts about our own soldier: our own
+    /// exactly these people — and until this line nothing on screen showed it. A threat in view
+    /// is quoted where it stands; a threat remembered at a marker is quoted where it is
+    /// <em>believed</em> to be, with the credence the scorer discounts it by, and never where it
+    /// really is — the distance is traced to the marker for exactly that reason. Beside each is
+    /// the worst single shot they could take at you from there, which is what
+    /// <c>Tactician.Incoming</c> starts from. All of it is our own soldier's information: our own
     /// contact file, their weapon, our exposure, our plate.
     /// </para>
     /// <para>
@@ -346,23 +354,37 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         var battle = frame.Battle;
 
-        var threats = battle.Tactics.Seen(active).Select(threat =>
+        var threats = battle.Tactics.Known(active).Select(threat =>
         {
-            var range = battle.Look(active, threat.Unit).Distance;
+            var range = battle.Sight.Trace(active.Vantage, threat.Where.Vantage).Distance;
+            var where = threat.EyesOn
+                ? $"{threat.Unit.Name} {range:0.0} m"
+                : $"{threat.Unit.Name} believed at {threat.Where.Position} {range:0.0} m x{threat.Credence:P0}";
+
             return WorstShotAt(battle, threat, active) is { } worst
-                ? $"{threat.Unit.Name} {range:0.0} m (worst shot {battle.Tactics.Worth(worst):0.0}: "
-                  + $"{worst.Mode.Name} {worst.Weapon.Name.ToLowerInvariant()} at {worst.HitChance:P0})"
-                : $"{threat.Unit.Name} {range:0.0} m (no shot on you)";
+                ? $"{where}, worst {battle.Tactics.Worth(worst):0.0} "
+                  + $"({worst.Mode.Name} {worst.Weapon.Name.ToLowerInvariant()} {worst.HitChance:P0})"
+                : $"{where}, no shot on you";
         }).ToList();
 
-        var watchers = battle.Enemies(active)
-            .Select(enemy => (enemy, sight: battle.Look(enemy, active)))
+        return $"taking seriously: {(threats.Count == 0 ? "nobody" : string.Join("  ·  ", threats))}";
+    }
+
+    /// <summary>Which enemies have a line to this soldier, and how much of it each can make out.</summary>
+    /// <remarks>
+    /// Its own line rather than the tail of <see cref="SeenLine"/>: with three contacts known
+    /// the two together ran under the turn-order strip, and the strip is the thing nobody should
+    /// have to read through.
+    /// </remarks>
+    private static string ViewedLine(SandboxFrame frame, Unit active)
+    {
+        var watchers = frame.Battle.Enemies(active)
+            .Select(enemy => (enemy, sight: frame.Battle.Look(enemy, active)))
             .Where(pair => pair.sight.CanSee)
             .Select(pair => $"{pair.enemy.Name} ({pair.sight.Exposure:P0})")
             .ToList();
 
-        return $"taking seriously: {(threats.Count == 0 ? "nobody" : string.Join(", ", threats))}    "
-               + $"in view of: {(watchers.Count == 0 ? "nobody" : string.Join(", ", watchers))}";
+        return $"in view of: {(watchers.Count == 0 ? "nobody" : string.Join(", ", watchers))}";
     }
 
     /// <summary>The single shot from this threat that would cost the target most, if it has one.</summary>
@@ -384,30 +406,27 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     }
 
     /// <summary>
-    /// What the three posture keys would cost, and what each would open up.
+    /// What the three posture keys would cost, and what the scorer makes of each.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <see cref="Tactician.AppraisePosture"/> has four terms and this line shows two of them.
-    /// <b>Spent</b> is the price, quoted as <see cref="Battle.Costs"/> lists it because that is
-    /// what <see cref="Battle.Face"/> and <see cref="Battle.ChangeStance"/> actually charge — see
-    /// the note at the end of entry 012 in <c>docs/decisions.md</c>. <b>Prospect</b> is what the
-    /// new pose would let this soldier notice, and it is built entirely from our own side of the
-    /// ledger: our attention, our contact file, our best shot from there.
-    /// </para>
-    /// <para>
-    /// <b>Spared is deliberately not shown</b>, and the line says so rather than leaving a reader
-    /// to assume the appraisal is complete. It carries how much each enemy has already worked out
-    /// about this soldier as a raw certainty — entry 011 — and a score with that number folded
-    /// into it is a leak with extra steps. When Core resolves 011 this line grows a term; until
-    /// then it is honest about being half an appraisal. Harm is always nought for a posture and
-    /// is not printed.
+    /// <see cref="Tactician.AppraisePosture"/>, term by term, for the pose each key would leave
+    /// this soldier in. <b>Spent</b> is quoted as <see cref="Battle.Costs"/> lists it because that
+    /// is what <see cref="Battle.Face"/> and <see cref="Battle.ChangeStance"/> actually charge —
+    /// see the note at the end of entry 012 in <c>docs/decisions.md</c>. <b>Prospect</b> is what
+    /// the new pose would let this soldier notice, from our own attention, our own contact file
+    /// and our best shot from there. <b>Spared</b> is what the pose keeps off us, and it was the
+    /// term this line could not print when it was first drawn: it folded in how much each enemy
+    /// had worked out about this soldier as a raw certainty, which contract 3 blurs. Entry 021
+    /// made the scorer read that at the rung the interface shows, so the whole appraisal is now a
+    /// figure the player is entitled to — and it is the same figure the AI ranks the same pose
+    /// by. Harm is always nought for a posture and is not printed.
     /// </para>
     /// </remarks>
-    private static string PostureLine(SandboxFrame frame, Unit active)
+    private static IEnumerable<string> PostureLines(SandboxFrame frame, Unit active)
     {
         var battle = frame.Battle;
-        var threats = battle.Tactics.Seen(active).ToList();
+        var threats = battle.Tactics.Known(active).ToList();
         var here = UnitPose.Of(active);
 
         var next = active.Stance switch
@@ -419,16 +438,49 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         var left = active.Facing.Rotate(1);
         var right = active.Facing.Rotate(-1);
 
-        string Opens(UnitPose after, int cost)
-            => battle.Tactics.AppraisePosture(active, after, cost, threats).Prospect.ToString("+0.00;-0.00");
+        string Worth(UnitPose after, int cost)
+        {
+            var appraisal = battle.Tactics.AppraisePosture(active, after, cost, threats);
+            return $"{appraisal.Score:+0.00;-0.00} ({Terms(appraisal)})";
+        }
 
         var stance = battle.Costs.ChangeStance;
         var turn = battle.Costs.TurnInPlace;
 
-        return $"C: go {next.ToString().ToLowerInvariant()} for {stance} AP, opens {Opens(here with { Stance = next }, stance)}    "
-               + $"Z: face {left} for {turn} AP, opens {Opens(here with { Facing = left }, turn)}    "
-               + $"X: face {right} for {turn} AP, opens {Opens(here with { Facing = right }, turn)}    "
-               + "(what each spares you is withheld: entry 011)";
+        // Two lines, not one: three appraisals with their terms ran under the turn-order strip.
+        yield return $"C: go {next.ToString().ToLowerInvariant()} for {stance} AP {Worth(here with { Stance = next }, stance)}";
+        yield return $"Z: face {left} for {turn} AP {Worth(here with { Facing = left }, turn)}    "
+                     + $"X: face {right} for {turn} AP {Worth(here with { Facing = right }, turn)}";
+    }
+
+    /// <summary>
+    /// What walking to the place under the cursor would announce: how loud the route is, and who
+    /// would hear it.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Battle.Loudness"/> is the figure <see cref="Battle.Move"/> will charge for the
+    /// same route, so what this line says a walk would make is what it makes, and
+    /// <see cref="Hexcom.Core.Awareness.AwarenessTracker.WouldHear"/> is what the AI's own move
+    /// appraisal folds into a route's score. Only the names of who would hear it are printed. The
+    /// figures behind them are how far each listener's contact file on us would move, and while
+    /// <see cref="Hexcom.Core.Awareness.Announcement"/> argues that is information about our own
+    /// soldier, contract 3 has so far been read as blurring the enemy's file whichever way it is
+    /// approached. Names are safe under either reading; a player who wants to know how much is
+    /// told in what direction by the rung under the listener's feet on the next look.
+    /// </remarks>
+    private static string NoiseLine(SandboxFrame frame, NodeId node)
+    {
+        if (frame.Battle.Active is not { } active) return "";
+        if (!frame.Reach.TryGetPath(node, out var path) || path.Count == 0) return "";
+
+        var loudness = frame.Battle.Loudness(active, path);
+        if (loudness <= 0) return "    silent";
+
+        var listeners = frame.Battle.Awareness.WouldHear(active, node, loudness)
+            .Select(word => word.Learner.Name)
+            .ToList();
+
+        return $"    noise {loudness:0}, heard by {(listeners.Count == 0 ? "nobody" : string.Join(", ", listeners))}";
     }
 
     /// <summary>

@@ -53,22 +53,25 @@ the reaction line saying what the sentry did about it. Keep it deaf and reproduc
 the whole bargain the harness rests on, and keep `HexSandbox` the only thing that calls `Battle`
 — the script is an argument list, not a second input system.
 
-**Three other jobs are waiting on other territories, and whichever gate lifts first jumps the
+**Two other jobs are waiting on other territories, and whichever gate lifts first jumps the
 queue.** Each has its readout already designed in the audit below; what is missing is the query.
 
 - **Placing your own reactions**, when Core lands the seam asked for in entry 004 and answered in
-  entry 021: an open `ReactionWindow` whose offers the HUD can list, appraise and let the player
+  entry 022: an open `ReactionWindow` whose offers the HUD can list, appraise and let the player
   pick from before it resolves.
-- **The spared term on the posture line**, when entry 011 is resolved. The line already prints
-  the other two terms and says which one is missing; it grows a term and loses a caveat.
 - **The attention cone at its true reach**, when content's larger map lands — entry 006, gated
   on 007's finding that the demo compound is too small for any honest range figure.
 
-**Two things watched on `view/interface-readouts` are for Core and are written up in entry 022.**
+**Two things watched on `view/interface-readouts` are for Core and are written up in entry 023.**
 Do not re-find them: a stance change is scored on what it spares and never on the shot it
 costs, because postures carry no `Opens` and `Prospect` is nought against a contact already held
 `Engaged`; and a hostile's own `Prospect` term is built from the one number contract 3 blurs,
 which is fine for the AI and makes the orders readout an instrument rather than an entitlement.
+
+**Since beliefs landed (entry 021) the AI hunts.** A hostile that has heard enough walks to where
+it can see the marker, looks, and shoots next turn. A capture with `--ai` will show a soldier
+arrive somewhere and stand there: that is a look, not a stall, and the seen line on its next
+turn will say what it was walking towards.
 
 **How to know it worked.** A capture, from one pasted command, in which one of ours has acted
 and the reaction line reports what the other side did about it.
@@ -125,28 +128,25 @@ that said 7, and the arithmetic could not be checked from the screen.
 
 | The AI weighs | The query | Where the interface shows it | |
 |---|---|---|---|
-| who this soldier is taking seriously | `Tactician.Seen` | seen line, with distance | shown |
+| who this soldier is taking seriously | `Tactician.Known` | seen line — in view with distance, or believed at a marker with credence | shown |
 | the worst one shot each could do to you | `PlanThreat` per threat and mode | seen line, worth, mode and hit chance | shown |
-| how likely they are to shoot at all | `Awareness.Of(them, you).Detection` | alarm line, as a rung | coarse — **but see below** |
+| how likely they are to shoot at all | `Awareness.ReadoutFor(them, you).State` | alarm line, as a rung — and since entry 021 the scorer reads the same rung | coarse, on both sides |
 | the bar they act from | `Model.Threshold(UtilityModel.ActsOn)` | alarm line, named | shown |
 | what a stance or a turn costs | `MovementCosts.ChangeStance` / `TurnInPlace` | posture line, for each of the three keys | shown |
-| what the whole trade comes to | `Tactics.AppraisePosture` | posture line — **two of its terms**; the line says which is missing | **blocked** (the spared term) |
+| what the whole trade comes to | `Tactics.AppraisePosture` | posture line, score and every term | shown |
 
-**The audit's real find is in this table.** `Tactician.Aimed` reads how much the enemy has
+**The audit's real find was in this table.** `Tactician.Aimed` read how much the enemy had
 detected you as a raw certainty, and contract 3 says that number is blurred to a rung on purpose.
-So the appraisal of a posture cannot be displayed without leaking it — and, worse the other way
-round, the AI is reading a figure its own soldier has no way of knowing, which is the one thing
-`Tactician`'s own doc comment promises it never does. That is Core's to resolve and it is written
-up as entry 011 in `../decisions.md`.
+So the appraisal of a posture could not be displayed without leaking it — and, worse the other
+way round, the AI was reading a figure its own soldier had no way of knowing, which is the one
+thing `Tactician`'s own doc comment promises it never does. Written up as entry 011 and resolved
+by entry 021: the scorer now reads the rung the interface shows, a test pins that two certainties
+on one rung score the same, and the posture line prints the whole appraisal.
 
-It is worth being clear about which of the two problems matters. The display leak is small — you
-would have to invert an aggregate to recover the number. The AI reading it is not small: it is a
-soldier who knows exactly how spotted they are, in a game whose whole subject is not knowing.
-
-What the posture line does meanwhile is print the terms it can — the price, and the prospect, which
-is built entirely from our own side of the ledger — and say in as many words that the spared term
-is withheld and why. Half an appraisal, labelled, beats a whole one with a blurred number folded
-in; the terms are kept apart precisely so that one can be.
+It is worth keeping clear which of the two problems mattered. The display leak was small — you
+would have to invert an aggregate to recover the number. The AI reading it was not small: it was
+a soldier who knew exactly how spotted they were, in a game whose whole subject is not knowing.
+The interface audit found it and Core did not, which is contract 2 paying for itself.
 
 ### Prospect — what an action sets up
 
@@ -154,7 +154,7 @@ in; the terms are kept apart precisely so that one can be.
 |---|---|---|---|
 | how much attention a place has | `Awareness.AttentionOn(pose, node)` | cursor line, exactly | shown |
 | how much is still left to learn about a contact | own `Detection` against `Threshold(Engaged)` | nowhere | gap — **and a question**, below |
-| the shot a new facing would open | `Tactician.BestShot` from an untaken pose | posture line — it is the *opens* figure, scaled by attention and by what is left to learn | shown |
+| the shot a new facing would open | `Tactician.BestShot` from an untaken pose | posture lines — it is the *prospect* term, scaled by attention and by what is left to learn | shown |
 | who would hear you call it in | `Awareness.Earshot` | nowhere — and there is no way to shout | gap, and a Core gap with it |
 | how much survives being passed on | `AwarenessModel.RelayFraction` | nowhere | gap |
 
@@ -167,8 +167,10 @@ noticed the two were separate problems.
 The second row is left open on purpose. Your own soldier's certainty about an enemy is neither of
 the two cases contract 3 names — it is not your exposure and it is not the enemy's alarm — and
 nobody has said whether a player reads it exactly or as a rung. The seen line already applies it
-as a filter (`Seen` is contacts past `ActsOn`) without quoting it. Quoting it is a design decision
-about entitlement, not a formatting one, and it is raised in entry 022.
+as a filter (`Known` is contacts past `ActsOn`) without quoting it, and quotes the *credence* of
+a marker, which is a different thing: how much a remembered position is trusted, not how sure the
+soldier is that the enemy exists. Quoting the certainty is a design decision about entitlement,
+not a formatting one, and it is raised in entry 023.
 
 Shouting is the odd row. `Tactician.AppraiseWord` scores it, `ReactionAction.Shout` uses it in a
 window, and there is no `Battle` action that lets anybody do it on their own turn — so the
@@ -202,21 +204,22 @@ its remarks, and any interface built for a player rather than for a tester drops
 One of its terms could not be shown to a player even in principle. A hostile's `Prospect` is
 scaled by how much that hostile has already worked out about the soldier it is turning towards —
 its own contact file, which is fine for the AI and is the number contract 3 blurs for us. Noted
-in entry 022 so that nobody later mistakes the readout for a precedent.
+in entry 023 so that nobody later mistakes the readout for a precedent.
 
 ### What is not in the scorer yet, and is missing from both
 
-`core.md` names two omissions the turn planner will hit first. Both are also interface gaps, and
-saying so is the point of the exercise:
+The audit named two omissions the turn planner would hit first. Both were also interface gaps,
+and saying so was the point of the exercise:
 
-- **Firing gives you away and nothing prices it.** `Battle.AnnounceFire` raises every enemy in
-  earshot or facing your way. There is no preview of it, so neither the AI nor the player can see
-  what a shot would cost in attention before taking it.
-- **A move's noise is computed and thrown away.** `Battle.LoudnessOf` is private and runs inside
-  `Move`, after the decision. In a stealth-first game the loudness of a route is one of the two
-  or three things worth knowing about it.
-
-Both are Core queries that do not exist. Entry 012.
+- **Firing gives you away and nothing prices it for the player.** The scorer charges a shot for
+  what it announces (`GivenAway`, shown inside the worth line's spared term), but there is no
+  preview of *who* a shot would wake and by how much, so the player sees the price and not the
+  bill. Still open — entry 012, item 2.
+- **A move's noise was computed and thrown away.** No longer: `Battle.Loudness` is public and is
+  the figure `Move` then charges, `AwarenessTracker.WouldHear` says who would hear it, and the
+  cursor line prints both — the loudness and the names — for any route the active soldier could
+  take. Closed by entry 021. Only the names are printed; the figures behind them are movements in
+  the enemy's contact file, and `BattleHud.NoiseLine` says why that stays a rung.
 
 ---
 
@@ -373,7 +376,7 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0
 - **What the player's own soldiers did during the enemy's turn is invisible.** A hostile move
   opens a window in which our units react automatically, and the sandbox cannot report it:
   `Commander.TakeTurn` returns orders with their appraisals and not what carrying them out did,
-  so the reaction line only ever describes a move a person made. Asked of Core in entry 021,
+  so the reaction line only ever describes a move a person made. Asked of Core in entry 022,
   alongside the seam for placing reactions by hand, since an interface that drives the enemy
   through `Commander` needs both to reach through it.
 

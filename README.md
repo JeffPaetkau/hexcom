@@ -10,8 +10,9 @@ cover, movement, line of sight, detection, initiative, damage, AI — lives ther
 presentation and input layer that queries the core and draws the answer.
 
 That buys three things: the rules are unit-testable headless, balance can be tuned by running
-thousands of AI-vs-AI matches in seconds, and if the art pipeline ever forces a move off Godot,
-only the view layer is lost.
+AI-vs-AI matches with no window open — a three-a-side match on a radius-sixteen map takes about
+two seconds, so a thousand of them is a lunch break rather than an afternoon — and if the art
+pipeline ever forces a move off Godot, only the view layer is lost.
 
 If you ever find yourself adding `using Godot;` to a file under `src/`, stop.
 
@@ -104,13 +105,14 @@ nothing on the second, and the second is the one the AI ranks by.
 The HUD also says who your soldier is taking seriously — every enemy it has eyes on and is past
 the bar of ignoring — with the worst single shot each could put into it from where they stand,
 and, the other way round, which enemies have a line to it and how much of it each can make out.
-The first list is the one the AI weighs every posture against; the second decomposes the
-exposure figure into who it is exposure *to*. The posture line prices the three posture keys and
-says what each would open up; what each would spare you is deliberately withheld until the rules
-stop reading a number the interface may not show (`docs/decisions.md`, entry 011). The cursor
-line places any hex in the active weapon's range bands, whose figures sit beside the weapon on
-the status line, so you can see the long stretch where a rifle still fires and fires worse
-before a shot is refused.
+The first list is the one the AI weighs every posture against, and it includes what your
+soldier merely *remembers* — a contact at a marker, quoted where it is believed to be and with
+the credence it is discounted by; the second decomposes the exposure figure into who it is
+exposure *to*. The posture line prices the three posture keys and scores each the way the AI
+would, term by term: what it spares you, what it opens, what it costs. The cursor line places
+any hex in the active weapon's range bands, whose figures sit beside the weapon on the status
+line, so you can see the long stretch where a rifle still fires and fires worse before a shot is
+refused — and says how loud the walk there would be and who would hear it.
 
 The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
 alarmed they are — coarse on purpose, though the HUD now names the rung at which they will act on

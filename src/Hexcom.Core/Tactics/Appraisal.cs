@@ -42,6 +42,13 @@ public readonly record struct Appraisal(double Harm, double Spared, double Prosp
     public static Appraisal operator +(Appraisal a, Appraisal b)
         => new(a.Harm + b.Harm, a.Spared + b.Spared, a.Prospect + b.Prospect, a.Spent + b.Spent);
 
+    /// <summary>
+    /// Scale every term, for an action whose whole outcome rests on something that is only
+    /// probably true — a shot at where somebody was, counted at the chance they still are.
+    /// </summary>
+    public static Appraisal operator *(Appraisal a, double share)
+        => new(a.Harm * share, a.Spared * share, a.Prospect * share, a.Spent * share);
+
     public override string ToString()
         => $"{Score:+0.00;-0.00} (harm {Harm:0.00}, spared {Spared:0.00}, prospect {Prospect:0.00}, spent {Spent:0.00})";
 }
