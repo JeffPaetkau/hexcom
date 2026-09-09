@@ -40,8 +40,13 @@ The sandbox needs **Godot 4.7 .NET edition** ([godotengine.org](https://godoteng
 Windows). Open `game/project.godot` in the editor and press F5, or from a shell:
 
 ```bash
-dotnet build Hexcom.sln && godot --path game
+dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game
 ```
+
+That long name is the executable's real one. The WinGet package puts its directory on the PATH
+but makes no `godot` alias, so `godot` itself resolves to nothing; the `_console` build is the one
+to script with, because it keeps its output on the terminal. On another platform or another
+install, substitute whatever your Godot binary is called.
 
 Build first — Godot loads the C# assembly from `game/.godot/mono/temp/bin/`, and a scene launched
 before it exists fails with a message about not being able to instantiate the script. If your
@@ -52,16 +57,17 @@ To render a frame and write it to a file rather than watch it — useful in CI, 
 automated session can check its own drawing:
 
 ```bash
-godot --path game -- --shot out.png
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png
 ```
 
 A capture ignores the mouse and the keyboard, so that two runs of it agree. `--hover q,r[,layer]`
 parks the cursor on a node and `--pass N` hands the turn on N times first, which between them put
 the readouts that depend on either back into the picture — the route preview, the cover and
-sight figures, and the shot under the cursor:
+sight figures, and the shot under the cursor. `--ai` hands every hostile turn to the AI during
+those passes, so the picture shows a situation the enemy made rather than the opening deployment:
 
 ```bash
-godot --path game -- --shot out.png --hover 4,0,1 --pass 2
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0 --pass 6 --ai
 ```
 
 The sandbox runs a five-unit skirmish on `DemoMaps.Compound`, drawn flat — two of yours outside
@@ -78,6 +84,8 @@ the compound against three inside it, one of them holding the roof:
 | `B` | arm an ambush, or spring it on whoever is under the cursor |
 | `Z` / `X` | turn on the spot |
 | `Q` / `E` | change layer (the roof is layer 1) |
+| `A` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
+| `H` | hand the hostile side to the AI for every turn, or take it back |
 | `R` | new battle |
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in.
@@ -93,6 +101,17 @@ it puts them down, and what the scorer therefore makes of it. The two are furthe
 look. A beam landing squarely on a full shield reads beautifully on the first line and achieves
 nothing on the second, and the second is the one the AI ranks by.
 
+The HUD also says who your soldier is taking seriously — every enemy it has eyes on and is past
+the bar of ignoring — with the worst single shot each could put into it from where they stand,
+and, the other way round, which enemies have a line to it and how much of it each can make out.
+The first list is the one the AI weighs every posture against; the second decomposes the
+exposure figure into who it is exposure *to*. The posture line prices the three posture keys and
+says what each would open up; what each would spare you is deliberately withheld until the rules
+stop reading a number the interface may not show (`docs/decisions.md`, entry 011). The cursor
+line places any hex in the active weapon's range bands, whose figures sit beside the weapon on
+the status line, so you can see the long stretch where a rifle still fires and fires worse
+before a shot is refused.
+
 The translucent wedge on each unit is the arc it is properly watching. Under each enemy is how
 alarmed they are — coarse on purpose, though the HUD now names the rung at which they will act on
 it, because a rung nobody can place means nothing. Your own soldier's exposure is reported
@@ -102,6 +121,15 @@ to. Faint red circles are where an enemy *believes*
 one of yours to be; they stop moving when you do. A brighter, outlined wedge is an arc being held
 — yellow for an overwatch, pink for an armed ambush — and the figure beside it in the turn order
 is what that unit has banked to answer with.
+
+Press `H` and the other side plays itself. Every turn it takes is written up in the block at the
+bottom of the screen, one line per order with the score broken into the terms it was ranked on —
+what the action does, what it sets up, and what it cost — so a move to a firing position reads
+as the near-worthless walk it is plus the shot at the end of it, and a soldier dropping prone
+reads as what that spares it. That block is the enemy's mind laid open, which a finished game
+would never show; the sandbox shows it because an AI can only be checked by somebody who can see
+what it thought. A soldier that can see nobody does nothing, and the block says so — that is the
+current limit of the AI, not a fault in the display.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry's wedge and watch it stay unaware while the

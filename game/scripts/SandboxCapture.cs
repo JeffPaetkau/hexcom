@@ -20,8 +20,8 @@ namespace Hexcom.Game;
 /// Run it with the arguments Godot passes through after <c>--</c>:
 /// </para>
 /// <code>
-/// godot --path game -- --shot out.png
-/// godot --path game -- --shot out.png --hover 4,2
+/// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png
+/// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 4,2 --pass 3 --ai
 /// </code>
 /// <para>
 /// Not with <c>--headless</c>. The headless driver does not rasterise, so the capture comes back
@@ -36,16 +36,18 @@ public sealed class SandboxCapture
     private const string DelayFlag = "--shot-after";
     private const string HoverFlag = "--hover";
     private const string PassFlag = "--pass";
+    private const string AiFlag = "--ai";
 
     private readonly string _path;
     private int _framesLeft;
 
-    private SandboxCapture(string path, int framesLeft, NodeId? hover, int passes)
+    private SandboxCapture(string path, int framesLeft, NodeId? hover, int passes, bool automatic)
     {
         _path = path;
         _framesLeft = framesLeft;
         Hover = hover;
         Passes = passes;
+        Automatic = automatic;
     }
 
     /// <summary>
@@ -76,6 +78,19 @@ public sealed class SandboxCapture
     /// </remarks>
     public int Passes { get; }
 
+    /// <summary>
+    /// Whether the hostile side takes its own turns, through <c>Commander</c>, during the passes.
+    /// </summary>
+    /// <remarks>
+    /// Without this a pass hands every turn on untouched, whoever holds it, and the picture can
+    /// only ever show the opening deployment from a later soldier's point of view. With it each
+    /// pass is one of <em>ours</em> standing still while the other side does whatever it decides
+    /// to, which is the first way a capture has had of showing a situation rather than a
+    /// starting position — and the only way of putting the enemy's reasoning in a picture, since
+    /// the orders it chose are what the HUD prints. Entry 009 in <c>docs/decisions.md</c>.
+    /// </remarks>
+    public bool Automatic { get; }
+
     /// <summary>The capture this run was asked for, or null for an ordinary interactive run.</summary>
     public static SandboxCapture? Requested()
     {
@@ -91,7 +106,8 @@ public sealed class SandboxCapture
             path,
             int.TryParse(delay, out var frames) ? frames : 4,
             ParseNode(ValueOf(args, HoverFlag)),
-            int.TryParse(passes, out var turns) ? turns : 0);
+            int.TryParse(passes, out var turns) ? turns : 0,
+            args.Contains(AiFlag));
     }
 
     /// <summary>

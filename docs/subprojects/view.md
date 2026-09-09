@@ -1,7 +1,7 @@
 # View — presentation and interface
 
 The Godot layer: drawing what Core answers, and taking input. Currently one flat 2D sandbox that
-drives both sides by hand.
+drives either side by hand, or hands the hostile side to the AI.
 
 Read [../map.md](../map.md) first.
 
@@ -34,75 +34,53 @@ reaching into `src/`.
 
 ---
 
-## The job — watch the AI play, then work the interface fix list
+## The job — a capture that can act
 
-Branch `view/interface-readouts`. Read **The interface audit** below first: it is the list this
-job works from, and every item in it says what to do and what is stopping it.
+Branch `view/scripted-capture`. Read **Seeing it** below first; the job is to extend it.
 
-**Two things come before the list, because without them nothing on it can be checked.**
+A capture can now show a situation the *AI* made — `--ai` hands the hostile side to `Commander`
+during the passes, and the picture that proved `view/interface-readouts` was one where the
+Spotter had crawled along the roof and shot the scout twice. It still cannot show a situation a
+*person* made: nothing in a capture moves one of ours, fires, or changes a stance, so every
+readout that depends on the player having done something — the reaction line most of all — is
+still checkable only with a hand on the keyboard.
 
-- **Make the capture command run as written** — entry 017, with its cause in entry 019. The
-  WinGet package directory is already on the PATH, but the only executables in it are
-  `Godot_v4.7.2-stable_mono_win64.exe` and `Godot_v4.7.2-stable_mono_win64_console.exe`;
-  nothing on this machine is called `godot`. Fix every command in **Seeing it** so a fresh session
-  can paste it and get a picture, whether by naming the executable or by saying what shim to make
-  and where. Prove it with one capture taken from the doc.
-- **Hand the hostile side to `Commander`** — entry 009. `new Commander(battle).TakeTurn()` takes a
-  unit's whole turn and returns its `Order`s, each carrying the appraisal it was chosen on. A key
-  that gives one hostile turn to it, or a mode that gives it every hostile turn, is the first time
-  anybody watches the enemy behave like an enemy — and it is what makes the fix list below
-  checkable against something, because every readout it adds becomes a readout of a quantity the
-  AI is visibly acting on. Show `Worth`, `Opens` and `Score` with their terms separated, never a
-  bare number; 009 says why, and if the HUD ends up printing only the score that is itself a
-  finding. Know that a `Commander` with no contacts stands still and banks its turn, so the demo
-  scenario as it opens will look like nothing is happening. That is correct, it is Core's current
-  brief, and it is not yours to fix.
+Give the capture a small script. Flags in the shape the existing ones already have, applied in
+order before `--pass` and the picture — something like `--move q,r[,layer]` for the active unit,
+`--fire name`, `--stance prone`, `--face NE`, `--end` — is enough. The test of it: a single
+pasted command that walks Orsini across the front of a sentry that is holding an arc and captures
+the reaction line saying what the sentry did about it. Keep it deaf and reproducible, which is
+the whole bargain the harness rests on, and keep `HexSandbox` the only thing that calls `Battle`
+— the script is an argument list, not a second input system.
 
-The audit is finished. Four rows of it were closed while it was being written, because the fix
-was a line of text once the question had been asked; the rest are still open and are ordered here
-by what they cost against what they buy.
+**Three other jobs are waiting on other territories, and whichever gate lifts first jumps the
+queue.** Each has its readout already designed in the audit below; what is missing is the query.
 
-1. **Show what the active soldier can see, and what can see it.** `Tactician.Seen` is the list
-   the AI's whole defensive half is computed over and the interface shows none of it. Nearest
-   thing on screen is the alarm rung floating over each hostile, which is the *other* direction.
-2. **Show what a posture would cost and what it would buy** — `Tactics.AppraisePosture` against
-   `MovementCosts.ChangeStance` and `TurnInPlace`. This is the single largest hole: `Spared` and
-   `Prospect` are two of the four terms in an `Appraisal` and neither has ever appeared on this
-   screen. **Half of it is blocked** — see entry 011 in `../decisions.md`, and do not close that
-   row by quietly rendering a score with an enemy's exact detection folded into it.
-3. **Show the weapon's range bands.** The refusal line says *out of range at 14 m* only once the
-   shot is already impossible. Which band a target sits in is what decides whether to close.
-4. **Show what a move would announce** — its noise, and who would hear it. Blocked: no query
-   exists, for the interface or the AI. Entry 012.
-5. **The attention cone still lies about range.** Entry 006, still gated. The metres-per-hex
-   figure is settled now (entry 007) but the map is not — 007 says the ranges are right and the
-   demo compound is too small, so an honest cone still fills the viewport. Wait for content's
-   larger map rather than drawing a cone against this one.
+- **Placing your own reactions**, when Core lands the seam asked for in entry 004 and answered in
+  entry 021: an open `ReactionWindow` whose offers the HUD can list, appraise and let the player
+  pick from before it resolves.
+- **The spared term on the posture line**, when entry 011 is resolved. The line already prints
+  the other two terms and says which one is missing; it grows a term and loses a caveat.
+- **The attention cone at its true reach**, when content's larger map lands — entry 006, gated
+  on 007's finding that the demo compound is too small for any honest range figure.
 
-**Answer entry 004 while you are in `BattleHud`.** Core asked which shape View wants for letting
-a player place their own reaction between `PlaceRecommended()` and `Resolve()` — an optional
-callback on `Battle.Move`, or `Move` split into commit and resolve. It is the first API in the
-project designed for an interface that does not exist yet, and Core is waiting so as not to
-guess. Append the answer to `../decisions.md`; do not build it, since `Battle` is Core's.
+**Two things watched on `view/interface-readouts` are for Core and are written up in entry 022.**
+Do not re-find them: a stance change is scored on what it spares and never on the shot it
+costs, because postures carry no `Opens` and `Prospect` is nought against a contact already held
+`Engaged`; and a hostile's own `Prospect` term is built from the one number contract 3 blurs,
+which is fine for the AI and makes the orders readout an instrument rather than an entitlement.
 
-**Two passages in this doc are stale and are yours to fix.** *Two territories, one doc* below
-still ends by saying the split is a decision for whoever picks up interface work, and the open
-question about splitting still says the condition is met and raised as 013. Entry 014 answered
-013: one territory, because the paths do not divide. Say so, point at 014, and stop the question
-being re-raised by every reader.
-
-**How to know it worked.** A capture, taken with a command pasted from **Seeing it**, in which the
-hostile side has acted on its own — and every audit row either closed with a readout you can
-point at in that capture, or annotated with what is blocking it and where that is written down.
+**How to know it worked.** A capture, from one pasted command, in which one of ours has acted
+and the reaction line reports what the other side did about it.
 
 ---
 
 ## The interface audit
 
-*Done on `view/interface-audit`. Contract 2 says the view and the AI read one query surface, and
-the build order's rule is sharper: **if the AI needs information the interface cannot show, the
-interface is wrong**. This is that check, run against `Tactician` — the scorer the AI ranks every
-action by.*
+*Done on `view/interface-audit`, and closed against on `view/interface-readouts`. Contract 2 says
+the view and the AI read one query surface, and the build order's rule is sharper: **if the AI
+needs information the interface cannot show, the interface is wrong**. This is that check, run
+against `Tactician` — the scorer the AI ranks every action by.*
 
 The tables below are organised by the four terms of an `Appraisal`, because that is how the AI
 reasons and therefore what the interface has to be able to explain. Verdicts:
@@ -123,31 +101,36 @@ reasons and therefore what the interface has to be able to explain. Verdicts:
 | what it costs this soldier | `ShotPlan.ApCost` | shot line, with the list price when they differ | shown |
 | how much survives the angle | `ShotPlan.GlancingFactor` | shot line | shown |
 | which plates it can reach | `ShotPlan.Aspects` + `Protection` | shot line, share and stock per face | shown |
-| vitality it actually takes off | `Gunnery.Expect().Vitality` | worth line | **closed by this job** |
-| plate worn through | `Expect().PlateStripped` | worth line | **closed by this job** |
-| shield soaked | `Expect().ShieldStripped` | worth line | **closed by this job** |
-| chance it puts them down | `Expect().DownChance` | worth line | **closed by this job** |
-| how much soldier is there to remove | `Target.Stats.Vitality` | map label gives current, never the maximum | gap |
+| vitality it actually takes off | `Gunnery.Expect().Vitality` | worth line | shown |
+| plate worn through | `Expect().PlateStripped` | worth line | shown |
+| shield soaked | `Expect().ShieldStripped` | worth line | shown |
+| chance it puts them down | `Expect().DownChance` | worth line | shown |
+| how much soldier is there to remove | `Target.Stats.Vitality` | map label, current over maximum | shown |
 | distance, cover, exposure | `SightResult` | cursor line, in metres and per cent | shown |
-| where in the weapon's range that falls | `WeaponProfile.OptimalRange` / `MaxRange` | nowhere until the shot is refused | gap |
+| where in the weapon's range that falls | `WeaponProfile.OptimalRange` / `MaxRange` | cursor line names the band and the long-range factor; status line carries the bands | shown |
 | the bonus for having the arc already held | `OverwatchArc.AimBonus` | reserve line | shown |
 
-The four closed rows are one change and it was the audit's clearest single finding. Everything
-the shot line said was true and none of it was what the AI ranks by: `ShotPlan.ExpectedDamage` is
-damage arriving at the plate, and a beam landing squarely on a full shield reads well there and
-achieves nothing. The player was being shown the trap the core doc calls the easiest mistake in
-the codebase, and being left to do the arithmetic that avoids it.
+The four `Expect` rows were the audit's clearest single finding and were closed while it was
+being written. Everything the shot line said was true and none of it was what the AI ranks by:
+`ShotPlan.ExpectedDamage` is damage arriving at the plate, and a beam landing squarely on a full
+shield reads well there and achieves nothing. The player was being shown the trap the core doc
+calls the easiest mistake in the codebase, and being left to do the arithmetic that avoids it.
+
+The maximum-vitality row looked cosmetic and was not. The scorer's removal bonus is priced
+against the *maximum* — a kill shot on a soldier with seven points left scores a whole soldier of
+twenty — so the first time the AI's orders were printed, a shot worth 22.5 sat beside a label
+that said 7, and the arithmetic could not be checked from the screen.
 
 ### Spared — what a posture keeps off you
 
 | The AI weighs | The query | Where the interface shows it | |
 |---|---|---|---|
-| who this soldier is taking seriously | `Tactician.Seen` | nowhere | gap |
-| the worst one shot each could do to you | `PlanThreat` per threat and mode | nowhere | gap |
+| who this soldier is taking seriously | `Tactician.Seen` | seen line, with distance | shown |
+| the worst one shot each could do to you | `PlanThreat` per threat and mode | seen line, worth, mode and hit chance | shown |
 | how likely they are to shoot at all | `Awareness.Of(them, you).Detection` | alarm line, as a rung | coarse — **but see below** |
-| the bar they act from | `Model.Threshold(UtilityModel.ActsOn)` | alarm line, named | **closed by this job** |
-| what a stance or a turn costs | `MovementCosts.ChangeStance` / `TurnInPlace` | nowhere | gap |
-| what the whole trade comes to | `Tactics.AppraisePosture` | nowhere | **blocked** |
+| the bar they act from | `Model.Threshold(UtilityModel.ActsOn)` | alarm line, named | shown |
+| what a stance or a turn costs | `MovementCosts.ChangeStance` / `TurnInPlace` | posture line, for each of the three keys | shown |
+| what the whole trade comes to | `Tactics.AppraisePosture` | posture line — **two of its terms**; the line says which is missing | **blocked** (the spared term) |
 
 **The audit's real find is in this table.** `Tactician.Aimed` reads how much the enemy has
 detected you as a raw certainty, and contract 3 says that number is blurred to a rung on purpose.
@@ -160,13 +143,18 @@ It is worth being clear about which of the two problems matters. The display lea
 would have to invert an aggregate to recover the number. The AI reading it is not small: it is a
 soldier who knows exactly how spotted they are, in a game whose whole subject is not knowing.
 
+What the posture line does meanwhile is print the terms it can — the price, and the prospect, which
+is built entirely from our own side of the ledger — and say in as many words that the spared term
+is withheld and why. Half an appraisal, labelled, beats a whole one with a blurred number folded
+in; the terms are kept apart precisely so that one can be.
+
 ### Prospect — what an action sets up
 
 | The AI weighs | The query | Where the interface shows it | |
 |---|---|---|---|
-| how much attention a place has | `Awareness.AttentionOn(pose, node)` | cursor line, exactly | **closed by this job** |
-| how much is still left to learn about a contact | own `Detection` against `Threshold(Engaged)` | nowhere | gap |
-| the shot a new facing would open | `Tactician.BestShot` from an untaken pose | nowhere | gap |
+| how much attention a place has | `Awareness.AttentionOn(pose, node)` | cursor line, exactly | shown |
+| how much is still left to learn about a contact | own `Detection` against `Threshold(Engaged)` | nowhere | gap — **and a question**, below |
+| the shot a new facing would open | `Tactician.BestShot` from an untaken pose | posture line — it is the *opens* figure, scaled by attention and by what is left to learn | shown |
 | who would hear you call it in | `Awareness.Earshot` | nowhere — and there is no way to shout | gap, and a Core gap with it |
 | how much survives being passed on | `AwarenessModel.RelayFraction` | nowhere | gap |
 
@@ -175,6 +163,12 @@ as a yes or a no; the model does not — a place is attended to fully, at the co
 barely, and the gap between the last two is the entire reason flanking works. The cone's *range*
 is still a lie and is still blocked by entry 006; its *resolution* never was, and nobody had
 noticed the two were separate problems.
+
+The second row is left open on purpose. Your own soldier's certainty about an enemy is neither of
+the two cases contract 3 names — it is not your exposure and it is not the enemy's alarm — and
+nobody has said whether a player reads it exactly or as a rung. The seen line already applies it
+as a filter (`Seen` is contacts past `ActsOn`) without quoting it. Quoting it is a design decision
+about entitlement, not a formatting one, and it is raised in entry 022.
 
 Shouting is the odd row. `Tactician.AppraiseWord` scores it, `ReactionAction.Shout` uses it in a
 window, and there is no `Battle` action that lets anybody do it on their own turn — so the
@@ -193,7 +187,22 @@ interface cannot offer it and `Commander` cannot generate it. Entry 012.
 other than contract 3. They are not facts about the world; they are what one side's judgement
 happens to prefer, and showing a player the exchange rates their opponent scores by is showing
 them the opponent's mind rather than the battlefield. The scores those dials produce are a
-different matter and belong on screen, which is what the worth line now does.
+different matter and belong on screen, which is what the worth line does.
+
+### The orders readout is the opponent's mind, and is shown anyway
+
+The block at the bottom of the screen prints every turn `Commander` has taken since the player
+last acted, one line per `Order`, with `Worth` and `Opens` each broken into their terms and the
+`Score` beside them. That is exactly what entry 009 asked for and exactly what the paragraph
+above says a shipped interface must not do. Both are right: the sandbox exists to check the AI,
+an AI can only be checked by somebody who can see what it thought, and the readout is an
+instrument in the same sense the seed on the command line is. `BattleHud.TurnLines` says so in
+its remarks, and any interface built for a player rather than for a tester drops it.
+
+One of its terms could not be shown to a player even in principle. A hostile's `Prospect` is
+scaled by how much that hostile has already worked out about the soldier it is turning towards —
+its own contact file, which is fine for the AI and is the number contract 3 blurs for us. Noted
+in entry 022 so that nobody later mistakes the readout for a precedent.
 
 ### What is not in the scorer yet, and is missing from both
 
@@ -211,7 +220,7 @@ Both are Core queries that do not exist. Entry 012.
 
 ---
 
-## Two territories, one doc — now with a boundary
+## Two territories, one doc — and one territory, settled
 
 Presentation and interface are different problems:
 
@@ -227,12 +236,12 @@ They shared this doc because they shared a single 705-line file. They no longer 
 
 | | |
 |---|---|
-| `HexSandbox.cs` | the Godot node — lifecycle, the demo scenario, input, and assembling a frame |
+| `HexSandbox.cs` | the Godot node — lifecycle, the demo scenario, input, handing turns to the AI, and assembling a frame |
 | `SandboxScale.cs` | metres against pixels, and the only place that knows the difference |
 | `SandboxGeometry.cs` | where things sit on the canvas — centroids, region polygons, hit tests |
 | `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves |
 | `BattleView.cs` | **presentation** — ground, walls, links, path, beliefs, soldiers |
-| `BattleHud.cs` | **interface** — turn order, exposure, the shot under the cursor, reactions |
+| `BattleHud.cs` | **interface** — turn order, the soldier's situation, the shot under the cursor, reactions, the AI's orders |
 | `SandboxPalette.cs` | colours, shared because a side is one colour in both halves |
 | `SandboxCapture.cs` | render some frames, write a PNG, quit |
 
@@ -241,8 +250,12 @@ partials would have kept every private field reachable from both, which is a pat
 no boundary behind it. They each take a `SandboxFrame` and a `CanvasItem` and can reach nothing
 else. Two sessions can now work one on each.
 
-This doc still covers both, because one of them has no brief yet. Splitting the doc is a decision
-for whoever picks up interface work in earnest.
+**Whether that boundary makes two territories was asked in entry 013 and answered in entry 014:
+it does not, and the question is settled.** A territory is defined by paths, and the paths do not
+divide — the entry point, the input handling, the scenario, the scale contract and the capture
+harness are over half of `game/` and belong to both halves and to neither. One territory whose
+brief happens to be interface work is an accurate description rather than a compromise. The
+greybox (build order 06) rewrites `game/` substantially and is the moment to look again.
 
 ---
 
@@ -252,6 +265,9 @@ for whoever picks up interface work in earnest.
   `using Side = Hexcom.Core.Units.Side;`.
 - **The sandbox needs Godot 4.7 .NET edition**, not the plain build. If your Godot is a different
   4.x, change the `Godot.NET.Sdk` version in `game/Hexcom.Game.csproj` to match.
+- **Nothing on this machine is called `godot`.** See **Seeing it**. A session that types the
+  short name, gets *command not found* and concludes the engine is missing has been misled by a
+  shell, not by the install.
 - **`.uid` files are tracked, and Godot writes them for you.** Adding a script under
   `game/scripts/` leaves the tree dirty the first time anyone opens the project, because Godot
   generates a `.uid` beside each one. They belong in the repository — commit them with the script
@@ -273,12 +289,22 @@ for whoever picks up interface work in earnest.
   **Diff the capture against the previous commit whenever you move drawing code.** It cuts the
   other way too: the HUD rework on `view/interface-audit` changed 78,110 pixels in exactly two
   horizontal bands — rows 14–112 and 862–891, the two panels — and every row of map between them
-  came out byte-identical. That is how a change to the interface half proves it left the
-  presentation half alone.
-- **The readouts are drawn over the map, not beside it.** Both HUD blocks sit on a panel for that
-  reason, and anything added to them has to assume there is a tile-cost label underneath —
+  came out byte-identical. `view/interface-readouts` was held to the same test before it touched
+  a map label: rows 14–143 and 862–891, nothing between. That is how a change to the interface
+  half proves it left the presentation half alone.
+- **The readouts are drawn over the map, not beside it.** All three HUD blocks sit on a panel for
+  that reason, and anything added to them has to assume there is a tile-cost label underneath —
   because there is. The help line and the top row of the map were mutually illegible in every
-  capture taken before the panels existed.
+  capture taken before the panels existed. The top block is the active soldier's situation and
+  the bottom block is what happened while it was not your go; they are separate so that a busy
+  enemy round does not push the situation down onto the roof.
+- **The bottom block is *since you last acted*, not a log.** It is replaced whenever the enemy
+  gets a go after something you did, so if two of yours are adjacent in the initiative order, the
+  second one's pass leaves the block untouched — nothing hostile happened in between. Read it as
+  "what they did about that", never as a history.
+- **`Battle` does not stop when a side is gone.** The survivors keep taking turns, so anything
+  that loops on the hostile side being up has to check `IsDecided` or it never returns.
+  `HexSandbox.Settle` does.
 - **Drawing scale and world scale are different variables and must stay that way.** `HexSize` is
   pixels and is exported; `SandboxScale.MetresPerHexSize` is metres and is a constant. That
   asymmetry is the contract, not an oversight.
@@ -289,17 +315,21 @@ for whoever picks up interface work in earnest.
 
 Godot 4.7.2 .NET is installed on this machine and the scene wiring runs — that is no longer an
 open question. `winget install GodotEngine.GodotEngine.Mono` puts it under
-`%LOCALAPPDATA%\Microsoft\WinGet\Packages`.
+`%LOCALAPPDATA%\Microsoft\WinGet\Packages`, adds that directory to the PATH, and **makes no
+`godot` alias** — the only executables there are `Godot_v4.7.2-stable_mono_win64.exe` and its
+`_console` twin (entries 017 and 019). So the commands below name the executable in full, and
+they run as pasted from either `bash` or PowerShell. Use the `_console` one when scripting: it
+keeps stdout on the terminal, which is where the capture reports where it wrote to.
 
 ```bash
-dotnet build Hexcom.sln && godot --path game
+dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game
 ```
 
 To capture the sandbox without anyone at the keyboard — which is how a session with no human
 watching can check its own work:
 
 ```bash
-godot --path game -- --shot out.png
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png
 ```
 
 `--shot-after N` waits N frames first, default 4; the first frame is drawn before the font atlas
@@ -309,19 +339,27 @@ way to check that the scene loads and `_Ready` survives, which catches most wiri
 
 **A capture is deaf, so anything it is to show has to be an argument.** The run ignores the mouse
 and the keyboard on purpose — the window opens under whatever the pointer was already doing, and
-a capture that read it would not reproduce. Two flags put back what that took away:
+a capture that read it would not reproduce. Three flags put back what that took away:
 
 ```bash
-godot --path game -- --shot out.png --hover 4,0,1 --pass 2
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0 --pass 6 --ai
 ```
 
 - `--hover q,r[,layer[,region]]` parks the cursor on a node, axial, the way the maps are
-  authored. Everything cursor-driven — the path preview, the sight readout, the shot under the
-  cursor and what it is worth — was invisible to every capture ever taken before this existed.
+  authored. Everything cursor-driven — the path preview, the sight readout, the range band, the
+  shot under the cursor and what it is worth — was invisible to every capture ever taken before
+  this existed.
 - `--pass N` hands the turn on N times before the picture. Whose turn it is decides most of the
   HUD, and the demo's first soldier carries a **power blade**, so no capture of the opening frame
-  can show a shot readout at all. One pass brings up somebody with a rifle. Nobody acts during
-  the passes — this reaches later soldiers, not later situations.
+  can show a rifle's readout. Without `--ai`, nobody acts during the passes — this reaches later
+  soldiers, not later situations.
+- `--ai` hands every hostile turn to `Commander` during the passes, so each pass is one of ours
+  standing still while the other side does what it decides to. This is the first way a capture
+  has had of showing a situation rather than a starting position, and it is what puts the orders
+  readout in a picture. The command above is the one that proved this branch: by the sixth pass
+  the Spotter has crawled along the roof, put an aimed shot into the scout at 95 % and gone prone,
+  and the bottom block says so with every term. Interactively the same thing is `H`, and `A`
+  gives one turn — anybody's — to the AI.
 
 ---
 
@@ -332,12 +370,12 @@ godot --path game -- --shot out.png --hover 4,0,1 --pass 2
 - **Whether the demo scenario belongs in `game/`.** `HexSandbox.NewBattle` hard-codes five
   deployments. That is content wearing a view extension, the same way `DemoMaps.cs` is content
   wearing a `.cs` one, and it should probably move when there is a scenario format to move it to.
-- **Splitting this doc, and the condition for it is now met.** `map.md` says interface earns its
-  own doc when it has a brief of its own. It has one: the audit above and the fix list at the
-  top are both entirely interface, and presentation has had no brief at all since the scale
-  split. The reason it has not been done here is that `map.md` names `subprojects/view.md` as
-  View's doc and `map.md` belongs to master, so the split is two files changing in two
-  territories. Raised as entry 013 in `../decisions.md`; do not do it unilaterally.
+- **What the player's own soldiers did during the enemy's turn is invisible.** A hostile move
+  opens a window in which our units react automatically, and the sandbox cannot report it:
+  `Commander.TakeTurn` returns orders with their appraisals and not what carrying them out did,
+  so the reaction line only ever describes a move a person made. Asked of Core in entry 021,
+  alongside the seam for placing reactions by hand, since an interface that drives the enemy
+  through `Commander` needs both to reach through it.
 
 ## Recent work
 

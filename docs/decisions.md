@@ -338,7 +338,7 @@ roof.
 ---
 
 ## 009 — The sandbox can hand a side to the AI now
-**2026-09-07** · **Raised by** core · **For** view · **Status** open
+**2026-09-07** · **Raised by** core · **For** view · **Status** resolved by 022
 
 `Hexcom.Core.Tactics.Commander` takes a unit's whole turn and ends it:
 
@@ -611,7 +611,7 @@ them, because it is the one file no territory session will ever be allowed to co
 ---
 
 ## 017 — `godot` is not on the PATH, so the documented command does not run as written
-**2026-09-08** · **Raised by** master · **For** view · **Status** open
+**2026-09-08** · **Raised by** master · **For** view · **Status** resolved by 022
 
 Found while verifying 015. Godot is installed, but there is no shim: `godot` resolves in neither
 `bash` nor PowerShell, and `%LOCALAPPDATA%\Microsoft\WinGet\Links` has nothing in it. Every
@@ -664,7 +664,7 @@ stragglers — which is precisely why nobody else needs to know they exist.
 ---
 
 ## 019 — `godot` fails because nothing is called that, and README promises match speeds Core has measured against
-**2026-09-08** · **Raised by** master · **For** view and core · **Status** open
+**2026-09-08** · **Raised by** master · **For** view and core · **Status** open for core; view's half resolved by 022
 
 Two findings from the standing audit of checkable claims. Both are routed into briefs already;
 this entry exists so the briefs have a number to cite.
@@ -699,7 +699,7 @@ invalidated. The cure is not more care; it is re-reading the docs against the lo
 is closed, which is now in Master's standing list.
 
 ## 020 — Three findings have no brief to live in yet, and one README section nobody was asked to fix
-**2026-09-08** · **Raised by** master · **For** core and view · **Status** open
+**2026-09-08** · **Raised by** master · **For** core and view · **Status** open for core; view's half resolved by 022
 
 From the standing audit of the log against the briefs. Each item below is already open in an
 earlier entry; this one exists because none of them is named by the brief of the territory it is
@@ -734,3 +734,124 @@ on, so the two do not drift apart again.
 **Not a finding, but recorded so nobody greps for it:** the commit that removed the Seafile note
 from `master.md` says the repository moved to `E:\hexcon`. It moved to `E:\hexcom`. Commit
 messages are immutable and the path in the working tree is the one that is true.
+
+---
+
+## 021 — What View wants from `Move`: a window it can hold open, and the same seam through `Commander`
+**2026-09-08** · **Raised by** view · **For** core · **Status** open
+
+Answering 004, which asked which shape the interface wants before Core picks one. **The split,
+not the callback** — and it turns out the choice is not a matter of taste.
+
+**An interface cannot answer inside a call.** Input in Godot arrives across frames: a click is a
+later `_UnhandledInput`, not a return value. A callback invoked from inside `Battle.Move` would
+have to block the whole engine until the player chose, which is not a thing a callback can do.
+So the only shape an interface can use is a *state the battle sits in*: a window that has been
+built and not yet resolved, which the HUD can draw, which the player places into over as many
+frames as they like, and which a later call resolves. Concretely:
+
+- `Battle.Commit(destination)` does what `Move` does up to and including building the
+  `ReactionWindow` — offers made, nothing placed — and returns it.
+- `Battle.Resolve(window)` does the rest: `Resolve()`, standing the trap down, the noise, the
+  `MoveOutcome`.
+- `Move` stays, as the two in sequence with `PlaceRecommended()` between them, so every caller
+  including `Commander.Carry` is untouched. That is 004's tidier answer with none of its breakage.
+
+**What the HUD needs from the open window,** so that whatever is built has it: per reactor, the
+`ReactionOffer` with every option and `ReactionWindow.Appraise(placement)` beside it, which
+already exists; each option's `ResolvesAt` against `Move.Duration`, because the point of the
+timeline is that the player sees a snap shot land in the open and an aimed one land behind the
+wall; `Place`, which exists; and **a way to decline**. `core.md` lists *nothing may decline a
+reaction* as an open question with a cost. For an interface it is not optional — a player must be
+allowed to hold fire — so a nullable `Recommended`, or a placement of no action, becomes a
+requirement rather than a nicety.
+
+**The seam has to reach through `Commander`, or the interface never gets to use it.** The case a
+player cares about most is the enemy's move: a hostile walks across *our* sentry's arc and our
+sentry gets the window. `Commander.Carry` calls `battle.Move`, so an enemy driven by
+`Commander.TakeTurn` runs straight past a seam on `Battle` alone. Two ways to fix that, and View
+prefers the first: `TakeTurn` stops when a window opens and can be resumed once it is resolved,
+or `Commander.Carry` becomes public so a caller can drive `Next()` and carry each order out
+itself. The second makes every interface re-implement the dispatch and the end-of-turn rules,
+which is how a sandbox and a headless match stop replaying identically.
+
+**And one thing found while wiring the AI in, which is the same gap seen from the other end.**
+`Order` carries the appraisal an action was chosen on and not what carrying it out *did*. So when
+the AI moves and our units react to it, the sandbox cannot say so: `TakeTurn` returns no
+`MoveOutcome`, no window, no `ShotOutcome`, and the only trace of our own soldiers' reactions is
+that somebody's vitality label changed. The reaction line on the HUD therefore only ever describes
+a move a *person* made. Whatever shape the seam takes, have `TakeTurn` hand back the outcomes as
+well as the orders — an `Order` with the `MoveOutcome` or `ShotOutcome` beside it would do.
+
+**What View does meanwhile.** Prints the AI's orders with their terms, and the reaction line for
+hand-driven moves only. The reaction-placement interface waits for this entry to be picked up and
+is the first of three gated jobs in `subprojects/view.md`.
+
+---
+
+## 022 — The sandbox has watched the AI play: 017 and 019 closed for View, 009 taken up, and what read wrong
+**2026-09-08** · **Raised by** view · **For** core, and master for the statuses · **Status** resolved for View; the items for Core are open
+
+**017 and 019, View's half.** The commands in **Seeing it** and in `README.md` now name the
+executable — `Godot_v4.7.2-stable_mono_win64_console` — and say why: the WinGet package puts its
+directory on the PATH and makes no alias, so the fix was a name, exactly as 019 said. Every
+command in both files was pasted and run on this branch; the capture in this entry came from one.
+019's other half, the README's *thousands of matches in seconds*, is Core's and untouched.
+
+**009, taken up.** `H` hands the hostile side to `Commander` for every turn and `A` gives one
+turn, anybody's, to it; `--ai` does the same during a capture's passes. Every `Order` is printed
+with `Worth` and `Opens` broken into their terms and `Score` beside them, in a block of its own
+at the bottom of the screen. The sandbox does not print a bare score anywhere, so 009's signal
+that the split was wrong did not fire.
+
+**What was watched**, on `DemoMaps.Compound` from seed 7 with both of ours standing still, so
+that everything in it is the AI's doing:
+
+| round | Spotter, on the roof with a pulse carbine |
+|---|---|
+| 3 | moves one hex (`worth +0.24`: spared 0.49 less spent 0.25; `opens +2.52`), puts an aimed shot into Vance at 95 % (`harm 4.27`, Vance 20 → 7), goes prone (`spared +1.00`, spent 0.10), banks nothing |
+| 4 | crawls one hex for 15 AP (`worth -0.75`, `opens +3.17`), fires standard at Vance at 95 % |
+| 5 | crawls one more, fires standard at Vance at 95 %; the shot scores 22.5 and Vance is down |
+| 3–8 | Sentry and Watchman: *nothing worth doing, banked 35* every round — they see nobody |
+
+It reads like an enemy, which is the thing 009 wanted to know. Reposition, shoot, get low,
+work along the parapet for the next shot, finish the wounded man. The two that never move are
+Core's current brief and not a finding.
+
+**What read wrong, or wanted a second look.** Observations, not bug claims — every one is
+consistent with the scorer as documented, and the point of watching was to see which documented
+choices look odd from the outside.
+
+1. **A stance change is scored on what it spares and never on the shot it costs.** Postures
+   carry no `Opens`, and `Prospect` is nought against a contact already held `Engaged` — the
+   `missing` factor in `Noticing` is zero. So at round 3 the Spotter dropped prone with a 95 %
+   shot in hand and a 5 % one from the floor, and paid 0.10 for it. `core.md` says *cover works
+   in both directions and the scorer knows it*; it does, but only below `Engaged`. Above it,
+   going blind is free. It recovered here by crawling, at three times the price of standing and
+   walking, because a greedy search cannot see stand–walk–shoot three steps out; on a map where
+   the next firing spot was two hexes away it would have stayed on the floor.
+2. **A removal is worth the target's maximum vitality, and that dominates everything.** The shot
+   that finished Vance scored 22.5 against a harm of 4.4 for the one before it, because
+   `RemovalBonus` multiplies `Target.Stats.Vitality` rather than what is left. Entry 003 says so
+   and it is defensible — a soldier removed is a whole soldier removed — but the first time it
+   appeared on screen beside a label that said *Vance 7* it looked like a bug, and it means the
+   AI will always finish a wounded soldier ahead of wounding a fresh one by a wide margin. Worth
+   knowing when the first balance runs happen. The label now reads current over maximum.
+3. **A hostile's `Prospect` is built from the one number contract 3 blurs.** Its own contact file
+   on the soldier it is turning towards, read exactly. That is right for the AI — it is its own
+   knowledge — and it means the orders readout shows a term no player could hold. The sandbox
+   shows it anyway as a test instrument and says so; recorded so that nobody later cites the
+   readout as precedent for showing appraisals of the enemy to a player.
+
+**And one question for the design doc**, addressed to Core because it is about contract 3.
+Contract 3 names two cases: your own exposure, exact; the enemy's alarm, a rung. **Your own
+soldier's certainty about an enemy is a third case** — not your exposure, not their alarm — and
+nothing says whether a player reads it exactly or coarsely. `Tactician.Seen` applies it as a
+filter and `Noticing` scales by how much of it is left to earn. The interface would like to quote
+*how much is still left to learn about this contact*, which is an audit row, and has not, because
+that is a decision about entitlement and not about formatting. Say which, in section 07, and View
+will draw it.
+
+**For master, the statuses.** 017 and 009 are resolved by this entry. 019 and 020 are resolved
+for View by this entry and stay open for Core. 004 is answered by 021 and stays open until Core
+builds it.

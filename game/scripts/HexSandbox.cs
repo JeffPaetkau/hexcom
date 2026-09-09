@@ -7,6 +7,7 @@ using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
+using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 using Side = Hexcom.Core.Units.Side; // Godot has a Side enum of its own
@@ -63,6 +64,20 @@ public partial class HexSandbox : Node2D
     /// <summary>What the last committed move got shot at with, if anything. Debug readout only.</summary>
     private string _lastWindow = "";
 
+    /// <summary>
+    /// Whether the hostile side is being driven by <see cref="Commander"/> rather than by hand.
+    /// </summary>
+    /// <remarks>
+    /// Off by default, because the sandbox exists to try things on both sides. Switching it on
+    /// is the first time anybody watches the enemy behave like an enemy — entry 009 in
+    /// <c>docs/decisions.md</c> — and what makes every readout in the HUD a readout of something
+    /// the other side is visibly acting on rather than a figure with nothing to check it against.
+    /// </remarks>
+    private bool _auto;
+
+    /// <summary>The turns the AI has taken since a person last did anything. Newest last.</summary>
+    private readonly List<TakenTurn> _turns = [];
+
     public override void _Ready()
     {
         var font = ThemeDB.FallbackFont;
@@ -108,15 +123,66 @@ public partial class HexSandbox : Node2D
 
         _battle.Start();
 
-        // A capture takes its cursor and its turn from the command line rather than from the
-        // keyboard, which is the only way anything cursor-driven or anything belonging to a
-        // soldier other than the first gets into a picture at all. See SandboxCapture.
-        for (var i = 0; i < (_capture?.Passes ?? 0) && _battle.IsRunning; i++) _battle.EndTurn();
+        // A capture takes its cursor, its turn and whether the enemy plays itself from the
+        // command line rather than from the keyboard, which is the only way anything
+        // cursor-driven, anything belonging to a later soldier, or anything the AI decided gets
+        // into a picture at all. See SandboxCapture.
+        _auto = _capture?.Automatic ?? false;
+        _turns.Clear();
+        Settle();
+        for (var i = 0; i < (_capture?.Passes ?? 0) && _battle.IsRunning; i++)
+        {
+            _battle.EndTurn();
+            Settle();
+        }
 
         _layer = _battle.Active?.Position.Layer ?? 0;
         _lastWindow = "";
         _hover = _capture?.Hover;
 
+        Recalculate();
+    }
+
+    /// <summary>
+    /// Give every hostile turn that is up to the AI, if the hostile side is on automatic, and
+    /// keep what it decided for the HUD.
+    /// </summary>
+    /// <remarks>
+    /// The record is replaced rather than appended to, so what is on screen is always what the
+    /// other side did <em>since you last acted</em> — several turns of it when the initiative
+    /// order puts two or three of theirs together, which is exactly when a reader most needs to
+    /// know which of them did what. Nothing is kept from before, because a readout that scrolls
+    /// is a log, and the HUD is not one.
+    /// <para>
+    /// The battle does not stop when one side is gone; the survivors keep taking turns. So this
+    /// has to, or a side on automatic with nobody left to fight would take turns forever.
+    /// </para>
+    /// </remarks>
+    private void Settle(bool keepRecord = false)
+    {
+        if (!_auto || _battle.Active is not { Side: Side.Hostile }) return;
+
+        if (!keepRecord) _turns.Clear();
+        while (_auto && !_battle.IsDecided && _battle.Active is { Side: Side.Hostile } unit)
+            TakeTurnWithAi(unit);
+    }
+
+    /// <summary>Let <see cref="Commander"/> take the active unit's whole turn, and remember why.</summary>
+    private void TakeTurnWithAi(Unit unit)
+    {
+        var orders = new Commander(_battle).TakeTurn();
+        _turns.Add(new TakenTurn(unit, orders, unit.Reserve));
+    }
+
+    /// <summary>
+    /// What follows anything a person did: the other side gets its go if it is on automatic,
+    /// and the screen follows whoever is up next.
+    /// </summary>
+    private void AfterAction(bool keepRecord = false)
+    {
+        var before = _battle.Active;
+        Settle(keepRecord);
+        if (_battle.Active is { } next && next != before) _layer = next.Position.Layer;
         Recalculate();
     }
 
@@ -149,7 +215,7 @@ public partial class HexSandbox : Node2D
 
     /// <summary>The moment as the drawing sees it. Assembled once, read by both halves.</summary>
     private SandboxFrame Frame()
-        => new(_battle, _layer, _hover, _reach, _sight, _lastWindow);
+        => new(_battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto);
 
     // ---- input -----------------------------------------------------------------
 
@@ -171,7 +237,7 @@ public partial class HexSandbox : Node2D
 
                     // A reaction can drop the mover part way, which hands the turn straight on.
                     if (_battle.Active is { } next && next != mover) _layer = next.Position.Layer;
-                    Recalculate();
+                    AfterAction();
                 }
                 break;
 
@@ -179,7 +245,7 @@ public partial class HexSandbox : Node2D
                 if (HoveredUnit() is { } quarry && _battle.Active is not null)
                 {
                     _battle.Fire(quarry);
-                    Recalculate();
+                    AfterAction();
                 }
                 break;
 
@@ -198,8 +264,26 @@ public partial class HexSandbox : Node2D
                 {
                     _battle.EndTurn();
                     if (_battle.Active is { } next) _layer = next.Position.Layer;
-                    Recalculate();
+                    AfterAction();
                 }
+                break;
+
+            case Key.A:
+                // Whoever is up, theirs or ours: "what would you do here" is a question a player
+                // should be able to ask of their own soldier, and the answer is the same search
+                // the enemy runs.
+                if (_battle.Active is { } soldier)
+                {
+                    _turns.Clear();
+                    TakeTurnWithAi(soldier);
+                    if (_battle.Active is { } next) _layer = next.Position.Layer;
+                    AfterAction(keepRecord: true);
+                }
+                break;
+
+            case Key.H:
+                _auto = !_auto;
+                AfterAction();
                 break;
 
             case Key.C:

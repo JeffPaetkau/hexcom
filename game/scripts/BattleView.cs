@@ -128,11 +128,15 @@ public sealed class BattleView(CanvasItem canvas, SandboxScale scale, SandboxGeo
             if (unit == frame.Battle.Active)
                 _canvas.DrawArc(at, radius + 6f, 0, Mathf.Tau, 32, SandboxPalette.TextBright, 2f, true);
 
+            // Current over maximum, because the scorer's removal bonus is priced against the
+            // maximum: a kill shot on a soldier with seven points left is worth a whole soldier
+            // of twenty, and a label that only ever said seven left that arithmetic unreadable.
             DrawCentredText(
                 centre + new CoreVec2(0, _scale.HexRadiiToPixels(0.42f)),
-                $"{unit.Name} {unit.Vitality}",
+                $"{unit.Name} {unit.Vitality}/{unit.Stats.Vitality}",
                 11,
-                hue);
+                hue,
+                widthRadii: 3f);   // "Watchman 20/20" is wider than a hex
 
             // What the other side has worked out. Coarse on purpose — a rung on a ladder, never
             // a number. Our own exposure is the figure we get to read exactly, in the HUD.
@@ -286,9 +290,15 @@ public sealed class BattleView(CanvasItem canvas, SandboxScale scale, SandboxGeo
                 SandboxPalette.PathColor);
     }
 
-    private void DrawCentredText(CoreVec2 canvasPosition, string text, int size, Color color)
+    /// <param name="widthRadii">
+    /// How wide a box the text is centred in, in hex radii. Two is a hex, and Godot clips at the
+    /// box edge rather than spilling over it, so anything longer than a tile-cost label asks for
+    /// more.
+    /// </param>
+    private void DrawCentredText(CoreVec2 canvasPosition, string text, int size, Color color, float widthRadii = 2f)
     {
-        var at = SandboxScale.ToScreen(canvasPosition) + new Vector2(-_scale.HexPixels, size * 0.36f);
-        _canvas.DrawString(_font, at, text, HorizontalAlignment.Center, _scale.HexPixels * 2, size, color);
+        var width = _scale.HexRadiiToPixels(widthRadii);
+        var at = SandboxScale.ToScreen(canvasPosition) + new Vector2(-width / 2f, size * 0.36f);
+        _canvas.DrawString(_font, at, text, HorizontalAlignment.Center, width, size, color);
     }
 }

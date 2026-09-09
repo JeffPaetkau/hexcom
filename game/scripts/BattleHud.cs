@@ -3,6 +3,7 @@ using System.Linq;
 using Godot;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
+using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
@@ -43,6 +44,7 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         DrawOrderStrip(frame, viewport);
         DrawLines(frame);
+        DrawHappenings(frame, viewport);
         DrawLegend(viewport);
     }
 
@@ -83,28 +85,61 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         var battle = frame.Battle;
         var active = battle.Active;
 
-        var lines = new[]
+        var hostiles = frame.HostilesAutomatic ? "hostiles: AI" : "hostiles: by hand";
+
+        var lines = new List<string>
         {
             active is null
-                ? $"round {battle.Round}    nobody left to act"
+                ? $"round {battle.Round}    nobody left to act    {hostiles}"
                 : $"round {battle.Round}    {active.Name} ({active.Side})    "
                   + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
-                  + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}",
+                  + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}    "
+                  + $"{WeaponLine(active)}    {hostiles}",
             active is null ? "" : AlarmLine(frame, active),
+            active is null ? "" : SeenLine(frame, active),
             active is null ? "" : ReserveLine(frame, active),
+            active is null ? "" : PostureLine(frame, active),
             frame.Hover is { } h
                 ? $"cursor {h}    {(frame.Reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    "
                   + $"{SightLine(frame, h)}{AttentionLine(frame, h)}"
                 : "cursor —",
             ShotLine(frame),
             WorthLine(frame),
-            frame.LastWindow,
-        }.Where(line => line.Length > 0).ToArray();
+        };
+        lines.RemoveAll(line => line.Length == 0);
 
         var top = Origin + new Vector2(18, 30);
         Panel(top, lines);
 
-        for (var i = 0; i < lines.Length; i++)
+        for (var i = 0; i < lines.Count; i++)
+            _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), lines[i],
+                HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextBright);
+    }
+
+    /// <summary>
+    /// What happened while it was not your go: the last reaction window, and every turn the AI
+    /// has taken since you last did anything.
+    /// </summary>
+    /// <remarks>
+    /// A block of its own, along the bottom edge above the legend, rather than more lines on the
+    /// block at the top. The top block is the active soldier's situation and grows with what is
+    /// under the cursor; this one is a record of other people's turns and grows with how many
+    /// of them there were. Stacked together they reached a third of the way down the screen and
+    /// sat squarely on the roof, which is where the demo's most interesting soldier stands. The
+    /// bottom rows of the map are open ground with cost labels on them, and cost labels are the
+    /// cheapest thing on the screen to cover.
+    /// </remarks>
+    private void DrawHappenings(SandboxFrame frame, Vector2 viewport)
+    {
+        var lines = new List<string> { frame.LastWindow };
+        lines.AddRange(TurnLines(frame));
+        lines.RemoveAll(line => line.Length == 0);
+        if (lines.Count == 0) return;
+
+        var top = Origin + new Vector2(18, viewport.Y - 22 - LineHeight - 14 - (lines.Count - 1) * LineHeight);
+        Panel(top, lines);
+
+        for (var i = 0; i < lines.Count; i++)
             _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), lines[i],
                 HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextBright);
     }
@@ -122,7 +157,8 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         const string keys =
             "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
-            + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    R: new battle";
+            + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    A: AI takes this turn    "
+            + "H: hostiles to AI    R: new battle";
 
         var at = Origin + new Vector2(18, viewport.Y - 22);
         Panel(at, [keys]);
@@ -284,6 +320,185 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                + $"(harm {worth.Harm:0.00} less spent {worth.Spent:0.00})";
     }
 
+    /// <summary>
+    /// Who this soldier is taking seriously and what each of them could do about it, and who has
+    /// eyes on this soldier right now.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The first half is <see cref="Tactician.Seen"/>, which is the list the whole defensive
+    /// half of the scorer is computed over — every posture the AI weighs is weighed against
+    /// exactly these people — and until this line nothing on screen showed it. Beside each is the
+    /// worst single shot they could take at you from where they stand, which is what
+    /// <c>Tactician.Incoming</c> starts from. Both are facts about our own soldier: our own
+    /// contact file, their weapon, our exposure, our plate.
+    /// </para>
+    /// <para>
+    /// The second half is the other direction, and it is the line contract 3 in
+    /// <c>docs/map.md</c> would seem to forbid and does not. Whether an enemy has a line to you is
+    /// geometry, and it is already on screen as the exposure figure on the line above — that
+    /// figure <em>is</em> the worst of these. Naming which enemy the exposure is to, and how much
+    /// of you each can make out, decomposes a number the player already has. What it does not say
+    /// is whether any of them has <em>noticed</em>; that stays a rung.
+    /// </para>
+    /// </remarks>
+    private static string SeenLine(SandboxFrame frame, Unit active)
+    {
+        var battle = frame.Battle;
+
+        var threats = battle.Tactics.Seen(active).Select(threat =>
+        {
+            var range = battle.Look(active, threat.Unit).Distance;
+            return WorstShotAt(battle, threat, active) is { } worst
+                ? $"{threat.Unit.Name} {range:0.0} m (worst shot {battle.Tactics.Worth(worst):0.0}: "
+                  + $"{worst.Mode.Name} {worst.Weapon.Name.ToLowerInvariant()} at {worst.HitChance:P0})"
+                : $"{threat.Unit.Name} {range:0.0} m (no shot on you)";
+        }).ToList();
+
+        var watchers = battle.Enemies(active)
+            .Select(enemy => (enemy, sight: battle.Look(enemy, active)))
+            .Where(pair => pair.sight.CanSee)
+            .Select(pair => $"{pair.enemy.Name} ({pair.sight.Exposure:P0})")
+            .ToList();
+
+        return $"taking seriously: {(threats.Count == 0 ? "nobody" : string.Join(", ", threats))}    "
+               + $"in view of: {(watchers.Count == 0 ? "nobody" : string.Join(", ", watchers))}";
+    }
+
+    /// <summary>The single shot from this threat that would cost the target most, if it has one.</summary>
+    private static ShotPlan? WorstShotAt(Battle battle, Threat threat, Unit target)
+    {
+        ShotPlan? worst = null;
+        var most = 0.0;
+
+        foreach (var mode in threat.Unit.Weapon.Modes)
+        {
+            var plan = battle.PlanThreat(threat.Unit, threat.Where, target, UnitPose.Of(target), mode);
+            if (!plan.CanFire) continue;
+
+            var worth = battle.Tactics.Worth(plan);
+            if (worst is null || worth > most) (worst, most) = (plan, worth);
+        }
+
+        return worst;
+    }
+
+    /// <summary>
+    /// What the three posture keys would cost, and what each would open up.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Tactician.AppraisePosture"/> has four terms and this line shows two of them.
+    /// <b>Spent</b> is the price, quoted as <see cref="Battle.Costs"/> lists it because that is
+    /// what <see cref="Battle.Face"/> and <see cref="Battle.ChangeStance"/> actually charge — see
+    /// the note at the end of entry 012 in <c>docs/decisions.md</c>. <b>Prospect</b> is what the
+    /// new pose would let this soldier notice, and it is built entirely from our own side of the
+    /// ledger: our attention, our contact file, our best shot from there.
+    /// </para>
+    /// <para>
+    /// <b>Spared is deliberately not shown</b>, and the line says so rather than leaving a reader
+    /// to assume the appraisal is complete. It carries how much each enemy has already worked out
+    /// about this soldier as a raw certainty — entry 011 — and a score with that number folded
+    /// into it is a leak with extra steps. When Core resolves 011 this line grows a term; until
+    /// then it is honest about being half an appraisal. Harm is always nought for a posture and
+    /// is not printed.
+    /// </para>
+    /// </remarks>
+    private static string PostureLine(SandboxFrame frame, Unit active)
+    {
+        var battle = frame.Battle;
+        var threats = battle.Tactics.Seen(active).ToList();
+        var here = UnitPose.Of(active);
+
+        var next = active.Stance switch
+        {
+            Stance.Standing => Stance.Crouching,
+            Stance.Crouching => Stance.Prone,
+            _ => Stance.Standing,
+        };
+        var left = active.Facing.Rotate(1);
+        var right = active.Facing.Rotate(-1);
+
+        string Opens(UnitPose after, int cost)
+            => battle.Tactics.AppraisePosture(active, after, cost, threats).Prospect.ToString("+0.00;-0.00");
+
+        var stance = battle.Costs.ChangeStance;
+        var turn = battle.Costs.TurnInPlace;
+
+        return $"C: go {next.ToString().ToLowerInvariant()} for {stance} AP, opens {Opens(here with { Stance = next }, stance)}    "
+               + $"Z: face {left} for {turn} AP, opens {Opens(here with { Facing = left }, turn)}    "
+               + $"X: face {right} for {turn} AP, opens {Opens(here with { Facing = right }, turn)}    "
+               + "(what each spares you is withheld: entry 011)";
+    }
+
+    /// <summary>
+    /// What the AI did with the turns it was handed, and why.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// One line per order, each with its score broken into the terms it was ranked on. Entry 009
+    /// in <c>docs/decisions.md</c> says an <see cref="Order"/> is meant to be displayed and that
+    /// a sandbox printing only the score would be a finding; so <see cref="Order.Worth"/> and
+    /// <see cref="Order.Opens"/> are both printed, each with its own terms, because a move is
+    /// almost always worth less than nothing on its own and is taken for the shot at the end of
+    /// it. A reader who sees only the sum cannot tell a soldier moving to shoot from a soldier
+    /// moving to hide.
+    /// </para>
+    /// <para>
+    /// <b>This is the enemy's mind, and a shipped interface would never show it.</b> The audit in
+    /// <c>docs/subprojects/view.md</c> withholds <see cref="UtilityModel"/> on exactly those
+    /// grounds. It is shown here because the sandbox exists to check the AI, and an AI can only be
+    /// checked by somebody who can see what it thought — the same reason the seed is on the
+    /// command line. One term of it is not even a fact the player could hold: a hostile's
+    /// <b>Prospect</b> is scaled by how much that hostile has already worked out about the
+    /// soldier it is turning towards, which is the number contract 3 blurs. That is fine for the
+    /// AI, whose own contact file it is, and it is one more reason this readout is an instrument
+    /// rather than an entitlement.
+    /// </para>
+    /// </remarks>
+    private static IEnumerable<string> TurnLines(SandboxFrame frame)
+    {
+        foreach (var turn in frame.Turns)
+        {
+            if (turn.Orders.Count == 0)
+            {
+                yield return $"{turn.Unit.Name} (AI): nothing worth doing, banked {turn.Banked}";
+                continue;
+            }
+
+            yield return $"{turn.Unit.Name} (AI), banked {turn.Banked}:";
+            foreach (var order in turn.Orders) yield return "    " + Describe(order);
+        }
+    }
+
+    /// <summary>One order, with what it was ranked on laid out term by term.</summary>
+    public static string Describe(Order order)
+    {
+        var what = order.Kind switch
+        {
+            OrderKind.Move => $"move to {order.MoveTo}",
+            OrderKind.Fire => $"{order.Shot!.Mode.Name} at {order.Shot.Target.Name} ({order.Shot.HitChance:P0})",
+            OrderKind.Overwatch => $"hold a {order.Arc!.Name} arc on {order.Facing}",
+            OrderKind.Face => $"turn to {order.Facing}",
+            _ => $"go {order.Stance!.Value.ToString().ToLowerInvariant()}",
+        };
+
+        var text = $"{what}    {order.Score:+0.00;-0.00} = worth {order.Worth.Score:+0.00;-0.00} ({Terms(order.Worth)})";
+        if (order.Opens is { } opens) text += $" + opens {opens.Score:+0.00;-0.00} ({Terms(opens)})";
+        return text;
+    }
+
+    /// <summary>The non-zero terms of an appraisal, named. A term left out is nought.</summary>
+    private static string Terms(Appraisal appraisal)
+    {
+        var terms = new List<string>();
+        if (appraisal.Harm != 0) terms.Add($"harm {appraisal.Harm:0.00}");
+        if (appraisal.Spared != 0) terms.Add($"spared {appraisal.Spared:+0.00;-0.00}");
+        if (appraisal.Prospect != 0) terms.Add($"prospect {appraisal.Prospect:+0.00;-0.00}");
+        if (appraisal.Spent != 0) terms.Add($"spent {appraisal.Spent:0.00}");
+        return terms.Count == 0 ? "nothing" : string.Join(", ", terms);
+    }
+
     /// <summary>The shot the active unit would take at the cursor, planned once for both lines.</summary>
     private static ShotPlan? HoveredShot(SandboxFrame frame)
     {
@@ -311,8 +526,34 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
             ? "in the open"
             : $"{seen.Cover.ToString().ToLowerInvariant()} cover behind {seen.CoverSource?.Profile.Id}";
 
-        return $"{cover}    {seen.Exposure:P0} exposed    {seen.Distance:0.0} m";
+        return $"{cover}    {seen.Exposure:P0} exposed    {seen.Distance:0.0} m, {RangeBand(frame, seen.Distance)}";
     }
+
+    /// <summary>
+    /// Where the place under the cursor falls in the active soldier's weapon's range bands.
+    /// </summary>
+    /// <remarks>
+    /// The refusal line says <i>out of range at 14 m</i> only once the shot is already
+    /// impossible, and nothing said anything at all about the long stretch between optimal and
+    /// maximum where the weapon still fires and fires worse. Which band a target sits in is what
+    /// decides whether to close, so it is quoted for any node, not only for one with a soldier on
+    /// it — the question is usually about a hex nobody is standing on yet. The bands themselves
+    /// are on the status line beside the weapon, so the figure here can stay short.
+    /// </remarks>
+    private static string RangeBand(SandboxFrame frame, double distance)
+    {
+        if (frame.Battle.Active is not { } active) return "";
+
+        var weapon = active.Weapon;
+        if (distance <= weapon.OptimalRange) return "in optimal range";
+        if (distance > weapon.MaxRange) return "out of range";
+
+        return $"long range, x{frame.Battle.Gunnery.RangeFactor(weapon, distance):0.00} to hit";
+    }
+
+    /// <summary>The active soldier's weapon and its two range bands, in metres.</summary>
+    private static string WeaponLine(Unit active)
+        => $"{active.Weapon.Name} {active.Weapon.OptimalRange:0}/{active.Weapon.MaxRange:0} m";
 
     private static Unit? HoveredUnit(SandboxFrame frame)
         => frame.Hover is { } node ? frame.Battle.UnitAt(node) : null;
