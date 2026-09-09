@@ -1,0 +1,35 @@
+# The compound: the demo map, as a file rather than as C#.
+#
+# A walled compound with a breach, sandbags, a smoke screen, broken ground, a barricade running
+# across one tile, and a rooftop reachable only by ladder. Exercises every traversal kind the
+# graph builder knows how to generate. Must stay identical to DemoMaps.Compound() until that
+# method is retired — a test holds the two side by side.
+
+map Compound
+
+fill disc 0,0 r 6 floor
+
+# The perimeter wall, one hex column wide. A straight wall on a hex grid is a zigzag: each hex
+# on the line contributes its north-west and south-west faces. One face is then knocked out,
+# which is the breach everyone will funnel through.
+wall solid line 2,-3 to 2,2 nw sw
+breach 2,0 sw
+
+# Sandbags, and a hedge you cannot see through but can walk straight past.
+wall low hex -2,2 se s
+wall low hex -1,1 s
+wall screen hex -1,-2 ne
+
+# Broken ground.
+fill hexes -4,1 -4,2 -3,1 rubble
+
+# Barricades. The first clips a corner off its tile, so most of it is still standable. The
+# second splits its tile in half: crossable, but there is nowhere in it to stand.
+chord low 0,3 0-2
+chord low 0,-3 0-3
+
+# The rooftop. Too high to jump down from, so the ladder is the only way up or off, and a
+# parapet along the north edge gives whoever holds the roof something to fight from.
+fill hexes 4,-1 4,0 4,1 5,-1 5,0 layer 1 h 3.5
+ladder 4,0@0 4,0@1
+wall railing hex 4,1 n nw layer 1

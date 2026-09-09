@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: undocumented public member. CS1573: only some record parameters documented. -->
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+    <RootNamespace>Hexcom.Content</RootNamespace>
+    <!--
+      Content, and the tools that read it. Plain .NET like the core, and for the same reason:
+      a map has to load in a headless test exactly as it loads in the game. Never reference a
+      game engine from here either.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Hexcom.Core\Hexcom.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Every map under content/maps ships inside the assembly, so a caller with no idea where the
+      repository is on disk (a Godot scene, a test) can still ask for a map by name.
+    -->
+    <EmbeddedResource Include="..\maps\*.hexmap" LogicalName="maps/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

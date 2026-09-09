@@ -1,0 +1,86 @@
+# The waystation: a settlement at a crossroads, at the size decisions.md entry 007 asked for.
+#
+# Radius 24 — 49 hexes and 85 m across, eighteen hundred tiles — so a rifle at 55 m and a sentry
+# at 45 m have somewhere to be different from each other. Open ground with a walled compound on
+# the main road, a stream crossed by one bridge, a barn, a pair of cottages, a ridge, a
+# watchtower and two stands of trees. Nothing here has been fought over yet; it exists to show
+# that a map this size is forty statements rather than two thousand lines of C#.
+
+map Waystation
+
+# Kit the built-ins do not have. A hedge you can push through but not see through, and the
+# planking of the bridge, which is louder underfoot than the road either side of it.
+profile hedge height 1.5 cover light passable opaque destructible
+ground boardwalk cost 0 noise 1.4
+
+# ---- ground ------------------------------------------------------------------------------
+
+fill disc 0,0 r 24 grass
+
+# The stream runs north-west to south-east, west of the compound; the roads are painted after
+# it, so where the main road crosses it there is a bridge.
+fill line -20,24 to 4,-24 shallow_water
+fill line -24,0 to 24,0 gravel
+fill line 10,-24 to 10,14 gravel
+fill hex -8,0 boardwalk
+
+fill disc -10,6 r 3 rubble
+fill disc 6,-16 r 2 shallow_water
+
+# A ridge, high enough that getting up it is a climb, with one cut path on the road side.
+fill disc -12,-6 r 3 h 1.5
+stairs -8,-6 -9,-6
+
+# ---- the compound -------------------------------------------------------------------------
+
+# Paved inside, a solid wall all round, a gate at each end of the main road, and a drain under
+# the south wall that somebody small and patient could crawl through.
+fill disc 0,0 r 4 floor
+enclose solid disc 0,0 r 4
+breach 4,0 ne
+breach -4,0 sw
+link crawl -1,-3 -1,-4
+
+# Sandbags outside the east gate, covering the road.
+wall low hexes 5,-1 5,1 ne
+
+# The house in the middle: a door on the south side, a flat roof with a parapet, and a ladder
+# up from the yard on the east.
+enclose solid disc 0,1 r 1
+breach 0,0 s
+fill disc 0,1 r 1 layer 1 h 3
+enclose railing disc 0,1 r 1 layer 1
+ladder 2,1@0 1,1@1
+
+# ---- outbuildings -------------------------------------------------------------------------
+
+# The barn: head-high walls you could climb, and one door on the west.
+fill disc 14,-6 r 2 floor
+enclose high disc 14,-6 r 2
+breach 12,-6 sw
+
+# Two cottages in the rubble, sharing a wall, door facing the road.
+fill hexes -12,8 -12,9 -11,8 floor
+enclose solid hexes -12,8 -12,9 -11,8
+wall solid hex -12,8 n
+breach -11,8 se
+
+# The watchtower: a platform four metres up, railed, ladder only.
+fill hex 16,-14 layer 1 h 4
+enclose railing hex 16,-14 layer 1
+ladder 16,-14@0 16,-14@1
+
+# Ruins by the east road: the odd wall left standing.
+chord high 20,-9 0-2
+chord low 20,-8 1-3
+chord low 21,-10 3-5
+
+# ---- cover in the open --------------------------------------------------------------------
+
+# Two stands of trees, dense enough to hide in and walk through.
+wall screen disc 14,6 r 2 all
+wall screen disc -6,-14 r 1 all
+
+# Hedgerows along the field boundaries north of the road.
+wall hedge line 2,6 to 2,14 nw sw
+wall hedge line -14,14 to -6,14 n

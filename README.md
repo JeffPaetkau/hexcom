@@ -18,6 +18,7 @@ If you ever find yourself adding `using Godot;` to a file under `src/`, stop.
 ```
 src/Hexcom.Core/        the rules — no engine references, ever
 tests/Hexcom.Core.Tests/  xUnit
+content/                maps as text, and the library that reads them; its own tests beside it
 game/                   the Godot 4 project (view + input only)
 docs/                   design doc, and the project map the work is divided by
 ```
@@ -257,6 +258,15 @@ shot went off on and where the target was standing when it landed.
 
   Two sides driven by it fight a skirmish to a decision with no window open, and replay
   identically from a seed. That is the thing the engine-free split was built for.
+
+- **Maps are text** — `content/maps/*.hexmap`, and `MapLibrary.Load("compound")` from anywhere.
+  The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
+  an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
+  `enclose`, `breach` — expands to those three, and a writer lowers any map back to them so the
+  shorthand can be shown to add nothing. The demo compound is thirteen statements and comes out
+  identical to the version built in C#; the first map at the size the ranges need, 85 m across
+  and eighteen hundred tiles, is forty. A map brings its own wall profiles and ground types
+  if it wants them. `content/README.md` is the reference.
 
 ## What is not built yet
 

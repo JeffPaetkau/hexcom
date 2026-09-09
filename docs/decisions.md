@@ -697,3 +697,68 @@ for balance numbers, eight since 003). None was written carelessly. Every one wa
 written and was overtaken by a later entry that nobody carried back to the sentence it
 invalidated. The cure is not more care; it is re-reading the docs against the log whenever an entry
 is closed, which is now in Master's standing list.
+
+---
+
+## 020 — A map is a text file: the corner graph written down, plus shorthand that lowers to it
+**2026-09-08** · **Raised by** content · **For** view, core and master · **Status** open (view's
+and core's halves; the decision itself is made)
+
+The `.hexmap` format exists, in `content/`, with a reader, a writer and two maps. The brief in
+`subprojects/content.md` posed two candidates and asked for the choice and the rejected
+alternative to be recorded. **The answer is that they were never two candidates.**
+
+**What was chosen.** Three statements are primitives and between them say everything a
+`BattleMap` can hold: `tile` (one hex at one layer), `chord` (a wall between two corners of one
+hex — a side is the chord between adjacent corners, so every wall in the game is one) and `link`
+(an authored connection). Every other statement — `fill`, `wall`, `enclose`, `breach`, `ladder`,
+`stairs`, `door` — is a loop over those three. `MapWriter` lowers any map back to primitives, and
+a test reads the lowering back and holds it identical to the original. So the format *is* the
+corner graph serialised, which was the honest candidate, and it is authorable, which was the
+friendly one. Reference in `content/README.md`; reasoning in the `<remarks>` on `MapFile`.
+
+**What was rejected, and why.**
+
+- *JSON or another generic serialisation of the graph.* Two thousand tiles is two thousand
+  objects, no comments, and a wall named by two `HexVertex` records that no author thinks in.
+  Honest, and nobody would write one.
+- *An ASCII-art grid.* The natural answer for tile maps and wrong for this one: cover here lives
+  on edges and chords, and a character grid can name a hex but not the fifteen segments in it.
+- *A scripting language or a real compiler.* Would make a map a program again, which is the
+  state the format exists to leave; and every simplification in a compiled form risks making a
+  legal map inexpressible, which is the risk the brief named. Keeping the primitives in the
+  same file removes it: anything the shorthand cannot say, the primitive can.
+
+**The test the brief set is passed.** `content/maps/compound.hexmap` reads to a map identical to
+`DemoMaps.Compound()` — same tiles, walls, links and settings — and a test holds them together.
+It is 13 statements against 90 lines of C#.
+
+**The size constraint from entry 007 is met.** `content/maps/waystation.hexmap` is radius 24 —
+85 m across, 1801 ground tiles, a compound, a barn, cottages, a ridge, a tower, two woods, a
+stream with one bridge — in 40 statements. It reads in about 6 ms and builds a movement graph
+of about 1800 nodes and 10,000 links in about 20 ms; measured, on this machine, five runs each.
+Every standable node on it is reachable from the centre. It was drawn to show the format
+scales, not to be fought over, and its own brief says so.
+
+**For View.** `MapLibrary.Load("compound")` returns the same map `DemoMaps.Compound()` does,
+from any working directory, because the maps are embedded in `Hexcom.Content`. Referencing that
+project from `Hexcom.Game` and swapping the call is one line; whether and when is yours. Entry
+006 was waiting on a map big enough for an honest attention cone: the waystation is that map, at
+the scale 007 fixed, and it is one `Load` away.
+
+**For Core.** `DemoMaps.cs` stays until nothing in `tests/` calls it — `DemoMapTests` and three
+tests in `SightTests` do. If the test project references `Hexcom.Content` and loads
+`"compound"` instead, Content deletes the file the same day; if you would rather keep a
+hand-built map in Core for the tests, say so and Content keeps the two equal by test, as now.
+Also: `dotnet test` now runs two test assemblies, and the masthead in `design.html` counts only
+one of them.
+
+**For Master.** `content/**` exists, so the *when it exists* in `map.md`'s Owns column has come
+due. `Hexcom.sln` was edited to add the two projects; it is a shared file with no owner in the
+map, and Content will touch nothing else in it. Content's tests are under `content/`, not
+`tests/`, because `tests/**` is Core's — worth a line in the map so nobody moves them.
+
+**Two things the format deliberately does not hold.** Deployments and objectives — who starts
+where and what winning means — are not ground, and the sandbox hard-codes them today. And the
+built-in profiles and grounds cannot be redefined from a file: a map may bring new kit, but
+changing what `low` means is a balance change and goes through Core.
