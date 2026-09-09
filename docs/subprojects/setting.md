@@ -24,55 +24,52 @@ anybody. But it is not unconstrained — see below.
 
 ---
 
-## The job — write the bible, downstream of the mechanics
+## The job — write the mission book
 
-Branch `setting/bible`. No worktree strictly needed if nothing else is running, but take one
-anyway; the rule in `CLAUDE.md` does not have an exception for prose.
+Branch `setting/missions`. Take a worktree; the rule in `CLAUDE.md` has no exception for prose.
 
-**The discipline that makes this hard.** Ten systems are already built, and they imply a great
-deal about the world whether anybody meant them to or not. The fiction is downstream of them, and
-its first job is to be *consistent with* what the rules already assert rather than to invent
-freely. Read `../design.html` before writing a word. Some of what is already committed:
+[`../setting.md`](../setting.md) answers the five questions the bible was asked. Section 6 of it
+answers *what is a mission* only in outline — six shapes and what each would cost to build — and
+that outline is now the most-cited thing in the setting by everybody else. `../decisions.md`
+entry 026 routed it to Core and Content as a finding about objectives. This job turns the outline
+into the fiction those two will need when they build one.
 
-- **Beam and kinetic weapons both exist**, and each defeats what the other cannot — shields soak
-  beams and shrug at solid objects, ablative plate stops rounds and cooks under a beam. So neither
-  has superseded the other, which is a strange and specific thing to be true of an armed force,
-  and the setting should have a reason for it.
-- **Protection is per body face**, six of them, and a soldier can turn a fresh shield to a threat
-  for a point. That is powered equipment worn by individuals.
-- **Not everybody has a radio.** Word travels by radio, by shouting, or by watching a comrade
-  react, and only a radio reaches the whole side. Killing the radio operator is a tactic. A
-  squad with one radio between it says something about how well equipped these people are.
-- **A powered blade is silent** where a slug rifle is heard through walls and a beam paints a
-  line back to the shooter. Melee is a stealth tool, not a last resort.
-- **The fight is decided by who saw whom first.** If the fiction makes these people into a
-  line-of-battle army, it is fighting the game.
+**Where the output goes:** `docs/setting/missions.md`. The territory owns `docs/setting/**` and
+this is the first thing worth splitting out — the bible should stay a bible.
 
-**What the bible has to answer**, roughly in order of how much else depends on it:
+**What it has to contain**, one section per mission shape:
 
-1. **Who are the two sides, and why is this happening at squad scale?** Twelve people in a
-   compound, not a war front. What kind of conflict is fought this way?
-2. **What is a mission, and what does winning one mean?** The rules currently end when one side
-   is down. Extraction, sabotage, capture and reconnaissance are all better fits for a
-   stealth-first game, and each implies rules that do not exist yet.
-3. **The tech register.** Enough to name things. The kit already has mechanical identities —
-   `WeaponProfile`, `FireMode`, shields, ablative plate — and they need names that carry the
-   world.
-4. **The campaign shape.** What connects one mission to the next: soldiers who persist and can
-   be lost, ground that changes hands, a clock. This is where the strategy-layer territory
-   begins, and the answer decides whether that is a second game or a thin frame.
-5. **Tone.** Three registers are named above and they are not the same. Star Trek is procedural
-   and humane, Star Wars is mythic, Babylon 5 is political and worn-down. The stealth-first,
-   information-scarce design points hard at the third; that is worth arguing rather than
-   assuming.
+- **What it is called in the world**, and what a soldier calls it, which is usually different.
+  Section 7 of the bible is the register to match; keep it additive, and do not propose renaming
+  anything in `src/`.
+- **What the briefing says.** The actual words somebody is given before they go. This is the
+  useful artefact: it is what a mission file eventually has to be able to express, arrived at
+  from the fiction rather than from a format.
+- **How you know you have won**, in terms of quantities the rules already have. The withdrawal
+  mission is the model here — *leave with the whole hostile side still at Unaware or Suspicious*
+  is readable off `AwarenessTracker` today, and saying so is what made entry 026 worth writing.
+- **What going wrong looks like**, which is where the alarm and the mission clock live. Word does
+  not stop at the edge of the map, and a radio call is the difference between an incident and a
+  manhunt.
+- **What the ground has to offer** for the mission to be playable at all. The `.hexmap` format
+  exists in `content/` and entry 024 records that it deliberately holds ground and nothing else —
+  *deployments and objectives are not ground*, and the sandbox hard-codes them today. So the
+  question of what an extraction needs an exit for, and what a reconnaissance needs worth seeing,
+  is open on purpose and this is the file that should answer it in fiction first.
 
-**Where the output goes:** `docs/setting.md`, created by this work. Anything that turns out to
-need a rule goes to Core through `../decisions.md`. Anything that turns out to need a map goes
-to Content the same way.
+**Settle this before writing much: whether a mission can be failed without the squad being
+destroyed.** The bible asserts that a squad achieving its objective and losing four people has
+lost, and nothing anywhere measures that. It is the last open question in `../setting.md` and it
+decides whether these six shapes are win conditions or whole scoring models. Argue it in the file
+rather than assuming it.
 
-**What would make this fail:** writing a setting that the eight built systems then have to be
-bent to fit. The order is fiction-follows-mechanics here, unusually — the mechanics were built
-first and they are good, so the fiction earns its place by explaining them.
+**Out of scope.** A file format, a schema, or anything resembling a spec — that is Content's, and
+entry 026 is careful not to hand them one. Rules for objectives are Core's. If the fiction wants
+either, it says so in `../decisions.md` and stops there.
+
+**How to know it worked:** somebody building objectives can read one section and know what to
+build, and `DemoMaps.Compound` can be pointed at whichever of the six it could carry today with
+no new rules at all.
 
 ## Recent work
 
