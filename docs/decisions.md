@@ -1228,3 +1228,77 @@ Rows 1 to 3 are sequential on Core. Rows 4 to 6 run beside them; 6 waits on 4 an
 an objective is. Rows 7 and 8 run beside everything; 8 waits on 2. Row 9 waits on all of it, and
 `view.md` already says the greybox rewrites `game/` substantially, which is why nothing in rows 7
 and 8 should be built as though it will survive that rewrite untouched.
+
+---
+
+## 030 — The mission book is written, and the withdrawal condition needs two things entry 026 did not see
+**2026-09-08** · **Raised by** setting · **For** core and content · **Status** open
+
+[setting/missions.md](setting/missions.md) exists: the six shapes of entry 026 turned into what
+a soldier is actually told, what winning is in quantities the rules already have, and what the
+ground has to offer. Row 4 of entry 029's road to a greybox.
+
+**The bible's last open question is closed, and the answer relocates it rather than building
+anything.** *Can a mission be failed without the squad being destroyed?* Yes, and the failure is
+the objective becoming unreachable, never the casualty count. A battle wants three endings rather
+than two — achieved, settled against you, and stopped being reachable and everybody came home —
+and the third is the commonest honest outcome of quiet work. **Casualties are the campaign's to
+grade and it already has the data**, since entry 027 records that soldiers persist and plate never
+recovers, so the roster is the measurement. Nothing tactical should weigh a dead rifleman against
+a records core, and specifically it should not be made to, because the only thing in the code that
+prices a soldier is `UtilityModel` valuing them at their own vitality — the figure the bible
+already records the fiction as disagreeing with. So the six shapes are win conditions and not
+scoring models.
+
+**Two things about the withdrawal condition, checked against the source rather than assumed.**
+Entry 026 said it needs no new rules at all. The awareness *measurement* needs none, and that
+holds. The *ending* needs two small things, and both are the kind that is cheaper to know about
+before the code is written than after.
+
+1. **Today, leaving is indistinguishable from being wiped out.** `Battle.Withdraw` sets
+   `InPlay` false, `SidesInPlay` filters on `InPlay`, and `IsDecided` is true when at most one
+   side is left. So a squad that successfully walks off the map ends the battle in exactly the
+   state a squad that was killed to the last man ends it. Whatever ends a battle on an objective
+   has to tell the two apart.
+
+2. **`Withdraw` calls `Awareness.Forget`, so the evidence is gone by the time anybody could poll
+   for it.** A condition of the form *leave with the whole hostile side still at Unaware or
+   Suspicious*, evaluated after the squad has left, reads Unaware for everybody, trivially and
+   always. The reading has to be sampled per soldier at the moment of departure, and the worst
+   sample kept.
+
+   **And it should be sampled that way rather than kept as a global high-water mark**, because
+   `Forget` is also what makes the best move in the game work. A unit going down is put through
+   `Withdraw` by `Battle.Fire`, so silencing a witness really does take his contact out of the
+   world — with no new rules, today. A monotone global mark would forbid that. A per-departure
+   sample keeps it, and keeps its counter-play too: if he relayed before he died, his side holds
+   0.6 of what he had and that survives him.
+
+**Two costings in entry 026 come down.** Reconnaissance was costed at *an objective node, and a
+record of whether it was ever traced*; the record is two calls that exist —
+`SightSolver.Trace` from the soldier's vantage to a vantage at the place, and
+`AwarenessTracker.IsWatching(observer, place)` for the front cone at acuity 1.0 rather than the
+corner of the eye at 0.45. Denial was costed at *the mirror of the others, plus a clock*; the
+clock is `Battle.Round`, which counts already, so what is wanted is a round limit that ends a
+battle rather than a clock to read.
+
+**For Content, the four things a mission needs that a map deliberately cannot hold** — entry 024
+left this open on purpose and the fiction now has an answer. Somewhere to start, *with facing*,
+because 1.0 against 0.45 means a deployment that faces the wrong way has made a decision on the
+player's behalf. Somewhere to end, which is **a named place and not an edge**, because the person
+meeting you there has to be able to find it. Something to do. And when it stops.
+
+**And one measurement, off `waystation.hexmap`, at 1.73 m between centres.** The barn is 14 hexes
+from the compound centre and the watchtower 16 — 24.2 m and 27.7 m, both outside the 15 m a shout
+carries and the 18 m a slug rifle is heard at. So a detail split across that map genuinely depends
+on its set, and `AwarenessTracker.CanReach` is what makes the signaller worth killing rather than
+anything in the fiction. The compound, at 20.8 m across, has every point within earshot of every
+other: it can carry the withdrawal win condition today, and it cannot make an alarm or a clock
+mean anything.
+
+**The mission clock is the one genuinely new thing the six shapes want**, and there is no channel
+that leaves the map for it to hang on. `Relay` fires at `AlertedAt` and `CanReach` sends it
+side-wide only for a unit with a set; a relayed contact arrives at 0.6, so 75 becomes 45 and lands
+below Searching, which is the bible's *a bearing, not a target* as arithmetic. What is missing is
+anything that records the moment a hostile with a set has registered somebody and had a turn in
+which to use it. Everything in that sentence but the record is a query that exists.

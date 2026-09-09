@@ -8,7 +8,8 @@ Read [../map.md](../map.md) first.
 ## Owns
 
 ```
-docs/setting.md      and anything under docs/setting/ once there is enough to split
+docs/setting.md      the bible
+docs/setting/**      the parts that outgrew it — missions.md so far
 ```
 
 ## Must not touch
@@ -24,55 +25,57 @@ anybody. But it is not unconstrained — see below.
 
 ---
 
-## The job — write the mission book
+## The job — write the roster
 
-Branch `setting/missions`. Take a worktree; the rule in `CLAUDE.md` has no exception for prose.
+Branch `setting/roster`. Take a worktree; the rule in `CLAUDE.md` has no exception for prose.
 
-[`../setting.md`](../setting.md) answers the five questions the bible was asked. Section 6 of it
-answers *what is a mission* only in outline — six shapes and what each would cost to build — and
-that outline is now the most-cited thing in the setting by everybody else. `../decisions.md`
-entry 026 routed it to Core and Content as a finding about objectives. This job turns the outline
-into the fiction those two will need when they build one.
+The bible and [`../setting/missions.md`](../setting/missions.md) between them say who is fighting
+and what they are sent to do. Neither says who *they* are, and three other territories are about
+to need that: `Battle.Deploy` takes a name, a mission file has to list a squad, and the interface
+puts those names in front of a player. Today the sandbox deploys two people called Vance and
+Orsini against four called Sentry, Watchman and so on — **one side has names and the other has
+job titles**, which is precisely the asymmetry section 4 of the bible denies. Same armoury,
+eleven years apart, and possibly the same sergeant.
 
-**Where the output goes:** `docs/setting/missions.md`. The territory owns `docs/setting/**` and
-this is the first thing worth splitting out — the bible should stay a bible.
+**Where the output goes:** `docs/setting/roster.md`.
 
-**What it has to contain**, one section per mission shape:
+**What it has to contain.**
 
-- **What it is called in the world**, and what a soldier calls it, which is usually different.
-  Section 7 of the bible is the register to match; keep it additive, and do not propose renaming
-  anything in `src/`.
-- **What the briefing says.** The actual words somebody is given before they go. This is the
-  useful artefact: it is what a mission file eventually has to be able to express, arrived at
-  from the fiction rather than from a format.
-- **How you know you have won**, in terms of quantities the rules already have. The withdrawal
-  mission is the model here — *leave with the whole hostile side still at Unaware or Suspicious*
-  is readable off `AwarenessTracker` today, and saying so is what made entry 026 worth writing.
-- **What going wrong looks like**, which is where the alarm and the mission clock live. Word does
-  not stop at the edge of the map, and a radio call is the difference between an incident and a
-  manhunt.
-- **What the ground has to offer** for the mission to be playable at all. The `.hexmap` format
-  exists in `content/` and entry 024 records that it deliberately holds ground and nothing else —
-  *deployments and objectives are not ground*, and the sandbox hard-codes them today. So the
-  question of what an extraction needs an exit for, and what a reconnaissance needs worth seeing,
-  is open on purpose and this is the file that should answer it in fiction first.
+- **Twelve people a side**, named, with the numbers they already have. `UnitStats` gives
+  `Scout`, `Trooper` and `Signaller`; `CostProfile` gives `Scout` and `Gunner`; `Loadout` gives
+  rifleman, beamer, heavy and infiltrator. **Invent no new statistic and propose no new one.** A
+  soldier here is an existing set of numbers plus three sentences, and the discipline of writing
+  them that way is most of the value — if a person cannot be expressed in what exists, that is a
+  finding for Core in `../decisions.md` and not a licence.
+- **What a name is for.** Vance and Orsini already exist in `game/`. Say whether the roster
+  adopts them or replaces them, and be aware that adopting is the cheaper answer and probably
+  the right one.
+- **The signaller, specifically.** The bible says the man with the set is the most valuable
+  target on the field and `UtilityModel` says he is average — an open question in both
+  `../setting.md` and `core.md`. The roster is where the fiction has to put its money down: who
+  carries it, why that person, and what the squad does when he goes down.
+- **Both sides, in the same file and to the same depth.** A Cadre detail with names and a
+  rotation is what makes the approach game feel like something being done to people rather than
+  to obstacles, and section 9 of the bible — *the enemy is bored, which is why the approach
+  works* — is unwriteable without it.
+- **What carries between missions**, in the terms entry 027 already set: plate never recovers,
+  fields always do, so what a name accumulates is worn kit and not wounds. One paragraph, not a
+  campaign system.
 
-**Settle this before writing much: whether a mission can be failed without the squad being
-destroyed.** The bible asserts that a squad achieving its objective and losing four people has
-lost, and nothing anywhere measures that. It is the last open question in `../setting.md` and it
-decides whether these six shapes are win conditions or whole scoring models. Argue it in the file
-rather than assuming it.
+**Out of scope.** Stats, rules, loadout balance, and anything that would need `src/` to change.
+Also any claim about how many missions somebody has survived, which is campaign state and belongs
+to a layer nobody has built.
 
-**Out of scope.** A file format, a schema, or anything resembling a spec — that is Content's, and
-entry 026 is careful not to hand them one. Rules for objectives are Core's. If the fiction wants
-either, it says so in `../decisions.md` and stops there.
+**How to know it worked:** the sandbox's six deployments can be given names and two lines each
+out of this file with nothing invented, and a Cadre sentry reads as somebody a fortnight into a
+rotation rather than as a spawn point.
 
-**How to know it worked:** somebody building objectives can read one section and know what to
-build, and `DemoMaps.Compound` can be pointed at whichever of the six it could carry today with
-no new rules at all.
+**Probably next after this**, and noted so it is not lost: the sites of Calder as a list, which
+is what entry 027's campaign map wants under it. Not briefed yet, because Content owns what gets
+built and there is no reason to write a site list before somebody needs one.
 
 ## Recent work
 
 ```bash
-git log --oneline -20 -- docs/setting.md docs/subprojects/setting.md
+git log --oneline -20 -- docs/setting.md docs/setting/ docs/subprojects/setting.md
 ```

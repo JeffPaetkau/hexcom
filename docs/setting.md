@@ -212,7 +212,10 @@ close to nothing. Elimination is not a hard objective here. It is an *unreachabl
 the time, and a game that demands it is a game where both sides shoot at each other until
 somebody's plate runs out.
 
-Six mission shapes fit the machinery. They are ordered by what they cost to build.
+Six mission shapes fit the machinery. They are ordered by what they cost to build. **The outline
+is here and the missions themselves are in [setting/missions.md](setting/missions.md)** — what
+each one is called, the words a soldier is given, what winning is in quantities the rules already
+have, and what the ground has to offer.
 
 | Mission | What it is | What it needs that does not exist |
 |---|---|---|
@@ -232,7 +235,10 @@ entry so that Core and Content can decide whether it is worth having early.
 **What winning means.** Possession and information, not bodies. A mission is won by having the
 thing, having seen the thing, having broken the thing, or having got the person out — and the
 soldiers coming home is a separate and equally real success condition, because they are the
-campaign's actual resource. A squad that achieves the objective and loses four people has lost.
+campaign's actual resource. A squad that achieves the objective and loses four people has lost —
+though not the mission, which it won. That distinction is
+[setting/missions.md](setting/missions.md) section 1: the mission is won or lost on the objective,
+and the four people are a campaign judgement the roster already measures.
 
 **What the alarm costs.** Word does not stop at the edge of the map. A radio call from a garrison
 that has properly registered you is the difference between an incident and a manhunt, and it is
@@ -404,8 +410,12 @@ with a better idea and nothing breaks.
   and which the fiction disagrees with strongly. The setting's answer is that the man with the
   net is the most valuable target on the field; the code's answer is that he is average. Core's
   question, and it is already in `core.md`.
-- **Whether missions want a defeat condition other than the squad being destroyed.** Section 6
-  says a squad that achieves the objective and loses four people has lost. Nothing measures that.
+- ~~**Whether missions want a defeat condition other than the squad being destroyed.**~~
+  **Answered** in [setting/missions.md](setting/missions.md) section 1, and in
+  [decisions.md](decisions.md) entry 030. They do, the failure is the objective becoming
+  unreachable rather than the casualty count, and the sentence above about four people is a
+  campaign judgement that the roster already measures. Left here rather than deleted so that
+  anybody who read the question finds the answer.
 
 ## Recent work
 
