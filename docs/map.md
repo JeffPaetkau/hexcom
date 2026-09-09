@@ -90,14 +90,16 @@ neither gets a private back door.
 enemy's alarm is reported coarsely. The view must not render a number Core deliberately blurred,
 and Core must not blur a number about your own soldier.
 
-**4. Balance numbers live in exactly eight homes.** `MovementCosts`, `AwarenessModel`,
-`GunneryModel`, `ReactionModel`, `CostProfile`, `StanceProfile`, `OverwatchArc`, `UtilityModel`,
-plus `Loadout` / `WeaponProfile` / `FireMode` as content. A magic number in a method body is a
-bug. Float epsilons are not balance numbers.
+**4. Balance numbers live in exactly nine homes.** `MovementCosts`, `AwarenessModel`,
+`GunneryModel`, `ReactionModel`, `BlastModel`, `CostProfile`, `StanceProfile`, `OverwatchArc`,
+`UtilityModel`, plus `Loadout` / `WeaponProfile` / `FireMode` / `ThrownProfile` as content. A
+magic number in a method body is a bug. Float epsilons are not balance numbers.
 
-The eighth is newer than the rest and different in kind: the other seven say what the world does,
-`UtilityModel` says what any of it is *worth to somebody deciding*. See
-[decisions.md](decisions.md) entry 003.
+Two of the nine are different in kind. `UtilityModel` says what any of it is *worth to somebody
+deciding*, where the rest say what the world does — see [decisions.md](decisions.md) entry 003.
+`BlastModel` is the shortest, and deliberately: what a stance is worth against a blast is derived
+from the stance heights in contract 6 rather than dialled, which entry 032 names as the pattern
+to prefer.
 
 **5. One horizontal world unit is one metre.** `SightSolver` builds a `Vec3` from a
 `HexLayout` position (X, Y) and a floor height (Z, metres) and takes distances across it, so the

@@ -79,10 +79,13 @@ a skirmish test on a disc. Nothing has ever been run on ground with buildings in
 **What to do.**
 
 1. **Give the waystation a reason.** Two deployments and an objective, in prose in the file's
-   header for now — where each side starts, which way they face, what they are there for. A
-   scenario format is an open question below and is *not* this job; the sandbox hard-codes five
-   deployments and `view.md` says so. Argue for the rewrite when there is a second map that
-   needs it.
+   header for now — where each side starts, which way they face, what they are there for. Entry
+   030 says what a mission needs that a map cannot hold, and the header should say those four
+   things: somewhere to start *with facing*, somewhere to end that is a named place and not an
+   edge, something to do, and when it stops. A scenario format is an open question below and is
+   *not* this job; the sandbox gathers its deployments in `SandboxScenario` and `view.md` says
+   the move to a file is a deletion when there is one. Argue for the rewrite when there is a
+   second map that needs it.
 2. **Run the AI over it, and look at the routes.** Both sides `Commander`, a dozen seeds. The
    thing to read off is not who wins but *where the fighting happens*: whether anybody uses the
    drain, whether the ridge is worth the climb, whether the woods hide anything at 45 m. A
@@ -102,9 +105,16 @@ down, which on 85 m of ground with an AI that only fights what it can see may ta
 time or never. A turn cap is the obvious answer and it is a balance number, so if you need one it
 goes in `../decisions.md` for Core, not in a test.
 
-**Out of scope.** Loading the map in the sandbox is View's (entry 024 offers it); deleting
-`DemoMaps.cs` waits on Core's tests not calling it (same entry); a deployment format is open
-below.
+**Two things the sandbox learned drawing this map, for whoever redraws it — entry 035.** The
+ridge is reachable in one turn only at its eastern foot, because the 1.5 m step is a climb
+everywhere else and the one cut path at `-8,-6` is well forward; a good shape, and not obvious
+from the file. And a profile a map declares for itself is drawn grey: `BattleView.StyleFor`
+switches on well-known ids, so a map that brings its own kit brings no colour with it, and the
+next invented profile is a line in `../decisions.md` for View.
+
+**Out of scope.** The sandbox already opens on the waystation through `MapLibrary.Load` (entry
+035). Deleting `DemoMaps.cs` waits on Core's tests not calling it (entry 024); a deployment
+format is open below.
 
 **How to know it worked.** A map file with a header that says what the fight is, a test that runs
 a match on it to a decision, and at least one entry in `../decisions.md` that says a number was
@@ -122,10 +132,12 @@ to leave by. Nothing has been played at this size.
 
 **What is a scenario file?** The map format deliberately holds ground and walls and nothing
 else. Who starts where, facing which way, with what, and what winning means are not in it, and
-today they are hard-coded in `game/scripts/HexSandbox.cs` — content wearing a view extension,
-as `view.md` puts it. A deployment block in the map file, a separate scenario file that names a
-map, or something the campaign layer owns are all plausible; the answer depends on the campaign
-shape, which is Setting's to decide first.
+today they are hard-coded in `game/scripts/SandboxScenario.cs` — content wearing a view
+extension, as `view.md` puts it. A deployment block in the map file, a separate scenario file
+that names a map, or something the campaign layer owns are all plausible. The campaign shape is
+settled — a thin frame, entry 027 — and the fiction's answer to what a mission needs is entry
+030; what is still missing is what an objective *is* in the rules, which is Core's build order
+05b. The file is written after that, not before.
 
 **A map editor.** Text is enough to author with and it is not enough to *see* with: the
 waystation was checked by rendering it as characters. Whether the sandbox grows a map view, or

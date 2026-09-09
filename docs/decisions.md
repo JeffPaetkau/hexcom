@@ -1342,8 +1342,8 @@ said in as many words on both.
 ---
 
 ## 032 — There is a ninth home for balance numbers, and four of the eight have moved
-**2026-09-08** · **Raised by** core · **For** master, view, content · **Status** open — needs
-[map.md](map.md) contract 4 updating
+**2026-09-08** · **Raised by** core · **For** master, view, content · **Status** resolved for
+master by 036, which updated contract 4; open for view and content until they read it
 
 Frozen contract 4 names eight homes plus the kit records. Building grenades and mines changed
 five things about that list, and a contract change needs an entry saying what and why. This is it.
@@ -1475,7 +1475,7 @@ it, unlike being shot at.
 ---
 
 ## 034 — Four things found building grenades that are nobody's job yet
-**2026-09-08** · **Raised by** core · **For** core, master · **Status** open
+**2026-09-08** · **Raised by** core · **For** core, master · **Status** open for core — items 1, 2 and 4 are in `core.md`'s open questions; master routed item 3 to build order 05b in 036
 
 Recorded rather than built, per the brief. None of them blocks anything.
 
@@ -1608,3 +1608,50 @@ about the ones on screen.
 `view.md` had, and a picture of one of ours mid-approach with a sentry reacting to it still needs
 a hand on the keyboard. It does not touch the greybox, which rewrites `game/` and will want a
 camera that is a `Camera2D` rather than an offset on a node.
+
+## 036 — After three more merges: nine homes, Content's brief caught up, and the road to the greybox shortened
+**2026-09-08** · **Raised by** master · **For** all · **Status** resolved
+
+Three branches merged since 029 — `setting/missions`, `core/grenades`, `view/waystation` — and
+the fourth territory, Content, has not started the brief 029 gave it. This entry records what
+Master did about the entries they left, and restates the road, since three rows of 029's table
+are done and one has split.
+
+**Contract 4 is nine homes.** `BlastModel` and `ThrownProfile` are in the map and in
+`CLAUDE.md`, as entry 032 asked. The pattern 032 named — a figure derived from a physical
+constant rather than dialled — is in the contract's text now, so the next person adding a home
+sees it before choosing.
+
+**Content's brief was stale without anybody touching it**, which is the rot 029 did not predict:
+a brief written before three neighbours merged said the sandbox hard-coded five deployments (it
+gathers them in `SandboxScenario` now, and there are six), said loading the map was View's to
+offer (035 did it), and said the scenario file waited on the campaign shape (027 settled it).
+Fixed, and entry 030's four things a mission needs and entry 035's two authoring notes are in it.
+The scenario file now waits on one thing only: Core saying what an objective is, build order
+05b.
+
+**Two Core debts had no brief**: the `DemoMaps` deletion from 024, and the contract 3 question
+from 023 about a soldier's own certainty. Both are a paragraph in `core/open-window`. Entry
+034's third item — the AI laying mines waits on an approach to deny, which is an objective seen
+from the other side — is 05b's by construction and needs no separate routing.
+
+**The road from here.** What 029 listed as nine rows is now six, because rows 1, 4 and half of
+7 are done and rows 2 and 3 became one Core brief:
+
+| | Territory | What it produces | Waits on |
+|---|---|---|---|
+| 1 | Core | the open window and a battle that ends on an objective — 05a and 05b, one brief | nothing |
+| 2 | Content | the waystation fought over, and the first measured balance findings | nothing |
+| 3 | Setting | the roster, so deployments have names on both sides | nothing |
+| 4 | View | a capture that can act | nothing |
+| 5 | Content | a mission file: start with facing, a named end, a thing to do, when it stops | 1 for what an objective is, 3 for who |
+| 6 | View | placing your own reactions, then the greybox | 1, then everything |
+
+Four sessions can start today, one per territory, and none of them collides. The critical path
+is still Core, and it is now one increment long rather than two.
+
+**One thing to watch that nobody owns yet.** Entry 030 names a mission clock as the one
+genuinely new thing the six mission shapes want — a record of the moment a hostile with a set
+has registered somebody and had a turn to use it. Core's brief leaves it to the judgement of
+whoever picks the brief up. If it is left out of 05b, it becomes the item after, and the denial
+and extraction missions wait on it; the withdrawal mission does not.

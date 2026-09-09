@@ -73,6 +73,15 @@ order, because the second is what the first is for.
   it. Every other part of that sentence is a query that already exists. Whether the clock belongs
   in this job or the one after it is a judgement for whoever picks this up.
 
+**Two small debts to clear on the same branch, a paragraph each.** Entry 024, Core's half:
+`DemoMapTests` and three tests in `SightTests` still call `DemoMaps.Compound()`, and Content
+deletes the file the day they load `"compound"` from `Hexcom.Content` instead — or say in
+`../decisions.md` that a hand-built map stays in Core for the tests, and Content keeps the two
+equal by test as now. And entry 023's question for section 07 of the design doc: your own
+soldier's certainty about an enemy is a third case contract 3 does not name — not your exposure,
+not their alarm — and View will not quote *how much is left to learn about this contact* until
+the doc says whether a player reads it exactly or coarsely. Say which.
+
 **Settle before writing much.** Whether declining is a null recommendation or an explicit
 `ReactionAction.Nothing`. The first is fewer lines and the second is a thing the interface can
 draw and the scorer can price at zero; entry 004 assumed neither. And whether a committed window

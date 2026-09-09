@@ -143,10 +143,11 @@ one.
   | `AwarenessModel` | detection rates, arc widths, thresholds, how far word travels |
   | `GunneryModel` | hit chance, cover penalties, glancing, called shots |
   | `ReactionModel` | what banks, what springs a reaction, what each kind costs |
+  | `BlastModel` | how high a charge bursts, and what reaches you with no line to it |
   | `CostProfile` | what one soldier pays against the price list — per unit |
   | `StanceProfile` | heights, concealment, noise and movement per stance |
   | `OverwatchArc` | arc widths and their aiming bonuses |
-  | `Loadout` / `WeaponProfile` / `FireMode` | kit, as content |
+  | `Loadout` / `WeaponProfile` / `FireMode` / `ThrownProfile` | kit, as content |
   | `UtilityModel` | what an action is worth — the exchange rates the AI ranks by |
 
   Float epsilons are not balance numbers: `Geometry2D.Epsilon` and `AngleEpsilonDegrees`.
