@@ -3,7 +3,8 @@
 The constitution for working on this repository across several Claude sessions at once. It says
 who owns what, what may not change quietly, and where to find out what everybody else has done.
 
-**Read this file and every sub-project doc. Write only your own.** A session is told which
+**Read this file and your own doc in full; of the others, `## Owns` and `## The job`. Write
+only your own.** A session is told which
 territory it is working in; that grants it the paths listed under that territory and nothing
 else. The one exception is `decisions.md`, which anybody may append to and nobody may edit.
 
@@ -87,8 +88,11 @@ the interface is wrong.* So a query added for one is available to the other by c
 neither gets a private back door.
 
 **3. Information is asymmetric on purpose.** A unit's own exposure is reported exactly; an
-enemy's alarm is reported coarsely. The view must not render a number Core deliberately blurred,
-and Core must not blur a number about your own soldier.
+enemy's alarm is reported coarsely; and what your own soldier holds on an enemy is reported
+exactly too. The principle is *whose knowledge it is*, not what it is about — your side's
+knowledge is yours in both directions, theirs stays coarse in both — see
+[decisions.md](decisions.md) entry 042. The view must not render a number Core deliberately
+blurred, and Core must not blur a number about your own side.
 
 **4. Balance numbers live in exactly nine homes.** `MovementCosts`, `AwarenessModel`,
 `GunneryModel`, `ReactionModel`, `BlastModel`, `CostProfile`, `StanceProfile`, `OverwatchArc`,
@@ -156,7 +160,11 @@ dotnet test
 
 ## Rules of the scheme
 
-1. **Read every doc, write one.** Plus `decisions.md`, which is everybody's.
+1. **Read this file and your own doc in full, the heads of the others, and the open entries in
+   `decisions.md` plus any your brief cites. Write one doc.** A brief is written so that one file
+   is enough; the rest of a neighbour's doc is their working notes, and a resolved entry is
+   history whose outcome is already in the code. Reading everything was the rule while the docs
+   were short, and the log is now the longest file in the repository — see entry 045.
 2. **`decisions.md` is append-only, with one exception: the `Status` field.** Never edit or
    reorder an entry's text; supersede it with a new one. But an entry's Status may be flipped in
    place, naming the entry that resolved it — otherwise the log grows, everything reads as open,

@@ -1704,7 +1704,7 @@ on purpose, and the weapons table reads as though the shot were the louder of th
 ---
 
 ## 038 — The waystation has been fought over: twelve matches, none decided, and a map redrawn from the routes
-**2026-09-08** · **Raised by** content · **For** core, view and master · **Status** open (core's half); the map is redrawn and the brief is done
+**2026-09-08** · **Raised by** content · **For** core, view and master · **Status** open (core's half, routed into `core/objectives`); view's half in View's brief and master's by 045; the map is redrawn and the brief is done
 
 Row 2 of entry 036's road. `Commander` on both sides, the sandbox's deployments (entry 035),
 sixty rounds or a decision, whichever first. The recorder is
@@ -1942,7 +1942,7 @@ standing rule for a battle nobody gave an objective to.
 ---
 
 ## 042 — Contract 3 has a third case, and it reads exactly
-**2026-09-09** · **Raised by** core · **For** view, master · **Status** resolved
+**2026-09-09** · **Raised by** core · **For** view, master · **Status** resolved — contract 3 in `map.md` says so since 045
 
 Entry 023 asked, and it is in section 07 of the design doc now. Contract 3 named two cases: your
 own exposure, exact; the enemy's alarm, a rung. **What your own soldier holds on an enemy is a
@@ -1999,3 +1999,62 @@ move because a marker is a point and not a slope. The two are the same shape of 
 either end, and the fix for the second is a deeper search rather than another gradient — a marker
 that sloped would send soldiers walking at ghosts from across the map, which is the thing
 `MarkerDecay` exists to prevent.
+
+## 045 — Build order 05 is done end to end, the reading rule has changed, and sessions now say what they were
+**2026-09-09** · **Raised by** master · **For** all · **Status** resolved
+
+Three branches merged since 036 — `content/first-battlefield`, `core/open-window` carrying both
+05a and 05b — and the road to the greybox is now View's and Content's rather than Core's. This
+entry records the routine, and two changes to the scheme that are not routine.
+
+**Routine.** Contract 3 in `map.md` names the third case entry 042 found. Entry 004 is closed by
+040, the oldest open entry in the log and the first API designed for an interface that did not
+yet exist. View's brief no longer
+says reaction placement waits on Core: 040 built the seam, and the brief names `MoveCommitment`,
+`ReactionAction.Nothing`, `WindowAnswer.HandedOut` and `Act` so View reads one file. Content's
+brief inverted: it said the mission file waited on 05b and a second map could go first; 05b
+landed, so the mission file is the job and the second map is after it, and the two sentences
+that said `DemoMaps` still served Core's tests now say 043 let it go. The `deep` ground and the
+`hedge` profile from 038 are in View's brief.
+
+**Not routine, one: the reading rule.** `CLAUDE.md` and `map.md` said read every doc. The docs
+are now 460 KB, the log alone is 135 KB and 44 entries of which five are open, and every new
+session was paying to read the resolved thirty-nine. The rule is now: the map and your own doc in
+full; of the others, `## Owns` and `## The job`; of the log, the open entries and any your brief
+cites; of the design doc, the section the job touches. The briefs were already written to be
+sufficient prompts — `master.md` says so in as many words — so this is the scheme being used as
+designed rather than a change to it. What it costs: a session may miss a neighbour's gotcha that
+would have saved it an hour. The cure is the existing one, an entry, and the brief-writer's job
+of naming what the job depends on gets slightly more important.
+
+**Not routine, two: a `Session:` trailer.** The user asked that each session record, for Master,
+whether it was fresh or continued and what model it ran on, so that the next job can be pointed
+at the cheaper of the two. The model was already in every commit — the harness adds
+`Co-Authored-By: Claude Opus 5` or `Claude Fable 5.1` — and continuity was not recorded
+anywhere. It is now a trailer on the last commit of a branch, `Session: new` or
+`Session: continued, job 3`, and `master.md` has the `git log` format that reads both. A
+trailer rather than a line in a doc because *status is derived*: it cannot go stale, it cannot
+be forgotten to be deleted, and it sits beside the thing it describes.
+
+**The recommendation this round**, so it is written down once and can be checked against the
+next set of trailers. Core has run two jobs on Opus in one session and its next brief continues
+on the same files; keep it. Content has run two on Fable, and its next job is a file format with
+a sufficient brief; start fresh on Opus, because a continued Fable session pays the dearer rate
+on a large context every turn, and a cold start on Opus pays once. View has run one job on Opus
+and its next is in the same files; keep it. Setting is prose with a sufficient brief; Opus,
+fresh or continued as it stands. The greybox, when it comes, is a fresh session on Fable: it
+rewrites `game/` and re-asks the View split.
+
+**The road, restated.** Four rows, and Core is off the critical path for the first time.
+
+| | Territory | What it produces | Waits on |
+|---|---|---|---|
+| 1 | Content | the mission file, and `DemoMaps` deleted | nothing |
+| 2 | View | a capture that can act, and placing your own reactions | nothing |
+| 3 | Setting | the roster | nothing |
+| 4 | Core | the rest of the mission shapes, the clock, and the first measured numbers | nothing, and nothing waits on it for the greybox |
+| 5 | View | the sandbox loads the mission file | 1 |
+| 6 | View | the greybox, build order 06 | 2 and 5 |
+
+Rows 1 to 4 can all start today. The greybox is two View increments away, and the second of them
+is the one that rewrites the directory.

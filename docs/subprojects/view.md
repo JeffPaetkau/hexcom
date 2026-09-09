@@ -58,12 +58,30 @@ of the map and worth allowing for: the sentry outside the west gate is twenty he
 ours start, and a turn is about ten. A scripted approach is two turns of moves before anything
 reacts to anything.
 
-**One other job is waiting on another territory**, with its readout already designed in the audit
-below; what is missing is the query.
+**The second job is no longer waiting on anybody, and it is the next branch — `view/open-window`
+— or this one, if the script and the window are built together, which they may want to be,
+since a scripted capture is how a picture proves a window was answered by hand.** Core built the
+seam entry 022 asked for; entry 040 is the account. `Battle.Commit` returns a `MoveCommitment`
+whose `Window` has its offers made and nothing placed, and the mover has *not stepped* until
+`Battle.Resolve` — so a field drawn while a window is open shows a soldier who has paid for a
+walk it has not taken. Declining is an explicit `ReactionAction.Nothing`, offered to overwatch
+and ambush and deliberately not to surprise. A `Commander` built with `WindowAnswer.HandedOut`
+stops at a window, exposes it as `Waiting`, and carries on from `Resume()`, so the enemy's move
+can be answered by a person. `TakeTurn` returns an `Act` per order with the `MoveOutcome`,
+`ShotOutcome` or `BlastOutcome` beside it, which answers the last open question below — strike
+it. 040 says the commitment rather than the bare window is a small change if View would rather
+have the window; say so in `../decisions.md` rather than working round it.
 
-- **Placing your own reactions**, when Core lands the seam asked for in entry 004 and answered in
-  entry 022: an open `ReactionWindow` whose offers the HUD can list, appraise and let the player
-  pick from before it resolves.
+Three other things landed that this screen has to be able to say, all Core's and all readable:
+
+- **A battle can end because a squad walked out** — entry 041. `Battle.VerdictFor(side)`,
+  `Battle.ObjectiveOf(side)`, `Objective.Brief` for the words, and `Unit.Left` for why somebody
+  is off the field. `IsDecided` is now true when an objective settles however many are standing.
+- **How much is left to learn about a contact may be shown as a figure** — entry 042 closed the
+  contract 3 question, and the audit row that waited on it is a gap rather than blocked.
+- **The waystation changed under the sandbox** — entry 038 lists what moved. `deep` ground and
+  the `hedge` profile are map-declared kit, drawn grey until the view decides how to colour
+  declared kit; entry 035 asked for that decision.
 
 **The waystation is loaded and the attention cone is drawn at its true reach.** Entry 006 is
 closed and entry 035 is the reasoning. What it left behind, so that nobody re-derives it:

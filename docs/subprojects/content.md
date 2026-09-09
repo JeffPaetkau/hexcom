@@ -64,13 +64,50 @@ content.
 
 ---
 
-## The job — a second battlefield, of a different shape
+## The job — the mission file
+
+Branch `content/mission-file`. Row 5 of entry 036's road. It was waiting on one thing, Core
+saying what an objective is, and entry 041 said: `Battle.SetObjective` before `Start`,
+`Withdrawal(side, exits, unnoticed)` taking a collection of exit nodes — a named place, never an
+edge — and `Battle.Extract()` as the free turn action. So the file can be written now, and it
+comes before the second map below because the second map is argued *from* it.
+
+**Where the seam is.** Three copies of one fact, with nothing but an entry keeping them equal —
+entry 038's words. The waystation's header carries the mission in prose, in the mission book's
+six parts. `SandboxScenario` in `game/` holds the deployments to the hex and the facing (entry
+035). `WaystationFight` in the harness deploys the same. The file replaces all three: the
+harness reads it on this branch, and the sandbox reading it is an entry for View.
+
+**What it holds** is the four things entry 030 says a mission needs that a map cannot: where
+each side starts, *with facing*; a named place to end at; the thing to do, as an objective the
+rules have — withdrawal is the one there is, and the file should name the other five the way the
+mission book does so it needs no new format when Core adds them; and when it stops. Plus the
+squads, by name and loadout. Use the sandbox's names now: the roster is Setting's current brief
+and it says adopting them is probably right, and if it renames anybody that is one file.
+
+**Settle before writing much.** Whether it is a block in the `.hexmap` or a file of its own
+that names a map. Entry 024 kept the map to ground on purpose and called a separate file
+plausible; one map carrying two missions is the case that decides it, and the second map below
+is when that case arrives. And whether the same reader parses it, with the same
+primitives-plus-shorthand discipline that made the map format hold up.
+
+**Also on this branch: delete `DemoMaps.cs` and the test that held it equal.** Entry 043 —
+nothing in `tests/` calls it any more, and both remaining pieces are yours.
+
+**Out of scope.** `game/` — the sandbox loading the file is View's, raised in `../decisions.md`.
+New objective kinds are Core's. Names are Setting's.
+
+**How to know it worked.** The harness deploys the waystation from the file and fights it to a
+verdict rather than to a round cap; `DemoMaps.cs` is gone; and the prose header in
+`waystation.hexmap` is either the file itself or has been replaced by it.
+
+---
+
+## After this — a second battlefield, of a different shape
 
 Branch `content/second-battlefield`. The waystation has been fought over (entry 038) and the
-mission file waits on Core saying what an objective is (entry 036, row 5). What Content can do
-without waiting is the thing the mission file will need when it comes: a second map, so that
-the file is argued from two shapes rather than one, and the *one size or a range* question
-below gets a second data point.
+mission file exists. A second map, so that the file is argued from two shapes rather than one,
+and the *one size or a range* question below gets a second data point.
 
 **Where the seam is.** `content/README.md` is the format; `waystation.hexmap` is the worked
 example, forty-five statements plus a header that carries a mission in the mission book's six parts.
@@ -97,13 +134,13 @@ is the map's: a firing lane where a street was meant, a crossing nobody uses bec
 easier one.
 
 **Settle before drawing much.** Whether the compound goes. It is the demo map, radius 6,
-everything in earshot of everything (entry 030), and `DemoMaps.cs` still mirrors it for Core's
-tests (entry 024). A second map at the right size that carries the withdrawal mission would make
+everything in earshot of everything (entry 030), and `DemoMaps.cs` is gone (entry 043). A
+second map at the right size that carries the withdrawal mission would make
 the compound the third map and the only one too small to fight on. Do not delete it — the view's
 captures diff against it — but say in `../decisions.md` whether it is a map or a fixture.
 
-**Out of scope.** The mission file itself, until 05b. Balance findings that need a match to end
-— there is no ending yet. Anything in `game/`: the sandbox opens whatever `SandboxScenario` names,
+**Out of scope.** Balance findings that need a match to end on a fight rather than an objective —
+entry 038 measured that none does. Anything in `game/`: the sandbox opens whatever `SandboxScenario` names,
 and offering it the new map is an entry for View, with the deployments written out the way
 entry 038 wrote the waystation's.
 

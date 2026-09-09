@@ -19,9 +19,19 @@ Then read the doc for the territory you have been told you are working in:
 | [docs/subprojects/setting.md](docs/subprojects/setting.md) | the fiction — `docs/setting.md`, downstream of the mechanics |
 | [docs/subprojects/master.md](docs/subprojects/master.md) | the map, the log and the briefs — writes no code, works on `master` |
 
-**Read all of them, write only yours.** The one exception is
-[docs/decisions.md](docs/decisions.md), which any session may append to and none may edit — that
-is where a finding about somebody else's territory goes instead of into their code.
+**Read `docs/map.md` and your own doc in full. Of the other docs, read `## Owns` and
+`## The job` and stop** — a brief is written so that reading one file is enough, and the rest
+of a neighbour's doc is their working notes. Of [docs/decisions.md](docs/decisions.md), read the
+entries your brief cites and the ones still open; a resolved entry is history whose outcome is
+already in the code and the docs. This lists the open ones:
+
+```bash
+grep -n "Status\*\* open" docs/decisions.md
+```
+
+**Write only yours.** The one exception is `docs/decisions.md`, which any session may append to
+and none may edit — that is where a finding about somebody else's territory goes instead of into
+their code.
 
 If you have not been told which territory you are in, ask before editing.
 
@@ -68,6 +78,19 @@ which is exactly why nobody else has to.
 **Cleaning up.** Finish the increment as usual — tests green, docs updated, committed — then push
 the branch and say it is ready to merge.
 
+**The last commit on the branch carries a `Session:` trailer**, on its own line at the end of
+the message beside the `Co-Authored-By` one the harness adds:
+
+```
+Session: new
+Session: continued, job 3
+```
+
+*New* means this session started for this job; *continued, job N* means it was already running
+and this is its Nth. The model is already in the `Co-Authored-By` trailer, so do not repeat it.
+Master reads both from `git log` to say what the next job should run on — which is why this is a
+trailer and not a line in a doc: it is derived, and it cannot go stale.
+
 **Remove your own worktree once your branch is merged**, with `ExitWorktree` and
 `action: "remove"`. Being merged is the safety gate and it enforces itself: the tool refuses
 while commits are not on the original branch, and once they are there is nothing left to lose.
@@ -111,8 +134,10 @@ claiming anything about the sandbox either way.
 
 The design doc is published as an Artifact at
 https://claude.ai/code/artifact/f7a71d6e-e493-43d7-88f7-bd569d06e201 and is republished from
-`docs/design.html` after each increment. Read it before proposing design changes; it records why
-things are the way they are, and which questions are still open.
+`docs/design.html` after each increment. Read the section your job touches before changing what
+it describes, and read it before proposing design changes; it records why things are the way they
+are, and which questions are still open. It is long, and a session that reads all of it to change
+one rule has spent its budget on the wrong thing.
 
 **Only the core territory republishes it.** One URL and several sessions is a conflict waiting to
 happen.

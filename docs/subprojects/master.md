@@ -59,6 +59,13 @@ dotnet test                # whether it works
 
 Per territory: `git log --oneline -20 -- <its owned paths>`, from the table in `map.md`.
 
+What each increment was run on — the model from the `Co-Authored-By` trailer the harness adds,
+and whether the session was fresh or continued from the `Session:` trailer `CLAUDE.md` asks for:
+
+```bash
+git log --format='%h %s%n   %(trailers:key=Co-Authored-By,valueonly)%(trailers:key=Session,valueonly)' -20
+```
+
 A territory is **in progress** if it has a branch or a worktree; **ready** if its doc's
 `## The job` section describes work nothing blocks; **blocked** if the `Gated by` column names
 something that has not happened yet. There is no fourth state that means anything.
@@ -125,6 +132,30 @@ A brief goes in the territory's doc under `## The job`, and it is written so tha
 
 A brief is a work order, not a status line: what to do, never how far along somebody got. That
 distinction is the whole reason the doc set does not rot.
+
+### 5. Say what to run the next job on
+
+Asked for by the user, because the tokens are the budget. For each territory with a brief ready,
+two recommendations: **keep the running session or start a fresh one**, and **which model** —
+Opus 5 or Fable 5.1. They interact, and the reasoning is in the entry 045; the short form:
+
+- **A fresh session costs its reading.** With the reading rule in `CLAUDE.md` that is the map,
+  one doc in full, four heads, the open entries and the section of the design doc the job
+  touches — tens of thousands of tokens, once. A continued session costs its accumulated
+  context on every turn, and the context only grows. So a session pays to continue *per turn*
+  and pays to restart *once*: continue when the next job is on the same files and the session
+  has done one or two jobs; restart when it has done three, or when the job changes shape.
+- **Opus for a brief that says what to build; Fable for a job that has to decide what the brief
+  should have said.** The briefs are written to be sufficient prompts, and most jobs are the
+  first kind. The second kind is the greybox — it rewrites `game/` and is the moment `map.md`
+  says to look at the View split again — and anything on the AI's search, where the last four
+  entries from real ground are all about what a one-step search does wrong.
+- **Never restart to change model if the job is one turn from done.** The cold start is the
+  whole cost, and a session at its last turn has already paid its context.
+
+Read the trailers off `git log` (section 1 above) before saying any of this; the trailers are
+the only record of what a session was, and they are the reason the recommendation can be
+derived rather than remembered.
 
 ---
 
