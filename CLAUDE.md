@@ -46,10 +46,33 @@ Three things about how it behaves here:
   `dotnet test` in a new worktree is slow and the rest are normal. Packages come from the global
   cache, so nothing is re-downloaded.
 
+**Mind your own worktree and no one else's.** Do not list, inspect, reference or reason about
+another territory's worktree or branch, and never touch one. Not in your code, not in your doc,
+not in a commit message, not a `git worktree list` to see who else is about.
+
+Another territory's branch is in flight by definition, so anything you write about it is a guess
+that goes stale before it is read — and it is status about somebody else, which is the worst kind
+there is. Three sentences saying *the turn planner being built now* survived into two permanent
+entries and a doc, and every one of them outlived the branch it described.
+
+**So refer to work by what it produced, never by who is producing it.** A merged capability, a
+type you can call, an entry number in `docs/decisions.md`: those are checkable, and they stay
+true. "Being built now" is not, and it is never necessary — if you need something that does not
+exist yet, the entry saying so is the reference.
+
+Master is the exception. It works across all the territories and worries about all the worktrees,
+which is exactly why nobody else has to.
+
 **Cleaning up.** Finish the increment as usual — tests green, docs updated, committed — then push
-the branch and say it is ready to merge. **Do not remove a worktree yourself.** Removing one with
-commits that are not on `master` throws work away, so exiting and removing is the user's call:
-offer it once the branch is merged, and leave it alone otherwise.
+the branch and say it is ready to merge.
+
+**Remove your own worktree once your branch is merged**, with `ExitWorktree` and
+`action: "remove"`. Being merged is the safety gate and it enforces itself: the tool refuses
+while commits are not on the original branch, and once they are there is nothing left to lose.
+
+If the merge has not happened by the time you finish, push, say the branch is ready, and **leave
+the worktree alone** — never force it, and never remove one you did not create. Master clears the
+stragglers.
 
 ## The one rule
 

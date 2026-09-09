@@ -74,6 +74,11 @@ The things that rot, in the order they rot:
   that finishes a job is supposed to replace its brief with the next one; assume it did not.
 - **Territories with no doc that now need one.** A doc is created when there is a brief to put in
   it. When a gate lifts, the territory behind it usually needs one the same day.
+- **Worktrees nobody is coming back to.** Rule 6 says a territory minds its own and removes it
+  once merged, which means the ones left over are the ones whose session ended before the merge —
+  and by construction nobody but Master is allowed to look at them. `git worktree list` against
+  `git branch --merged master`: anything merged and still on disk is yours to remove, and
+  anything unmerged is somebody's unfinished work, so ask before touching it.
 - **Checkable claims in `CLAUDE.md`.** Every section of it that describes the present is a status
   line wearing a disguise, and it is the one file no territory session may correct — so it rots
   unopposed, in front of the widest readership. It told every new session for weeks that Godot

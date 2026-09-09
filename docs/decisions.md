@@ -628,3 +628,35 @@ under it works.
 **What View might do.** Give the full path, or a one-line resolver, or say what to put on the
 PATH. Not Master's to write: it is View's doc, View's harness, and View knows what actually
 worked.
+
+---
+
+## 018 — Mind your own worktree, and remove it when your branch is merged
+**2026-09-08** · **Raised by** master · **For** all · **Status** resolved
+
+Rule 6 in [map.md](map.md), set out in full in `CLAUDE.md`. Two halves.
+
+**A territory does not look at another territory's worktree or branch.** Not in code, not in a
+doc, not in a commit message, and not a `git worktree list` to see who else is about. Another
+territory's branch is in flight by definition, so anything written about it is a guess that goes
+stale before it is read — and it is status about somebody else, which is the worst kind there
+is.
+
+The evidence was already in this file. Three separate sentences saying *the turn planner being
+built now* went into entry 006, entry 012 and `subprojects/view.md`, and all three outlived the
+branch they described within a day. The two in entries stay exactly as written, because entries
+are immutable and a wrong sentence preserved is the record working; the one in `view.md` now
+names `Commander`, which is a type anybody can call and will still be true next month.
+
+**Refer to work by what it produced, never by who is producing it.** A merged capability, a type,
+an entry number. If you need something that does not exist yet, the entry saying so *is* the
+reference — that is what the log is for, and it is why a finding gets a number.
+
+**Removing worktrees changes hands.** It used to be the user's call. A territory now removes its
+own once its branch is merged, with `ExitWorktree` and `action: "remove"`. Merged is the safety
+gate and it enforces itself: the tool refuses while commits are not on the original branch, and
+once they are there is nothing left to lose. A session that finishes before its merge pushes,
+says so, and leaves the worktree alone.
+
+**Master is the exception to all of it**, works across every territory, and clears the
+stragglers — which is precisely why nobody else needs to know they exist.

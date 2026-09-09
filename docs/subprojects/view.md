@@ -146,7 +146,7 @@ noticed the two were separate problems.
 
 Shouting is the odd row. `Tactician.AppraiseWord` scores it, `ReactionAction.Shout` uses it in a
 window, and there is no `Battle` action that lets anybody do it on their own turn — so the
-interface cannot offer it and the turn planner being built now cannot generate it. Entry 012.
+interface cannot offer it and `Commander` cannot generate it. Entry 012.
 
 ### Spent — what it costs
 

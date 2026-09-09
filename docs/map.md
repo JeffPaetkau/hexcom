@@ -163,7 +163,11 @@ dotnet test
    These docs stop sessions colliding *semantically*; they do nothing about two sessions writing
    the same file in the same directory. Only a worktree does that. Master sessions editing this
    file stay on `master`.
-6. **Say when it is a good moment to start a new session.** The rhythm in `CLAUDE.md` applies per
+6. **Mind your own worktree and no one else's**, and remove it once your branch is merged. Do not
+   list, inspect, reference or reason about another territory's worktree or branch — refer to
+   work by what it produced, never by who is producing it. Anything else is status about somebody
+   else, stale before it is read. Master is the exception and worries about all of them.
+7. **Say when it is a good moment to start a new session.** The rhythm in `CLAUDE.md` applies per
    territory: a territory is at a clean point when its own doc, its tests and its commits agree,
    and nothing decided in conversation is still only in the conversation.
 
