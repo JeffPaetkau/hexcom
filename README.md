@@ -354,9 +354,21 @@ shot went off on and where the target was standing when it landed.
   `enclose`, `breach` — expands to those three, and a writer lowers any map back to them so the
   shorthand can be shown to add nothing. The demo compound is thirteen statements and comes out
   identical to the version built in C#; the first map at the size the ranges need, 85 m across
-  and eighteen hundred tiles, is forty. A map brings its own wall profiles and ground types
+  and eighteen hundred tiles, is forty-five. A map brings its own wall profiles and ground types
   if it wants them. `content/README.md` is the reference. The sandbox reads its maps this way and
   no other, so what the game draws and what a headless test loads are the same file.
+
+- **The waystation has been fought over** — by the AI on both sides, a dozen seeds, headless,
+  with a recorder in `content/Hexcom.Content.Tests/Waystation` that writes down where everybody
+  went, who threw what at which piece of ground, and the highest rung each hostile ever reached
+  about each of ours. The map was redrawn from what the routes said: a tree line so the west road
+  is a queue and the fields an approach, a stream too deep to wade so the bridge and the ford are
+  the crossings, and sandbags at the gate the sentry stands at. The map's header now carries the
+  mission in the shape the mission book gives a briefing — where you start and which way you
+  face, a named place to leave by, the task, and what ends it. What the matches measured is in
+  `docs/decisions.md` from entry 037; the short version is that the fighting is over in twenty
+  rounds and nothing ends the battle after it, which is the objective system's job and not the
+  map's.
 
 ## What is not built yet
 

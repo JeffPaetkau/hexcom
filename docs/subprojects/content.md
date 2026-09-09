@@ -64,61 +64,52 @@ content.
 
 ---
 
-## The job — a battlefield to fight over, and the numbers it tests
+## The job — a second battlefield, of a different shape
 
-Branch `content/first-battlefield`. The format exists and the first map at the right size exists;
-neither has had a shot fired on it. This job is the first use of both.
+Branch `content/second-battlefield`. The waystation has been fought over (entry 038) and the
+mission file waits on Core saying what an objective is (entry 036, row 5). What Content can do
+without waiting is the thing the mission file will need when it comes: a second map, so that
+the file is argued from two shapes rather than one, and the *one size or a range* question
+below gets a second data point.
 
-**Where the seam is.** `content/maps/waystation.hexmap` is radius 24 — 85 m across, 1801 ground
-tiles — which is the size entry 007 asked for so that a rifle's 55 m and a sentry's 45 m have
-room to differ. It was drawn to show the format scales, not to be fought over, and it shows: a
-crossroads with a compound, a barn, cottages, a ridge, a tower and two woods, laid out by
-eye. `Commander` (entry 009) drives both sides headless, and `tests/` already shows the shape of
-a skirmish test on a disc. Nothing has ever been run on ground with buildings in it.
+**Where the seam is.** `content/README.md` is the format; `waystation.hexmap` is the worked
+example, forty-five statements plus a header that carries a mission in the mission book's six parts.
+`content/Hexcom.Content.Tests/Waystation` is the harness: `WaystationFight` deploys, `MatchRecorder`
+runs `Commander` against itself and writes down routes, throws, casualties, alarm peaks and
+pacing, and `HEXCOM_SEEDS`, `HEXCOM_SEED_FROM`, `HEXCOM_ROUNDS` and `HEXCOM_TRANSCRIPT` steer it.
+Copy the shape for the new map; the recorder is not waystation-specific except for its
+landmarks, which want generalising when a second map needs them.
 
-**What to do.**
+**What to draw.** The waystation is open ground with things on it, and the mission book's six
+shapes want the other kind too: somewhere built-up and tight, where sight lines are short,
+every wall is a building face, and the way in that is not the way everybody uses is a roof or a
+duct rather than a ford. Radius 12 to 16 rather than 24 — that is the size question being asked
+on purpose, since entry 007's figure was reasoned from the ranges and a town blocks the ranges.
+Give it the four things a mission needs in its header, the way the waystation has them. Reuse
+the built-in profiles; if it needs a new one, remember entry 035 — a map that brings its own
+kit brings no colour with it, and the view wants a line in `../decisions.md`.
 
-1. **Give the waystation a reason.** Two deployments and an objective, in prose in the file's
-   header for now — where each side starts, which way they face, what they are there for. Entry
-   030 says what a mission needs that a map cannot hold, and the header should say those four
-   things: somewhere to start *with facing*, somewhere to end that is a named place and not an
-   edge, something to do, and when it stops. A scenario format is an open question below and is
-   *not* this job; the sandbox gathers its deployments in `SandboxScenario` and `view.md` says
-   the move to a file is a deletion when there is one. Argue for the rewrite when there is a
-   second map that needs it.
-2. **Run the AI over it, and look at the routes.** Both sides `Commander`, a dozen seeds. The
-   thing to read off is not who wins but *where the fighting happens*: whether anybody uses the
-   drain, whether the ridge is worth the climb, whether the woods hide anything at 45 m. A
-   headless match is a second or two on a radius-16 disc (`core.md`); measure it here, because
-   this is five times the ground and the search is over reachable sets. If it is unusable that
-   is an entry for Core, with the number.
-3. **Redraw the map from what the routes say.** This is the level design the format was built to
-   make possible. The map is forty statements; changing it is meant to be cheaper than arguing
-   about it.
-4. **Then, and only then, write down the first balance findings** — as entries in
-   `../decisions.md`, one number each, with the match that showed it. Every figure in the game is
-   an argument rather than a measurement; this is the first place a measurement can come from,
-   and the whole of the balance-numbers question below turns on there being some.
+**Fight it before calling it done.** A dozen seeds through the harness, and read the routes
+the way entry 038 did. Expect the same two findings — nothing decided, the tower-and-barn
+stillness wherever a soldier starts out of view — and do not redraw around them, because they
+are Core's (entries 038 and 039) and a map cannot fix a search. Do redraw around anything that
+is the map's: a firing lane where a street was meant, a crossing nobody uses because there is an
+easier one.
 
-**Decide before writing much:** what a match on this map *ends* on. The rules end when one side is
-down, which on 85 m of ground with an AI that only fights what it can see may take a very long
-time or never. A turn cap is the obvious answer and it is a balance number, so if you need one it
-goes in `../decisions.md` for Core, not in a test.
+**Settle before drawing much.** Whether the compound goes. It is the demo map, radius 6,
+everything in earshot of everything (entry 030), and `DemoMaps.cs` still mirrors it for Core's
+tests (entry 024). A second map at the right size that carries the withdrawal mission would make
+the compound the third map and the only one too small to fight on. Do not delete it — the view's
+captures diff against it — but say in `../decisions.md` whether it is a map or a fixture.
 
-**Two things the sandbox learned drawing this map, for whoever redraws it — entry 035.** The
-ridge is reachable in one turn only at its eastern foot, because the 1.5 m step is a climb
-everywhere else and the one cut path at `-8,-6` is well forward; a good shape, and not obvious
-from the file. And a profile a map declares for itself is drawn grey: `BattleView.StyleFor`
-switches on well-known ids, so a map that brings its own kit brings no colour with it, and the
-next invented profile is a line in `../decisions.md` for View.
+**Out of scope.** The mission file itself, until 05b. Balance findings that need a match to end
+— there is no ending yet. Anything in `game/`: the sandbox opens whatever `SandboxScenario` names,
+and offering it the new map is an entry for View, with the deployments written out the way
+entry 038 wrote the waystation's.
 
-**Out of scope.** The sandbox already opens on the waystation through `MapLibrary.Load` (entry
-035). Deleting `DemoMaps.cs` waits on Core's tests not calling it (entry 024); a deployment
-format is open below.
-
-**How to know it worked.** A map file with a header that says what the fight is, a test that runs
-a match on it to a decision, and at least one entry in `../decisions.md` that says a number was
-*measured* to be wrong — or measured to be right, which counts.
+**How to know it worked.** A second `.hexmap` with a mission header, a harness that fights it,
+a note in `../decisions.md` on what its size did to the ranges that the waystation's did not,
+and the *one size or a range* question below either answered or sharpened.
 
 ---
 
@@ -126,9 +117,12 @@ a match on it to a decision, and at least one entry in `../decisions.md` that sa
 
 **How big is a map?** Entry 007 settled the *scale*: radius 20 to 30, 70 to 105 m, one to three
 thousand tiles, if the ranges are right. The waystation is radius 24 and the format takes it in
-forty statements, so size is no longer a cost. What is still open is whether that is one map size or
-a range of them, and what a mission needs beyond ground — deployment zones, objectives, an edge
-to leave by. Nothing has been played at this size.
+under fifty statements, so size is no longer a cost, and it has now been fought on (entry 038):
+at that size a rifle engages at 35 to 38 m before anybody on the other side is past `Unaware`,
+a firefight at the gate is silent in the barn 24 m away (entry 037), and the far half of the map
+is never visited because nothing sends anybody there. What is still open is whether that is one
+map size or a range of them — the brief above asks for a tight one on purpose — and what a
+mission needs beyond ground, which entry 030 has answered in prose and no file yet holds.
 
 **What is a scenario file?** The map format deliberately holds ground and walls and nothing
 else. Who starts where, facing which way, with what, and what winning means are not in it, and
@@ -151,9 +145,13 @@ would also weaken the "eight homes" rule that currently keeps magic numbers out 
 bodies, so it is not obviously correct. The map format shows the shape the answer would take:
 `profile` and `ground` are content declaring kit against a shape Core owns.
 
-**Nothing has been measured.** Every number in the game is set by reasoning, because there is
-nobody to play against yet. The AI is what turns these arguments into findings, and the job
-above is the first time it is pointed at ground this territory drew.
+**Almost nothing has been measured, and here is what has.** Every number in the game was set by
+reasoning; the waystation harness is the first thing to check any of them against a match, and
+what it found is in entries 037 to 039: a rifle is heard at 18 m against a design that says a
+hundred, a turn's walk on gravel is heard further than a shot, no match ends, the AI throws
+every charge at the first crater and paces between two tiles on a shot it never takes. Nothing
+was measured to be *right* yet, which is the more interesting half and needs a match that can
+end. A dozen seeds is nine minutes; the harness is there for whoever has a number to test.
 
 ## Recent work
 
