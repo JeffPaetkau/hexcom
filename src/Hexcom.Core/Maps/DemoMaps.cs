@@ -3,9 +3,16 @@ using Hexcom.Core.Hexes;
 namespace Hexcom.Core.Maps;
 
 /// <summary>
-/// Hand-built maps for greyboxing and tests. Content, not rules — delete freely once there is
-/// a real map format.
+/// Hand-built maps for greyboxing and tests. Content, not rules.
 /// </summary>
+/// <remarks>
+/// There is a real map format now, and this map lives in it as <c>content/maps/compound.hexmap</c>,
+/// where <c>MapLibrary.Load("compound")</c> returns the same tiles, walls and links this method
+/// builds. A test in <c>content/Hexcom.Content.Tests</c> holds the two identical. This copy stays
+/// only because the core tests and the sandbox still call it; once they load the file instead
+/// it goes — see <c>docs/decisions.md</c> entry 024. Until then, a change here is a change to
+/// the file too, or that test will say so.
+/// </remarks>
 public static class DemoMaps
 {
     /// <summary>
