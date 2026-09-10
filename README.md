@@ -90,11 +90,13 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario 
 That one walks Orsini across the front of a rifleman holding an arc, and the picture reports
 what he did about it: *t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0*.
 
-The sandbox runs a seven-unit skirmish over `content/maps/waystation.hexmap`, drawn flat — three
-of yours on the west road against a garrison holding the crossroads, one on the house roof with
-the radio and one in the watchtower. `--scenario compound` opens the older and much smaller
-fight instead: two of yours outside a walled compound against three inside it. Both maps are read
-from `content/`, by name.
+The sandbox fights `content/missions/waystation.hexmission`, drawn flat — three of yours on the
+west road against a garrison holding the crossroads, one on the house roof with the radio and one
+in the watchtower. The map, who stands where facing which way, the way off, the objective and the
+clock all come out of that one file; nothing about the waystation is written down in the game
+code. `--scenario compound` opens the older and much smaller fight instead: two of yours outside a
+walled compound against three inside it, on a map with no mission, deployed by hand — the fixture
+every capture is diffed against.
 
 | | |
 |---|---|
@@ -112,6 +114,7 @@ from `content/`, by name.
 | `A` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
 | `H` | hand the hostile side to the AI for every turn, or take it back |
 | `W` | answer reaction windows by hand rather than taking the recommendation |
+| `M` | the full briefing, in the six parts the squad was given it |
 | tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
 | `R` | new battle |
 | wheel, `+` / `-` | zoom |
@@ -186,13 +189,19 @@ would never show; the sandbox shows it because an AI can only be checked by some
 what it thought. A soldier that can see nobody does nothing, and the block says so — that is the
 current limit of the AI, not a fault in the display.
 
-**There is something to win.** The waystation carries the mission its own map header describes:
-go in, look at what is in the house, and come out by the cottages without anybody properly
-registering you. The exit is drawn on the map, `T` walks a soldier standing on it off the field,
-and the top line says what the orders are and how they are going. Losing a man usually costs the
-mission rather than being counted as a loss of its own, because what is judged is the highest
-rung any enemy held on each soldier as they left — which is the right way round for a squad whose
-orders were to go unnoticed.
+**There is something to win.** The waystation's mission file says it: go in, look at what is in
+the house, and come out by the cottages without anybody properly registering you. The task is on
+the top line, `M` shows the whole briefing in the six parts the squad was given it, the exit and
+the named ground are drawn on the map, and `T` walks a soldier standing on the exit off the
+field. The file also carries a clock — thirty rounds, before first light — which the sandbox
+applies and counts down in the status line, because the rules have no clock of their own yet.
+
+Losing a man usually costs the mission rather than being counted as a loss of its own, because
+what is judged is the highest rung any enemy held on each soldier as they left, which is the
+right way round for a squad whose orders were to go unnoticed. Hand both sides to the AI and
+watch it settle in five rounds: the squad walks straight to the cottages and out, unnoticed and
+achieved, without going near the compound the task is about. That is not a bug in the loader. It
+is what a squad told only how to leave will do, and the missing half is in the design doc.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry and watch it stay unaware while the same walk
@@ -449,7 +458,8 @@ Press `W` first and you get to answer any of those by hand rather than watch the
   the squads and the briefing, in the six parts the mission book gives one. `Mission.Begin(seed)`
   hands back a battle deployed, ordered and started. It is a separate file rather than a block in
   the map because ground outlives missions and one battlefield can carry several of them, and the
-  reasoning is in `content/README.md`.
+  reasoning is in `content/README.md`. The sandbox fights from it too, so what you play and what
+  a headless match measures are the same seven soldiers standing in the same places.
 
 - **The waystation has been fought over** — by the AI on both sides, a dozen seeds, headless,
   with a recorder in `content/Hexcom.Content.Tests/Waystation` that writes down where everybody

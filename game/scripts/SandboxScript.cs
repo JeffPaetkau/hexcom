@@ -66,7 +66,7 @@ public sealed class SandboxScript
     /// <summary>Steps that take no argument, so the next word is not swallowed as one.</summary>
     private static readonly HashSet<string> Bare =
     [
-        "--fit", "--arm", "--extract", "--resolve", "--ai-turn",
+        "--fit", "--arm", "--extract", "--resolve", "--ai-turn", "--brief",
     ];
 
     private SandboxScript(IReadOnlyList<SandboxStep> steps) => Steps = steps;

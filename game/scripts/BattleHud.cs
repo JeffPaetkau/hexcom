@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Hexcom.Content;
 using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
@@ -97,15 +98,17 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
             $"{frame.Scenario.Name}    {frame.Scenario.Situation}    {battle.Map.Tiles.Count} tiles"
                 + (frame.TileDetail ? "" : "    zoomed out: tile detail off")
                 + (frame.AnswerByHand ? "    reactions: by hand" : ""),
-            MissionLine(frame),
-            active is null
-                ? $"round {battle.Round}    nobody left to act    {hostiles}"
-                : $"round {battle.Round}    {active.Name} ({active.Side})    "
+        };
+        lines.AddRange(MissionLines(frame));
+        lines.Add(
+            active is null || frame.OutOfTime
+                ? $"{Clock(frame)}    {(frame.OutOfTime ? "out of time" : "nobody left to act")}    {hostiles}"
+                : $"{Clock(frame)}    {active.Name} ({active.Side})    "
                   + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
                   + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}    "
-                  + $"{WeaponLine(active)}    {hostiles}",
-            active is null ? "" : AlarmLine(frame, active),
-        };
+                  + $"{WeaponLine(active)}    {hostiles}");
+        lines.Add(active is null ? "" : AlarmLine(frame, active));
+
         if (active is not null)
         {
             lines.AddRange(SeenLines(frame, active));
@@ -155,7 +158,8 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         lines.RemoveAll(line => line.Length == 0);
 
         var next = DrawBlockAbove(viewport.Y - 22 - LineHeight - 14, lines);
-        DrawBlockAbove(next, WindowLines(frame), SandboxPalette.OverwatchHue);
+        next = DrawBlockAbove(next, WindowLines(frame), SandboxPalette.OverwatchHue);
+        DrawBlockAbove(next, BriefingLines(frame), SandboxPalette.TextDim);
     }
 
     /// <summary>
@@ -261,7 +265,7 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         const string keys =
             "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
             + "V: overwatch arc    B: arm/spring ambush    S: call it in    T: leave the field    Q/E: layer    "
-            + "A: AI takes this turn    H: hostiles to AI    W: answer windows by hand    R: new battle    "
+            + "A: AI takes this turn    H: hostiles to AI    W: answer windows by hand    M: briefing    R: new battle    "
             + "wheel/+-: zoom    drag or arrows: pan    F: whole map    G: whoever is up";
 
         var at = Origin + new Vector2(18, viewport.Y - 22);
@@ -297,6 +301,19 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     }
 
     /// <summary>
+    /// The round, against the mission's own limit where there is one.
+    /// </summary>
+    /// <remarks>
+    /// A fraction rather than a bare count whenever the file carries a clock, because a limit
+    /// nobody can see is a limit that arrives as a surprise — and the sandbox is the thing
+    /// applying it, since the rules have none of their own. Entry 047.
+    /// </remarks>
+    private static string Clock(SandboxFrame frame)
+        => frame.Mission?.Rounds is { } limit
+            ? $"round {frame.Battle.Round}/{limit}"
+            : $"round {frame.Battle.Round}";
+
+    /// <summary>
     /// What our side came to do, how it is going, and who is off the field.
     /// </summary>
     /// <remarks>
@@ -317,20 +334,92 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// theirs to know; there is no line here for it and there should not be one.
     /// </para>
     /// </remarks>
-    private static string MissionLine(SandboxFrame frame)
+    private static IEnumerable<string> MissionLines(SandboxFrame frame)
     {
         var battle = frame.Battle;
-        if (battle.ObjectiveOf(Side.Player) is not { } objective) return "";
+        if (battle.ObjectiveOf(Side.Player) is not { } objective) yield break;
+
+        // The task, in the words the squad was given, and the rule the same thing turns into.
+        // A mission file has six briefing parts and only one of them is a sentence about what to
+        // do this turn; the other five are read once and are behind M. Where there is no file —
+        // the compound fixture — the rule's own summary is all there is to say.
+        var task = frame.Mission is { } mission ? mission.Brief.Task : objective.Brief;
 
         var verdict = battle.VerdictFor(Side.Player);
+        yield return $"mission: {task}    {verdict.ToString().ToUpperInvariant()}";
+
+        // One line each. A withdrawal ends with everybody off the field, so the case where this
+        // matters most is the case where there are most of them, and joined into the line above
+        // they ran under the turn-order strip on the first mission anybody actually won.
         var gone = battle.Units
             .Where(u => u.Side == Side.Player && u.Left is not null)
-            .Select(u => $"{u.Name} {u.Left!.Kind.ToString().ToLowerInvariant()} "
-                         + $"round {u.Left.Round}, they had {u.Left.Noticed.ToString().ToUpperInvariant()}")
+            .OrderBy(u => u.Left!.Round)
+            .Select(u => $"{u.Name} {u.Left!.Kind.ToString().ToLowerInvariant()} in round {u.Left.Round}, "
+                         + $"they had {u.Left.Noticed.ToString().ToUpperInvariant()}")
             .ToList();
 
-        return $"mission: {objective.Brief}    {verdict.ToString().ToUpperInvariant()}"
-               + (gone.Count == 0 ? "" : "    off the field: " + string.Join("  ·  ", gone));
+        if (gone.Count == 0) yield break;
+        if (gone.Count == 1) { yield return $"off the field: {gone[0]}"; yield break; }
+
+        yield return "off the field:";
+        foreach (var who in gone) yield return "    " + who;
+    }
+
+    /// <summary>
+    /// The six parts of the briefing, as the squad was given them.
+    /// </summary>
+    /// <remarks>
+    /// Behind a key rather than on screen, and that is the interface decision this readout is.
+    /// The mission book's six parts are what a squad is told <em>before</em> it goes: the
+    /// instrument it is filed under, what is thought to be there, the task, the restraint, the
+    /// way off, and what ends it short. Exactly one of them — the task — is a sentence about what
+    /// to do next, and it is the one on the status line. The other five are context a player
+    /// reads once and refers back to, which is a page and not a line.
+    /// <para>
+    /// Printed in the file's own words rather than in the rules'. <c>Objective.Brief</c> says
+    /// <em>leave by the exit with nobody above Suspicious</em>, which is what the rules judge;
+    /// the briefing says not to be seen and not to fire and that the people in the cottages are
+    /// not part of this, which is what the squad was actually told. Entry 048 is precisely the
+    /// gap between those two, so showing both and keeping them apart is the honest thing.
+    /// </para>
+    /// </remarks>
+    private static IReadOnlyList<string> BriefingLines(SandboxFrame frame)
+    {
+        if (!frame.Briefing || frame.Mission is not { } mission) return [];
+
+        var lines = new List<string> { $"BRIEFING — {mission.Name ?? mission.MapName}    M to put it away" };
+
+        foreach (var part in Briefing.Order)
+        {
+            var label = part.ToString().ToLowerInvariant();
+            foreach (var (text, i) in Wrap(mission.Brief.Part(part), 108).Select((t, i) => (t, i)))
+                lines.Add($"  {(i == 0 ? label.PadRight(11) : new string(' ', 11))}  {text}");
+        }
+
+        if (mission.Rounds is { } rounds)
+            lines.Add($"  {"clock".PadRight(11)}  {rounds} rounds, applied by the sandbox because the rules have no clock");
+
+        return lines;
+    }
+
+    /// <summary>Break a paragraph on word boundaries, because a briefing part is prose.</summary>
+    private static IEnumerable<string> Wrap(string text, int width)
+    {
+        var line = new System.Text.StringBuilder();
+
+        foreach (var word in text.Split(' ', System.StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (line.Length > 0 && line.Length + 1 + word.Length > width)
+            {
+                yield return line.ToString();
+                line.Clear();
+            }
+
+            if (line.Length > 0) line.Append(' ');
+            line.Append(word);
+        }
+
+        if (line.Length > 0) yield return line.ToString();
     }
 
     /// <summary>

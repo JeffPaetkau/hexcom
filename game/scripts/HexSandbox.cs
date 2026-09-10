@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Hexcom.Content;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
@@ -123,8 +124,33 @@ public partial class HexSandbox : Node2D
     /// </remarks>
     private ReactionWindow? Open => _committed?.Window ?? _handed?.Waiting;
 
+    /// <summary>The mission this battle is, or null for a bare map with people put on it here.</summary>
+    private Mission? _mission;
+
+    /// <summary>Whether the full six-part briefing is on screen.</summary>
+    private bool _briefing;
+
     /// <summary>The turns the AI has taken since a person last did anything. Newest last.</summary>
     private readonly List<TakenTurn> _turns = [];
+
+    /// <summary>
+    /// Whether the mission's own clock has run out.
+    /// </summary>
+    /// <remarks>
+    /// <b>The clock is the sandbox's to apply, and that is not an oversight in either direction.</b>
+    /// A mission file carries a round limit — the waystation's is thirty, *before first light* —
+    /// and nothing in the rules reads it: entry 047 says whatever runs the battle applies it, and
+    /// entry 030 has the missing clock as Core's outstanding work. So this is a view enforcing a
+    /// content figure until there is a rule to enforce it, and the one thing it must not do is
+    /// enforce it quietly.
+    /// <para>
+    /// It stops the turns and it does not invent a verdict. <c>Withdrawal.Judge</c> reads
+    /// <c>Undecided</c> while anybody is still on the field, and that is the honest answer here:
+    /// the squad did not get out, the rules have not settled it, and a sandbox that made up an
+    /// <c>Abandoned</c> would be putting a rule in <c>game/</c>.
+    /// </para>
+    /// </remarks>
+    private bool OutOfTime => _mission?.Rounds is { } limit && _battle.Round > limit;
 
     public override void _Ready()
     {
@@ -151,18 +177,17 @@ public partial class HexSandbox : Node2D
     /// Load the scenario asked for and put everybody on it.
     /// </summary>
     /// <remarks>
-    /// The map comes from <c>content/</c> and the deployments do not, because there is nowhere
-    /// yet to put them. Both are <see cref="SandboxScenario"/>'s problem; this method's job is
-    /// only to hand the rules the metres layout and never the pixels one, which is the single
-    /// mistake this file has actually made. See <see cref="SandboxScale"/>.
+    /// The whole of the waystation — the ground, who stands where facing which way, the objective
+    /// and the clock — comes from <c>content/</c> now, and this method's remaining job is to hand
+    /// the rules the metres layout and never the pixels one, which is the single mistake this
+    /// file has actually made. See <see cref="SandboxScale"/>.
     /// </remarks>
     private void NewBattle()
     {
         _scenario = SandboxScenario.ByName(_capture?.Scenario ?? (Scenario.Length > 0 ? Scenario : null));
 
-        _battle = new Battle(_scenario.LoadMap(), _camera.Scale.World, seed: Seed);
-        _scenario.DeployInto(_battle);
-        _battle.Start();
+        _mission = _scenario.LoadMission();
+        _battle = _scenario.Open(_mission, _camera.Scale.World, Seed);
 
         _auto = _capture?.Automatic ?? false;
         _byHand = _capture?.AnswerWindowsByHand ?? false;
@@ -209,11 +234,12 @@ public partial class HexSandbox : Node2D
     /// </remarks>
     private void Settle(bool keepRecord = false)
     {
-        if (Open is not null) return;
+        if (Open is not null || OutOfTime) return;
         if (!_auto || _battle.Active is not { Side: Side.Hostile }) return;
 
         if (!keepRecord) _turns.Clear();
-        while (_auto && Open is null && !_battle.IsDecided && _battle.Active is { Side: Side.Hostile } unit)
+        while (_auto && Open is null && !OutOfTime && !_battle.IsDecided
+               && _battle.Active is { Side: Side.Hostile } unit)
             TakeTurnWithAi(unit);
     }
 
@@ -322,7 +348,7 @@ public partial class HexSandbox : Node2D
         => new(
             _battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto,
             _scenario, _camera.Visible(GetViewportRect().Size), _camera.ShowsTileDetail,
-            Open, _chooser, _byHand);
+            Open, _chooser, _byHand, _mission, _briefing, OutOfTime);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -492,6 +518,7 @@ public partial class HexSandbox : Node2D
     {
         if (Open is not null) return "a reaction window is open";
         if (!_battle.IsRunning) return "the battle is over";
+        if (OutOfTime) return $"the mission's {_mission!.Rounds} rounds are up";
 
         _battle.EndTurn();
         if (_battle.Active is { } next) _layer = next.Position.Layer;
@@ -640,12 +667,14 @@ public partial class HexSandbox : Node2D
                 // than only where it ended, because "asked for six, took two" is the interesting
                 // half and the picture cannot show it.
                 var done = 0;
-                for (; done < times && _battle.IsRunning && Open is null; done++) EndTurn();
+                for (; done < times && _battle.IsRunning && Open is null && !OutOfTime; done++) EndTurn();
 
-                var where = _battle.Active is { } up ? $"now {up.Name}" : "nobody left to act";
-                return done == times
-                    ? $"passed {done}, {where}"
-                    : $"passed {done} of {times}, {(Open is not null ? "stopped at a window" : where)}";
+                var where = OutOfTime ? $"the mission's {_mission!.Rounds} rounds are up"
+                    : Open is not null ? "stopped at a window"
+                    : _battle.Active is { } up ? $"now {up.Name}"
+                    : "nobody left to act";
+
+                return done == times ? $"passed {done}, {where}" : $"passed {done} of {times}, {where}";
             }
 
             case "--until":
@@ -658,13 +687,16 @@ public partial class HexSandbox : Node2D
                 if (Named(step.Argument) is not { } wanted) return $"no unit called {step.Argument}";
 
                 var passes = 0;
-                while (_battle.Active is { } up && up != wanted && _battle.IsRunning && Open is null && passes < 24)
+                while (_battle.Active is { } up && up != wanted
+                       && _battle.IsRunning && Open is null && !OutOfTime && passes < 24)
                 {
                     EndTurn();
                     passes++;
                 }
 
                 if (Open is not null) return $"stopped at a window after {passes}";
+                if (OutOfTime) return $"the mission's {_mission!.Rounds} rounds ran out after {passes}";
+
                 return _battle.Active == wanted
                     ? $"passed {passes}, now {wanted.Name}"
                     : $"passed {passes} and never reached {wanted.Name}";
@@ -731,6 +763,11 @@ public partial class HexSandbox : Node2D
 
             case "--resolve":
                 return ResolveOpenWindow();
+
+            case "--brief":
+                _briefing = true;
+                QueueRedraw();
+                return _mission is null ? "this scenario has no mission to brief" : "briefing on screen";
 
             case "--hover":
                 if (ParseNode(step.Argument) is not { } at) return "wanted q,r[,layer[,region]]";
@@ -909,6 +946,11 @@ public partial class HexSandbox : Node2D
 
             case Key.T:
                 LeaveTheField();
+                break;
+
+            case Key.M:
+                _briefing = !_briefing;
+                QueueRedraw();
                 break;
 
             case Key.S:
