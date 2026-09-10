@@ -3044,3 +3044,29 @@ values every soldier at their own vitality and nothing else. It wants the same b
 offers. That is right for these rules — an empty window is still a window — and the sandbox skips
 them itself. If a second interface wants the same, the place for it is a flag here rather than
 the same code written twice.
+
+## 063 — Windows a session opens go on the left monitor
+**2026-09-09** · **Raised by** master, for the user · **For** view · **Status** open until the flag is in Seeing it
+
+The user has three monitors and works on the centre one. Every Godot window a session opens — a
+capture, a scene-load check, a run to look at something — lands on it, and with four sessions
+running that is a window every few minutes in the middle of whatever they are reading. The rule:
+**a window a session opens goes on the left monitor**, and it is in `CLAUDE.md` as a gotcha for
+everybody.
+
+**The mechanism is View's, and it is the harness.** A setting on the command line — a setting,
+not a step, in the sense entry 049 draws — call it `--aside`, that moves the window to the
+leftmost screen before the first frame. Leftmost by position, not by index: Godot's `--screen N`
+takes an index, and which index is the left monitor is a fact about this machine that would be
+wrong on the next one, whereas `DisplayServer.ScreenGetPosition` over every screen and the one
+with the smallest X is true everywhere. `--shot` implies it, since a capture is always a
+session's. Every command in **Seeing it** carries it. The exported game with no flags opens where
+Windows puts it, which is the user's monitor and correct.
+
+**One thing to check rather than assume.** A capture has to rasterise, and entry 053's harness
+notes say a window off-screen or headless does not. A window on another monitor is on-screen;
+a window moved before the display server has settled may not be. Verify with two captures of
+the same command after the move, as entry 053 did on day one.
+
+**Priority.** Ahead of anything in the interface queue and behind nothing: it costs an hour and
+it is paid for the first time a session takes a capture without the user noticing.

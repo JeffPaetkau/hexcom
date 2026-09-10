@@ -197,6 +197,10 @@ problem are in [docs/subprojects/view.md](docs/subprojects/view.md). These two a
   `--logger "console;verbosity=detailed"` and grep for `Error Message`.
 - Bash heredocs in this environment break on apostrophes in the body. Use the Write/Edit tools
   for prose-heavy files rather than `cat <<EOF`.
+- **Any window a session opens goes on the left monitor.** The user works on the centre one of
+  three, and a game window landing on it mid-thought is the most distracting thing a session
+  does. Every Godot command in **Seeing it** carries the flag that puts the window aside; a
+  command without it is for a person, not a session. Entry 063 is the rule and the mechanism.
 
 ## Where it stands
 
