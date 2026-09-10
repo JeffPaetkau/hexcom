@@ -11,6 +11,7 @@ using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
+using CoreVec2 = Hexcom.Core.Geometry.Vec2;
 using Side = Hexcom.Core.Units.Side; // Godot has a Side enum of its own
 
 namespace Hexcom.Game;
@@ -39,8 +40,16 @@ namespace Hexcom.Game;
 /// is the first decision in the greybox brief and the whole of what makes this a game: a
 /// hostile is a body while somebody of ours has eyes on it, a ghost at its marker otherwise,
 /// and nothing at all before anybody has heard a thing. <c>O</c> or <c>--omniscient</c> puts
-/// everything back, because the capture harness and the orders readout are instruments and
-/// entry 023 in <c>docs/decisions.md</c> says so. The status line says which is on.
+/// everything back, because the capture harness is an instrument. The instruments window says
+/// which is on.
+/// </para>
+/// <para>
+/// <b>The keys open on the game and the capture harness opens on its own defaults.</b> A person
+/// double-clicking the build is playing the waystation against <see cref="Commander"/>, with
+/// reaction windows handed out and the other side hidden until found; a capture opens with all
+/// three of those off, so <c>--ai</c>, <c>--windows</c> and <c>--omniscient</c> still mean what
+/// they meant and every capture command in <c>view.md</c> still opens the run it was written
+/// against. Entry 066 in <c>docs/decisions.md</c> is the argument.
 /// </para>
 /// </remarks>
 public partial class HexSandbox : Node3D
@@ -59,6 +68,25 @@ public partial class HexSandbox : Node3D
     [Export] public int Seed { get; set; } = 7;
 
     /// <summary>
+    /// Whether the camera turns and soldiers walk over time, rather than arriving at once.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the one settle mechanism, and it is a switch rather than a wait.</b> The play-
+    /// through asked for a smooth camera and a walked route (entry 057, items 2 and 6) and the
+    /// brief attached one condition to both: nothing may animate in a capture, or <c>--yaw N</c>
+    /// stops landing on the frame it names and entry 053's determinism goes with it. Two ways to
+    /// keep that — settle every animation before the picture, or never start one — and this is
+    /// the second, because it leaves a capture on exactly the code path it was measured
+    /// byte-deterministic on rather than on a new one that has to be re-measured.
+    /// <para>
+    /// So it is false for the whole of any run with <c>--shot</c> on it, and <c>--still</c> turns
+    /// it off for a person as well. Everything that animates asks <see cref="Animated"/> and
+    /// lands on its end state within the call when the answer is no.
+    /// </para>
+    /// </remarks>
+    [Export] public bool Animate { get; set; } = true;
+
+    /// <summary>
     /// Which of <see cref="SandboxScenario.All"/> to open with. Blank takes the first.
     /// </summary>
     [Export] public string Scenario { get; set; } = "";
@@ -75,12 +103,31 @@ public partial class HexSandbox : Node3D
     private SandboxCanvas _readouts = null!;
     private SandboxCapture? _capture;
 
+    /// <summary>The instruments window, and the surface inside it. Built closed. See <see cref="BuildInstrumentsWindow"/>.</summary>
+    private Window _instruments = null!;
+    private SandboxCanvas _instrumentPanel = null!;
+
     private ReachabilityResult _reach = null!;
     private NodeId? _hover;
     private int _layer;
 
     /// <summary>Where a middle-button drag was last seen, while one is in progress.</summary>
     private Vector2? _dragging;
+
+    /// <summary>Where a right-button drag was last seen, while one is in progress.</summary>
+    private Vector2? _orbiting;
+
+    /// <summary>
+    /// How far the pointer has travelled since the right button went down.
+    /// </summary>
+    /// <remarks>
+    /// The right button has to do two jobs — it fires, and it orbits — so the two are told apart
+    /// by whether the pointer moved. Under <see cref="ClickSlop"/> pixels between press and
+    /// release it was a click and the shot goes off; over it, it was a drag and nothing is
+    /// fired. Which is why firing happens on <em>release</em> now and not on press: on press
+    /// there is nothing yet to tell the two apart by.
+    /// </remarks>
+    private float _orbitTravel;
 
     /// <summary>What the last committed move got shot at with, if anything. Debug readout only.</summary>
     private string _lastWindow = "";
@@ -118,6 +165,15 @@ public partial class HexSandbox : Node3D
     /// ask, so there is no second place a hostile could leak through.
     /// </remarks>
     private bool _omniscient;
+
+    /// <summary>The route a walk is being drawn along, as plane points with the floor under each.</summary>
+    private readonly List<(CoreVec2 At, double Floor, NodeId Node)> _walkRoute = [];
+
+    /// <summary>Whose walk it is, or null when nobody is part way along one.</summary>
+    private UnitId? _walking;
+
+    /// <summary>Seconds into the walk, and how many it lasts.</summary>
+    private double _walkElapsed, _walkSeconds;
 
     /// <summary>A move of ours that is paid for and not yet resolved.</summary>
     private MoveCommitment? _committed;
@@ -181,16 +237,25 @@ public partial class HexSandbox : Node3D
 
         _camera = new SandboxCamera(GetNode<Camera3D>("Camera"), Distance);
         _view = new BattleView(GetNode<Node3D>("World"), _labels, _camera, font);
-        _hud = new BattleHud(_readouts, font);
+        _hud = new BattleHud(font);
 
+        // One frame, two surfaces. Both painters build it from the same call, in the same tick,
+        // so the instruments window can never be showing a moment the map is not — which is the
+        // condition the brief attached to splitting the HUD at all.
         _labels.Painter = _view.DrawLabels;
-        _readouts.Painter = _ => _hud.Draw(Frame(), Viewport);
+        _readouts.Painter = canvas => _hud.Draw(canvas, Frame(), Viewport);
+        _instrumentPanel.Painter = canvas => _hud.DrawInstruments(canvas, Frame(), _instruments.Size);
+
+        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), InstrumentsFlag) >= 0) ShowInstruments(true);
+
+        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), StillFlag) >= 0) Animate = false;
 
         // A capture has to be reproducible, and input is the one thing here that is not: the
         // window opens under whatever the pointer was already doing, so the cursor readout and
         // the previewed path land in the picture and two runs disagree. Capturing is therefore
-        // deaf as well as brief.
-        SetProcess(_capture is not null);
+        // deaf as well as brief. It processes all the same — a capture is the thing counting
+        // frames down — and so does an interactive run now, for the animation and the edge pan.
+        SetProcess(true);
         SetProcessUnhandledInput(_capture is null);
 
         NewBattle();
@@ -250,9 +315,110 @@ public partial class HexSandbox : Node3D
         _readouts = new SandboxCanvas { Name = "Canvas" };
         readouts.AddChild(_readouts);
         AddChild(readouts);
+
+        BuildInstrumentsWindow();
     }
 
-    public override void _Process(double delta) => _capture?.Tick(this);
+    /// <summary>How big the instruments window opens, in pixels.</summary>
+    private static readonly Vector2I InstrumentsSize = new(1120, 620);
+
+    /// <summary>
+    /// The second window: a surface for everything a player of a shipped game would never see.
+    /// </summary>
+    /// <remarks>
+    /// A real <c>Window</c> rather than a panel in a corner, which is the play-through's first
+    /// finding and the only shape that answers it — the point is that it can be dragged onto
+    /// another monitor, and nothing inside one viewport can be. It is built closed and shown by
+    /// <c>I</c> or <c>--instruments</c>, so a person who opens the game gets the game.
+    /// <para>
+    /// <b>Closing it with the system button hides it rather than freeing it.</b> A window that
+    /// destroyed itself would take its canvas with it and <c>I</c> would have to build a second
+    /// one, which is a second place the split between the two halves is decided. There is one.
+    /// </para>
+    /// </remarks>
+    private void BuildInstrumentsWindow()
+    {
+        _instruments = new Window
+        {
+            Name = "Instruments",
+            Title = "Hexcom — instruments",
+            Size = InstrumentsSize,
+            Visible = false,
+            Unresizable = false,
+            Transient = false,
+        };
+
+        var canvas = new SandboxCanvas { Name = "Canvas" };
+        _instrumentPanel = canvas;
+        _instruments.AddChild(canvas);
+        AddChild(_instruments);
+
+        _instruments.CloseRequested += () => ShowInstruments(false);
+    }
+
+    /// <summary>Turns off the camera turn and the walk for a whole run. See <see cref="Animate"/>.</summary>
+    private const string StillFlag = "--still";
+
+    /// <summary>Opens the second window on a run started from the command line. Interactively it is <c>I</c>.</summary>
+    private const string InstrumentsFlag = "--instruments";
+
+    /// <summary>Whether anything may take time. False for the whole of a capture, by <see cref="Animate"/>'s remarks.</summary>
+    private bool Animated => _capture is null && Animate;
+
+    public override void _Process(double delta)
+    {
+        if (Animated)
+        {
+            var moved = _camera.Advance(delta);
+            moved |= AdvanceWalk(delta);
+            if (moved) CameraMoved();
+
+            EdgePan(delta);
+        }
+
+        _capture?.Tick(this, _instruments);
+    }
+
+    /// <summary>How far from an edge the pointer starts pushing the view, in pixels.</summary>
+    private const float EdgeMargin = 24f;
+
+    /// <summary>How fast the view runs when the pointer is right against an edge, pixels of ground per second.</summary>
+    private const float EdgePanRate = 900f;
+
+    /// <summary>
+    /// Push the view when the pointer sits near an edge of the window.
+    /// </summary>
+    /// <remarks>
+    /// The third of the three mouse gestures the play-through asked for, and the one with a
+    /// habit of firing when nobody wanted it: a pointer resting outside the window, or on the
+    /// instruments window next door, must not drag the map along behind it. So it runs only
+    /// while the pointer is genuinely inside the viewport and no drag is already holding the
+    /// ground. The rate is proportional to how far into the margin the pointer has gone, which
+    /// is what makes a slow nudge at the edge possible at all.
+    /// </remarks>
+    private void EdgePan(double delta)
+    {
+        if (_dragging is not null || _orbiting is not null) return;
+
+        var viewport = Viewport;
+        var at = GetViewport().GetMousePosition();
+        if (at.X < 0 || at.Y < 0 || at.X > viewport.X || at.Y > viewport.Y) return;
+
+        var push = new Vector2(
+            Depth(at.X, viewport.X),
+            Depth(at.Y, viewport.Y));
+
+        if (push == Vector2.Zero) return;
+
+        // Pan takes the screen distance the ground moved, so pushing right moves the ground left.
+        _camera.Pan(-push * EdgePanRate * (float)delta, viewport);
+        CameraMoved();
+
+        static float Depth(float at, float extent)
+            => at < EdgeMargin ? (at - EdgeMargin) / EdgeMargin
+             : at > extent - EdgeMargin ? (at - (extent - EdgeMargin)) / EdgeMargin
+             : 0f;
+    }
 
     /// <summary>
     /// Load the scenario asked for and put everybody on it.
@@ -270,8 +436,15 @@ public partial class HexSandbox : Node3D
         _mission = _scenario.LoadMission();
         _battle = _scenario.Open(_mission, SandboxScale.World, Seed);
 
-        _auto = _capture?.Automatic ?? false;
-        _byHand = _capture?.AnswerWindowsByHand ?? false;
+        // The keys open on the game and the capture harness opens on its own defaults, which is
+        // the whole of the play-through's fourth finding. A person double-clicking the build is
+        // playing the mission against Commander, with the windows handed out and the other side
+        // hidden until found; they should not have to press H and K first to be playing at all.
+        // A capture keeps every default it had, because six flags and every capture command in
+        // view.md were written against them — --ai and --windows would stop meaning anything the
+        // day they became the default of the thing they switch on.
+        _auto = _capture?.Automatic ?? true;
+        _byHand = _capture?.AnswerWindowsByHand ?? true;
         _omniscient = _capture?.Omniscient ?? false;
         _turns.Clear();
         _committed = null;
@@ -439,6 +612,10 @@ public partial class HexSandbox : Node3D
 
         _view.Rebuild(Frame());
         _readouts.QueueRedraw();
+
+        // The instruments follow the rules changing and not the cursor moving, which is why
+        // HoverChanged leaves them alone: nothing in that window is a question about a tile.
+        if (_instruments.Visible) _instrumentPanel.QueueRedraw();
     }
 
     private static bool Better(Threat candidate, Threat held)
@@ -450,6 +627,20 @@ public partial class HexSandbox : Node3D
     {
         _labels.QueueRedraw();
         _readouts.QueueRedraw();
+        if (_instruments.Visible) _instrumentPanel.QueueRedraw();
+    }
+
+    /// <summary>Open or close the instruments window.</summary>
+    /// <remarks>
+    /// Shown and hidden rather than built and freed, so that the split between the two halves of
+    /// the HUD is decided in one place — see <see cref="BuildInstrumentsWindow"/>. Opening it
+    /// redraws it at once: it has been hidden, so nothing has been queueing its redraws, and a
+    /// window that opened blank until the next action would look broken.
+    /// </remarks>
+    private void ShowInstruments(bool open)
+    {
+        _instruments.Visible = open;
+        if (open) _instrumentPanel.QueueRedraw();
     }
 
     /// <summary>The cursor moved: rebuild what follows it and redraw what quotes it.</summary>
@@ -501,7 +692,7 @@ public partial class HexSandbox : Node3D
             if (outcome.Refusal is { } no) return no;
 
             _lastWindow = BattleHud.Describe(outcome);
-            AfterMove(mover);
+            AfterMove(mover, outcome.Path);
             return $"moved to {destination}, {outcome.ApSpent} AP";
         }
 
@@ -511,7 +702,7 @@ public partial class HexSandbox : Node3D
         if (commitment.Window!.Offers.Count == 0)
         {
             _lastWindow = BattleHud.Describe(_battle.Resolve(commitment));
-            AfterMove(mover);
+            AfterMove(mover, commitment.Path);
             return $"moved to {destination}, {commitment.ApCost} AP, nobody could answer";
         }
 
@@ -524,10 +715,141 @@ public partial class HexSandbox : Node3D
 
     /// <summary>What follows a move that actually resolved.</summary>
     /// <remarks>A reaction can drop the mover part way, which hands the turn straight on.</remarks>
-    private void AfterMove(Unit mover)
+    private void AfterMove(Unit mover, IReadOnlyList<TraversalLink> path)
     {
         if (_battle.Active is { } next && next != mover) _layer = next.Position.Layer;
         AfterAction();
+        BeginWalk(mover, path);
+    }
+
+    // ---- the walk ----------------------------------------------------------------
+
+    /// <summary>Metres a second a soldier covers, at the default zoom, when it is not being hurried.</summary>
+    /// <remarks>
+    /// A jog rather than a walk — a real 1.4 metres a second would take six seconds to cross five
+    /// hexes, and the play-through asked for *not slow*. At this pace one hex takes about a
+    /// quarter of a second, which is fast enough to be a transition and slow enough that the eye
+    /// follows the route rather than being told the answer.
+    /// </remarks>
+    private const double WalkPace = 7.0;
+
+    /// <summary>The longest any one walk may take, seconds. A long route is covered faster, not for longer.</summary>
+    private const double WalkLongest = 1.6;
+
+    /// <summary>
+    /// Start drawing a move that has already happened in the rules.
+    /// </summary>
+    /// <remarks>
+    /// <b>Nothing about the battle is pending here.</b> Entry 040 is precise about it: the mover
+    /// has not stepped until the window resolves, and by the time this is called the window has
+    /// resolved, every reaction has been taken and the soldier is standing at the far end. What
+    /// walks is the drawing. So the route is truncated at wherever the unit actually ended up —
+    /// a reaction that dropped it part way leaves it short of the destination, and a picture that
+    /// walked the whole planned route would be showing a walk the rules refused.
+    /// <para>
+    /// It is skipped whole when <see cref="Animated"/> is false, so a capture and a headless run
+    /// see exactly what they saw before there was a walk at all.
+    /// </para>
+    /// </remarks>
+    private void BeginWalk(Unit mover, IReadOnlyList<TraversalLink> path)
+    {
+        if (path.Count == 0) { EndWalk(); return; }
+
+        var nodes = new List<NodeId> { path[0].From };
+        nodes.AddRange(path.Select(link => link.To));
+        BeginWalk(mover, nodes);
+    }
+
+    /// <inheritdoc cref="BeginWalk(Unit, IReadOnlyList{TraversalLink})"/>
+    private void BeginWalk(Unit mover, IReadOnlyList<NodeId> walked)
+    {
+        EndWalk();
+        if (!Animated || walked.Count < 2 || !mover.InPlay) return;
+
+        var map = _battle.Map;
+        var route = new List<NodeId>();
+        foreach (var node in walked)
+        {
+            route.Add(node);
+            if (node != walked[0] && node == mover.Position) break;   // dropped en route, or arrived
+        }
+
+        if (route.Count < 2) return;
+
+        foreach (var node in route)
+            _walkRoute.Add((SandboxGeometry.NodePlane(map, node), SandboxGeometry.FloorOf(map, node), node));
+
+        var metres = 0.0;
+        for (var i = 0; i + 1 < _walkRoute.Count; i++)
+            metres += CoreVec2.Distance(_walkRoute[i].At, _walkRoute[i + 1].At);
+
+        _walking = mover.Id;
+        _walkElapsed = 0;
+        _walkSeconds = System.Math.Min(metres / WalkPace, WalkLongest);
+
+        if (_walkSeconds <= 0) { EndWalk(); return; }
+
+        AdvanceWalk(0);
+    }
+
+    /// <summary>Move a walk along by one frame, and say whether it is still going.</summary>
+    private bool AdvanceWalk(double delta)
+    {
+        if (_walking is not { } mover) return false;
+
+        _walkElapsed += delta;
+        if (_walkElapsed >= _walkSeconds) { EndWalk(); return false; }
+
+        // Distance rather than time per leg, so a long hop across a gap does not take the same
+        // quarter second as a step between neighbours.
+        var wanted = _walkElapsed / _walkSeconds * TotalMetres();
+        var run = 0.0;
+
+        for (var i = 0; i + 1 < _walkRoute.Count; i++)
+        {
+            var (from, to) = (_walkRoute[i], _walkRoute[i + 1]);
+            var span = CoreVec2.Distance(from.At, to.At);
+
+            if (run + span < wanted) { run += span; continue; }
+
+            var into = span <= 0 ? 1.0 : (wanted - run) / span;
+            var step = to.At - from.At;
+
+            _view.Walk = new UnitWalk(
+                mover,
+                from.At + step * into,
+                from.Floor + (to.Floor - from.Floor) * into,
+                System.Math.Atan2(step.Y, step.X),
+                _walkRoute.Skip(i + 1).Select(point => point.Node).ToList());
+
+            _view.RebuildBodies(Frame());
+            _view.RebuildCursor(Frame());
+            return true;
+        }
+
+        EndWalk();
+        return false;
+    }
+
+    private double TotalMetres()
+    {
+        var metres = 0.0;
+        for (var i = 0; i + 1 < _walkRoute.Count; i++)
+            metres += CoreVec2.Distance(_walkRoute[i].At, _walkRoute[i + 1].At);
+        return metres;
+    }
+
+    /// <summary>Put the soldier back where the rules have had it standing all along.</summary>
+    private void EndWalk()
+    {
+        var was = _walking;
+        _walking = null;
+        _walkRoute.Clear();
+        _view.Walk = null;
+
+        if (was is null) return;
+        _view.RebuildBodies(Frame());
+        _view.RebuildCursor(Frame());
     }
 
     /// <remarks>
@@ -741,12 +1063,20 @@ public partial class HexSandbox : Node3D
             _chooser = 0;
 
             _lastWindow = BattleHud.Describe(_battle.Resolve(ours));
-            AfterMove(mover);
+            AfterMove(mover, ours.Path);
             return "resolved";
         }
 
         var commander = _handed!;
         var unit = _turns.Count > 0 ? _turns[^1].Unit : window.Mover;
+
+        // The route the hostile is about to walk, taken before it walks it. This is the only
+        // hostile move the view can draw travelling: the window carries its steps, and the
+        // sandbox is holding the resolution rather than watching it go past. A hostile move that
+        // nobody could have reacted to opens no window, is resumed past by SkipEmptyWindows, and
+        // jumps — see the note for Core in decisions entry 066.
+        var hostile = window.Mover;
+        var route = window.Move.Steps.Select(step => step.Node).ToList();
 
         _handed = null;
         _chooser = 0;
@@ -759,6 +1089,7 @@ public partial class HexSandbox : Node3D
 
         if (Open is null && _battle.Active is { } next) _layer = next.Position.Layer;
         AfterAction(keepRecord: true);
+        BeginWalk(hostile, route);
         return "resolved";
     }
 
@@ -979,12 +1310,22 @@ public partial class HexSandbox : Node3D
             case InputEventMouseMotion motion:
             {
                 // A drag moves the ground under the cursor and does not move the cursor's
-                // readout with it: while the middle button is down the pointer is holding
-                // ground, not pointing at it.
+                // readout with it: while the button is down the pointer is holding the view,
+                // not pointing at it.
                 if (_dragging is { } from)
                 {
                     _camera.Pan(motion.Position - from, Viewport);
                     _dragging = motion.Position;
+                    CameraMoved();
+                    break;
+                }
+
+                if (_orbiting is { } held)
+                {
+                    var travel = motion.Position - held;
+                    _orbitTravel += travel.Length();
+                    _camera.Orbit(-travel.X * OrbitPerPixel);
+                    _orbiting = motion.Position;
                     CameraMoved();
                     break;
                 }
@@ -1009,8 +1350,18 @@ public partial class HexSandbox : Node3D
                 if (NodeUnderMouse() is { } target) MoveTo(target);
                 break;
 
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }:
-                if (HoveredUnit() is { } quarry) FireAt(quarry);
+            // The right button orbits and fires, told apart by whether the pointer moved — so
+            // the shot goes off on release, which is the only moment that is known. See
+            // _orbitTravel.
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right } aim:
+                _orbiting = aim.Position;
+                _orbitTravel = 0f;
+                break;
+
+            case InputEventMouseButton { Pressed: false, ButtonIndex: MouseButton.Right }:
+                var wasClick = _orbiting is not null && _orbitTravel < ClickSlop;
+                _orbiting = null;
+                if (wasClick && HoveredUnit() is { } quarry) FireAt(quarry);
                 break;
 
             case InputEventKey { Pressed: true, Echo: false } key:
@@ -1090,6 +1441,10 @@ public partial class HexSandbox : Node3D
                 Redraw();
                 break;
 
+            case Key.I:
+                ShowInstruments(!_instruments.Visible);
+                break;
+
             case Key.L:
                 // Whoever is under the cursor, or the contact this soldier is taking most
                 // seriously if the cursor is on nobody.
@@ -1124,9 +1479,13 @@ public partial class HexSandbox : Node3D
                 break;
 
             // Q and E turn the camera, and , and . still do the same thing for anybody who
-            // learned them before the remap.
+            // learned them before the remap. The turn is the one camera move that takes time,
+            // so it is the one that has to be landed by hand when nothing is driving it — with
+            // animation off _Process never calls Advance, and a target nothing advances towards
+            // is a key that does nothing at all.
             case Key.Q or Key.E or Key.Comma or Key.Period:
                 _camera.Turn(key is Key.Q or Key.Comma ? 1 : -1);
+                if (!Animated) _camera.Settle();
                 CameraMoved();
                 break;
 
@@ -1162,13 +1521,36 @@ public partial class HexSandbox : Node3D
     /// <summary>How far one arrow key moves the view, in pixels.</summary>
     private const float PanStep = 160f;
 
+    /// <summary>How far a right-drag turns the camera, radians per pixel of pointer travel.</summary>
+    /// <remarks>
+    /// A third of a screen's width comes to about a bearing, so the gesture a person makes to
+    /// turn one face of the map towards them is the same size as the one <c>Q</c> makes for them.
+    /// </remarks>
+    private const float OrbitPerPixel = 0.006f;
+
+    /// <summary>How far the pointer may travel between press and release and still count as a click.</summary>
+    private const float ClickSlop = 6f;
+
     /// <summary>The camera moved: nothing is true that was not, so only the labels and the readouts re-project.</summary>
     private void CameraMoved()
     {
         _hover = _capture is null ? NodeUnderMouse() : _hover;
         HoverChanged();
         _labels.QueueRedraw();
+
+        // The one thing a camera move can change about the world mesh. Bodies carry rings that
+        // are drawn wider once the camera is far enough back to have given up on tile detail
+        // (see BattleView.Rings), so crossing that threshold has to rebuild them — and only
+        // crossing it, because otherwise every wheel notch would rebuild the bodies for nothing.
+        var detail = _camera.ShowsTileDetail;
+        if (detail == _tileDetail) return;
+
+        _tileDetail = detail;
+        _view.RebuildBodies(Frame());
     }
+
+    /// <summary>Whether the camera was close enough for tile detail last time it moved. See <see cref="CameraMoved"/>.</summary>
+    private bool _tileDetail = true;
 
     /// <summary>
     /// Keep whoever is up on screen, and only if they are not already.

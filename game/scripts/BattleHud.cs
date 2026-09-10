@@ -35,22 +35,105 @@ namespace Hexcom.Game;
 /// asymmetry between them is deliberate. Do not "improve" the coarse one.
 /// </para>
 /// </remarks>
-public sealed class BattleHud(CanvasItem canvas, Font font)
+public sealed class BattleHud(Font font)
 {
-    private readonly CanvasItem _canvas = canvas;
     private readonly Font _font = font;
+
+    /// <summary>The surface currently being drawn on. Set by whichever of the two entry points is running.</summary>
+    private CanvasItem _canvas = null!;
 
     /// <summary>Where the panels hang, given the node's own offset. Screen space, not canvas space.</summary>
     public Vector2 Origin { get; set; }
 
-    public void Draw(SandboxFrame frame, Vector2 viewport)
+    /// <summary>
+    /// What a player sees: the mission, whose go it is, this soldier's situation, the cursor,
+    /// the shot and what it is worth, and what happened while it was not your turn.
+    /// </summary>
+    /// <remarks>
+    /// <b>The two halves of this class draw one frame between them, and that is load-bearing.</b>
+    /// A frame is one moment's answers (<see cref="SandboxFrame"/>), and the play-through's first
+    /// finding put the instruments in a second window — which is a second surface, redrawn on its
+    /// own schedule, and therefore the first chance this code has ever had to show two moments at
+    /// once. It cannot: the node assembles one frame and hands the same instance to both, so a
+    /// number in the instruments window is the number the map beside it was drawn from.
+    /// <para>
+    /// The line between the two halves is the brief's test — <i>would a player who never presses
+    /// <c>O</c> want it</i> — and it does not run where the file's own structure would have put
+    /// it. The legend splits: where you are looking and what the soldier does are a player's, and
+    /// what the run is set to is a tester's, which is the split <see cref="DrawLegend"/> already
+    /// had for reasons of width. What moves out of the status line is only which mode the run is
+    /// in; the round, the soldier and the weapon stay.
+    /// </para>
+    /// </remarks>
+    public void Draw(CanvasItem canvas, SandboxFrame frame, Vector2 viewport)
     {
+        _canvas = canvas;
+
         // The strip last, so that a long readout runs under it rather than over it.
         DrawLines(frame);
         DrawHappenings(frame, viewport);
-        DrawLegend(viewport);
+        DrawLegend(viewport, PlayerKeys);
         DrawOrderStrip(frame, viewport);
     }
+
+    /// <summary>
+    /// What a tester sees: which mode the run is in, the keys that change it, and the AI's
+    /// reasoning for every turn it has taken since a person last acted.
+    /// </summary>
+    /// <remarks>
+    /// A window of its own, which the play-through asked for so it can sit on a second monitor.
+    /// Everything here fails the test in <see cref="Draw"/>'s remarks: the orders block is the
+    /// opponent's mind and entry 023 is the argument for it existing at all, and the mode line
+    /// and the third rank of keys are about the harness rather than about the battle. A shipped
+    /// interface is what is left when this window is closed, which is now a thing that can be
+    /// looked at rather than argued about.
+    /// <para>
+    /// It draws from its own top-left rather than stacking off the bottom edge, because it is a
+    /// panel of text on nothing rather than readouts over a map, and because the window is
+    /// resizable and a block anchored to the bottom of a short one would run off the top.
+    /// </para>
+    /// </remarks>
+    public void DrawInstruments(CanvasItem canvas, SandboxFrame frame, Vector2 window)
+    {
+        _canvas = canvas;
+        _canvas.DrawRect(new Rect2(Vector2.Zero, window), SandboxPalette.Background);
+
+        var lines = new List<string> { WhichBattle(frame), WhichMode(frame), "" };
+        lines.AddRange(InstrumentKeys);
+        lines.Add("");
+
+        var orders = TurnLines(frame).ToList();
+        lines.AddRange(orders.Count > 0 ? orders : ["the AI has not acted since you last did"]);
+
+        var top = new Vector2(18, 30);
+        for (var i = 0; i < lines.Count; i++)
+            _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), lines[i],
+                HorizontalAlignment.Left, -1, LineSize,
+                i <= 1 ? SandboxPalette.TextBright : SandboxPalette.TextDim);
+    }
+
+    /// <summary>Which map and which deployment this is.</summary>
+    /// <remarks>
+    /// A picture that does not say which battle it is of cannot be checked against anything, and
+    /// there is more than one map now. It is a line to itself rather than the head of the mode
+    /// line because the two answer different questions and because one line carrying both ran off
+    /// the right of the window — which is the failure the legend had for weeks before the key
+    /// remap found it, and reintroducing it in the second week would be careless.
+    /// </remarks>
+    private static string WhichBattle(SandboxFrame frame)
+        => $"{frame.Scenario.Name} — {frame.Scenario.Situation}    {frame.Battle.Map.Tiles.Count} tiles";
+
+    /// <summary>Which of the run's switches are on.</summary>
+    /// <remarks>
+    /// An instrument in every clause. A capture with two hostiles on it means one thing if it
+    /// shows everything and another if it shows what our side has found, and a session reading it
+    /// months later has nothing else to tell them which.
+    /// </remarks>
+    private static string WhichMode(SandboxFrame frame)
+        => (frame.Omniscient ? "seeing everything" : "seeing what our side knows")
+           + (frame.HostilesAutomatic ? "    hostiles: AI" : "    hostiles: by hand")
+           + (frame.AnswerByHand ? "    reactions: by hand" : "    reactions: recommended")
+           + (frame.TileDetail ? "" : "    zoomed out: tile detail off");
 
     /// <summary>The next few bookings, so the player can see the interleaving coming.</summary>
     private void DrawOrderStrip(SandboxFrame frame, Vector2 viewport)
@@ -101,27 +184,18 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         var battle = frame.Battle;
         var active = battle.Active;
 
-        var hostiles = frame.HostilesAutomatic ? "hostiles: AI" : "hostiles: by hand";
-
-        var lines = new List<string>
-        {
-            // Which map and which deployment, because there is more than one now and a picture
-            // that does not say which it is of cannot be checked against anything — and which
-            // mode, because a picture with two hostiles on it means one thing if it shows
-            // everything and another if it shows what our side has found.
-            $"{frame.Scenario.Name}    {frame.Scenario.Situation}    {battle.Map.Tiles.Count} tiles    "
-                + (frame.Omniscient ? "seeing everything" : "seeing what our side knows")
-                + (frame.TileDetail ? "" : "    zoomed out: tile detail off")
-                + (frame.AnswerByHand ? "    reactions: by hand" : ""),
-        };
+        // The mode line that used to open this block is in the instruments window now — which
+        // map, which deployment and which switches are on are a tester's questions. What is left
+        // is the battle: the mission, whose go it is, and what that soldier is carrying.
+        var lines = new List<string>();
         lines.AddRange(MissionLines(frame));
         lines.Add(
             active is null || frame.OutOfTime
-                ? $"{Clock(frame)}    {(frame.OutOfTime ? "out of time" : "nobody left to act")}    {hostiles}"
+                ? $"{Clock(frame)}    {(frame.OutOfTime ? "out of time" : "nobody left to act")}"
                 : $"{Clock(frame)}    {active.Name} ({active.Side})    "
                   + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
                   + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}    "
-                  + $"{WeaponLine(active)}    {hostiles}");
+                  + $"{WeaponLine(active)}");
         lines.Add(active is null ? "" : AlarmLine(frame, active));
 
         if (active is not null)
@@ -167,9 +241,10 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         // Stacked upwards from just above the legend, most recent nearest the bottom. The open
         // window goes on top of the pile because it is the only one of these that is a question
-        // rather than a record, and the only one the next keystroke is about.
+        // rather than a record, and the only one the next keystroke is about. The AI's orders
+        // used to be on this pile and are in the instruments window now: what the other side
+        // *did to you* is a player's, and why it decided to is not.
         var lines = new List<string> { frame.LastWindow };
-        lines.AddRange(TurnLines(frame));
         lines.RemoveAll(line => line.Length == 0);
 
         var next = DrawBlockAbove(viewport.Y - 22 - LegendLines * LineHeight - 14, lines);
@@ -285,26 +360,42 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// is complete on its own, and the first one is the one a person reaches for first.
     /// </para>
     /// </remarks>
-    private void DrawLegend(Vector2 viewport)
-    {
-        string[] keys =
-        [
-            "WASD or drag: pan    Q/E: turn the camera    wheel/+-: zoom    F: whole map    G: whoever is up    PgUp/PgDn: storey",
-            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn on the spot    "
-                + "V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in",
-            "H: hostiles to AI    J: AI takes this turn    K: answer windows by hand    O: see everything    M: briefing    R: new battle",
-        ];
+    /// <summary>
+    /// The keys a player needs: where you are looking, and what the soldier does.
+    /// </summary>
+    /// <remarks>
+    /// Two of the three ranks the legend has had since the key remap. The third went to the
+    /// instruments window with the rest of the harness, which is what the play-through asked for
+    /// and, more usefully, what the brief's own test gives: a player who never presses <c>O</c>
+    /// wants to know how to move and how to look, and does not want to know how to hand the
+    /// hostile side to the AI.
+    /// </remarks>
+    private static readonly string[] PlayerKeys =
+    [
+        "WASD or drag: pan    Q/E or right-drag: turn    wheel/+-: zoom    F: whole map    G: whoever is up    PgUp/PgDn: storey",
+        "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn on the spot    "
+            + "V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in",
+    ];
 
-        var top = Origin + new Vector2(18, viewport.Y - 22 - (keys.Length - 1) * LineHeight);
+    /// <summary>The keys that change what kind of run this is. Instruments, by the same test.</summary>
+    private static readonly string[] InstrumentKeys =
+    [
+        "H: hostiles to AI    J: AI takes this turn    K: answer windows by hand",
+        "O: see everything    M: briefing    I: this window    R: new battle",
+    ];
+
+    private void DrawLegend(Vector2 viewport, IReadOnlyList<string> keys)
+    {
+        var top = Origin + new Vector2(18, viewport.Y - 22 - (keys.Count - 1) * LineHeight);
         Panel(top, keys);
 
-        for (var i = 0; i < keys.Length; i++)
+        for (var i = 0; i < keys.Count; i++)
             _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), keys[i],
                 HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextDim);
     }
 
     /// <summary>How many lines <see cref="DrawLegend"/> occupies, so that what stacks above it agrees.</summary>
-    private const int LegendLines = 3;
+    private static readonly int LegendLines = PlayerKeys.Length;
 
     /// <summary>
     /// A backing plate under a run of lines, sized to the widest of them.
@@ -839,10 +930,12 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// </remarks>
     private static IEnumerable<string> TurnLines(SandboxFrame frame)
     {
-        // The instrument only. In the game the other side's turns are what happened to you,
-        // which the reaction line already says, and not what they were thinking.
-        if (!frame.Omniscient) yield break;
-
+        // Gated on the instruments window being open, and no longer on --omniscient as well.
+        // Entry 023 made this an instrument and it still is; what changed is that there is now a
+        // window that is nothing but instruments, so the gate can be *being in it*. Two gates
+        // would have made watching the AI reason cost a change to the map — pressing O to read
+        // the orders is exactly the thing that stops you seeing what a player would have seen —
+        // and separating those two is most of the point of the second window.
         foreach (var turn in frame.Turns)
         {
             if (turn.Orders.Count == 0)

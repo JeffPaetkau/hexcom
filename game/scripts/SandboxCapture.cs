@@ -26,8 +26,10 @@ namespace Hexcom.Game;
 /// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --zoom 44
 /// </code>
 /// <para>
-/// Six of the flags are settings and live here: <c>--shot</c>, <c>--shot-after</c>,
-/// <c>--scenario</c>, <c>--ai</c>, <c>--windows</c> and <c>--omniscient</c>. Everything else on the line is a
+/// Eight of the flags are settings: <c>--shot</c>, <c>--shot-after</c>, <c>--scenario</c>,
+/// <c>--ai</c>, <c>--windows</c> and <c>--omniscient</c> live here, and <c>--instruments</c> and
+/// <c>--still</c> are read by <see cref="HexSandbox"/> itself because they mean something on a
+/// run with no capture in it. Everything else on the line is a
 /// <see cref="SandboxScript"/> step, run in the order it was typed, because <c>--move</c> then
 /// <c>--pass</c> is a different battle from <c>--pass</c> then <c>--move</c>. The test for which
 /// side of that line a flag falls on is whether somebody at the keyboard could do it.
@@ -137,7 +139,18 @@ public sealed class SandboxCapture
     /// Called once a frame. Saves and quits when the wait is up; returns true on the frame it
     /// captured, so the caller can say so.
     /// </summary>
-    public bool Tick(Node node)
+    /// <remarks>
+    /// <b><c>--shot</c> captures the main viewport, and the instruments window is written beside
+    /// it rather than instead of it.</b> That is the decision the play-through's first finding
+    /// asked for and there was really only one answer available: every capture command in
+    /// <c>view.md</c> names a file and means the picture of the game, and a flag that quietly
+    /// changed which window a path referred to would rewrite the meaning of all of them. So the
+    /// path given is always the game. When the second window is open as well — which takes
+    /// <c>--instruments</c>, since a capture never presses <c>I</c> — it goes to the same name
+    /// with <c>.instruments</c> before the extension, and a run that did not ask for the window
+    /// writes exactly the one file it always did.
+    /// </remarks>
+    public bool Tick(Node node, Window? instruments = null)
     {
         if (_framesLeft-- > 0) return false;
 
@@ -148,7 +161,27 @@ public sealed class SandboxCapture
             ? $"captured {image.GetWidth()}x{image.GetHeight()} to {_path}"
             : $"capture to {_path} failed: {error}");
 
+        if (error == Error.Ok && instruments is { Visible: true })
+        {
+            var beside = Beside(_path);
+            var panel = instruments.GetTexture().GetImage();
+            var second = panel.SavePng(beside);
+
+            GD.Print(second == Error.Ok
+                ? $"captured {panel.GetWidth()}x{panel.GetHeight()} to {beside}"
+                : $"capture to {beside} failed: {second}");
+        }
+
         node.GetTree().Quit(error == Error.Ok ? 0 : 1);
         return true;
+    }
+
+    /// <summary>The instruments window's path, given the game's: <c>out.png</c> becomes <c>out.instruments.png</c>.</summary>
+    private static string Beside(string path)
+    {
+        var dot = path.LastIndexOf('.');
+        return dot <= path.Replace('\\', '/').LastIndexOf('/')
+            ? path + ".instruments.png"
+            : path[..dot] + ".instruments" + path[dot..];
     }
 }

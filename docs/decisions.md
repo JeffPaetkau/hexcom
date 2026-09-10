@@ -2697,7 +2697,7 @@ all of which were out of scope. And it is a packaging job only — no file under
 changed, which is why the pictures are identical rather than merely similar.
 
 ## 057 — The first play-through: six findings, a change of focus, and a territory for the interface
-**2026-09-09** · **Raised by** master, for the user · **For** view, content, core, interface · **Status** open until the six are built
+**2026-09-09** · **Raised by** master, for the user · **For** view, content, core, interface · **Status** the six are built — entry 066; the mission's content half and the objective scope routed to Content and Core remain open
 
 The user played `build/Hexcom.exe` — the waystation against `Commander`, the first person to —
 and said this, recorded here in their words as nearly as a list allows, because entry 053 said the
@@ -3148,3 +3148,114 @@ slot went.
 
 **Routed.** Brief five in `docs/interface/briefs.md`, which is the strip's brief and now carries
 the banner with it, and the turn-order section of `conventions.md`.
+
+## 066 — The six are built: one switch for every animation, and a second window that makes "a shipped interface" a thing you can look at
+
+**2026-09-09** · **Raised by** view · **For** view, core, interface and master · **Status** resolved for the six; the notes for Core and Interface below are open
+
+Entry 057's six findings, built on `view/playable`. `subprojects/view.md` has the shape and the
+tables. This is the reasoning, and the three decisions the brief left for the session to settle.
+
+**The settle mechanism: a run with `--shot` on it never starts an animation.** The brief allowed
+either settling every animation before the shutter or forcing them instantly, and asked for one
+mechanism used for all of them. `HexSandbox.Animate` is it — false for the whole of a capture,
+turned off for a person by `--still`, asked by everything that moves. The argument for this half
+of the choice rather than the other is not about tidiness: settling before the picture would have
+put a capture on a code path that had never been measured, where forcing instantly leaves it on
+exactly the one entry 053 measured byte-deterministic. Three runs of the pinned command during the
+work produced one SHA-256, before and after the walk was built. **If some future animation has to
+run during a capture, the thing to change is the capture, not the flag.**
+
+**The gesture set: the right button does both jobs and they are told apart by whether the pointer
+moved.** Right-click already fired, so orbit could not be a plain right-drag and something had to
+give. What gave is *when* a shot happens: it is on release now, because on press there is nothing
+yet to tell a click from a drag by. Under six pixels of travel it was a click. Middle-drag still
+pans, and the pointer near an edge pushes the view — guarded on the pointer being genuinely inside
+the viewport, which matters more than it used to now that there is a second window for it to be
+sitting on.
+
+**`--shot` captures the game and the instruments window is written beside it**, as
+`out.instruments.png`, when `--instruments` is on the line too. One answer was really available:
+every capture command in `view.md` names a file and means the picture of the game, and a flag that
+quietly changed which window a path referred to would have rewritten the meaning of all of them.
+
+**The defaults split between the keys and the harness, and that is what made item 4 cheap.** A
+person opening the build is now playing the waystation against `Commander` with windows handed out
+and the other side hidden. A capture keeps all three switches off. Making the capture follow the
+keys would have made `--ai`, `--windows` and `--omniscient` no-ops-by-default — flags that turn on
+what is already on — and every capture command in the repository would have had to be re-read
+rather than merely re-run. The keys are the game and the harness is an instrument; they are
+allowed to open differently, and saying so out loud is cheaper than a compatibility flag.
+
+**The finding worth the entry: a readout painted across the ground cannot share a colour constant
+with the thing standing on it.** Item 5 was *our units lack contrast against the terrain*, and the
+obvious fix — raise the two side hues — washed the whole map out. `BuildAttention` tints every tile
+a soldier is attending to in that soldier's side colour, and five soldiers on the waystation is a
+wash of side colour over most of the ground; brightening the soldier brightened the ground it was
+supposed to stand out from. **A body that reads well against terrain it has itself repainted has
+not been fixed.** `SandboxPalette.AttentionHue` is now a second, dimmer pair for the field alone:
+hue carries the side and is shared, saturation is not. It is the only place in the palette where a
+side is two colours, and it is the question to ask first the next time a readout wants one.
+
+What actually fixed the contrast was three things rather than the hue: the hues above 70 per cent
+saturation, which no ground fill approaches; a dark contact ring under every body supplying the
+shadow a blockout has no ambient occlusion to cast; and both rings widening once the camera passes
+`LegibleAt`, which is the same threshold the tile labels already switch off at. The brief asked for
+the check at `--fit` as well as close in and it was a different problem there — at 80 metres a
+soldier is a handful of pixels and a ring drawn to look right at 36 is a hairline.
+
+**The walk is the resolution drawn over time, and the rules are finished before it starts.** Entry
+040 says the mover has not stepped until the window resolves; by the time a walk begins the window
+has resolved, every reaction is taken and the soldier is at the far end. Nothing is asked of the
+battle part way along one. The route is truncated at wherever the unit actually ended up, so a
+reaction that dropped it short is drawn stopping there. Two things that needed doing and only one
+of which was obvious: the unit rings moved out of the overlay mesh into the bodies mesh, because a
+ring left in the overlay stays on the tile the soldier set off from; and `DrawUnitLabels` reads the
+walk too, because a name hanging over the destination while the soldier is half way there is the
+map disagreeing with itself.
+
+**The second window is where the interesting decision was, and the brief's own test overruled the
+brief's own prose.** 057 named *the debugging readouts and the legend*; the brief also gave the
+test — *would a player who never presses `O` want it*. They disagree about the legend, and the test
+won: a player wants to know how to move and how to look and does not want to know how to hand the
+hostile side to the AI. So the legend split along the seam it already had for reasons of width, two
+ranks staying in the main view and the third going. The mode line and the AI's orders block went
+with it. `BattleHud` has two entry points now and holds no canvas of its own, and **both are handed
+the same `SandboxFrame` in the same call** — a second surface redrawn on its own schedule is the
+first chance this code has had to show two moments at once, and it cannot.
+
+**One thing changed that entry 023 had settled, and it is a change rather than an oversight.** The
+orders readout is no longer gated on `--omniscient` as well as on being an instrument. Entry 023's
+argument is untouched — it is the opponent's mind and it exists because an AI can only be checked by
+somebody who can see what it thought — but there is now a window that is nothing but instruments,
+so the gate can be *being in it*. Two gates meant that reading the AI's reasoning cost a change to
+the map, and pressing `O` is precisely the thing that stops you seeing what a player would have
+seen. Separating those two is most of what the second window is for. The `Prospect` leak 023 notes
+is unchanged and is still confined to that readout.
+
+**And the claim 023's paragraph could only assert is now demonstrable**: a shipped interface is what
+the main view shows with the window shut. That is a thing somebody can look at rather than argue
+about, which is the reason it was worth a window rather than a keypress.
+
+**For Core, one note, and it is a request this time rather than a workaround.** Only our side's
+moves walk, plus the one hostile move in a turn that opened a reaction window — the window carries
+its steps and the sandbox is holding the resolution, so that one can be drawn. Every other hostile
+move jumps. Making them all walk needs two things the view cannot get: `Commander.TakeTurn()` runs
+a whole turn synchronously and returns nothing about what its orders did, so the picture is at the
+end state before control comes back; and `Order` carries `MoveTo` but not the path walked. This is
+entry 022's shape again, one level up — the seam that entry wanted for windows, wanted for orders.
+It is not urgent and it is not a blocker; it is the thing that stops a player watching a sentry
+walk into view, and the sentry walking into view is the game's best moment.
+
+**For Interface, three things the build settled that its research should know before it writes
+against them.** Where the player/instrument line currently falls, and that it was drawn by 057's
+own test rather than by taste. That the reaction window's answers now include the enemy's reactors
+*by default*, since the keys open with windows handed out — `view.md`'s open question about that
+got sharper rather than easier. And that `I` is advertised only inside the window it opens, which
+is fine for a player and is a cold-start problem for anybody handed the build.
+
+**For Master.** 057's six are done and its Status can move. The next measurement is the same one
+as last time and a session cannot run it: a person plays `build/Hexcom.exe` to a verdict.
+`view.md`'s `## The job` names the one specified item that can be done while waiting — entry 012's
+second, the shot line saying who a shot would wake — and otherwise hands the queue to
+`subprojects/interface.md`.
