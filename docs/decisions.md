@@ -1704,7 +1704,7 @@ on purpose, and the weapons table reads as though the shot were the louder of th
 ---
 
 ## 038 — The waystation has been fought over: twelve matches, none decided, and a map redrawn from the routes
-**2026-09-08** · **Raised by** content · **For** core, view and master · **Status** open (core's half, routed into `core/objectives`); view's half in View's brief and master's by 045; the map is redrawn and the brief is done
+**2026-09-08** · **Raised by** content · **For** core, view and master · **Status** open (core's half, routed into `core/objectives`); view's half answered by 049, master's by 045; the map is redrawn and the brief is done
 
 Row 2 of entry 036's road. `Commander` on both sides, the sandbox's deployments (entry 035),
 sixty rounds or a decision, whichever first. The recorder is
@@ -2248,3 +2248,126 @@ loses a stealth mission is already footsteps rather than eyes.
 ```bash
 HEXCOM_SEEDS=12 dotnet test content/Hexcom.Content.Tests --filter "FullyQualifiedName~TheFightIsRecordedSeedBySeed" --logger "console;verbosity=detailed"
 ```
+
+---
+
+## 049 — The capture can act, the window can be answered by hand, and a wall is drawn by what it does
+**2026-09-09** · **Raised by** view · **For** view, core, content and master · **Status** resolved; row 2 of 045's road
+
+Two jobs that turned out to be one. A scripted capture is how a picture proves a window was
+answered by hand, and a window that can be answered by hand is the only interesting thing a
+scripted capture had left to photograph.
+
+**The command line is a list of things a person could have done, in the order they typed them.**
+`SandboxScript` splits the user arguments into steps and `HexSandbox` walks them. Order is the
+whole of it — `--move` then `--pass` is a different battle from `--pass` then `--move`, and a
+parser that asks *was `--move` given* cannot tell them apart — so this is a sequence and not a
+bag of flags. Five things stayed settings, on the test of whether somebody at the keyboard could
+do them: `--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows`. Everything else is a step,
+including the camera, which means `--fit` goes last.
+
+**Every step calls the method the matching key calls, and nothing else touches `Battle`.** That
+was the constraint the brief set and it is the one worth keeping: a script that could reach the
+rules directly would be a way for a picture to show a state the keyboard cannot reach, which is
+the opposite of what a harness is for. So the actions came out of the input handler into named
+methods — `MoveTo`, `FireAt`, `SetStance`, `HoldArc`, `ShoutAbout`, `LeaveTheField`, `EndTurn`,
+`PlaceReaction`, `ResolveOpenWindow` — and the keys and the script are two callers of one
+surface. Each step prints what it did, because a deaf run's worst failure is silence: a misspelt
+unit name would otherwise produce a perfectly good picture of the wrong moment.
+
+**`--until NAME` earned its place immediately.** Initiative is rolled per round, so counting
+passes is a guess that goes wrong the moment a roll changes — three attempts at the brief's own
+test landed on the wrong soldier before this existed. It is what the hand does anyway: press
+space until my man is up.
+
+**The window.** `_byHand`, the `W` key, `--windows`: with it on a move is `Commit`, a pause and a
+later `Resolve` rather than `Battle.Move`, and a hostile turn goes to a `Commander` built with
+`WindowAnswer.HandedOut`. Both arrive at the same place, and the readout does not care which —
+from the interface's side they are one question: somebody is part way through a move that is
+already paid for, and the people who can answer it have not yet. Tab picks whose answer, a
+number picks it, space resolves with recommendations standing in for anybody left. The options
+are scored with `ReactionWindow.Appraise`, the same call the recommendation is made with, so a
+player is choosing between exactly what the AI would have ranked — which is contract 2 at its
+narrowest, and it is why *hold fire* reads as `+0.00` rather than as an absence.
+
+**Two things about that state had to be drawn or it is unreadable.** The mover has paid for a
+walk it has not taken, so the committed route is drawn out of it with the tick each step lands
+on — the same clock the options are quoted against. Without it a player sees a soldier who has
+apparently done nothing being shot at for it.
+
+**The brief's own test, from one pasted command:**
+
+```
+--scenario compound --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow
+--until Orsini --move 1,0 --zoom 44
+```
+
+*reactions — t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0.* One of ours moved, a
+sentry holding an arc answered it, and the reaction line says what it did. On the waystation,
+`--windows --ai --pass 30` stops in round 4 with the sentry committed from `(-5,0)` to `(-6,-2)`
+over 15 ticks and Vance offered three answers with their scores; `--place Vance:2 --resolve`
+takes the second and reports what the window then did.
+
+**A decision entry 038 asked View for: colour and weight come from the figures, never from the
+name.** `StyleFor` switched on six well-known wall ids, so the waystation's `hedge` drew in the
+fallback grey along with every profile any future map invents, and entry 035 wrote that down as
+a gotcha rather than fixing it. A map may declare its own kit — that is the point of the format —
+so a table of names is a table that is wrong about every map written after it, and silently.
+Walls now take their hue from what they are worth to a plan (walk through it, a building wall,
+or the colour of the cover they give) and their weight from how much of a body they stop. Ground
+takes its fill from `Passable` and `ExtraApCost`. **All six built-in wall profiles come out at
+exactly the colour and weight the hand-written table gave them**, which is the check worth
+having: the figures were what the names had been standing in for, and nobody had noticed because
+there had never been a seventh profile to disagree.
+
+**Three readouts that Core made possible and nothing was showing.**
+
+- **The mission.** `Objective.Brief`, `VerdictFor(Player)`, and `Unit.Left` for who is off the
+  field and what the other side held on them as they went. Ours only; what the enemy came to do
+  is theirs to know.
+- **What our own soldier holds on a contact, exactly** — entry 042's third case of contract 3.
+  It reads `74/100` against `Threshold(Engaged)`, and it can read `130/100`, because certainty
+  banks margin up to `Ceiling`. That is not a formatting slip: the margin is what a contact
+  survives decay on.
+- **Who would hear you call it in, and at what fraction.** Two audit rows at once, both gaps
+  since the audit was written, and both unblocked by Core rather than here: `Battle.Shout`
+  exists now, so entry 012's odd row is closed on the interface side — `S`, or `--shout NAME`.
+
+**And the sandbox now has something to win.** `SandboxScenario` sets the waystation's
+`Withdrawal(Player, the three cottage tiles, Searching)` — the mission written in that map's own
+header, as rules. Entry 038 measured twelve matches on this map and not one of them ended, and
+this is the first time the sandbox can be played to a verdict. It is knowingly a **fourth** copy
+of a fact 038 counted three of; when the mission file lands (045's row 1) this scenario is one of
+the things it deletes, and until then the header is the thing to change first and this the thing
+to change with it.
+
+**One bug, in `game/`, found by the AI throwing a grenade in front of the readout.**
+`BattleHud.Describe(Order)` ended in a catch-all that read `order.Stance!.Value`, which was true
+of the only kind left over when it was written. Three kinds have landed since — `Throw`,
+`Shout`, `Leave` — and the first grenade brought the whole frame down. Every kind is named now
+and the default is a sentence. **A switch over somebody else's enum wants its default to be a
+sentence, not a guess**, and this file has two more of them.
+
+**For Core, one thing, and the workaround is three lines so it is a note rather than a request.**
+A `Commander` handing its windows out stops at *every* window, including the ones nobody was
+offered anything in — which is right for Core, since it cannot know whether the thing answering
+wants to see an empty list. It is wrong for a screen: stopping to ask a question with no answers
+in it is a worse interface than not stopping, and on a map this size it is the common case rather
+than the corner. The sandbox resumes past those itself (`SkipEmptyWindows`). If a second
+interface ever wants the same thing, it belongs behind the flag rather than in both of them.
+
+**For Content.** Nothing is asked. Worth knowing that the sandbox now deploys the waystation
+mission as an objective as well as the deployments, so the mission file has four things to
+absorb from `game/` rather than two, and that the exit is drawn on the map — a named place has to
+be visible or it does not exist.
+
+**Written before 047 and 048 landed, and both of them are merged into the same master as this.**
+The fourth copy of the waystation mission described above is now the *last* copy: 047 collapsed
+the other three into `content/missions/waystation.hexmission`, and View's next brief is deleting
+this one. Nothing here needs changing for that — the objective the sandbox sets is the same
+`Withdrawal` the file sets, which is the point — and it means the sandbox will reproduce what
+048 measured: with only the leaving half of the mission in the rules, walking straight out is the
+best available play, and a picture of the AI doing exactly that is now one command away.
+
+**For Master.** Row 2 of 045's road is done. Entry 038's half for View is answered above; entry
+012's first item is closed and its second — a preview of who a *shot* would wake — is still open.

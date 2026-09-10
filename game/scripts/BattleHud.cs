@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
@@ -10,6 +11,7 @@ using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
+using Side = Hexcom.Core.Units.Side; // Godot has a Side enum of its own
 
 namespace Hexcom.Game;
 
@@ -93,7 +95,9 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
             // Which map and which deployment, because there is more than one now and a picture
             // that does not say which it is of cannot be checked against anything.
             $"{frame.Scenario.Name}    {frame.Scenario.Situation}    {battle.Map.Tiles.Count} tiles"
-                + (frame.TileDetail ? "" : "    zoomed out: tile detail off"),
+                + (frame.TileDetail ? "" : "    zoomed out: tile detail off")
+                + (frame.AnswerByHand ? "    reactions: by hand" : ""),
+            MissionLine(frame),
             active is null
                 ? $"round {battle.Round}    nobody left to act    {hostiles}"
                 : $"round {battle.Round}    {active.Name} ({active.Side})    "
@@ -101,11 +105,14 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                   + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}    "
                   + $"{WeaponLine(active)}    {hostiles}",
             active is null ? "" : AlarmLine(frame, active),
-            active is null ? "" : SeenLine(frame, active),
-            active is null ? "" : ViewedLine(frame, active),
-            active is null ? "" : ReserveLine(frame, active),
         };
-        if (active is not null) lines.AddRange(PostureLines(frame, active));
+        if (active is not null)
+        {
+            lines.AddRange(SeenLines(frame, active));
+            lines.Add(ViewedLine(frame, active));
+            lines.Add(ReserveLine(frame, active));
+            lines.AddRange(PostureLines(frame, active));
+        }
         lines.AddRange(new[]
         {
             frame.Hover is { } h
@@ -140,17 +147,104 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// </remarks>
     private void DrawHappenings(SandboxFrame frame, Vector2 viewport)
     {
+        // Stacked upwards from just above the legend, most recent nearest the bottom. The open
+        // window goes on top of the pile because it is the only one of these that is a question
+        // rather than a record, and the only one the next keystroke is about.
         var lines = new List<string> { frame.LastWindow };
         lines.AddRange(TurnLines(frame));
         lines.RemoveAll(line => line.Length == 0);
-        if (lines.Count == 0) return;
 
-        var top = Origin + new Vector2(18, viewport.Y - 22 - LineHeight - 14 - (lines.Count - 1) * LineHeight);
+        var next = DrawBlockAbove(viewport.Y - 22 - LineHeight - 14, lines);
+        DrawBlockAbove(next, WindowLines(frame), SandboxPalette.OverwatchHue);
+    }
+
+    /// <summary>
+    /// Draw a block of lines whose last one sits at <paramref name="bottom"/>, and say where the
+    /// next block up may end.
+    /// </summary>
+    private float DrawBlockAbove(float bottom, IReadOnlyList<string> lines, Color? hue = null)
+    {
+        if (lines.Count == 0) return bottom;
+
+        var top = Origin + new Vector2(18, bottom - (lines.Count - 1) * LineHeight);
         Panel(top, lines);
 
         for (var i = 0; i < lines.Count; i++)
             _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), lines[i],
-                HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextBright);
+                HorizontalAlignment.Left, -1, LineSize, hue ?? SandboxPalette.TextBright);
+
+        return bottom - lines.Count * LineHeight - 14;
+    }
+
+    /// <summary>
+    /// The question an open reaction window is asking, and every answer it will accept.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the readout entry 004 asked for and entry 040 made reachable. The state behind it
+    /// is worth being precise about, because it is the one state in the game where the map is
+    /// lying if you read it carelessly: the mover has <b>paid for a walk it has not taken</b>. It
+    /// stands at the start of the route until the window resolves and walks it along, so the dot
+    /// on the map is where the soldier is, the line out of it is where the soldier is going, and
+    /// every option below is priced against where the soldier <em>will</em> be when it lands.
+    /// </para>
+    /// <para>
+    /// Only the reactor being chosen for gets its options listed. A window with three reactors
+    /// and four options each is twelve lines, which is a third of the screen for a question that
+    /// is answered one soldier at a time; everybody else gets the line saying what they have
+    /// already said, or nothing, which is what a player checking their own work needs.
+    /// </para>
+    /// <para>
+    /// The scores are <c>ReactionWindow.Appraise</c> — the same call the recommendation is made
+    /// with, so what a player is choosing between is exactly what the AI would have ranked. That
+    /// is contract 2 at its narrowest, and it is why <em>hold fire</em> reads as <c>+0.00</c>
+    /// rather than as an absence: an option worth nothing beats every option worth less, by
+    /// arithmetic, and a player should be able to see that happen.
+    /// </para>
+    /// </remarks>
+    private static IReadOnlyList<string> WindowLines(SandboxFrame frame)
+    {
+        if (frame.Open is not { } window) return [];
+
+        var mover = window.Mover;
+        var answered = window.Placements.Count;
+
+        var what = window.IsAmbush
+            ? $"{window.SprungBy!.Name} springs on {mover.Name}, standing at {mover.Position}"
+            : $"{mover.Name} has paid for {window.Move.Start} to {window.Move.Destination}, "
+              + $"{window.Move.Duration} ticks, and not walked it yet";
+
+        var lines = new List<string>
+        {
+            $"WINDOW OPEN — {what}    {answered} of {window.Offers.Count} answered    "
+            + "tab: whose answer    1-9: pick    space: resolve, recommending the rest",
+        };
+
+        for (var i = 0; i < window.Offers.Count; i++)
+        {
+            var offer = window.Offers[i];
+            var chosen = i == frame.Chooser;
+            var placed = window.Placements.FirstOrDefault(p => p.Reactor == offer.Reactor);
+
+            var who = $"{(chosen ? ">" : " ")} {offer.Reactor.Name} ({offer.Kind.ToString().ToLowerInvariant()})"
+                      + $"    reserve {offer.Reserve}, purse {offer.Purse}";
+
+            if (placed is not null) { lines.Add($"{who}    ANSWERED: {placed}"); continue; }
+            if (!chosen) { lines.Add($"{who}    {offer.Options.Count} options"); continue; }
+
+            lines.Add(who);
+            for (var n = 0; n < offer.Options.Count; n++)
+            {
+                var option = offer.Options[n];
+                var worth = window.Appraise(option);
+
+                lines.Add(
+                    $"      {n + 1}  {option}    {worth.Score:+0.00;-0.00} ({Terms(worth)})"
+                    + (option == offer.Recommended ? "    ← recommended" : ""));
+            }
+        }
+
+        return lines;
     }
 
     /// <summary>
@@ -166,8 +260,8 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         const string keys =
             "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
-            + "V: overwatch arc    B: arm/spring ambush    Q/E: layer    A: AI takes this turn    "
-            + "H: hostiles to AI    R: new battle    "
+            + "V: overwatch arc    B: arm/spring ambush    S: call it in    T: leave the field    Q/E: layer    "
+            + "A: AI takes this turn    H: hostiles to AI    W: answer windows by hand    R: new battle    "
             + "wheel/+-: zoom    drag or arrows: pan    F: whole map    G: whoever is up";
 
         var at = Origin + new Vector2(18, viewport.Y - 22);
@@ -200,6 +294,43 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                 top + new Vector2(-10, -LineSize - 2),
                 new Vector2(widest + 20, lines.Count * LineHeight + 10)),
             SandboxPalette.Panel);
+    }
+
+    /// <summary>
+    /// What our side came to do, how it is going, and who is off the field.
+    /// </summary>
+    /// <remarks>
+    /// Until entry 041 a battle ended one way — everybody on one side down — and the interface
+    /// had nothing to say about it that the turn-order strip did not already say by being empty.
+    /// Three things are worth reading now and all three are new. <c>Objective.Brief</c> is the
+    /// orders in the words the rules judge by; <c>VerdictFor</c> is where they stand; and
+    /// <c>Unit.Left</c> is the difference between a soldier who walked out and one who was
+    /// carried, which the old model could not tell apart.
+    /// <para>
+    /// The reading beside a departure is the load-bearing part. A withdrawal is judged on the
+    /// highest rung any enemy held on each soldier <em>at the moment it left</em> — sampled then,
+    /// because asking afterwards reads Unaware for everybody, trivially and always — so the
+    /// number that decides the mission is one a player can only see if it is printed here.
+    /// </para>
+    /// <para>
+    /// It is our own side's objective and nobody else's. What the enemy is on the field to do is
+    /// theirs to know; there is no line here for it and there should not be one.
+    /// </para>
+    /// </remarks>
+    private static string MissionLine(SandboxFrame frame)
+    {
+        var battle = frame.Battle;
+        if (battle.ObjectiveOf(Side.Player) is not { } objective) return "";
+
+        var verdict = battle.VerdictFor(Side.Player);
+        var gone = battle.Units
+            .Where(u => u.Side == Side.Player && u.Left is not null)
+            .Select(u => $"{u.Name} {u.Left!.Kind.ToString().ToLowerInvariant()} "
+                         + $"round {u.Left.Round}, they had {u.Left.Noticed.ToString().ToUpperInvariant()}")
+            .ToList();
+
+        return $"mission: {objective.Brief}    {verdict.ToString().ToUpperInvariant()}"
+               + (gone.Count == 0 ? "" : "    off the field: " + string.Join("  ·  ", gone));
     }
 
     /// <summary>
@@ -241,7 +372,34 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
             ? $"holding a {order.Arc.Name} arc {order.Centre} (x{order.Arc.AimBonus:0.00} to hit)"
             : "watching nothing in particular";
 
-        return $"reserve {active.Reserve}, {would} if you stop here    {holding}";
+        return $"reserve {active.Reserve}, {would} if you stop here    {holding}    {EarshotOf(frame, active)}";
+    }
+
+    /// <summary>
+    /// Who would hear this soldier call a contact in, and how much of it would survive the trip.
+    /// </summary>
+    /// <remarks>
+    /// Two audit rows in one clause, both of them gaps since the audit was written, and both
+    /// unblocked by Core rather than by anything here: <c>Battle.Shout</c> exists now, so there
+    /// is something to preview. <c>Awareness.Earshot</c> is the list — a radio reaches the whole
+    /// side, a voice reaches <c>VoiceRangeMetres</c>, and seeing a comrade react counts too —
+    /// and <c>RelayFraction</c> is what a second-hand contact is worth, which is why calling
+    /// somebody in leaves the hearer hunting rather than immediately engaged.
+    /// <para>
+    /// Names and a fraction, both of them ours. What the shout does to each hearer's own contact
+    /// file is a movement in a figure about our own side, so contract 3 permits it; it is left
+    /// out because the interesting question before you shout is <em>who</em>, and the list is
+    /// already the longest thing on this line.
+    /// </para>
+    /// </remarks>
+    private static string EarshotOf(SandboxFrame frame, Unit active)
+    {
+        var heard = frame.Battle.Awareness.Earshot(active).Select(u => u.Name).ToList();
+        var relay = frame.Battle.Awareness.Model.RelayFraction;
+
+        return heard.Count == 0
+            ? "a shout reaches nobody"
+            : $"a shout reaches {string.Join(", ", heard)} at {relay:P0}";
     }
 
     /// <summary>
@@ -355,7 +513,16 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// is whether any of them has <em>noticed</em>; that stays a rung.
     /// </para>
     /// </remarks>
-    private static string SeenLine(SandboxFrame frame, Unit active)
+    /// <remarks>
+    /// One line each once there is more than one, rather than all of them joined. The joined
+    /// version was already the longest line on the screen with two contacts on it and ran clean
+    /// under the turn-order strip with three — which is the strip's own gotcha in
+    /// <c>docs/subprojects/view.md</c>, and the reason the exposure half of this was split out
+    /// into a line of its own once already. Splitting by contact rather than by field is the
+    /// version that keeps working as contacts accumulate, which is the direction a battle only
+    /// ever goes.
+    /// </remarks>
+    private static IEnumerable<string> SeenLines(SandboxFrame frame, Unit active)
     {
         var battle = frame.Battle;
 
@@ -363,8 +530,9 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         {
             var range = battle.Sight.Trace(active.Vantage, threat.Where.Vantage).Distance;
             var where = threat.EyesOn
-                ? $"{threat.Unit.Name} {range:0.0} m"
-                : $"{threat.Unit.Name} believed at {threat.Where.Position} {range:0.0} m x{threat.Credence:P0}";
+                ? $"{threat.Unit.Name} {range:0.0} m {Held(battle, active, threat.Unit)}"
+                : $"{threat.Unit.Name} believed at {threat.Where.Position} {range:0.0} m "
+                  + $"x{threat.Credence:P0} {Held(battle, active, threat.Unit)}";
 
             return WorstShotAt(battle, threat, active) is { } worst
                 ? $"{where}, worst {battle.Tactics.Worth(worst):0.0} "
@@ -372,7 +540,36 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
                 : $"{where}, no shot on you";
         }).ToList();
 
-        return $"taking seriously: {(threats.Count == 0 ? "nobody" : string.Join("  ·  ", threats))}";
+        if (threats.Count == 0) { yield return "taking seriously: nobody"; yield break; }
+        if (threats.Count == 1) { yield return $"taking seriously: {threats[0]}"; yield break; }
+
+        yield return "taking seriously:";
+        foreach (var threat in threats) yield return "    " + threat;
+    }
+
+    /// <summary>
+    /// How much our own soldier has worked out about an enemy, exactly, against a full contact.
+    /// </summary>
+    /// <remarks>
+    /// The audit row in <c>docs/subprojects/view.md</c> that sat open the longest, because the
+    /// question was never how to format it. Contract 3 named two cases — your own exposure,
+    /// exact; the enemy's alarm, a rung — and this is neither. Entry 042 settled it: the split is
+    /// <b>whose knowledge it is</b> rather than what it is about, so your side's knowledge is
+    /// yours in both directions, and blurring what your own soldier has worked out would be fog
+    /// about yourself, which contract 3 already rejects for exposure in as many words.
+    /// <para>
+    /// Quoted against <c>Threshold(Engaged)</c>, the top of the ladder, because that is what the
+    /// scorer scales its prospect term by — how much is still left to learn. A contact at 50 of
+    /// 100 is a soldier who knows somebody is there and is still paying to find out more, and
+    /// that is the figure a player weighing a look against a shot is short of.
+    /// </para>
+    /// </remarks>
+    private static string Held(Battle battle, Unit observer, Unit subject)
+    {
+        var contact = battle.Awareness.Of(observer.Id, subject.Id);
+        var full = battle.Awareness.Model.Threshold(AwarenessState.Engaged);
+
+        return $"[you hold {contact.Detection:0}/{full:0}]";
     }
 
     /// <summary>Which enemies have a line to this soldier, and how much of it each can make out.</summary>
@@ -531,13 +728,21 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// <summary>One order, with what it was ranked on laid out term by term.</summary>
     public static string Describe(Order order)
     {
+        // Every kind, named. It used to end in a catch-all that read the stance, which was true
+        // of the only kind left over at the time; three more have landed since and the first
+        // grenade the AI threw in front of this readout brought the whole frame down with it.
+        // A switch over somebody else's enum wants its default to be a sentence, not a guess.
         var what = order.Kind switch
         {
             OrderKind.Move => $"move to {order.MoveTo}",
             OrderKind.Fire => $"{order.Shot!.Mode.Name} at {order.Shot.Target.Name} ({order.Shot.HitChance:P0})",
             OrderKind.Overwatch => $"hold a {order.Arc!.Name} arc on {order.Facing}",
             OrderKind.Face => $"turn to {order.Facing}",
-            _ => $"go {order.Stance!.Value.ToString().ToLowerInvariant()}",
+            OrderKind.Stance => $"go {order.Stance!.Value.ToString().ToLowerInvariant()}",
+            OrderKind.Throw => $"throw {order.Throw!.Item.Name.ToLowerInvariant()} at {order.Throw.Aimed}",
+            OrderKind.Shout => $"call in {order.About?.Name ?? "a contact"}",
+            OrderKind.Leave => "walk off the field",
+            _ => order.Kind.ToString().ToLowerInvariant(),
         };
 
         var text = $"{what}    {order.Score:+0.00;-0.00} = worth {order.Worth.Score:+0.00;-0.00} ({Terms(order.Worth)})";

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Godot;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
@@ -42,6 +43,15 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// Whether a tile is currently drawn big enough to carry its own labels and outlines. See
 /// <see cref="SandboxCamera.LegibleAt"/>.
 /// </param>
+/// <param name="Open">
+/// The reaction window waiting to be answered, if there is one.
+/// </param>
+/// <param name="Chooser">
+/// Which of that window's offers the keyboard is pointed at. Meaningless without one.
+/// </param>
+/// <param name="AnswerByHand">
+/// Whether a move stops at its window rather than taking every recommendation.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
@@ -66,4 +76,18 @@ public sealed record SandboxFrame(
     bool HostilesAutomatic,
     SandboxScenario Scenario,
     Rect2 Visible,
-    bool TileDetail);
+    bool TileDetail,
+    ReactionWindow? Open,
+    int Chooser,
+    bool AnswerByHand)
+{
+    /// <summary>
+    /// Where the subject of the open window is standing <em>now</em>, which is where it started.
+    /// </summary>
+    /// <remarks>
+    /// The distinction the whole readout turns on. A committed move is paid for and not taken:
+    /// the mover stands at the start until the window resolves and walks it along, so the dot on
+    /// the map is where it is and the route drawn out of it is where it is going. Entry 040.
+    /// </remarks>
+    public NodeId? Committed => Open?.Move.Start;
+}

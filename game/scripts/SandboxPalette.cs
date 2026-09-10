@@ -19,6 +19,15 @@ public static class SandboxPalette
     public static readonly Color FloorFill = new("2b3038");
     public static readonly Color RoughFill = new("3b332a");
     public static readonly Color TransitFill = new("3a2630");
+
+    /// <summary>Ground nobody can be on: deep water, a hole. Read off <c>GroundType.Passable</c>.</summary>
+    public static readonly Color ImpassableFill = new("18222e");
+
+    /// <summary>Where our side may walk off the field, if the mission gives us one.</summary>
+    public static readonly Color ExitFill = new("2a4a6a");
+
+    /// <summary>A route paid for and not yet walked, while its reaction window is open.</summary>
+    public static readonly Color CommittedColor = new("f2c14e");
     public static readonly Color ReachFill = new("1f4438");
     public static readonly Color RegionEdge = new("434a55");
     public static readonly Color PathColor = new("6fd3b0");

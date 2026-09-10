@@ -34,84 +34,67 @@ reaching into `src/`.
 
 ---
 
-## The job — a capture that can act
+## The job — the sandbox loads the mission file
 
-Branch `view/scripted-capture`. Read **Seeing it** below first; the job is to extend it.
+Branch `view/mission-file`. Row 5 of entry 045's road, and **it is unblocked**: entry 047 landed
+the file, and its *For View* paragraph is the whole API —
+`MissionLibrary.Load(name)`, `Mission.Begin(seed, layout, map)`, `Mission.Deploy(battle)` for a
+caller that builds its own `Battle`, `Mission.Brief` as six strings fit to show, and
+`Mission.Places` as named ground a readout can label. The sandbox builds its own `Battle`,
+because it wants its own layout, so `Deploy` is the one it wants.
 
-A capture can now show a situation the *AI* made — `--ai` hands the hostile side to `Commander`
-during the passes, and the picture that proved `view/interface-readouts` was one where the
-Spotter had crawled along the roof and shot the scout twice. It still cannot show a situation a
-*person* made: nothing in a capture moves one of ours, fires, or changes a stance, so every
-readout that depends on the player having done something — the reaction line most of all — is
-still checkable only with a hand on the keyboard.
+**It is a deletion, which is what gathering the scenario in one place was for.**
+`SandboxScenario` holds four things the file now holds: which map, who starts where with what
+facing, where our side may leave from, and the bar we may not be noticed above. Entry 038 counted
+three copies of the waystation mission and entry 049 knowingly added a fourth; 047 collapsed the
+first three, so this is the last one. **The compound stays**, and not out of sentiment: it is the
+fixture every capture from before the waystation was taken against, and entry 047 makes it the
+case that keeps a map with no mission legal. So the type does not go — its waystation deployment
+list does, and a scenario becomes either a mission name or a bare map.
 
-Give the capture a small script. Flags in the shape the existing ones already have, applied in
-order before `--pass` and the picture — something like `--move q,r[,layer]` for the active unit,
-`--fire name`, `--stance prone`, `--face NE`, `--end` — is enough. The test of it: a single
-pasted command that walks Orsini across the front of a sentry that is holding an arc and captures
-the reaction line saying what the sentry did about it. Keep it deaf and reproducible, which is
-the whole bargain the harness rests on, and keep `HexSandbox` the only thing that calls `Battle`
-— the script is an argument list, not a second input system.
+**Two things to get right rather than to discover.** `Mission.Brief` is six strings and the
+mission line currently prints `Objective.Brief`, which is one; deciding which of the six a player
+sees mid-battle, and where the other five go, is interface work and not formatting. And the file
+carries a round limit that nothing in the rules reads — entry 047 says whatever runs the battle
+applies it — so the sandbox either applies it and says so on screen, or does not and says that
+instead. Silently ignoring it is the one option that is wrong.
 
-On the waystation the script has further to walk than it did on the compound, which is the point
-of the map and worth allowing for: the sentry outside the west gate is twenty hexes from where
-ours start, and a turn is about ten. A scripted approach is two turns of moves before anything
-reacts to anything.
+**Read entry 048 before touching the objective.** Fought from the file, twelve seeds all settle
+and in none of them does anybody go near the compound: only the leaving half of the mission is
+in the rules, so walking straight out is the best available play. That is Core's to fix and the
+sandbox will show it happening; do not read it as the loader being wrong.
 
-**The second job is no longer waiting on anybody, and it is the next branch — `view/open-window`
-— or this one, if the script and the window are built together, which they may want to be,
-since a scripted capture is how a picture proves a window was answered by hand.** Core built the
-seam entry 022 asked for; entry 040 is the account. `Battle.Commit` returns a `MoveCommitment`
-whose `Window` has its offers made and nothing placed, and the mover has *not stepped* until
-`Battle.Resolve` — so a field drawn while a window is open shows a soldier who has paid for a
-walk it has not taken. Declining is an explicit `ReactionAction.Nothing`, offered to overwatch
-and ambush and deliberately not to surprise. A `Commander` built with `WindowAnswer.HandedOut`
-stops at a window, exposes it as `Waiting`, and carries on from `Resume()`, so the enemy's move
-can be answered by a person. `TakeTurn` returns an `Act` per order with the `MoveOutcome`,
-`ShotOutcome` or `BlastOutcome` beside it, which answers the last open question below — strike
-it. 040 says the commitment rather than the bare window is a small change if View would rather
-have the window; say so in `../decisions.md` rather than working round it.
+**How to know it worked.** `--scenario waystation` deploys from `content/` with nothing about the
+waystation left in `game/`, and the mission line still reads the same words.
 
-Three other things landed that this screen has to be able to say, all Core's and all readable:
+**After that, the greybox** — build order 06, row 6 of 045's road. It rewrites `game/`
+substantially, so nothing here should be built as though it will survive untouched.
 
-- **A battle can end because a squad walked out** — entry 041. `Battle.VerdictFor(side)`,
-  `Battle.ObjectiveOf(side)`, `Objective.Brief` for the words, and `Unit.Left` for why somebody
-  is off the field. `IsDecided` is now true when an objective settles however many are standing.
-- **How much is left to learn about a contact may be shown as a figure** — entry 042 closed the
-  contract 3 question, and the audit row that waited on it is a gap rather than blocked.
-- **The waystation changed under the sandbox** — entry 038 lists what moved. `deep` ground and
-  the `hedge` profile are map-declared kit, drawn grey until the view decides how to colour
-  declared kit; entry 035 asked for that decision.
+---
 
-**The waystation is loaded and the attention cone is drawn at its true reach.** Entry 006 is
-closed and entry 035 is the reasoning. What it left behind, so that nobody re-derives it:
+## What landed on `view/scripted-capture`, so nobody re-derives it
 
-- The sandbox opens on `content/maps/waystation.hexmap` through `MapLibrary.Load`, and `game/`
-  no longer calls `DemoMaps` at all. The compound survives as `--scenario compound`, loaded by
-  name like everything else.
-- The map and the deployments live in `SandboxScenario` rather than in `HexSandbox.NewBattle`.
-  That does not answer the open question about whether the scenario belongs in `game/` — see
-  below, it is still open — it only makes the answer a deletion when it comes.
-- The cone is now a graded field over four arcs and six rings, out to
-  `AwarenessModel.SightRangeMetres`, because `AttentionOn` grades attention and `LookGain` grades
-  range. The held arc reaches `WeaponProfile.MaxRange`, because an overwatch has no range of its
-  own and just needs a shot.
-- **`SandboxCamera` is what made it possible**, and is the thing to read first if you are
-  changing any of this. 45 metres is a screen-filling wash only from four metres away.
+Entry 049 is the reasoning; this is the shape.
 
-**Two things watched on `view/interface-readouts` are for Core and are written up in entry 023.**
-Do not re-find them: a stance change is scored on what it spares and never on the shot it
-costs, because postures carry no `Opens` and `Prospect` is nought against a contact already held
-`Engaged`; and a hostile's own `Prospect` term is built from the one number contract 3 blurs,
-which is fine for the AI and makes the orders readout an instrument rather than an entitlement.
-
-**Since beliefs landed (entry 021) the AI hunts.** A hostile that has heard enough walks to where
-it can see the marker, looks, and shoots next turn. A capture with `--ai` will show a soldier
-arrive somewhere and stand there: that is a look, not a stall, and the seen line on its next
-turn will say what it was walking towards.
-
-**How to know it worked.** A capture, from one pasted command, in which one of ours has acted
-and the reaction line reports what the other side did about it.
+- **The command line is a list of things a person could have done**, in the order typed.
+  `SandboxScript` parses, `HexSandbox.Perform` dispatches, and **every step calls the same method
+  the matching key calls**. That is the constraint worth keeping: a script that could reach
+  `Battle` directly would be a way for a picture to show a state the keyboard cannot reach.
+  Adding an action means adding a method, a key and a case — three places, on purpose.
+- **A reaction window can be answered by hand**, from either side of it. `W` or `--windows` turns
+  it on; a move then becomes `Commit`, a pause, and `Resolve`, and a hostile turn goes to a
+  `Commander` built with `WindowAnswer.HandedOut`. `HexSandbox.Open` is the one question the rest
+  of the code asks, because from the interface's side the two cases are identical.
+- **Windows with no offers are skipped**, in `SkipEmptyWindows`. Core stops at every window when
+  it is handing them out and is right to; a screen that stopped to ask a question with no answers
+  in it would stop twice a turn on this map.
+- **The committed route is drawn** while a window is open, with the tick each step lands on,
+  because the mover has paid for a walk it has not taken and the map is otherwise lying.
+- **Walls and ground take their look from their figures, never from their id.** Entry 038 asked
+  for the decision and entry 049 made it. All six built-in wall profiles come out at the colour
+  and weight the old table gave them.
+- **The sandbox has an objective**, so a battle on the waystation can end. `Withdrawal` to the
+  cottages, nobody above `Searching`, which is the map header as rules.
 
 ---
 
@@ -190,10 +173,10 @@ The interface audit found it and Core did not, which is contract 2 paying for it
 | The AI weighs | The query | Where the interface shows it | |
 |---|---|---|---|
 | how much attention a place has | `Awareness.AttentionOn(pose, node)` | cursor line, exactly | shown |
-| how much is still left to learn about a contact | own `Detection` against `Threshold(Engaged)` | nowhere | gap — **and a question**, below |
+| how much is still left to learn about a contact | own `Detection` against `Threshold(Engaged)` | seen line, per contact, exactly | shown |
 | the shot a new facing would open | `Tactician.BestShot` from an untaken pose | posture lines — it is the *prospect* term, scaled by attention and by what is left to learn | shown |
-| who would hear you call it in | `Awareness.Earshot` | nowhere — and there is no way to shout | gap, and a Core gap with it |
-| how much survives being passed on | `AwarenessModel.RelayFraction` | nowhere | gap |
+| who would hear you call it in | `Awareness.Earshot` | reserve line, by name — and `S` calls it in | shown |
+| how much survives being passed on | `AwarenessModel.RelayFraction` | reserve line, beside the names | shown |
 
 The attention row was worth closing on its own. The watch cone on the map used to answer this
 question as a yes or a no; the model does not — a place is attended to fully, at the corner of
@@ -202,17 +185,22 @@ cone's *range* was a lie as well, and blocked by entry 006 where its *resolution
 nobody had noticed the two were separate problems. Both are closed now: the cone is a graded
 field out to the sight range, and entry 035 says how.
 
-The second row is left open on purpose. Your own soldier's certainty about an enemy is neither of
-the two cases contract 3 names — it is not your exposure and it is not the enemy's alarm — and
-nobody has said whether a player reads it exactly or as a rung. The seen line already applies it
-as a filter (`Known` is contacts past `ActsOn`) without quoting it, and quotes the *credence* of
-a marker, which is a different thing: how much a remembered position is trusted, not how sure the
-soldier is that the enemy exists. Quoting the certainty is a design decision about entitlement,
-not a formatting one, and it is raised in entry 023.
+The second row was open the longest and the question was never how to format it. Your own
+soldier's certainty about an enemy is neither of the two cases contract 3 originally named — it
+is not your exposure and it is not the enemy's alarm. **Entry 042 settled it**: the split is
+*whose knowledge it is* rather than what it is about, so your side's knowledge is yours in both
+directions, and blurring what your own soldier has worked out would be fog about yourself, which
+contract 3 already rejects for exposure in as many words. The seen line quotes it against
+`Threshold(Engaged)` — and it can read over 100, because certainty banks margin up to `Ceiling`
+and that margin is what a contact survives decay on.
 
-Shouting is the odd row. `Tactician.AppraiseWord` scores it, `ReactionAction.Shout` uses it in a
-window, and there is no `Battle` action that lets anybody do it on their own turn — so the
-interface cannot offer it and `Commander` cannot generate it. Entry 012.
+Shouting was the odd row and is closed. `Tactician.AppraiseWord` scored it and
+`ReactionAction.Shout` used it in a window, but no `Battle` action let anybody do it on their own
+turn — so the interface could not offer it and `Commander` could not generate it, which is entry
+012's first item. `Battle.Shout` exists now; `S` calls a contact in and the reserve line says who
+would hear it. **Item 2 of entry 012 is still open**: the scorer charges a shot for what it
+announces, and there is no preview of *who* a shot would wake, so the player sees the price and
+not the bill.
 
 ### Spent — what it costs
 
@@ -277,8 +265,9 @@ They shared this doc because they shared a single 705-line file. They no longer 
 
 | | |
 |---|---|
-| `HexSandbox.cs` | the Godot node — lifecycle, input, handing turns to the AI, and assembling a frame |
-| `SandboxScenario.cs` | which map and who is standing on it. Content wearing a view extension, gathered in one place against the day there is a mission file |
+| `HexSandbox.cs` | the Godot node — lifecycle, the actions, input, handing turns to the AI, and assembling a frame |
+| `SandboxScenario.cs` | which map, who is standing on it, and what winning is. Content wearing a view extension, gathered in one place against the day there is a mission file |
+| `SandboxScript.cs` | the command line as a list of things a person could have done, in order |
 | `SandboxScale.cs` | metres against pixels, and the only place that knows the difference |
 | `SandboxCamera.cs` | where the map is looked at from and how close. Owns the scale, because zooming rebuilds it |
 | `SandboxGeometry.cs` | where things sit on the canvas — centroids, region polygons, hit tests |
@@ -370,6 +359,21 @@ greybox (build order 06) rewrites `game/` substantially and is the moment to loo
   hollow rings labelled *above* or *below*, with their attention field drawn all the same, since
   a soldier four metres up is watching this ground and not some other ground. Leaving the field
   out was tried and it hid the most interesting fact on the waystation.
+- **A switch over somebody else's enum wants its default to be a sentence, not a guess.**
+  `BattleHud.Describe(Order)` ended in a catch-all that read the stance, which was true of the
+  only kind left over when it was written; three kinds landed with grenades and the first one the
+  AI threw brought the whole frame down. Entry 049. There are two more switches over Core enums
+  in that file, and neither of them is Core's problem.
+- **An action lives in three places and that is on purpose.** A method on `HexSandbox`, a key in
+  `HandleKey`, a case in `Perform`. The script is an argument list rather than a second input
+  system, so nothing but those methods may touch `Battle` — otherwise a capture can show a state
+  the keyboard cannot reach, which is the opposite of what a harness is for.
+- **A window is modal, and the camera keys are the exception.** While one is open the battle is
+  held still around a question, so only the answers and the camera do anything. Looking is not
+  answering, and the reactor being chosen for is usually somewhere else on the map.
+- **Counting `--pass` is a guess.** Initiative is rolled per round, so a script that passes four
+  times lands on a different soldier the day anybody's roll changes. `--until NAME` is what the
+  hand does anyway.
 
 ---
 
@@ -444,28 +448,61 @@ Interactively it is the wheel or `+`/`-` to zoom, a middle-drag or the arrows to
 whole map and `G` for whoever is up. The camera never re-asks the rules anything, so none of it
 can change what is true — only what is on screen.
 
+**And a capture can act.** Everything on the line that is not one of the five settings —
+`--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows` — is a step, run in the order it was
+typed, and each one prints what it did. They are the keys under another name:
+
+| | |
+|---|---|
+| `--pass [N]` · `--until NAME` | hand the turn on; or hand it on until a named soldier is up |
+| `--move q,r[,l[,g]]` · `--fire NAME` | the active soldier moves or shoots |
+| `--stance NAME` · `--face DIR` · `--overwatch NAME\|none` | posture, facing, the arc being held |
+| `--arm` · `--spring NAME` · `--shout NAME` · `--extract` | ambush, call it in, walk off the field |
+| `--ai-turn` · `--hostiles ai\|hand` | give this turn to the search; give the side to it or take it back |
+| `--place NAME:N` · `--resolve` | answer an open reaction window, and run it |
+| `--hover node` · `--look q,r` · `--zoom N` · `--fit` · `--layer N` | the cursor, the camera, the storey |
+
+`--until` rather than a count of passes, because initiative is rolled per round. Camera steps go
+last, since anything a soldier does afterwards may pull the view to whoever is up next.
+
+The test this was built for, and what it prints:
+
+```bash
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini   --move 1,0 --zoom 44
+```
+
+*reactions — t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0.* One of ours moved, a
+sentry holding an arc answered it, and the reaction line says what it did — which was checkable
+only with a hand on the keyboard until this existed.
+
+With `--windows`, a move stops at its reaction window instead and the picture can be taken with
+the question still on screen. `--windows --ai --pass 30` on the waystation stops in round 4 with
+the sentry committed to a 15-tick walk it has not taken, Vance offered three answers and their
+scores, and the route drawn out of the sentry with the tick each step lands on.
+
 ---
 
 ## Open questions
 
 - **The greybox.** Build order puts a 3D blockout after the AI and after grenades — *only once
   the rules are settled*. The flat sandbox stays the working view until then.
-- **Whether the scenarios belong in `game/`.** Still open, and now smaller: the ground comes
-  from `content/` and only the deployments do not. `SandboxScenario` holds two of them, seven
-  soldiers and five, which is content wearing a view extension the same way `DemoMaps.cs` was
-  content wearing a `.cs` one. Entry 024 says the map format leaves out who starts where on
-  purpose and entry 029 makes the mission file Content's job; when it exists this file is a
-  deletion.
 - **Whether the camera should be a `Camera2D`.** It is an offset on the node, which is what the
   one line it replaced already was, and it costs nothing while there is a single flat view. A
   real camera node would give smoothing, limits and a viewport for free, and the greybox will
   want all three.
-- **What the player's own soldiers did during the enemy's turn is invisible.** A hostile move
-  opens a window in which our units react automatically, and the sandbox cannot report it:
-  `Commander.TakeTurn` returns orders with their appraisals and not what carrying them out did,
-  so the reaction line only ever describes a move a person made. Asked of Core in entry 022,
-  alongside the seam for placing reactions by hand, since an interface that drives the enemy
-  through `Commander` needs both to reach through it.
+- **Whether a player should be answering the enemy's reactions.** The sandbox drives both sides
+  by hand, so an open window offers every reactor in it whichever side they are on — which is
+  right for a thing built to try both sides and is not what a shipped interface would do. The
+  window readout says whose each offer is; nothing stops you answering for the other lot. Same
+  family as the orders readout, which is the opponent's mind and is shown anyway.
+- **Whether the mission line belongs to a player at all, or only to a tester.** It shows the
+  verdict, which is the scoreboard, and the reading each departed soldier left with, which is
+  how the mission is judged. Both are ours by contract 3, so there is no leak; the question is
+  whether being told *you have currently failed* mid-battle is the game or a debug readout.
+
+The scenario question is answered rather than open: it is a `## The job` above, waiting on
+Content. And what our own soldiers did during the enemy's turn is no longer invisible — `Act`
+carries the outcome (entry 040) and a handed-out window is answerable by hand (entry 049).
 
 ## Recent work
 
