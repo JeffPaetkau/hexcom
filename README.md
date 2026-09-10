@@ -442,10 +442,12 @@ it for a marker either.
 
 Science fiction, people rather than monsters, and written downstream of the rules — the systems
 were built first, so the fiction earns its place by explaining them rather than by inventing
-freely. [`docs/setting.md`](docs/setting.md) is the bible, and
-[`docs/setting/missions.md`](docs/setting/missions.md) is the mission book: six shapes a mission
-can take, the words a squad is briefed in, and what winning each one is in quantities the rules
-already have.
+freely. [`docs/setting.md`](docs/setting.md) is the bible;
+[`docs/setting/missions.md`](docs/setting/missions.md) is the mission book, six shapes a mission
+can take with the words a squad is briefed in and what winning each one is in quantities the
+rules already have; and [`docs/setting/roster.md`](docs/setting/roster.md) is the roster, twelve
+people a side written as nothing but the numbers that already exist — a `UnitStats`, a
+`CostProfile`, a `Loadout` and three sentences each.
 
 The short version. A power that administered this region has withdrawn and left its automated
 interdiction still running overhead, which destroys anything that announces itself: no aircraft,

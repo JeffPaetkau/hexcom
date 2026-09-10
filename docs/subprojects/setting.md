@@ -9,7 +9,7 @@ Read [../map.md](../map.md) first.
 
 ```
 docs/setting.md      the bible
-docs/setting/**      the parts that outgrew it — missions.md so far
+docs/setting/**      the parts that outgrew it — the mission book and the roster
 ```
 
 ## Must not touch
@@ -25,54 +25,53 @@ anybody. But it is not unconstrained — see below.
 
 ---
 
-## The job — write the roster
+## The job — the sites of Calder
 
-Branch `setting/roster`. Take a worktree; the rule in `CLAUDE.md` has no exception for prose.
+Branch `setting/sites`. Take a worktree; the rule in `CLAUDE.md` has no exception for prose.
 
-The bible and [`../setting/missions.md`](../setting/missions.md) between them say who is fighting
-and what they are sent to do. Neither says who *they* are, and three other territories are about
-to need that: `Battle.Deploy` takes a name, a mission file has to list a squad, and the interface
-puts those names in front of a player. Today the sandbox deploys two people called Vance and
-Orsini against four called Sentry, Watchman and so on — **one side has names and the other has
-job titles**, which is precisely the asymmetry section 4 of the bible denies. Same armoury,
-eleven years apart, and possibly the same sergeant.
+Entry 027 says a campaign map is a list of installations and who is working them, and section 7
+of the bible answers only half of that: it gives a palette — pumping stations, relay masts,
+freight sheds, a water plant, one refinery, and the roads between them — and no list. The
+previous brief left this unwritten on the grounds that nobody needed a site list yet. Somebody
+does now: mission files are being written against maps, and the question *what should this place
+be able to carry* has to be answerable before a map is drawn rather than after.
 
-**Where the output goes:** `docs/setting/roster.md`.
+**Where the output goes:** `docs/setting/sites.md`.
 
 **What it has to contain.**
 
-- **Twelve people a side**, named, with the numbers they already have. `UnitStats` gives
-  `Scout`, `Trooper` and `Signaller`; `CostProfile` gives `Scout` and `Gunner`; `Loadout` gives
-  rifleman, beamer, heavy and infiltrator. **Invent no new statistic and propose no new one.** A
-  soldier here is an existing set of numbers plus three sentences, and the discipline of writing
-  them that way is most of the value — if a person cannot be expressed in what exists, that is a
-  finding for Core in `../decisions.md` and not a licence.
-- **What a name is for.** Vance and Orsini already exist in `game/`. Say whether the roster
-  adopts them or replaces them, and be aware that adopting is the cheaper answer and probably
-  the right one.
-- **The signaller, specifically.** The bible says the man with the set is the most valuable
-  target on the field and `UtilityModel` says he is average — an open question in both
-  `../setting.md` and `core.md`. The roster is where the fiction has to put its money down: who
-  carries it, why that person, and what the squad does when he goes down.
-- **Both sides, in the same file and to the same depth.** A Cadre detail with names and a
-  rotation is what makes the approach game feel like something being done to people rather than
-  to obstacles, and section 9 of the bible — *the enemy is bored, which is why the approach
-  works* — is unwriteable without it.
-- **What carries between missions**, in the terms entry 027 already set: plate never recovers,
-  fields always do, so what a name accumulates is worn kit and not wounds. One paragraph, not a
-  campaign system.
+- **A dozen or so named places**, each with what it is, who works there, and what the ground
+  offers. Ordinary country as well as industry — the waystation is the more useful reading of
+  this world precisely because people live at it, and a list of nothing but installations loses
+  that.
+- **Which of the six mission shapes each one can carry, and why.** This is the whole value and
+  it is the discipline the roster used one rung out: a site is not a description, it is an
+  answer to *what could happen here*. A place with no standoff cannot carry a reconnaissance. A
+  place with nothing worth spending four turns on cannot carry a sabotage. Section 9 of
+  [`../setting/missions.md`](../setting/missions.md) says what each shape needs from the ground
+  and it is the checklist to work against.
+- **A size, in metres, with the reason.** Entry 007 fixes the useful band at 70 to 105 m across,
+  because that is where a rifle at 55, a sight range of 45, a rifle heard at 18 and a shout at 15
+  stop being the same number. A site that wants to be smaller than that has to say what it gives
+  up, the way `waystation.hexmap`'s header says what the compound gives up.
+- **The two that exist, described rather than respecified.** `compound.hexmap` and
+  `waystation.hexmap` are built and Content owns them. The list adopts what they are, names them
+  as the ones already standing, and does not tell Content to change a hex.
 
-**Out of scope.** Stats, rules, loadout balance, and anything that would need `src/` to change.
-Also any claim about how many missions somebody has survived, which is campaign state and belongs
-to a layer nobody has built.
+**Out of scope.** Hex layouts, tile counts, wall profiles, anything that reads as a map spec —
+Content owns what gets built and this is a palette. Also who currently holds which site, which is
+campaign state and belongs to a layer nobody has built.
 
-**How to know it worked:** the sandbox's six deployments can be given names and two lines each
-out of this file with nothing invented, and a Cadre sentry reads as somebody a fortnight into a
-rotation rather than as a spawn point.
+**How to know it worked:** somebody about to author a map can pick a site off the list and know,
+before drawing a hex, which mission shapes it is for and roughly how big it has to be for the
+ranges to discriminate on it.
 
-**Probably next after this**, and noted so it is not lost: the sites of Calder as a list, which
-is what entry 027's campaign map wants under it. Not briefed yet, because Content owns what gets
-built and there is no reason to write a site list before somebody needs one.
+**Probably next after this**, and noted so it is not lost: the people who live at these places.
+Bible section 5 argues `Side.Neutral` should be somebody rather than nobody, and the roster's
+method would carry straight over. It is not briefed, and the reason is a real one — contacts only
+form between hostiles and `IsHostileTo` excludes neutrals, so a civilian written up today is a
+person the rules cannot make behave. The want is already filed with Core in entry 026. Wait for
+it.
 
 ## Recent work
 
