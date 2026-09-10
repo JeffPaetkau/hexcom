@@ -34,57 +34,7 @@ reaching into `src/`.
 
 ---
 
-## The job — the sandbox loads the mission file
-
-Branch `view/mission-file`. Row 5 of entry 045's road, and **it is unblocked**: entry 047 landed
-the file, and its *For View* paragraph is the whole API —
-`MissionLibrary.Load(name)`, `Mission.Begin(seed, layout, map)`, `Mission.Deploy(battle)` for a
-caller that builds its own `Battle`, `Mission.Brief` as six strings fit to show, and
-`Mission.Places` as named ground a readout can label. The sandbox builds its own `Battle`,
-because it wants its own layout, so `Deploy` is the one it wants.
-
-**It is a deletion, which is what gathering the scenario in one place was for.**
-`SandboxScenario` holds four things the file now holds: which map, who starts where with what
-facing, where our side may leave from, and the bar we may not be noticed above. Entry 038 counted
-three copies of the waystation mission and entry 049 knowingly added a fourth; 047 collapsed the
-first three, so this is the last one. **The compound stays**, and not out of sentiment: it is the
-fixture every capture from before the waystation was taken against, and entry 047 makes it the
-case that keeps a map with no mission legal. So the type does not go — its waystation deployment
-list does, and a scenario becomes either a mission name or a bare map.
-
-**Two things to get right rather than to discover.** `Mission.Brief` is six strings and the
-mission line currently prints `Objective.Brief`, which is one; deciding which of the six a player
-sees mid-battle, and where the other five go, is interface work and not formatting. And the file
-carries a round limit that nothing in the rules reads — entry 047 says whatever runs the battle
-applies it — so the sandbox either applies it and says so on screen, or does not and says that
-instead. Silently ignoring it is the one option that is wrong.
-
-**Read entry 048 before touching the objective.** Fought from the file, twelve seeds all settle
-and in none of them does anybody go near the compound: only the leaving half of the mission is
-in the rules, so walking straight out is the best available play. That is Core's to fix and the
-sandbox will show it happening; do not read it as the loader being wrong.
-
-**How to know it worked.** `--scenario waystation` deploys from `content/` with nothing about the
-waystation left in `game/`, and the mission line still reads the same words.
-
-**Two lines while the file is open.** Entry 047 says the remarks on `SandboxScenario` and
-`SandboxCapture` still describe `DemoMaps.cs` as present; it is deleted. And entry 046 names the
-three hostile posts — Sentry is Cobb, Spotter is Teague, Watchman is Marek — but the names live
-in the mission file now, so that is Content's line and not this job's; if any string literal
-survives the deletion, it should be a name.
-
-**One audit row is now a gap rather than blocked**, and it is the sibling of the one 049 closed:
-`Battle.WouldAnnounce(ShotPlan)` exists (entry 033), so who a *shot* would wake can go on the
-shot line the way who would hear a route already goes on the cursor line. Not this job; noted so
-it is not re-found.
-
-**After that, the greybox** — the section below is its brief, written in full so that it can be
-promoted to `## The job` the day this one is merged. It rewrites `game/` substantially, so nothing
-here should be built as though it will survive untouched.
-
----
-
-## The job after this — the greybox (build order 06)
+## The job — the greybox (build order 06)
 
 Branch `view/greybox`. **This is the brief for a fresh session**, and it is written so that this
 file, `../map.md`, and the entries it cites are the whole of what that session reads before it
@@ -194,6 +144,37 @@ map. Suppression, saves, the strategy layer.
   out and the other side hidden until found**, and says afterwards what read wrong. That is the
   first measurement of the interface rather than of the rules, and it belongs in
   `../decisions.md` beside the balance findings.
+
+---
+
+## What landed on `view/mission-file`
+
+Entry 052 is the reasoning; this is the shape.
+
+- **`SandboxScenario` is a name.** `MissionLibrary.Load` reads the file, `Mission.Begin` hands
+  back a battle deployed, objectives set and started, and nothing in `game/` knows where anybody
+  stands on the waystation. The compound stays as a bare map with hand-placed soldiers, because
+  it is the fixture captures are diffed against and the case that keeps a map with no mission
+  legal.
+- **One of the six briefing parts is on screen and five are behind `M`.** The task is the only
+  one that is a sentence about what to do next. The other five are what the squad was told before
+  it went, which is a page and not a status line.
+- **The sandbox applies the mission's clock and says so** — `round 31/30    out of time`. The
+  rules have no clock (entry 047), so this is a view enforcing a content figure; it stops the
+  turns and deliberately invents no verdict, because a made-up `Abandoned` would be a rule in
+  `game/`.
+- **Named ground is labelled on the map**, from `Mission.Places`. Same argument as the exit: a
+  place a briefing names and a player cannot find is a name and not a place.
+
+**One row of the audit below is a gap rather than blocked, and it is the last one.** Entry 012's
+second item: the scorer charges a shot for what it announces, so the player sees the price and
+not the bill. `AwarenessTracker.WouldAnnounce(shooter, from, weapon, at)` exists (entry 033) and
+hands back an `Announcement` per enemy, in the same shape as `WouldHear` — which the cursor line
+already prints for a route. It is the shot line growing the clause the cursor line has, it is
+half a day, and **the names go on screen and the figures do not**, for the reason
+`BattleHud.NoiseLine` gives. Do it before the greybox or during it; it is the same readout either
+way.
+
 
 ---
 
@@ -391,7 +372,7 @@ They shared this doc because they shared a single 705-line file. They no longer 
 | | |
 |---|---|
 | `HexSandbox.cs` | the Godot node — lifecycle, the actions, input, handing turns to the AI, and assembling a frame |
-| `SandboxScenario.cs` | which map, who is standing on it, and what winning is. Content wearing a view extension, gathered in one place against the day there is a mission file |
+| `SandboxScenario.cs` | which mission, by name — or, for the compound fixture, which map and who is on it |
 | `SandboxScript.cs` | the command line as a list of things a person could have done, in order |
 | `SandboxScale.cs` | metres against pixels, and the only place that knows the difference |
 | `SandboxCamera.cs` | where the map is looked at from and how close. Owns the scale, because zooming rebuilds it |
@@ -624,9 +605,14 @@ scores, and the route drawn out of the sentry with the tick each step lands on.
   verdict, which is the scoreboard, and the reading each departed soldier left with, which is
   how the mission is judged. Both are ours by contract 3, so there is no leak; the question is
   whether being told *you have currently failed* mid-battle is the game or a debug readout.
+- **Whether the sandbox should keep applying the mission clock once Core has one.** It does now
+  because the rules have none and entry 047 says whatever runs the battle applies it, so the
+  harness in `content/` and this both do — two implementations of one figure, which is the shape
+  entry 038 was about. When the clock lands in the rules this should become a deletion and not a
+  second opinion.
 
-The scenario question is answered rather than open: it is a `## The job` above, waiting on
-Content. And what our own soldiers did during the enemy's turn is no longer invisible — `Act`
+Two questions here are answered rather than open. The scenario belongs in `content/` and now
+lives there. And what our own soldiers did during the enemy's turn is no longer invisible: `Act`
 carries the outcome (entry 040) and a handed-out window is answerable by hand (entry 049).
 
 ## Recent work

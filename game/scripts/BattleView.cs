@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using Hexcom.Content;
 using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Hexes;
@@ -74,6 +75,7 @@ public sealed class BattleView(CanvasItem canvas, SandboxCamera camera, Font fon
         DrawExit(frame);
         DrawWalls(frame);
         DrawAuthoredLinks(frame);
+        DrawPlaces(frame);
         DrawPath(frame);
         DrawCommitted(frame);
         DrawBeliefs(frame);
@@ -580,6 +582,44 @@ public sealed class BattleView(CanvasItem canvas, SandboxCamera camera, Font fon
 
             _canvas.DrawColoredPolygon(polygon, SandboxPalette.ExitFill);
             _canvas.DrawPolyline([.. polygon, polygon[0]], SandboxPalette.CoverLightHue, 2f, true);
+        }
+    }
+
+    /// <summary>
+    /// The names a mission gives to pieces of ground, written on the ground they name.
+    /// </summary>
+    /// <remarks>
+    /// A mission talks in places — <em>off by the cottages</em> — and the rules talk in nodes, and
+    /// until the file existed there was nowhere for the first to come from. <c>Mission.Places</c>
+    /// is the dictionary, and putting it on the map is the same argument that had the exit drawn:
+    /// a named place that cannot be found on the ground is a name and not a place, and the
+    /// briefing behind <c>M</c> is unusable without it.
+    /// <para>
+    /// One label per place rather than one per tile, at the middle of the tiles it covers, and
+    /// only when a tile is big enough to carry writing at all. Places are few — one on the
+    /// waystation — so this is cheap; if a map ever names a dozen it should become a toggle
+    /// rather than a filter, because the answer to clutter is not smaller text.
+    /// </para>
+    /// </remarks>
+    private void DrawPlaces(SandboxFrame frame)
+    {
+        if (!frame.TileDetail || frame.Mission is not { } mission) return;
+
+        foreach (var (name, tiles) in mission.Places)
+        {
+            var here = tiles.Where(t => t.Layer == frame.Layer).ToList();
+            if (here.Count == 0) continue;
+
+            var middle = here
+                .Select(t => Scale.Canvas.Center(t.Hex))
+                .Aggregate(new CoreVec2(0, 0), (a, b) => a + b) / here.Count;
+
+            if (!frame.Visible.HasPoint(SandboxScale.ToScreen(middle))) continue;
+
+            // Above the ground it names rather than on it, and after the walls, because the
+            // places worth naming are buildings and a building is drawn as a heavy outline.
+            var above = middle + new CoreVec2(0, Scale.HexRadiiToPixels(1.1f));
+            DrawCentredText(above, name.ToUpperInvariant(), 12, SandboxPalette.LinkText, widthPixels: 200f);
         }
     }
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using Hexcom.Content;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
@@ -52,6 +53,14 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// <param name="AnswerByHand">
 /// Whether a move stops at its window rather than taking every recommendation.
 /// </param>
+/// <param name="Mission">
+/// The mission this battle is, read from <c>content/</c>, or null for a bare map.
+/// </param>
+/// <param name="Briefing">Whether the full six-part briefing is on screen.</param>
+/// <param name="OutOfTime">
+/// Whether the mission's own round limit has passed. The rules have no clock, so this one is
+/// applied by the thing running the battle — see <c>docs/decisions.md</c> entry 047.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
@@ -79,7 +88,10 @@ public sealed record SandboxFrame(
     bool TileDetail,
     ReactionWindow? Open,
     int Chooser,
-    bool AnswerByHand)
+    bool AnswerByHand,
+    Mission? Mission,
+    bool Briefing,
+    bool OutOfTime)
 {
     /// <summary>
     /// Where the subject of the open window is standing <em>now</em>, which is where it started.

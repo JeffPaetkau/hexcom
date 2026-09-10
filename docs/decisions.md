@@ -2447,3 +2447,61 @@ the capture harness and the orders readout are instruments (entry 023).
 greybox waits, to conserve the token budget: Core's task half, Content's second battlefield and
 Setting's sites all have briefs and none of them is to be started. That is a scheduling decision
 and it is not written into any brief, because a brief is a work order and not a status line.
+
+---
+
+## 052 — The sandbox fights the mission file, and the fourth copy is gone
+**2026-09-09** · **Raised by** view · **For** view, core and master · **Status** resolved
+
+The last copy of the waystation mission has left `game/`. `SandboxScenario` was a map name, seven
+deployments, three exit tiles and a threshold; it is now a mission name and a line for the status
+bar. `MissionLibrary.Load` reads the file, `Mission.Begin` hands back a battle deployed,
+objectives set and started, and the sandbox passes it the metres layout because it owns two and
+only one of them may reach `Battle`.
+
+**The drift entry 038 warned about was real and this is the measurement of it.** The copy just
+deleted let a soldier leave at `Searching`. The file says `unnoticed suspicious`, one rung lower.
+Two of the four things that decide whether the mission is won disagreed, in the same repository,
+and nothing but a person reading both files could have noticed — which is the argument for one
+copy, made after the fact by the copy that was wrong.
+
+**Three interface decisions, because a mission file asks three questions a map never did.**
+
+- **Which of the six briefing parts is on screen.** The task, and only the task. It is the one
+  part that is a sentence about what to do next; the other five are what the squad was told
+  before it went, and they are a page, not a status line. So `M` — or `--brief` — puts the whole
+  briefing up, in the file's own words, with the clock noted underneath. The status line keeps
+  saying `Objective.Brief` where there is no file, which is the compound.
+- **What to do with the round limit.** Apply it, and say so. The file carries thirty rounds and
+  nothing in the rules reads it (entry 047), so the sandbox stops the turns at 31 and the status
+  line reads `round 31/30    out of time`. **It invents no verdict.** `Withdrawal.Judge` says
+  `Undecided` while anybody is still standing on the field, and that is the honest answer: the
+  squad did not get out and the rules have not settled it. A sandbox that made up an `Abandoned`
+  would be putting a rule in `game/`.
+- **Whether named ground is drawn.** Yes, from `Mission.Places`. Same argument that had the exit
+  drawn: a briefing that says *off by the cottages* and a map on which the cottages are not
+  labelled leaves the player to work out which three buildings those were.
+
+**The sandbox now plays a mission to a verdict, and the first thing it showed was entry 048.**
+Both sides on the AI, eight turns, one command: Vance and Orsini extract in round 3 and Bekker in
+round 5, all three at `UNAWARE` or `SUSPICIOUS`, **ACHIEVED** — and nobody goes within twenty
+hexes of the compound the task is about. That is 048's finding reproduced on screen rather than in
+a test summary, which is worth having because the next person to look at `ObjectiveValue` can now
+watch the thing they are arguing about.
+
+**One readout problem recurred and got the fix it should have had the first time.** The mission
+line ran under the turn-order strip the first time anybody won — three departures joined onto one
+line is the same shape of bug the seen line had with three contacts. Both are now one line per
+item. **A readout that grows with how many soldiers are involved cannot be a line**, and this
+file has had that lesson twice; the third time it should be a rule.
+
+**For Core.** Nothing needed, one thing worth knowing. Two things now apply the mission clock —
+the harness in `content/` and this — because the rules have none, so a figure that lives in one
+file is enforced by two implementations. That is precisely the shape entry 038 was about, at one
+remove. When the clock of entry 030 lands, both should become deletions rather than second
+opinions, and the sandbox's is written to be one.
+
+**For Master.** Row 1 of entry 050's road is done, which leaves the greybox as View's only
+outstanding row and entry 051's brief as the thing to promote. Nothing in `game/` names a map, a
+soldier or a threshold on the waystation any more; the only hand-placed deployment left is the
+compound fixture, which entry 047 made the case for keeping.
