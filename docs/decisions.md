@@ -3104,3 +3104,47 @@ mid-round enters the order at once, which should read as a discovery rather than
 View open question *whether an unfound hostile should hold a slot in the turn order at all* is
 answered: no. `SandboxFrame.Sees` is already the one question that says whether a hostile is
 known, so the strip should ask it rather than grow a second opinion.
+
+## 065 — The pause when it is not your go gets one banner per stretch, not one per turn
+**2026-09-09** · **Raised by** interface, for the user · **For** view · **Status** resolved
+
+Entry 064 dropped the unfound hostile's slot from the turn order strip and left a hole: their
+turn now passes with nothing on screen while time moves, which reads as a bug. The user asked for
+a spinner or a message. **The answer is one indicator per contiguous stretch of hostile activity,
+never one per turn**, and the reason it has to be per stretch is the point of this entry.
+
+**A per-turn indicator hands back what 064 withheld.** Count the appearances over a round and you
+have the enemy's count and their rough place in the order again — which is precisely the leak
+dropping the slot removed, arriving through a different door. Showing it only for hostiles nobody
+has found is worse: then the *presence* of the indicator is the tell, and its absence says *this
+one you have met*. So it is the same indicator for every hostile turn, known actor or not, and
+one indicator for a run of them. It appears when control leaves the player's side and clears when
+it comes back.
+
+**Which makes it the alternating games' phase banner, and that is the convention it takes.** XCOM
+says *enemy turn* over a whole phase rather than per unit. An interleaved game normally has no
+use for that, because the strip carries the identity — here the identity is the one thing that
+cannot be shown, so the interleaved presentation collapses onto the alternating one. That is the
+second time this project has found the genre's convention already fitting a hole the asymmetry
+dug, after Invisible, Inc.'s hidden alarm sub-levels in entry 060.
+
+**Two details, because both are easy to get wrong in the direction of looking broken.**
+
+- **A message with an activity indicator inside it, not an indicator alone.** A bare spinner
+  claims *the software is busy*, which is a bug report rather than a turn. The words are what
+  claim *somebody else is playing*. The spinner earns its place only on a stretch long enough to
+  look frozen.
+- **A minimum dwell**, or a resolution finishing in a frame flashes the banner and is worse than
+  drawing nothing at all. Roughly 0.6 to 1.2 seconds in the games that do this — an argument, not
+  a measurement. **No dwell in captures or headless runs**, by the settle-before-shot rule every
+  other animation here obeys.
+
+**What stays countable, deliberately.** Anything a hostile turn does that the player can actually
+perceive — a noise heard, a shout picked up, one of theirs shot at — registers per event, and the
+happenings block already exists for what happened while it was not your go. Those are things the
+player perceived, so counting them is the game working rather than a leak. The banner is not one
+of them. And no camera move towards an actor the player has not found, for the same reason the
+slot went.
+
+**Routed.** Brief five in `docs/interface/briefs.md`, which is the strip's brief and now carries
+the banner with it, and the turn-order section of `conventions.md`.
