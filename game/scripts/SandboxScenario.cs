@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Hexcom.Content;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
@@ -51,11 +52,15 @@ public sealed record SandboxDeployment(
 /// <param name="MapName">The <c>.hexmap</c> to load it on.</param>
 /// <param name="Situation">One line for the readouts, so the picture says what it is a picture of.</param>
 /// <param name="Deployments">Everybody, in no particular order — initiative decides who goes first.</param>
+/// <param name="Exit">
+/// Where our side may walk off the field, or empty for a fight with nothing to win.
+/// </param>
 public sealed record SandboxScenario(
     string Name,
     string MapName,
     string Situation,
-    IReadOnlyList<SandboxDeployment> Deployments)
+    IReadOnlyList<SandboxDeployment> Deployments,
+    IReadOnlyList<NodeId>? Exit = null)
 {
     private static NodeId At(int q, int r, int layer = 0) => new(new Hex(q, r), layer);
 
@@ -101,7 +106,23 @@ public sealed record SandboxScenario(
     /// <para>
     /// Vance also has the highest initiative, so the sandbox opens on a soldier holding a blade
     /// and no capture of the opening frame can show a shot readout. That is the same trap the
-    /// compound had and <c>SandboxCapture.Passes</c> is still the way past it.
+    /// compound had and a <c>--pass</c> is still the way past it.
+    /// </para>
+    /// <para>
+    /// <b>And there is now something to win.</b> The mission is the one written in the header of
+    /// <c>waystation.hexmap</c>: go in, look at what is in the house, come out by the cottages,
+    /// and do not be properly registered on the way. As rules that is
+    /// <c>Withdrawal(Player, the three cottage tiles, Searching)</c> — entry 041 — and it is the
+    /// difference between a sandbox and a game, because entry 038 measured twelve matches on this
+    /// map and not one of them ended: a commander with nothing to want stands still once contact
+    /// is lost.
+    /// </para>
+    /// <para>
+    /// It is also a <b>fourth</b> copy of a fact entry 038 already counted three of, and that is
+    /// deliberate and temporary. The map header holds the mission in prose, the harness in
+    /// <c>content/</c> deploys it, and this file does both — so when the mission file lands
+    /// (entry 036, row 5) this scenario is one of the things it deletes, and until then the
+    /// header is the thing to change first and this the thing to change with it.
     /// </para>
     /// </remarks>
     public static readonly SandboxScenario Waystation = new(
@@ -120,7 +141,11 @@ public sealed record SandboxScenario(
             new("Spotter", Side.Hostile, At(0, 1, 1), UnitStats.Signaller, HexDirection.NorthWest, Loadout.Beamer),
             new("Watchman", Side.Hostile, At(16, -14, 1), null, HexDirection.NorthWest, Loadout.Rifleman),
             new("Hollis", Side.Hostile, At(14, -6), null, HexDirection.SouthWest, Loadout.Beamer),
-        ]);
+        ],
+
+        // The cottages on the west bank: a named place and not a map edge, because whoever is
+        // meeting you there has to be able to find it.
+        [At(-14, 6), At(-14, 7), At(-13, 6)]);
 
     /// <summary>
     /// The old demo: two of ours outside the compound, three of theirs inside it, one on the roof.
@@ -166,10 +191,27 @@ public sealed record SandboxScenario(
     /// <summary>The ground, read from <c>content/</c>.</summary>
     public BattleMap LoadMap() => MapLibrary.Load(MapName);
 
-    /// <summary>Put everybody on a battle that has not started yet.</summary>
+    /// <summary>
+    /// Put everybody on a battle that has not started yet, and give it something to be about.
+    /// </summary>
+    /// <remarks>
+    /// The objective goes on before <c>Start</c>, which is what entry 041 asks for. A scenario
+    /// with no exit gets none, and a battle with no objective behaves exactly as it always did —
+    /// which is why the compound is unchanged and every capture ever taken on it still means the
+    /// same thing.
+    /// <para>
+    /// <c>Searching</c> rather than the <c>Suspicious</c> default, because the header says so in
+    /// as many words: <em>Searching, not a dog barking</em>. It is a real difference — half the
+    /// certainty ladder — and it is what makes the mission winnable by people who were noticed
+    /// and not identified.
+    /// </para>
+    /// </remarks>
     public void DeployInto(Battle battle)
     {
         foreach (var d in Deployments)
             battle.Deploy(d.Name, d.Side, d.Where, d.Stats, d.Facing, d.Kit);
+
+        if (Exit is { Count: > 0 } exit)
+            battle.SetObjective(new Withdrawal(Side.Player, exit, AwarenessState.Searching));
     }
 }

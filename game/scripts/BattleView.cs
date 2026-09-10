@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using Hexcom.Core.Awareness;
+using Hexcom.Core.Battles;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
@@ -70,9 +71,11 @@ public sealed class BattleView(CanvasItem canvas, SandboxCamera camera, Font fon
     public void Draw(SandboxFrame frame)
     {
         DrawTiles(frame);
+        DrawExit(frame);
         DrawWalls(frame);
         DrawAuthoredLinks(frame);
         DrawPath(frame);
+        DrawCommitted(frame);
         DrawBeliefs(frame);
         DrawUnits(frame);
     }
@@ -131,10 +134,28 @@ public sealed class BattleView(CanvasItem canvas, SandboxCamera camera, Font fon
         }
     }
 
+    /// <summary>
+    /// What colour a piece of ground is, decided from what the ground <em>does</em>.
+    /// </summary>
+    /// <remarks>
+    /// Entry 035 left a question for whoever came next: the wall styles switch on well-known ids,
+    /// so a profile a <c>.hexmap</c> declares for itself draws in the default grey, and entry 038
+    /// asked whether grounds should be coloured by id or by figure. <b>By figure.</b> A map may
+    /// invent ground and kit — that is the whole point of the format — so a table of names is a
+    /// table that is wrong about every map written after it, and silently. The waystation's
+    /// <c>deep</c> is the case that settles it: it is impassable, which is the single most
+    /// important thing about a tile a player is planning a route across, and no amount of adding
+    /// cases would have made the <em>next</em> map's water read correctly.
+    /// <para>
+    /// So: impassable ground reads as impassable, ground that costs extra reads as rough, and
+    /// everything else is floor. Three figures, all of them declarable, none of them a name.
+    /// </para>
+    /// </remarks>
     private static Color FillFor(SandboxFrame frame, Tile tile, HexRegion region, NodeId id)
     {
         if (frame.Battle.Active is { } active && frame.Reach.CanReach(id) && frame.Battle.CanStopAt(active, id))
             return SandboxPalette.ReachFill;
+        if (!tile.Ground.Passable) return SandboxPalette.ImpassableFill;
         if (!region.Occupiable) return SandboxPalette.TransitFill;   // crossable, but nowhere to stand
         if (tile.Ground.ExtraApCost > 0) return SandboxPalette.RoughFill;
         return SandboxPalette.FloorFill;
@@ -440,16 +461,53 @@ public sealed class BattleView(CanvasItem canvas, SandboxCamera camera, Font fon
         }
     }
 
-    private static (Color Color, float Width) StyleFor(WallProfile profile) => profile.Id switch
+    /// <summary>
+    /// What a wall looks like, decided from what the wall <em>does</em>.
+    /// </summary>
+    /// <remarks>
+    /// The same decision as <see cref="FillFor"/> and for the same reason: this used to switch on
+    /// six well-known ids, so the waystation's <c>hedge</c> — a profile the map declares for
+    /// itself — drew in the fallback grey along with every profile any future map invents. Entry
+    /// 035 wrote that down as a gotcha and entry 038 asked for a decision. It is: <b>colour and
+    /// weight come from the figures, never from the name.</b>
+    /// <para>
+    /// The <b>hue</b> says what it is worth to a plan: green if you can walk through it, white if
+    /// it is a building wall that nothing gets over, and otherwise the colour of the cover it
+    /// gives, matching the cover outlines on the tiles either side of it. The <b>weight</b> says
+    /// how much of a body it stops — see-through is a hairline, walk-through is thin, vault is
+    /// thicker, climb thicker again, and a wall that stops you outright is the heaviest thing on
+    /// the map.
+    /// </para>
+    /// <para>
+    /// <b>All six built-in profiles come out at exactly the colour and weight the hand-written
+    /// table gave them</b>, which is the check worth having: the figures were what the names had
+    /// been standing in for all along, and nobody had noticed because there was never a seventh
+    /// profile to disagree. The waystation's hedge — 1.5 m, light cover, walk through, cannot see
+    /// through — now draws as a hedge because of what it is rather than because it was listed.
+    /// </para>
+    /// </remarks>
+    private static (Color Color, float Width) StyleFor(WallProfile profile)
     {
-        "low" => (new Color("d8b25a"), 6f),      // waist high: half cover, vault it
-        "high" => (new Color("d1743c"), 8f),     // head high: full cover, climb it
-        "solid" => (new Color("e6e9ee"), 10f),   // building: nothing gets through
-        "railing" => (new Color("6fa8c8"), 3f),  // light cover only
-        "screen" => (new Color("74b06a"), 5f),   // blocks sight, not movement
-        "hedge" => (new Color("5f8f57"), 5f),    // push through it, cannot see through it
-        _ => (new Color("aaaaaa"), 4f),
-    };
+        var hue =
+            !profile.BlocksMovement ? new Color("74b06a")                          // push through it
+            : profile.Cover == CoverGrade.Full && !profile.Climbable ? new Color("e6e9ee")   // a building
+            : profile.Cover switch
+            {
+                CoverGrade.Full => new Color("d1743c"),
+                CoverGrade.Half => new Color("d8b25a"),
+                CoverGrade.Light => new Color("6fa8c8"),
+                _ => new Color("aaaaaa"),
+            };
+
+        var width =
+            !profile.Opaque ? 3f                    // see through it: a railing, a parapet
+            : !profile.BlocksMovement ? 5f          // walk through it: a screen, a hedge
+            : profile.Vaultable ? 6f                // waist high: over it and keep going
+            : profile.Climbable ? 8f                // head high: over it, slowly
+            : 10f;                                  // a building wall
+
+        return (hue, width);
+    }
 
     private void DrawAuthoredLinks(SandboxFrame frame)
     {
@@ -463,6 +521,65 @@ public sealed class BattleView(CanvasItem canvas, SandboxCamera camera, Font fon
             _canvas.DrawCircle(at, Mathf.Max(4f, Scale.HexRadiiToPixels(0.30f)), SandboxPalette.LinkFill);
             if (frame.TileDetail)
                 DrawCentredText(centre, link.Kind.ToString().ToUpperInvariant(), 11, SandboxPalette.LinkText);
+        }
+    }
+
+    /// <summary>
+    /// The route somebody has committed to and not yet walked, with the ticks along it.
+    /// </summary>
+    /// <remarks>
+    /// Only ever on screen while a reaction window is open, and it is the one thing that makes
+    /// that state readable. The mover has paid for this walk and is still standing at the start
+    /// of it — entry 040 — so without the route drawn, a player looking at the map sees a soldier
+    /// who has apparently done nothing and is being shot at for it. The tick numbers are the
+    /// clock the options in the readout are quoted against: a reaction placed at t3 lands where
+    /// the label says 3.
+    /// </remarks>
+    private void DrawCommitted(SandboxFrame frame)
+    {
+        if (frame.Open is not { } window) return;
+
+        var map = frame.Battle.Map;
+        var steps = window.Move.Steps;
+        if (steps.Count < 2) return;
+
+        var points = steps.Select(s => SandboxScale.ToScreen(Geometry.NodeCentre(map, s.Node))).ToArray();
+        _canvas.DrawPolyline(points, SandboxPalette.CommittedColor, 3f, true);
+
+        if (!frame.TileDetail) return;
+
+        foreach (var step in steps.Skip(1))
+            DrawCentredText(
+                Geometry.NodeCentre(map, step.Node) + new CoreVec2(0, -Scale.HexRadiiToPixels(0.34f)),
+                $"t{step.Tick}",
+                11,
+                SandboxPalette.CommittedColor);
+    }
+
+    /// <summary>
+    /// Where our side may walk off the field, if the mission gives us somewhere.
+    /// </summary>
+    /// <remarks>
+    /// A named place rather than a map edge, which is entry 041's choice and not this file's, and
+    /// it has to be drawn or it does not exist: an exit nobody can find is the same as no exit,
+    /// and until this the only way to know where the cottages were was to read the map file.
+    /// Ours only. Where the other side is going is theirs to know.
+    /// </remarks>
+    private void DrawExit(SandboxFrame frame)
+    {
+        if (frame.Battle.ObjectiveOf(Side.Player) is not Withdrawal way) return;
+
+        foreach (var node in way.Exit.Where(n => n.Layer == frame.Layer))
+        {
+            var regions = frame.Battle.Map.RegionsOf(node.Tile);
+            var region = regions.FirstOrDefault(r => r.Index == node.Region);
+            if (region is null) continue;
+
+            var polygon = Geometry.RegionPolygon(node.Tile, region, inset: 0.06f);
+            if (!frame.Visible.HasPoint(polygon[0])) continue;
+
+            _canvas.DrawColoredPolygon(polygon, SandboxPalette.ExitFill);
+            _canvas.DrawPolyline([.. polygon, polygon[0]], SandboxPalette.CoverLightHue, 2f, true);
         }
     }
 

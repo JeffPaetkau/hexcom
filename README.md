@@ -75,6 +75,21 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0
 `--fit` pulls back until the whole map is in one picture, `--zoom N` sets the hex size in pixels,
 `--look q,r` centres on a hex, and `--scenario name` picks which battle to open.
 
+**And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
+`--ai` and `--windows` is a step, run in the order it was typed: `--move`, `--fire`, `--stance`,
+`--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
+`--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
+method its key calls, so a picture can only ever show a state somebody at the keyboard could
+have reached, and each one prints what it did — a misspelt name would otherwise make a perfectly
+good picture of the wrong moment.
+
+```bash
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini --move 1,0
+```
+
+That one walks Orsini across the front of a rifleman holding an arc, and the picture reports
+what he did about it: *t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0*.
+
 The sandbox runs a seven-unit skirmish over `content/maps/waystation.hexmap`, drawn flat — three
 of yours on the west road against a garrison holding the crossroads, one on the house roof with
 the radio and one in the watchtower. `--scenario compound` opens the older and much smaller
@@ -90,20 +105,30 @@ from `content/`, by name.
 | `C` | cycle stance: standing, crouching, prone |
 | `V` | cycle the overwatch arc: none, narrow, standard, wide |
 | `B` | arm an ambush, or spring it on whoever is under the cursor |
+| `S` | call a contact in, so everybody in earshot knows |
+| `T` | walk off the field, if you are standing somewhere your side may leave from |
 | `Z` / `X` | turn on the spot |
 | `Q` / `E` | change layer (the roof is layer 1) |
 | `A` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
 | `H` | hand the hostile side to the AI for every turn, or take it back |
+| `W` | answer reaction windows by hand rather than taking the recommendation |
+| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
 | `R` | new battle |
 | wheel, `+` / `-` | zoom |
 | middle-drag, arrows | pan |
 | `F` / `G` | see the whole map / go back to whoever is up |
 
-Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in.
-Blacked-out tiles are dead ground the active unit has no eyes on, and outlined tiles have cover
-from where it is standing — blue light, yellow half, orange full. Wall colours: white solid,
-orange high, yellow low, blue railing, green sight-screen. The strip on the right is the turn
-order with each unit's initiative roll.
+Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in,
+dark blue ones cannot be entered at all, and the blue-outlined ones are where your side may walk
+off the field. Blacked-out tiles are dead ground the active unit has no eyes on, and outlined
+tiles have cover from where it is standing — blue light, yellow half, orange full.
+
+Walls are drawn from what they do rather than from what they are called, so a map that invents
+its own kit draws correctly on the day it is written: the hue is green if you can push through
+it, white if it is a building wall nothing gets over, and otherwise the colour of the cover it
+gives; the weight is how much of a body it stops, from a hairline you can see through to the
+heaviest thing on the map. The strip on the right is the turn order with each unit's initiative
+roll.
 
 Point at an enemy and the HUD gives you the shot twice over: once as a physical event — the
 chance, the price, which plates it can reach and what each still carries — and once as a
@@ -117,12 +142,22 @@ the bar of ignoring — with the worst single shot each could put into it from w
 and, the other way round, which enemies have a line to it and how much of it each can make out.
 The first list is the one the AI weighs every posture against, and it includes what your
 soldier merely *remembers* — a contact at a marker, quoted where it is believed to be and with
-the credence it is discounted by; the second decomposes the exposure figure into who it is
-exposure *to*. The posture line prices the three posture keys and scores each the way the AI
+the credence it is discounted by — and, for each, how much your soldier has worked out about
+them, exactly, because your side's knowledge is yours in both directions; the second decomposes
+the exposure figure into who it is exposure *to*. The posture line prices the three posture keys and scores each the way the AI
 would, term by term: what it spares you, what it opens, what it costs. The cursor line places
 any hex in the active weapon's range bands, whose figures sit beside the weapon on the status
 line, so you can see the long stretch where a rifle still fires and fires worse before a shot is
 refused — and says how loud the walk there would be and who would hear it.
+
+**A move opens a window, and you can answer it yourself.** Press `W` and a move is paid for and
+held rather than resolved: the soldier stands at the start of a walk it has not taken, the route
+is drawn out of it with the tick each step lands on, and everybody who could do something about
+it is listed with what each option is worth. The scores are the same call the AI's own
+recommendation is made with, which is why *hold fire* reads as `+0.00` — an answer worth nothing
+beats every answer worth less, by arithmetic, and there is no rule anywhere saying it should.
+It works the other way too: hand the hostile side to the AI and its moves stop for you to answer
+with your own sentries.
 
 The translucent field round each unit is how much of its attention each part of the ground has,
 drawn at the reach the rules actually judge by. It is graded twice over, because the model is:
@@ -151,6 +186,14 @@ would never show; the sandbox shows it because an AI can only be checked by some
 what it thought. A soldier that can see nobody does nothing, and the block says so — that is the
 current limit of the AI, not a fault in the display.
 
+**There is something to win.** The waystation carries the mission its own map header describes:
+go in, look at what is in the house, and come out by the cottages without anybody properly
+registering you. The exit is drawn on the map, `T` walks a soldier standing on it off the field,
+and the top line says what the orders are and how they are going. Losing a man usually costs the
+mission rather than being counted as a loss of its own, because what is judged is the highest
+rung any enemy held on each soldier as they left — which is the right way round for a squad whose
+orders were to go unnoticed.
+
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry and watch it stay unaware while the same walk
 in front of it does not. Press `F` and look at the rifleman in the watchtower: it can see all
@@ -170,6 +213,8 @@ shot went off on and where the target was standing when it landed.
 - **Ambush** — press `B` on two or three of theirs in a row to arm them, then walk one of yours
   into the arc. All of them fire in one window, before you get to answer. Or hover a target and
   press `B` again with an armed unit active to spring it deliberately.
+
+Press `W` first and you get to answer any of those by hand rather than watch them happen.
 
 ## What is built
 
