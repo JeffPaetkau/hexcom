@@ -49,7 +49,7 @@ side hidden until found, and says afterwards what read wrong.* That is the first
 the interface rather than of the rules, and it belongs in `../decisions.md` beside the balance
 findings. So:
 
-1. Sit somebody down in front of `build/Hexcom.exe`, press `H` and `W`, and let them play to a
+1. Sit somebody down in front of `build/Hexcom.exe`, press `H` and `K`, and let them play to a
    verdict. Do not press `O`. **Shipping it** below is how that executable is made, and a person
    testing the game should be given one rather than a checkout — the editor command
    `dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game` is the same
@@ -62,17 +62,12 @@ findings. So:
    out to be a rule, or a query Core does not expose, is an entry for Core and not a fix here
    (contract 2).
 
-**Before the play-through: standard camera controls, asked for by the user.** `W` `A` `S` `D`
-pan the camera, relative to the screen — `W` moves the view up the screen whatever bearing the
-camera is on — and `Q` `E` turn it to the previous and next hex bearing, which is what `,` and
-`.` do today. That displaces five keys the sandbox already uses: `Q`/`E` change storey, `A` gives
-the AI one turn, `S` calls a contact in, `W` turns on answering windows by hand. Move them rather
-than drop them — storeys are a pair of keys and want to stay a pair; the other three are toggles
-or one-offs and can go almost anywhere — and put the new table in `README.md` and in **Seeing
-it**. **The script steps do not change**: `--layer`, `--ai-turn`, `--shout`, `--windows` and
-`--yaw` are the surface and the keys are only callers of it (entry 049), so a remap is a change
-to `_UnhandledInput` and two tables and nothing else. Do this first, because the person at the
-keyboard for the play-through is the person who asked for it.
+**The camera keys are new and nobody has played with them.** `W` `A` `S` `D` pan and `Q` `E`
+turn, which is what the user asked for, and five keys moved out of the way to make room — the
+table is in **Seeing it** and the three-line legend along the bottom of the screen is the same
+list. Nothing about that arrangement has been measured, and the three keys that moved furthest
+from where a hand rests are the storey pair and the two AI toggles. Whether that is a problem is
+a thing to watch for rather than a thing to ask about.
 
 **Three things the greybox left open, which the play-through is the way to settle.** They are
 under Open questions below with the reasoning; the short form is: whether an unfound hostile
@@ -88,6 +83,42 @@ screen and the figures do not**, for the reason `BattleHud.NoiseLine` gives — 
 name is *somebody unseen* unless our side has eyes on them, as `ViewedLine` does it.
 
 **Out of scope.** Art, animation, audio. Every rule. A second map or mission. The strategy layer.
+
+---
+
+## What landed on `view/camera-keys`
+
+The user asked for standard camera controls before the play-through, and the brief above named
+the five keys that had to move. What was decided while doing it, since the brief left the
+destinations open:
+
+- **The storey pair did not have to be invented.** `PageUp` and `PageDown` already changed storey
+  — they were an undocumented alias beside `Q`/`E` — so the remap is a deletion there rather than
+  a new binding, and the pair the brief wanted to keep as a pair was already one. It is now the
+  only binding, and it is in both tables where it never was before.
+- **The three singletons went to `J`, `K` and `L`, next to `H`.** `H` hands the hostile side to
+  the AI and did not move, so `J` gives it one turn, `K` turns on answering windows by hand, and
+  `L` calls a contact in. Four adjacent keys under the right hand, and all four are *who is
+  deciding, and who gets told* — which is a group a person can learn as a group. `L` for **c-a-l-l
+  it in** is the only one of the four with a mnemonic and it is the one that needed it least.
+- **`,` and `.` still turn the camera.** They cost one `or` in a switch and they are what anybody
+  who has used the sandbox already has in their hands. The tables name `Q`/`E`.
+
+**The legend was already broken and this is what found it.** One line of keys along the bottom
+edge ran off the right of a 1600-wide viewport, and had been doing so for long enough that it is
+in every capture in the repository. Nobody noticed because the keys that fall off the end are the
+ones nobody has learned — which is the failure mode of a legend, and the reason it is worth saying
+out loud. It is three lines now, split into where you are looking, what the soldier does, and what
+the run is set to, and `LegendLines` is the one figure the stack above it reads so the two cannot
+drift apart. Splitting by purpose rather than by width also means each line is complete on its own.
+
+**No script step moved.** `--layer`, `--ai-turn`, `--shout`, `--windows` and `--yaw` are the
+surface the keys call (entry 049), so every capture command in this file still means what it
+said. Two files changed: `HexSandbox.cs` for the switch and `BattleHud.cs` for the legend.
+
+**The pinned scene does change, and only along the bottom edge.** A legend two lines taller is
+drawn in every capture, so the zero-changed-pixel comparison in **Seeing it** has to be re-pinned
+against a picture taken after this — the world above it is untouched.
 
 ---
 
@@ -134,9 +165,9 @@ settled before writing much.
 - **Storeys above the one being looked at are ghosted, not cut away.** Solid at or below, drawn at
   sixteen per cent above, so a roof says there is a roof without hiding the room. Cutting away
   loses the tower and the ridge from every picture of the ground; the flat view drew nothing and
-  lost the soldiers standing on them. `Q`/`E` and `--layer` still choose the storey, and it is the
+  lost the soldiers standing on them. PgUp/PgDn and `--layer` still choose the storey, and it is the
   storey the cursor picks on and the sight sweep runs over.
-- **The camera is pitched at 55 degrees and its yaw snaps to the six hex bearings.** `,` and `.`
+- **The camera is pitched at 55 degrees and its yaw snaps to the six hex bearings.** `Q` and `E`
   turn it, `--yaw N` sets it, and it opens looking north so up the screen is up the map the way the
   flat view had it. Distance is the zoom — `--zoom N` is metres back, `LegibleAt` is 70 of them —
   and the camera never animates, because a capture has to land on the same frame every run.
@@ -207,7 +238,7 @@ Entry 049 is the reasoning; this is the shape.
   the matching key calls**. That is the constraint worth keeping: a script that could reach
   `Battle` directly would be a way for a picture to show a state the keyboard cannot reach.
   Adding an action means adding a method, a key and a case — three places, on purpose.
-- **A reaction window can be answered by hand**, from either side of it. `W` or `--windows` turns
+- **A reaction window can be answered by hand**, from either side of it. `K` or `--windows` turns
   it on; a move then becomes `Commit`, a pause, and `Resolve`, and a hostile turn goes to a
   `Commander` built with `WindowAnswer.HandedOut`. `HexSandbox.Open` is the one question the rest
   of the code asks, because from the interface's side the two cases are identical.
@@ -301,7 +332,7 @@ The interface audit found it and Core did not, which is contract 2 paying for it
 | how much attention a place has | `Awareness.AttentionOn(pose, node)` | cursor line, exactly | shown |
 | how much is still left to learn about a contact | own `Detection` against `Threshold(Engaged)` | seen line, per contact, exactly | shown |
 | the shot a new facing would open | `Tactician.BestShot` from an untaken pose | posture lines — it is the *prospect* term, scaled by attention and by what is left to learn | shown |
-| who would hear you call it in | `Awareness.Earshot` | reserve line, by name — and `S` calls it in | shown |
+| who would hear you call it in | `Awareness.Earshot` | reserve line, by name — and `L` calls it in | shown |
 | how much survives being passed on | `AwarenessModel.RelayFraction` | reserve line, beside the names | shown |
 
 The attention row was worth closing on its own. The watch cone on the map used to answer this
@@ -323,7 +354,7 @@ and that margin is what a contact survives decay on.
 Shouting was the odd row and is closed. `Tactician.AppraiseWord` scored it and
 `ReactionAction.Shout` used it in a window, but no `Battle` action let anybody do it on their own
 turn — so the interface could not offer it and `Commander` could not generate it, which is entry
-012's first item. `Battle.Shout` exists now; `S` calls a contact in and the reserve line says who
+012's first item. `Battle.Shout` exists now; `L` calls a contact in and the reserve line says who
 would hear it. **Item 2 of entry 012 is still open**: the scorer charges a shot for what it
 announces, and there is no preview of *who* a shot would wake, so the player sees the price and
 not the bill.
@@ -448,7 +479,9 @@ Entry 053 records the count.
   scene when you do.** The pinned scene is now
   `--scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1`: omniscient because the fixture
   is checked with every soldier drawn, and the yaw said because a default is a thing that moves.
-  Nothing captured before the greybox diffs against anything captured after it.
+  Nothing captured before the greybox diffs against anything captured after it, and nothing
+  captured before the key remap diffs against anything after it either — the legend along the
+  bottom edge grew from one line to three, and it is in every picture.
 - **The readouts are drawn over the map, not beside it.** All three HUD blocks sit on a panel for
   that reason, and anything added to them has to assume there is a tile-cost label underneath —
   because there is. The top block is the active soldier's situation and the bottom block is what
@@ -480,7 +513,7 @@ Entry 053 records the count.
 - **The cursor picks on the storey being looked at and nothing else.** The ray is met with each
   floor height on that storey; a roof above is transparent to it and a floor below is not
   reached. So on the ground storey you cannot click the roof, and on the roof you cannot click the
-  room under it. That is what `Q`/`E` are for.
+  room under it. That is what PgUp/PgDn are for.
 - **Attention is a tint per tile and costs a query per tile.** Seven soldiers within 45 metres
   of most of the waystation is about eight thousand `AttentionOn` calls a rebuild, which is
   cheap, and eight thousand quads, which is cheap. It would stop being cheap at a hundred
@@ -546,7 +579,7 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --omniscien
   soldiers, not later situations.
 - `--ai` hands every hostile turn to `Commander` during the passes, so each pass is one of ours
   standing still while the other side does what it decides to. Interactively the same thing is
-  `H`, and `A` gives one turn — anybody's — to the AI.
+  `H`, and `J` gives one turn — anybody's — to the AI.
 - `--omniscient` draws every soldier in play and prints the AI's orders. **Without it the
   picture is the game**: hostiles nobody of ours has found are not in it, and neither is the
   orders readout. A capture checking the AI wants this flag; a capture checking what a player
@@ -571,9 +604,37 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario 
   A name that matches nothing gets you the default and says so in the status line, rather than a
   scene that fails to load.
 
-Interactively it is the wheel or `+`/`-` to zoom, a middle-drag or the arrows to pan, `,` and `.`
-to turn, `F` for the whole map and `G` for whoever is up. The camera never re-asks the rules
-anything, so none of it can change what is true — only what is on screen.
+Interactively it is `W` `A` `S` `D` or a middle-drag to pan, `Q` and `E` to turn, the wheel or
+`+`/`-` to zoom, `F` for the whole map and `G` for whoever is up. The camera never re-asks the
+rules anything, so none of it can change what is true — only what is on screen.
+
+**The keys, in the three groups the on-screen legend uses.** The legend is
+`BattleHud.DrawLegend` and this table is the same content; they are two copies of one list and
+changing one without the other is how a legend starts lying.
+
+| Where you are looking | |
+|---|---|
+| `W` `A` `S` `D` | pan, in screen terms — `W` moves the view up the screen whichever bearing you are on |
+| `Q` / `E` | turn the camera to the previous or next hex bearing; `,` and `.` still do the same |
+| wheel, `+` / `-` | zoom |
+| `F` / `G` | the whole map / whoever is up |
+| PgUp / PgDn | change storey |
+
+| What the soldier does | |
+|---|---|
+| left-click · right-click · space | move · fire · end the turn |
+| `C` · `Z`/`X` · `V` · `B` · `T` | stance · turn on the spot · overwatch arc · arm or spring an ambush · leave the field |
+| `L` | call a contact in |
+| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
+
+| What the run is set to | |
+|---|---|
+| `H` · `J` | hand the hostile side to the AI · give it this one turn |
+| `K` | answer reaction windows by hand |
+| `O` · `M` · `R` | see everything · the briefing · a new battle |
+
+A middle-drag and the arrow keys pan as well, which is the one place two bindings survive the
+remap on purpose: a person who has a hand on the mouse should not have to move it.
 
 **And a capture can act.** Everything on the line that is not one of the six settings —
 `--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows`, `--omniscient` — is a step, run in
@@ -682,7 +743,7 @@ against `game/`. Pass an absolute path to either and the question goes away.
 - **It opens on the waystation from the mission file.** The status line reads *waystation — a
   garrison holding the crossroads, approached from the west*, the mission line reads *Enter the
   compound, confirm what is stored in the house, and come out — UNDECIDED*, and the turn order
-  has Bekker and Orsini against four `?` slots. `H`, `W` and `M` are the three keys of the
+  has Bekker and Orsini against four `?` slots. `H`, `K` and `M` are the three keys of the
   play-through and all three work: their script forms `--ai`/`--hostiles ai`, `--windows` and
   `--brief` were driven through the executable and each reported what it did, `--pass 30`
   stopping at a reaction window in round 4 the way it does in the editor.
