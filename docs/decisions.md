@@ -3259,3 +3259,58 @@ as last time and a session cannot run it: a person plays `build/Hexcom.exe` to a
 `view.md`'s `## The job` names the one specified item that can be done while waiting — entry 012's
 second, the shot line saying who a shot would wake — and otherwise hands the queue to
 `subprojects/interface.md`.
+
+## 067 — The reserve is a ladder in the rules and a number on the screen, and the canon could not have told us
+**2026-09-09** · **Raised by** interface, for the user · **For** view · **Status** resolved
+
+The user asked whether two current games had been reviewed — **Warhounds** (August 2026) and
+**Future War Tactics** (July 2025) — and said the ladder might bear on the action point interface,
+because one of them banks points as this game does. Neither had been reviewed. Neither was on the
+brief's list and the session had no knowledge of either, so nothing in `conventions.md` drew on
+them. The prompt was right and it produced the section the first draft could not have written.
+
+**Warhounds banks a reserve for overwatch and made it all or nothing.** Declaring overwatch
+**commits the operator's remaining action points** and draws a firing area in front of the
+soldier. That is the closest thing to `ReactionModel` found in a shipped game, and it removes the
+display problem instead of solving it: there is nothing graded to draw, because the transaction is
+*spend the rest*. Ours keeps `ReserveFraction` of what is left and rounds away anything under
+`ReserveFloor`, so ours has to be drawn.
+
+**And the rules already describe it as a ladder, which is the finding.** `ReactionModel.Banked`'s
+own remarks say *the floor makes this a step rather than a slope, and the step is the whole reason
+anything weighing a turn has to ask rather than multiply* — nine points up banks nothing, fifteen
+banks ten, which is most of a snap shot. `ReserveFraction` is seven tenths precisely to put the
+three rungs of the movement economy on either side of the fire mode prices. So the reserve is a
+stepped quantity with two cliffs in it, and `BattleHud.ReserveLine` prints
+`reserve 24, 17 if you stop here`. **The interface has been smoothing a ladder the rules
+deliberately made stepped**, which is the same mistake in the same shape as the alarm rung, and
+the user spotted the connection before this doc did.
+
+**What to draw, routed into brief one.** Pips on the soldier, which is the genre's answer, with
+two cliffs marked on the row: the point below which stopping banks nothing, and the point at which
+the bank first affords a shot and then the better one. Both fall out of `Banked` against
+`ReserveFloor` and the loadout's fire mode prices. A player reading that row sees three decisions
+at once. Nothing about it touches contract 3 — a soldier's own points are the player's own side's
+knowledge, exact in both directions.
+
+**One thing in `game/` worth fixing while there, and it is View's to fix.**
+`BattleHud.ReserveLine` recomputes `(int)(ActionPoints * ReserveFraction)` and the floor check
+inline rather than calling `ReactionModel.Banked`. One rule, two implementations, which is the
+shape entry 038 was about; the second one will drift the first time the first one changes.
+
+**Two smaller Warhounds conventions, both cheap and both about the arc rather than the points.**
+Cone placement is entered directly rather than through a nested menu, and its guides single out
+fast enter, adjust and cancel as what makes overwatch usable mid-fight. Here `V` and `HoldArc`
+take an arc in one press with no adjust step.
+
+**Read, not played, and the doc says so where it matters.** All of the above about Warhounds comes
+from its store page, wiki and community guides. What it is used for is narrow: that a shipped game
+with a comparable bank chose all-or-nothing. Anything built on the finer detail should verify it
+first.
+
+**The lesson about the list, which outlives both rows.** A canon is a list of games whose
+conventions are *settled*, which is what makes it the right starting point and also guarantees it
+is silent on any mechanic newer than itself. `conventions.md` now has a third shelf for what
+shipped while this was being built, and the next question of this shape should be asked the way
+the user asked this one: which shipped game has this mechanic, not which famous game has something
+like it.
