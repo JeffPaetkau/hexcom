@@ -83,13 +83,52 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
 
 ---
 
-## The job — a second battlefield, of a different shape
+## The job — finish the waystation mission
 
-Branch `content/second-battlefield`. Row 6 of entry 045's road, and the last thing Content owes
-the greybox. The waystation has been fought over twice now — once with nothing to want (entry 038)
-and once from a mission file (entry 048) — and both times on one shape of ground. A second map,
-so that the mission format is argued from two shapes rather than one, and the *one size or a
-range* question below gets a second data point.
+Branch `content/waystation-mission`. The user has played the greybox and said *make what we
+have playable* (entry 057), and the one mission there is achieves itself by walking away (entry
+048). Half of that is Core's — the rules have no objective at a place yet, and `core/objectives`
+is building one. This is the other half: everything about the waystation mission that is
+content, made ready so that when Core's objective lands the file changes one statement and the
+mission is a mission.
+
+**What to do.**
+
+1. **The squads come out of the roster.** Entry 046: the three hostile posts are Cobb, Teague and
+   Marek, and `docs/setting/roster.md` sections 4 to 6 have every soldier the sandbox fields in
+   exactly the form `deploy` takes. No more job titles on one side and names on the other.
+2. **The places the task needs are named.** The task is *enter the compound, confirm what is
+   stored in the house, and come out*. The compound and the house are `place` statements or the
+   objective cannot refer to them; the exit already is. A `place` is drawn on the map (entry
+   052), so name them the way the briefing says them.
+3. **The briefing reads as the mission book says a briefing does**, six parts, in the world's
+   words. It is the one part of the file a player sees whole (`M`), and it is currently the
+   header prose moved across. Setting's `missions.md` section for reconnaissance is the voice.
+4. **The objective statement is written for the shape it will be**, reconnaissance, and left
+   refused until Core has it — the grammar already knows the name (entry 047). The withdrawal
+   line stays beside it as what runs today. When Core lands the objective, swapping which line
+   is live is the whole change, and the harness fights it to a verdict the same day.
+5. **Fight it, and say what a person would see.** A dozen seeds through the harness, read as
+   entry 048 read them. Then the one finding that matters: with the AI walking out in round 2,
+   what does the mission need from the *content* side to be worth a player's time — a garrison
+   that patrols, a house worth looking into, a second exit — and which of those are content and
+   which are entries for Core.
+
+**Out of scope.** The objective rule itself, `ObjectiveValue`, and the clock — Core's. The
+second map, which is now the job after this. Anything in `game/`.
+
+**How to know it worked.** Both sides deploy by name from the roster, the compound and the house
+are named places on the map, `M` reads as a briefing, and the reconnaissance objective is one
+line away from live.
+
+---
+
+## After this — a second battlefield, of a different shape
+
+Branch `content/second-battlefield`. The waystation has been fought over twice now — once with
+nothing to want (entry 038) and once from a mission file (entry 048) — and both times on one
+shape of ground. A second map, so that the mission format is argued from two shapes rather than
+one, and the *one size or a range* question below gets a second data point.
 
 **Where the seam is.** `content/README.md` is both formats. `waystation.hexmap` is the worked
 example, forty-five statements of ground; `waystation.hexmission` is the mission on it, and

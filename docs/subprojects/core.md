@@ -41,6 +41,12 @@ plays both sides, maps as text, grenades and mines, a reaction window a person c
 battle that ends because a squad did what it came for. `docs/decisions.md` entries 040 to 044 are
 the argument for the last two.
 
+**Scope, set by the user after the first play-through (entry 057): the first item below is the
+job, and the rest is if it goes quickly.** *Make what we have playable* means the waystation
+mission stops achieving itself by walking away (entry 048), and that is an objective at a place.
+Content is readying the file's side of it so that the day the objective lands the mission changes
+one statement. The clock and the other shapes wait.
+
 **The job is the mission shapes the fiction describes and the rules cannot yet express.** Entry
 026 lists six and one is built. In the order they cost:
 

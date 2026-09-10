@@ -12,7 +12,7 @@ else. The one exception is `decisions.md`, which anybody may append to and nobod
 
 ## The territories
 
-Seven, five with docs. A doc is created when there is a brief to put in it — an empty one rots
+Eight, six with docs. A doc is created when there is a brief to put in it — an empty one rots
 and, worse, looks maintained while doing it.
 
 | Territory | Doc | Owns | Gated by |
@@ -21,6 +21,7 @@ and, worse, looks maintained while doing it.
 | **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — and the larger map entry 006 waited on has landed, see entry 024 |
 | **Content** | [subprojects/content.md](subprojects/content.md) | `content/**` — the `.hexmap` maps, the `.hexmission` missions, `Hexcom.Content`, its tests, and `content/README.md` | nothing |
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
+| **Interface design** | [subprojects/interface.md](subprojects/interface.md) | `docs/interface/**` — the genre's conventions, and a queue of briefs View builds to; it writes no code | nothing |
 | **Art & audio** | — this file | `assets/**` when it exists | an asset spec nobody has written. The hex figure (entry 007) and the visual register (entry 025) it was waiting on are both settled |
 | **Strategy layer** | — this file | undecided | a battle that can end some way other than elimination, in Core, and a mission file, in Content — entries 026 and 027. The campaign shape it was waiting on is settled: a thin frame, see 027 |
 | **Master** | [subprojects/master.md](subprojects/master.md) | `CLAUDE.md`, `docs/map.md`, `docs/decisions.md`, and the doc *set* — each territory owns its own doc's contents | nothing — but it writes no code, ever |

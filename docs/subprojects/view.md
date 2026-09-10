@@ -35,54 +35,70 @@ reaching into `src/`.
 
 ---
 
-## The job — the first play-through, and what read wrong
+## The job — the first play-through's findings, built
 
-Branch `view/play-through`, or none: the first half of this is a person at the keyboard, and the
-session's part is to record what they said. **This is the brief for a fresh session**, and it is
-written so that this file, `../map.md`, and entries 051 and 053 are the whole of what that
-session reads before it starts.
+Branch `view/playable`. **This is the brief for a fresh session**, and it is written so that this
+file, `../map.md`, and entries 049, 053 and 057 are the whole of what it reads before it starts.
 
-**What it is.** The greybox (build order 06) is built and entry 053 says what it is. The third of
-its three success tests has not been run, because it cannot be run by a session: *a person plays
-the waystation mission to a verdict against `Commander`, with windows handed out and the other
-side hidden until found, and says afterwards what read wrong.* That is the first measurement of
-the interface rather than of the rules, and it belongs in `../decisions.md` beside the balance
-findings. So:
+**What it is.** The first person has played the greybox — the user, against `Commander`, from
+`build/Hexcom.exe` — and entry 057 is what they said. Six things, all of them interface, none of
+them a rule, and the user's instruction with them: *make what we have playable*. This job builds
+the six. A territory for interface research now exists (`subprojects/interface.md`) and will
+write later briefs against what the genre does; **do not wait for it** — these six are concrete
+and the person who asked for them is the person who will test them.
 
-1. Sit somebody down in front of `build/Hexcom.exe`, press `H` and `K`, and let them play to a
-   verdict. Do not press `O`. **Shipping it** below is how that executable is made, and a person
-   testing the game should be given one rather than a checkout — the editor command
-   `dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game` is the same
-   game and is for the session, not for them.
-2. Write what they said into `../decisions.md` as an entry, in their words where possible: what
-   they could not find, what they misread, what they wanted to ask and could not, and what the
-   verdict was. Nothing is too small — *I did not know which way he was facing* is the kind of
-   finding this exists for.
-3. Fix what is a drawing or a readout problem, in `game/`, on the same branch. Anything that turns
-   out to be a rule, or a query Core does not expose, is an entry for Core and not a fix here
-   (contract 2).
+1. **The instruments go in a second window.** The legend and the tester's readouts — the orders
+   block, the mode line, whatever else a player of a shipped game would never see — move to a
+   separate `Window` the user can drag to another monitor. What stays in the main view is the
+   player's HUD: mission, turn order, the soldier's situation, the cursor, the shot and its worth,
+   reactions. **The test for which side of the line a readout is on**: would a player who never
+   presses `O` want it. Captures still take the main viewport; decide whether `--shot` also
+   captures the second window, or a flag does, and say so in **Seeing it**.
+2. **The camera turns smoothly, not sixty degrees at a time.** Entry 053 chose snapping so arcs
+   stay legible from a bearing; the user has overruled it and the arcs will have to stay legible
+   anyway. `Q`/`E` animate to the next bearing rather than jumping, and the mouse turns freely.
+   **Nothing animates in a capture**: `--yaw N` lands on the frame it names, and a run with
+   `--shot` on it settles every animation before the picture, or the harness stops being
+   deterministic and entry 053's fifth decision is undone.
+3. **The mouse drives the camera as well as the keyboard.** Wheel zoom exists; add drag-to-orbit,
+   drag-to-pan, and edge-pan. Right-click currently fires, so orbit is not a plain right-drag —
+   settle the gesture set first, against what `conventions.md` will eventually say, and write
+   the table in **Seeing it** beside the keys.
+4. **It opens as the mission against the AI.** Today the keys open with both sides by hand and
+   the user has to press `H` and `K` first. The default is the user playing the waystation
+   mission against `Commander` with windows handed out and the other side hidden until found.
+   Every other mode stays — AI against AI, both sides by hand, omniscient — behind the keys and
+   the script settings, because the harness and the balance runs need them. **Every capture
+   command in this file assumed the old defaults**; re-run them and re-pin the scene.
+5. **Our units do not read against the terrain.** Contrast, first — a hue the ground never uses,
+   an outline or a ground ring at a weight that survives the ghosted-storey tint, and a check
+   at `--fit` distance as well as close in. The figures-not-names rule (entry 049) is about
+   walls and ground and does not stop a soldier having a colour of its own.
+6. **A move walks the route.** Not instant, not slow: the soldier moves along the path the
+   rules already hand back, at a pace that reads as a walk at the default zoom. Entry 040 says
+   the mover has not stepped until the window resolves, so the walk is the *resolution* drawn
+   over time — draw the ticks the reaction line quotes as the soldier passes them. **Off for
+   captures and headless runs**, by the same settle-before-shot rule as item 2, and a script
+   setting so a person can turn it off too.
 
-**The camera keys are new and nobody has played with them.** `W` `A` `S` `D` pan and `Q` `E`
-turn, which is what the user asked for, and five keys moved out of the way to make room — the
-table is in **Seeing it** and the three-line legend along the bottom of the screen is the same
-list. Nothing about that arrangement has been measured, and the three keys that moved furthest
-from where a hand rests are the storey pair and the two AI toggles. Whether that is a problem is
-a thing to watch for rather than a thing to ask about.
+**Settle before writing much.** Two things, and they are the same thing. Every animation
+introduced here — camera, movement — has to have a *settled* state the capture can wait for,
+or `--shot` has to force it instantly; pick one mechanism and use it for all of them. And the
+second window changes what a *frame* is: `SandboxFrame` is one moment's answers read by both
+halves, and a HUD split across two windows still reads one frame, or it will show two moments.
 
-**Three things the greybox left open, which the play-through is the way to settle.** They are
-under Open questions below with the reasoning; the short form is: whether an unfound hostile
-should hold a `?` slot in the turn order at all; whether a hostile's held arc should be drawn when
-the hostile is; and whether the fixed 55-degree pitch is enough to read a wall by. Decide each
-from what the player did, not from what seems tidy.
+**Record before fixing.** Entry 057 is the user's words; when the six are built, append an entry
+saying what each cost and what it changed about the pinned scene, so the next play-through has a
+baseline. Anything found on the way that is a rule, or a query Core does not expose, is an entry
+for Core and not a fix here (contract 2).
 
-**Also still open, and half a day.** Entry 012's second item: the scorer charges a shot for what it
-announces, and the player sees the price and not the bill. `AwarenessTracker.WouldAnnounce` exists
-and hands back an `Announcement` per enemy in the same shape as `WouldHear`, which the cursor line
-already prints for a route. The shot line grows the clause the cursor line has; **the names go on
-screen and the figures do not**, for the reason `BattleHud.NoiseLine` gives — and in the game a
-name is *somebody unseen* unless our side has eyes on them, as `ViewedLine` does it.
+**Still open from the greybox, and not this job's.** Whether an unfound hostile should hold a
+`?` slot in the turn order, whether a hostile's held arc is drawn when the hostile is, whether
+the fixed pitch is enough — Open questions below. And entry 012's second item, the shot line
+saying who a shot would wake, half a day whenever it fits. The research territory will have a
+view on all four.
 
-**Out of scope.** Art, animation, audio. Every rule. A second map or mission. The strategy layer.
+**Out of scope.** Art, audio. Every rule. A second map or mission. The strategy layer.
 
 ---
 

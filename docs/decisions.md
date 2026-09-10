@@ -2695,3 +2695,55 @@ builds.
 **What it does not settle.** Nothing about art, installers, signing, or any platform but Windows,
 all of which were out of scope. And it is a packaging job only — no file under `game/scripts/`
 changed, which is why the pictures are identical rather than merely similar.
+
+## 057 — The first play-through: six findings, a change of focus, and a territory for the interface
+**2026-09-09** · **Raised by** master, for the user · **For** view, content, core, interface · **Status** open until the six are built
+
+The user played `build/Hexcom.exe` — the waystation against `Commander`, the first person to —
+and said this, recorded here in their words as nearly as a list allows, because entry 053 said the
+play-through's finding would be its own entry.
+
+**The six findings.** All interface, none a rule.
+
+1. Move the debugging readouts and the legend to a separate window that can sit on a different
+   monitor.
+2. Moving the camera should be smooth, not sixty degrees at a time.
+3. The mouse should control the camera as well as the keyboard.
+4. Opening it as a user should go straight into the mission against the AI. Keep the other
+   settings controllable for AI-against-AI work, but the default is me playing the mission.
+5. My units lack contrast against the terrain.
+6. When units move, move them along the path — not slow, but not instant. With the animation off
+   for headless runs.
+
+And the verdict on the whole: *it's a start*.
+
+**The change of focus.** From here the work is making what exists playable: Content finishing
+the mission material, View developing the interface. Everything else waits. Two consequences
+that are not obvious from the sentence:
+
+- **Half of "finishing the mission" is Core's.** Entry 048 measured the waystation mission
+  achieving itself in round 2, because the rules have an objective for leaving and none for the
+  task. Content can name the places, take the squads from the roster and write the briefing, and
+  the mission still walks out until Core has an objective at a place. So `core/objectives` runs,
+  scoped to that one item, and its brief says so.
+- **Item 2 overrules a greybox decision.** Entry 053 snapped the camera to hex bearings so that
+  arcs stay legible from any angle. The user wants it free and smooth; the arcs have to stay
+  legible anyway, and the harness has to stay deterministic — the brief says how.
+
+**A new territory: Interface design**, `subprojects/interface.md`, owning `docs/interface/**`.
+The interface so far was designed by the sessions that built the rules, against the audit of what
+the AI reads, and never against what a player of this genre expects under their hands. The
+territory researches what is standard in turn-based squad tactics, says what the asymmetry of
+contract 3 does to each convention, and writes a queue of View briefs against it. It writes no
+code and no other territory's doc; Master promotes its briefs into `view.md`, so one file is
+never two territories' `## The job`. The six findings above go to View **now**, without waiting
+for the research: they are concrete, and the person who asked is the person who tests.
+
+**Routed.** The six into View's brief, `view/playable`. The mission's content half into
+Content's brief, `content/waystation-mission`, with the second map after it. The scope onto
+Core's brief. The territory's first brief in its own doc.
+
+**Sessions.** View: fresh, and Opus — six well-specified items, and the Opus session that did
+the keys has run three jobs. Content: keep on Opus if the session holds, else fresh. Core:
+its idle Opus session if it still holds context, else fresh on Opus. Interface: fresh on Opus;
+it reads and writes.

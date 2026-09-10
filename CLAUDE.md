@@ -17,6 +17,7 @@ Then read the doc for the territory you have been told you are working in:
 | [docs/subprojects/view.md](docs/subprojects/view.md) | Godot presentation and interface — `game/` |
 | [docs/subprojects/content.md](docs/subprojects/content.md) | maps, kit, and the tools to author them |
 | [docs/subprojects/setting.md](docs/subprojects/setting.md) | the fiction — `docs/setting.md`, downstream of the mechanics |
+| [docs/subprojects/interface.md](docs/subprojects/interface.md) | what the genre's interface does, and the queue of briefs View builds to — `docs/interface/` |
 | [docs/subprojects/master.md](docs/subprojects/master.md) | the map, the log and the briefs — writes no code, works on `master` |
 
 **Read `docs/map.md` and your own doc in full. Of the other docs, read `## Owns` and
