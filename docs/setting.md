@@ -277,6 +277,12 @@ knows. Using it is a decision with a cost, not a default state.
 scout, trooper, signaller; rifleman, beamer, heavy, infiltrator. *Beamer* is already soldier
 slang for somebody carrying an emitter weapon and it should stay that way.
 
+**People.** Twelve a side, named, with the numbers they already carry, are in
+[setting/roster.md](setting/roster.md). Nothing there invents a statistic: a soldier is a
+`UnitStats`, a `CostProfile`, a `Loadout` and three sentences. It is also where *Sentry*,
+*Spotter* and *Watchman* are settled — they are posts on a crossroads and not names, and the
+people standing them tonight are Cobb, Teague and Marek.
+
 **Places.** The theatre is a world called **Calder**: a settled place with an industrial spine
 through it and ordinary country either side. Pumping stations, relay masts, freight sheds, a
 water plant, one refinery — and the roads between them, with the farms, crossings, waystations
@@ -321,6 +327,11 @@ right.
 That is a frame worth building and a small one. A roster, a map of sites, a clock, a market for
 what you carry, and a record of what each side has been seen fielding. It does not want a second
 combat model, an economy, or a research tree.
+
+**The roster is the first of those and it exists**, in [setting/roster.md](setting/roster.md),
+along with the argument for what a name should accumulate: nothing carries between battles today
+because there is no layer to carry it, and when there is one, the thing it should carry is worn
+plate rather than wounds.
 
 **Ground changes hands as sites, not as a front**, because there is no front — the lid forbids
 one and the deniability premise forbids admitting one. A campaign map is a list of installations
@@ -409,7 +420,10 @@ with a better idea and nothing breaks.
   signaller is worth no more than the rifleman beside them — which the design doc lists as open
   and which the fiction disagrees with strongly. The setting's answer is that the man with the
   net is the most valuable target on the field; the code's answer is that he is average. Core's
-  question, and it is already in `core.md`.
+  question, and it is already in `core.md`. **The fiction has now put its money down**, in
+  [setting/roster.md](setting/roster.md) section 3: the set goes to the worst-armed observer on
+  the detail, the order to use it comes from somebody else, and the fifteen metres between those
+  two people is the shape of every position either side takes. Still Core's number.
 - ~~**Whether missions want a defeat condition other than the squad being destroyed.**~~
   **Answered** in [setting/missions.md](setting/missions.md) section 1, and in
   [decisions.md](decisions.md) entry 030. They do, the failure is the objective becoming

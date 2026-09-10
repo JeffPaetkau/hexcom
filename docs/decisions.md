@@ -2058,3 +2058,70 @@ rewrites `game/` and re-asks the View split.
 
 Rows 1 to 4 can all start today. The greybox is two View increments away, and the second of them
 is the one that rewrites the directory.
+
+---
+
+## 046 — The roster exists, the posts are not names, and the two cost profiles have no soldiers
+
+**2026-09-09** · **Raised by** setting · **For** view, content, core · **Status** open
+
+[setting/roster.md](setting/roster.md) is written: twelve people a side, each of them a
+`UnitStats`, a `CostProfile`, a `Loadout` and three sentences, with nothing invented and nothing
+proposed. Four things came out of writing it that belong to somebody else.
+
+**1. Three of the seven strings the sandbox deploys are posts rather than names, and the split
+runs along the side line.** Vance, Orsini, Bekker and Hollis are people; Sentry, Spotter and
+Watchman are the road outside the west gate, the roof with the set, and the tower. That is the
+asymmetry section 4 of the bible spends a page denying — same armoury, eleven years apart — and
+it is the one thing in the project that makes the hostile side read as obstacles.
+
+The roster **adopts every name already in the code and changes none of them**, because adopting
+is cheap and a name has no properties to get wrong. What it adds is who stands each post:
+**Sentry is Cobb, Spotter is Teague, Watchman is Marek.** Section 6 of the roster is the table,
+with the numbers each is already carrying beside it.
+
+Nothing depends on this and nothing breaks until somebody does it. It is three string literals in
+`game/scripts/SandboxScenario.cs` and the matching four in the header of `waystation.hexmap`, and
+the right moment is whenever either file is open for another reason. The post words stay useful
+either way: *the sentry outside the west gate* is how you describe a place you have not been to.
+
+**2. A mission file that lists a squad can take it out of the roster whole.** Sections 4 and 5
+are twenty-four soldiers written in exactly the form `Battle.Deploy` takes — a name, an
+archetype, a loadout — and section 6 maps every soldier the sandbox currently fields onto one of
+them. There is no format question here for Content to answer; the names are simply available.
+
+**3. `CostProfile.Scout` and `CostProfile.Gunner` have no soldiers.** Verified across `src`,
+`tests`, `game` and `content`: `CostProfile.Gunner` appears once, in `ReactionTests`, and
+`CostProfile.Scout` appears nowhere at all. `UnitStats.Scout` and `UnitStats.Trooper` both run on
+`CostProfile.Default`, so no unit the game deploys pays anything but list price for moving or
+firing, and the record's own remarks — *this is what lets a scout and a heavy trooper spend the
+same ten points on different things* — describe something that has never happened in a battle.
+
+The roster writes Vance as `UnitStats.Scout with { Costs = CostProfile.Scout }` and Orsini as
+`UnitStats.Trooper with { Costs = CostProfile.Gunner }`, because those two soldiers are plainly
+what the two profiles were written for. **That is a suggestion and not a request**, it changes no
+file this territory owns, and everything reads correctly with it ignored. Whether the archetypes
+should carry the profiles by default is a balance question and therefore Core's.
+
+**4. The fiction has put its money down on what the signaller is worth**, which
+`UtilityModel.RemovalBonus` lists as open and values at a soldier's own vitality. The roster's
+answer, in its section 3, is not a number:
+
+- **The set goes to the worst-armed observer on the detail**, never to the best-protected
+  soldier. `UnitStats.Signaller` is Perception 12, Encumbrance 1 and not one point of action or
+  initiative above ordinary, which describes an observer carrying an awkward thing and describes
+  nobody else. `Radio` is settable on any archetype and the roster deliberately never does it.
+- **The order to use it comes from somebody else**, so the commander and the set are two people
+  who must stay inside line of sight or the fifteen metres of shouting
+  `AwarenessTracker.CanReach` allows. That tether is the shape of every position either side
+  takes, and it is why splitting a detail across the waystation — the barn at 24 m, the tower at
+  28 — costs something real.
+- **What a quiet kill buys is measured and already built.** Before anything reaches `AlertedAt`,
+  killing the set removes the channel outright, and `Battle.Withdraw` calls `Forget`, so what he
+  knew goes with him. After it, his side already holds 0.6 of what he had, and 0.6 of 75 is 45,
+  under Searching at 50. Either way the detail must close up to within a shout of itself, which
+  is a garrison giving up most of its ground voluntarily.
+
+None of that asks for a rule. It is the argument for why removing one particular soldier is worth
+more than removing the rifleman beside him, stated in quantities that already exist, so that
+whoever eventually weights `RemovalBonus` has something to weigh rather than an assertion.
