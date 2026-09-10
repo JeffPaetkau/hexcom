@@ -237,6 +237,25 @@ shot went off on and where the target was standing when it landed.
 
 Press `W` first and you get to answer any of those by hand rather than watch them happen.
 
+### Building something to hand somebody
+
+The two commands above run the game out of a checkout. To get an executable a person can be given
+instead, from the repository root:
+
+```bash
+mkdir -p build && Godot_v4.7.2-stable_mono_win64_console --headless --path game --export-release "Windows Desktop" ../build/Hexcom.exe
+```
+
+That leaves `build/Hexcom.exe`, which is the whole game in one file — no pack, no assemblies
+beside it, nothing to keep together — and `build/Hexcom.console.exe`, which is the same game with
+its output on the terminal and takes every capture and script flag above. `build/` is not tracked,
+because a built game is derived exactly as a test result is.
+
+It needs Godot's **mono** export templates for the matching version installed, which is a 1.2 GB
+download and the one thing the command does not do for you. `## Shipping it` in
+[docs/subprojects/view.md](docs/subprojects/view.md) says where they go, how to tell they are
+there, and what the failure looks like when they are not.
+
 ## What is built
 
 - **Hex geometry** — axial coordinates, flat-top layout, distance, rings, lines. `HexLayout`

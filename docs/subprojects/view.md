@@ -35,75 +35,7 @@ reaching into `src/`.
 
 ---
 
-## The job — an executable to test with
-
-Branch `view/export`. Small, and the whole point of it is **one command that Master can run
-after every round of sessions, with no View session awake, and hand the user something to
-play.** The game runs only through the editor binary against `game/` today, and the user tests by
-playing; from now on every round ends with a rebuilt executable, and Master does the rebuilding.
-Entry 055 is the decision. This job builds the environment and writes the command down.
-
-**Where the seam is.** `game/project.godot` declares `4.7`, `C#` and `Forward Plus`;
-`game/Hexcom.Game.csproj` is `Godot.NET.Sdk/4.7.2`; and **Seeing it** below names the editor
-binary and where WinGet put it. Godot's .NET exporter builds the C# project itself, so an export
-is the editor binary run headless with `--export-release` against a preset — nothing in the
-solution changes. There is no CI and no second machine: **this machine is the build environment**,
-and everything this job installs has to be written down as if the next person were setting up a
-new one, because one day they will be.
-
-**What to do.**
-
-1. **Install the export templates**, matching the editor exactly — `4.7.2-stable`, the **mono**
-   templates and not the plain ones, since the editor is the .NET build. The editor's *Manage
-   Export Templates* dialog fetches them, or the release asset
-   `Godot_v4.7.2-stable_mono_export_templates.tpz` from the `godotengine/godot` GitHub release
-   does; either way they land under `%APPDATA%\Godot\export_templates\4.7.2.stable.mono\`. The
-   download is large and it is the user's to approve. Record which route was taken, the exact
-   directory, and how to tell they are present, so that a missing-templates failure on another
-   machine is a one-line fix and not an afternoon.
-2. **Commit `game/export_presets.cfg`** with one preset, `Windows Desktop`, release, and say in
-   the file's comments — or in **Shipping it** — what the .NET export produces beside the
-   `.exe`, because it is not one file: the `.pck`, and a data directory for the assemblies unless
-   the pack is embedded. Decide embedded or not on what makes the output a thing a person can copy
-   to another folder and double-click; that is the test.
-3. **The output goes in `build/` at the repository root, and `build/` goes in `.gitignore`.** A
-   built game is derived, exactly as test results are, and the doctrine about status applies to
-   it: nothing checked in is a claim about whether it builds.
-4. **Write the command under a new heading, `## Shipping it`, below Seeing it**, in the same
-   shape those commands have — the full executable name, pasteable from `bash` or PowerShell,
-   from the repository root. It will be close to:
-
-   ```bash
-   dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --headless --path game --export-release "Windows Desktop" ../build/Hexcom.exe
-   ```
-
-   but the brief does not know whether the exporter wants the solution built first or builds it
-   itself, whether `--headless` is right for an export on this driver, or whether the output path
-   is taken relative to `game/` or to the working directory. **Find out and write down what was
-   found**, not what was expected. Then say what is in `build/` afterwards, and what the user
-   double-clicks.
-5. **Check three things about the built game and record each.** That it runs from a directory
-   that is not the repository — copy `build/` somewhere else and start it there. That it opens
-   on the waystation from the mission file with `H`, `W` and `M` working, since those three keys
-   are the play-through. And whether the capture and script flags still work through the
-   executable — `Hexcom.exe -- --shot out.png --fit` — because if they do, the exported game is
-   a second harness, and if they do not, **Seeing it** has to say the harness is editor-only.
-
-**Settle before writing much.** Debug or release export: release, unless something the HUD prints
-needs debug, in which case say what. And whether the built game honours arguments after `--` the
-way the editor run does; the answer decides item 5's third check and belongs in the doc either
-way.
-
-**Out of scope.** An icon, an installer, code signing, a Linux or Mac export — desktop-only is
-the design and Windows is the machine. The play-through, which is the next job. Anything drawn.
-
-**How to know it worked.** Master, with no View session running, pastes the one command from
-**Shipping it**, gets a `build/` that opens on the waystation, and the commit contains the preset,
-the `.gitignore` line and the doc — and not the build.
-
----
-
-## After this — the first play-through, and what read wrong
+## The job — the first play-through, and what read wrong
 
 Branch `view/play-through`, or none: the first half of this is a person at the keyboard, and the
 session's part is to record what they said. **This is the brief for a fresh session**, and it is
@@ -117,8 +49,11 @@ side hidden until found, and says afterwards what read wrong.* That is the first
 the interface rather than of the rules, and it belongs in `../decisions.md` beside the balance
 findings. So:
 
-1. Sit somebody down with `dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console
-   --path game`, press `H` and `W`, and let them play to a verdict. Do not press `O`.
+1. Sit somebody down in front of `build/Hexcom.exe`, press `H` and `W`, and let them play to a
+   verdict. Do not press `O`. **Shipping it** below is how that executable is made, and a person
+   testing the game should be given one rather than a checkout — the editor command
+   `dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game` is the same
+   game and is for the session, not for them.
 2. Write what they said into `../decisions.md` as an entry, in their words where possible: what
    they could not find, what they misread, what they wanted to ask and could not, and what the
    verdict was. Nothing is too small — *I did not know which way he was facing* is the kind of
@@ -141,6 +76,27 @@ screen and the figures do not**, for the reason `BattleHud.NoiseLine` gives — 
 name is *somebody unseen* unless our side has eyes on them, as `ViewedLine` does it.
 
 **Out of scope.** Art, animation, audio. Every rule. A second map or mission. The strategy layer.
+
+---
+
+## What landed on `view/export`
+
+Entry 055 asked for it and entry 056 records what it cost. **Shipping it** above is the whole of
+the result — the command, the two files it produces, the differences between the exported harness
+and the editor one, and how to put the environment back on a machine that has never had it. Three
+things about the shape of the change, which the section itself does not stop to say:
+
+- **The repository gained one tracked file and lost a line from `.gitignore`.**
+  `game/export_presets.cfg` is committed on purpose, which is why `game/export_presets.cfg` is no
+  longer ignored: Master runs the export with no View session awake, and a preset it would have to
+  recreate by hand is not a job it can run. `build/` took the ignored line's place.
+- **`game/project.godot` gained `dotnet/project/solution_directory`.** That is the one edit to a
+  file that was not new, and it is load-bearing rather than tidy — without it the export writes an
+  executable with no .NET assemblies in it and exits 0. **Shipping it** says how that failure
+  looks, because the way it looks is the trap.
+- **Nothing in `game/scripts/` changed at all.** The capture harness, the script steps and the
+  scale contract were exported as they stood and came out identical to the byte. The export is a
+  packaging job, and it stayed one.
 
 ---
 
@@ -641,6 +597,135 @@ answers and their scores, and the route drawn out of the sentry with the tick ea
 `--ai --pass 16 --zoom 60` without `--omniscient` is the game's own view of the same fight two
 rounds on: two hostiles as bodies with their rungs, two as `?` in the turn order and nowhere on
 the map.
+
+---
+
+## Shipping it
+
+**One command, from the repository root, and what comes out is a game the user double-clicks.**
+Master runs this after every round of merges with no View session awake — entry 055 — so it is
+written to be pasted rather than adapted.
+
+```bash
+mkdir -p build && Godot_v4.7.2-stable_mono_win64_console --headless --path game --export-release "Windows Desktop" ../build/Hexcom.exe
+```
+
+PowerShell has no `&&`, so there it is two statements on one line:
+
+```
+New-Item -ItemType Directory -Force build > $null; Godot_v4.7.2-stable_mono_win64_console --headless --path game --export-release "Windows Desktop" ../build/Hexcom.exe
+```
+
+**What `build/` holds afterwards, and nothing else.**
+
+| | |
+|---|---|
+| `Hexcom.exe` | 190 MB. The game. This is the one to double-click |
+| `Hexcom.console.exe` | 50 KB. A launcher that starts the same game with stdout on the terminal — the exported twin of `Godot_v4.7.2-stable_mono_win64_console`, and the one to script with |
+
+There is no `.pck` and no `data_Hexcom_windows_x86_64/`, because the preset sets both
+`binary_format/embed_pck` and `dotnet/embed_build_outputs`. The test the brief set was a thing a
+person can copy to another folder and double-click, and one file passes it outright. `build/` is
+in `.gitignore`: a built game is derived exactly as a test result is, and nothing checked in is a
+claim about whether the tree builds.
+
+**Four things about that command that are findings and not guesses**, each of them checked here
+rather than assumed:
+
+- **`--headless` is right, and the export does not need the solution built first.** The exporter
+  runs `dotnet publish` itself, as a step it prints. It was run against a tree with every `bin/`,
+  `obj/` and `game/.godot/mono` deleted and produced a working executable. This is the opposite
+  of the interactive run, which *does* need `dotnet build Hexcom.sln` first and hangs on a dialog
+  without it.
+- **The export path is taken relative to `game/`, not to the working directory.** `--path game`
+  sets it. Hence `../build/Hexcom.exe` for a `build/` at the repository root.
+- **`build/` has to exist first.** The exporter will not create it; it stops with *The given
+  export path doesn't exist* and writes nothing. That is the whole reason for the `mkdir`.
+- **The preset is release, and nothing wants debug.** Everything the HUD prints is drawn by the
+  HUD, and everything the script steps print reaches the terminal through the console wrapper in
+  a release build — the capture below reports where it wrote to, in release. A debug export would
+  buy the .NET debugger and the remote-debug hook, and neither is any use to a person playing.
+
+### The exported game is a second harness
+
+**It honours everything after `--` exactly as the editor run does, and it draws the same
+picture to the byte.** `--fit` from the executable and `--fit` from the editor produced the same
+SHA-256, so the zero-changed-pixel refactor test in **Seeing it** can be run either way and a
+capture taken from a build is comparable with one taken from the tree.
+
+```bash
+build/Hexcom.console.exe -- --shot out.png --fit
+```
+
+**One difference, and it will bite.** A relative `--shot` path is resolved against the
+executable's own directory, not the working directory — so the line above writes
+`build/out.png`, and `--shot build/out.png` from the repository root fails with *FileNotFound*
+because it is looking for `build/build/out.png`. The editor run resolves the same relative path
+against `game/`. Pass an absolute path to either and the question goes away.
+
+### The three checks the build has to pass, and what they said
+
+- **It runs from outside the repository.** `build/` was copied to a temporary directory with no
+  checkout anywhere near it and started there. It opens.
+- **It opens on the waystation from the mission file.** The status line reads *waystation — a
+  garrison holding the crossroads, approached from the west*, the mission line reads *Enter the
+  compound, confirm what is stored in the house, and come out — UNDECIDED*, and the turn order
+  has Bekker and Orsini against four `?` slots. `H`, `W` and `M` are the three keys of the
+  play-through and all three work: their script forms `--ai`/`--hostiles ai`, `--windows` and
+  `--brief` were driven through the executable and each reported what it did, `--pass 30`
+  stopping at a reaction window in round 4 the way it does in the editor.
+- **The capture and script flags survive the export.** They do, byte for byte, which is why
+  there is a section about it above rather than a line in **Seeing it** saying the harness is
+  editor-only.
+
+### Setting this up on a machine that has never done it
+
+Two things beyond a Godot install, and neither is in the repository.
+
+**1. The export templates, matching the editor exactly.** The editor here is
+`4.7.2.stable.mono.official.ed1daf0bf`, and it wants the **mono** templates, not the plain ones.
+The route taken was the release asset rather than the editor's *Manage Export Templates* dialog,
+because it scripts:
+
+```bash
+curl -L -o templates.tpz https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_mono_export_templates.tpz
+```
+
+1.20 GB — 1,202,598,411 bytes. It is a zip: unpack it and copy the contents of its `templates/`
+directory into `%APPDATA%\Godot\export_templates\4.7.2.stable.mono\`, which on this machine is
+`C:\Users\<user>\AppData\Roaming\Godot\export_templates\4.7.2.stable.mono\`. Godot creates the
+`export_templates` directory empty on first run, so its existing is not evidence of anything.
+
+**How to tell they are there**: 27 files in that directory, `version.txt` reading exactly
+`4.7.2.stable.mono`, and `windows_release_x86_64.exe` among them at about 110 MB. If they are
+missing the export stops early and says so by name.
+
+**2. `dotnet/project/solution_directory` in `game/project.godot`, pointing at the repository
+root.** This one is not obvious and it costs an afternoon to rediscover. Godot's .NET exporter
+insists on a solution file beside the C# project, and it names the one it wants after the
+assembly — with the setting absent it looks for `game/Hexcom.Game.sln`, does not find one, and
+**fails in a way that still writes an executable**: the run exits 0, `Hexcom.exe` appears at
+109 MB rather than 190, the `dotnet publish` step never runs, and the .NET assemblies are simply
+not in it. The errors scroll past in the middle of the pack listing. Read the size.
+
+Pointing the setting at the root is what fixes it:
+
+```
+[dotnet]
+
+project/assembly_name="Hexcom.Game"
+project/solution_directory="res://.."
+```
+
+The repository's one solution is `Hexcom.sln` at the root and that satisfies it, even though the
+error message names `Hexcom.Game.sln` — checked by moving `Hexcom.sln` aside, which brings the
+failure straight back. The alternative was a second solution file inside `game/`, which is a
+duplicate of `Hexcom.sln` that has to be kept in step with it, and `game/*.sln` is in
+`.gitignore` for the reason that duplicate is unwelcome. The setting also points the editor's own
+build button at the real solution, which it should have been pointing at all along.
+
+**Out of scope, deliberately**: an icon, an installer, code signing, and a Linux or Mac export.
+Desktop-only is the design and Windows is the machine.
 
 ---
 
