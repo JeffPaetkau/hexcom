@@ -430,6 +430,245 @@ public class ObjectiveTests
         Assert.Contains(battle.InPlay, u => u.Side == Side.Hostile);
     }
 
+    // ---- a mission with something in the middle of it ----------------------------
+
+    /// <summary>
+    /// What entry 048 measured, and the whole of what this is for. Twelve seeds settled in round
+    /// two by walking to the exit, because the rules had an objective for the leaving and none
+    /// for the task. Leaving is not on the table until the task is done.
+    /// </summary>
+    [Fact]
+    public void AMissionIsNotAchievedByWalkingOutOfTheGate()
+    {
+        var battle = Sent(out var scout);
+        var job = (Reconnaissance)battle.ObjectiveOf(Side.Player)!;
+        var commander = new Commander(battle);
+
+        // Standing on the exit with the job undone, and walking off it is not offered.
+        while (battle.Active != scout) battle.EndTurn();
+        Assert.True(battle.Move(Gate).Moved);
+
+        Assert.True(job.IsExit(scout.Position));
+        Assert.False(job.Done);
+        Assert.DoesNotContain(
+            commander.Options(scout, commander.Judge.Known(scout).ToList()),
+            o => o.Kind == OrderKind.Leave);
+
+        // The rules still permit it — abandoning is a real decision — and it settles as one.
+        Assert.True(battle.Extract());
+        Assert.Equal(Verdict.Abandoned, battle.VerdictFor(Side.Player));
+    }
+
+    /// <summary>
+    /// The journey is out and back, so the exit is not the far end of it. Standing on the exit
+    /// with the job undone is further from done than standing at the place.
+    /// </summary>
+    [Fact]
+    public void TheWayHomeIsMeasuredByWayOfTheThingYouCameFor()
+    {
+        var battle = Sent(out _);
+        var job = battle.ObjectiveOf(Side.Player)!;
+
+        var atStart = job.Progress(battle, Node(0, 0));
+        var atGate = job.Progress(battle, Gate);
+        var atCompound = job.Progress(battle, Compound);
+
+        Assert.True(atCompound > atStart, $"the compound {atCompound:0.00} should beat the start {atStart:0.00}");
+        Assert.True(atGate < atCompound, $"the gate {atGate:0.00} should not beat the compound {atCompound:0.00}");
+
+        // And walking to the gate is worse than standing still, because it is the wrong way.
+        Assert.True(atGate < atStart);
+    }
+
+    /// <summary>
+    /// Doing the thing does not jolt the score. It changes what is left, and the score is what is
+    /// left — which is why the two stages need no seam between them.
+    /// </summary>
+    [Fact]
+    public void ConfirmingItLeavesTheScoreWhereItWasAndTheRestOfTheJourneyShorter()
+    {
+        var battle = Field();
+        var sapper = battle.Deploy("Vance", Side.Player, Compound, Quick, HexDirection.NorthEast);
+        battle.Deploy("Kessel", Side.Hostile, Node(0, 14), Slow, HexDirection.NorthEast);
+
+        var job = new Sabotage(Side.Player, Compound, [Gate], effort: 20);
+        battle.SetObjective(job);
+        battle.Start();
+
+        var before = job.Progress(battle, Compound);
+
+        while (battle.Active != sapper) battle.EndTurn();
+        Assert.Equal(job.Effort, battle.Work());
+        Assert.True(job.Done);
+
+        // Standing in the same place, the score has moved by exactly the points that went in —
+        // no more, and no jolt for the stage changing.
+        Assert.Equal(before + job.Effort * job.PerPoint, job.Progress(battle, Compound), 6);
+        Assert.True(job.Progress(battle, Gate) > job.Progress(battle, Compound));
+    }
+
+    [Fact]
+    public void ALookFromTooFarOffConfirmsNothing()
+    {
+        var battle = Sent(out var scout, new Reconnaissance(Side.Player, Compound, [Gate], within: 4.0));
+        var job = (Reconnaissance)battle.ObjectiveOf(Side.Player)!;
+
+        // Two hexes short is three and a half metres, which is inside four; five hexes is not.
+        while (battle.Active != scout) battle.EndTurn();
+        Assert.True(battle.Move(Node(5, 0)).Moved);
+        battle.EndTurn();
+
+        Assert.False(job.Done, "five hexes off is not a confirmation");
+
+        while (battle.Active != scout) battle.EndTurn();
+        Assert.True(battle.Move(Node(9, 0)).Moved);
+        battle.EndTurn();
+
+        Assert.True(job.Done);
+        Assert.Equal(scout, job.Confirmed!.Value.By);
+    }
+
+    [Fact]
+    public void ConfirmingItMeansLookingAtIt()
+    {
+        var battle = Sent(out var scout);
+        var job = (Reconnaissance)battle.ObjectiveOf(Side.Player)!;
+
+        while (battle.Active != scout) battle.EndTurn();
+        Assert.True(battle.Move(Node(9, 0)).Moved);
+
+        // Facing the other way, so the place is behind him. A look he did not take is not a look.
+        Assert.True(battle.Face(HexDirection.SouthWest));
+        Assert.False(battle.Awareness.IsWatching(scout, Compound));
+        battle.EndTurn();
+
+        Assert.False(job.Done);
+
+        while (battle.Active != scout) battle.EndTurn();
+        Assert.True(battle.Face(HexDirection.NorthEast));
+        battle.EndTurn();
+
+        Assert.True(job.Done);
+    }
+
+    // ---- working at it -----------------------------------------------------------
+
+    /// <summary>
+    /// The job is so many points of somebody's turn, and a turn is not enough of them. It
+    /// accumulates, and it only accumulates from somebody standing on it.
+    /// </summary>
+    [Fact]
+    public void AChargeTakesMorePointsThanOneTurnHasAndRemembersWhatWentIn()
+    {
+        var battle = Field();
+        var sapper = battle.Deploy("Vance", Side.Player, Compound, Quick, HexDirection.NorthEast);
+        var mate = battle.Deploy("Orsini", Side.Player, Node(10, 1), Slow, HexDirection.NorthEast);
+        battle.Deploy("Kessel", Side.Hostile, Node(0, 14), Slow, HexDirection.NorthEast);
+
+        var job = new Sabotage(Side.Player, Compound, [Gate], effort: 70);
+        battle.SetObjective(job);
+        battle.Start();
+
+        while (battle.Active != sapper) battle.EndTurn();
+        var went = battle.Work();
+
+        Assert.Equal(sapper.Stats.ActionPoints, went);
+        Assert.Equal(0, sapper.ActionPoints);
+        Assert.False(job.Done);
+        Assert.Equal(70 - went, job.Owing);
+
+        // Standing beside it is not standing on it.
+        battle.EndTurn();
+        while (battle.Active != mate) battle.EndTurn();
+        Assert.Equal(0, battle.Work());
+
+        // And the rest goes in on the next turn of somebody who is.
+        battle.EndTurn();
+        while (battle.Active != sapper) battle.EndTurn();
+
+        Assert.Equal(70 - went, battle.Work());
+        Assert.True(job.Done);
+        Assert.Equal(0, job.Owing);
+    }
+
+    /// <summary>
+    /// The whole reason the mission is measured in action points: a point spent on the charge and
+    /// a point spent walking toward it are worth the same, so nothing has to say that working is
+    /// better than shuffling.
+    /// </summary>
+    [Fact]
+    public void PuttingPointsIntoTheJobPaysWhatWalkingTowardItPays()
+    {
+        var battle = Sent(out var scout, new Sabotage(Side.Player, Compound, [Gate], effort: 40));
+        var job = (Sabotage)battle.ObjectiveOf(Side.Player)!;
+
+        var walked = job.Progress(battle, Node(1, 0)) - job.Progress(battle, Node(0, 0));
+        var stride = MovementCosts.Default.Walk;
+
+        Assert.Equal(stride * job.PerPoint, walked, 6);
+        Assert.Equal(walked, battle.Tactics.WorkWorth(scout, stride) / battle.Tactics.Model.ObjectiveValue, 6);
+    }
+
+    // ---- what it does to the search ----------------------------------------------
+
+    /// <summary>
+    /// The acceptance test. A squad sent out to look at something goes and looks at it, and only
+    /// then comes home — where before it walked to the exit and called the mission done.
+    /// </summary>
+    [Fact]
+    public void ASquadSentToLookAtSomethingGoesAndLooksBeforeItComesHome()
+    {
+        var battle = Sent(out var scout);
+        var job = (Reconnaissance)battle.ObjectiveOf(Side.Player)!;
+        var commander = new Commander(battle);
+
+        var confirmedBefore = false;
+        var turns = 0;
+
+        while (battle.IsRunning && !battle.IsDecided && turns++ < 60)
+        {
+            var mover = battle.Active!;
+            var acts = commander.TakeTurn();
+
+            if (mover != scout) continue;
+            if (acts.Any(a => a.Kind == OrderKind.Leave)) confirmedBefore = job.Done;
+        }
+
+        Assert.True(job.Done, "the scout never went and looked");
+        Assert.True(confirmedBefore, "it walked off the field before confirming anything");
+        Assert.True(scout.GotOut);
+        Assert.Equal(Verdict.Achieved, battle.VerdictFor(Side.Player));
+    }
+
+    /// <summary>
+    /// The trap the gradient was invented to solve, seen from the other side: a mission longer
+    /// than the horizon would read as nothing worth starting, which is a flag again.
+    /// </summary>
+    [Fact]
+    public void AMissionLongerThanTheHorizonStillSlopesAllTheWayBack()
+    {
+        var far = Node(15, 0);
+        var battle = Field();
+        var scout = battle.Deploy("Vance", Side.Player, Node(-15, 0), Quick, HexDirection.NorthEast);
+        battle.Deploy("Kessel", Side.Hostile, Node(0, 14), Slow, HexDirection.NorthEast);
+
+        var job = new Reconnaissance(Side.Player, far, [Node(-15, 1)]);
+        battle.SetObjective(job);
+        battle.Start();
+
+        // Thirty hexes out and thirty back is three hundred points, past the four turns the
+        // horizon is set at — and every stride of it still scores.
+        var here = job.Progress(battle, scout.Position);
+        var onward = job.Progress(battle, Node(-14, 0));
+
+        Assert.True(job.PerPoint > 0);
+        Assert.True(onward > here, $"{onward:0.000} should beat {here:0.000}");
+
+        var acts = new Commander(battle).TakeTurn();
+        Assert.Contains(acts, a => a.Kind == OrderKind.Move);
+        Assert.True(job.Progress(battle, scout.Position) > here);
+    }
+
     // ---- setting up --------------------------------------------------------------
 
     /// <summary>
@@ -483,4 +722,31 @@ public class ObjectiveTests
     {
         for (var i = 0; i < times; i++) battle.Awareness.Hear(about, 200, battle.Round);
     }
+
+    /// <summary>
+    /// The waystation shape, in miniature: a squad with the exit one way and the thing to look at
+    /// twice as far the other, which is the geometry entry 048 measured walking away from.
+    /// </summary>
+    private static Battle Sent(out Unit scout, Objective? job = null)
+    {
+        var battle = Field();
+
+        scout = battle.Deploy("Vance", Side.Player, Node(0, 0), Quick, HexDirection.NorthEast);
+        battle.Deploy("Kessel", Side.Hostile, Node(0, 14), Slow, HexDirection.NorthEast);
+
+        // The bar is Searching rather than Suspicious because these read the *sequence* — go,
+        // look, come back — on an open disc where a lone hostile cannot help registering somebody
+        // crossing it. What the bar should be for a real mission is content's to say.
+        battle.SetObjective(
+            job ?? new Reconnaissance(Side.Player, Compound, [Gate], unnoticed: AwarenessState.Searching));
+        battle.Start();
+
+        return battle;
+    }
+
+    /// <summary>The thing to look at, ten hexes out.</summary>
+    private static NodeId Compound => Node(10, 0);
+
+    /// <summary>The way home, four hexes back the other way.</summary>
+    private static NodeId Gate => Node(-4, 0);
 }

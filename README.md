@@ -487,6 +487,21 @@ there, and what the failure looks like when they are not.
   pace outside, and a search one step deep would never set off; sloped over the approach, measured
   in action points along the movement graph, every stride toward it scores.
 
+- **A mission is a journey with something in the middle of it** — go, do the thing, come back. It
+  is one quantity, measured in action points: getting to the place, whatever the job itself costs,
+  and getting to the exit. So a stride toward a charge and a stride spent setting it are worth the
+  same, and the score is continuous across the moment the task completes — finishing it does not
+  jolt anything, it shortens what is left. The exit is not the far end: standing on it with the
+  job undone is further from done than standing at the place, because the way home runs by way of
+  the thing you came for.
+
+  That was found rather than designed. The first version modelled only the leaving, and twelve
+  matches on a real map ended in round two with a squad that walked out of the gate and never went
+  near what it was sent to look at — correct play, given what it had been told. Three shapes now
+  exist over one structure: get out unseen, put eyes on a place, or spend long enough on
+  something. The horizon the pull is measured over stretches to the length of the job, so a
+  mission longer than a few turns still slopes all the way back to where the squad started.
+
 - **Maps are text** — `content/maps/*.hexmap`, and `MapLibrary.Load("compound")` from anywhere.
   The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
   an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
@@ -533,26 +548,29 @@ there, and what the failure looks like when they are not.
 Suppression, saves, art, and the strategy layer. See the design doc for where these are
 heading.
 
-**There is one mission shape and the fiction describes six.** Withdrawal is built. Reconnaissance
-wants an objective node and a record of whether anybody ever traced it; sabotage wants something
-at a place and a price in action points; extraction wants a thing that can be carried; denial and
-capture want a clock and a way to put somebody down that is not damage. None needs new geometry,
-and what an objective *is* now exists to hang them on.
+**Three of the six mission shapes are built and three are not.** Extraction wants a thing that can
+be carried; capture wants a way to put somebody down that is not damage; denial wants a clock.
+None needs new geometry.
 
 **Nothing hangs a clock on.** A mission file names a round limit and whatever runs the battle
 applies it, but no rule reads one. A mission that runs out of time also wants a record of the
 moment a hostile with a radio has registered somebody and then had a turn in which to use it.
 Every part of that sentence but the record is a query that already exists.
 
-**A withdrawal is achieved by walking away.** The one mission shape there is judges the leaving
-and not the being there, so twelve matches out of twelve end with a squad that never went near
-what it was sent to look at. The task half of every shape in the mission book is the missing
-piece — entry 048. The waystation's file already carries the line it wants, commented out.
-
 **Nobody patrols.** A garrison is however many soldiers were deployed, standing exactly where they
 were put, and three of the waystation's four never act at all. Neither a mission file nor the AI
 can say what a soldier is *doing* rather than where it is, so the fiction's one honest patrol is
-unwritable and a fifth sentry would be a fifth sentry standing still — entry 059.
+unwritable and a fifth sentry would be a fifth sentry standing still.
+
+**Nothing tells a commander how the battle is going.** It weighs one action against another at
+one moment, so it cannot weigh cutting its losses against pressing on — and it is therefore not
+offered the choice, which the rules allow and which is one of the three endings. A squad being
+cut to pieces stands and takes it.
+
+**Every number in the game is still an argument.** Not one has been measured against a batch of
+matches, and the four that most want it are what an objective is worth, how far its pull reaches,
+what a soldier's own cost profile does now that the archetypes carry one, and what removing a
+signaller is worth against removing a rifleman.
 
 **A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from
 several turns away; a marker does not, so hunting still reaches about one move and two survivors

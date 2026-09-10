@@ -12,10 +12,9 @@ namespace Hexcom.Core.Tests;
 /// the whole pipeline — tiles, walls, regions, graph, pathfinding — holds together.
 /// </summary>
 /// <remarks>
-/// Read from <c>content/maps/compound.hexmap</c> rather than built in C#, which is what entry 024
-/// asked for and the last thing holding <c>DemoMaps.cs</c> in <c>src/</c>. It is a better fixture
+/// Read from <c>content/maps/compound.hexmap</c> rather than built in C#. It is a better fixture
 /// as well as a tidier one: the pipeline it checks end to end now starts at the text a person
-/// actually writes.
+/// actually writes. See <c>docs/decisions.md</c> entries 024 and 043.
 /// </remarks>
 public class DemoMapTests
 {

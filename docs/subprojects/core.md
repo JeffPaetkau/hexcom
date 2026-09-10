@@ -30,115 +30,97 @@ purpose, balance numbers in their homes — nine of them since `BlastModel`, see
 
 ---
 
-## The job — the rest of the mission shapes, and something to measure them with
+## The job — measure the numbers, and the clock
 
-Branch `core/objectives`. Read the rest of this file before starting; the turn loop below and the
-gotchas after it are the things that will bite, and the two new ones about windows and objectives
-are the two most likely to.
+Branch `core/measured`. Read the rest of this file before starting; the turn loop below and the
+gotchas after it are the things that will bite, and the two about objectives are the two most
+likely to.
 
-**What exists.** Every system the design doc describes bar suppression. Ten of them, an AI that
-plays both sides, maps as text, grenades and mines, a reaction window a person can answer, and a
-battle that ends because a squad did what it came for. `docs/decisions.md` entries 040 to 044 are
-the argument for the last two.
+**What exists.** Every system the design doc describes bar suppression, and every mission shape in
+the book bar three. A reaction window a person can answer, a battle that ends because a squad did
+what it came for, and an objective at a place that a squad will actually walk to.
+`docs/decisions.md` entries 061 and 062 are the argument for the last of those.
 
-**Scope, set by the user after the first play-through (entry 057): the first item below is the
-job, and the rest is if it goes quickly.** *Make what we have playable* means the waystation
-mission stops achieving itself by walking away (entry 048), and that is an objective at a place.
-Content is readying the file's side of it so that the day the objective lands the mission changes
-one statement. The clock and the other shapes wait.
+**The job is the first measurement in this project's history, and then the clock.** In that
+order, because the first one is overdue and the second is small.
 
-**The job is the mission shapes the fiction describes and the rules cannot yet express.** Entry
-026 lists six and one is built. In the order they cost:
+- **Run the matches and write down what they said.** `Commander` drives both sides headless, the
+  waystation mission fights itself in about two seconds for twelve seeds, and *every balance
+  number in this game is still an argument*. Four are load-bearing and none has been measured:
+  `UtilityModel.ObjectiveValue` and `ObjectiveHorizon`, which decide whether a squad walks past a
+  firefight to reach an exit or stands in one ignoring it; the two `CostProfile` archetypes, which
+  entry 062 turned on for the first time in a live behaviour change nothing tested; and
+  `RemovalBonus`, which values a signaller at a rifleman. **Run each of them both ways over a few
+  hundred seeds and record the figures in `../decisions.md`.** It would be the first entry in this
+  project to say a number *was measured* rather than argued, which is worth more than any of the
+  numbers it settles.
 
-- **An objective at a place — reconnaissance and sabotage.** Both want the same two things: a
-  node that means something, and a record of whether anybody got what they came for at it. Entry
-  030 costed the reconnaissance half down to two calls that already exist, `SightSolver.Trace` to
-  a vantage at the place and `AwarenessTracker.IsWatching` for the front cone rather than the
-  corner of the eye. Sabotage is that plus a price in action points and a thing to spend them on.
-  Both are new `Objective` kinds and neither needs new geometry.
+  Two of the readings entry 048 already offers are worth separating while you are there: the scout
+  is `Unaware` to everybody in twelve matches and the trooper is `Searching` in nine, and nobody
+  has established whether that is the noise of the walk or simply who is nearer the road. Entry
+  037 says a turn's walk on gravel is heard further than a slug rifle, which would mean the thing
+  that loses a stealth mission is already footsteps rather than eyes.
 
-- **The mission clock — denial, and every shape that can run out.** Entry 030 named it as the one
-  genuinely new thing the six shapes want, and entry 036 says it is nobody's until somebody picks
-  it up. What is missing is a record of the moment a hostile **with a set** has registered
-  somebody and then had a turn in which to use it. Everything else in that sentence is a query
-  that exists: `Relay` fires at `AlertedAt`, `CanReach` sends it side-wide only for a unit with a
-  radio, and a relayed contact arrives at 0.6 of what the caller held. A round limit that ends a
-  battle is `Battle.Round` and a comparison.
+- **The mission clock.** Entry 030 named it as the one genuinely new thing the six shapes want and
+  it has been nobody's for four increments. What is missing is a record of the moment a hostile
+  **with a set** has registered somebody and then had a turn in which to use it; everything else
+  in that sentence is a query that exists. A round limit that ends a battle is `Battle.Round` and
+  a comparison. Settle where it lives: a round limit is a property of the mission, but *the alarm
+  went out* is a fact about the awareness model, and putting it in the wrong one makes the other
+  awkward for good.
 
-- **Extraction and capture, if the first two go quickly.** A thing that can be carried, and a way
-  to put a soldier down that is not damage. Both are real new state and neither is needed for a
-  playable greybox, so they are the half of this brief to drop if it runs long.
+- **Extraction and capture, if the two above go quickly.** A thing that can be carried, and a way
+  to put a soldier down that is not damage. Both are real new state, neither is needed for a
+  playable greybox, and they are the half of this brief to drop.
 
-**And one measurement, which is the point of doing this now.** Every number in this game is an
-argument and two of the newest are the most load-bearing yet: `UtilityModel.ObjectiveValue` makes
-a squad walk out through fire, and `ObjectiveHorizon` decides from how far away. Entry 041 says
-what the failure modes look like. `Commander` drives both sides headless and a three-a-side match
-costs a second or two, so a few hundred matches is minutes — **run some, and write down what they
-said in `../decisions.md`**. It would be the first entry in this project to record a figure that
-was measured rather than reasoned, which is worth more than any one of the numbers.
+**Content is waiting on one line, and it is already written.** Entry 059 says
+`waystation.hexmission` carries its objective statement commented out, and that landing the rule
+is an uncomment and a deletion:
 
-**Entry 048 is the measurement that says the first item above is the whole job, and it changes
-its shape.** Fought from the mission file, twelve seeds out of twelve settle in round 2 or 3 and
-in none of them does anybody go near the compound: the brief says *enter, confirm what is in the
-house, come out*, and `Withdrawal` judges only the coming out, so walking straight to the exit is
-the best available play. The exit is ten hexes from the start and the thing to look at is twenty
-in the other direction, thirty-four by way of the compound. Any objective at a place has to make
-the mission worth thirty-four hexes rather than ten — and `ObjectiveHorizon` is measured in turns
-of action points, so a two-stage objective whose first stage is out of horizon has the problem
-the gradient was invented to solve. That is the design question under *one kind or two*, and it
-wants settling with 048's table open. The harness reproduces it in two seconds:
-`HEXCOM_SEEDS=12 dotnet test content/Hexcom.Content.Tests`.
+```
+objective reconnaissance player at house out cottages unnoticed suspicious
+```
 
-**Three smaller things from the same round, none of them this job's headline.** Entry 046, from
-the roster: `CostProfile.Scout` is used nowhere and `CostProfile.Gunner` once in a test, so no
-unit the game has ever deployed pays anything but list price — whether `UnitStats.Scout` and
-`Trooper` should carry the profiles by default is a balance question and yours; and section 3 of
-`docs/setting/roster.md` is the fiction's argument for what a signaller is worth, in quantities
-that exist, for whoever weights `RemovalBonus`. Entry 049: a `Commander` handing its windows out
-stops at windows with no offers, which is right for Core and wrong for a screen; the sandbox
-skips them itself, and if a second interface wants the same it belongs behind the flag. Entry
-047: the remarks on `DemoMapTests` still describe `DemoMaps.cs`, which is deleted — one line.
+That is the shape entry 061 built — every sortie carries its own exit and threshold, rather than
+objectives composing and a mission carrying two — so the statement maps straight onto
+`Reconnaissance(side, place, exit, within, unnoticed)`. **What it does not name is `within`**, the
+distance a look has to be taken from, which defaults to twelve metres; entry 059's own measurement
+says the house can only be seen from fourteen places inside the yard, so the default is probably
+right and the parameter exists if it is not. Whoever picks this up should say so in
+`../decisions.md` and let Content uncomment.
 
-**Settle before writing much.** Whether an objective at a place is one kind with a flag or two
-kinds — reconnaissance is *did anybody see it* and sabotage is *did anybody spend on it*, and the
-temptation to unify them into a node with a predicate should be resisted or taken deliberately.
-And whether the clock belongs to the battle or to an objective: a round limit is a property of the
-mission, but *the alarm went out* is a fact about the awareness model, and putting it in the wrong
-one makes the other awkward for good.
+**A garrison that does not move is Core's, and it is not this brief's.** Entry 059 measures three
+of the waystation's four hostiles never acting at all, and names the cause: nothing in the game
+patrols, so a standing order in a mission file has nothing in the search to hand it to. That is a
+real hole and it is bigger than a brief — it wants a notion of what a soldier is *doing* rather
+than where it is, which is the same missing thing as *the mission is lost, get out*. Both are
+about a soldier having a standing intent, and neither should be built piecemeal.
 
-**Three findings arrived from real ground while this branch was open, and they are Core's.**
-Entries 037 and 039 came out of twelve matches fought on the waystation, which is the first time
-any of this has been run on something other than a disc. They are not this brief's headline and
-two of them are cheap:
+**Two findings from real ground that are still open and still Core's.** Both are entry 039, both
+were invisible on a disc, and both nearly vanished when the map changed — which says the geometry
+that produces them is specific rather than that they are fixed.
 
-1. **A rifle is heard at eighteen metres and the design doc says a hundred** — entry 037. One of
-   the two figures is wrong by a factor of five, and which one is a *design* decision rather than
-   a typo: at 18 m a slug rifle is nearly silent on an 85 m map, which flattens the one cost the
-   weapons table gives it over a carbine; at 100 m every shot on that map is heard by everybody.
-   The entry argues for somewhere between, and names both dials — `WeaponProfile.Loudness` and
-   `AwarenessModel.NoiseMetresPerPoint`. **The doc has been made to agree with the code in the
-   meantime**, so section 07 now says eighteen; changing the number is still open, and the
-   measurement to make it with is the same batch as the objective dials.
+1. **Every charge in a match lands on one empty hex.** The crater rule marks the thrower at the
+   burst, so the next throw is aimed at the crater, and five charges went into a hex nobody had
+   stood on since round 3. The rule is right — a grenade should be able to make noise somewhere
+   you are not — and its interaction with a one-step search is not.
+2. **A soldier paces between two tiles on a shot it never takes.** `Order.Opens` credits a move
+   with a shot, and from the new tile the best option is the move back, credited with the same
+   shot. What is missing is either the move costing the shot it displaces, or the shot being taken
+   when it is the thing the last move was chosen for.
 
-2. **A turn's walk is heard further than a rifle shot**, same entry. Possibly right — a walk is a
-   long noise and a shot a short one — but the weapons table reads as though the shot were the
-   louder, so it should be true on purpose or not true.
+**And one thing this increment made sharper rather than better.** A commander will not walk out
+with the job undone, because weighing *cut our losses* against *press on* needs to know how the
+rest of the battle is going. That is the right call for now and it means a squad being cut to
+pieces stands and takes it. Entry 058 says so; whoever gives the scorer a notion of how a battle
+is going should look here first.
 
-3. **Every charge in a match lands on one empty hex, and soldiers pace** — entry 039. The first
-   is the crater rule feeding itself: a burst marks the thrower at the crater, so the next throw
-   is aimed at the crater, and five charges went into a hex nobody had stood on since round 3.
-   The second is `Order.Opens` crediting a move with a shot it never takes, so a soldier walks
-   between two tiles for six rounds on the same forecast. Both are the search rather than any
-   number, both were invisible on a disc, and both nearly vanished when the map changed — which
-   says the geometry that produces them is specific, not that they are fixed.
+**Out of scope.** `game/**` as ever. Which objective a mission carries and where — Content's, and
+entry 061 unblocked it. Suppression, still: nothing depends on it.
 
-**Out of scope.** `game/**` as ever. Which objective a mission carries and where — that is
-Content's, and entry 041 unblocked it. Suppression: nothing depends on it, and it is the last row
-of the weapons table rather than the next one.
-
-**The test that it worked:** a squad that reaches a place, looks at it, and leaves has achieved
-something the rules can name; a squad that is still on the map when the alarm has been out for
-three rounds has not.
+**The test that it worked:** an entry in `../decisions.md` that says a figure was measured, with
+the seeds and the counts under it — and a mission that ends because the alarm has been out for
+three rounds.
 
 ---
 
@@ -152,8 +134,9 @@ Battle.Start()      roll initiative, book everyone, hand the first turn out
                     (NOT Ambush) · rebook for next round
   the active unit acts
       Move (= Commit · PlaceRecommended · Resolve) · Fire · Throw · LayMine · Shout
-      Face · ChangeStance · SetOverwatch · Arm · SpringAmbush · Extract
+      Face · ChangeStance · SetOverwatch · Arm · SpringAmbush · Work · Extract
   Battle.EndTurn()  Awareness.Observe  ← the only moment a unit looks around
+                    Objective.Looked   ← and therefore the only moment a look-at-it job completes
                     Bank               ← leftover AP becomes Reserve, AP zeroed
                     Advance
 ```
@@ -375,11 +358,39 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   predates objectives is untouched. That is what made this safe to add to every appraisal rather
   than to a special path, and it is worth preserving.
 
+- **A mission is one journey, measured in action points, and the task is part of it.**
+  `Objective.Remaining` is what is still owed from where you stand: the walking there, the points
+  the job itself wants, and the walking home. So a stride toward the charge and a stride spent on
+  the charge are worth exactly the same, and the score is continuous across the moment the task
+  completes — finishing it does not jolt anything, it shortens what is left. Anything added to
+  this model should be expressible in action points or it does not belong in `Remaining`.
+- **The exit is not the far end of the journey.** Progress at the exit with the job undone is
+  *lower* than progress at the place, because the way home runs by way of the thing you came for.
+  That is the whole of what entry 048 asked for, and it is the first thing to check if a squad
+  ever walks out early again.
+- **The horizon stretches to the length of the job, once, at `Start`.** It decides how steep the
+  slope is and never how far it reaches, so a mission longer than `ObjectiveHorizon` still slopes
+  all the way back to the deployment. Measured off where the squad actually stands, because the
+  map's diameter is not the mission's length — on a large map that would flatten every objective
+  to nothing.
+- **A commander will not walk out with the job undone**, and the rules will. `Battle.Extract`
+  permits it and settles to `Verdict.Abandoned`; `Commander` is simply not offered it, because
+  weighing cutting your losses against pressing on needs a notion of how the battle is going that
+  the scorer has not got. So a squad being cut to pieces stands and takes it.
+- **`Objective` is a class, not a record.** It holds how far along the mission is. A record that
+  changes is a record in name only, and this is the one entity in the rules that is not a unit.
+
 ## Open questions
 
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
 the ones that block or shape what Core does next.
 
+- **Nothing tells a commander how the battle is going.** It cannot weigh cutting its losses
+  against pressing on, so it is not offered the choice: leaving with the job undone is a decision
+  the rules allow and the scorer never takes. Everything it ranks is one action against another at
+  one moment, and *the mission is lost, get out* is a judgement about the whole thing. This is the
+  sharpest thing the search cannot do, and it arrived with objectives rather than being fixed by
+  them.
 - **An objective is worth more than any fight, and nobody has measured that.**
   `UtilityModel.ObjectiveValue` is a whole squad's worth of vitality, deliberately larger than
   anything a shot can score, so a squad told to get out walks out through fire rather than

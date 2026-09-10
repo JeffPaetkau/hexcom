@@ -2199,7 +2199,7 @@ which is what fighting from the file turned up.
 ---
 
 ## 048 — A withdrawal is achieved by walking away, because the task half of a mission is not in the rules
-**2026-09-09** · **Raised by** content · **For** core · **Status** open
+**2026-09-09** · **Raised by** content · **For** core · **Status** resolved by 061
 
 Twelve seeds on the waystation, fought from the mission file, `Commander` on both sides. **Every
 one of them settles**, which is the finding entry 038 asked for: it measured twelve matches
@@ -2942,3 +2942,105 @@ keyboard settles them.
 file is never two territories' `## The job`. The amendment sheet at the head of it is deliberately
 *not* a brief: entry 057's six are routed already and re-issuing them would put one job in two
 files, so the sheet is what belongs beside them, and a review list if they have landed.
+---
+
+---
+
+## 061 — An objective at a place: one shape, three tasks, and a mission measured in one currency
+**2026-09-09** · **Raised by** core · **For** content, view, master · **Status** resolved
+
+Entry 048 measured the waystation mission achieving itself in round 2, because the rules had an
+objective for the leaving and none for the task. They have one now.
+
+**The choice the brief asked to be made deliberately — one kind or two — is: one shape and three
+tasks.** `Sortie` is *go out, do something, come back*, and it holds the exit, the reading taken
+as each soldier leaves, the three endings and the journey. `Withdrawal`, `Reconnaissance` and
+`Sabotage` differ in one question: has the thing been done. Looking at a place is a geometric fact
+checked when somebody looks; spending points on a charge is an action with a verb and a price.
+Those are different enough that a predicate on one shared record would have to be a delegate,
+which content written as a text file cannot hold — so they are subclasses over a base that carries
+the other nine tenths.
+
+**The interesting part is that the task and the walking are priced in the same currency.**
+`Remaining` is the action points still owed: getting there, doing what is there, and getting to
+the exit. Twenty points spent walking and twenty spent on the charge move it by the same amount,
+so a two-stage mission needs no second scale and **no seam** — completing the task does not jolt
+the score, it changes what is left. That is what the brief's *two-stage objective whose first
+stage is out of horizon* worry was really about, and it dissolves: there are no stages, only a
+journey with something in the middle of it.
+
+**And the horizon is stretched to the length of the job.** `ObjectiveHorizon` said how many turns
+of walking still counted as being on the way; a mission longer than that would have read as
+nothing worth starting, which is a flag again with extra steps. So the horizon is now the larger
+of the configured one and the actual journey, measured off the deployment at `Start` — it decides
+how *steep* the slope is on a short mission and never how far it reaches. Measured off where the
+squad stands rather than off the map, because a map's diameter is not a mission's length.
+
+**Two consequences for the AI, and the first is the fix.**
+
+- **Leaving is not offered until the job is done.** A commander with the task outstanding has no
+  Leave order to pick, so it cannot achieve the mission by walking out of the gate. The *rules*
+  still allow it — abandoning is a real decision and `Verdict.Abandoned` is what it settles to —
+  but the scorer is not offered it, because weighing *cut our losses* against *press on* needs to
+  know how the rest of the battle is going and it does not. That is now the sharpest thing the
+  search cannot do.
+- **Working is an order**, ranked at the same rate per point as walking toward the place, which
+  falls straight out of the shared currency rather than being asserted.
+
+**For Content, and this answers the question entry 059 asks.** Every sortie carries its own exit
+and threshold; objectives do not compose and a mission carries one. So
+`objective reconnaissance player at house out cottages unnoticed suspicious` maps straight onto
+the constructor, and the only thing the statement does not name is `within` — how close a look has
+to be taken from, in metres, defaulting to twelve. Entry 059's own measurement says the house can
+be seen from fourteen places, all inside the yard, so the default is very likely right; the
+parameter is there if it is not.
+
+`Reconnaissance(side, place, exit, within, unnoticed)` and
+`Sabotage(side, place, exit, effort, unnoticed)`, both set with `Battle.SetObjective` before
+`Start` like `Withdrawal`. `within` is how close a look has to be taken from, in metres, default
+twelve — a line to a building from eighty metres is a line and not a report. `effort` is action
+points, from however many soldiers, default forty. `Battle.Work()` is the turn action and spends
+everything the soldier can spare rather than a fixed chunk. The waystation mission changes one
+statement, as the brief said it would.
+
+**For View.** `Objective.Brief` is words to show. `Sortie.Done` says whether the task is done,
+`Reconnaissance.Confirmed` says who confirmed it and in which round, and `Sabotage.Spent`,
+`Effort` and `Owing` are a progress bar. `OrderKind.Work` is new and comes back in an `Act` like
+any other.
+
+**One structural change worth naming.** `Objective` is a class rather than a record now. It holds
+how far along the mission is, and a record that changes is a record in name only.
+
+---
+
+## 062 — The two archetypes now pay their own prices, and nothing noticed
+**2026-09-09** · **Raised by** core · **For** master · **Status** open — unmeasured
+
+Entry 046's item for Core, taken up. `UnitStats.Scout` carries `CostProfile.Scout` and
+`UnitStats.Trooper` carries `CostProfile.Gunner`, so a scout is quick over ground and slow on the
+trigger and a trooper is the other way round — which is what both profiles were written to
+describe, and what the design doc has claimed for three increments while no soldier the game ever
+deployed carried one.
+
+**The whole suite passed unchanged**, and that is the finding rather than the reassurance. Nothing
+depended on the archetypes paying list price, and equally **nothing tested that they did not**: a
+scout that moved at four fifths and fired at seven fifths would have been indistinguishable from
+one that did neither, in 391 tests. So this is a live behaviour change to every match on the
+waystation with no measurement behind it, and it lands in the same increment that asks for the
+first measured numbers in the project. Whoever runs that batch should run it both ways.
+
+**What it does, on paper.** A scout crosses ten hexes for forty points instead of fifty and pays
+thirty-five for a standard shot instead of twenty-five, so it banks more from a walk and shoots
+worse and later — cost is time inside a reaction window, so it also answers a move further along
+the route. A trooper is the mirror. Entry 048 already reads the scout as the one nobody notices
+and the trooper as the one everybody does; this widens the gap in one direction and narrows it in
+the other, and which way it lands is exactly what a batch would say.
+
+**Also from 046, and not done:** what a signaller is worth to remove. Section 3 of
+`docs/setting/roster.md` is the fiction's argument in quantities that exist, and `RemovalBonus`
+values every soldier at their own vitality and nothing else. It wants the same batch.
+
+**Also from 049, and not Core's:** a commander handing its windows out stops at windows with no
+offers. That is right for these rules — an empty window is still a window — and the sandbox skips
+them itself. If a second interface wants the same, the place for it is a flag here rather than
+the same code written twice.
