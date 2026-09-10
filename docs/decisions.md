@@ -2627,3 +2627,30 @@ press, because what it hides is the game.
 **What waits, still.** Core's task half (048), Content's second battlefield, Setting's sites,
 and the export. All briefed but the last; none started. The order in which they resume is the
 user's, and the first play-through is the thing most likely to change it.
+
+## 055 — The game is tested by playing it, so every round ends with a build, and Master runs it
+**2026-09-09** · **Raised by** master · **For** view, master · **Status** open until `view/export` lands
+
+The user's decision, recorded because it gives Master a power it did not have and View a job the
+build order does not list.
+
+**The decision.** From now on each round of sessions ends with a rebuilt Windows executable for
+the user to test, and Master produces it. Master writes no code and that has not changed: it
+pastes one command that View owns, after everything is merged and pushed, and reports where the
+output went. `subprojects/master.md` has it as a standing item.
+
+**What View owes for that, in its current brief.** The export templates installed on this machine
+and written down as if for the next machine; a committed `export_presets.cfg`; `build/` at the
+root and in `.gitignore`; and one pasteable command under `## Shipping it`, verified rather than
+expected — including whether the built game still takes the capture and script flags, because if
+it does the export is a second harness and if it does not the doc has to say the harness is
+editor-only.
+
+**Why the build is not committed.** It is derived, exactly as a test result is. The doctrine
+that status lives nowhere in the repository applies to it: a checked-in `.exe` is a claim about
+whether the tree builds, made by whoever last remembered to update it.
+
+**What it costs.** One command's worth of tokens per round for Master, and a View increment once.
+Against that, the user plays every round instead of asking whether it runs, and the play-through
+findings — the first measurement of the interface rather than of the rules — start arriving one
+round earlier than they otherwise would.

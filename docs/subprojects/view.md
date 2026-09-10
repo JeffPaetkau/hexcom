@@ -35,7 +35,75 @@ reaching into `src/`.
 
 ---
 
-## The job — the first play-through, and what read wrong
+## The job — an executable to test with
+
+Branch `view/export`. Small, and the whole point of it is **one command that Master can run
+after every round of sessions, with no View session awake, and hand the user something to
+play.** The game runs only through the editor binary against `game/` today, and the user tests by
+playing; from now on every round ends with a rebuilt executable, and Master does the rebuilding.
+Entry 055 is the decision. This job builds the environment and writes the command down.
+
+**Where the seam is.** `game/project.godot` declares `4.7`, `C#` and `Forward Plus`;
+`game/Hexcom.Game.csproj` is `Godot.NET.Sdk/4.7.2`; and **Seeing it** below names the editor
+binary and where WinGet put it. Godot's .NET exporter builds the C# project itself, so an export
+is the editor binary run headless with `--export-release` against a preset — nothing in the
+solution changes. There is no CI and no second machine: **this machine is the build environment**,
+and everything this job installs has to be written down as if the next person were setting up a
+new one, because one day they will be.
+
+**What to do.**
+
+1. **Install the export templates**, matching the editor exactly — `4.7.2-stable`, the **mono**
+   templates and not the plain ones, since the editor is the .NET build. The editor's *Manage
+   Export Templates* dialog fetches them, or the release asset
+   `Godot_v4.7.2-stable_mono_export_templates.tpz` from the `godotengine/godot` GitHub release
+   does; either way they land under `%APPDATA%\Godot\export_templates\4.7.2.stable.mono\`. The
+   download is large and it is the user's to approve. Record which route was taken, the exact
+   directory, and how to tell they are present, so that a missing-templates failure on another
+   machine is a one-line fix and not an afternoon.
+2. **Commit `game/export_presets.cfg`** with one preset, `Windows Desktop`, release, and say in
+   the file's comments — or in **Shipping it** — what the .NET export produces beside the
+   `.exe`, because it is not one file: the `.pck`, and a data directory for the assemblies unless
+   the pack is embedded. Decide embedded or not on what makes the output a thing a person can copy
+   to another folder and double-click; that is the test.
+3. **The output goes in `build/` at the repository root, and `build/` goes in `.gitignore`.** A
+   built game is derived, exactly as test results are, and the doctrine about status applies to
+   it: nothing checked in is a claim about whether it builds.
+4. **Write the command under a new heading, `## Shipping it`, below Seeing it**, in the same
+   shape those commands have — the full executable name, pasteable from `bash` or PowerShell,
+   from the repository root. It will be close to:
+
+   ```bash
+   dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --headless --path game --export-release "Windows Desktop" ../build/Hexcom.exe
+   ```
+
+   but the brief does not know whether the exporter wants the solution built first or builds it
+   itself, whether `--headless` is right for an export on this driver, or whether the output path
+   is taken relative to `game/` or to the working directory. **Find out and write down what was
+   found**, not what was expected. Then say what is in `build/` afterwards, and what the user
+   double-clicks.
+5. **Check three things about the built game and record each.** That it runs from a directory
+   that is not the repository — copy `build/` somewhere else and start it there. That it opens
+   on the waystation from the mission file with `H`, `W` and `M` working, since those three keys
+   are the play-through. And whether the capture and script flags still work through the
+   executable — `Hexcom.exe -- --shot out.png --fit` — because if they do, the exported game is
+   a second harness, and if they do not, **Seeing it** has to say the harness is editor-only.
+
+**Settle before writing much.** Debug or release export: release, unless something the HUD prints
+needs debug, in which case say what. And whether the built game honours arguments after `--` the
+way the editor run does; the answer decides item 5's third check and belongs in the doc either
+way.
+
+**Out of scope.** An icon, an installer, code signing, a Linux or Mac export — desktop-only is
+the design and Windows is the machine. The play-through, which is the next job. Anything drawn.
+
+**How to know it worked.** Master, with no View session running, pastes the one command from
+**Shipping it**, gets a `build/` that opens on the waystation, and the commit contains the preset,
+the `.gitignore` line and the doc — and not the build.
+
+---
+
+## After this — the first play-through, and what read wrong
 
 Branch `view/play-through`, or none: the first half of this is a person at the keyboard, and the
 session's part is to record what they said. **This is the brief for a fresh session**, and it is

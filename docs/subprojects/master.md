@@ -157,6 +157,23 @@ Read the trailers off `git log` (section 1 above) before saying any of this; the
 the only record of what a session was, and they are the reason the recommendation can be
 derived rather than remembered.
 
+### 6. Rebuild the executable after each round
+
+Asked for by the user, entry 055: the game is tested by playing it, so every round of merges
+ends with a fresh build the user can double-click. **The command is View's and lives under
+`## Shipping it` in `subprojects/view.md`; Master pastes it and does not edit it.** The output
+is `build/` at the repository root, which is ignored by git — a built game is derived, like a
+test result, and nothing checked in is a claim about whether it builds.
+
+The order within a round: merge, `dotnet test`, the map and the log, commit and push, **then**
+the build, so that what is built is what was pushed. Report the path to the user and nothing
+else about it.
+
+If the build fails, that is a finding for View in `decisions.md`, with the output — not a fix.
+Master runs a build; it does not own one. The one exception is templates or a tool missing from
+this machine, which is environment and not code, and which `view.md` should say how to put
+back.
+
 ---
 
 ## What Master must not do
