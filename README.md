@@ -72,11 +72,14 @@ those passes, so the picture shows a situation the enemy made rather than the op
 Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0 --pass 6 --ai
 ```
 
-`--fit` pulls back until the whole map is in one picture, `--zoom N` sets the hex size in pixels,
-`--look q,r` centres on a hex, and `--scenario name` picks which battle to open.
+`--fit` pulls back until the whole map is in one picture, `--zoom N` puts the camera N metres
+back, `--yaw N` turns it to one of the six hex bearings, `--look q,r` centres on a hex, and
+`--scenario name` picks which battle to open. `--omniscient` draws every soldier in play and
+prints the AI's orders; without it the picture is the game, and a hostile nobody of yours has
+found is not in it.
 
 **And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
-`--ai` and `--windows` is a step, run in the order it was typed: `--move`, `--fire`, `--stance`,
+`--ai`, `--windows` and `--omniscient` is a step, run in the order it was typed: `--move`, `--fire`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
 `--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
 method its key calls, so a picture can only ever show a state somebody at the keyboard could
@@ -84,13 +87,18 @@ have reached, and each one prints what it did — a misspelt name would otherwis
 good picture of the wrong moment.
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini --move 1,0
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound --omniscient   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini --move 1,0
 ```
 
 That one walks Orsini across the front of a rifleman holding an arc, and the picture reports
 what he did about it: *t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0*.
 
-The sandbox fights `content/missions/waystation.hexmission`, drawn flat — three of yours on the
+The sandbox is a greybox: the battle as boxes on the ground the rules describe, every tile at
+its floor height, every wall at the height its profile gives it, every soldier a body at its
+stance height with its facing marked, and no art. It opens as the game — you see what your side
+knows, and a hostile is on the map only while one of yours has eyes on it, or as a ghost at the
+place they were last seen. `O` shows everything, which is what the captures that check the AI
+use. It fights `content/missions/waystation.hexmission` — three of yours on the
 west road against a garrison holding the crossroads, one on the house roof with the radio and one
 in the watchtower. The map, who stands where facing which way, the way off, the objective and the
 clock all come out of that one file; nothing about the waystation is written down in the game
@@ -110,27 +118,31 @@ every capture is diffed against.
 | `S` | call a contact in, so everybody in earshot knows |
 | `T` | walk off the field, if you are standing somewhere your side may leave from |
 | `Z` / `X` | turn on the spot |
-| `Q` / `E` | change layer (the roof is layer 1) |
+| `Q` / `E` | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
 | `A` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
 | `H` | hand the hostile side to the AI for every turn, or take it back |
 | `W` | answer reaction windows by hand rather than taking the recommendation |
+| `O` | see everything — every soldier in play and the AI's orders — or only what your side knows |
 | `M` | the full briefing, in the six parts the squad was given it |
 | tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
 | `R` | new battle |
 | wheel, `+` / `-` | zoom |
 | middle-drag, arrows | pan |
+| `,` / `.` | turn the camera to the next hex bearing |
 | `F` / `G` | see the whole map / go back to whoever is up |
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in,
 dark blue ones cannot be entered at all, and the blue-outlined ones are where your side may walk
-off the field. Blacked-out tiles are dead ground the active unit has no eyes on, and outlined
-tiles have cover from where it is standing — blue light, yellow half, orange full.
+off the field. Darkened tiles are dead ground the active unit has no eyes on, and outlined
+tiles have cover from where it is standing — blue light, yellow half, orange full. The tint in a
+side's colour is how much attention each soldier has on each piece of ground, at the reach the
+rules judge by; the yellow tint is an arc being held, out to the weapon's range.
 
 Walls are drawn from what they do rather than from what they are called, so a map that invents
 its own kit draws correctly on the day it is written: the hue is green if you can push through
 it, white if it is a building wall nothing gets over, and otherwise the colour of the cover it
-gives; the weight is how much of a body it stops, from a hairline you can see through to the
-heaviest thing on the map. The strip on the right is the turn order with each unit's initiative
+gives; the thickness is how much of a body it stops, from a hairline you can see through to the
+heaviest thing on the map; and the height is the height the sight trace uses. The strip on the right is the turn order with each unit's initiative
 roll.
 
 Point at an enemy and the HUD gives you the shot twice over: once as a physical event — the
@@ -474,8 +486,8 @@ Press `W` first and you get to answer any of those by hand rather than watch the
 
 ## What is not built yet
 
-Suppression, saves, the greybox interface, and the strategy layer. See the design doc for where
-these are heading.
+Suppression, saves, art, and the strategy layer. See the design doc for where these are
+heading.
 
 **There is one mission shape and the fiction describes six.** Withdrawal is built. Reconnaissance
 wants an objective node and a record of whether anybody ever traced it; sabotage wants something

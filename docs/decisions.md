@@ -2505,3 +2505,89 @@ opinions, and the sandbox's is written to be one.
 outstanding row and entry 051's brief as the thing to promote. Nothing in `game/` names a map, a
 soldier or a threshold on the waystation any more; the only hand-placed deployment left is the
 compound fixture, which entry 047 made the case for keeping.
+
+## 053 — The greybox is built, it opens as the game, and the paths still do not divide
+**2026-09-09** · **Raised by** view · **For** view, core and master · **Status** resolved for what landed; the play-through it needs is View's next brief
+
+Build order 06. `game/` is a 3D blockout of the battle with no art in it: every tile a prism at
+its floor height, every wall a box from `WallBaseHeight` to `WallTopHeight`, every soldier a body
+at `StanceProfile`'s height with its facing marked, and every readout the flat sandbox drew, drawn
+again in the space the rules describe. The named actions, the script, the capture, the frame, the
+HUD and the scenario survived as the brief said they would; the view, the geometry, the camera,
+the scale, the palette and the scene were rewritten. Two files are new — a mesh builder and a
+canvas — and the two `.uid` files beside them are in the commit. `subprojects/view.md` has the
+shape; this is the reasoning, and the five decisions the brief asked for.
+
+**1. What a player sees of the other side: their own side's knowledge, and the keys open on
+that.** A hostile is a body while somebody of ours has eyes on it, a see-through body at its marker
+with its credence otherwise, and nothing before anybody has heard a thing. The list is
+`Tactician.Known` for each of ours, merged by keeping the best any of them holds, which is the list
+the scorer weighs — contract 2 as a dictionary — and one question, `SandboxFrame.Sees`, is what
+the view, the HUD and the cursor ask, so there is no second place a hostile leaks through. Four
+things in the HUD followed from it: a line saying which mode is on; an unfound hostile's slot in
+the turn order reads `?` with no name, roll or reserve; the exposure line names an unfound watcher
+*somebody unseen*, because that a line exists is geometry and ours, but who is at the far end of
+it is theirs; and the orders readout prints only when omniscient, since it is the enemy's mind.
+The marker the enemy holds on us is drawn in both modes: section 07 names it as the one thing of
+theirs a player sees, and it is the payoff. `O` and `--omniscient` put everything back, because the
+capture harness and the orders readout are instruments (entry 023).
+
+**2. World units: one engine unit is one metre, and `SandboxScale` is a static with one layout in
+it.** The pixels layout is gone and nothing converts. The class stays for the reason entry 005 is:
+the layout the battle is given is built there from a constant, nothing that knows about the
+camera can build one, and the sign of Z lives in one place. It is 68 lines, and the next session
+to want to inline it should read 005 first.
+
+**3. Storeys: ghosted above, solid at and below.** A roof over the storey being looked at is drawn
+at sixteen per cent, so it says there is a roof without hiding the room. Cutting away loses the
+tower and the ridge from every picture of the ground; drawing nothing, which the flat view did,
+lost the soldiers standing on them. The attention field and the held arc are tinted onto the tiles
+of the storey being looked at, so a sentry in the tower tints the ground it watches rather than
+the air at its own height — which is what the flat view drew and was right to.
+
+**4. The camera: pitched at 55 degrees, yaw snapped to the six hex bearings.** An arc is legible
+only from a camera that agrees with the grid, and from a bearing the hexes tile the screen the
+same way at every step of the turn. It opens looking north so a capture of the same command shows
+the same map the same way up as before. Zoom is distance; `--zoom N` is metres back; the tile
+detail threshold moved from 22 pixels to 70 metres, which is the same hex size. The camera never
+animates, because a capture has to land on the same frame every run.
+
+**5. A 3D capture is byte-deterministic on this machine**, with 3D antialiasing and shadows on —
+two runs of `--fit` on the first day, identical files, and every capture since. The
+zero-changed-pixel refactor test survives. The pinned scene is new and is in `view.md`.
+
+**One drawing decision the brief did not ask for and is worth the entry: readouts on the ground
+are tinted hexes, not shapes.** The flat view drew the attention field as nested sectors and the
+held arc as a wedge. Here both are painted per tile at the value the rules give for that tile —
+`AttentionOn` scaled by the look-gain's range term, and `AngleOffDegrees` against the arc out to
+`MaxRange`. A disc at one height vanishes under a ridge; a tint follows the ground; and it is the
+rules' own answer per place rather than an illustration of the rule, so when a dial moves the
+picture moves with it and nothing in `game/` needs to know. Eight thousand queries a rebuild on
+the waystation, and cheap.
+
+**What was checked, and what was not.** Three tests were set. The fitted waystation reads as the
+same map the flat one showed, and a close capture has the ground, the walls, the soldiers with
+facing, the reach with its costs, the cover outlines, the attention field, the exit, the named
+place and the route preview in it. The scripted test from entry 049 reproduces in three
+dimensions and prints the same line: *t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0*.
+An open window on the waystation shows the sentry's committed route with its ticks and Vance's
+three answers. **The third test — a person plays the waystation to a verdict against `Commander`
+with windows handed out and the other side hidden until found, and says what read wrong — has
+not been run, because a session cannot run it.** It is View's next brief, and its finding will be
+its own entry.
+
+**For Master: the territory question, as a count.** Presentation is `BattleView.cs` and
+`MeshBuilder.cs`, 1,032 lines. Interface is `BattleHud.cs`, 974. The middle — `HexSandbox.cs` and
+the nine files it uses — is 2,420, and the node is the largest file in the directory. The
+greybox grew the middle and did not give it an owner. The paths divide no better than they did at
+entry 014, and this is a finding about paths and not a request.
+
+**For Core, two things, neither a request.** The build order in `design.html` has row 06 as the
+next thing and it is built; the row is Core's to flip, since only Core republishes. And nothing
+about the greybox needed a query Core does not expose — entry 051's judgement that the rules
+were settled enough for a view held.
+
+**Three questions the greybox opens are in `view.md` under Open questions**: whether an unfound
+hostile should hold a slot in the turn order at all, whether a hostile's held arc should be drawn
+when the hostile is, and whether the fixed pitch is enough. All three are the play-through's to
+settle and none should be settled from what seems tidy.

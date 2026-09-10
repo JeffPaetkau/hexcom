@@ -1,7 +1,8 @@
 # View — presentation and interface
 
-The Godot layer: drawing what Core answers, and taking input. Currently one flat 2D sandbox that
-drives either side by hand, or hands the hostile side to the AI.
+The Godot layer: drawing what Core answers, and taking input. Currently the greybox — a 3D
+blockout of the battle with no art in it — which opens as the game a person plays, drives either
+side by hand, or hands the hostile side to the AI.
 
 Read [../map.md](../map.md) first.
 
@@ -29,121 +30,104 @@ reaching into `src/`.
   because that is information about yourself. An enemy's alarm is coarse on purpose. Do not
   render a number Core deliberately blurred, even when you can compute it.
 - **One horizontal world unit is one metre** (contract 5). Held by `SandboxScale`, which builds
-  the metres layout `Battle` is given and the pixels layout everything is drawn with. See
-  `../decisions.md` entries 002 and 005.
+  the one layout `Battle` is given and owns the mapping from the rules' plane into the scene;
+  the camera moves itself and cannot reach it. See `../decisions.md` entries 002 and 005.
 
 ---
 
-## The job — the greybox (build order 06)
+## The job — the first play-through, and what read wrong
 
-Branch `view/greybox`. **This is the brief for a fresh session**, and it is written so that this
-file, `../map.md`, and the entries it cites are the whole of what that session reads before it
-starts. The design doc is 120 KB; read sections 01, 06 (*What it hands the interface*) and 07
-(*Asymmetric information, deliberately*) and no more of it unless a question sends you there.
+Branch `view/play-through`, or none: the first half of this is a person at the keyboard, and the
+session's part is to record what they said. **This is the brief for a fresh session**, and it is
+written so that this file, `../map.md`, and entries 051 and 053 are the whole of what that
+session reads before it starts.
 
-**What it is.** A 3D blockout of the sandbox with no art in it: every hex a flat prism at its
-floor height, every wall a box at the band height contract 6 fixes, every soldier a body at its
-stance height with its facing marked, and every readout the flat sandbox has learned to draw,
-drawn again in the space the rules already describe. *Playable* means what entry 050 says:
-a person drives one side against `Commander` on the waystation from its mission file, answers
-reaction windows by hand, and wins by withdrawing. It is the first view anyone will play rather
-than test, and that is the whole of what changes — the rules have not moved since entry 041 and
-every query this draws already exists.
+**What it is.** The greybox (build order 06) is built and entry 053 says what it is. The third of
+its three success tests has not been run, because it cannot be run by a session: *a person plays
+the waystation mission to a verdict against `Commander`, with windows handed out and the other
+side hidden until found, and says afterwards what read wrong.* That is the first measurement of
+the interface rather than of the rules, and it belongs in `../decisions.md` beside the balance
+findings. So:
 
-**Why now, against the build order's *only once the rules are settled*.** The rules that shape
-a view are settled: nothing added since 040 has changed a signature the sandbox reads, the
-audit's rows are all shown, coarse or gap, and the one thing Core still owes the mission (entry
-048, the task half) changes what the AI does and nothing about what is drawn. Balance dials will
-move for a year and none of them change a shape. Entry 051 records that judgement and it is
-Master's; if building this finds a query missing, that is an entry and not a reason to stop.
+1. Sit somebody down with `dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console
+   --path game`, press `H` and `W`, and let them play to a verdict. Do not press `O`.
+2. Write what they said into `../decisions.md` as an entry, in their words where possible: what
+   they could not find, what they misread, what they wanted to ask and could not, and what the
+   verdict was. Nothing is too small — *I did not know which way he was facing* is the kind of
+   finding this exists for.
+3. Fix what is a drawing or a readout problem, in `game/`, on the same branch. Anything that turns
+   out to be a rule, or a query Core does not expose, is an entry for Core and not a fix here
+   (contract 2).
 
-**Where the seam is, by what survives and what does not.** The flat sandbox was built in
-eleven files against the day it would be rewritten, and the division was made for this:
+**Three things the greybox left open, which the play-through is the way to settle.** They are
+under Open questions below with the reasoning; the short form is: whether an unfound hostile
+should hold a `?` slot in the turn order at all; whether a hostile's held arc should be drawn when
+the hostile is; and whether the fixed 55-degree pitch is enough to read a wall by. Decide each
+from what the player did, not from what seems tidy.
 
-| Survives as it is | Why |
-|---|---|
-| `HexSandbox`'s named actions — `MoveTo`, `FireAt`, `SetStance`, `PlaceReaction`, `ResolveOpenWindow` and the rest | the one surface both the keys and the script call; entry 049 says why it must stay the only thing that touches `Battle` |
-| `SandboxScript`, `SandboxCapture`, and every flag in **Seeing it** | a session with no human watching checks its drawing with these, and a greybox nobody can photograph is a greybox nobody can check |
-| `SandboxFrame` | one moment's answers, assembled once — the 3D view reads the same frame the HUD reads, which is contract 2 as a class |
-| `BattleHud` | the interface is 2D text over the picture and stays so; it draws to a `CanvasLayer` and should need nothing but a new place to hang |
-| `SandboxScenario`, as a mission name or a bare map | what the job above leaves of it |
-| the figures-not-names rule of entry 049 | a wall's look comes from what it stops and what it costs; a material is a colour with a third dimension |
+**Also still open, and half a day.** Entry 012's second item: the scorer charges a shot for what it
+announces, and the player sees the price and not the bill. `AwarenessTracker.WouldAnnounce` exists
+and hands back an `Announcement` per enemy in the same shape as `WouldHear`, which the cursor line
+already prints for a route. The shot line grows the clause the cursor line has; **the names go on
+screen and the figures do not**, for the reason `BattleHud.NoiseLine` gives — and in the game a
+name is *somebody unseen* unless our side has eyes on them, as `ViewedLine` does it.
 
-| Rewritten | Into |
-|---|---|
-| `BattleView` | meshes in a `Node3D` tree instead of `_Draw` calls — ground, walls, links, the route, the attention field, the held arc, the soldiers |
-| `SandboxGeometry` | world positions from `HexLayout` and floor heights, and picking by ray rather than by polygon |
-| `SandboxCamera` | a `Camera3D`, which the open question below has been asking for |
-| `SandboxPalette` | materials; the same six colours, one per side and per cover grade |
-| `SandboxScale` | see the first decision — it may become a single line, and the line must stay |
-| `Sandbox.tscn` | a 3D scene; keep the node name so the capture path does not change |
+**Out of scope.** Art, animation, audio. Every rule. A second map or mission. The strategy layer.
 
-**Settle before writing much.** Five decisions, and the first is the one that makes this a game.
+---
 
-1. **What a player is allowed to see of the other side.** The flat sandbox draws every hostile in
-   play, and the beliefs it draws are the *enemy's* markers on us — right for a tool that drives
-   both sides and the opposite of a game whose subject is who saw whom first. A playable view
-   draws **your side's knowledge and nothing else**: a hostile as a body only while somebody of
-   yours holds `EyesOn` on it, as a ghost at its marker with its credence otherwise
-   (`Tactician.Known` is the list, and entry 042 says your own certainty is shown exactly), and
-   not at all before anybody has heard a thing. Contract 3 permits exactly this and forbids
-   nothing else. **Keep the see-everything mode as a switch** — `--omniscient`, or whatever
-   name — because the capture harness and the orders readout are test instruments and 023 says
-   so. Decide which mode the keys open in, and make the status line say which is on.
-2. **World units.** In 3D one engine unit can be one metre, and `SandboxScale`'s whole reason —
-   pixels against metres — collapses to a conversion of one. Contract 5 still stands: rendering
-   scale is never fed into `Battle`. Keep one place that owns the layout the battle is given,
-   however small it gets; the decisions log (entries 002, 005) is the argument for why that
-   place exists at all, and it is the first thing a future session will delete as dead code.
-3. **Storeys.** `--layer N` shows one floor of a flat map. In 3D a roof is above a room, and the
-   waystation has a house roof, a tower and a ridge. Decide whether the active soldier's storey
-   is shown by cutting away what is above it, by ghosting it, or by nothing — and know that the
-   attention field and the held arc are drawn on the *ground* of a storey, so a roof that hides
-   the floor hides the readout too. This is the one thing 3D makes harder rather than easier.
-4. **The camera.** Facing is a rule here — six body faces, arcs measured from `Unit.Facing` —
-   and an arc is legible only from a camera that agrees with the grid. A pitched camera whose
-   yaw snaps to the six hex bearings keeps every wedge readable at every angle; a free orbit
-   does not. Pan, zoom, `--fit`, `--look` and `--zoom` keep their meaning; `--zoom` becomes a
-   distance rather than a hex radius, and the status line's *zoomed out* threshold moves with it.
-5. **What a capture proves in 3D.** The flat render is byte-deterministic and the doc above
-   relies on it for zero-changed-pixel refactors. A 3D render with MSAA and a depth buffer may or
-   may not be, on this machine. **Find out on the first day**, with two captures of the same
-   command, and write the answer into **Seeing it** before building anything that would rely on
-   either answer.
+## What landed on `view/greybox`
 
-**What to draw, in the order it earns its keep.** Ground and walls first, at the heights in
-contract 6, and a capture with `--fit` of the waystation that a person can read as the same map
-the flat one shows. Then soldiers as bodies with facing. Then the six things the flat sandbox
-draws that nothing else shows — the attention field, the held arc, the committed route with its
-ticks, the reach set with its costs, the cover outlines, and the markers — each one checked
-against the flat capture of the same command. Then the mission: the exit as a named place on the
-ground, because a place that is not visible does not exist (entry 049). The HUD reads the same
-frame throughout and should not need to change to be right.
+Entry 053 is the reasoning; this is the shape, and the five decisions the brief asked to be
+settled before writing much.
 
-**The territory question, which is Master's and which this job is asked to inform.** Entry 014
-settled that presentation and interface are one territory because the paths did not divide, and
-`../map.md` says the greybox is the moment to look again. When the rewrite is done, say in
-`../decisions.md` whether they divide now — whether `game/` has fallen into a 3D-view half and a
-HUD half with a small shared middle, or has not. That is a finding about paths, not a request to
-split, and it is the only thing about the breakdown this brief asks for.
+- **The picture shows our side's knowledge and nothing else, and opens that way.** A hostile is a
+  body while somebody of ours has eyes on it, a see-through standing body at its marker with its
+  credence otherwise, and nothing at all before anybody has heard a thing. `SandboxFrame.Knowledge`
+  is the list — `Tactician.Known` for each of ours, merged by keeping the best any of them holds —
+  and `SandboxFrame.Sees` is the one question the view, the HUD and the cursor ask, so there is no
+  second place a hostile can leak through. What the enemy holds on *us* is drawn in both modes,
+  because section 07 of the design doc names it as the one thing of theirs a player sees. `O` or
+  `--omniscient` puts everything back, the status line says which is on, and the orders readout
+  prints only when it is: it is the enemy's mind, and entry 023 says why it stays as an instrument.
+- **One engine unit is one metre, and `SandboxScale` is one static layout and two axis
+  conversions.** The pixels layout is gone. The class stays because entry 005 is the argument for
+  the place existing: the layout the battle is given is built there from a constant and nothing
+  that knows about the camera can build one. It also owns the sign of Z, so a mirror-image map
+  cannot be introduced from a call site.
+- **Storeys above the one being looked at are ghosted, not cut away.** Solid at or below, drawn at
+  sixteen per cent above, so a roof says there is a roof without hiding the room. Cutting away
+  loses the tower and the ridge from every picture of the ground; the flat view drew nothing and
+  lost the soldiers standing on them. `Q`/`E` and `--layer` still choose the storey, and it is the
+  storey the cursor picks on and the sight sweep runs over.
+- **The camera is pitched at 55 degrees and its yaw snaps to the six hex bearings.** `,` and `.`
+  turn it, `--yaw N` sets it, and it opens looking north so up the screen is up the map the way the
+  flat view had it. Distance is the zoom — `--zoom N` is metres back, `LegibleAt` is 70 of them —
+  and the camera never animates, because a capture has to land on the same frame every run.
+- **A 3D capture is byte-deterministic on this machine**, with 3D antialiasing and shadows on. Two
+  runs of `--fit` on the first day produced identical files, and every capture since has. So the
+  zero-changed-pixel refactor test survives the move; **the pinned scene changes** — see Seeing it.
 
-**Out of scope.** Art, animation, audio, and anything under `assets/` — a blockout is boxes on
-purpose, and the visual register in `docs/setting.md` is for whoever comes after. Every rule.
-The task half of a mission — the AI will walk to the exit in round 2 on the waystation and
-entry 048 says why; a picture of it doing so is correct. The map editor. A second mission or
-map. Suppression, saves, the strategy layer.
+**Readouts on the ground are tinted hexes, not shapes.** The attention field asks `AttentionOn`
+per tile and scales it by the range term the look-gain uses; the held arc asks `AngleOffDegrees`
+per tile out to `MaxRange`, brighter inside `OptimalRange`. A flat disc vanishes under a ridge and
+floats over a hollow; a tint follows the ground, and it is the rules' own answer per place. The
+soldiers are cylinders — a slab, prone — at `StanceProfile`'s heights, with a bar at eye height for
+the facing and a ring on the ground for whoever is up. Walls run from `WallBaseHeight` to
+`WallTopHeight`, the two figures the sight trace uses, with entry 049's hue and a thickness in
+place of the weight. Text is projected: every label the map carries is painted on a flat canvas
+over the picture at a fixed point size, which is the lesson about labels in hex radii kept.
 
-**How to know it worked.** Three things, and the last is the one that matters:
+**What survived exactly as the brief said it would.** The named actions on `HexSandbox`, the
+script, the capture, the frame, the HUD, the scenario, and the figures-not-names rule. `BattleHud`
+needed a line saying the mode, the cursor going through the frame, `?` slots in the turn order, and
+*somebody unseen* on the exposure line; nothing else.
 
-- A capture from one pasted command, on the waystation from its mission file, in which the
-  ground, the walls, the soldiers and every readout in the table above are in the picture and
-  match the flat capture of the same command in what they say.
-- The scripted test from entry 049 — a sentry holding an arc answers a move — reproduces in 3D
-  with the reaction line saying the same thing.
-- **A person plays the waystation mission to a verdict against `Commander` with windows handed
-  out and the other side hidden until found**, and says afterwards what read wrong. That is the
-  first measurement of the interface rather than of the rules, and it belongs in
-  `../decisions.md` beside the balance findings.
+**The territory question, answered for Master.** Presentation is `BattleView.cs` and
+`MeshBuilder.cs`, 1,032 lines. Interface is `BattleHud.cs`, 974. The middle — the node, the camera,
+the geometry, the scale, the frame, the palette, the capture, the script, the scenario, the canvas
+— is 2,420, and `HexSandbox.cs` alone is the largest file in the directory. The middle grew; it did
+not shrink or acquire an owner. The paths divide no better than they did at entry 014.
 
 ---
 
@@ -355,61 +339,64 @@ and saying so was the point of the exercise:
 
 ---
 
-## Two territories, one doc — and one territory, settled
+## Two territories, one doc — and one territory, settled twice
 
 Presentation and interface are different problems:
 
 - **Presentation** is drawing, cameras, input plumbing, and eventually animation. It consumes
-  Core. It lives in `BattleView.cs`.
+  Core. It lives in `BattleView.cs`, with `MeshBuilder.cs` under it.
 - **Interface** is what the player is allowed to know and how they ask for it. It *constrains*
   Core — the design doc's build order puts it plainly: if the AI needs information the interface
   cannot show, the interface is wrong. Section 06 ("What it hands the interface") and section 07
   ("Asymmetric information, deliberately") are interface design as much as rules design. It lives
   in `BattleHud.cs`.
 
-They shared this doc because they shared a single 705-line file. They no longer do:
+They shared this doc because they once shared a single 705-line file. They no longer do:
 
 | | |
 |---|---|
-| `HexSandbox.cs` | the Godot node — lifecycle, the actions, input, handing turns to the AI, and assembling a frame |
+| `HexSandbox.cs` | the Godot node — lifecycle, the scene furniture, the actions, input, handing turns to the AI, gathering what our side knows, and assembling a frame |
 | `SandboxScenario.cs` | which mission, by name — or, for the compound fixture, which map and who is on it |
 | `SandboxScript.cs` | the command line as a list of things a person could have done, in order |
-| `SandboxScale.cs` | metres against pixels, and the only place that knows the difference |
-| `SandboxCamera.cs` | where the map is looked at from and how close. Owns the scale, because zooming rebuilds it |
-| `SandboxGeometry.cs` | where things sit on the canvas — centroids, region polygons, hit tests |
-| `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves |
-| `BattleView.cs` | **presentation** — ground, walls, links, path, beliefs, soldiers |
+| `SandboxScale.cs` | the one layout the rules are given, and the axis mapping into the scene |
+| `SandboxCamera.cs` | where the map is looked at from: a focus, a distance, one of six bearings |
+| `SandboxGeometry.cs` | where things sit in the scene — outlines at floor height, node centres, picking by ray |
+| `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves — including what our side knows of the other |
+| `MeshBuilder.cs` | coloured triangles into one mesh: prisms, slabs, cylinders, ribbons |
+| `SandboxCanvas.cs` | a flat surface over the picture that draws what it is handed; there are two, one per half |
+| `BattleView.cs` | **presentation** — ground, walls, links, the route, the fields and arcs, ghosts, bodies, and the map's labels |
 | `BattleHud.cs` | **interface** — turn order, the soldier's situation, the shot under the cursor, reactions, the AI's orders |
-| `SandboxPalette.cs` | colours, shared because a side is one colour in both halves |
+| `SandboxPalette.cs` | colours and the two materials, shared because a side is one colour in both halves |
 | `SandboxCapture.cs` | render some frames, write a PNG, quit |
 
 `BattleView` and `BattleHud` are separate classes rather than partials of the node deliberately:
 partials would have kept every private field reachable from both, which is a path boundary with
-no boundary behind it. They each take a `SandboxFrame` and a `CanvasItem` and can reach nothing
-else. Two sessions can now work one on each.
+no boundary behind it. Each takes a `SandboxFrame` and its own surface and can reach nothing
+else — the view has a `Node3D` and a canvas for labels, the HUD a canvas of its own.
 
-**Whether that boundary makes two territories was asked in entry 013 and answered in entry 014:
-it does not, and the question is settled.** A territory is defined by paths, and the paths do not
-divide — the entry point, the input handling, the scenario, the scale contract and the capture
-harness are over half of `game/` and belong to both halves and to neither. One territory whose
-brief happens to be interface work is an accurate description rather than a compromise. The
-greybox (build order 06) rewrites `game/` substantially and is the moment to look again.
+**Whether that boundary makes two territories was asked in entry 013, answered in entry 014, and
+looked at again by the greybox as `../map.md` said it would be.** It does not, and the second look
+made it plainer: the middle is 2,420 lines against 1,032 and 974 for the halves, and the node is
+the largest file in the directory. A territory is defined by paths, and the paths do not divide.
+Entry 053 records the count.
 
 ---
 
 ## Gotchas
 
-- **Godot defines its own `Side` enum.** `game/` files need
-  `using Side = Hexcom.Core.Units.Side;`.
+- **Godot defines its own `Side` enum, and its own `Environment`.** `game/` files need
+  `using Side = Hexcom.Core.Units.Side;`. `Environment` resolves to Godot's while `using Godot;`
+  is in scope, which is what the world environment wants and not what `System.Environment` is.
 - **The sandbox needs Godot 4.7 .NET edition**, not the plain build. If your Godot is a different
   4.x, change the `Godot.NET.Sdk` version in `game/Hexcom.Game.csproj` to match.
 - **Nothing on this machine is called `godot`.** See **Seeing it**. A session that types the
   short name, gets *command not found* and concludes the engine is missing has been misled by a
   shell, not by the install.
-- **`.uid` files are tracked, and Godot writes them for you.** Adding a script under
-  `game/scripts/` leaves the tree dirty the first time anyone opens the project, because Godot
-  generates a `.uid` beside each one. They belong in the repository — commit them with the script
-  rather than wondering, later, whether the untracked files in your status are yours.
+- **`.uid` files are tracked, and Godot writes them for you — but only the editor does.** Running
+  the scene does not. Adding a script under `game/scripts/` leaves the tree one file short until
+  somebody opens the project; a session with no editor open can make Godot write them with
+  `--editor --headless --quit-after 200`, which is how the greybox's two arrived. Commit them with
+  the script.
 - **Build before you run.** Godot loads the assembly from `game/.godot/mono/temp/bin/Debug/`, and
   a scene launched before `dotnet build Hexcom.sln` fails with *"Cannot instantiate C# script"* —
   which reads like a broken scene file and is not one.
@@ -417,54 +404,51 @@ greybox (build order 06) rewrites `game/` substantially and is the moment to loo
   so the opening frame is byte-identical before and after the world-scale fix. What changed was
   detection, which no still image shows. When a change is about distance, measure it; when it is
   about layout, capture it.
-- **A picture is exactly the proof of a drawing change, and the render is deterministic.** The
-  same build captures byte-identically across runs and across frame counts, so a refactor of
-  drawing code can be held to *zero* changed pixels against the commit before it. The split that
-  created these files was checked that way and it earned its keep immediately: the vision wedge
-  came out of the move with `steps = 14` where the original had `18`, a coarser arc that nothing
-  else would have caught — it is a translucent overlay whose silhouette nobody has memorised, the
-  build was clean and all 259 tests passed. 546 pixels on one arc were the entire evidence.
-  **Diff the capture against the previous commit whenever you move drawing code.** Pin the scene
-  when you do — `--scenario compound --zoom 44 --look 0,0` is the frame every capture taken
-  before the waystation was taken at, and the default is now a different map at a different zoom
-  centred on a different thing. A diff against an unpinned default is a diff of the deployment.
-  It cuts the
-  other way too: the HUD rework on `view/interface-audit` changed 78,110 pixels in exactly two
-  horizontal bands — rows 14–112 and 862–891, the two panels — and every row of map between them
-  came out byte-identical. `view/interface-readouts` was held to the same test before it touched
-  a map label: rows 14–143 and 862–891, nothing between. That is how a change to the interface
-  half proves it left the presentation half alone.
+- **A picture is exactly the proof of a drawing change, and the 3D render is deterministic.** Two
+  runs of the same command produce the same file, with MSAA and shadows on, so a refactor of
+  drawing code can still be held to *zero* changed pixels against the commit before it. The flat
+  view's history of catching a 546-pixel arc that way is why this was checked on the first day.
+  **Diff the capture against the previous commit whenever you move drawing code, and pin the
+  scene when you do.** The pinned scene is now
+  `--scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1`: omniscient because the fixture
+  is checked with every soldier drawn, and the yaw said because a default is a thing that moves.
+  Nothing captured before the greybox diffs against anything captured after it.
 - **The readouts are drawn over the map, not beside it.** All three HUD blocks sit on a panel for
   that reason, and anything added to them has to assume there is a tile-cost label underneath —
-  because there is. The help line and the top row of the map were mutually illegible in every
-  capture taken before the panels existed. The top block is the active soldier's situation and
-  the bottom block is what happened while it was not your go; they are separate so that a busy
-  enemy round does not push the situation down onto the roof.
+  because there is. The top block is the active soldier's situation and the bottom block is what
+  happened while it was not your go; they are separate so that a busy enemy round does not push
+  the situation down onto the roof.
 - **The bottom block is *since you last acted*, not a log.** It is replaced whenever the enemy
   gets a go after something you did, so if two of yours are adjacent in the initiative order, the
   second one's pass leaves the block untouched — nothing hostile happened in between. Read it as
-  "what they did about that", never as a history.
+  "what they did about that", never as a history. And it prints only when the picture is
+  omniscient: it is the enemy's mind.
 - **`Battle` does not stop when a side is gone.** The survivors keep taking turns, so anything
   that loops on the hostile side being up has to check `IsDecided` or it never returns.
   `HexSandbox.Settle` does.
-- **Drawing scale and world scale are different variables and must stay that way.** `HexSize` is
-  pixels and is exported; `SandboxScale.MetresPerHexSize` is metres and is a constant. That
-  asymmetry is the contract, not an oversight. The camera moves the first one on every wheel
-  notch and must never move the second — which is why zooming rebuilds a whole `SandboxScale`
-  rather than assigning to a field: an immutable pair of layouts cannot drift apart.
-- **Anything drawn in hex radii vanishes when you zoom out, and text does not.** A label set at
-  11 points stays 11 points at any zoom, so an offset quoted in hex radii puts the name on top of
-  the dot; a box width quoted in hex radii clips the last characters off every label on the map
-  at once. Offsets and text boxes are therefore in pixels, footprints and wedges in hex radii,
-  and anything the rules quote in metres goes through `SandboxScale.MetresToPixels`. Three units
-  in one file is not a mess, it is three different questions.
-- **A map that brings its own kit brings no colour with it.** `BattleView.StyleFor` switches on
-  well-known wall ids, so a profile a `.hexmap` declares for itself — the waystation's `hedge`,
-  say — draws in the default grey until somebody adds a case. Entry 035.
-- **The sandbox draws one storey and the units on the others are still there.** They come out as
-  hollow rings labelled *above* or *below*, with their attention field drawn all the same, since
-  a soldier four metres up is watching this ground and not some other ground. Leaving the field
-  out was tried and it hid the most interesting fact on the waystation.
+- **There is one layout and the camera cannot reach it.** `SandboxScale.World` is a static built
+  from a constant; `SandboxCamera` owns a distance and a bearing and rewrites a `Camera3D`. The
+  day a zoom factor gets multiplied into a layout is entry 002 again, and the shape of the code is
+  what makes that a thing somebody has to do on purpose.
+- **Text is projected, everything else is built.** A label is `Camera3D.UnprojectPosition` of a
+  scene point, painted on the label canvas at a point size, so it stays legible at any distance
+  and has to be redrawn on every camera move. Meshes are rebuilt on every action and never on a
+  camera move. If a label and a shape disagree, the frame they were drawn from does not — look at
+  which of the two redraws was missed.
+- **Transparent meshes are sorted by distance, and all of ours are at the origin.** The ghosted
+  storeys and the readouts would draw in whichever order the engine picked, and sometimes a
+  readout vanished under a ghosted roof. `SandboxPalette.ClearBehind` carries a render priority so
+  the ghosts go first, whatever the distance. Within one mesh, triangles draw in the order they
+  were added, which is what lets several tints on one hex composite — so add the unseen wash
+  before the fields and the outlines after them.
+- **The cursor picks on the storey being looked at and nothing else.** The ray is met with each
+  floor height on that storey; a roof above is transparent to it and a floor below is not
+  reached. So on the ground storey you cannot click the roof, and on the roof you cannot click the
+  room under it. That is what `Q`/`E` are for.
+- **Attention is a tint per tile and costs a query per tile.** Seven soldiers within 45 metres
+  of most of the waystation is about eight thousand `AttentionOn` calls a rebuild, which is
+  cheap, and eight thousand quads, which is cheap. It would stop being cheap at a hundred
+  soldiers, at which point the field should sample rings again.
 - **A switch over somebody else's enum wants its default to be a sentence, not a guess.**
   `BattleHud.Describe(Order)` ended in a catch-all that read the stance, which was true of the
   only kind left over when it was written; three kinds landed with grenades and the first one the
@@ -511,96 +495,105 @@ way to check that the scene loads and `_Ready` survives, which catches most wiri
 
 **A capture is deaf, so anything it is to show has to be an argument.** The run ignores the mouse
 and the keyboard on purpose — the window opens under whatever the pointer was already doing, and
-a capture that read it would not reproduce. Three flags put back what that took away:
+a capture that read it would not reproduce. Flags put back what that took away:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0 --pass 6 --ai
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --omniscient --hover 2,0 --pass 6 --ai
 ```
 
 - `--hover q,r[,layer[,region]]` parks the cursor on a node, axial, the way the maps are
   authored. Everything cursor-driven — the path preview, the sight readout, the range band, the
-  shot under the cursor and what it is worth — was invisible to every capture ever taken before
-  this existed.
+  shot under the cursor and what it is worth — is invisible to a capture without it.
 - `--pass N` hands the turn on N times before the picture. Whose turn it is decides most of the
   HUD, and the demo's first soldier carries a **power blade**, so no capture of the opening frame
   can show a rifle's readout. Without `--ai`, nobody acts during the passes — this reaches later
   soldiers, not later situations.
 - `--ai` hands every hostile turn to `Commander` during the passes, so each pass is one of ours
-  standing still while the other side does what it decides to. This is the first way a capture
-  has had of showing a situation rather than a starting position, and it is what puts the orders
-  readout in a picture. The command above is the one that proved that branch: by the sixth pass
-  the Spotter has crawled along the roof, put an aimed shot into the scout at 95 % and gone prone,
-  and the bottom block says so with every term. Interactively the same thing is `H`, and `A`
-  gives one turn — anybody's — to the AI.
+  standing still while the other side does what it decides to. Interactively the same thing is
+  `H`, and `A` gives one turn — anybody's — to the AI.
+- `--omniscient` draws every soldier in play and prints the AI's orders. **Without it the
+  picture is the game**: hostiles nobody of ours has found are not in it, and neither is the
+  orders readout. A capture checking the AI wants this flag; a capture checking what a player
+  would see does not. Interactively it is `O`.
 
-**A map 85 metres across needs the camera told about, so four more flags do that.**
+**A map 85 metres across needs the camera told about, so five flags do that.**
 
 ```bash
 Godot_v4.7.2-stable_mono_win64_console --path game -- --shot map.png --fit
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --zoom 44
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1
 ```
 
 - `--fit` pulls back until the whole map is in one picture, working the figure out rather than
-  being told it. This is the flag to reach for: the waystation at the 44-pixel hex the compound
-  was drawn with is nearly four screens wide, so without it every picture is of one corner.
-- `--zoom N` sets the hex radius in pixels directly. Below 22 the tile detail switches off, which
-  is deliberate and is what the status line means by *zoomed out*.
-- `--look q,r` centres on a hex instead of on whoever is up.
+  being told it. This is the flag to reach for for a picture of the shape of a map.
+- `--zoom N` puts the camera N metres back from the ground it is looking at. Past 70 the tile
+  detail switches off, which is deliberate and is what the status line means by *zoomed out*;
+  36 is where a battle opens.
+- `--look q,r` centres on a hex instead of on whoever is up, at the floor height of the storey
+  being looked at.
+- `--yaw N` turns the camera to look along hex bearing N, 0 to 5; 1 is north and is the default.
 - `--scenario name` picks from `SandboxScenario.All` — `waystation`, the default, or `compound`.
   A name that matches nothing gets you the default and says so in the status line, rather than a
   scene that fails to load.
 
-Interactively it is the wheel or `+`/`-` to zoom, a middle-drag or the arrows to pan, `F` for the
-whole map and `G` for whoever is up. The camera never re-asks the rules anything, so none of it
-can change what is true — only what is on screen.
+Interactively it is the wheel or `+`/`-` to zoom, a middle-drag or the arrows to pan, `,` and `.`
+to turn, `F` for the whole map and `G` for whoever is up. The camera never re-asks the rules
+anything, so none of it can change what is true — only what is on screen.
 
-**And a capture can act.** Everything on the line that is not one of the five settings —
-`--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows` — is a step, run in the order it was
-typed, and each one prints what it did. They are the keys under another name:
+**And a capture can act.** Everything on the line that is not one of the six settings —
+`--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows`, `--omniscient` — is a step, run in
+the order it was typed, and each one prints what it did. They are the keys under another name:
 
 | | |
 |---|---|
 | `--pass [N]` · `--until NAME` | hand the turn on; or hand it on until a named soldier is up |
-| `--move q,r[,l[,g]]` · `--fire NAME` | the active soldier moves or shoots |
+| `--move q,r[,l[,g]]` · `--fire NAME` | the active soldier moves or shoots — at a soldier the picture shows |
 | `--stance NAME` · `--face DIR` · `--overwatch NAME\|none` | posture, facing, the arc being held |
 | `--arm` · `--spring NAME` · `--shout NAME` · `--extract` | ambush, call it in, walk off the field |
 | `--ai-turn` · `--hostiles ai\|hand` | give this turn to the search; give the side to it or take it back |
 | `--place NAME:N` · `--resolve` | answer an open reaction window, and run it |
-| `--hover node` · `--look q,r` · `--zoom N` · `--fit` · `--layer N` | the cursor, the camera, the storey |
+| `--brief` | the whole briefing on screen |
+| `--hover node` · `--look q,r` · `--zoom N` · `--yaw N` · `--fit` · `--layer N` | the cursor, the camera, the storey |
 
 `--until` rather than a count of passes, because initiative is rolled per round. Camera steps go
 last, since anything a soldier does afterwards may pull the view to whoever is up next.
 
-The test this was built for, and what it prints:
+The test this was built for, and what it prints — the same line in three dimensions as in two:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini   --move 1,0 --zoom 44
+Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound --omniscient   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini   --move 1,0 --zoom 24
 ```
 
 *reactions — t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0.* One of ours moved, a
-sentry holding an arc answered it, and the reaction line says what it did — which was checkable
-only with a hand on the keyboard until this existed.
+sentry holding an arc answered it, and the reaction line says what it did.
 
 With `--windows`, a move stops at its reaction window instead and the picture can be taken with
-the question still on screen. `--windows --ai --pass 30` on the waystation stops in round 4 with
-the sentry committed to a 15-tick walk it has not taken, Vance offered three answers and their
-scores, and the route drawn out of the sentry with the tick each step lands on.
+the question still on screen. `--windows --ai --omniscient --pass 30 --zoom 40` on the waystation
+stops in round 4 with the sentry committed to a 15-tick walk it has not taken, Vance offered three
+answers and their scores, and the route drawn out of the sentry with the tick each step lands on.
+`--ai --pass 16 --zoom 60` without `--omniscient` is the game's own view of the same fight two
+rounds on: two hostiles as bodies with their rungs, two as `?` in the turn order and nowhere on
+the map.
 
 ---
 
 ## Open questions
 
-- **The greybox.** Build order puts a 3D blockout after the AI and after grenades — *only once
-  the rules are settled*. The flat sandbox stays the working view until then.
-- **Whether the camera should be a `Camera2D`.** It is an offset on the node, which is what the
-  one line it replaced already was, and it costs nothing while there is a single flat view. A
-  real camera node would give smoothing, limits and a viewport for free, and the greybox will
-  want all three.
+- **Whether an unfound hostile should hold a slot in the turn order at all.** It holds a `?` now:
+  that somebody acts at that point is known, because turns are taken in the open, but the count
+  of the enemy is a thing a stealth game might want to keep. The alternative is to drop the slot
+  and let the strip show only what is found, which loses the interleaving the strip exists to
+  show. The first play-through is the way to decide.
+- **Whether a hostile's held arc should be drawn when the hostile is.** It is not, now: a body
+  shows where a soldier is and which way it faces, and the attention field shows where it is
+  looking, but what it would shoot at is its intent. Omniscient draws every arc. A player who
+  walks into an arc they could see the soldier holding may reasonably say the picture lied.
+- **Whether a fixed 55-degree pitch is enough.** It keeps a hex a hex and a wall a wall from every
+  bearing, and it cannot look along a wall. Nothing so far has wanted to.
 - **Whether a player should be answering the enemy's reactions.** The sandbox drives both sides
   by hand, so an open window offers every reactor in it whichever side they are on — which is
   right for a thing built to try both sides and is not what a shipped interface would do. The
   window readout says whose each offer is; nothing stops you answering for the other lot. Same
-  family as the orders readout, which is the opponent's mind and is shown anyway.
+  family as the orders readout, which is the opponent's mind and is shown only when omniscient.
 - **Whether the mission line belongs to a player at all, or only to a tester.** It shows the
   verdict, which is the scoreboard, and the reading each departed soldier left with, which is
   how the mission is judged. Both are ours by contract 3, so there is no leak; the question is
@@ -611,9 +604,10 @@ scores, and the route drawn out of the sentry with the tick each step lands on.
   entry 038 was about. When the clock lands in the rules this should become a deletion and not a
   second opinion.
 
-Two questions here are answered rather than open. The scenario belongs in `content/` and now
-lives there. And what our own soldiers did during the enemy's turn is no longer invisible: `Act`
-carries the outcome (entry 040) and a handed-out window is answerable by hand (entry 049).
+Three questions here are answered rather than open. The scenario belongs in `content/` and lives
+there. What our own soldiers did during the enemy's turn is no longer invisible: `Act` carries the
+outcome (entry 040) and a handed-out window is answerable by hand (entry 049). And the camera is a
+`Camera3D`, which is what the old question about a `Camera2D` was really asking for.
 
 ## Recent work
 
