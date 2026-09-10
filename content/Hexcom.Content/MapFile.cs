@@ -1,8 +1,6 @@
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
 
@@ -57,15 +55,10 @@ public static class MapFile
         => new Reader(text, source).Read();
 
     /// <summary>Bearing names as they appear in a map file, indexed by <see cref="HexDirection"/>.</summary>
-    public static string DirectionName(HexDirection direction) => Reader.DirectionNames[(int)direction];
+    public static string DirectionName(HexDirection direction) => Bearings.Names[(int)direction];
 
-    private sealed class Reader(string text, string? source)
+    private sealed class Reader(string text, string? source) : TextFormatReader(text)
     {
-        internal static readonly string[] DirectionNames = ["ne", "n", "nw", "sw", "s", "se"];
-
-        private static readonly Regex CoordinatePattern = new(@"^(-?\d+),(-?\d+)(?:@(-?\d+))?$", RegexOptions.Compiled);
-        private static readonly Regex CornerPairPattern = new(@"^([0-5])-([0-5])$", RegexOptions.Compiled);
-
         private readonly Dictionary<string, WallProfile> _profiles = new(BuiltInProfiles, StringComparer.Ordinal);
         private readonly Dictionary<string, GroundType> _grounds = new(BuiltInGrounds, StringComparer.Ordinal);
 
@@ -76,37 +69,22 @@ public static class MapFile
         private double _occupancy = HexPartition.DefaultOccupancyThreshold;
         private double _layerHeight = 3.0;
         private BattleMap? _map;
-        private int _line;
 
         private BattleMap Map => _map ??= new BattleMap { OccupancyThreshold = _occupancy, LayerHeight = _layerHeight };
 
         public MapDocument Read()
         {
-            var lines = text.Split('\n');
-            for (var i = 0; i < lines.Length; i++)
-            {
-                _line = i + 1;
-                var tokens = Tokenize(lines[i]);
-                if (tokens.Length == 0) continue;
-                Statement(new Cursor(this, tokens));
-            }
-
+            ReadLines();
             CheckPartitions();
             return new MapDocument(_name ?? source, Map, _profiles, _grounds);
         }
 
-        private static string[] Tokenize(string line)
-        {
-            var hash = line.IndexOf('#');
-            if (hash >= 0) line = line[..hash];
-            return line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-        }
-
-        private MapFormatException Error(string message) => new(message, source, _line);
+        protected override ContentFormatException Error(string message)
+            => new MapFormatException(message, source, LineNumber);
 
         // ---- statements ------------------------------------------------------------
 
-        private void Statement(Cursor c)
+        protected override void Statement(Cursor c)
         {
             var keyword = c.Next("a statement");
             switch (keyword)
@@ -122,7 +100,7 @@ public static class MapFile
                 case "wall": Wall(c); break;
                 case "enclose": Enclose(c); break;
                 case "breach": Breach(c); break;
-                case "link": Link(c, c.Kind()); break;
+                case "link": Link(c, TraversalKindOf(c)); break;
                 case "ladder": Link(c, TraversalKind.Ladder); break;
                 case "stairs": Link(c, TraversalKind.Stairs); break;
                 case "door": Link(c, TraversalKind.Door); break;
@@ -137,6 +115,12 @@ public static class MapFile
             apply(c.Double("a number"));
             c.End();
         }
+
+        /// <summary>A wall profile by name: built-in, or one this file declared earlier.</summary>
+        private WallProfile ProfileOf(Cursor c) => c.Named("wall profile", _profiles);
+
+        private static TraversalKind TraversalKindOf(Cursor c)
+            => c.Enum<TraversalKind>("a traversal kind: walk, vault, climb, ladder, stairs, drop, jump, door or crawl");
 
         private void Profile(Cursor c)
         {
@@ -253,7 +237,7 @@ public static class MapFile
 
         private void Chord(Cursor c)
         {
-            var profile = c.Profile();
+            var profile = ProfileOf(c);
             var address = c.Address();
             var (a, b) = c.CornerPair();
             c.End();
@@ -264,12 +248,12 @@ public static class MapFile
         {
             Map.AddChord(address.Hex, a, b, address.Layer, profile);
             if (WallSegment.Classify(a, b) != ChordClass.Side)
-                _chordLines[(address.Hex, address.Layer)] = _line;
+                _chordLines[(address.Hex, address.Layer)] = LineNumber;
         }
 
         private void Wall(Cursor c)
         {
-            var profile = c.Profile();
+            var profile = ProfileOf(c);
             var hexes = c.Shape();
             var (directions, layer) = Directions(c);
             if (directions.Count == 0) throw Error("A wall needs at least one side: ne, n, nw, sw, s, se or all.");
@@ -282,7 +266,7 @@ public static class MapFile
         /// <summary>Walls along every side of a shape that faces out of it: a building in one line.</summary>
         private void Enclose(Cursor c)
         {
-            var profile = c.Profile();
+            var profile = ProfileOf(c);
             var hexes = c.Shape();
             var (directions, layer) = Directions(c);
             if (directions.Count != 0) throw Error("'enclose' works out its own sides; it takes only an optional layer.");
@@ -303,12 +287,12 @@ public static class MapFile
             {
                 var token = c.Next("a side or a corner pair");
                 HexVertex a, b;
-                if (TryDirection(token, out var direction))
+                if (Bearings.TryParse(token, out var direction))
                 {
                     var (ia, ib) = direction.Corners();
                     (a, b) = (address.Hex.Corner(ia), address.Hex.Corner(ib));
                 }
-                else if (TryCornerPair(token, out var ia2, out var ib2))
+                else if (Cursor.TryCornerPair(token, out var ia2, out var ib2))
                 {
                     (a, b) = (address.Hex.Corner(ia2), address.Hex.Corner(ib2));
                 }
@@ -361,7 +345,7 @@ public static class MapFile
                 var token = c.Next("a side or 'layer'");
                 if (token == "layer") layer = c.Int("a layer number");
                 else if (token == "all") directions.AddRange(HexDirectionExtensions.All);
-                else if (TryDirection(token, out var direction)) directions.Add(direction);
+                else if (Bearings.TryParse(token, out var direction)) directions.Add(direction);
                 else throw Error($"'{token}' is not a side (ne, n, nw, sw, s, se, all) or 'layer'.");
             }
 
@@ -383,172 +367,9 @@ public static class MapFile
                 }
                 catch (HexPartitionException e)
                 {
-                    _line = _chordLines.GetValueOrDefault((tile.Address.Hex, tile.Address.Layer));
+                    LineNumber = _chordLines.GetValueOrDefault((tile.Address.Hex, tile.Address.Layer));
                     throw Error($"{tile.Address}: {e.Message}");
                 }
-            }
-        }
-
-        // ---- tokens ----------------------------------------------------------------
-
-        private static bool TryDirection(string token, out HexDirection direction)
-        {
-            var index = Array.IndexOf(DirectionNames, token);
-            direction = (HexDirection)Math.Max(index, 0);
-            return index >= 0;
-        }
-
-        private static bool TryCornerPair(string token, out int a, out int b)
-        {
-            var match = CornerPairPattern.Match(token);
-            a = b = 0;
-            if (!match.Success) return false;
-            a = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-            b = int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
-            return true;
-        }
-
-        private static bool TryCoordinate(string token, out Hex hex, out int? layer)
-        {
-            var match = CoordinatePattern.Match(token);
-            hex = default;
-            layer = null;
-            if (!match.Success) return false;
-            hex = new Hex(
-                int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture),
-                int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture));
-            if (match.Groups[3].Success)
-                layer = int.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture);
-            return true;
-        }
-
-        /// <summary>One line's tokens, consumed left to right, with errors that say what was wanted.</summary>
-        private sealed class Cursor(Reader reader, string[] tokens)
-        {
-            private int _position;
-
-            public bool Done => _position >= tokens.Length;
-
-            public string Next(string what)
-            {
-                if (Done) throw reader.Error($"Expected {what} but the line ended.");
-                return tokens[_position++];
-            }
-
-            public string[] Rest()
-            {
-                var rest = tokens[_position..];
-                _position = tokens.Length;
-                return rest;
-            }
-
-            public void End()
-            {
-                if (!Done) throw reader.Error($"Unexpected '{tokens[_position]}'.");
-            }
-
-            public int Int(string what)
-            {
-                var token = Next(what);
-                if (!int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
-                    throw reader.Error($"Expected {what}, got '{token}'.");
-                return value;
-            }
-
-            public double Double(string what)
-            {
-                var token = Next(what);
-                if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
-                    throw reader.Error($"Expected {what}, got '{token}'.");
-                return value;
-            }
-
-            public T Enum<T>(string what) where T : struct, Enum
-            {
-                var token = Next(what);
-                if (!System.Enum.TryParse<T>(token, ignoreCase: true, out var value))
-                    throw reader.Error($"Expected {what}, got '{token}'.");
-                return value;
-            }
-
-            public TraversalKind Kind() => Enum<TraversalKind>("a traversal kind: walk, vault, climb, ladder, stairs, drop, jump, door or crawl");
-
-            public WallProfile Profile()
-            {
-                var token = Next("a wall profile");
-                if (!reader._profiles.TryGetValue(token, out var profile))
-                    throw reader.Error($"Unknown wall profile '{token}'. Known: {string.Join(", ", reader._profiles.Keys.Order(StringComparer.Ordinal))}.");
-                return profile;
-            }
-
-            /// <summary>A hex with no layer: <c>q,r</c>.</summary>
-            public Hex Coordinate()
-            {
-                var token = Next("a hex as q,r");
-                if (!TryCoordinate(token, out var hex, out var layer))
-                    throw reader.Error($"Expected a hex as q,r, got '{token}'.");
-                if (layer is not null)
-                    throw reader.Error($"'{token}' names a layer; a shape takes its layer afterwards, as 'layer N'.");
-                return hex;
-            }
-
-            /// <summary>A tile: <c>q,r</c> or <c>q,r@layer</c>, layer 0 when omitted.</summary>
-            public TileAddress Address()
-            {
-                var token = Next("a tile as q,r or q,r@layer");
-                if (!TryCoordinate(token, out var hex, out var layer))
-                    throw reader.Error($"Expected a tile as q,r or q,r@layer, got '{token}'.");
-                return new TileAddress(hex, layer ?? 0);
-            }
-
-            public (int A, int B) CornerPair()
-            {
-                var token = Next("a corner pair such as 0-2");
-                if (!TryCornerPair(token, out var a, out var b))
-                    throw reader.Error($"Expected a corner pair such as 0-2, got '{token}'.");
-                if (a == b) throw reader.Error($"A chord needs two different corners, not '{token}'.");
-                return (a, b);
-            }
-
-            /// <summary>A set of hexes, in the order the shape produces them, without repeats.</summary>
-            public List<Hex> Shape()
-            {
-                var keyword = Next("a shape: hex, hexes, line, disc or ring");
-                IEnumerable<Hex> hexes = keyword switch
-                {
-                    "hex" => [Coordinate()],
-                    "hexes" => Coordinates(),
-                    "line" => Line(),
-                    "disc" => Coordinate().WithinRange(Radius()),
-                    "ring" => Coordinate().Ring(Radius()),
-                    _ => throw reader.Error($"Expected a shape (hex, hexes, line, disc or ring), got '{keyword}'."),
-                };
-                return hexes.Distinct().ToList();
-            }
-
-            private List<Hex> Coordinates()
-            {
-                var hexes = new List<Hex> { Coordinate() };
-                while (!Done && TryCoordinate(tokens[_position], out _, out _))
-                    hexes.Add(Coordinate());
-                return hexes;
-            }
-
-            private IReadOnlyList<Hex> Line()
-            {
-                var from = Coordinate();
-                var to = Next("'to'");
-                if (to != "to") throw reader.Error($"Expected 'to' between the ends of a line, got '{to}'.");
-                return from.LineTo(Coordinate());
-            }
-
-            private int Radius()
-            {
-                var r = Next("'r'");
-                if (r != "r") throw reader.Error($"Expected 'r' before a radius, got '{r}'.");
-                var radius = Int("a radius");
-                if (radius < 0) throw reader.Error("A radius cannot be negative.");
-                return radius;
             }
         }
     }

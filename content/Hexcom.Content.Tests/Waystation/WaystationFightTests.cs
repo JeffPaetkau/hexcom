@@ -11,10 +11,14 @@ namespace Hexcom.Content.Tests.Waystation;
 /// instrument the first battlefield brief asks for: not who won, but where the fighting was.
 /// </summary>
 /// <remarks>
-/// Nothing here asserts a decision, because none of the first twelve matches reached one and
-/// the reason is Core's, recorded in <c>docs/decisions.md</c> entry 038: the fighting is over by
-/// round 21 and the rest is the stalemate <c>core.md</c> predicts for a search one step deep
-/// with nothing to want. What is asserted is what the map was redrawn to guarantee.
+/// The deployments, the exit and the round cap all come from
+/// <c>content/missions/waystation.hexmission</c> now, which is the one copy of them there is.
+/// <para>
+/// The first twelve matches fought here reached no decision at all, and entry 038 is the reason:
+/// there was nothing to want, so a search one step deep found nothing better than where it was
+/// standing. There is something to want now, and what these tests assert is that it is enough to
+/// end a match — the rest of what they check is what the map was redrawn to guarantee.
+/// </para>
 /// </remarks>
 public class WaystationFightTests(ITestOutputHelper output)
 {
@@ -29,10 +33,11 @@ public class WaystationFightTests(ITestOutputHelper output)
     private static int FirstSeed => Env("HEXCOM_SEED_FROM", 1);
 
     /// <summary>
-    /// The round cap. Thirty covers every fight seen so far with room to spare; sixty is what
-    /// the first dozen were run to, and what to use when comparing against them.
+    /// The round cap, which the mission carries: it is the sixth row of the briefing, not a knob
+    /// on the harness. Sixty is what the first dozen were run to, and what to set
+    /// <c>HEXCOM_ROUNDS</c> to when comparing against them.
     /// </summary>
-    private static int Rounds => Env("HEXCOM_ROUNDS", 30);
+    private static int Rounds => Env("HEXCOM_ROUNDS", WaystationFight.Rounds);
 
     private static int Env(string name, int fallback)
         => int.TryParse(Environment.GetEnvironmentVariable(name), out var n) && n > 0 ? n : fallback;
@@ -50,8 +55,11 @@ public class WaystationFightTests(ITestOutputHelper output)
             if (Environment.GetEnvironmentVariable("HEXCOM_TRANSCRIPT") == seed.ToString())
                 output.WriteLine(MatchRecorder.Transcript(report));
 
-            // It is a fight, whatever else it is.
-            Assert.True(report.Shots + report.Throws > 0, $"seed {seed}: nobody fired");
+            // It comes to something, which is what entry 038 measured that it did not.
+            // What is deliberately no longer asserted is that anybody fired: a withdrawal
+            // achieved without a shot is the best outcome this game has, and the line that used
+            // to demand one was written when the only way to end a battle was to win a fight.
+            Assert.True(report.Settled, $"seed {seed}: ran to the round cap with no verdict");
         }
     }
 

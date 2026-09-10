@@ -14,9 +14,8 @@ namespace Hexcom.Content;
 /// This is the honest half of the format made concrete. A map lowered this way reads back to
 /// the same tiles, walls and links, whichever shorthand it was originally written with, and the
 /// round trip is what the tests use to show that the shorthand adds nothing the primitives
-/// cannot say. It is also how a map built in code — <c>DemoMaps.Compound()</c>, or one day an
-/// editor — gets onto disk in the first place. The output is sorted, so two maps that differ
-/// diff sensibly.
+/// cannot say. It is also how a map built in code — by an editor, one day — gets onto disk in
+/// the first place. The output is sorted, so two maps that differ diff sensibly.
 /// </remarks>
 public static class MapWriter
 {

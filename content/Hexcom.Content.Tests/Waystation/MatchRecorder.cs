@@ -22,18 +22,29 @@ public sealed record Casualty(int Round, string Unit, Side Side, NodeId Where, s
 /// What one match came to. Everything a reader needs to say where the fighting happened,
 /// which is the question the first battlefield brief asks and the win check does not answer.
 /// </summary>
+/// <param name="Verdict">
+/// How it came out for the side that had orders, or <c>Undecided</c> for a match that ran out of
+/// rounds. Entry 041: a battle settles on its objective now, and a mission that ends because
+/// somebody walked off the field looks nothing like one that ends because a side was wiped out.
+/// </param>
+/// <param name="Departures">How each soldier left the field, and what the enemy held on them as they went.</param>
 public sealed record MatchReport(
     int Seed,
     bool Decided,
     Side? Winner,
+    Verdict Verdict,
     int Rounds,
     int Turns,
     double Seconds,
     IReadOnlyList<TurnRecord> TurnLog,
     IReadOnlyList<Casualty> Casualties,
     IReadOnlyDictionary<string, AwarenessState> AlarmPeaks,
-    IReadOnlyDictionary<string, int> Standing)
+    IReadOnlyDictionary<string, int> Standing,
+    IReadOnlyDictionary<string, Departure> Departures)
 {
+    /// <summary>Whether it settled on the objective rather than on the round cap.</summary>
+    public bool Settled => Verdict != Verdict.Undecided;
+
     public int Shots => TurnLog.Sum(t => t.Orders.Count(o => o.Kind == OrderKind.Fire));
     public int Throws => TurnLog.Sum(t => t.Orders.Count(o => o.Kind == OrderKind.Throw));
     public TurnRecord? FirstShot => TurnLog.FirstOrDefault(t => t.Orders.Any(o => o.Kind is OrderKind.Fire or OrderKind.Throw));
@@ -70,7 +81,7 @@ public sealed record MatchReport(
 /// </remarks>
 public static class MatchRecorder
 {
-    public static MatchReport Play(Battle battle, int seed, int roundCap = 60)
+    public static MatchReport Play(Battle battle, int seed, int roundCap = 60, Side orders = Side.Player)
     {
         var commander = new Commander(battle);
         var log = new List<TurnRecord>();
@@ -99,7 +110,9 @@ public static class MatchRecorder
             log.Add(new TurnRecord(
                 round, mover.Name, mover.Side, from, mover.Position, [.. acts.Select(a => a.Order)]));
 
-            foreach (var fallen in standingBefore.Where(u => !u.InPlay))
+            // Left is what tells a body from a soldier who walked off, and until objectives
+            // existed nothing had to — InPlay is false for both. Entry 030.
+            foreach (var fallen in standingBefore.Where(u => u.Left?.Kind == DepartureKind.Down))
                 casualties.Add(new Casualty(round, fallen.Name, fallen.Side, fallen.Position, mover.Name));
 
             foreach (var hostile in theirs.Where(h => h.InPlay))
@@ -118,13 +131,15 @@ public static class MatchRecorder
             seed,
             battle.IsDecided,
             sides.Count == 1 ? sides[0] : null,
+            battle.VerdictFor(orders),
             battle.Round,
             turns,
             watch.Elapsed.TotalSeconds,
             log,
             casualties,
             peaks,
-            everyone.ToDictionary(u => u.Name, u => u.InPlay ? u.Vitality : 0));
+            everyone.ToDictionary(u => u.Name, u => u.InPlay ? u.Vitality : 0),
+            everyone.Where(u => u.Left is not null).ToDictionary(u => u.Name, u => u.Left!));
     }
 
     /// <summary>A named place on the waystation, so a route can be read as a story.</summary>
@@ -152,7 +167,7 @@ public static class MatchRecorder
     public static string Describe(MatchReport r, BattleMap map)
     {
         var sb = new StringBuilder();
-        var outcome = r.Decided ? $"decided for {r.Winner}" : "UNDECIDED";
+        var outcome = r.Settled ? r.Verdict.ToString().ToLowerInvariant() : r.Decided ? $"decided for {r.Winner}" : "UNDECIDED";
         sb.AppendLine($"seed {r.Seed}: {outcome} at round {r.Rounds} after {r.Turns} turns, {r.Seconds:F1} s; {r.Shots} shots, {r.Throws} throws, last fire round {r.LastFire}");
 
         if (r.FirstShot is { } first)
@@ -166,6 +181,9 @@ public static class MatchRecorder
 
         var pacing = r.PacingTurns.GroupBy(t => t.Unit).Select(g => $"{g.Key} {g.Count()} turns");
         if (pacing.Any()) sb.AppendLine($"  pacing: {string.Join(", ", pacing)}");
+
+        foreach (var (name, left) in r.Departures.Where(d => d.Value.Kind == DepartureKind.Extracted))
+            sb.AppendLine($"  off: {name} in round {left.Round}, with the other side at {left.Noticed}");
 
         foreach (var c in r.Casualties)
             sb.AppendLine($"  down: {c.Unit} ({c.Side}) round {c.Round} at {c.Where}, on {c.By}'s turn");

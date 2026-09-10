@@ -5,53 +5,20 @@
 # the main road, a stream crossed by one bridge, a barn, a pair of cottages, a ridge, a
 # watchtower and two stands of trees.
 #
-# ---- the mission --------------------------------------------------------------------------
+# ---- what the ground offers a mission -------------------------------------------------------
 #
-# The map format holds ground and nothing else (entry 024), so until there is a mission file
-# (entry 036, row 5) the mission lives here as prose, in the six-part shape the mission book
-# gives a briefing. The sandbox (game/scripts/SandboxScenario.cs) and the test harness
-# (content/Hexcom.Content.Tests/Waystation) both deploy exactly what this says. Keep the three
-# agreeing.
+# This map used to carry a mission in its header, in prose, because there was nowhere else to put
+# one. There is now: content/missions/waystation.hexmission, which holds the deployments, the way
+# off, the objective and the clock, and is the only copy of them. Entry 047. What stays here is
+# the part that is about the ground, because the ground is what this file is.
 #
-# The instrument.  Instrument 4-11 continues in force and this is an inspection of the
-#                  waystation on the north road, filed accordingly. A walk.
-#
-# What is there.   A detail of four, we think, holding the crossroads. One outside the west gate
-#                  watching the road. One on the roof of the house inside the compound, and that
-#                  is the one with the set. A rifle in the tower to the south-east, four metres
-#                  up, and one more in the barn on the east road. They have held this place a
-#                  fortnight and nobody has come up the road in that time.
-#
-# The task.        Enter the compound, confirm what is stored in the house, and come out.
-#
-# The restraint.   You will not be seen and you will not fire. The people who live in the
-#                  cottages are not part of this.
-#
-# Where you start. On the west road, twenty hexes out, before first light:
-#                    Vance   -21,3    facing se   scout, blade and sidearm, two claymores
-#                    Orsini  -20,0    facing ne   trooper, repeater and a frag
-#                    Bekker  -19,-3   facing ne   slug rifle and two frags
-#                  Theirs, so that a test can say the same thing:
-#                    Sentry    -5,0      facing sw   pulse carbine
-#                    Spotter    0,1@1    facing nw   signaller, on the house roof, the set
-#                    Watchman  16,-14@1  facing nw   slug rifle, in the tower
-#                    Hollis    14,-6     facing sw   pulse carbine, in the barn
-#
-# The way off.     The cottages, west of the stream and north of the road — a named place and
-#                  not an edge, because whoever meets you there has to be able to find it. Not
-#                  the road you came in by: the sentry has had all night to watch it.
-#
-# The stop.        If one of them properly registers you — Searching, not a dog barking — and
-#                  lives to keep it, or has already passed it to the roof, the task is over.
-#                  Come home by the cottages. There is nothing here worth the second half of
-#                  the night.
-#
-# What the ground offers this: the sentry looks straight down the west road through the gap in
-# the trees, so the road is a queue and the fields are the approach; the stream is too deep to
-# wade, and the two ways over it are the bridge, in full view of the gate, and the ford below
-# the compound, slow and loud and unwatched; the drain under the south wall, five hexes from
-# the ford, is the way into the compound that nobody is watching; and the barn and the tower
-# are outside earshot of the compound, so if the roof goes quiet, so do they.
+# The sentry's post outside the west gate looks straight down the west road through the gap in
+# the trees, so the road is a queue and the fields either side of it are the approach. The stream
+# is too deep to wade, and the two ways over it are the bridge, in full view of the gate, and the
+# ford below the compound, slow and loud and unwatched. The drain under the south wall, five
+# hexes from the ford, is the way into the compound that nobody is watching. The barn and the
+# tower are outside earshot of the compound (entry 037), so anything that happens on the roof
+# does not reach them unless somebody says so.
 
 map Waystation
 

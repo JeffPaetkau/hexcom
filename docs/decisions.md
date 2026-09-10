@@ -2125,3 +2125,126 @@ answer, in its section 3, is not a number:
 None of that asks for a rule. It is the argument for why removing one particular soldier is worth
 more than removing the rifleman beside him, stated in quantities that already exist, so that
 whoever eventually weights `RemovalBonus` has something to weigh rather than an assertion.
+
+---
+
+## 047 — A mission is a file of its own, and the waystation is now written down once
+**2026-09-09** · **Raised by** content · **For** view, core, setting, master · **Status** resolved
+
+Row 1 of entry 045's road. `content/missions/waystation.hexmission` exists, `MissionFile` reads
+it, `MissionWriter` lowers it, `MissionLibrary.Load("waystation")` ships it, and `Mission.Begin`
+hands back a battle deployed, ordered and started. `DemoMaps.cs` is gone.
+
+**It is a separate file, not a block in the `.hexmap`, and here is the case.** Entry 024 kept the
+map to ground on purpose and called a separate file plausible; the brief said the deciding case
+was one map carrying two missions. That case does not need waiting for, because two weaker ones
+are already here and point the same way. **A map with no mission has to stay legal** —
+`compound.hexmap` has none and never will, since it is the fixture the view diffs its captures
+against, and a mission-in-map format makes every such map look like one with something missing.
+**Ground outlives missions**: a map is drawn once and edited rarely, a mission is per-run and, in
+a campaign, generated. And the original case stands on its own: the waystation is a crossroads
+and all six shapes in the mission book could be fought over it.
+
+**What is shared is the lexer and not the reader.** One statement per line, `#` to end of line,
+`q,r` and `q,r@layer`, `ne n nw sw s se`, and an error that names the file and the line — those
+are in one place now (`TextFormat.cs`), and `MapFile` was moved onto it. The statements are
+disjoint and the two readers are separate, because a shared reader would need a statement table
+keyed on which kind of file it was halfway through. The rejected alternative was copying the
+cursor, which would have left two tokenisers to drift apart in exactly the way this entry is
+about.
+
+**What the file holds** is entry 030's four things plus the squads: `deploy` with a facing,
+`place` for named ground, `objective` for the thing to do, `rounds` for the clock, and `brief` in
+the mission book's six parts. All six briefing parts are **required**, which is the whole moral of
+entry 038 turned into a rule — three copies of one mission drifted, and what let them was that
+none of them had to be complete.
+
+**All six mission shapes are names the grammar knows and only withdrawal builds.** The other five
+are refused with *this is one of the six shapes and the rules only have withdrawal so far*, which
+is a true and useful thing to be told where "unknown statement" is neither. So the format needs no
+change when Core adds one — only a new `ObjectiveOrder`.
+
+**Roles and kits are named, never declared.** `scout`, `trooper`, `signaller`; `rifleman`,
+`beamer`, `heavy`, `infiltrator`, `sidearm`. A file that could write out its own action points
+and plate would be a balance change hiding in content — the same line that lets a map declare a
+hedge and not redefine what `low` means. `content.md`'s open question about where balance numbers
+live is unchanged by this and not answered by it.
+
+**The three copies are one.** The prose header in `waystation.hexmap` is gone, replaced by what
+is genuinely about the ground; `WaystationFight` in the harness is now a name and one call. The
+third copy is `SandboxScenario` in `game/`, and it is View's — see below.
+
+**Two stale references this leaves, both outside Content and both one line.** The remarks on
+`DemoMapTests` in `tests/` and on `SandboxScenario` and `SandboxCapture` in `game/` describe
+`DemoMaps.cs` as still present or as the thing a map is held equal to. Nothing breaks; the
+sentences are just no longer true.
+
+**For View.** `MissionLibrary.Load(name)` and `Mission.Begin(seed, layout, map)` are the whole
+API, and `Mission.Deploy(battle)` is there for a caller that builds its own `Battle` — which the
+sandbox does, because it wants its own layout. `Mission.Brief` is six strings fit to show, and
+`Mission.Places` is named ground a readout can label. Row 5 of entry 045's road is unblocked and
+is a deletion of `SandboxScenario`'s deployment lists rather than surgery.
+
+**For Setting.** The names in the file are the sandbox's — Vance, Orsini, Bekker, Sentry,
+Spotter, Watchman, Hollis. If the roster renames anybody, it is one file now.
+
+**For Core.** The round limit is in the file and nothing in the rules reads it; whatever runs the
+battle applies it. That is still the missing clock of entry 030 and it has not moved. And see 048,
+which is what fighting from the file turned up.
+
+**For Master.** `content/missions/**` is Content's, on the same terms as `content/maps/**`.
+`src/Hexcom.Core/Maps/DemoMaps.cs` is deleted, so the carve-out in `map.md`'s Owns column for Core
+— *except `Maps/DemoMaps.cs`* — has nothing left to except and can go.
+
+---
+
+## 048 — A withdrawal is achieved by walking away, because the task half of a mission is not in the rules
+**2026-09-09** · **Raised by** content · **For** core · **Status** open
+
+Twelve seeds on the waystation, fought from the mission file, `Commander` on both sides. **Every
+one of them settles**, which is the finding entry 038 asked for: it measured twelve matches
+reaching no decision in sixty rounds, and an objective closes that completely. Three achieved,
+nine abandoned, all in round 2 or 3, and the twelve together take two seconds where they used to
+take nine minutes.
+
+**And in none of them does anybody go near the compound.** The brief says *enter the compound,
+confirm what is stored in the house, and come out*. `Withdrawal` judges the coming out. So the
+best available play is to walk to the exit immediately, and the AI plays it — correctly, given
+what it was told.
+
+**The diagnosis is not that `ObjectiveValue` is too high.** That is entry 044's first item and it
+is a real question, but it is not this one: with the value at nothing, the squad would do what
+entry 038 measured, which is nothing at all. What is missing is that **every shape in the mission
+book has something to do before the leaving**, and only the leaving is modelled. The book's own
+withdrawal is *go, be there, come back*; entry 041 quotes that as `Withdrawal`'s summary and then
+builds the last third of it.
+
+**What the numbers say about the shape of the fix.** Measured off the map, in hexes at 1.73 m
+between centres:
+
+| | Vance | Orsini | Bekker |
+|---|---|---|---|
+| start to the nearest cottage | 10 | 12 | 14 |
+| start to the compound centre | 21 | 20 | 22 |
+| by way of the compound | 34 | 33 | 35 |
+
+A turn is about ten hexes. So the exit is one turn away and the thing to look at is two turns
+past it in the opposite direction, which is why round 2 is when everybody leaves. Any fix has to
+make the mission worth thirty-four hexes rather than ten, and `ObjectiveHorizon` is measured in
+turns of action points — so a two-stage objective whose first stage is out of horizon has the
+same problem the gradient was invented to solve. That is the interesting part, and it is Core's.
+
+**One more reading, offered as an observation rather than a measurement.** Vance, the scout on
+foot with the blade, is `Unaware` to everybody in all twelve. Orsini, the trooper carrying the
+repeater at encumbrance 3, is `Searching` in nine. Bekker sits between them. Nobody fired a shot
+in nine of the twelve and the only ordnance in any of them was the sentry throwing a plasma
+charge at open ground. Whether that split is the noise of the walk (entry 037: a turn's walk on
+gravel is heard further than a slug rifle) or simply who is nearer the road is not something these
+runs separate, and it is worth separating, because the first answer would mean the thing that
+loses a stealth mission is already footsteps rather than eyes.
+
+**Reproduce it:**
+
+```bash
+HEXCOM_SEEDS=12 dotnet test content/Hexcom.Content.Tests --filter "FullyQualifiedName~TheFightIsRecordedSeedBySeed" --logger "console;verbosity=detailed"
+```

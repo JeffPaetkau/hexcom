@@ -1,19 +1,22 @@
-# Content — maps, and the `.hexmap` format
+# Content — the `.hexmap` and `.hexmission` formats
 
 What is here:
 
 ```
-maps/*.hexmap              the maps, as text
-Hexcom.Content/            reads and writes that text; ships every map as an embedded resource
+maps/*.hexmap              the ground, as text
+missions/*.hexmission      who is standing on it and what they came to do
+Hexcom.Content/            reads and writes both; ships every file as an embedded resource
 Hexcom.Content.Tests/      xUnit
 ```
 
 `MapLibrary.Load("compound")` gives you a `BattleMap` from anywhere, with no working directory
-to get right. `MapFile.Load(path)` reads a file; `MapFile.Parse(text)` reads a string;
-`MapWriter.Write(map)` turns any `BattleMap` back into text, primitives only.
+to get right, and `MissionLibrary.Load("waystation")` gives you a `Mission`. `MapFile.Load(path)`
+reads a file; `MapFile.Parse(text)` reads a string; `MapWriter.Write(map)` turns any `BattleMap`
+back into text, primitives only. `MissionFile` and `MissionWriter` are the same three for a
+mission, and `Mission.Begin(seed)` hands back a battle deployed, ordered and started.
 
-The rest of this file is the format. It is short because the format is: a map is the corner
-graph written down, plus shorthand that expands to it.
+Most of this file is the map format. It is short because the format is: a map is the corner
+graph written down, plus shorthand that expands to it. The mission format is at the end.
 
 ## The shape of a file
 
@@ -154,6 +157,123 @@ first built, and blamed on the last line that put a chord in that hex.
 
 `MapWriter.Write` emits only `tile`, `chord` and `link` lines, plus declarations for any kit
 the map brought with it. Reading that back gives the same map, whatever shorthand the original
-used — the tests hold `DemoMaps.Compound()` and both shipped maps to this. It is how a map
-built in code gets onto disk, and it is the proof that the shorthand adds convenience and
-nothing else.
+used — the tests hold both shipped maps to this. It is how a map built in code gets onto disk,
+and it is the proof that the shorthand adds convenience and nothing else.
+
+---
+
+# Missions
+
+A map holds ground and nothing else, deliberately. The four things a mission needs that ground
+cannot carry — where each side starts *with facing*, a named place to end at, the thing to do,
+and when it stops — live in a `.hexmission` file that names a map.
+
+## Why a separate file and not a block in the map
+
+Three reasons, and the first is the one that decided it.
+
+**One battlefield carries several missions.** The waystation is a crossroads, and the mission
+book lists six shapes that could all be fought over it. A block in the map file means either one
+map to one mission, or several mission blocks inside a file that is otherwise entirely about
+ground — and the second is a separate file with extra steps.
+
+**A map with no mission has to stay legal.** `compound.hexmap` has none and never will: it is
+the fixture the view diffs its captures against. If the mission lived in the map, every map
+without one would be a map with something missing.
+
+**Ground outlives missions.** A map is drawn once and edited rarely. A mission is per-run and, in
+a campaign, generated. Keeping them in one file would put a stable thing and a disposable one
+behind the same round trip.
+
+What is shared is the *lexer*, not the reader: one statement per line, `#` to end of line,
+`q,r` and `q,r@layer`, `ne n nw sw s se`, and errors that name the file and the line. Two readers
+over one tokeniser, because a person carries those conventions from one file to the other and
+would be furious to find them subtly different.
+
+## The shape of a file
+
+```
+mission Instrument 4-11: the waystation
+map waystation
+rounds 30
+```
+
+`map` is required and names a `.hexmap` by library name. `mission` is the title, and falls back
+to the file name. `rounds` is the mission clock — no rule reads it yet, so whatever runs the
+battle applies it.
+
+## The briefing
+
+```
+brief instrument  Instrument 4-11 continues in force and this is an inspection of the waystation
+brief instrument  on the north road, filed accordingly. A walk.
+brief task        Enter the compound, confirm what is stored in the house, and come out.
+```
+
+Six parts, all required: `instrument`, `presence`, `task`, `restraint`, `way-off`, `stop`. They
+are the six of [`docs/setting/missions.md`](../docs/setting/missions.md), and requiring all of
+them is the point — this file exists because the same mission was written down three times and
+what let the copies drift was that none of them had to be complete.
+
+Repeating a part adds a line to it, which is how prose wraps without a continuation character.
+
+## Named ground
+
+```
+place cottages hexes -14,6 -14,7 -13,6
+place yard disc 0,0 r 4
+place roof hex 0,1 layer 1
+```
+
+Any shape the map format knows, plus an optional `layer`. A place is authored as tiles and used
+as *nodes*: when something asks which of them a soldier could stand in, the movement graph
+answers, so a hex cut by a chord contributes the half anybody can stop in and not the offcut.
+
+Places are named rather than numbered because a briefing has to be able to say one.
+
+## Deployments
+
+```
+deploy Vance  player -21,3  facing se role scout   kit infiltrator
+deploy Spotter hostile 0,1@1 facing nw role signaller kit beamer
+deploy Bekker player -19,-3 facing ne              kit rifleman
+```
+
+`deploy <name> <side> <tile>`, then any of `facing`, `role` and `kit`. Sides are `player`,
+`hostile` and `neutral`. Facing defaults to `ne` and is never decoration: a soldier's front cone
+reads at acuity 1.0 and the corner of his eye at 0.45, so a garrison deployed facing the wrong
+way has made a decision on the player's behalf.
+
+Roles name a `UnitStats` preset — `scout`, `trooper`, `signaller`, or omitted for the default
+soldier. Kits name a `Loadout` — `rifleman`, `beamer`, `heavy`, `infiltrator`, `sidearm`.
+
+**Both are named, never declared.** A file that could write out its own action points, shields
+and plate would be a balance change hiding in content, which is the same line that lets a map
+declare a hedge but not redefine what `low` means. Whether that line is in the right place is an
+open question in [`../docs/subprojects/content.md`](../docs/subprojects/content.md).
+
+## Objectives
+
+```
+objective withdrawal player exit cottages unnoticed suspicious
+```
+
+`objective <shape> <side>`, then options belonging to the shape. One per side, and a side with
+none behaves as it always did.
+
+All six shapes of the mission book are names the grammar knows — `withdrawal`,
+`reconnaissance`, `sabotage`, `extraction`, `denial`, `capture` — and only `withdrawal` can be
+built, because it is the only one the rules have. The other five are refused with a message
+saying so rather than as a misspelling, which is a true and useful thing to be told.
+
+`withdrawal` takes `exit <place>`, required, and `unnoticed <rung>`, which is the highest
+awareness rung any enemy may hold on a departing soldier and still have it count. Rungs are
+`unaware`, `suspicious`, `searching`, `alerted`, `engaged`; the default is `suspicious`, which is
+a dog barking rather than a sentry walking towards where he thinks you were.
+
+## Lowering
+
+`MissionWriter.Write` spells everything out: every place an explicit list of tiles, every facing,
+role, kit and threshold. There is only one piece of shorthand in the format — `place` takes the
+map's shapes — so the claim this proves is mostly about the *defaults*, which are the part of any
+format that quietly stops meaning what the reader thinks.

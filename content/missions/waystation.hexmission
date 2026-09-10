@@ -1,0 +1,68 @@
+# Instrument 4-11 — the waystation on the north road.
+#
+# The four things entry 030 says a mission needs that a map deliberately cannot hold, plus the
+# squads. This file replaced three copies of the same facts: a prose header in
+# content/maps/waystation.hexmap, a scenario in game/scripts/SandboxScenario.cs, and a harness in
+# content/Hexcom.Content.Tests/Waystation. Entry 038 said what was wrong with three; entry 047
+# says what this is instead. Anything that wants to fight the waystation reads this.
+
+mission Instrument 4-11: the waystation
+map waystation
+
+# ---- the briefing, in the mission book's six parts ------------------------------------------
+
+brief instrument  Instrument 4-11 continues in force and this is an inspection of the waystation
+brief instrument  on the north road, filed accordingly. A walk.
+
+brief presence    A detail of four, we think, holding the crossroads. One outside the west gate
+brief presence    watching the road. One on the roof of the house inside the compound, and that
+brief presence    is the one with the set. A rifle in the tower to the south-east, four metres
+brief presence    up, and one more in the barn on the east road. They have held this place a
+brief presence    fortnight and nobody has come up the road in that time.
+
+brief task        Enter the compound, confirm what is stored in the house, and come out.
+
+brief restraint   You will not be seen and you will not fire. The people who live in the cottages
+brief restraint   are not part of this.
+
+brief way-off     Off by the cottages, west of the stream and north of the road, before first
+brief way-off     light. Not the road you came in by: the sentry has had all night to watch it.
+
+brief stop        If one of them properly registers you, and lives to keep it or has already
+brief stop        passed it to the roof, the task is over. Come home by the cottages. There is
+brief stop        nothing here worth the second half of the night.
+
+# ---- named ground ---------------------------------------------------------------------------
+
+# The way off has to be somewhere the person meeting you can find, which is why it is a place and
+# not a map edge (entry 030). The two cottages share a wall and have one door, on the road side.
+place cottages hexes -14,6 -14,7 -13,6
+
+# ---- who is standing where ------------------------------------------------------------------
+
+# Ours, on the west road about twenty hexes out, facing the crossroads. Twenty hexes is 35 m at
+# the 1.73 m pitch entry 007 fixed, which is far enough out that the distances discriminate.
+deploy Vance  player -21,3  facing se role scout   kit infiltrator
+deploy Orsini player -20,0  facing ne role trooper kit heavy
+deploy Bekker player -19,-3 facing ne              kit rifleman
+
+# Theirs. The sentry watches the road we are coming up. The spotter has the roof and the set, and
+# AwarenessTracker.CanReach gives a radio the whole side — so whatever the roof works out, the
+# tower and the barn know, and neither can see that far itself. The barn and the tower are both
+# outside earshot of the compound (entry 037), so if the roof goes quiet, so do they.
+deploy Sentry   hostile -5,0     facing sw                 kit beamer
+deploy Spotter  hostile 0,1@1    facing nw role signaller  kit beamer
+deploy Watchman hostile 16,-14@1 facing nw                 kit rifleman
+deploy Hollis   hostile 14,-6    facing sw                 kit beamer
+
+# ---- what we came to do ---------------------------------------------------------------------
+
+# Suspicious is a dog barking at 25; Searching is 50, the rung where a sentry stops scanning and
+# starts walking towards where he thinks you were. The brief says properly registered, so the
+# threshold is the higher one and a suspicion is survivable.
+objective withdrawal player exit cottages unnoticed suspicious
+
+# Before first light. Thirty rounds covers every fight seen on this ground with room to spare —
+# entry 038 measured the fighting over by round 21 — and nothing in the rules reads this yet, so
+# whatever runs the battle applies it.
+rounds 30

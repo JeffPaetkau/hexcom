@@ -19,7 +19,7 @@ If you ever find yourself adding `using Godot;` to a file under `src/`, stop.
 ```
 src/Hexcom.Core/        the rules — no engine references, ever
 tests/Hexcom.Core.Tests/  xUnit
-content/                maps as text, and the library that reads them; its own tests beside it
+content/                maps and missions as text, and the library that reads them; its own tests beside it
 game/                   the Godot 4 project (view + input only)
 docs/                   design doc, setting bible, and the project map the work is divided by
 ```
@@ -391,23 +391,31 @@ shot went off on and where the target was standing when it landed.
   The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
   an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
   `enclose`, `breach` — expands to those three, and a writer lowers any map back to them so the
-  shorthand can be shown to add nothing. The demo compound is thirteen statements and comes out
-  identical to the version built in C#; the first map at the size the ranges need, 85 m across
-  and eighteen hundred tiles, is forty-five. A map brings its own wall profiles and ground types
-  if it wants them. `content/README.md` is the reference. The sandbox reads its maps this way and
-  no other, so what the game draws and what a headless test loads are the same file.
+  shorthand can be shown to add nothing. The demo compound is thirteen statements; the first map
+  at the size the ranges need, 85 m across and eighteen hundred tiles, is forty-five. A map brings
+  its own wall profiles and ground types if it wants them. `content/README.md` is the reference.
+  The sandbox reads its maps this way and no other, so what the game draws and what a headless
+  test loads are the same file.
+
+- **Missions are text too, in a file of their own** — `content/missions/*.hexmission`, and
+  `MissionLibrary.Load("waystation")`. A map holds ground and nothing else on purpose, so the
+  four things a mission needs that ground cannot carry go here: where each side starts and which
+  way it is looking, a named place to leave by, what the side came to do, and when it stops. Plus
+  the squads and the briefing, in the six parts the mission book gives one. `Mission.Begin(seed)`
+  hands back a battle deployed, ordered and started. It is a separate file rather than a block in
+  the map because ground outlives missions and one battlefield can carry several of them, and the
+  reasoning is in `content/README.md`.
 
 - **The waystation has been fought over** — by the AI on both sides, a dozen seeds, headless,
   with a recorder in `content/Hexcom.Content.Tests/Waystation` that writes down where everybody
   went, who threw what at which piece of ground, and the highest rung each hostile ever reached
   about each of ours. The map was redrawn from what the routes said: a tree line so the west road
   is a queue and the fields an approach, a stream too deep to wade so the bridge and the ford are
-  the crossings, and sandbags at the gate the sentry stands at. The map's header now carries the
-  mission in the shape the mission book gives a briefing — where you start and which way you
-  face, a named place to leave by, the task, and what ends it. What the matches measured is in
-  `docs/decisions.md` from entry 037; the short version is that the fighting is over in twenty
-  rounds and nothing ends the battle after it, which is the objective system's job and not the
-  map's.
+  the crossings, and sandbags at the gate the sentry stands at. What the matches measured is in
+  `docs/decisions.md` from entry 037. The first dozen never reached a decision at all; the same
+  dozen fought from the mission file all settle, in two or three rounds, because a squad told to
+  leave leaves. That is the objective system working and it is also the next thing to argue
+  about — see entry 048.
 
 ## What is not built yet
 
@@ -420,9 +428,15 @@ at a place and a price in action points; extraction wants a thing that can be ca
 capture want a clock and a way to put somebody down that is not damage. None needs new geometry,
 and what an objective *is* now exists to hang them on.
 
-**Nothing hangs a clock on.** A mission that runs out of time needs a record of the moment a
-hostile with a radio has registered somebody and then had a turn in which to use it. Every part
-of that sentence but the record is a query that already exists.
+**Nothing hangs a clock on.** A mission file names a round limit and whatever runs the battle
+applies it, but no rule reads one. A mission that runs out of time also wants a record of the
+moment a hostile with a radio has registered somebody and then had a turn in which to use it.
+Every part of that sentence but the record is a query that already exists.
+
+**A withdrawal is achieved by walking away.** The one mission shape there is judges the leaving
+and not the being there, so twelve matches out of twelve end with a squad that never went near
+what it was sent to look at. The task half of every shape in the mission book is the missing
+piece — entry 048.
 
 **A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from
 several turns away; a marker does not, so hunting still reaches about one move and two survivors
