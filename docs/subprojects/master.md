@@ -150,6 +150,11 @@ Opus 5 or Fable 5.1. They interact, and the reasoning is in the entry 045; the s
   first kind. The second kind is the greybox — it rewrites `game/` and is the moment `map.md`
   says to look at the View split again — and anything on the AI's search, where the last four
   entries from real ground are all about what a one-step search does wrong.
+- **Sonnet 5 for jobs whose output is transcription or lookup, not decision.** Recording a
+  play-through in the user's words; a fact a brief names precisely; the consistency sweep of
+  the docs against a closed entry. Not for research that ends in a brief — the interface
+  territory's job looks research-heavy and is judgement-heavy, and a weak brief costs more in the
+  View session that follows than it saved. Not for fiction, which looks like lookup and is not.
 - **Never restart to change model if the job is one turn from done.** The cold start is the
   whole cost, and a session at its last turn has already paid its context.
 
