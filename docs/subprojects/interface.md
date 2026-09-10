@@ -36,69 +36,94 @@ decisions to settle first, what is out of scope, and how to know it worked.
 
 ---
 
-## The job — the conventions, and the first queue
+## The job — the first five minutes, and what has to be taught
 
-Branch `interface/conventions`. Take a worktree; the rule has no exception for prose.
+Branch `interface/onboarding`. Take a worktree; the rule has no exception for prose.
 
-**What it is.** The greybox is built and the first person has played it (entry 057). The
-interface was designed by the sessions that built the rules, against the audit of what the AI
-reads, and never against what a player of this genre expects to find under their hands. This
-job supplies that: what is standard in turn-based squad tactics, what of it applies here, and
-a queue of briefs for View in priority order.
+**What it is.** The conventions are written and the queue is written (entry 059), and both assume
+a player who already knows what a hit chance and an action point are. Neither says how anybody
+learns *this* game. That is the next interface question and it is the one the second play-through
+will run into hardest, because the model a player has to hold here is not the genre's: a soldier
+has two pockets of points rather than one, spending everything means answering nothing, a contact
+is a file that decays rather than a unit that is spotted, and the marker on the map is somebody
+else's belief and not a fact.
 
-**Where to look.** The genre has a settled grammar and a handful of games that set it: the
-modern XCOM pair, Phoenix Point, Jagged Alliance 3, Battle Brothers, Into the Breach, and the
-older line — X-COM, Silent Storm, Xenonauts — whose conventions the modern ones simplified.
-Read their interfaces, not their rules. The questions, roughly in the order a player meets them:
+**Where to look.** The genre teaches in four ways and this game can afford at most two of them.
+XCOM 2 ships a scripted tutorial mission that takes control away. Into the Breach teaches by
+showing every enemy's next action, so the rules are legible from the first turn and there is no
+tutorial at all. Invisible, Inc. teaches by making the first level's single guard unmissable, and
+by drawing the cone that everything else in the game is about. Jagged Alliance 3 and Battle
+Brothers teach by tooltip and let the player lose. Say which of those this game is, and why —
+Into the Breach's answer is the one that costs no content, and this game already draws a graded
+attention field per tile, which is the same move.
 
-- **The camera** — orbit, pan, zoom, edge-scroll, what the mouse does versus the keyboard, and
-  whether rotation is free or stepped. Entry 057 already says the user wants it free and smooth
-  and mouse-driven; the research says what *smooth* means in this genre in degrees per second
-  and what a stepped camera was ever for.
-- **Selecting and ordering** — how a unit is chosen, how a move is previewed and committed, how
-  an action bar is laid out, what a right-click means, and where confirmation sits.
-- **Turn order and whose go it is** — the strip, the timeline, the initiative bar, and how the
-  games that interleave (this one does) show it against the ones that alternate.
-- **What of the enemy is drawn** — fog, last-known-position ghosts, detection meters, alert
-  states. This is where contract 3 bites: the genre draws the enemy the moment a unit sees it,
-  and this game additionally draws what the enemy holds on *you*. Say what the convention is
-  and what this game does that has no convention.
-- **Reactions** — overwatch cones, the interrupt prompt, how the games that let a player answer
-  mid-move (few do) present the choice and the clock.
-- **Movement and shooting animation** — how long a move takes on screen, whether it can be
-  skipped, and what the camera does during it. Entry 057 asks for movement along the path; the
-  research says how fast.
-- **Readouts** — hit chance, cover, exposure, and how much arithmetic is shown against how much
-  is hidden behind a number. The audit shows everything the AI weighs; the genre shows less, on
-  purpose, and the question is which of those is right for a game whose subject is information.
-- **Debug and developer overlays** — what ships and what is a tester's, and how the games that
-  keep both separate them. Entry 057 asks for the legend and the instruments in a second window.
+**The questions.**
 
-**Where the output goes.** Two files.
+- **What a player must know before turn one, and what can wait.** The reserve is the candidate
+  for *before*: a player who spends all their points is holding no reaction and will not find out
+  why until it costs them.
+- **How a rung is taught.** A five-step ladder means nothing until a player has watched one move.
+  What action makes it move visibly and cheaply, in the first minute?
+- **What the game should refuse to let a player do silently.** Not a confirmation dialogue, which
+  the genre has decided against for moves. A warning drawn on the thing — the genre's concealment
+  ring is exactly this and it is brief four in the queue already.
+- **Tooltips, and where the arithmetic lives.** Brief one moves the figures onto the things they
+  describe and picks one gesture for *show me the terms*. Onboarding is the other half of that
+  decision, and it should not be settled twice.
+- **What the mission briefing is for.** `Objective.Brief` exists, the mission file carries a
+  briefing, and the only way to read it is a key a tester presses. The genre puts it on a screen
+  before the battle.
 
-- `docs/interface/conventions.md` — one section per question above: what is standard, with the
-  games it comes from; what this game already does; what the asymmetry changes; and a
-  recommendation. Short. A convention is a sentence and a source, not a survey.
-- `docs/interface/briefs.md` — the queue, in priority order, each brief complete in the shape
-  Master writes them. The first entries are the six findings in entry 057, rewritten against
-  the conventions so that View builds the genre's answer and not the first one that works.
-  After those, whatever the conventions doc found that the audit missed.
+**Where the output goes.** A new section in `docs/interface/conventions.md` — *Teaching it* — in
+the same shape as the others: standard with its games, what this game does, what the asymmetry
+changes, a recommendation tagged **convention** or **departure**. Plus briefs appended to
+`docs/interface/briefs.md`, after the six that are there.
 
-**Settle before writing much.** What the standard is *for*. **The user's rule, entry 058: the
-convention is the starting point, and a departure from it is a proposal that has to argue its
-case.** A convention is worth following because a player arrives already knowing it, and worth
-breaking only where this game's subject — who saw whom first — needs something the genre never
-had to show. So every recommendation is one of two things, and says which: *the convention, as
-is*, or *a departure, and here is why this game needs it*. View does not have to guess which
-conventions are load-bearing, and the default when in doubt is the convention.
+**Also re-prime the queue.** Read `git log --oneline -- game docs/interface` and
+`../decisions.md` for entries appended since 059. A brief whose subject has landed comes out of
+the queue; a brief the play-through contradicted gets rewritten. Do not record what is in flight
+and do not name a branch that is not merged — the queue is a work order, never a status board.
 
-**Out of scope.** Building anything. Art direction, which is `docs/setting.md`'s register and
-Art's job. Rules, which go to Core through `../decisions.md`. The strategy layer's interface,
-which has no rules to show yet.
+**Settle before writing much.** Entry 058's rule still holds and applies here twice over: the
+convention is the starting point and a departure argues its case. The temptation in onboarding is
+to invent, because the model is unusual. It is also the place where inventing costs most, since a
+player who does not recognise the *teaching* cannot tell whether they are confused by the lesson
+or by the game.
 
-**How to know it worked.** A View session can be pointed at the first brief in
-`docs/interface/briefs.md` and need nothing else; and a reader of `conventions.md` who has
-played XCOM can say in one sentence what will feel familiar here and what will not, and why.
+**Out of scope.** Building anything. Writing the tutorial's words, which is `docs/setting.md`'s
+register and Setting's job once there is a shape to fill. Rules, which go to Core through
+`../decisions.md` — and a tutorial that needs a rule is a strong signal the lesson is wrong.
+The strategy layer's interface, which still has no rules to show.
+
+**How to know it worked.** A View session can be pointed at one of the new briefs and need
+nothing else; and somebody who has never played this game can be handed the recommendation and
+say what they would understand about the enemy after one turn.
+
+---
+
+## What landed on `interface/conventions`
+
+Entry 059 has the reasoning. What exists:
+
+- `docs/interface/conventions.md` — nine sections, one per question a player meets, each with the
+  standard and its games, what this game does, what contract 3's asymmetry changes, and a
+  recommendation tagged **convention** or **departure** per entry 058.
+- `docs/interface/briefs.md` — six View briefs in priority order, with an amendment sheet at the
+  head for entry 057's six findings, which are routed already and are deliberately not re-issued
+  as briefs here.
+
+Three things worth not re-deriving:
+
+- **The largest finding is placement, not content.** The interface audit asked whether everything
+  the AI weighs is visible and it passed; nobody asked *where*, and the answer is a panel of
+  about twenty text lines at the top left.
+- **Half the genre list is the wrong shelf.** The tactics canon sets the camera, the action bar,
+  the turn order and the animation. It has nothing on a contact file, because no game on it has
+  one. Invisible, Inc., Mutant Year Zero and the Commandos line are where those conventions come
+  from, and Invisible, Inc.'s hidden alarm sub-levels are contract 3's coarse rung shipped by
+  somebody else.
+- **Nothing in the research needed a query Core does not expose.** The one gap that does is
+  entry 012's second item, which was already open.
 
 ## Recent work
 

@@ -2764,3 +2764,71 @@ interface territory: every recommendation is either the convention as it stands 
 with the reason this game needs it, and the default in doubt is the convention. This game will
 modify conventions to suit its subject; it will not invent where a player already knows what to
 expect.
+
+## 059 — The genre's conventions are written down, and the biggest gap is where the numbers are drawn
+**2026-09-09** · **Raised by** interface · **For** view, master · **Status** resolved for the research; the queue is Master's to promote
+
+`docs/interface/conventions.md` and `docs/interface/briefs.md` exist. The first is one section per
+question a player meets — camera, selecting and ordering, turn order, what of the enemy is drawn,
+reactions, animation, readouts, developer overlays — each saying what is standard with the games
+it comes from, what this game already does, what contract 3's asymmetry changes, and a
+recommendation tagged **convention** or **departure** per entry 058. The second is a queue of six
+View briefs, with an amendment sheet at its head for the six findings 057 already routed.
+
+**The finding that outranks the other nine, and it is not a missing feature.** Every figure in
+this interface is a line of text in a panel at the top left; `BattleHud.DrawLines` assembles about
+twenty of them and several carry six or eight facts each. The only numbers drawn at the thing they
+describe are the AP costs on tiles. The genre's interface is spatial — hit chance on the target,
+cover on the tile, points on the soldier — and the panel holds only what has nowhere better to be.
+The interface audit checked *whether* everything the AI weighs is visible and it passed; nobody
+asked *where*, and a game whose subject is information cannot teach a player to read a
+battlefield with a readout that requires looking away from it. First brief in the queue.
+
+**The brief's list of games is the right shelf for half the questions and the wrong one for the
+half that matters most.** The tactics canon — the XCOM pair, Phoenix Point, Jagged Alliance 3,
+Battle Brothers, Into the Breach, the older line — sets the camera, the action bar, the turn
+order and the animation, and the conventions doc leans on it there. But every game on it draws
+the enemy the moment a unit sees one, and none has a rung, a marker or a contact file. The
+conventions that transfer to *what of the enemy is drawn* come from turn-based and real-time
+stealth instead: **Invisible, Inc.**, whose alarm runs on six rungs with five sub-levels each
+that are deliberately given no effect and no display so that a player only ever reads a
+transition — which is contract 3's coarse rung, designed independently by somebody else and
+shipped; **Mutant Year Zero**, which draws detection radii only in the mode where they matter;
+and the Commandos line, which draws a cone per guard and a meter that fills as you are noticed.
+
+**Three View open questions are answered with a genre reason rather than a tidiness one**, and
+the briefs carry the reasoning:
+
+- **A hostile's held arc is drawn whenever the hostile is.** The stealth shelf draws what a guard
+  will do, because beating it is the game. A player who walks into an arc held by a soldier they
+  could see holding it will say the picture lied, and they will be right.
+- **An unfound hostile keeps its slot in the turn order and loses its shape.** Dropping the slot
+  loses the interleaving a strip exists to show. A portrait-shaped slot with a `?` in it claims
+  more than the rules do; an anonymous narrow tick says *somebody acts here*, which is true
+  because turns are taken in the open. Whether the *count* of ticks is itself too much has no
+  precedent in the genre, because every interleaving game in it starts with everybody visible.
+- **A player answers reaction windows only for their own side, by default.** Offering every
+  reactor whichever side they are on is the same family as the orders readout: an instrument, and
+  it belongs behind the same switch.
+
+**Two things a session building the six should read before it starts.** Right-click fires here
+and cancels in every game in the genre, which puts the most irreversible action in the game on
+the button a player presses to back out of something *and* spends the gesture the genre uses for
+orbit — so the mouse camera and the gesture set settle together. And a walk should be priced in
+**metres per second** rather than seconds per move, because one world unit is one metre by
+contract 5 and a fixed duration makes a two-hex step and an eight-hex step look equally urgent.
+
+**Nothing here is a proposal for Core.** Every recommendation is answerable from a query that
+exists — `ReadoutFor` for the rung, `Contact.LastKnownPosition` for the marker, `Appraise` for
+the window's default. The one thing the interface cannot show is already open rather than new:
+entry 012's second item, who a shot would wake, which is the fourth brief in the queue.
+
+**Every figure in the research is an argument and not a measurement**, and the doc says so where
+it gives one. Degrees per second for a camera step, degrees per pixel for a drag, metres per
+second for a walk: all reasoned from what the genre looks like, none timed. The person at the
+keyboard settles them.
+
+**For Master.** The queue is written to be promoted one at a time into `view.md`, so that one
+file is never two territories' `## The job`. The amendment sheet at the head of it is deliberately
+*not* a brief: entry 057's six are routed already and re-issuing them would put one job in two
+files, so the sheet is what belongs beside them, and a review list if they have landed.
