@@ -71,6 +71,28 @@ costs a second or two, so a few hundred matches is minutes — **run some, and w
 said in `../decisions.md`**. It would be the first entry in this project to record a figure that
 was measured rather than reasoned, which is worth more than any one of the numbers.
 
+**Entry 048 is the measurement that says the first item above is the whole job, and it changes
+its shape.** Fought from the mission file, twelve seeds out of twelve settle in round 2 or 3 and
+in none of them does anybody go near the compound: the brief says *enter, confirm what is in the
+house, come out*, and `Withdrawal` judges only the coming out, so walking straight to the exit is
+the best available play. The exit is ten hexes from the start and the thing to look at is twenty
+in the other direction, thirty-four by way of the compound. Any objective at a place has to make
+the mission worth thirty-four hexes rather than ten — and `ObjectiveHorizon` is measured in turns
+of action points, so a two-stage objective whose first stage is out of horizon has the problem
+the gradient was invented to solve. That is the design question under *one kind or two*, and it
+wants settling with 048's table open. The harness reproduces it in two seconds:
+`HEXCOM_SEEDS=12 dotnet test content/Hexcom.Content.Tests`.
+
+**Three smaller things from the same round, none of them this job's headline.** Entry 046, from
+the roster: `CostProfile.Scout` is used nowhere and `CostProfile.Gunner` once in a test, so no
+unit the game has ever deployed pays anything but list price — whether `UnitStats.Scout` and
+`Trooper` should carry the profiles by default is a balance question and yours; and section 3 of
+`docs/setting/roster.md` is the fiction's argument for what a signaller is worth, in quantities
+that exist, for whoever weights `RemovalBonus`. Entry 049: a `Commander` handing its windows out
+stops at windows with no offers, which is right for Core and wrong for a screen; the sandbox
+skips them itself, and if a second interface wants the same it belongs behind the flag. Entry
+047: the remarks on `DemoMapTests` still describe `DemoMaps.cs`, which is deleted — one line.
+
 **Settle before writing much.** Whether an objective at a place is one kind with a flag or two
 kinds — reconnaissance is *did anybody see it* and sabotage is *did anybody spend on it*, and the
 temptation to unify them into a node with a predicate should be resisted or taken deliberately.

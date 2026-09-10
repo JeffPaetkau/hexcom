@@ -2063,7 +2063,7 @@ is the one that rewrites the directory.
 
 ## 046 — The roster exists, the posts are not names, and the two cost profiles have no soldiers
 
-**2026-09-09** · **Raised by** setting · **For** view, content, core · **Status** open
+**2026-09-09** · **Raised by** setting · **For** view, content, core · **Status** open — routed by 050: the names to Content's brief, items 3 and 4 to Core's, and View's line to its brief
 
 [setting/roster.md](setting/roster.md) is written: twelve people a side, each of them a
 `UnitStats`, a `CostProfile`, a `Loadout` and three sentences, with nothing invented and nothing
@@ -2371,3 +2371,51 @@ best available play, and a picture of the AI doing exactly that is now one comma
 
 **For Master.** Row 2 of 045's road is done. Entry 038's half for View is answered above; entry
 012's first item is closed and its second — a preview of who a *shot* would wake — is still open.
+
+## 050 — The mission is a file, the sandbox can be played to a verdict, and the first trailers have been read
+**2026-09-09** · **Raised by** master · **For** all · **Status** resolved
+
+Three branches merged since 045 — `setting/roster`, `content/mission-file`,
+`view/scripted-capture` — and Core did not run. This entry records the routine, the first reading
+of the `Session:` trailers, and where the road now stands.
+
+**Routine.** The carve-out in `map.md` for `DemoMaps.cs` is gone with the file (047), and
+`content/missions/**` is in Content's Owns column and in `CLAUDE.md`. Entry 048 is in Core's brief
+as the measurement that reshapes its first item: with only the leaving half of a mission in the
+rules, a squad told to inspect a compound walks to the exit in round 2, and the fix has to make
+the mission worth thirty-four hexes rather than ten against a horizon measured in turns. Entry
+046's four items are routed — the post names to Content, since the names live in the mission
+file now; the unused cost profiles and the signaller argument to Core; the stale remarks to
+whoever has each file open. Entry 049's note about empty windows is in Core's brief as a note.
+
+**The trailers, first reading.** View ran on Opus, continued, job 2 — as recommended in 045.
+Content ran on Opus, new — as recommended. Setting's commit carries no trailer: the rule landed
+in 045 and its branch was cut from the same master, so it is the one that missed it, and the
+model is in the `Co-Authored-By` line anyway. Core did not run. So the instrument works, and the
+recommendations for this round can be checked against it next time:
+
+| Territory | Last | Next job | Session | Model |
+|---|---|---|---|---|
+| View | Opus, continued, job 2 | the sandbox loads the mission file — a deletion in files it just edited | keep, job 3 | Opus |
+| View, after that | — | the greybox, build order 06 — rewrites `game/`, re-asks the split | fresh | Fable |
+| Content | Opus, new | a second battlefield — same harness, same formats | keep, job 2 | Opus |
+| Setting | Opus | the sites of Calder — prose against a checklist | either | Opus |
+| Core | Opus, two jobs, idle a round | the task half of a mission — a design question with a table to settle it against | keep if it still holds context, else fresh | Opus, and Fable if the *one kind or two* question stalls |
+| Master | Fable, job 5 | the next round | keep while it holds the picture | Fable |
+
+**The road.** Playable and greybox have come apart, and it is worth saying which is which.
+The greybox is two View increments away and waits on nothing else. *Playable* — a mission that
+is a mission rather than a walk to the exit — waits on Core's task half, and nothing in the
+greybox waits on that in turn, so the two proceed side by side.
+
+| | Territory | What it produces | Waits on |
+|---|---|---|---|
+| 1 | View | the sandbox loads the mission file | nothing |
+| 2 | View | the greybox | 1 |
+| 3 | Core | an objective at a place, so the mission has a task before the leaving | nothing |
+| 4 | Content | a second battlefield, tight and built-up, with its own mission | nothing |
+| 5 | Setting | the sites of Calder | nothing |
+
+Rows 1, 3, 4 and 5 can all start today. The first greybox somebody plays will have a walk-out
+mission on it unless row 3 lands first, and that is fine: it is a blockout, and 048 says the
+walk-out is one command away to see.

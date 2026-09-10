@@ -67,6 +67,17 @@ sandbox will show it happening; do not read it as the loader being wrong.
 **How to know it worked.** `--scenario waystation` deploys from `content/` with nothing about the
 waystation left in `game/`, and the mission line still reads the same words.
 
+**Two lines while the file is open.** Entry 047 says the remarks on `SandboxScenario` and
+`SandboxCapture` still describe `DemoMaps.cs` as present; it is deleted. And entry 046 names the
+three hostile posts — Sentry is Cobb, Spotter is Teague, Watchman is Marek — but the names live
+in the mission file now, so that is Content's line and not this job's; if any string literal
+survives the deletion, it should be a name.
+
+**One audit row is now a gap rather than blocked**, and it is the sibling of the one 049 closed:
+`Battle.WouldAnnounce(ShotPlan)` exists (entry 033), so who a *shot* would wake can go on the
+shot line the way who would hear a route already goes on the cursor line. Not this job; noted so
+it is not re-found.
+
 **After that, the greybox** — build order 06, row 6 of 045's road. It rewrites `game/`
 substantially, so nothing here should be built as though it will survive untouched.
 

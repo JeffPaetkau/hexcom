@@ -17,9 +17,9 @@ and, worse, looks maintained while doing it.
 
 | Territory | Doc | Owns | Gated by |
 |---|---|---|---|
-| **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**` (except `Maps/DemoMaps.cs`), `tests/**`, `docs/design.html` | nothing — it is the trunk |
+| **Core** | [subprojects/core.md](subprojects/core.md) | `src/Hexcom.Core/**`, `tests/**`, `docs/design.html` | nothing — it is the trunk |
 | **View** | [subprojects/view.md](subprojects/view.md) | `game/**` | nothing — and the larger map entry 006 waited on has landed, see entry 024 |
-| **Content** | [subprojects/content.md](subprojects/content.md) | `content/**` — the `.hexmap` maps, `Hexcom.Content`, its tests, and `content/README.md` — plus `src/Hexcom.Core/Maps/DemoMaps.cs` until nothing in `tests/` calls it | nothing |
+| **Content** | [subprojects/content.md](subprojects/content.md) | `content/**` — the `.hexmap` maps, the `.hexmission` missions, `Hexcom.Content`, its tests, and `content/README.md` | nothing |
 | **Setting & campaign** | [subprojects/setting.md](subprojects/setting.md) | `docs/setting.md` and `docs/setting/**` | nothing |
 | **Art & audio** | — this file | `assets/**` when it exists | an asset spec nobody has written. The hex figure (entry 007) and the visual register (entry 025) it was waiting on are both settled |
 | **Strategy layer** | — this file | undecided | a battle that can end some way other than elimination, in Core, and a mission file, in Content — entries 026 and 027. The campaign shape it was waiting on is settled: a thin frame, see 027 |
@@ -30,9 +30,10 @@ written so that a session can be pointed at that one file and need nothing else.
 finished, the session that finished it replaces that section with the next one. A brief is a work
 order, not a status line: it says what to do, not how far along somebody got.
 
-Note the carve-out: Core owns all of `src/Hexcom.Core` **except** `Maps/DemoMaps.cs`, which is
-content wearing a `.cs` extension. The map format exists now (entry 024) and the file stays only
-until Core's tests stop calling it.
+There used to be a carve-out here: Core owned all of `src/Hexcom.Core` except `Maps/DemoMaps.cs`,
+which was content wearing a `.cs` extension until there was a format to put it in. The format
+exists (entry 024), Core's tests load from it (entry 043), and the file is deleted (entry 047).
+Nothing under `src/` is anybody's but Core's now.
 
 **Content's tests live under `content/`, not `tests/`**, because `tests/**` is Core's. Do not
 move them.

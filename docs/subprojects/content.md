@@ -108,6 +108,12 @@ purpose, since entry 007's figure was reasoned from the ranges and a town blocks
 Reuse the built-in profiles; if it needs a new one, remember entry 035 — a map that brings its
 own kit brings no colour with it, and the view wants a line in `../decisions.md`.
 
+**Take the squads out of the roster, for both maps.** Entry 046: `docs/setting/roster.md` has
+twenty-four soldiers in exactly the form `deploy` takes, and it names the three posts the
+waystation still fields as posts — Sentry is Cobb, Spotter is Teague, Watchman is Marek. Three
+words in `waystation.hexmission`, and the new mission lists its squads from the roster from the
+start. The post words stay useful in the briefing text, where a place is what is being described.
+
 **Give it a mission file of its own**, not a header. That is what the format is for now, and the
 new map is the second data point on whether it is the right shape. Watch for what the waystation
 could not test: a `place` that is a building interior rather than three hexes of floor, an exit

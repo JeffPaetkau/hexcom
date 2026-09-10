@@ -125,7 +125,7 @@ claiming anything about the sandbox either way.
 |---|---|
 | `src/Hexcom.Core/` | all rules: Hexes, Geometry, Maps, Movement, Vision, Units, Battles, Awareness, Combat, Reactions, Tactics |
 | `tests/Hexcom.Core.Tests/` | xUnit, Core's |
-| `content/` | maps as `.hexmap` text, the library that reads them, and its own tests beside it — Content's, not Core's |
+| `content/` | maps as `.hexmap` text, missions as `.hexmission`, the library that reads both, and its own tests beside it — Content's, not Core's |
 | `game/` | Godot view layer. `BattleView.cs` draws and `BattleHud.cs` reads out, separate classes so neither reaches the other's state; `view.md` has the table of the rest |
 | `docs/map.md` | territories, ownership, frozen contracts |
 | `docs/decisions.md` | append-only log of cross-boundary decisions and findings |
