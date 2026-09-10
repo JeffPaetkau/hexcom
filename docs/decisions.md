@@ -2629,7 +2629,7 @@ and the export. All briefed but the last; none started. The order in which they 
 user's, and the first play-through is the thing most likely to change it.
 
 ## 055 — The game is tested by playing it, so every round ends with a build, and Master runs it
-**2026-09-09** · **Raised by** master · **For** view, master · **Status** open until `view/export` lands
+**2026-09-09** · **Raised by** master · **For** view, master · **Status** closed by 056
 
 The user's decision, recorded because it gives Master a power it did not have and View a job the
 build order does not list.
@@ -2654,3 +2654,44 @@ whether the tree builds, made by whoever last remembered to update it.
 Against that, the user plays every round instead of asking whether it runs, and the play-through
 findings — the first measurement of the interface rather than of the rules — start arriving one
 round earlier than they otherwise would.
+
+## 056 — The export works, and the exported game is a second capture harness
+
+**2026-09-09** · **Raised by** view · **For** master, core, content · **Status** closed — this is what entry 055 was waiting on
+
+`view/export` is done and `## Shipping it` in `subprojects/view.md` is the command. Master can
+paste it after a round with no View session awake, which is what entry 055 asked for. Four things
+here rather than in that doc, because each of them is somebody else's business too.
+
+**The exported game answers the capture and script flags, and draws the same picture to the
+byte.** `--fit` run from `build/Hexcom.console.exe` and `--fit` run from the editor against
+`game/` produced the same SHA-256. So the zero-changed-pixel refactor test survives into the
+build, and a picture taken from a shipped executable is comparable with one taken from a
+checkout. This was the open half of entry 055 — whether the export would be a second harness or
+whether the harness would have to be called editor-only. It is a second harness.
+
+One difference and it is worth knowing before it wastes an hour: a relative `--shot` path is
+resolved against the executable's own directory in the build, and against `game/` in the editor
+run. An absolute path behaves the same in both.
+
+**Godot's .NET exporter fails silently in a way that produces a plausible executable.** With no
+solution file where it expects one it prints errors in the middle of the pack listing, **exits
+0**, and writes an `Hexcom.exe` that is missing every .NET assembly. The only cheap tell is the
+size: 109 MB wrong against 190 MB right. The fix is one line of `game/project.godot` and it is
+written down. This is recorded for whoever hits the same shape elsewhere — a zero exit code from
+a Godot tool is not evidence that it did the thing.
+
+**The export builds the C# itself and needs no `dotnet build` first.** It runs `dotnet publish`
+as a step it prints, and it was verified against a tree with every `bin/`, `obj/` and
+`game/.godot/mono` deleted. The interactive editor run is the opposite and still needs a build
+first, so the two commands in `README.md` are different on purpose and not by neglect.
+
+**One tracked file was added and it is not code.** `game/export_presets.cfg` is committed, and
+`game/export_presets.cfg` came out of `.gitignore` to allow it, because Master runs the export
+and cannot recreate a preset by hand. `build/` took its place in the ignore list: a built game is
+derived exactly as a test result is, and nothing checked in is a claim about whether the tree
+builds.
+
+**What it does not settle.** Nothing about art, installers, signing, or any platform but Windows,
+all of which were out of scope. And it is a packaging job only — no file under `game/scripts/`
+changed, which is why the pictures are identical rather than merely similar.

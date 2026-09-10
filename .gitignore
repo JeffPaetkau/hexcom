@@ -11,12 +11,16 @@ artifacts/
 game/.godot/
 game/.import/
 game/export.cfg
-game/export_presets.cfg
 game/android/
 game/*.sln
 game/*.csproj.user
 data_*/
 mono_crash.*.json
+
+# The exported game. Derived, exactly as a test result is: nothing checked in is a
+# claim about whether the tree builds. `## Shipping it` in docs/subprojects/view.md
+# says how to rebuild it.
+build/
 
 # Per-machine tool settings (absolute paths, local permission grants)
 .claude/settings.local.json
