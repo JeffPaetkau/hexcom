@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 20 · 8 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 21 · 9 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 339 of them, run in about ten seconds today, most of it the AI. The maps and the matches fought on them bring 29 more.</li>
+        <li>The rules are unit-testable headless — 348 of them, run in about ten seconds today, most of it the AI. The maps and the matches fought on them bring 43 more.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -2189,6 +2189,49 @@
         which is the behaviour the whole complaint about elimination was asking for.
       </p>
 
+      <h3>A mission has something in the middle of it</h3>
+      <p>
+        The first version modelled only the leaving, and twelve matches on a real map found the
+        hole in round two of every one of them: the brief said <em>enter the compound, confirm
+        what is stored in the house, and come out</em>, the rules judged the coming out, and the
+        exit was one turn away while the compound was two turns past it in the other direction. So
+        the best available play was to walk out of the gate immediately, and the AI played it —
+        correctly, given what it had been told. Every shape in the mission book has something to
+        do before the leaving, and only the leaving was there.
+      </p>
+      <p>
+        The fix is not another term. <strong>A mission is one journey and it is measured in action
+        points</strong>: getting to the place, doing whatever is there, and getting to the exit.
+        Twenty points spent walking and twenty spent on a charge move the same quantity by the same
+        amount, so a two-stage mission needs no second scale and <em>no seam</em> — finishing the
+        task does not jolt the score, it shortens what is left. And the exit stops being the far
+        end: standing on it with the job undone is further from done than standing at the place,
+        because the way home runs by way of the thing you came for.
+      </p>
+      <p>
+        That leaves one shape and three tasks. What they share is nearly everything; what differs
+        is a single question, <em>has the thing been done</em>. Looking at a place is a geometric
+        fact checked at the moment somebody looks — which is the end of their own turn, the only
+        moment anybody sees anything here. Spending points on a charge is an action with a verb and
+        a price. Withdrawal is the degenerate one, with nothing in the middle.
+      </p>
+      <p>
+        <strong>The horizon stretches to the length of the job.</strong> A mission longer than the
+        few turns the slope was set at would read as nothing worth starting from anywhere near the
+        start, which is a flag again with extra steps — so the horizon is the larger of the
+        configured one and the journey the squad actually has in front of it, measured off the
+        deployment. It decides how <em>steep</em> the slope is on a short mission, never how far it
+        reaches.
+      </p>
+      <p>
+        And the AI is not offered the chance to walk out with the job undone. The rules allow it —
+        abandoning is a real decision, and it is one of the three endings — but weighing
+        <em>cut our losses</em> against <em>press on</em> means knowing how the whole battle is
+        going, and a scorer that ranks one action against another at one moment does not. That is
+        now the sharpest thing this search cannot do, and it arrived with objectives rather than
+        being fixed by them.
+      </p>
+
       <div class="aside">
         <span class="tag">Open</span>
         <p>
@@ -2259,6 +2302,7 @@
         <li class="done"><span class="idx">DONE</span><div><b>Grenades and mines</b><p>An arcing trace, a blast through the ordinary layers, and a reaction owned by the terrain rather than by a unit. Melee reach settled as adjacency, and a shout you can do on your own turn.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>The open window</b><p>A move committed and not yet resolved, which a person can look at, answer by hand and decline &mdash; and the same seam through the AI, so the enemy&rsquo;s move is the one you get to answer.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Objectives, and a battle that ends</b><p>Three endings rather than two, off a reading sampled as each soldier leaves. Withdrawal needed no new measurement. It is also the first thing that gives a soldier who can see nobody something to want.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>An objective at a place</b><p>One shape and three tasks, with the walking and the working priced in the same action points, so a mission is one journey with something in the middle of it rather than two stages with a seam.</p></div></li>
         <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
@@ -2269,8 +2313,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 20</span>
-    <span>368 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 21</span>
+    <span>391 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

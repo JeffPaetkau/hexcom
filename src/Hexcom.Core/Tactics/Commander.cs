@@ -36,6 +36,9 @@ public enum OrderKind
 
     /// <summary>Walk off the field, having done what you came to do.</summary>
     Leave,
+
+    /// <summary>Get on with the thing the squad came for.</summary>
+    Work,
 }
 
 /// <summary>
@@ -74,6 +77,7 @@ public sealed record Order(
         OrderKind.Throw => $"{Throw?.Item.Name} at {Throw?.Aimed} ({Score:+0.00;-0.00})",
         OrderKind.Shout => $"call {About?.Name} in ({Score:+0.00;-0.00})",
         OrderKind.Leave => $"walk off the field ({Score:+0.00;-0.00})",
+        OrderKind.Work => $"work on it ({Score:+0.00;-0.00})",
         _ => $"go {Stance} ({Score:+0.00;-0.00})",
     };
 }
@@ -326,11 +330,36 @@ public sealed class Commander(
 
         foreach (var order in Shots(unit, UnitPose.Of(unit), inView, ApSource.Turn)) yield return order;
         foreach (var order in Throws(unit, threats)) yield return order;
+        foreach (var order in Working(unit)) yield return order;
         foreach (var order in Leaving(unit)) yield return order;
         foreach (var order in Moves(unit, threats)) yield return order;
         foreach (var order in Postures(unit, threats)) yield return order;
         foreach (var order in Watches(unit, threats)) yield return order;
         foreach (var order in Words(unit, threats)) yield return order;
+    }
+
+    /// <summary>
+    /// Getting on with the job, for a soldier standing on it.
+    /// </summary>
+    /// <remarks>
+    /// Ranked on the progress it makes, which is the same arithmetic a step toward the place is
+    /// ranked on, because the job and the walk are priced in the same points. So a soldier that
+    /// arrives with half a turn left puts it into the charge without anything having to say that
+    /// working beats shuffling.
+    /// </remarks>
+    private IEnumerable<Order> Working(Unit unit)
+    {
+        if (battle.ObjectiveOf(unit.Side) is not Sabotage job) yield break;
+        if (job.Place != unit.Position || job.Owing <= 0) yield break;
+
+        var spend = Math.Min(unit.ActionPoints, job.Owing);
+        if (spend <= 0) yield break;
+
+        // Progress is measured in the points still owed, so putting points in moves it by exactly
+        // what walking the same points toward it would.
+        yield return new Order(
+            OrderKind.Work,
+            new Appraisal(0, 0, _judge.WorkWorth(unit, spend), _judge.Price(spend)));
     }
 
     /// <summary>
@@ -342,15 +371,20 @@ public sealed class Commander(
     /// anything a shot can score, deliberately: a squad told to get out and not be seen should
     /// walk out through fire rather than stop to trade, and the design's complaint about
     /// elimination was that the rules made the fight the only thing worth wanting.
+    /// <para>
+    /// <b>Offered only once the job is done</b>, which is the whole of what entry 048 asked for.
+    /// The rules still allow a soldier to walk out with the task undone — abandoning is a real
+    /// decision and <see cref="Verdict.Abandoned"/> is what it settles to — but a commander is
+    /// not offered it, because a scorer that could weigh <em>cut our losses</em> against
+    /// <em>press on</em> would need to know how the rest of the battle is going, and it does not.
+    /// </para>
     /// </remarks>
     private IEnumerable<Order> Leaving(Unit unit)
     {
-        if (battle.ObjectiveOf(unit.Side) is not Withdrawal way) yield break;
-        if (!way.IsExit(unit.Position)) yield break;
+        if (battle.ObjectiveOf(unit.Side) is not Sortie sortie) yield break;
+        if (!sortie.Done || !sortie.IsExit(unit.Position)) yield break;
 
-        yield return new Order(
-            OrderKind.Leave,
-            new Appraisal(0, 0, _judge.TowardObjective(unit, unit.Position), 0));
+        yield return new Order(OrderKind.Leave, new Appraisal(0, 0, _judge.Finishing(unit), 0));
     }
 
     // ---- what is on the table --------------------------------------------------
@@ -640,6 +674,9 @@ public sealed class Commander(
 
             case OrderKind.Shout:
                 return new Act(order, battle.Shout(order.About!));
+
+            case OrderKind.Work:
+                return new Act(order, battle.Work() > 0);
 
             case OrderKind.Leave:
                 return new Act(order, battle.Extract());

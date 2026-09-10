@@ -227,6 +227,11 @@ public sealed class Battle
 
         _queue.Clear();
         foreach (var unit in InPlay.OrderBy(u => u.Id.Value)) Book(unit, round: 1);
+
+        // An objective wants to know how long the job is, and the only moment that is knowable
+        // is now: everybody is deployed and nobody has moved. See Objective.Begin.
+        foreach (var objective in _objectives) objective.Begin(this);
+
         Advance();
     }
 
@@ -282,6 +287,12 @@ public sealed class Battle
     {
         var unit = RequireActive();
         Awareness.Observe(unit, Round);
+
+        // The same look, asked a second question: was that the thing we came to see. Nothing but
+        // a reconnaissance answers, and it answers here because this is the only moment in the
+        // game at which anybody sees anything at all.
+        if (ObjectiveOf(unit.Side) is { } objective) objective.Looked(this, unit);
+
         Bank(unit);
         Advance();
     }
@@ -323,6 +334,34 @@ public sealed class Battle
     }
 
     /// <summary>
+    /// The active unit works on whatever it came to do, spending what it can spare on it.
+    /// </summary>
+    /// <remarks>
+    /// Priced in action points because that is what the rest of the mission is priced in: the job
+    /// is so many points of somebody's turn, and it does not care whose. A squad that splits it
+    /// between two soldiers finishes sooner, which is what a squad is for.
+    /// <para>
+    /// It spends everything it can rather than a fixed chunk, so a soldier that walked most of the
+    /// way there still puts its remaining points into the charge rather than standing over it with
+    /// nothing to do. Returns what went in, which is nought when there is nothing to work on.
+    /// </para>
+    /// </remarks>
+    public int Work()
+    {
+        var unit = RequireActive();
+
+        if (ObjectiveOf(unit.Side) is not Sabotage job) return 0;
+        if (job.Place != unit.Position) return 0;
+
+        var spend = Math.Min(unit.ActionPoints, job.Owing);
+        if (spend <= 0) return 0;
+
+        unit.ActionPoints -= spend;
+        job.Work(spend);
+        return spend;
+    }
+
+    /// <summary>
     /// The active unit walks off the field, from somewhere its side may leave.
     /// </summary>
     /// <remarks>
@@ -333,8 +372,8 @@ public sealed class Battle
     {
         var unit = RequireActive();
 
-        if (ObjectiveOf(unit.Side) is not Withdrawal way) return false;
-        if (!way.IsExit(unit.Position)) return false;
+        if (ObjectiveOf(unit.Side) is not Sortie sortie) return false;
+        if (!sortie.IsExit(unit.Position)) return false;
 
         Withdraw(unit, DepartureKind.Extracted);
         return true;

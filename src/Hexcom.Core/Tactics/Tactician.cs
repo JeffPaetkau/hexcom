@@ -361,6 +361,27 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// which is what makes this safe to add to every appraisal rather than to a special path.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// What walking off the field is worth to a soldier whose job is done.
+    /// </summary>
+    /// <remarks>
+    /// The whole objective, because leaving is the act that settles it — the gradient is a guide
+    /// along the way and the mission is not achieved until everybody is off. That double-counts
+    /// against <see cref="TowardObjective"/>, which has already paid for the walk, and it is
+    /// allowed to: the two are never compared with each other, only with what else the soldier
+    /// could do instead, and standing on the exit doing nothing has to lose.
+    /// </remarks>
+    public double Finishing(Unit unit)
+        => battle.ObjectiveOf(unit.Side) is null ? 0 : Model.ObjectiveValue;
+
+    /// <summary>
+    /// What putting action points into the job is worth: the rate walking toward it earns.
+    /// </summary>
+    public double WorkWorth(Unit unit, int points)
+        => battle.ObjectiveOf(unit.Side) is { } objective
+            ? Model.ObjectiveValue * objective.PerPoint * points
+            : 0;
+
     public double TowardObjective(Unit unit, NodeId at)
         => battle.ObjectiveOf(unit.Side) is { } objective
             ? Model.ObjectiveValue * objective.Progress(battle, at)

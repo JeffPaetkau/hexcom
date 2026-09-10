@@ -63,11 +63,24 @@ public sealed record UnitStats(
 
     public static readonly UnitStats Default = new();
 
-    /// <summary>Light kit, quick off the mark, sharp eyes.</summary>
-    public static readonly UnitStats Scout = new(ActionPoints: 55, Initiative: 14, Perception: 13);
+    /// <summary>Light kit, quick off the mark, sharp eyes — and slow to bring a weapon to bear.</summary>
+    /// <remarks>
+    /// The cost profile is what makes the post mean anything. Both profiles were written to
+    /// describe exactly these two archetypes and until now no soldier the game had ever deployed
+    /// carried one, so every unit in every match paid list price and <c>CostProfile</c> was a
+    /// record the design doc described as load-bearing and nothing loaded. See
+    /// <c>docs/decisions.md</c> entry 046.
+    /// </remarks>
+    public static readonly UnitStats Scout = new(ActionPoints: 55, Initiative: 14, Perception: 13)
+    {
+        Costs = CostProfile.Scout,
+    };
 
-    /// <summary>Heavy armour, slow to react.</summary>
-    public static readonly UnitStats Trooper = new(ActionPoints: 45, Initiative: 8, Perception: 9, Encumbrance: 3);
+    /// <summary>Heavy armour, slow to react, and fast on the trigger once planted.</summary>
+    public static readonly UnitStats Trooper = new(ActionPoints: 45, Initiative: 8, Perception: 9, Encumbrance: 3)
+    {
+        Costs = CostProfile.Gunner,
+    };
 
     /// <summary>Carries the net. Kill this one first, and the rest have to shout.</summary>
     public static readonly UnitStats Signaller = new(Perception: 12, Encumbrance: 1, Radio: true);
