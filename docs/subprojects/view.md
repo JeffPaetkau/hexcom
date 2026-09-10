@@ -62,6 +62,18 @@ findings. So:
    out to be a rule, or a query Core does not expose, is an entry for Core and not a fix here
    (contract 2).
 
+**Before the play-through: standard camera controls, asked for by the user.** `W` `A` `S` `D`
+pan the camera, relative to the screen — `W` moves the view up the screen whatever bearing the
+camera is on — and `Q` `E` turn it to the previous and next hex bearing, which is what `,` and
+`.` do today. That displaces five keys the sandbox already uses: `Q`/`E` change storey, `A` gives
+the AI one turn, `S` calls a contact in, `W` turns on answering windows by hand. Move them rather
+than drop them — storeys are a pair of keys and want to stay a pair; the other three are toggles
+or one-offs and can go almost anywhere — and put the new table in `README.md` and in **Seeing
+it**. **The script steps do not change**: `--layer`, `--ai-turn`, `--shout`, `--windows` and
+`--yaw` are the surface and the keys are only callers of it (entry 049), so a remap is a change
+to `_UnhandledInput` and two tables and nothing else. Do this first, because the person at the
+keyboard for the play-through is the person who asked for it.
+
 **Three things the greybox left open, which the play-through is the way to settle.** They are
 under Open questions below with the reasoning; the short form is: whether an unfound hostile
 should hold a `?` slot in the turn order at all; whether a hostile's held arc should be drawn when
