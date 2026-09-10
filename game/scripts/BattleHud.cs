@@ -67,6 +67,18 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
             var box = new Rect2(origin + new Vector2(0, 12 + i * 26), new Vector2(170, 22));
             _canvas.DrawRect(box, SandboxPalette.Panel);
             _canvas.DrawRect(new Rect2(box.Position, new Vector2(4, box.Size.Y)), SandboxPalette.SideHue(unit.Side));
+
+            // A hostile nobody of ours has found keeps its place in the order and loses its
+            // name, its roll and its reserve: that somebody acts here is known, because turns
+            // are taken in the open; who, and with what in hand, is theirs. Whether even the
+            // slot is too much is an open question in view.md.
+            if (!frame.Sees(unit))
+            {
+                _canvas.DrawString(_font, box.Position + new Vector2(12, 16), "?",
+                    HorizontalAlignment.Left, -1, 13, SandboxPalette.TextDim);
+                continue;
+            }
+
             _canvas.DrawString(_font, box.Position + new Vector2(12, 16), unit.Name,
                 HorizontalAlignment.Left, -1, 13, SandboxPalette.TextBright);
             _canvas.DrawString(_font, box.Position + new Vector2(120, 16), $"init {slots[i].Roll}",
@@ -94,8 +106,11 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         var lines = new List<string>
         {
             // Which map and which deployment, because there is more than one now and a picture
-            // that does not say which it is of cannot be checked against anything.
-            $"{frame.Scenario.Name}    {frame.Scenario.Situation}    {battle.Map.Tiles.Count} tiles"
+            // that does not say which it is of cannot be checked against anything — and which
+            // mode, because a picture with two hostiles on it means one thing if it shows
+            // everything and another if it shows what our side has found.
+            $"{frame.Scenario.Name}    {frame.Scenario.Situation}    {battle.Map.Tiles.Count} tiles    "
+                + (frame.Omniscient ? "seeing everything" : "seeing what our side knows")
                 + (frame.TileDetail ? "" : "    zoomed out: tile detail off")
                 + (frame.AnswerByHand ? "    reactions: by hand" : ""),
         };
@@ -264,9 +279,9 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     {
         const string keys =
             "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
-            + "V: overwatch arc    B: arm/spring ambush    S: call it in    T: leave the field    Q/E: layer    "
-            + "A: AI takes this turn    H: hostiles to AI    W: answer windows by hand    M: briefing    R: new battle    "
-            + "wheel/+-: zoom    drag or arrows: pan    F: whole map    G: whoever is up";
+            + "V: overwatch arc    B: arm/spring ambush    S: call it in    T: leave the field    Q/E: storey    "
+            + "A: AI takes this turn    H: hostiles to AI    W: answer windows by hand    O: see everything    M: briefing    R: new battle    "
+            + "wheel/+-: zoom    drag or arrows: pan    ,/.: turn the camera    F: whole map    G: whoever is up";
 
         var at = Origin + new Vector2(18, viewport.Y - 22);
         Panel(at, [keys]);
@@ -667,12 +682,17 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// the two together ran under the turn-order strip, and the strip is the thing nobody should
     /// have to read through.
     /// </remarks>
+    /// <remarks>
+    /// In the game an enemy nobody of ours has found is <em>somebody</em>: that a line exists is
+    /// geometry and is ours, but which soldier is at the far end of it is theirs until we have
+    /// eyes on them. Omniscient, the names are back.
+    /// </remarks>
     private static string ViewedLine(SandboxFrame frame, Unit active)
     {
         var watchers = frame.Battle.Enemies(active)
             .Select(enemy => (enemy, sight: frame.Battle.Look(enemy, active)))
             .Where(pair => pair.sight.CanSee)
-            .Select(pair => $"{pair.enemy.Name} ({pair.sight.Exposure:P0})")
+            .Select(pair => $"{(frame.Sees(pair.enemy) ? pair.enemy.Name : "somebody unseen")} ({pair.sight.Exposure:P0})")
             .ToList();
 
         return $"in view of: {(watchers.Count == 0 ? "nobody" : string.Join(", ", watchers))}";
@@ -801,6 +821,10 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// </remarks>
     private static IEnumerable<string> TurnLines(SandboxFrame frame)
     {
+        // The instrument only. In the game the other side's turns are what happened to you,
+        // which the reaction line already says, and not what they were thinking.
+        if (!frame.Omniscient) yield break;
+
         foreach (var turn in frame.Turns)
         {
             if (turn.Orders.Count == 0)
@@ -906,8 +930,12 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     private static string WeaponLine(Unit active)
         => $"{active.Weapon.Name} {active.Weapon.OptimalRange:0}/{active.Weapon.MaxRange:0} m";
 
-    private static Unit? HoveredUnit(SandboxFrame frame)
-        => frame.Hover is { } node ? frame.Battle.UnitAt(node) : null;
+    /// <remarks>
+    /// Through the frame, so the shot line cannot quote a soldier the map is not showing: in
+    /// the game a hostile nobody of ours has eyes on is not under the cursor, whatever is
+    /// standing there.
+    /// </remarks>
+    private static Unit? HoveredUnit(SandboxFrame frame) => frame.HoveredUnit;
 
     /// <summary>What a reaction window did, whether a move opened it or somebody sprang it.</summary>
     public static string Describe(MoveOutcome outcome) => Describe(outcome.Reactions);

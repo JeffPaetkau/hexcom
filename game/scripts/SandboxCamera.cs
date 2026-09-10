@@ -7,179 +7,231 @@ using CoreVec2 = Hexcom.Core.Geometry.Vec2;
 namespace Hexcom.Game;
 
 /// <summary>
-/// Where the map is being looked at from, and how close: a focus point on the canvas and a hex
-/// size in pixels.
+/// Where the map is being looked at from: a point on the ground, a distance back from it, and
+/// one of six directions to look along.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The sandbox had no camera because it never needed one. The demo compound is radius 6 and fits
-/// in a viewport twice over at any sensible drawing scale, so the node sat at the middle of the
-/// screen and every tile was on it. A map at the size <c>docs/decisions.md</c> entry 007 asks for
-/// does not fit: the waystation is radius 24, and at the 44-pixel hex the compound was drawn
-/// with it is about 3700 pixels across against a 1600 pixel viewport. So either the map gets
-/// smaller or the view learns to move, and the map is the one that is right.
+/// A pitched camera whose yaw snaps to the six hex bearings, which is the fourth decision in
+/// the greybox brief and the one that keeps the arcs legible. Facing is a rule here — six body
+/// faces, arcs measured from <c>Unit.Facing</c>, a front cone of 120 degrees — and a wedge on
+/// the ground is readable only when the camera agrees with the grid it is drawn on. From a
+/// free orbit every wedge is a different shape at every angle; from a bearing the hexes tile
+/// the screen the same way at every step of the turn, so a player learns what a held arc looks
+/// like once. The pitch is fixed for the same reason. What a person loses is the ability to
+/// look along a wall, and a blockout is not the view to find out whether they need to.
 /// </para>
 /// <para>
-/// Zooming is what makes entry 006 solvable rather than merely stateable. The honest attention
-/// cone reaches <c>AwarenessModel.SightRangeMetres</c>, 45 metres, which at 44 pixels to the
-/// metre is 1980 pixels — the screen-filling wash that entry describes. It is not a wash at the
-/// zoom the whole waystation is seen at, because at that zoom 45 metres is about half the width
-/// of the map, which is exactly what it is. The cone was never too long; the view was too close.
+/// <b>Distance is a drawing figure and nothing else.</b> The camera moves itself and never the
+/// layout: <see cref="SandboxScale.World"/> is a constant the camera cannot reach, which is
+/// contract 5 in <c>docs/map.md</c> kept the same way the flat view kept it. Zooming in three
+/// dimensions is a distance, and <c>--zoom N</c> is now metres back from the ground rather than
+/// pixels to a hex; the threshold below which tiles carry their own labels moved with it, see
+/// <see cref="LegibleAt"/>.
 /// </para>
 /// <para>
-/// <b>Zoom is a drawing figure and nothing else.</b> It moves
-/// <see cref="SandboxScale.HexPixels"/> and never <see cref="SandboxScale.MetresPerHexSize"/>,
-/// which is why the scale and the geometry are rebuilt here rather than mutated: a
-/// <see cref="SandboxScale"/> is cheap, immutable, and the one place that holds the two apart.
-/// Handing a zoomed layout to <c>Hexcom.Core</c> would be entry 002 all over again, one frame at
-/// a time.
+/// The camera is looked at through this class and never touched directly, so that every way of
+/// moving it — the keys, the wheel, a drag, a script step, the follow after an action — goes
+/// through the same clamps and the same snap. It rewrites the node's transform whenever
+/// anything changes rather than animating towards it: a capture has to land on the same frame
+/// every run, and a smoothed camera would put the same command in a different place depending
+/// on how many frames it was given.
 /// </para>
 /// </remarks>
 public sealed class SandboxCamera
 {
-    /// <summary>Closest the map may be drawn, in pixels to a hex radius.</summary>
-    public const float Closest = 96f;
+    /// <summary>Closest the camera may come to the ground, in metres.</summary>
+    public const float Closest = 6f;
 
-    /// <summary>Furthest out. Radius 24 fits a 1600-pixel viewport at about 18.</summary>
-    public const float Furthest = 5f;
+    /// <summary>Furthest back it may go. The waystation fits a 1600 by 900 viewport at about 120.</summary>
+    public const float Furthest = 260f;
 
     /// <summary>
-    /// Below this hex size a tile stops carrying its own detail — cost labels, cover outlines,
+    /// Beyond this distance a tile stops carrying its own detail — cost labels, cover outlines,
     /// the region inset.
     /// </summary>
     /// <remarks>
-    /// An interface judgement rather than a performance one, though it is both. A two-digit AP
-    /// cost set at 15 points does not fit inside a 14-pixel hex, and eighteen hundred of them
-    /// overlapping is worse than nothing: the reader loses the map underneath and gains no
-    /// number. What survives zoomed out is what is legible zoomed out — ground, walls, soldiers,
-    /// and who is attending to where.
+    /// The flat view switched its detail off below 22 pixels to a hex radius, on the grounds that
+    /// a two-digit AP cost set at 15 points does not fit in a 14-pixel hex. The same hex is
+    /// drawn at about 1650 / distance pixels across from this camera — a 50 degree field over
+    /// a 900 pixel viewport — so the same threshold is a distance of about 70 metres. Past it,
+    /// what survives is what is legible: ground, walls, soldiers, and who is attending to where.
     /// </remarks>
-    public const float LegibleAt = 22f;
+    public const float LegibleAt = 70f;
 
-    /// <summary>How much a wheel notch or a zoom key changes the hex size.</summary>
+    /// <summary>Vertical field of view, degrees.</summary>
+    public const float FieldOfView = 50f;
+
+    /// <summary>How far above the horizontal the camera looks down, degrees.</summary>
+    /// <remarks>
+    /// Steep enough that a hex reads as a hex rather than as a strip, and shallow enough that a
+    /// three-metre wall has a visible side. Fifty-five is the usual compromise for a tactics
+    /// game and nothing here argues for a different one yet.
+    /// </remarks>
+    public const float PitchDegrees = 55f;
+
+    /// <summary>How much a wheel notch or a zoom key changes the distance.</summary>
     private const float ZoomStep = 1.25f;
 
-    public SandboxCamera(float hexPixels)
+    private readonly Camera3D _camera;
+
+    public SandboxCamera(Camera3D camera, float distance)
     {
-        HexPixels = Mathf.Clamp(hexPixels, Furthest, Closest);
-        Rebuild();
+        _camera = camera;
+        _camera.Fov = FieldOfView;
+        _camera.Near = 0.5f;
+        _camera.Far = 1000f;
+        Distance = Mathf.Clamp(distance, Closest, Furthest);
+        Place();
     }
 
-    /// <summary>Hex radius in pixels. The drawing scale, and never the world one.</summary>
-    public float HexPixels { get; private set; }
-
-    /// <summary>
-    /// The canvas point held at the centre of the viewport, in pixels at the current zoom.
-    /// </summary>
-    /// <remarks>
-    /// Kept in canvas pixels rather than in hexes so that panning is the same arithmetic as the
-    /// mouse drag that drives it. A zoom rescales it by the same factor it rescales everything
-    /// else, which is what makes zooming leave the middle of the screen where it was.
-    /// </remarks>
+    /// <summary>The point on the ground the camera is looking at, on the rules' plane.</summary>
     public CoreVec2 Focus { get; private set; }
 
-    /// <summary>The two layouts, rebuilt whenever the zoom moves.</summary>
-    public SandboxScale Scale { get; private set; } = null!;
+    /// <summary>The height of the ground under the focus, so that stepping onto a roof lifts the view with it.</summary>
+    public double FocusHeight { get; private set; }
 
-    /// <summary>Canvas geometry against the current zoom.</summary>
-    public SandboxGeometry Geometry { get; private set; } = null!;
-
-    /// <summary>Whether a tile is currently big enough to be worth labelling. See <see cref="LegibleAt"/>.</summary>
-    public bool ShowsTileDetail => HexPixels >= LegibleAt;
-
-    /// <summary>Where the node has to sit for <see cref="Focus"/> to land in the middle of the screen.</summary>
-    public Vector2 ScreenOffset(Vector2 viewport)
-        => viewport * 0.5f - SandboxScale.ToScreen(Focus);
+    /// <summary>Metres from the focus back to the camera.</summary>
+    public float Distance { get; private set; }
 
     /// <summary>
-    /// The canvas rectangle the viewport currently shows, in the screen space drawing works in,
-    /// grown by a margin so that a shape whose centre is just outside still gets drawn.
+    /// Which of the six hex bearings the camera looks along, as a direction index.
     /// </summary>
     /// <remarks>
-    /// Drawing culls against this. Eighteen hundred tiles is four thousand draw calls a frame
-    /// for a map of which a twentieth is on screen, and the cull is one rectangle test — but the
-    /// margin matters more than the saving: a soldier's attention field reaches 45 metres, so
-    /// the unit casting it can be well off screen while the thing it is watching is not. The
-    /// margin is therefore quoted in hex radii and the callers that need a long one ask for it.
+    /// One by default, which is north: the camera stands to the south of the focus looking
+    /// north, so up the screen is up the map the way the flat view had it, and a capture of the
+    /// same command shows the same map the same way up.
     /// </remarks>
-    public Rect2 Visible(Vector2 viewport, float marginHexRadii = 2f)
+    public int Yaw { get; private set; } = 1;
+
+    /// <summary>The bearing being looked along, in the rules' radians.</summary>
+    public double YawRadians => ((HexDirection)Yaw).BearingRadians();
+
+    /// <summary>Whether a tile is currently close enough to be worth labelling. See <see cref="LegibleAt"/>.</summary>
+    public bool ShowsTileDetail => Distance <= LegibleAt;
+
+    /// <summary>Look at a point on the plane, at a height.</summary>
+    public void LookAt(CoreVec2 plane, double height)
     {
-        var margin = Scale.HexRadiiToPixels(marginHexRadii);
-        return new Rect2(-ScreenOffset(viewport), viewport).Grow(margin);
+        Focus = plane;
+        FocusHeight = height;
+        Place();
     }
 
-    /// <summary>Look at a point on the canvas.</summary>
-    public void LookAt(CoreVec2 canvas) => Focus = canvas;
-
-    /// <summary>Look at the middle of a hex.</summary>
-    public void LookAt(Hex hex) => Focus = Scale.Canvas.Center(hex);
-
-    /// <summary>Drag the map by a screen distance — the cursor keeps hold of the ground under it.</summary>
-    public void Pan(Vector2 screen) => Focus -= SandboxScale.FromScreen(screen);
-
-    /// <summary>One notch in or out, about the middle of the screen.</summary>
-    public void ZoomBy(int notches) => ZoomTo(HexPixels * Mathf.Pow(ZoomStep, notches));
+    /// <summary>Look at the middle of a hex, at the floor height of the tile there.</summary>
+    public void LookAt(BattleMap map, Hex hex, int layer)
+    {
+        var height = map.GetTile(new TileAddress(hex, layer))?.FloorHeight ?? layer * map.LayerHeight;
+        LookAt(SandboxScale.World.Center(hex), height);
+    }
 
     /// <summary>
-    /// Zoom keeping one canvas point where it is on screen — what a wheel over a map should do.
+    /// Drag the ground by a screen distance — the cursor keeps hold of what is under it, near
+    /// enough.
     /// </summary>
     /// <remarks>
-    /// A zoom multiplies every canvas coordinate by the same factor, so the point <c>p</c> ends
-    /// up at <c>p·k</c> and would only stay put if the focus went to <c>p·k - p + focus</c>.
-    /// <see cref="ZoomTo"/> takes it to <c>focus·k</c>, so the correction is the difference,
-    /// which is <c>(p - focus)(k - 1)</c> — and it has to be measured against the focus as it was
-    /// before the zoom, not after.
+    /// Near enough because the ground is foreshortened: a pixel near the top of the screen is
+    /// more metres than one near the bottom. The drag uses the scale at the focus, which is the
+    /// middle of the screen, so a drag started there tracks exactly and one started at the top
+    /// runs a little slow. A drag that tracked perfectly would need the pick ray, and a pan is
+    /// not worth a ray.
     /// </remarks>
-    public void ZoomAbout(int notches, CoreVec2 canvas)
+    public void Pan(Vector2 screen, Vector2 viewport)
     {
-        var before = HexPixels;
-        var focus = Focus;
+        var metresPerPixel = 2f * Distance * Mathf.Tan(Mathf.DegToRad(FieldOfView / 2f)) / viewport.Y;
 
-        ZoomBy(notches);
-        Focus += (canvas - focus) * (HexPixels / before - 1);
+        var forward = new CoreVec2(System.Math.Cos(YawRadians), System.Math.Sin(YawRadians));
+        var right = new CoreVec2(forward.Y, -forward.X);
+
+        // Dragging right moves the ground right, so the focus goes left; dragging down moves it
+        // down the screen, which is towards the camera, so the focus goes forward.
+        Focus -= (right * screen.X - forward * screen.Y / Mathf.Sin(Mathf.DegToRad(PitchDegrees))) * metresPerPixel;
+        Place();
     }
 
-    /// <summary>Zoom to a hex size, clamped, keeping the middle of the screen where it is.</summary>
-    public void ZoomTo(float hexPixels)
-    {
-        var clamped = Mathf.Clamp(hexPixels, Furthest, Closest);
-        if (Mathf.IsEqualApprox(clamped, HexPixels)) return;
+    /// <summary>One notch in or out.</summary>
+    public void ZoomBy(int notches) => ZoomTo(Distance / Mathf.Pow(ZoomStep, notches));
 
-        Focus *= clamped / HexPixels;
-        HexPixels = clamped;
-        Rebuild();
+    /// <summary>Move to a distance, clamped.</summary>
+    public void ZoomTo(float distance)
+    {
+        Distance = Mathf.Clamp(distance, Closest, Furthest);
+        Place();
+    }
+
+    /// <summary>Turn one bearing left or right, keeping the focus where it is.</summary>
+    public void Turn(int steps)
+    {
+        Yaw = ((Yaw + steps) % 6 + 6) % 6;
+        Place();
+    }
+
+    /// <summary>Face a bearing directly, by direction index.</summary>
+    public void TurnTo(int yaw)
+    {
+        Yaw = (yaw % 6 + 6) % 6;
+        Place();
     }
 
     /// <summary>
     /// Pull back until the whole map is on screen at once.
     /// </summary>
     /// <remarks>
-    /// Every storey, not the one being drawn. The storeys stack in the same footprint, so
-    /// fitting the current one would mean that stepping up onto a roof of ten tiles slammed the
-    /// zoom to its limit and lost the map underneath — and the roof is exactly where a player
-    /// most wants to see what is around it.
+    /// Every storey, not the one being drawn, and worked out from the map's own extent rather
+    /// than told. The map is treated as a disc of the radius its furthest tile is at, and the
+    /// distance is what puts that disc inside the narrower of the two fields of view — the
+    /// vertical one directly, the horizontal one through the viewport's aspect. Pitch
+    /// foreshortens the disc vertically, which is why the vertical term is the binding one on a
+    /// wide viewport: the map is a squashed ellipse that is still as wide as it ever was.
     /// </remarks>
     public void Fit(BattleMap map, Vector2 viewport)
     {
-        var hexes = map.Tiles.Select(t => t.Address.Hex).ToList();
+        var hexes = map.Tiles.Select(t => t.Address.Hex).Distinct().ToList();
         if (hexes.Count == 0) return;
 
-        // In hex-radius units, so the answer does not depend on the zoom it was measured at.
-        var unit = new HexLayout(1.0);
-        var centres = hexes.Select(unit.Center).ToList();
+        var layout = SandboxScale.World;
+        var centres = hexes.Select(layout.Center).ToList();
+        var middle = centres.Aggregate(CoreVec2.Zero, (a, b) => a + b) / centres.Count;
+        var radius = (float)centres.Max(c => CoreVec2.Distance(c, middle)) + (float)layout.Size;
 
-        var left = centres.Min(c => c.X) - 1;
-        var right = centres.Max(c => c.X) + 1;
-        var bottom = centres.Min(c => c.Y) - 1;
-        var top = centres.Max(c => c.Y) + 1;
+        var half = Mathf.DegToRad(FieldOfView / 2f);
+        var aspect = viewport.X / viewport.Y;
 
-        ZoomTo(Mathf.Min(viewport.X / (float)(right - left), viewport.Y / (float)(top - bottom)));
-        LookAt(new CoreVec2((left + right) / 2, (bottom + top) / 2) * HexPixels);
+        // The disc seen from a pitched camera: its front edge is nearer and lower on screen,
+        // its back edge further and higher. Treating it as a sphere of the same radius is the
+        // simple over-estimate, and then a little more so the edge tiles are not on the border.
+        var vertical = radius / Mathf.Sin(half);
+        var horizontal = radius / Mathf.Sin(Mathf.Atan(Mathf.Tan(half) * aspect));
+
+        Focus = middle;
+        FocusHeight = 0;
+        ZoomTo(Mathf.Max(vertical, horizontal) * 0.8f);
     }
 
-    private void Rebuild()
+    /// <summary>Where a scene point lands on the screen, or null if it is behind the camera.</summary>
+    public Vector2? Project(Vector3 scene)
+        => _camera.IsPositionBehind(scene) ? null : _camera.UnprojectPosition(scene);
+
+    /// <summary>The ray through a screen point, for picking.</summary>
+    public (Vector3 Origin, Vector3 Direction) Ray(Vector2 screen)
+        => (_camera.ProjectRayOrigin(screen), _camera.ProjectRayNormal(screen));
+
+    /// <summary>Whether a scene point is comfortably in shot — inside the middle of the screen.</summary>
+    public bool Frames(Vector3 scene, Vector2 viewport, float marginFraction = 0.2f)
     {
-        Scale = new SandboxScale(HexPixels);
-        Geometry = new SandboxGeometry(Scale);
+        if (Project(scene) is not { } at) return false;
+        var margin = viewport * marginFraction;
+        return new Rect2(margin, viewport - margin * 2).HasPoint(at);
+    }
+
+    private void Place()
+    {
+        var pitch = Mathf.DegToRad(PitchDegrees);
+        var back = SandboxScale.Along(YawRadians) * (-Distance * Mathf.Cos(pitch));
+        var up = Vector3.Up * (Distance * Mathf.Sin(pitch));
+
+        var target = SandboxScale.ToScene(Focus, FocusHeight);
+        _camera.Position = target + back + up;
+        _camera.LookAt(target, Vector3.Up);
     }
 }

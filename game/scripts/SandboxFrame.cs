@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Godot;
 using Hexcom.Content;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Movement;
@@ -7,6 +6,7 @@ using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
+using Side = Hexcom.Core.Units.Side; // Godot has a Side enum of its own
 
 namespace Hexcom.Game;
 
@@ -25,7 +25,7 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 
 /// <summary>Everything the sandbox has worked out about the current moment, ready to be drawn.</summary>
 /// <param name="Battle">The battle itself. Queried, never changed, by anything that takes a frame.</param>
-/// <param name="Layer">Which storey is on screen. The sandbox looks at one at a time.</param>
+/// <param name="Layer">Which storey is being looked at. Storeys above it are ghosted.</param>
 /// <param name="Hover">The node under the cursor, if it is over the map at all.</param>
 /// <param name="Reach">Where the active unit could get to, and for what.</param>
 /// <param name="View">What the active unit can make out, per node on the current layer.</param>
@@ -36,12 +36,8 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// </param>
 /// <param name="HostilesAutomatic">Whether every hostile turn goes to <see cref="Commander"/>.</param>
 /// <param name="Scenario">The map and the deployment this battle was opened with.</param>
-/// <param name="Visible">
-/// The canvas rectangle on screen, in the space drawing works in, already grown by a margin.
-/// Anything outside it is skipped.
-/// </param>
 /// <param name="TileDetail">
-/// Whether a tile is currently drawn big enough to carry its own labels and outlines. See
+/// Whether a tile is currently drawn close enough to carry its own labels and outlines. See
 /// <see cref="SandboxCamera.LegibleAt"/>.
 /// </param>
 /// <param name="Open">
@@ -61,17 +57,27 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// Whether the mission's own round limit has passed. The rules have no clock, so this one is
 /// applied by the thing running the battle — see <c>docs/decisions.md</c> entry 047.
 /// </param>
+/// <param name="Omniscient">
+/// Whether the picture shows everything in play, or only what our side knows. See
+/// <see cref="Sees"/>.
+/// </param>
+/// <param name="Knowledge">
+/// What our side holds on each hostile in play: eyes on it, or a marker with a credence. A
+/// hostile with no entry is one nobody of ours has heard a thing about.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
 /// it is drawn from the same answers — which is also what stops the map and the readouts
 /// disagreeing about a unit that a reaction moved half way through the frame.
 /// <para>
-/// The last three came in with the camera, and the last two are the same fact twice: a map of
-/// eighteen hundred tiles cannot all be on screen at a size anybody can read, so drawing has to
-/// know both what is in shot and how close it is. Both are camera answers rather than rules
-/// answers, which is why they arrive the same way every other answer does — assembled once, on
-/// the frame, rather than read off a node the drawing is not allowed to reach.
+/// The last two are the greybox's one decision that makes it a game, carried as data. The flat
+/// sandbox drew every hostile in play because it was built to drive both sides; a playable view
+/// draws our side's knowledge and nothing else. <see cref="Knowledge"/> is that knowledge —
+/// <c>Tactician.Known</c> for each of ours, merged by taking the best any of them holds — and it
+/// is the same list the scorer weighs, which is contract 2 in <c>docs/map.md</c> as a
+/// dictionary. Nothing in the view may ask the battle about a hostile it cannot see through
+/// this; that is what <see cref="Sees"/> is for.
 /// </para>
 /// </remarks>
 public sealed record SandboxFrame(
@@ -84,14 +90,15 @@ public sealed record SandboxFrame(
     IReadOnlyList<TakenTurn> Turns,
     bool HostilesAutomatic,
     SandboxScenario Scenario,
-    Rect2 Visible,
     bool TileDetail,
     ReactionWindow? Open,
     int Chooser,
     bool AnswerByHand,
     Mission? Mission,
     bool Briefing,
-    bool OutOfTime)
+    bool OutOfTime,
+    bool Omniscient,
+    IReadOnlyDictionary<UnitId, Threat> Knowledge)
 {
     /// <summary>
     /// Where the subject of the open window is standing <em>now</em>, which is where it started.
@@ -102,4 +109,23 @@ public sealed record SandboxFrame(
     /// the map is where it is and the route drawn out of it is where it is going. Entry 040.
     /// </remarks>
     public NodeId? Committed => Open?.Move.Start;
+
+    /// <summary>
+    /// Whether a unit is drawn as a body where it actually stands, and may be pointed at.
+    /// </summary>
+    /// <remarks>
+    /// Our own soldiers always; everybody, when the picture is omniscient; otherwise a hostile
+    /// only while somebody of ours holds eyes on it. Contract 3 permits exactly this and forbids
+    /// nothing else — the marker a hostile has moved away from is drawn as a ghost by the view,
+    /// and a hostile nobody has heard a thing about is not drawn at all. The cursor goes through
+    /// this too, so the shot line cannot quote a soldier the map is not showing.
+    /// </remarks>
+    public bool Sees(Unit unit)
+        => Omniscient
+           || unit.Side == Side.Player
+           || (Knowledge.TryGetValue(unit.Id, out var held) && held.EyesOn);
+
+    /// <summary>The unit under the cursor, if the picture is allowed to show one there.</summary>
+    public Unit? HoveredUnit
+        => Hover is { } node && Battle.UnitAt(node) is { } unit && Sees(unit) ? unit : null;
 }

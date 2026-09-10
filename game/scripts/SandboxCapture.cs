@@ -26,20 +26,20 @@ namespace Hexcom.Game;
 /// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --zoom 44
 /// </code>
 /// <para>
-/// Five of the flags are settings and live here: <c>--shot</c>, <c>--shot-after</c>,
-/// <c>--scenario</c>, <c>--ai</c> and <c>--windows</c>. Everything else on the line is a
+/// Six of the flags are settings and live here: <c>--shot</c>, <c>--shot-after</c>,
+/// <c>--scenario</c>, <c>--ai</c>, <c>--windows</c> and <c>--omniscient</c>. Everything else on the line is a
 /// <see cref="SandboxScript"/> step, run in the order it was typed, because <c>--move</c> then
 /// <c>--pass</c> is a different battle from <c>--pass</c> then <c>--move</c>. The test for which
 /// side of that line a flag falls on is whether somebody at the keyboard could do it.
 /// </para>
 /// <para>
 /// The camera flags came in with the waystation and they are not decoration: a map 85 metres
-/// across drawn at 44 pixels to the metre is four screens wide, so without <c>--fit</c> or
-/// <c>--zoom</c> every picture of it is a picture of one corner. <c>--fit</c> is the one to reach
-/// for, because it works the figure out from the map rather than being told it, and it is what
-/// puts an attention field at its true reach in a frame that shows what the reach is against.
-/// They are steps rather than settings, so put them <em>last</em>: anything a soldier does
-/// afterwards may pull the camera back to whoever is up next.
+/// across seen from a camera close enough to read a tile is several screens wide, so without
+/// <c>--fit</c> or <c>--zoom</c> every picture of it is a picture of one corner. <c>--fit</c> is
+/// the one to reach for, because it works the figure out from the map rather than being told
+/// it. <c>--zoom</c> is a distance in metres now, and <c>--yaw</c> turns the camera to one of
+/// the six hex bearings. They are steps rather than settings, so put them <em>last</em>:
+/// anything a soldier does afterwards may pull the camera back to whoever is up next.
 /// </para>
 /// <para>
 /// Not with <c>--headless</c>. The headless driver does not rasterise, so the capture comes back
@@ -54,17 +54,19 @@ public sealed class SandboxCapture
     private const string DelayFlag = "--shot-after";
     private const string AiFlag = "--ai";
     private const string WindowsFlag = "--windows";
+    private const string OmniscientFlag = "--omniscient";
     private const string ScenarioFlag = "--scenario";
 
     private readonly string _path;
     private int _framesLeft;
 
-    private SandboxCapture(string path, int framesLeft, bool automatic, bool byHand, string? scenario, SandboxScript script)
+    private SandboxCapture(string path, int framesLeft, bool automatic, bool byHand, bool omniscient, string? scenario, SandboxScript script)
     {
         _path = path;
         _framesLeft = framesLeft;
         Automatic = automatic;
         AnswerWindowsByHand = byHand;
+        Omniscient = omniscient;
         Scenario = scenario;
         Script = script;
     }
@@ -93,6 +95,18 @@ public sealed class SandboxCapture
     /// </remarks>
     public bool AnswerWindowsByHand { get; }
 
+    /// <summary>
+    /// Whether the picture shows every unit in play, or only what our side knows.
+    /// </summary>
+    /// <remarks>
+    /// Off by default, which is the first decision in the greybox brief: the sandbox opens as
+    /// the game a person would play, with the other side hidden until found. On, it is the
+    /// instrument the flat sandbox always was — every hostile drawn, and the AI's orders printed
+    /// — which is what a capture checking the AI needs, and entry 023 in <c>docs/decisions.md</c>
+    /// says why that stays a switch rather than going away.
+    /// </remarks>
+    public bool Omniscient { get; }
+
     /// <summary>Which of <see cref="SandboxScenario.All"/> to open, or null for the default.</summary>
     public string? Scenario { get; }
 
@@ -114,6 +128,7 @@ public sealed class SandboxCapture
             int.TryParse(delay, out var frames) ? frames : 4,
             args.Contains(AiFlag),
             args.Contains(WindowsFlag),
+            args.Contains(OmniscientFlag),
             SandboxScript.ValueOf(args, ScenarioFlag),
             SandboxScript.Parse(args));
     }

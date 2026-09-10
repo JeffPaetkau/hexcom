@@ -5,118 +5,64 @@ using CoreVec2 = Hexcom.Core.Geometry.Vec2;
 namespace Hexcom.Game;
 
 /// <summary>
-/// The two scales the view lives between: the world the rules are computed in, in metres, and
-/// the canvas they are drawn on, in pixels.
+/// The one layout the rules are given, in metres, and the mapping from the plane the rules
+/// compute in to the space the engine draws in.
 /// </summary>
 /// <remarks>
 /// <para>
-/// A <see cref="HexLayout"/> looks like a drawing concern and is not one.
-/// <c>SightSolver</c> builds a three-dimensional point from a layout position (X, Y) and a floor
-/// height (Z) that is measured in metres, then takes distances across the result — so the
-/// layout's horizontal units <i>are</i> metres, necessarily. The sandbox built one 44-unit
-/// layout and used it for both jobs until this type existed, which told the rules that a hex was
-/// 44 metres across while a solid wall was three metres tall. See <c>docs/decisions.md</c>
-/// entries 002 and 005.
+/// This type used to hold two layouts — the world in metres and a canvas in pixels — because a
+/// flat view has to draw a two-metre hex forty-four pixels wide, and the day it handed the
+/// pixels layout to <c>Battle</c> instead was the bug <c>docs/decisions.md</c> entries 002 and
+/// 005 describe: every range in the game compared against a distance twenty times too long, and
+/// a stealth game in which nobody could be detected. In three dimensions one engine unit is one
+/// metre and the second layout is gone, so the conversion this type existed to police is now a
+/// conversion of one.
 /// </para>
 /// <para>
-/// What that broke is worth being precise about, because the obvious guess is wrong. Sight and
-/// cover are <b>unaffected</b>: the solver projects a wall top onto the target using the
-/// fraction of the way along the sight line it sits at, and a fraction has no units, so the
-/// silhouette arithmetic is the same at any horizontal scale. The cover radius is
-/// <c>layout.Pitch</c>, which scales with the grid, so even which walls count as cover does not
-/// move. Measured on the demo map, the cover grades at size 44 and size 1 are identical.
+/// <b>It stays anyway, and the reason is entry 005.</b> Contract 5 in <c>docs/map.md</c> says
+/// rendering scale is never fed into <c>Battle</c>, and the place that makes that enforceable
+/// rather than merely true is the place that owns the layout the battle is given. It is one
+/// property now. The next session to see a class with one property in it will want to inline it
+/// at the call site, and the call site is exactly where a zoom factor would one day get
+/// multiplied in — because the camera lives there, and a camera that moves the world scale is
+/// the bug all over again, one frame at a time. So <see cref="World"/> is built here, from a
+/// constant, and nothing that knows about the camera may build a layout.
 /// </para>
 /// <para>
-/// What breaks is everything priced in metres — detection, noise, voice, weapon range — because
-/// those are absolute figures compared against a distance that is not. At size 44 the demo
-/// compound is 914 metres across, every soldier on it is far beyond
-/// <c>AwarenessModel.SightRangeMetres</c> of 45, and no enemy ever notices anybody: six turns in,
-/// all three hostiles are still <c>Unaware</c>, where at size 1 the roof spotter reaches
-/// <c>Searching</c>. A stealth game where nobody can be detected is the failure this type exists
-/// to prevent, and it is invisible on screen — which is why it survived so long.
-/// </para>
-/// <para>
-/// So there are two layouts and one rule about them: <see cref="World"/> is the only one that
-/// may be handed to anything under <c>Hexcom.Core</c>, and <see cref="Canvas"/> is the only one
-/// that may reach a draw call. Nothing converts between them, because nothing needs to — the
-/// rules never hand back a position to be drawn, only distances to be read. If that ever changes,
-/// convert here rather than at the call site.
+/// What it also owns is the axis mapping. The rules compute on a plane with Y running north and
+/// heights in metres above it; Godot draws with Y running up and Z running towards the viewer.
+/// So a rules point <c>(x, y)</c> at height <c>h</c> is drawn at <c>(x, h, -y)</c>, and a bearing
+/// the rules quote from east towards north is a direction <c>(cos, 0, -sin)</c> on the ground.
+/// Every conversion goes through the two methods below, because the one place that knows the
+/// sign of Z is the one place a mirror-image map cannot be introduced from.
 /// </para>
 /// </remarks>
-public sealed class SandboxScale
+public static class SandboxScale
 {
     /// <summary>
     /// How many metres one hex radius is worth. <b>Decided.</b>
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 1.0 — a hex two metres corner to corner and 1.73 metres between centres. It was an interim
-    /// value here, inherited from what every test in <c>tests/</c> happened to use; it is now the
-    /// chosen figure, and <c>docs/decisions.md</c> entry 007 is where it was chosen and why. The
-    /// short version is that the number cannot be derived from cover, because sight and cover are
-    /// scale-free, so it has to come from what a hex is <i>for</i>: one soldier occupies one and
-    /// walls sit on its edges, which makes it one soldier's standing space and no more.
-    /// </para>
-    /// <para>
-    /// The consequence entry 007 draws is that the ranges were never too long — the map was too
-    /// small. Every range in the game overshot the demo compound by up to a factor of three, and
-    /// <c>content/maps/waystation.hexmap</c> is the map drawn at a size they discriminate on.
-    /// </para>
-    /// <para>
-    /// It is deliberately a constant and not an <c>[Export]</c>, unlike the pixel size beside it.
-    /// Rendering scale is a matter of taste and may be fiddled with per scene; world scale is a
-    /// rule that the tests, the awareness ranges and eventually the art all have to agree on, and
-    /// a value the inspector can quietly override is not a rule. The camera moves the pixel one
-    /// every time somebody turns a wheel and must never touch this one — see
-    /// <see cref="SandboxCamera"/>.
-    /// </para>
+    /// 1.0 — a hex two metres corner to corner and 1.73 metres between centres, which is one
+    /// soldier's standing space, because a soldier occupies exactly one and walls sit on its
+    /// edges. <c>docs/decisions.md</c> entry 007 is where it was chosen and why. It is a constant
+    /// and not an <c>[Export]</c> deliberately: world scale is a rule the tests, the awareness
+    /// ranges and eventually the art all agree on, and a value the inspector can quietly
+    /// override is not a rule.
     /// </remarks>
     public const double MetresPerHexSize = 1.0;
 
     /// <summary>Metres. The only layout <c>Hexcom.Core</c> is ever given.</summary>
-    public HexLayout World { get; }
+    public static readonly HexLayout World = new(MetresPerHexSize);
 
-    /// <summary>Pixels. The only layout that reaches a draw call.</summary>
-    public HexLayout Canvas { get; }
+    /// <summary>A point on the rules' plane at a height above it, as a point in the scene.</summary>
+    public static Vector3 ToScene(CoreVec2 plane, double height)
+        => new((float)plane.X, (float)height, (float)-plane.Y);
 
-    /// <summary>Hex radius in pixels — the drawing figure the sandbox is laid out against.</summary>
-    public float HexPixels { get; }
+    /// <summary>A point in the scene, back to the rules' plane. The height is dropped.</summary>
+    public static CoreVec2 ToPlane(Vector3 scene) => new(scene.X, -scene.Z);
 
-    public SandboxScale(float hexPixels)
-    {
-        HexPixels = hexPixels;
-        World = new HexLayout(MetresPerHexSize);
-        Canvas = new HexLayout(hexPixels);
-    }
-
-    /// <summary>Pixels to a metre, for drawing anything the rules measure in metres.</summary>
-    public float PixelsPerMetre => (float)(HexPixels / MetresPerHexSize);
-
-    /// <summary>A distance the rules quote in metres, as a length on the canvas.</summary>
-    public float MetresToPixels(double metres) => (float)(metres * PixelsPerMetre);
-
-    /// <summary>
-    /// A length quoted in hex radii, as a length on the canvas. For figures chosen because they
-    /// read well rather than because they mean anything — a soldier's footprint by stance, the
-    /// dot on a ladder. Anything the rules quote in metres uses <see cref="MetresToPixels"/>
-    /// instead, and the attention field's reach used to be the loudest thing on this side of the
-    /// line: <c>docs/decisions.md</c> entry 006.
-    /// </summary>
-    /// <remarks>
-    /// Takes and returns <c>float</c>, the width the drawing figures are written in, so that the
-    /// arithmetic here is the same arithmetic as the <c>HexSize * 0.16f</c> it replaced. Nothing
-    /// dramatic turns on it — the <c>double</c> form rendered identically when it was tried —
-    /// but a conversion that cannot change a result is one less thing to rule out the next time
-    /// a picture disagrees with the one before it.
-    /// </remarks>
-    public float HexRadiiToPixels(float radii) => radii * HexPixels;
-
-    /// <summary>
-    /// Canvas space to Godot's screen space. The grid is built with Y running up, the way the
-    /// geometry in <c>Hexcom.Core</c> has it; Godot draws with Y running down.
-    /// </summary>
-    public static Vector2 ToScreen(CoreVec2 canvas) => new((float)canvas.X, (float)-canvas.Y);
-
-    /// <summary>Godot's screen space back to canvas space, for hit-testing the cursor.</summary>
-    public static CoreVec2 FromScreen(Vector2 screen) => new(screen.X, -screen.Y);
+    /// <summary>A bearing the rules quote — radians from east towards north — as a direction along the ground.</summary>
+    public static Vector3 Along(double bearingRadians)
+        => new((float)System.Math.Cos(bearingRadians), 0f, (float)-System.Math.Sin(bearingRadians));
 }

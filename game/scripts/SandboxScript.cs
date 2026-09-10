@@ -52,7 +52,9 @@ public sealed class SandboxScript
     /// <remarks>
     /// The test for this list is whether a person at the keyboard could do it. They can move,
     /// fire and pass the turn; they cannot choose which map the scene booted with or where the
-    /// PNG goes. Everything on the other side of that line is a step.
+    /// PNG goes. Everything on the other side of that line is a step. Three of these have keys
+    /// as well — the AI, the windows, and seeing everything — and they are settings all the
+    /// same, because they say what kind of run this is rather than what happened in it.
     /// </remarks>
     private static readonly Dictionary<string, bool> Settings = new()
     {
@@ -61,6 +63,7 @@ public sealed class SandboxScript
         ["--scenario"] = true,
         ["--ai"] = false,
         ["--windows"] = false,
+        ["--omniscient"] = false,
     };
 
     /// <summary>Steps that take no argument, so the next word is not swallowed as one.</summary>
