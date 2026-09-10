@@ -323,6 +323,59 @@ the scorer charges the shot for what it announces, and there is no preview of wh
 XCOM tells you before you break concealment; this game does not, and it is the game where it
 matters most. Entry 012's second item, still open, and it is brief four.
 
+## Points, and the reserve
+
+*Added after the first draft, on the user's prompt — entry 067. It is the section the original
+game list could not have produced; see the shelves below for why.*
+
+**Standard.** Points are pips on the soldier and the count is small. XCOM 2 gives two actions and
+draws two; Battle Brothers and the older line carry a number and a bar. Overwatch costs a fixed
+action, so no game in the brief's list has to draw *what is left to react with* — spending your
+last action on overwatch is the whole transaction and there is nothing graded about it.
+
+**The one shipped game with our mechanic removed the problem rather than drawing it.**
+Warhounds (2026), which is XCOM- and Jagged Alliance-inspired, banks a reserve for overwatch:
+declaring it **commits the operator's remaining action points** and draws a firing area in front
+of them. So the bank exists and it is all or nothing. Ours is graded, and that is the difference
+that puts this section here.
+
+**Here, and the rules already call it a ladder.** `ReactionModel.Banked` takes what a soldier did
+not spend, keeps `ReserveFraction` of it, and returns nothing at all below `ReserveFloor`. Its own
+remarks say why that shape was chosen: *the floor makes this a step rather than a slope, and the
+step is the whole reason anything weighing a turn has to ask rather than multiply* — ending a turn
+nine points up banks nothing, fifteen banks ten, which is most of a snap shot. `ReserveFraction`
+is set at seven tenths specifically to put the three rungs of the movement economy — hold
+everything, spend about half, spend it all — on either side of the fire mode prices. The reserve
+line prints `reserve 24, 17 if you stop here`.
+
+**The asymmetry.** None. This is the player's own soldier's own points, exact in both directions
+by contract 3, which is why it can be drawn as precisely as the rules compute it.
+
+**Recommendation** — **convention** in its form, **departure** in what the form carries. Pips on
+the soldier, which is the genre's answer. But the row carries **two cliffs marked on it**, which
+no game in the genre needs:
+
+- the point below which stopping banks **nothing** — `ReserveFloor` against `Banked`;
+- the point at which the bank first affords a **shot**, and then the better one — `Banked` against
+  the loadout's fire mode prices, which is the second cliff `Banked`'s own remarks name.
+
+A player reading that row sees *spend down to here and I can still snap, to here and I can still
+take an aimed shot, past here and I am holding nothing*. That is three decisions in one glance,
+and it is the same object as the alarm ladder: discrete steps with a threshold on them, which is
+why a number is the wrong drawing for either. It is also why the ladder was the right instinct
+here and not merely an analogy — the rules are already stepped, and the interface is what has
+been smoothing them.
+
+**Two things Warhounds does with the arc rather than the points**, both **convention** and both
+cheap: overwatch enters cone placement directly rather than through a nested menu, and its guides
+single out fast enter, adjust and cancel as what makes it usable mid-fight. Here `V` and
+`HoldArc` take an arc in one press with no adjust step.
+
+**Read, not played.** Everything about Warhounds above comes from its store page, wiki and
+community guides rather than from the controller, and it should be checked before anything is
+built on the detail. What it is used for here is narrow and safe: that a shipped game with a
+comparable bank chose all-or-nothing, which is a design fact its own store page states.
+
 ## Debug and developer overlays
 
 **Standard: shipped games ship none.** What exists is behind a console — XCOM's requires a launch
@@ -362,6 +415,23 @@ that transfer to the sections that matter most here come from turn-based and rea
 | **Invisible, Inc.** | The closest relative in existence. Vision cones with peripheral tiles distinguished, a *noticed* state short of seen, and an alarm ladder whose sub-levels are hidden on purpose so that only transitions are ever read. That last is contract 3's coarse rung, designed deliberately by somebody else and shipped. |
 | **Mutant Year Zero** | Detection radii drawn only in the mode where they matter, and shrunk by an action the player takes. Stealth as a non-twitch tactical decision, which is this game exactly. |
 | **Shadow Tactics / Desperados III / Commandos** | Real-time, so the input conventions do not transfer, but the drawing does: a cone per guard, and a meter over the head that fills as you are noticed. |
+
+**A third shelf, and the first draft did not know it existed: what shipped while this was being
+built.** The canon list stops at games old enough to have a settled reputation, which is exactly
+what makes it a canon and exactly what makes it blind to the two games in the genre closest in
+time. Both were added on the user's prompt.
+
+| | |
+|---|---|
+| **Warhounds** (2026) | XCOM- and Jagged Alliance-inspired, and the only shipped game found with a reserve like ours: declaring overwatch commits the operator's remaining action points. It is all or nothing where ours is graded, which is the whole of the *Points, and the reserve* section above. Also: cone placement entered directly rather than through a nested menu, with fast adjust and cancel. |
+| **Future War Tactics** (2025) | Colour-coded zones for movement and attack radius, which is the thing this game already does with graded tints rather than bands. Little else here that the canon does not say better. |
+
+**The lesson about the list itself is worth more than either row.** The reserve section exists
+because somebody asked whether a game outside the list had solved a problem we had, and one had —
+by removing it. A canon is a list of games whose conventions are *settled*, which is what makes it
+the right starting point and also guarantees it is silent on any mechanic newer than the canon.
+The next question of this shape should be asked the same way: which shipped game has this
+mechanic, rather than which famous game has something like it.
 
 **Nothing here is a proposal for Core.** Every recommendation above is answerable from a query
 that exists — `ReadoutFor` for the rung, `Contact.LastKnownPosition` for the marker, `Reachable`

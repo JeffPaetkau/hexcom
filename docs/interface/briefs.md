@@ -25,7 +25,8 @@ it; then the gestures, which block the mouse camera; then the two smaller gaps.
 **Not a brief.** Entry 057's six findings are routed to View already, and re-issuing them here
 would put one job in two files. This is the amendment sheet that belongs beside them: what
 `conventions.md` says each one's answer is, so the genre's version gets built and not the first
-version that works. If the six have already landed, it is a review list.
+version that works. **The six landed with entry 066**, so this is now a review list: each item
+says what the genre's answer was, and what was built can be read against it.
 
 1. **The instruments in a second window.** No genre precedent — shipped games ship no overlays
    and put what exists behind a console. Borrow the development-tool pattern instead. The
@@ -80,14 +81,26 @@ gesture for *on demand* once and use it everywhere; a second modal readout per f
 ends up worse than the panel. And pick what the panel keeps: the mission, the clock and the
 weapon have no place on the map, and everything else does.
 
+**The points are the one figure that changes shape rather than only place — entry 067.** Pips on
+the soldier is the genre's answer, and the row carries two cliffs no game in the genre needs: the
+point below which stopping banks nothing, and the point at which the bank first affords a snap
+shot and then an aimed one. Both come out of `ReactionModel.Banked` against `ReserveFloor` and
+the loadout's fire mode prices, and `Banked`'s own remarks name the second cliff. A player reading
+that row should see *spend to here and I can still snap, to here and I can still take an aimed
+shot, past here and I am holding nothing*. **Call `Banked` rather than re-deriving it**:
+`BattleHud.ReserveLine` currently recomputes the fraction and the floor inline, which is one rule
+with two implementations and is the shape entry 038 was about.
+
 **Out of scope.** The alarm rung on the body, which is brief two and depends on this landing
-first. The instrument window's contents, which are entry 057's item 1. Any new figure — this
-moves what exists and adds nothing.
+first. The instrument window's contents, which were entry 057's item 1. Any new figure other than
+the two cliffs above — this moves what exists, and those two are the one exception because the
+rules already compute them and only the panel was flattening them.
 
 **How to know it worked.** With the cursor on a hostile at default zoom, the hit chance, the
 expected worth and the cost of getting there are all readable without the eye leaving the target,
 and the panel is short enough to read in one glance. A capture at `--fit` has no text over the
-map that is not attached to something on it.
+map that is not attached to something on it. And a player who has spent no points can say, from
+the soldier alone, how far they may move and still hold an aimed shot.
 
 ---
 
