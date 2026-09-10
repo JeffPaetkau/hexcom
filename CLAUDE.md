@@ -112,6 +112,10 @@ dotnet test                 # the AI search is most of the runtime
 dotnet build Hexcom.sln     # includes the Godot project, which typechecks against Godot 4.7.2
 ```
 
+The game itself is built by one command under **Shipping it** in
+[docs/subprojects/view.md](docs/subprojects/view.md), into `build/`, which git ignores. Master
+runs it after each round of merges; nobody commits what it produces.
+
 **Godot 4.7.2 .NET is installed and the scene wiring runs.** You can take a picture of the
 sandbox without anyone at the keyboard, which means a session with no human watching can check
 its own drawing rather than hedging down to *it typechecks*. How — the capture flags, what a
