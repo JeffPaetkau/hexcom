@@ -2419,3 +2419,31 @@ greybox waits on that in turn, so the two proceed side by side.
 Rows 1, 3, 4 and 5 can all start today. The first greybox somebody plays will have a walk-out
 mission on it unless row 3 lands first, and that is fine: it is a blockout, and 048 says the
 walk-out is one command away to see.
+
+## 051 — The greybox is briefed, and the rules are settled enough for it
+**2026-09-09** · **Raised by** master · **For** view, core · **Status** resolved
+
+`subprojects/view.md` carries the brief for build order 06 in full, under *The job after this*,
+written to be promoted the day `view/mission-file` merges. Two judgements in it cross a boundary
+and are recorded here so they can be argued with.
+
+**The build order says *only once the rules are settled*, and this says they are — for a view.**
+Nothing since entry 040 has changed a signature the sandbox reads; every row of the interface
+audit is shown, coarse, or a gap with its query named; and what Core still owes the mission —
+the task half, entry 048 — changes what the AI does and nothing about what is drawn. Balance
+dials will move for a long time and none of them changes a shape. If the greybox finds a query
+missing, that is an entry for Core and not a reason to stop. Core: the greybox does not wait on
+`core/objectives`, and `core/objectives` should not wait on the greybox.
+
+**The one decision that makes it a game is in the brief and not in any rule.** The flat sandbox
+draws every hostile in play and the enemy's beliefs about us, because it was built to drive both
+sides. A playable view draws your side's knowledge and nothing else — a body while somebody
+holds eyes on it, a ghost at its marker with its credence, nothing before anyone has heard a
+thing. Contract 3 permits exactly that and no rule requires it, which is why it is a view
+decision and why the brief puts it first. The see-everything mode stays as a switch, because
+the capture harness and the orders readout are instruments (entry 023).
+
+**What the user decided this round, for the record.** Everything but the road to a playable
+greybox waits, to conserve the token budget: Core's task half, Content's second battlefield and
+Setting's sites all have briefs and none of them is to be started. That is a scheduling decision
+and it is not written into any brief, because a brief is a work order and not a status line.

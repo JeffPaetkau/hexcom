@@ -78,8 +78,122 @@ survives the deletion, it should be a name.
 shot line the way who would hear a route already goes on the cursor line. Not this job; noted so
 it is not re-found.
 
-**After that, the greybox** — build order 06, row 6 of 045's road. It rewrites `game/`
-substantially, so nothing here should be built as though it will survive untouched.
+**After that, the greybox** — the section below is its brief, written in full so that it can be
+promoted to `## The job` the day this one is merged. It rewrites `game/` substantially, so nothing
+here should be built as though it will survive untouched.
+
+---
+
+## The job after this — the greybox (build order 06)
+
+Branch `view/greybox`. **This is the brief for a fresh session**, and it is written so that this
+file, `../map.md`, and the entries it cites are the whole of what that session reads before it
+starts. The design doc is 120 KB; read sections 01, 06 (*What it hands the interface*) and 07
+(*Asymmetric information, deliberately*) and no more of it unless a question sends you there.
+
+**What it is.** A 3D blockout of the sandbox with no art in it: every hex a flat prism at its
+floor height, every wall a box at the band height contract 6 fixes, every soldier a body at its
+stance height with its facing marked, and every readout the flat sandbox has learned to draw,
+drawn again in the space the rules already describe. *Playable* means what entry 050 says:
+a person drives one side against `Commander` on the waystation from its mission file, answers
+reaction windows by hand, and wins by withdrawing. It is the first view anyone will play rather
+than test, and that is the whole of what changes — the rules have not moved since entry 041 and
+every query this draws already exists.
+
+**Why now, against the build order's *only once the rules are settled*.** The rules that shape
+a view are settled: nothing added since 040 has changed a signature the sandbox reads, the
+audit's rows are all shown, coarse or gap, and the one thing Core still owes the mission (entry
+048, the task half) changes what the AI does and nothing about what is drawn. Balance dials will
+move for a year and none of them change a shape. Entry 051 records that judgement and it is
+Master's; if building this finds a query missing, that is an entry and not a reason to stop.
+
+**Where the seam is, by what survives and what does not.** The flat sandbox was built in
+eleven files against the day it would be rewritten, and the division was made for this:
+
+| Survives as it is | Why |
+|---|---|
+| `HexSandbox`'s named actions — `MoveTo`, `FireAt`, `SetStance`, `PlaceReaction`, `ResolveOpenWindow` and the rest | the one surface both the keys and the script call; entry 049 says why it must stay the only thing that touches `Battle` |
+| `SandboxScript`, `SandboxCapture`, and every flag in **Seeing it** | a session with no human watching checks its drawing with these, and a greybox nobody can photograph is a greybox nobody can check |
+| `SandboxFrame` | one moment's answers, assembled once — the 3D view reads the same frame the HUD reads, which is contract 2 as a class |
+| `BattleHud` | the interface is 2D text over the picture and stays so; it draws to a `CanvasLayer` and should need nothing but a new place to hang |
+| `SandboxScenario`, as a mission name or a bare map | what the job above leaves of it |
+| the figures-not-names rule of entry 049 | a wall's look comes from what it stops and what it costs; a material is a colour with a third dimension |
+
+| Rewritten | Into |
+|---|---|
+| `BattleView` | meshes in a `Node3D` tree instead of `_Draw` calls — ground, walls, links, the route, the attention field, the held arc, the soldiers |
+| `SandboxGeometry` | world positions from `HexLayout` and floor heights, and picking by ray rather than by polygon |
+| `SandboxCamera` | a `Camera3D`, which the open question below has been asking for |
+| `SandboxPalette` | materials; the same six colours, one per side and per cover grade |
+| `SandboxScale` | see the first decision — it may become a single line, and the line must stay |
+| `Sandbox.tscn` | a 3D scene; keep the node name so the capture path does not change |
+
+**Settle before writing much.** Five decisions, and the first is the one that makes this a game.
+
+1. **What a player is allowed to see of the other side.** The flat sandbox draws every hostile in
+   play, and the beliefs it draws are the *enemy's* markers on us — right for a tool that drives
+   both sides and the opposite of a game whose subject is who saw whom first. A playable view
+   draws **your side's knowledge and nothing else**: a hostile as a body only while somebody of
+   yours holds `EyesOn` on it, as a ghost at its marker with its credence otherwise
+   (`Tactician.Known` is the list, and entry 042 says your own certainty is shown exactly), and
+   not at all before anybody has heard a thing. Contract 3 permits exactly this and forbids
+   nothing else. **Keep the see-everything mode as a switch** — `--omniscient`, or whatever
+   name — because the capture harness and the orders readout are test instruments and 023 says
+   so. Decide which mode the keys open in, and make the status line say which is on.
+2. **World units.** In 3D one engine unit can be one metre, and `SandboxScale`'s whole reason —
+   pixels against metres — collapses to a conversion of one. Contract 5 still stands: rendering
+   scale is never fed into `Battle`. Keep one place that owns the layout the battle is given,
+   however small it gets; the decisions log (entries 002, 005) is the argument for why that
+   place exists at all, and it is the first thing a future session will delete as dead code.
+3. **Storeys.** `--layer N` shows one floor of a flat map. In 3D a roof is above a room, and the
+   waystation has a house roof, a tower and a ridge. Decide whether the active soldier's storey
+   is shown by cutting away what is above it, by ghosting it, or by nothing — and know that the
+   attention field and the held arc are drawn on the *ground* of a storey, so a roof that hides
+   the floor hides the readout too. This is the one thing 3D makes harder rather than easier.
+4. **The camera.** Facing is a rule here — six body faces, arcs measured from `Unit.Facing` —
+   and an arc is legible only from a camera that agrees with the grid. A pitched camera whose
+   yaw snaps to the six hex bearings keeps every wedge readable at every angle; a free orbit
+   does not. Pan, zoom, `--fit`, `--look` and `--zoom` keep their meaning; `--zoom` becomes a
+   distance rather than a hex radius, and the status line's *zoomed out* threshold moves with it.
+5. **What a capture proves in 3D.** The flat render is byte-deterministic and the doc above
+   relies on it for zero-changed-pixel refactors. A 3D render with MSAA and a depth buffer may or
+   may not be, on this machine. **Find out on the first day**, with two captures of the same
+   command, and write the answer into **Seeing it** before building anything that would rely on
+   either answer.
+
+**What to draw, in the order it earns its keep.** Ground and walls first, at the heights in
+contract 6, and a capture with `--fit` of the waystation that a person can read as the same map
+the flat one shows. Then soldiers as bodies with facing. Then the six things the flat sandbox
+draws that nothing else shows — the attention field, the held arc, the committed route with its
+ticks, the reach set with its costs, the cover outlines, and the markers — each one checked
+against the flat capture of the same command. Then the mission: the exit as a named place on the
+ground, because a place that is not visible does not exist (entry 049). The HUD reads the same
+frame throughout and should not need to change to be right.
+
+**The territory question, which is Master's and which this job is asked to inform.** Entry 014
+settled that presentation and interface are one territory because the paths did not divide, and
+`../map.md` says the greybox is the moment to look again. When the rewrite is done, say in
+`../decisions.md` whether they divide now — whether `game/` has fallen into a 3D-view half and a
+HUD half with a small shared middle, or has not. That is a finding about paths, not a request to
+split, and it is the only thing about the breakdown this brief asks for.
+
+**Out of scope.** Art, animation, audio, and anything under `assets/` — a blockout is boxes on
+purpose, and the visual register in `docs/setting.md` is for whoever comes after. Every rule.
+The task half of a mission — the AI will walk to the exit in round 2 on the waystation and
+entry 048 says why; a picture of it doing so is correct. The map editor. A second mission or
+map. Suppression, saves, the strategy layer.
+
+**How to know it worked.** Three things, and the last is the one that matters:
+
+- A capture from one pasted command, on the waystation from its mission file, in which the
+  ground, the walls, the soldiers and every readout in the table above are in the picture and
+  match the flat capture of the same command in what they say.
+- The scripted test from entry 049 — a sentry holding an arc answers a move — reproduces in 3D
+  with the reaction line saying the same thing.
+- **A person plays the waystation mission to a verdict against `Commander` with windows handed
+  out and the other side hidden until found**, and says afterwards what read wrong. That is the
+  first measurement of the interface rather than of the rules, and it belongs in
+  `../decisions.md` beside the balance findings.
 
 ---
 
