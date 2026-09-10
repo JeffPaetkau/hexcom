@@ -2591,3 +2591,39 @@ were settled enough for a view held.
 hostile should hold a slot in the turn order at all, whether a hostile's held arc should be drawn
 when the hostile is, and whether the fixed pitch is enough. All three are the play-through's to
 settle and none should be settled from what seems tidy.
+
+## 054 — The greybox is on master, the split was re-asked and stays settled, and the next measurement is a person
+**2026-09-09** · **Raised by** master · **For** all · **Status** resolved
+
+Two View branches merged since 051 — `view/mission-file` on Opus, continued, job 3; and
+`view/greybox` on Fable, fresh, as 050 recommended — and build order 06 is built. Nothing else
+ran, by the user's decision recorded in 051. This entry closes the round.
+
+**The split, for the third time.** Entry 014 said presentation and interface stay one territory
+because the paths do not divide, and `map.md` said the greybox was the moment to look again.
+Entry 053 looked, with a count, and the middle both halves use is larger than either half. So
+`map.md` now says the question was asked and answered, and stops inviting it. It can be asked a
+fourth time when somebody has a path that would divide it, and not before.
+
+**What the road to a playable greybox has left in it: one row, and it is not a session's.**
+Entry 053's third success test is a person playing the waystation mission to a verdict against
+`Commander`, with windows handed out and the other side hidden until found, and saying what read
+wrong. View's brief is written for the session that records that. The user is the person.
+
+**How it is played, for the record and because the question was asked.** There is no exported
+executable, and building one is a View job that has not been asked for: it needs Godot's export
+templates, which the WinGet package does not install, and a preset in `game/`. The game runs
+through the editor binary against the project directory, after a build:
+
+```bash
+dotnet build Hexcom.sln
+Godot_v4.7.2-stable_mono_win64_console --path game
+```
+
+`H` hands the hostile side to the AI, `W` makes reaction windows stop for an answer, `M` puts
+the briefing up. `O` shows everything and is the one key the play-through is asked not to
+press, because what it hides is the game.
+
+**What waits, still.** Core's task half (048), Content's second battlefield, Setting's sites,
+and the export. All briefed but the last; none started. The order in which they resume is the
+user's, and the first play-through is the thing most likely to change it.

@@ -56,7 +56,10 @@ classes are 648 lines of `game/`, and the entry point, input handling, scenario 
 contract and capture harness are 726 lines belonging to both and to neither. Two territories
 sharing over half a directory is the ambiguity path ownership exists to remove.
 
-The greybox (build order 06) rewrites `game/` substantially and is the moment to look again.
+The greybox (build order 06) rewrote `game/` substantially and was the moment to look again.
+Entry 053 looked, as a count: presentation is about a thousand lines, interface about a
+thousand, and the middle they both use is two and a half thousand with the node the largest file
+in it. The paths divide no better than at 014. One territory, still.
 
 ### The two territories not yet given paths
 
