@@ -169,6 +169,12 @@ The order within a round: merge, `dotnet test`, the map and the log, commit and 
 the build, so that what is built is what was pushed. Report the path to the user and nothing
 else about it.
 
+**Check the game is not running first** — `tasklist | grep -i hexcom`. Windows will not let the
+exporter replace a running `Hexcom.exe`; the export completes, exits 0, and leaves a full-size
+`Hexcom.tmp` beside an unchanged `.exe`. That is the user playing the last build, which is the
+point of the whole exercise, so ask rather than kill. Send the exporter's output to a file rather
+than through a pipe with `head` on it, which can close early and end the run.
+
 If the build fails, that is a finding for View in `decisions.md`, with the output — not a fix.
 Master runs a build; it does not own one. The one exception is templates or a tool missing from
 this machine, which is environment and not code, and which `view.md` should say how to put
