@@ -84,10 +84,13 @@ Read their interfaces, not their rules. The questions, roughly in the order a pl
   the conventions so that View builds the genre's answer and not the first one that works.
   After those, whatever the conventions doc found that the audit missed.
 
-**Settle before writing much.** What the standard is *for*. A convention is worth following
-because a player arrives already knowing it, and worth breaking only where this game's subject —
-who saw whom first — needs something the genre never had to show. Say which of those every
-recommendation is, so View does not have to guess which conventions are load-bearing.
+**Settle before writing much.** What the standard is *for*. **The user's rule, entry 058: the
+convention is the starting point, and a departure from it is a proposal that has to argue its
+case.** A convention is worth following because a player arrives already knowing it, and worth
+breaking only where this game's subject — who saw whom first — needs something the genre never
+had to show. So every recommendation is one of two things, and says which: *the convention, as
+is*, or *a departure, and here is why this game needs it*. View does not have to guess which
+conventions are load-bearing, and the default when in doubt is the convention.
 
 **Out of scope.** Building anything. Art direction, which is `docs/setting.md`'s register and
 Art's job. Rules, which go to Core through `../decisions.md`. The strategy layer's interface,

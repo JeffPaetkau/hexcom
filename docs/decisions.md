@@ -2747,3 +2747,20 @@ Core's brief. The territory's first brief in its own doc.
 the keys has run three jobs. Content: keep on Opus if the session holds, else fresh. Core:
 its idle Opus session if it still holds context, else fresh on Opus. Interface: fresh on Opus;
 it reads and writes.
+
+## 058 — Two things the user settled after the play-through: the camera stays free, and convention is the default
+**2026-09-09** · **Raised by** master, for the user · **For** view, interface · **Status** resolved
+
+Recorded because both were argued, so that neither is re-argued.
+
+**The smooth camera stands over the snapped one.** Master put the case for entry 053's decision
+— arcs and facing wedges are legible from a hex bearing and smear between them — and the user
+held: smooth is more important, trade-off noted. So View's brief asks for a free camera *and*
+arcs that survive any angle, and if the second proves hard the answer is a better arc, never a
+snapped camera again.
+
+**The genre's convention is the starting point, and a departure argues its case.** For the
+interface territory: every recommendation is either the convention as it stands or a departure
+with the reason this game needs it, and the default in doubt is the convention. This game will
+modify conventions to suit its subject; it will not invent where a player already knows what to
+expect.
