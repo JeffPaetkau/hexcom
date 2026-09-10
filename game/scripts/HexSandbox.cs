@@ -1033,7 +1033,7 @@ public partial class HexSandbox : Node3D
                 EndTurn();
                 break;
 
-            case Key.A:
+            case Key.J:
                 GiveTurnToAi();
                 break;
 
@@ -1042,7 +1042,7 @@ public partial class HexSandbox : Node3D
                 AfterAction();
                 break;
 
-            case Key.W:
+            case Key.K:
                 _byHand = !_byHand;
                 Redraw();
                 break;
@@ -1090,7 +1090,7 @@ public partial class HexSandbox : Node3D
                 Redraw();
                 break;
 
-            case Key.S:
+            case Key.L:
                 // Whoever is under the cursor, or the contact this soldier is taking most
                 // seriously if the cursor is on nobody.
                 if (HoveredUnit() is { } named) ShoutAbout(named);
@@ -1098,29 +1098,35 @@ public partial class HexSandbox : Node3D
                     ShoutAbout(threat.Unit);
                 break;
 
-            case Key.Pageup or Key.E:
+            case Key.Pageup:
                 _layer++;
                 Recalculate();
                 break;
 
-            case Key.Pagedown or Key.Q:
+            case Key.Pagedown:
                 _layer--;
                 Recalculate();
                 break;
 
-            case Key.Left or Key.Right or Key.Up or Key.Down:
+            // Pan, in screen terms and not in the map's: W moves the view up the screen from
+            // whichever of the six bearings the camera is on, which is what a person means by
+            // up. The conversion back into the rules' plane is the camera's and happens once,
+            // in Pan, so nothing here knows which way north is.
+            case Key.W or Key.A or Key.S or Key.D or Key.Left or Key.Right or Key.Up or Key.Down:
                 _camera.Pan(PanStep * key switch
                 {
-                    Key.Left => Vector2.Right,      // the ground goes right, so the view goes left
-                    Key.Right => Vector2.Left,
-                    Key.Up => Vector2.Down,
+                    Key.A or Key.Left => Vector2.Right,     // the ground goes right, so the view goes left
+                    Key.D or Key.Right => Vector2.Left,
+                    Key.W or Key.Up => Vector2.Down,
                     _ => Vector2.Up,
                 }, Viewport);
                 CameraMoved();
                 break;
 
-            case Key.Comma or Key.Period:
-                _camera.Turn(key == Key.Comma ? 1 : -1);
+            // Q and E turn the camera, and , and . still do the same thing for anybody who
+            // learned them before the remap.
+            case Key.Q or Key.E or Key.Comma or Key.Period:
+                _camera.Turn(key is Key.Q or Key.Comma ? 1 : -1);
                 CameraMoved();
                 break;
 

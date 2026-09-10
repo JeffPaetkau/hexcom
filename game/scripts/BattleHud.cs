@@ -172,7 +172,7 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
         lines.AddRange(TurnLines(frame));
         lines.RemoveAll(line => line.Length == 0);
 
-        var next = DrawBlockAbove(viewport.Y - 22 - LineHeight - 14, lines);
+        var next = DrawBlockAbove(viewport.Y - 22 - LegendLines * LineHeight - 14, lines);
         next = DrawBlockAbove(next, WindowLines(frame), SandboxPalette.OverwatchHue);
         DrawBlockAbove(next, BriefingLines(frame), SandboxPalette.TextDim);
     }
@@ -270,23 +270,41 @@ public sealed class BattleHud(CanvasItem canvas, Font font)
     /// The keys, parked along the bottom edge where there is nothing else to read.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// It used to be the last line of the status block, which put it straight through the top
     /// row of tile-cost labels: both were legible on their own and neither was legible together,
     /// in every capture anyone has ever taken. Moving it costs nothing — a legend is the one
     /// readout that never changes and so never needs to be near anything.
+    /// </para>
+    /// <para>
+    /// <b>Three lines, split by what the key is for</b> — where you are looking, what the
+    /// soldier does, and what the whole run is set to. As one line it ran off the right edge of
+    /// a 1600-wide viewport and had done for some time, silently, which is the failure mode of a
+    /// legend: the keys that fall off are the ones nobody has learned yet, so nobody misses
+    /// them. Splitting by purpose rather than at whatever width happens to fit means each line
+    /// is complete on its own, and the first one is the one a person reaches for first.
+    /// </para>
     /// </remarks>
     private void DrawLegend(Vector2 viewport)
     {
-        const string keys =
-            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn    "
-            + "V: overwatch arc    B: arm/spring ambush    S: call it in    T: leave the field    Q/E: storey    "
-            + "A: AI takes this turn    H: hostiles to AI    W: answer windows by hand    O: see everything    M: briefing    R: new battle    "
-            + "wheel/+-: zoom    drag or arrows: pan    ,/.: turn the camera    F: whole map    G: whoever is up";
+        string[] keys =
+        [
+            "WASD or drag: pan    Q/E: turn the camera    wheel/+-: zoom    F: whole map    G: whoever is up    PgUp/PgDn: storey",
+            "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn on the spot    "
+                + "V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in",
+            "H: hostiles to AI    J: AI takes this turn    K: answer windows by hand    O: see everything    M: briefing    R: new battle",
+        ];
 
-        var at = Origin + new Vector2(18, viewport.Y - 22);
-        Panel(at, [keys]);
-        _canvas.DrawString(_font, at, keys, HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextDim);
+        var top = Origin + new Vector2(18, viewport.Y - 22 - (keys.Length - 1) * LineHeight);
+        Panel(top, keys);
+
+        for (var i = 0; i < keys.Length; i++)
+            _canvas.DrawString(_font, top + new Vector2(0, i * LineHeight), keys[i],
+                HorizontalAlignment.Left, -1, LineSize, SandboxPalette.TextDim);
     }
+
+    /// <summary>How many lines <see cref="DrawLegend"/> occupies, so that what stacks above it agrees.</summary>
+    private const int LegendLines = 3;
 
     /// <summary>
     /// A backing plate under a run of lines, sized to the widest of them.

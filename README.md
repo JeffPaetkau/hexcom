@@ -106,6 +106,21 @@ code. `--scenario compound` opens the older and much smaller fight instead: two 
 walled compound against three inside it, on a map with no mission, deployed by hand — the fixture
 every capture is diffed against.
 
+**Where you are looking.** The left hand drives the camera and never leaves the four keys it
+starts on.
+
+| | |
+|---|---|
+| `W` `A` `S` `D` | pan, in screen terms — `W` moves the view up the screen whichever bearing you are on |
+| `Q` / `E` | turn the camera to the previous or next of the six hex bearings |
+| wheel, `+` / `-` | zoom |
+| `F` / `G` | see the whole map / go back to whoever is up |
+| PgUp / PgDn | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
+
+A middle-drag pans too, and so do the arrow keys.
+
+**What the soldier does.**
+
 | | |
 |---|---|
 | left-click | move whoever is up |
@@ -113,23 +128,23 @@ every capture is diffed against.
 | right-click | fire at whoever is under the cursor |
 | space | end the turn |
 | `C` | cycle stance: standing, crouching, prone |
+| `Z` / `X` | turn on the spot |
 | `V` | cycle the overwatch arc: none, narrow, standard, wide |
 | `B` | arm an ambush, or spring it on whoever is under the cursor |
-| `S` | call a contact in, so everybody in earshot knows |
 | `T` | walk off the field, if you are standing somewhere your side may leave from |
-| `Z` / `X` | turn on the spot |
-| `Q` / `E` | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
-| `A` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
+| `L` | call a contact in, so everybody in earshot knows |
+| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
+
+**What the whole run is set to.**
+
+| | |
+|---|---|
 | `H` | hand the hostile side to the AI for every turn, or take it back |
-| `W` | answer reaction windows by hand rather than taking the recommendation |
+| `J` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
+| `K` | answer reaction windows by hand rather than taking the recommendation |
 | `O` | see everything — every soldier in play and the AI's orders — or only what your side knows |
 | `M` | the full briefing, in the six parts the squad was given it |
-| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
 | `R` | new battle |
-| wheel, `+` / `-` | zoom |
-| middle-drag, arrows | pan |
-| `,` / `.` | turn the camera to the next hex bearing |
-| `F` / `G` | see the whole map / go back to whoever is up |
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in,
 dark blue ones cannot be entered at all, and the blue-outlined ones are where your side may walk
@@ -165,7 +180,7 @@ any hex in the active weapon's range bands, whose figures sit beside the weapon 
 line, so you can see the long stretch where a rifle still fires and fires worse before a shot is
 refused — and says how loud the walk there would be and who would hear it.
 
-**A move opens a window, and you can answer it yourself.** Press `W` and a move is paid for and
+**A move opens a window, and you can answer it yourself.** Press `K` and a move is paid for and
 held rather than resolved: the soldier stands at the start of a walk it has not taken, the route
 is drawn out of it with the tick each step lands on, and everybody who could do something about
 it is listed with what each option is worth. The scores are the same call the AI's own
@@ -235,7 +250,7 @@ shot went off on and where the target was standing when it landed.
   into the arc. All of them fire in one window, before you get to answer. Or hover a target and
   press `B` again with an armed unit active to spring it deliberately.
 
-Press `W` first and you get to answer any of those by hand rather than watch them happen.
+Press `K` first and you get to answer any of those by hand rather than watch them happen.
 
 ### Building something to hand somebody
 
