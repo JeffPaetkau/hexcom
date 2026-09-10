@@ -52,9 +52,16 @@ public sealed class SandboxScript
     /// <remarks>
     /// The test for this list is whether a person at the keyboard could do it. They can move,
     /// fire and pass the turn; they cannot choose which map the scene booted with or where the
-    /// PNG goes. Everything on the other side of that line is a step. Three of these have keys
-    /// as well — the AI, the windows, and seeing everything — and they are settings all the
-    /// same, because they say what kind of run this is rather than what happened in it.
+    /// PNG goes. Everything on the other side of that line is a step. Four of these have keys
+    /// as well — the AI, the windows, seeing everything, and the instruments window — and they
+    /// are settings all the same, because they say what kind of run this is rather than what
+    /// happened in it.
+    /// <para>
+    /// <c>--still</c> is the odd one, because it is the only setting a capture does not need: a
+    /// capture is still whatever it is told, since nothing animates while a picture is being
+    /// taken. It is here for the person who wants the camera and the walk to stop moving and is
+    /// not taking one, and it is a setting because it is a property of the whole run.
+    /// </para>
     /// </remarks>
     private static readonly Dictionary<string, bool> Settings = new()
     {
@@ -64,6 +71,8 @@ public sealed class SandboxScript
         ["--ai"] = false,
         ["--windows"] = false,
         ["--omniscient"] = false,
+        ["--still"] = false,
+        ["--instruments"] = false,
     };
 
     /// <summary>Steps that take no argument, so the next word is not swallowed as one.</summary>

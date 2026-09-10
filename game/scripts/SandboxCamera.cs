@@ -12,14 +12,22 @@ namespace Hexcom.Game;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A pitched camera whose yaw snaps to the six hex bearings, which is the fourth decision in
-/// the greybox brief and the one that keeps the arcs legible. Facing is a rule here — six body
-/// faces, arcs measured from <c>Unit.Facing</c>, a front cone of 120 degrees — and a wedge on
-/// the ground is readable only when the camera agrees with the grid it is drawn on. From a
-/// free orbit every wedge is a different shape at every angle; from a bearing the hexes tile
-/// the screen the same way at every step of the turn, so a player learns what a held arc looks
-/// like once. The pitch is fixed for the same reason. What a person loses is the ability to
-/// look along a wall, and a blockout is not the view to find out whether they need to.
+/// A pitched camera with a free yaw that <em>rests</em> on the six hex bearings. Entry 053 made
+/// the yaw snap outright, on the grounds that a held arc is legible only from a camera that
+/// agrees with the grid it is drawn on; the first play-through overruled it (entry 057, item 2)
+/// and the arcs have had to stay legible anyway. What is left of 053's argument is the resting
+/// places: <see cref="Turn"/> moves between bearings and lands on one, so a player who only ever
+/// presses <c>Q</c> and <c>E</c> sees exactly the six views 053 chose, and the free orbit is
+/// what the mouse does in between. The pitch is still fixed — what a person loses is the ability
+/// to look along a wall, and nothing has wanted to.
+/// </para>
+/// <para>
+/// <b>Nothing here animates unless something is driving it.</b> The yaw moves towards
+/// <see cref="Turning"/> only when <see cref="Advance"/> is called, and a capture never calls it:
+/// <c>HexSandbox</c> holds one <c>Animated</c> flag, false whenever a picture is being taken, and
+/// with it false every method below lands on its end state within the call. That is the single
+/// settle mechanism the brief asked for — forcing instantly rather than waiting for a settle —
+/// and it is what keeps a capture on exactly the code path it was byte-deterministic on.
 /// </para>
 /// <para>
 /// <b>Distance is a drawing figure and nothing else.</b> The camera moves itself and never the
@@ -31,11 +39,10 @@ namespace Hexcom.Game;
 /// </para>
 /// <para>
 /// The camera is looked at through this class and never touched directly, so that every way of
-/// moving it — the keys, the wheel, a drag, a script step, the follow after an action — goes
-/// through the same clamps and the same snap. It rewrites the node's transform whenever
-/// anything changes rather than animating towards it: a capture has to land on the same frame
-/// every run, and a smoothed camera would put the same command in a different place depending
-/// on how many frames it was given.
+/// moving it — the keys, the wheel, a drag, an orbit, a script step, the follow after an action
+/// — goes through the same clamps and the same snap. Panning, zooming and orbiting still rewrite
+/// the transform within the call and are not animated at all: they are already continuous under
+/// the hand doing them, and smoothing a drag only adds lag to it.
 /// </para>
 /// </remarks>
 public sealed class SandboxCamera
@@ -73,7 +80,29 @@ public sealed class SandboxCamera
     /// <summary>How much a wheel notch or a zoom key changes the distance.</summary>
     private const float ZoomStep = 1.25f;
 
+    /// <summary>The angle between two neighbouring hex bearings, radians.</summary>
+    private const double BearingStep = System.Math.Tau / 6;
+
+    /// <summary>
+    /// How sharply a turn closes on the bearing it is heading for, per second.
+    /// </summary>
+    /// <remarks>
+    /// The step taken each frame is the angle still to go times this, which eases out — fast
+    /// while the turn is obviously happening and slow as it arrives, the way a head turns. On its
+    /// own it would never quite arrive, so <see cref="MinTurnRate"/> puts a floor under the last
+    /// few degrees and the step is clamped to what is left. A sixty-degree turn takes about a
+    /// fifth of a second, which is long enough to follow and short enough that pressing
+    /// <c>Q</c> four times in a row does not feel like queueing.
+    /// </remarks>
+    private const double TurnResponse = 14.0;
+
+    /// <summary>The slowest a turn may crawl, radians per second, so it arrives rather than approaches.</summary>
+    private const double MinTurnRate = BearingStep * 1.5;
+
     private readonly Camera3D _camera;
+
+    private double _yaw = ((HexDirection)1).BearingRadians();
+    private double? _turningTo;
 
     public SandboxCamera(Camera3D camera, float distance)
     {
@@ -95,17 +124,25 @@ public sealed class SandboxCamera
     public float Distance { get; private set; }
 
     /// <summary>
-    /// Which of the six hex bearings the camera looks along, as a direction index.
+    /// The nearest of the six hex bearings to where the camera is actually pointed.
     /// </summary>
     /// <remarks>
     /// One by default, which is north: the camera stands to the south of the focus looking
     /// north, so up the screen is up the map the way the flat view had it, and a capture of the
-    /// same command shows the same map the same way up.
+    /// same command shows the same map the same way up. It is derived rather than stored now
+    /// that the yaw is free — it is what a person <em>means</em> when they say which way they
+    /// are looking, and it is the only form of the yaw anything outside this class wants.
     /// </remarks>
-    public int Yaw { get; private set; } = 1;
+    public int Yaw => (int)((System.Math.Round((_yaw - BearingStep / 2) / BearingStep) % 6 + 6) % 6);
 
-    /// <summary>The bearing being looked along, in the rules' radians.</summary>
-    public double YawRadians => ((HexDirection)Yaw).BearingRadians();
+    /// <summary>The bearing being looked along, in the rules' radians. Continuous.</summary>
+    public double YawRadians => _yaw;
+
+    /// <summary>Where a turn is heading, or null when the camera is pointed where it was asked to be.</summary>
+    public double? Turning => _turningTo;
+
+    /// <summary>Whether nothing is moving of its own accord, so a picture may be taken.</summary>
+    public bool Settled => _turningTo is null;
 
     /// <summary>Whether a tile is currently close enough to be worth labelling. See <see cref="LegibleAt"/>.</summary>
     public bool ShowsTileDetail => Distance <= LegibleAt;
@@ -159,19 +196,102 @@ public sealed class SandboxCamera
         Place();
     }
 
-    /// <summary>Turn one bearing left or right, keeping the focus where it is.</summary>
+    /// <summary>
+    /// Head for the next hex bearing left or right, keeping the focus where it is.
+    /// </summary>
+    /// <remarks>
+    /// Counted from where the camera is <em>heading</em> rather than from where it has got to, so
+    /// that three quick presses of <c>Q</c> turn three bearings instead of collapsing into one
+    /// while the first is still under way. From a free orbit the first press lands on the nearest
+    /// bearing in the direction asked for, which is what tidying up with the keyboard should do.
+    /// </remarks>
     public void Turn(int steps)
     {
-        Yaw = ((Yaw + steps) % 6 + 6) % 6;
-        Place();
+        var from = _turningTo ?? _yaw;
+        var index = (from - BearingStep / 2) / BearingStep;
+
+        // Away from a bearing the first step goes to the next one in the direction asked for
+        // rather than past it, which is what Ceiling and Floor do that Round would not.
+        var landing = steps > 0 ? System.Math.Ceiling(index) : System.Math.Floor(index);
+        if (System.Math.Abs(landing - index) < 1e-6) landing = index + steps;
+        else if (System.Math.Abs(steps) > 1) landing += steps - System.Math.Sign(steps);
+
+        HeadFor(BearingStep / 2 + landing * BearingStep);
     }
 
     /// <summary>Face a bearing directly, by direction index.</summary>
+    /// <remarks>
+    /// <c>--yaw N</c> and nothing else. It arrives within the call rather than heading for the
+    /// bearing, because a script step that took frames to finish would put the same command in a
+    /// different place depending on how many it was given — which is the determinism entry 053
+    /// established and item 2 of the play-through was not allowed to undo.
+    /// </remarks>
     public void TurnTo(int yaw)
     {
-        Yaw = (yaw % 6 + 6) % 6;
+        _turningTo = null;
+        _yaw = ((HexDirection)((yaw % 6 + 6) % 6)).BearingRadians();
         Place();
     }
+
+    /// <summary>
+    /// Turn by an arbitrary angle, abandoning any bearing the camera was heading for.
+    /// </summary>
+    /// <remarks>
+    /// What a drag does. There is no snap at the end of one: a mouse that tidied itself up when
+    /// released would be taking the view back off the person holding it, and <c>Q</c> and
+    /// <c>E</c> are there for anybody who wants a bearing.
+    /// </remarks>
+    public void Orbit(double radians)
+    {
+        _turningTo = null;
+        _yaw = Wrapped(_yaw + radians);
+        Place();
+    }
+
+    /// <summary>
+    /// Move a turn along by one frame's worth, and say whether it is still going.
+    /// </summary>
+    /// <remarks>
+    /// The one thing here that takes time, and the only reason <c>HexSandbox</c> processes at
+    /// all when it is not capturing. A capture never calls it and never needs to: with animation
+    /// off <see cref="Turn"/> lands within the call, so there is nothing part-way through for a
+    /// picture to catch.
+    /// </remarks>
+    public bool Advance(double delta)
+    {
+        if (_turningTo is not { } target) return false;
+
+        var remaining = Wrapped(target - _yaw + System.Math.PI) - System.Math.PI;
+        var step = System.Math.Max(System.Math.Abs(remaining) * TurnResponse, MinTurnRate) * delta;
+
+        if (step >= System.Math.Abs(remaining))
+        {
+            _yaw = Wrapped(target);
+            _turningTo = null;
+        }
+        else _yaw = Wrapped(_yaw + System.Math.Sign(remaining) * step);
+
+        Place();
+        return _turningTo is not null;
+    }
+
+    /// <summary>Arrive at a bearing now, wherever a turn had got to. What <c>Animated</c> being off means here.</summary>
+    public void Settle()
+    {
+        if (_turningTo is not { } target) return;
+        _turningTo = null;
+        _yaw = Wrapped(target);
+        Place();
+    }
+
+    private void HeadFor(double bearing)
+    {
+        _turningTo = Wrapped(bearing);
+        Place();
+    }
+
+    private static double Wrapped(double radians)
+        => (radians % System.Math.Tau + System.Math.Tau) % System.Math.Tau;
 
     /// <summary>
     /// Pull back until the whole map is on screen at once.

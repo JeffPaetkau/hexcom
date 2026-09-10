@@ -35,70 +35,146 @@ reaching into `src/`.
 
 ---
 
-## The job — the first play-through's findings, built
+## The job — the second play-through, and the queue behind it
 
-Branch `view/playable`. **This is the brief for a fresh session**, and it is written so that this
-file, `../map.md`, and entries 049, 053 and 057 are the whole of what it reads before it starts.
+**The six findings of the first play-through are built** — `../decisions.md` entry 058 says what
+each cost — so the next measurement is the same one again: a person plays `build/Hexcom.exe` to a
+verdict and says what read wrong. That is not a thing a session can do, and the brief after it is
+written from what they say.
 
-**What it is.** The first person has played the greybox — the user, against `Commander`, from
-`build/Hexcom.exe` — and entry 057 is what they said. Six things, all of them interface, none of
-them a rule, and the user's instruction with them: *make what we have playable*. This job builds
-the six. A territory for interface research now exists (`subprojects/interface.md`) and will
-write later briefs against what the genre does; **do not wait for it** — these six are concrete
-and the person who asked for them is the person who will test them.
+**Two things are specified already and can be done while waiting.**
 
-1. **The instruments go in a second window.** The legend and the tester's readouts — the orders
-   block, the mode line, whatever else a player of a shipped game would never see — move to a
-   separate `Window` the user can drag to another monitor. What stays in the main view is the
-   player's HUD: mission, turn order, the soldier's situation, the cursor, the shot and its worth,
-   reactions. **The test for which side of the line a readout is on**: would a player who never
-   presses `O` want it. Captures still take the main viewport; decide whether `--shot` also
-   captures the second window, or a flag does, and say so in **Seeing it**.
-2. **The camera turns smoothly, not sixty degrees at a time.** Entry 053 chose snapping so arcs
-   stay legible from a bearing; the user has overruled it and the arcs will have to stay legible
-   anyway. `Q`/`E` animate to the next bearing rather than jumping, and the mouse turns freely.
-   **Nothing animates in a capture**: `--yaw N` lands on the frame it names, and a run with
-   `--shot` on it settles every animation before the picture, or the harness stops being
-   deterministic and entry 053's fifth decision is undone.
-3. **The mouse drives the camera as well as the keyboard.** Wheel zoom exists; add drag-to-orbit,
-   drag-to-pan, and edge-pan. Right-click currently fires, so orbit is not a plain right-drag —
-   settle the gesture set first, against what `conventions.md` will eventually say, and write
-   the table in **Seeing it** beside the keys.
-4. **It opens as the mission against the AI.** Today the keys open with both sides by hand and
-   the user has to press `H` and `K` first. The default is the user playing the waystation
-   mission against `Commander` with windows handed out and the other side hidden until found.
-   Every other mode stays — AI against AI, both sides by hand, omniscient — behind the keys and
-   the script settings, because the harness and the balance runs need them. **Every capture
-   command in this file assumed the old defaults**; re-run them and re-pin the scene.
-5. **Our units do not read against the terrain.** Contrast, first — a hue the ground never uses,
-   an outline or a ground ring at a weight that survives the ghosted-storey tint, and a check
-   at `--fit` distance as well as close in. The figures-not-names rule (entry 049) is about
-   walls and ground and does not stop a soldier having a colour of its own.
-6. **A move walks the route.** Not instant, not slow: the soldier moves along the path the
-   rules already hand back, at a pace that reads as a walk at the default zoom. Entry 040 says
-   the mover has not stepped until the window resolves, so the walk is the *resolution* drawn
-   over time — draw the ticks the reaction line quotes as the soldier passes them. **Off for
-   captures and headless runs**, by the same settle-before-shot rule as item 2, and a script
-   setting so a person can turn it off too.
+- **The shot line should say who a shot would wake.** Entry 012's second item, open since the
+  interface audit. The scorer charges a shot for what it announces — `GivenAway`, inside the worth
+  line's spared term — and there is no preview of *whose* contact file the shot would move, so the
+  player sees the price and not the bill. `AwarenessTracker.WouldAnnounce(shooter, from, weapon, at)`
+  exists (entry 033) and hands back an `Announcement` per enemy, in the same shape as `WouldHear`,
+  which the cursor line already prints for a route. It is the shot line growing the clause the
+  cursor line has. **The names go on screen and the figures do not**, for the reason
+  `BattleHud.NoiseLine` gives. Half a day.
+- **The four open questions below want answering from the play-through and not from what seems
+  tidy** — the `?` slot in the turn order, a hostile's held arc, the fixed pitch, and whether a
+  player should be answering the enemy's reactions. Entry 058 adds a fifth about the legend.
 
-**Settle before writing much.** Two things, and they are the same thing. Every animation
-introduced here — camera, movement — has to have a *settled* state the capture can wait for,
-or `--shot` has to force it instantly; pick one mechanism and use it for all of them. And the
-second window changes what a *frame* is: `SandboxFrame` is one moment's answers read by both
-halves, and a HUD split across two windows still reads one frame, or it will show two moments.
+**The queue is `subprojects/interface.md`'s to fill from here.** That territory researches what
+turn-based squad tactics does with its interface, says what contract 3's asymmetry does to each
+convention, and writes briefs Master promotes into this section. Nothing in this file should
+invent an interface brief ahead of it now that it exists; a finding still goes to
+`../decisions.md`.
 
-**Record before fixing.** Entry 057 is the user's words; when the six are built, append an entry
-saying what each cost and what it changed about the pinned scene, so the next play-through has a
-baseline. Anything found on the way that is a rule, or a query Core does not expose, is an entry
-for Core and not a fix here (contract 2).
+**Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
+layer.
 
-**Still open from the greybox, and not this job's.** Whether an unfound hostile should hold a
-`?` slot in the turn order, whether a hostile's held arc is drawn when the hostile is, whether
-the fixed pitch is enough — Open questions below. And entry 012's second item, the shot line
-saying who a shot would wake, half a day whenever it fits. The research territory will have a
-view on all four.
+## What landed on `view/playable`
 
-**Out of scope.** Art, audio. Every rule. A second map or mission. The strategy layer.
+Entry 057 is what the user said after the first play-through; entry 058 is what building the six
+cost. This is the shape, and the decisions the brief left open.
+
+**One switch settles every animation, and it is off rather than waited for.** The brief allowed
+two mechanisms — settle before the picture, or never start one — and `HexSandbox.Animate` is the
+second. It is false for the whole of any run with `--shot` on it, `--still` turns it off for a
+person, and everything that animates asks it and lands on its end state within the call when the
+answer is no. Waiting would have put a capture on a code path nobody had measured; this leaves it
+on exactly the one that was byte-deterministic before, and the pinned scene proves it — three
+runs of the pinned command, one SHA-256.
+
+**The camera turns freely and rests on the six bearings.** `SandboxCamera.YawRadians` is
+continuous now and `Yaw` is derived from it, which is the only form anything outside the class
+ever wanted. `Q`/`E` head for the next bearing and ease into it in about a fifth of a second,
+counted from where the camera is *heading* rather than where it has got to, so three quick
+presses turn three bearings. A right-drag turns it to anywhere in between and there is no snap
+when it is released — a mouse that tidied itself up would be taking the view off the person
+holding it. `--yaw N` still arrives within the call, animated or not, because a script step that
+took frames would put the same command in a different place depending on how many it was given.
+
+**The gesture set, settled.** Right-click had to keep firing, so the right button does both and
+they are told apart by whether the pointer moved: under six pixels between press and release it
+was a click and the shot goes off, over it and it was an orbit. **The shot therefore happens on
+release**, which is the only moment at which the two are distinguishable. Middle-drag still pans,
+the wheel still zooms, and the pointer within 24 pixels of an edge pushes the view at a rate
+proportional to how far in it has gone — guarded on the pointer actually being inside the
+viewport, because the whole point of the second window is that the pointer spends time elsewhere.
+
+**It opens as the mission against the AI, and a capture does not.** The keys now open with the
+hostile side on `Commander`, reaction windows handed out, and the other side hidden until found.
+The capture harness keeps every default it had. That split is deliberate and it is what stops the
+change being expensive: `--ai` and `--windows` would stop meaning anything the day they became
+the default of the thing they switch on, and every capture command in this file would have had to
+be re-read rather than merely re-run.
+
+**Our soldiers read against the terrain, and the fix was three changes rather than one.** The
+hues went up past 70 per cent saturation, which no ground fill approaches; every body stands on a
+dark contact ring supplying the shadow a blockout does not cast, and a side-coloured ring outside
+that which is what carries at distance; and both rings widen once the camera is far enough back
+to have switched tile detail off, which is the same threshold the tile labels already use.
+
+**The trap in that, and it is worth the paragraph.** Raising the two side hues washed the whole
+map out, because `BuildAttention` tints every tile a soldier is attending to in its own side's
+colour — five soldiers on the waystation is a wash of side colour over most of the ground, and
+brightening the soldier brightened the ground it was meant to stand out from. `AttentionHue` is
+now a second, dimmer pair for the field alone: hue carries the side and is shared, saturation is
+not. **A readout painted across the ground cannot share a constant with the thing standing on
+it**, and this is the only place in the palette where a side is two colours.
+
+**A move walks its route, and the walk is the resolution drawn over time.** Entry 040 says the
+mover has not stepped until the window resolves, so by the time a walk starts the rules have
+finished: every reaction is taken, the soldier is at the far end, and what moves is the picture
+catching up. The route is truncated at wherever the unit actually ended up, so a reaction that
+dropped it part way is drawn stopping there rather than walking on. The remaining route is drawn
+ahead of it in the committed colour with its tick labels — the same line the reaction options were
+quoted against, running out from under the soldier's feet. Seven metres a second, capped at 1.6
+seconds so a long route is covered faster rather than for longer.
+
+**Two things the walk needed that were not obvious.** The unit rings moved out of the overlay mesh
+into the bodies mesh, because a ring left in the overlay stays on the tile the soldier set off
+from; and `DrawUnitLabels` reads the walk as well, because a name hanging over the destination
+while the soldier is half way there is the map disagreeing with itself. `BattleView.RebuildBodies`
+exists so a walking frame costs seven bodies and not a sight sweep.
+
+**Only our side's moves walk, and one of theirs.** A hostile move that opened a reaction window is
+walked, because the window carries its steps and the sandbox is holding the resolution. A hostile
+move nobody could have reacted to opens no window, is resumed past by `SkipEmptyWindows`, and
+jumps. Making all of them walk needs two things from Core and neither is available here — a turn
+that yields per order, and the path each move walked. Written up for Core in entry 058 rather than
+worked around.
+
+**The instruments are in a `Window` of their own**, built closed, opened by `I` or
+`--instruments`, hidden rather than freed when it is closed so the split between the two halves of
+the HUD is decided in one place. `BattleHud` now has two entry points and holds no canvas of its
+own; **both are handed the same `SandboxFrame` in the same call**, which is the condition the brief
+attached to splitting the HUD at all — a second surface redrawn on its own schedule is the first
+chance this code has ever had to show two moments at once, and it cannot.
+
+**Where the line fell, and it is not where the brief's prose put it.** The brief named the legend
+as moving and also gave the test — *would a player who never presses `O` want it*. The two
+disagree, and the test wins: a player wants to know how to move and how to look and does not want
+to know how to hand the hostile side to the AI. So the legend splits along the seam it already had
+for reasons of width, two ranks staying and the third going. What else moved is the mode line, and
+the AI's orders block.
+
+**The orders readout is no longer gated on `--omniscient` as well.** Entry 023 made it an
+instrument and it still is; what changed is that there is now a window which is nothing but
+instruments, so the gate can be *being in it*. Two gates would have meant that reading the AI's
+reasoning cost a change to the map — pressing `O` is exactly the thing that stops you seeing what
+a player would have seen — and separating those two is most of what the second window is for.
+
+**`--shot` captures the game, and the second window is written beside it.** The decision the brief
+asked for, and there was one answer available: every capture command in this file names a file and
+means the picture of the game, so a flag that quietly changed which window a path referred to
+would rewrite the meaning of all of them. With `--instruments` on the line as well, the instruments
+window goes to the same name with `.instruments` before the extension.
+
+**One bug found and not introduced by this work.** The instruments window's mode line ran off its
+right edge on the first attempt, which is the legend's failure from the key remap happening again
+in a narrower box. It is two lines now — which battle, and which switches — and the window opens
+at 1120 by 620 because the widest orders line is about 880 pixels and a window sized to fit
+exactly is a window that is already broken.
+
+**The pinned scene did not change.** The bottom edge lost a legend line and the top block lost the
+mode line, so `--scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1` has to be re-pinned
+against a picture taken after this — but nothing captured after the key remap and before this
+differs in the world above the readouts, and three runs of the pinned command during this work
+produced one hash.
 
 ---
 
@@ -187,6 +263,10 @@ settled before writing much.
   turn it, `--yaw N` sets it, and it opens looking north so up the screen is up the map the way the
   flat view had it. Distance is the zoom — `--zoom N` is metres back, `LegibleAt` is 70 of them —
   and the camera never animates, because a capture has to land on the same frame every run.
+  **Two halves of this were overruled by the first play-through** and the section on
+  `view/playable` above is what stands: the yaw is free and rests on the bearings rather than
+  snapping to them, and turning is animated. The determinism the clause was protecting is intact
+  and is now kept by a switch instead — a capture starts no animation at all.
 - **A 3D capture is byte-deterministic on this machine**, with 3D antialiasing and shadows on. Two
   runs of `--fit` on the first day produced identical files, and every capture since has. So the
   zero-changed-pixel refactor test survives the move; **the pinned scene changes** — see Seeing it.
@@ -392,13 +472,20 @@ different matter and belong on screen, which is what the worth line does.
 
 ### The orders readout is the opponent's mind, and is shown anyway
 
-The block at the bottom of the screen prints every turn `Commander` has taken since the player
-last acted, one line per `Order`, with `Worth` and `Opens` each broken into their terms and the
-`Score` beside them. That is exactly what entry 009 asked for and exactly what the paragraph
-above says a shipped interface must not do. Both are right: the sandbox exists to check the AI,
-an AI can only be checked by somebody who can see what it thought, and the readout is an
-instrument in the same sense the seed on the command line is. `BattleHud.TurnLines` says so in
-its remarks, and any interface built for a player rather than for a tester drops it.
+The block prints every turn `Commander` has taken since the player last acted, one line per
+`Order`, with `Worth` and `Opens` each broken into their terms and the `Score` beside them. That
+is exactly what entry 009 asked for and exactly what the paragraph above says a shipped interface
+must not do. Both are right: the sandbox exists to check the AI, an AI can only be checked by
+somebody who can see what it thought, and the readout is an instrument in the same sense the seed
+on the command line is. `BattleHud.TurnLines` says so in its remarks, and any interface built for
+a player rather than for a tester drops it.
+
+**It is in the instruments window now, and dropping it is a thing you can do by closing that
+window.** The audit above was written when the readout was a block along the bottom of the same
+screen as the map, gated on `--omniscient`; `view/playable` moved it and took the second gate
+away, because reading the AI's reasoning should not cost a change to the picture. What the
+paragraph above argued for is unchanged and is now demonstrable rather than asserted: a shipped
+interface is what the main view shows with the window shut.
 
 One of its terms could not be shown to a player even in principle. A hostile's `Prospect` is
 scaled by how much that hostile has already worked out about the soldier it is turning towards —
@@ -446,9 +533,9 @@ They shared this doc because they once shared a single 705-line file. They no lo
 | `SandboxGeometry.cs` | where things sit in the scene — outlines at floor height, node centres, picking by ray |
 | `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves — including what our side knows of the other |
 | `MeshBuilder.cs` | coloured triangles into one mesh: prisms, slabs, cylinders, ribbons |
-| `SandboxCanvas.cs` | a flat surface over the picture that draws what it is handed; there are two, one per half |
+| `SandboxCanvas.cs` | a flat surface that draws what it is handed; there are three — the map's labels, the player's readouts, and the instruments window's |
 | `BattleView.cs` | **presentation** — ground, walls, links, the route, the fields and arcs, ghosts, bodies, and the map's labels |
-| `BattleHud.cs` | **interface** — turn order, the soldier's situation, the shot under the cursor, reactions, the AI's orders |
+| `BattleHud.cs` | **interface** — two surfaces from one frame: the player's readouts over the map, and the instruments in their own window |
 | `SandboxPalette.cs` | colours and the two materials, shared because a side is one colour in both halves |
 | `SandboxCapture.cs` | render some frames, write a PNG, quit |
 
@@ -495,9 +582,36 @@ Entry 053 records the count.
   scene when you do.** The pinned scene is now
   `--scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1`: omniscient because the fixture
   is checked with every soldier drawn, and the yaw said because a default is a thing that moves.
-  Nothing captured before the greybox diffs against anything captured after it, and nothing
-  captured before the key remap diffs against anything after it either — the legend along the
-  bottom edge grew from one line to three, and it is in every picture.
+  Nothing captured before the greybox diffs against anything captured after it, nothing captured
+  before the key remap diffs against anything after it — the legend grew from one line to three —
+  and nothing captured before `view/playable` diffs against anything after it either: the legend
+  went back down to two, the mode line left the top block, and every soldier gained two rings.
+- **Animation cannot break the determinism, and the reason is worth keeping straight.** It is not
+  that the animations settle quickly. It is that a run with `--shot` on it never starts one — see
+  `HexSandbox.Animate`. A change that made any animation conditional on something other than that
+  flag would put the whole harness back in play, so if a walk or a turn ever has to run during a
+  capture, the thing to change is the capture and not the flag.
+- **A readout painted across the ground may not share a colour constant with the thing standing
+  on it.** The attention field tints every tile a soldier attends to in that soldier's side
+  colour, so on the waystation it is a wash over most of the map. Raising the side hues to make
+  the bodies read washed the terrain out with them, and a body that reads well against ground it
+  has itself repainted has not been fixed. `SandboxPalette.AttentionHue` is the second, dimmer
+  pair; hue carries the side and is shared, saturation is not. It is the only place in the palette
+  where a side is two colours, and the day a third readout wants a side colour it is the question
+  to ask first.
+- **The bodies mesh is rebuilt on its own, and the unit rings live in it rather than the
+  overlay.** A walk redraws the soldiers every frame it runs for and the full rebuild is a sight
+  sweep behind it, so `BattleView.RebuildBodies` exists. The rings had to move for it: a ring left
+  in the overlay stays on the tile the soldier set off from while the soldier walks away. Anything
+  else that belongs to a body rather than to a place belongs in that mesh for the same reason.
+- **Two things read the walk and both have to.** `BuildBodies` draws the body at it and
+  `DrawUnitLabels` puts the name over it. Only the first is obvious, and with only the first done
+  the name hangs over the destination while the soldier is half way there — the map disagreeing
+  with itself, which is exactly what a single frame is supposed to prevent.
+- **A window sized to fit its widest line is already broken.** The instruments window's mode line
+  ran off its right edge on the first attempt, which is the legend's failure of the key remap in a
+  narrower box. Anything added to that window has to be checked against `InstrumentsSize`, and the
+  fix when it does not fit is to split the line by purpose rather than to widen the window again.
 - **The readouts are drawn over the map, not beside it.** All three HUD blocks sit on a panel for
   that reason, and anything added to them has to assume there is a tile-cost label underneath —
   because there is. The top block is the active soldier's situation and the bottom block is what
@@ -596,10 +710,25 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --omniscien
 - `--ai` hands every hostile turn to `Commander` during the passes, so each pass is one of ours
   standing still while the other side does what it decides to. Interactively the same thing is
   `H`, and `J` gives one turn — anybody's — to the AI.
-- `--omniscient` draws every soldier in play and prints the AI's orders. **Without it the
-  picture is the game**: hostiles nobody of ours has found are not in it, and neither is the
-  orders readout. A capture checking the AI wants this flag; a capture checking what a player
-  would see does not. Interactively it is `O`.
+- `--omniscient` draws every soldier in play. **Without it the picture is the game**: hostiles
+  nobody of ours has found are not in it. A capture checking where everybody is wants this flag;
+  a capture checking what a player would see does not. Interactively it is `O`. It no longer
+  governs the AI's orders readout — that moved to the instruments window and is gated on the
+  window being open, which is the next flag.
+- `--instruments` opens the second window and, with `--shot`, writes it beside the picture:
+  `--shot out.png --instruments` produces `out.png` and `out.instruments.png`. **`--shot` always
+  means the game**, so every command in this file still names the file it always named.
+  Interactively it is `I`.
+- `--still` turns off the camera turn and the walk for a person at the keyboard. A capture does
+  not need it — nothing animates while a picture is being taken, by construction — so it is here
+  for somebody watching rather than capturing.
+
+**A capture is still, and that is a switch rather than a wait.** `HexSandbox.Animate` is false
+for the whole of any run with `--shot` on it, so `--yaw N` lands on the frame it names, a
+`--move` puts the soldier at the far end within the call, and two runs of one command still make
+one file. The alternative — settling every animation before the shutter — would have put a
+capture on a code path that had never been measured. Do not make animation conditional on
+anything else; this is the one flag and everything that moves asks it.
 
 **A map 85 metres across needs the camera told about, so five flags do that.**
 
@@ -620,41 +749,78 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario 
   A name that matches nothing gets you the default and says so in the status line, rather than a
   scene that fails to load.
 
-Interactively it is `W` `A` `S` `D` or a middle-drag to pan, `Q` and `E` to turn, the wheel or
-`+`/`-` to zoom, `F` for the whole map and `G` for whoever is up. The camera never re-asks the
-rules anything, so none of it can change what is true — only what is on screen.
+Interactively it is `W` `A` `S` `D` or a middle-drag to pan, `Q` and `E` or a right-drag to turn,
+the wheel or `+`/`-` to zoom, `F` for the whole map and `G` for whoever is up. The camera never
+re-asks the rules anything, so none of it can change what is true — only what is on screen.
 
-**The keys, in the three groups the on-screen legend uses.** The legend is
-`BattleHud.DrawLegend` and this table is the same content; they are two copies of one list and
-changing one without the other is how a legend starts lying.
+**The mouse, settled.** Right-click had to keep firing, so the gesture set is arranged around
+that and nothing else was free to move:
 
-| Where you are looking | |
+| | |
+|---|---|
+| middle-drag | pan |
+| right-drag | turn the camera freely, to anywhere between the six bearings; no snap on release |
+| right-click | fire — **on release**, and only if the pointer moved under `ClickSlop` pixels since the press |
+| pointer near an edge | push the view that way, faster the further into the margin it goes |
+| wheel | zoom |
+| left-click | move whoever is up |
+
+A right press starts a candidate orbit either way; which of the two it turns out to have been is
+not knowable until the button comes back up, which is the whole reason firing moved off the
+press. Edge-pan runs only while the pointer is genuinely inside the viewport — with a second
+window in play the pointer spends time on another monitor, and a view that crept while nobody was
+looking at it would be the worst kind of bug to find.
+
+**The keys, in the groups the two legends use.** The player's legend is `BattleHud.PlayerKeys`
+and the instruments window's is `InstrumentKeys`; this table is the same content, and they are
+two copies of one list — changing one without the other is how a legend starts lying.
+
+The first two are on screen in the main view; the third is in the instruments window, which is
+where the split falls and why. The test is *would a player who never presses `O` want it* — a
+player wants to know how to move and how to look, and does not want to know how to hand the
+hostile side to the AI.
+
+| Where you are looking — **player's legend** | |
 |---|---|
 | `W` `A` `S` `D` | pan, in screen terms — `W` moves the view up the screen whichever bearing you are on |
-| `Q` / `E` | turn the camera to the previous or next hex bearing; `,` and `.` still do the same |
+| `Q` / `E` | head for the previous or next hex bearing, animated; `,` and `.` still do the same |
+| right-drag | turn freely, between bearings |
 | wheel, `+` / `-` | zoom |
 | `F` / `G` | the whole map / whoever is up |
 | PgUp / PgDn | change storey |
 
-| What the soldier does | |
+| What the soldier does — **player's legend** | |
 |---|---|
 | left-click · right-click · space | move · fire · end the turn |
 | `C` · `Z`/`X` · `V` · `B` · `T` | stance · turn on the spot · overwatch arc · arm or spring an ambush · leave the field |
 | `L` | call a contact in |
 | tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
 
-| What the run is set to | |
+| What the run is set to — **instruments window** | |
 |---|---|
 | `H` · `J` | hand the hostile side to the AI · give it this one turn |
 | `K` | answer reaction windows by hand |
 | `O` · `M` · `R` | see everything · the briefing · a new battle |
+| `I` | the instruments window itself — which is also how it is closed from the keyboard |
+
+**`I` is in the window it opens, which reads like a mistake and is not.** A key that shuts a
+window is discoverable from inside it; a key that opens one has to be discoverable from
+somewhere, and it is here, in the README, and on the window's own close button. Whether the main
+view should advertise it is one for the interface territory.
 
 A middle-drag and the arrow keys pan as well, which is the one place two bindings survive the
 remap on purpose: a person who has a hand on the mouse should not have to move it.
 
-**And a capture can act.** Everything on the line that is not one of the six settings —
-`--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows`, `--omniscient` — is a step, run in
-the order it was typed, and each one prints what it did. They are the keys under another name:
+**The keys open on the game and a capture opens on the harness.** Interactively the hostile side
+is on `Commander`, reaction windows are handed out, and the other side is hidden until found;
+`H`, `K` and `O` turn each of those the other way. A capture keeps the old defaults — all three
+off — so `--ai`, `--windows` and `--omniscient` still mean what they meant and every command in
+this file still opens the run it was written against.
+
+**And a capture can act.** Everything on the line that is not one of the eight settings —
+`--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows`, `--omniscient`, `--instruments`,
+`--still` — is a step, run in the order it was typed, and each one prints what it did. They are
+the keys under another name:
 
 | | |
 |---|---|
@@ -765,7 +931,10 @@ against `game/`. Pass an absolute path to either and the question goes away.
   stopping at a reaction window in round 4 the way it does in the editor.
 - **The capture and script flags survive the export.** They do, byte for byte, which is why
   there is a section about it above rather than a line in **Seeing it** saying the harness is
-  editor-only.
+  editor-only. **Re-checked after `view/playable`**, because that branch added a second `Window`
+  to the scene and two settings: the export honours `--instruments` and `--still`, writes both
+  PNGs, and the pinned scene from the executable has the same SHA-256 as the pinned scene from
+  the editor.
 
 ### Setting this up on a machine that has never done it
 
@@ -830,12 +999,27 @@ Desktop-only is the design and Windows is the machine.
   looking, but what it would shoot at is its intent. Omniscient draws every arc. A player who
   walks into an arc they could see the soldier holding may reasonably say the picture lied.
 - **Whether a fixed 55-degree pitch is enough.** It keeps a hex a hex and a wall a wall from every
-  bearing, and it cannot look along a wall. Nothing so far has wanted to.
+  bearing, and it cannot look along a wall. Nothing so far has wanted to. The free yaw makes this
+  more pressing rather than less: a person who can now turn the camera to anywhere will try to
+  tilt it, and the right-drag's vertical axis is unused and sitting there.
+- **Whether the main view should say anything about the instruments window.** The legend split by
+  the brief's own test and the third rank went with the instruments, so `I` is advertised only
+  inside the window it opens, in the README, and in this file. A player never wants it; a tester
+  opening the build cold has to be told once. Deliberately not solved by putting one line back on
+  the player's legend, which is the fix that would undo the split.
+- **Whether an unfound hostile's *walk* should be drawn.** A hostile move that opens a reaction
+  window is walked along its committed route, and the route is drawn whether or not our side can
+  see the mover — which is what `BuildCommitted` already did while the window was open, so it
+  leaks nothing the window did not. But the two together now draw a moving line out of a soldier
+  the picture is not showing, which is a stronger claim than a static one, and nobody has watched
+  it happen yet.
 - **Whether a player should be answering the enemy's reactions.** The sandbox drives both sides
   by hand, so an open window offers every reactor in it whichever side they are on — which is
   right for a thing built to try both sides and is not what a shipped interface would do. The
   window readout says whose each offer is; nothing stops you answering for the other lot. Same
-  family as the orders readout, which is the opponent's mind and is shown only when omniscient.
+  family as the orders readout, which is the opponent's mind and lives in the instruments window.
+  It has got sharper rather than easier: answering the enemy's reactions is now the *default*,
+  since the keys open with windows handed out.
 - **Whether the mission line belongs to a player at all, or only to a tester.** It shows the
   verdict, which is the scoreboard, and the reading each departed soldier left with, which is
   how the mission is judged. Both are ours by contract 3, so there is no leak; the question is

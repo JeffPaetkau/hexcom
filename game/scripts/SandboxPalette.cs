@@ -46,11 +46,41 @@ public static class SandboxPalette
     public static readonly Color CoverLightHue = new("6fa8c8");
     public static readonly Color CoverHalfHue = new("d8b25a");
     public static readonly Color CoverFullHue = new("d1743c");
-    public static readonly Color PlayerHue = new("74d3b4");
-    public static readonly Color HostileHue = new("e0674a");
-    public static readonly Color NeutralHue = new("aab2bd");
+    /// <summary>
+    /// The two sides, at a saturation the ground is not allowed to reach.
+    /// </summary>
+    /// <remarks>
+    /// The play-through's fifth finding was that our soldiers do not read against the terrain,
+    /// and the measurement behind these two figures is why: every ground fill in this table sits
+    /// between 12 and 24 per cent saturation, and the old player hue was a 45 per cent teal
+    /// against a 24 per cent brown — a difference a hex of attention tint could close on its own.
+    /// Both sides are now above 70 per cent, which no ground fill may approach; that is the rule,
+    /// and the hexes are the numbers that keep it. Value is doing work too, and the reason the
+    /// hostile hue went up rather than down: a body is lit from one side and shadowed on the
+    /// other, so the dark half of it has to still beat the ground it stands on.
+    /// <para>
+    /// Entry 049's figures-not-names rule is about walls and ground, and it does not stop a
+    /// soldier having a colour of its own — a side is not a kind of terrain. What the rule does
+    /// forbid is the reverse: a ground fill drifting up towards these, which is the change to
+    /// refuse when somebody proposes it.
+    /// </para>
+    /// </remarks>
+    public static readonly Color PlayerHue = new("2ce8b0");
+
+    public static readonly Color HostileHue = new("ff5a35");
+    public static readonly Color NeutralHue = new("c8d2e0");
+
+    /// <summary>
+    /// The contact ring under a body, standing in for the shadow a blockout does not cast.
+    /// </summary>
+    /// <remarks>
+    /// Darker than every ground fill in this table, which is what makes it work on all of them
+    /// rather than on the one it was picked against. Opaque: it goes in the bodies mesh, and that
+    /// material does not read alpha.
+    /// </remarks>
+    public static readonly Color UnitShadow = new("07090c");
     public static readonly Color Panel = new("1b1f26", 0.92f);
-    public static readonly Color GhostHue = new("e0674a", 0.55f);
+    public static readonly Color GhostHue = new(HostileHue, 0.55f);
     public static readonly Color OverwatchHue = new("f2c14e");
     public static readonly Color AmbushHue = new("d95f9a");
     public static readonly Color LinkFill = new("c8a24a");
@@ -127,6 +157,32 @@ public static class SandboxPalette
         Side.Player => PlayerHue,
         Side.Hostile => HostileHue,
         _ => NeutralHue,
+    };
+
+    /// <summary>
+    /// A side's colour for a readout painted across the ground, rather than for a body.
+    /// </summary>
+    /// <remarks>
+    /// <b>The one place a side is two colours, and the reason is that one of them covers the
+    /// whole map.</b> The attention field tints every tile a soldier is attending to, out to its
+    /// sight range, so five soldiers on the waystation put a wash of side colour over most of the
+    /// ground. Raising <see cref="PlayerHue"/> and <see cref="HostileHue"/> to fix the
+    /// play-through's fifth finding raised that wash with them and washed the terrain out
+    /// altogether — a body that reads well against ground it has itself repainted has not been
+    /// fixed. So the field keeps the values the two hues had before, which were chosen against
+    /// the terrain and were never the thing that was wrong.
+    /// <para>
+    /// Side identity survives the split because hue is what carries it and hue is what is shared:
+    /// green is ours and orange is theirs in the field, on the body, in the turn order and on the
+    /// label. What differs is saturation, and only where the readout has to sit under something
+    /// else rather than on top of it.
+    /// </para>
+    /// </remarks>
+    public static Color AttentionHue(Side side) => side switch
+    {
+        Side.Player => new Color("74d3b4"),
+        Side.Hostile => new Color("e0674a"),
+        _ => new Color("aab2bd"),
     };
 
     public static Color AlarmHue(AwarenessState state) => state switch

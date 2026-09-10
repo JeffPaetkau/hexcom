@@ -74,12 +74,20 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0
 
 `--fit` pulls back until the whole map is in one picture, `--zoom N` puts the camera N metres
 back, `--yaw N` turns it to one of the six hex bearings, `--look q,r` centres on a hex, and
-`--scenario name` picks which battle to open. `--omniscient` draws every soldier in play and
-prints the AI's orders; without it the picture is the game, and a hostile nobody of yours has
-found is not in it.
+`--scenario name` picks which battle to open. `--omniscient` draws every soldier in play; without
+it the picture is the game, and a hostile nobody of yours has found is not in it.
+`--instruments` opens the second window and writes it beside the picture as
+`out.instruments.png`.
+
+**Nothing animates in a capture.** The camera turns smoothly and a soldier walks its route when
+a person is playing; with `--shot` on the line both land on their end state within the call that
+starts them, so `--yaw N` still lands on the frame it names and two runs of one command still
+produce the same file to the byte. `--still` turns the same two off for a person who would rather
+they were.
 
 **And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
-`--ai`, `--windows` and `--omniscient` is a step, run in the order it was typed: `--move`, `--fire`, `--stance`,
+`--ai`, `--windows`, `--omniscient`, `--instruments` and `--still` is a step, run in the order it
+was typed: `--move`, `--fire`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
 `--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
 method its key calls, so a picture can only ever show a state somebody at the keyboard could
@@ -95,10 +103,13 @@ what he did about it: *t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0
 
 The sandbox is a greybox: the battle as boxes on the ground the rules describe, every tile at
 its floor height, every wall at the height its profile gives it, every soldier a body at its
-stance height with its facing marked, and no art. It opens as the game — you see what your side
-knows, and a hostile is on the map only while one of yours has eyes on it, or as a ghost at the
-place they were last seen. `O` shows everything, which is what the captures that check the AI
-use. It fights `content/missions/waystation.hexmission` — three of yours on the
+stance height with its facing marked, and no art. **It opens as the game a person plays**: you
+against the AI on the waystation mission, answering your own reaction windows, seeing what your
+side knows — a hostile is on the map only while one of yours has eyes on it, or as a ghost at the
+place they were last seen. `O` shows everything and `H` takes the hostile side back off the AI,
+so every other way of running it is a keystroke away; a capture opens on the older defaults
+instead, with nothing on, which is why the commands above say `--ai` when they want it.
+It fights `content/missions/waystation.hexmission` — three of yours on the
 west road against a garrison holding the crossroads, one on the house roof with the radio and one
 in the watchtower. The map, who stands where facing which way, the way off, the objective and the
 clock all come out of that one file; nothing about the waystation is written down in the game
@@ -112,12 +123,15 @@ starts on.
 | | |
 |---|---|
 | `W` `A` `S` `D` | pan, in screen terms — `W` moves the view up the screen whichever bearing you are on |
-| `Q` / `E` | turn the camera to the previous or next of the six hex bearings |
+| `Q` / `E` | turn to the previous or next of the six hex bearings, animated rather than snapped |
 | wheel, `+` / `-` | zoom |
 | `F` / `G` | see the whole map / go back to whoever is up |
 | PgUp / PgDn | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
 
-A middle-drag pans too, and so do the arrow keys.
+**The mouse drives it too.** A middle-drag pans, a right-drag turns the camera freely, and the
+pointer near an edge of the window pushes the view that way. The arrow keys pan as well. A right
+*click* still fires — the two are told apart by whether the pointer moved, so the shot goes off
+when the button comes back up having stayed put.
 
 **What the soldier does.**
 
@@ -142,9 +156,16 @@ A middle-drag pans too, and so do the arrow keys.
 | `H` | hand the hostile side to the AI for every turn, or take it back |
 | `J` | let the AI take this turn, whoever is up — "what would you do here?" of your own soldier |
 | `K` | answer reaction windows by hand rather than taking the recommendation |
-| `O` | see everything — every soldier in play and the AI's orders — or only what your side knows |
+| `O` | see everything — every soldier in play — or only what your side knows |
 | `M` | the full briefing, in the six parts the squad was given it |
+| `I` | the instruments window |
 | `R` | new battle |
+
+**The instruments live in a window of their own**, which `I` opens and which can sit on another
+monitor. In it: which battle this is and which switches are on, the keys in this table, and every
+turn the AI has taken since you last acted with the reasoning behind each. All of it fails the
+test the main view is built to — *would a player who never presses `O` want it* — and the window
+being shut is what a shipped interface would look like.
 
 Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in,
 dark blue ones cannot be entered at all, and the blue-outlined ones are where your side may walk
