@@ -21,7 +21,7 @@ src/Hexcom.Core/        the rules — no engine references, ever
 tests/Hexcom.Core.Tests/  xUnit
 content/                maps and missions as text, and the library that reads them; its own tests beside it
 game/                   the Godot 4 project (view + input only)
-docs/                   design doc, setting bible, and the project map the work is divided by
+docs/                   design doc, setting bible, interface conventions, and the project map the work is divided by
 ```
 
 Work is split into territories with path-based ownership so that several sessions can run at
