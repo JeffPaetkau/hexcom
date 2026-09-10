@@ -83,10 +83,25 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
 
 ---
 
-## The job — a second battlefield, of a different shape
+## The job — first, the one line; then a second battlefield
+
+**First, and it is an hour: turn the waystation's reconnaissance objective on.** Entry 059 left
+`objective reconnaissance player at house out cottages unnoticed suspicious` commented out in
+`waystation.hexmission` until Core had the shape. Entry 061 built it — `Reconnaissance(side,
+place, exit, within, unnoticed)`, one sortie carrying its own exit and threshold — and says the
+statement maps straight onto it, with `within` defaulting to twelve metres, which entry 059's
+own measurement of the house says is very likely right. So: the `ObjectiveOrder` for
+reconnaissance in `Hexcom.Content`, the line uncommented and the withdrawal line retired, and
+a dozen seeds through the harness to see the mission fought to a verdict *with something in the
+middle of it* for the first time. Record what the routes did in `../decisions.md`; entry 048
+is the baseline it is measured against. **Until this lands, every build the user tests still
+has the walk-out mission in it**, which is why it comes before the map. Branch
+`content/reconnaissance`, and merge it before starting the one below.
+
+### Then — a second battlefield, of a different shape
 
 Branch `content/second-battlefield`. The waystation's mission is written as far as content can
-take it (entry 059) and the rest of it is Core's objective. This is the other thing entry 057's
+take it (entry 059) and the rest of it is Core's objective, which has now landed (entry 061). This is the other thing entry 057's
 *make what we have playable* wants from Content, and it is the last map job before the campaign:
 one battlefield is one data point, and every claim the format makes rests on it.
 

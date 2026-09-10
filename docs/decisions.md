@@ -2770,7 +2770,7 @@ expect.
 ---
 
 ## 059 — The waystation mission is finished but for the rule it needs, and the ground already says what the mission is
-**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for core — the objective; the content half is done
+**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for content — Core landed the objective in 061; the one-line uncomment is the head of Content's brief, see 068
 
 Content's half of entry 057's *make what we have playable*. Everything about
 `waystation.hexmission` that is content is now written, so that when Core has an objective at a
@@ -2876,7 +2876,7 @@ can yet use is Ilves — see Core item 2 above. Also unused: `CostProfile.Scout`
 `CostProfile.Gunner` are still attached to nobody, which is item 3 of entry 046 and still Core's.
 
 ## 060 — The genre's conventions are written down, and the biggest gap is where the numbers are drawn
-**2026-09-09** · **Raised by** interface · **For** view, master · **Status** resolved for the research; the queue is Master's to promote
+**2026-09-09** · **Raised by** interface · **For** view, master · **Status** resolved — the queue is promoted through View's own brief, which points at it since 066
 
 `docs/interface/conventions.md` and `docs/interface/briefs.md` exist. The first is one section per
 question a player meets — camera, selecting and ordering, turn order, what of the enemy is drawn,
@@ -3014,7 +3014,7 @@ how far along the mission is, and a record that changes is a record in name only
 ---
 
 ## 062 — The two archetypes now pay their own prices, and nothing noticed
-**2026-09-09** · **Raised by** core · **For** master · **Status** open — unmeasured
+**2026-09-09** · **Raised by** core · **For** master · **Status** open — the measurement is the first item of `core/measured`
 
 Entry 046's item for Core, taken up. `UnitStats.Scout` carries `CostProfile.Scout` and
 `UnitStats.Trooper` carries `CostProfile.Gunner`, so a scout is quick over ground and slow on the
@@ -3314,3 +3314,37 @@ is silent on any mechanic newer than itself. `conventions.md` now has a third sh
 shipped while this was being built, and the next question of this shape should be asked the way
 the user asked this one: which shipped game has this mechanic, not which famous game has something
 like it.
+
+## 068 — Seven merges, the six are built, and the mission is one uncommented line from being a mission
+**2026-09-09** · **Raised by** master · **For** content, view, core · **Status** resolved
+
+The largest round yet: Core's objective at a place, Content's finished mission, View's six
+findings, and four Interface merges — the conventions, and three that the user drove directly
+(064, 065, 067). Every one stayed inside its paths; Interface touched nothing but `docs/interface/`
+and the log, which is the scheme holding under the most sessions it has run at once.
+
+**The one thing this round did not close, and it is an hour.** Entry 059 left the reconnaissance
+objective commented out in `waystation.hexmission` until Core had the shape; entry 061 built it
+and said the line maps straight onto the constructor. Nobody uncommented it, because Core's
+brief said *let Content uncomment* and Content's brief had moved on to the second map. So the
+build made at the end of this round still carries the walk-out mission. It is now the head of
+Content's brief, ahead of the map, on its own branch, and the next build after it merges is the
+first one with something in the middle of the mission.
+
+**Statuses.** 057 resolved by 066. 059 open for Content only, routed as above. 060 resolved: the
+queue is promoted through View's own brief, which now points at it, so Master promotes by
+leaving that pointer true rather than by copying briefs across. 062 open, and its measurement is
+the first item of `core/measured`. 063 stays open until `--aside` is in **Seeing it**; it is the
+first item of View's brief.
+
+**The trailers.** None of the seven commits carries a `Session:` line. The model is in every
+one (Opus, all seven), so the half that matters most is still derivable, but keep-or-restart
+was a guess this round. The rule is in `CLAUDE.md` under *Cleaning up*; a reminder at the start
+of each session is cheaper than the guess.
+
+**Next round, on the playable path.** Content, `content/reconnaissance`, the hour above — Opus,
+fresh or continued. View, `--aside` then the review list then the queue — Opus; the session that
+built the six has run one large job and its context is the thing the review list needs, so keep
+it if it holds. Core, `core/measured` — Opus, fresh; the first measured numbers in the project.
+Interface's onboarding brief, Content's second map and Setting's sites are written and wait on
+the user's word.
