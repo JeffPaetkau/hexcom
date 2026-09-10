@@ -24,10 +24,12 @@
 
   <ItemGroup>
     <!--
-      Every map under content/maps ships inside the assembly, so a caller with no idea where the
-      repository is on disk (a Godot scene, a test) can still ask for a map by name.
+      Every map under content/maps and every mission under content/missions ships inside the
+      assembly, so a caller with no idea where the repository is on disk (a Godot scene, a test)
+      can still ask for either by name.
     -->
     <EmbeddedResource Include="..\maps\*.hexmap" LogicalName="maps/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\missions\*.hexmission" LogicalName="missions/%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

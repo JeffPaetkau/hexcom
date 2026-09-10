@@ -6,23 +6,24 @@ using Hexcom.Core.Movement;
 namespace Hexcom.Content.Tests;
 
 /// <summary>
-/// The format is finished when it can say everything the corner graph can hold and the demo
-/// map comes out of a file identical to the one built by hand. These tests are that sentence.
+/// The format is finished when it can say everything the corner graph can hold, and when a map
+/// written with the friendly half of it lowers to the honest half without losing anything. These
+/// tests are that sentence.
 /// </summary>
+/// <remarks>
+/// One test used to hold <c>compound.hexmap</c> identical to a map built by hand in
+/// <c>DemoMaps.Compound()</c>, which was how the format proved itself while both existed. The
+/// hand-built one is gone — entry 043 — and what is left is the round trip, which was always the
+/// stronger claim: it holds for any map rather than for one.
+/// </remarks>
 public class MapFileTests
 {
     // ---- the two candidates are one format ---------------------------------------
 
     [Fact]
-    public void TheCompoundFromTheFileIsTheCompoundFromTheCode()
+    public void LoweringAMapToPrimitivesLosesNothing()
     {
-        MapEquality.AssertSame(DemoMaps.Compound(), MapLibrary.Load("compound"));
-    }
-
-    [Fact]
-    public void LoweringAMapBuiltInCodeToPrimitivesLosesNothing()
-    {
-        var original = DemoMaps.Compound();
+        var original = MapLibrary.Load("compound");
         var text = MapWriter.Write(original, "Compound");
         var reread = MapFile.Parse(text, "lowered").Map;
 
