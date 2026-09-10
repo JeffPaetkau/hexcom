@@ -155,6 +155,29 @@ sits through a pause with no account of it. And the strip is redrawn from what i
 a hostile found mid-round appears in the order at once, which reads as a discovery rather than as
 bookkeeping.
 
+**The pause itself needs an indicator, and its shape is not obvious — the user settled it in
+entry 065.** *One indicator per contiguous stretch of hostile activity, never one per turn.* It
+appears when control leaves the player's side and clears when it returns.
+
+The reason it cannot be per turn is that a per-turn mark hands back exactly what dropping the
+slot withheld: a player who counts the appearances has the enemy's count and their rough place in
+the order again. Showing it only for hostiles nobody has found is worse still, because then its
+*presence* is the tell. So it is the same indicator for every hostile turn, known actor or not,
+and it is one indicator for a run of them.
+
+**This is the alternating games' phase banner, and that is the convention it takes.** XCOM says
+*enemy turn* over the whole phase rather than per unit. An interleaved game would normally have
+no use for that, because its strip carries the identity; here the identity is the one thing that
+cannot be shown, so the presentation collapses onto the banner. Two details it needs:
+
+- **A message, with an activity indicator inside it — not an indicator alone.** A spinner on its
+  own claims *the software is busy*, which is a bug report. The words are what claim *somebody
+  else is playing*. The spinner earns its place only on a stretch long enough to look frozen.
+- **A minimum dwell**, or a resolution that finishes in a frame flashes the banner and is worse
+  than drawing nothing. The games that do this hold it for roughly 0.6 to 1.2 seconds, which is
+  an argument rather than a measurement. Captures and headless runs skip the dwell entirely, by
+  the same settle-before-shot rule every other animation here obeys.
+
 Mark the round boundary, which is a plain **convention** borrowed from Battle Brothers and is
 missing.
 

@@ -197,7 +197,7 @@ it, and taking the shot wakes exactly those.
 
 ---
 
-## Five — the strip says what it knows
+## Five — the strip, and the pause, say only what the player knows
 
 **Branch** `view/order-strip`. **The genre's answer on the round mark; a departure on the unfound
 hostile**, which the genre never needed because its strips draw everybody.
@@ -214,21 +214,34 @@ strip draws only what the player knows, and an unfound hostile holds no slot at 
 that says whether a hostile is known — the same question the view, the HUD and the cursor ask, so
 the strip must not grow a second opinion about it.
 
-**Settle first.** *What a player sees during a turn they cannot see.* An unfound hostile's go
-passes with nothing on screen and time moving, which is the honest presentation and is the game.
-So anything that turn does which the player *can* perceive has to register — a noise heard, a
-shout picked up, one of theirs shot at — or the pause has no account and reads as a bug. Decide
-where that lands: the happenings block already exists for what happened while it was not your go,
-and it is the obvious home. And *the strip is redrawn from what is known now*, so a hostile found
-mid-round enters the order immediately, which should read as a discovery.
+**Build with it: the *their go* banner, settled by entry 065.** An unfound hostile's turn passes
+with nothing on screen and time moving, and the pause needs an account or it reads as a bug.
+**One indicator per contiguous stretch of hostile activity, never one per turn** — it appears
+when control leaves the player's side and clears when it returns. Per-turn hands back exactly
+what dropping the slot withheld, because a player who counts the appearances has the enemy's
+count and their place in the order again; and showing it only for unfound hostiles is worse,
+because then its presence is the tell. So: the same indicator for every hostile turn, known actor
+or not, and one for a run of them. A **message** with an activity indicator inside it, not an
+indicator alone — a bare spinner claims the software is busy, which is a bug report. A **minimum
+dwell** of roughly 0.6 to 1.2 seconds, an argument and not a measurement, so a resolution that
+finishes in a frame does not flash it. **No dwell in captures or headless runs**, by the same
+settle-before-shot rule as every other animation.
+
+**Settle first.** *Where a perceptible event lands.* Anything a hostile turn does that the player
+*can* perceive — a noise heard, a shout picked up, one of theirs shot at — has to register, and
+the happenings block already exists for what happened while it was not your go. Those are per
+event and are legitimately countable, because the player genuinely perceived them; the banner is
+not. And *the strip is redrawn from what is known now*, so a hostile found mid-round enters the
+order immediately, which should read as a discovery.
 
 **Out of scope.** What is drawn on the map, which is brief two. Anything that would make an
-unfound hostile's turn *visible* — that is the fog, and it stays.
+unfound hostile's turn *visible* — that is the fog, and it stays. Any camera move towards an
+actor the player has not found, for the same reason.
 
 **How to know it worked.** A player can say whose go is next and when the round turns over, and
-cannot count the enemy squad from the strip or from anywhere else. A round in which a hostile
-they have not found takes a turn leaves them something to read about it if it made a sound, and
-nothing if it did not.
+cannot count the enemy squad from the strip, from the banner, or from anywhere else. A round in
+which a hostile they have not found takes a turn shows them the banner, leaves them something to
+read about it if it made a sound, and nothing if it did not.
 
 ---
 
