@@ -2764,3 +2764,113 @@ interface territory: every recommendation is either the convention as it stands 
 with the reason this game needs it, and the default in doubt is the convention. This game will
 modify conventions to suit its subject; it will not invent where a player already knows what to
 expect.
+
+---
+
+---
+
+## 059 — The waystation mission is finished but for the rule it needs, and the ground already says what the mission is
+**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for core — the objective; the content half is done
+
+Content's half of entry 057's *make what we have playable*. Everything about
+`waystation.hexmission` that is content is now written, so that when Core has an objective at a
+place the file changes one line.
+
+**The names are out of the roster.** Cobb has the gate, Teague has the roof and the set, Marek is
+in the tower. That is item 1 of entry 046 done for the waystation, and it took three words because
+the mission is one file. The **briefing still says posts** — *one stands on the road outside the
+west gate* — and only the deployments say names, which is the split section 6 of the roster asked
+for and the right one: the Commission does not know the man at the gate is called Cobb. `game/`'s
+compound fixture still fields the three posts and that is View's to change or keep.
+
+**The ground the briefing talks about is named ground.** `compound`, `house` and `cottages`, so an
+objective can point at them and the view can label them (entry 052).
+
+**The briefing is rewritten in the mission book's assessment register**, because the task is a
+look and not a walk. Six parts, about 250 words, the longest of them *what is there* at 121 —
+which is the right shape, since entry 030 says the uncertainty in that row is the campaign.
+
+### The measurement, which is the interesting half
+
+The mission book's test for a reconnaissance is whether the ground gives you somewhere to look at
+the place *from*: a place with no standoff on it is a burglary and not an assessment. Asked of the
+house, on the map as drawn:
+
+| | |
+|---|---|
+| standable places outside the wall | 1693 |
+| of those, with a line into the house | **0** |
+| standable places in the yard | 54 |
+| of those, with a line into the house | **14**, all south of the door |
+| of those fourteen, overlooked by the roof | **14** |
+| where the drain under the south wall opens | `-1,-3`, which is one of the fourteen |
+
+**So the ground already states the mission, and nobody drew it that way on purpose.** The house
+cannot be looked into from the road at any range, so the task is necessarily inside the wall. The
+drain — the way in nobody watches — lands you on the shot. And there is nowhere to take it from
+that Teague cannot see, so the man on the roof is not an obstacle on the way to the mission, he
+*is* the mission. Three tests in `content/Hexcom.Content.Tests/Waystation/WaystationGroundTests.cs`
+hold all of it, and they are the first tests in the project that check a map against what a
+briefing claims about it.
+
+**What is thin about it is that it is one decision.** Deal with the roof or accept being seen.
+Whether that is enough is measurable the day the objective lands and is guesswork before it, so
+the map has not been redrawn — but the two levers are known and both are content: a second
+opening on the far side of the house, or a lower section of compound wall so the ridge at 1.5 m
+buys standoff from outside.
+
+### For Core
+
+**1. The objective, and one question about its shape that Content cannot answer.** The
+reconnaissance line is written into the file and commented out, one statement, so landing the rule
+is an uncomment and a deletion:
+
+```
+objective reconnaissance player at house out cottages unnoticed suspicious
+```
+
+Note what it names: a place to get eyes on **and** a place to leave by. That is not this mission
+being unusual — **all six shapes in the mission book end with getting off the ground**, so either
+every objective grows an exit and a threshold, or objectives compose and a mission carries two.
+The grammar can express either and it cannot guess; whichever Core builds, Content writes an
+`ObjectiveOrder` for it and the format does not change (entry 047).
+
+**2. A garrison that does not move is most of what makes this read as a diorama**, and it is not
+content's to fix. Three of the four hostiles never act: Marek cannot notice the west road at 54 m
+against a sight range of 45, Hollis has no line to it at all, and Teague sits still. The fiction
+already has the answer and the map already has the route — the roster's section 5 gives the Cadre
+one honest patrol, Ilves, *out past the bridge and back at hours nobody can predict*. **Nothing can
+say that.** A mission file has no way to give a soldier a route, and nothing in `Commander`
+patrols; a fifth deployment would just be a fifth soldier standing still. Whether a patrol is a
+standing order in the file or a behaviour in the search is Core's call, and until one of them
+exists a garrison is four sentries.
+
+**3. Twelve seeds are unchanged from entry 048**, as they should be, since the objective did not
+change: three achieved, nine abandoned, all in round 2 or 3, nobody within twenty hexes of the
+house. The finding stands and the fix is item 1.
+
+### For View
+
+`Mission.Places` now holds three rather than one, and two of them are concentric: `compound` is 61
+tiles centred on `0,0` and `house` is 7 centred on `0,1`. `DrawPlaceLabels` puts one label at the
+centroid of each, so **this entry was going to report that the two would collide**, and a capture
+says they do not — 1.73 m of separation is about sixty pixels at a normal working zoom and both
+read cleanly, at the compound and from across the map. Recorded because it was checked rather than
+reasoned about, and the reasoning was wrong: a place inside another place is a case the
+one-label-per-place rule did not have until now and it turns out to handle.
+
+Two small things the same captures did show.
+
+- **The briefing panel prints `wayoff` where the file says `way-off`.** The five other parts are
+  single words so nothing else shows it. `MissionFile.PartName` is the file's spelling of a
+  `BriefingPart` and is public for exactly this.
+- **The task is on the status line and it is 21 words**, which fits at 1600 wide with a little to
+  spare. The mission book says a task is one sentence and *if it takes two it is two missions*, so
+  the constraint is the fiction's rather than the readout's — but a longer one would run out of
+  line, and Content now knows it.
+
+### For Setting
+
+The roster's names are in and they read well in a match report. What the roster wrote that nothing
+can yet use is Ilves — see Core item 2 above. Also unused: `CostProfile.Scout` and
+`CostProfile.Gunner` are still attached to nobody, which is item 3 of entry 046 and still Core's.

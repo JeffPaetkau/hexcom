@@ -71,14 +71,14 @@ public class WaystationFightTests(ITestOutputHelper output)
         var battle = WaystationFight.Start(seed: 1);
         var bekker = battle.Units.Single(u => u.Name == "Bekker");
         var orsini = battle.Units.Single(u => u.Name == "Orsini");
-        var sentry = battle.Units.Single(u => u.Name == "Sentry");
+        var cobb = battle.Units.Single(u => u.Name == "Cobb");
 
-        // From the field, the sentry at the gate is behind the trees.
-        Assert.False(battle.CanSee(bekker, sentry), "the rifleman in the field can see the gate");
-        Assert.False(battle.CanSee(sentry, bekker), "the sentry can see into the field");
+        // From the field, the man at the gate is behind the trees.
+        Assert.False(battle.CanSee(bekker, cobb), "the rifleman in the field can see the gate");
+        Assert.False(battle.CanSee(cobb, bekker), "the sentry can see into the field");
 
         // From the road, through the gap, he is not — the road is still the way everybody uses.
-        Assert.True(battle.CanSee(orsini, sentry), "the road should look straight at the gate");
+        Assert.True(battle.CanSee(orsini, cobb), "the road should look straight at the gate");
     }
 
     [Fact]
@@ -116,10 +116,10 @@ public class WaystationFightTests(ITestOutputHelper output)
             .ToList();
         output.WriteLine($"a slug rifle fired at the west gate is heard by: {string.Join(", ", heard)}");
 
-        // The sentry at the gate and the spotter on the roof; not the barn, not the tower.
-        Assert.Contains("Spotter", heard);
+        // Cobb at the gate and Teague on the roof; not the barn, not the tower.
+        Assert.Contains("Teague", heard);
         Assert.DoesNotContain("Hollis", heard);
-        Assert.DoesNotContain("Watchman", heard);
+        Assert.DoesNotContain("Marek", heard);
     }
 
     [Fact]

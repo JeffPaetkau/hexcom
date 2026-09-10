@@ -33,10 +33,10 @@ public class MissionFileTests
         Assert.Same(UnitStats.Scout, vance.Stats);
         Assert.Same(Loadout.Infiltrator, vance.Loadout);
 
-        // The spotter is on the house roof, which is a layer and not a coordinate.
-        var spotter = mission.Deployments.Single(d => d.Name == "Spotter");
-        Assert.Equal(new TileAddress(new Hex(0, 1), 1), spotter.Where);
-        Assert.Same(UnitStats.Signaller, spotter.Stats);
+        // Teague has the roof, which is a layer and not a coordinate.
+        var teague = mission.Deployments.Single(d => d.Name == "Teague");
+        Assert.Equal(new TileAddress(new Hex(0, 1), 1), teague.Where);
+        Assert.Same(UnitStats.Signaller, teague.Stats);
 
         // Bekker names no role, which is the default soldier rather than an omission.
         Assert.Null(mission.Deployments.Single(d => d.Name == "Bekker").Stats);
@@ -49,8 +49,13 @@ public class MissionFileTests
 
         Assert.All(Briefing.Order, part => Assert.NotEmpty(brief.Part(part)));
         Assert.Contains("Instrument 4-11", brief.Instrument);
-        Assert.Contains("confirm what is stored", brief.Task);
+        Assert.Contains("what is stored in the house", brief.Task);
         Assert.Contains("will not fire", brief.Restraint);
+
+        // The briefing names posts and the deployments name people, which is the split the
+        // roster asked for: the Commission does not know the man at the gate is called Cobb.
+        Assert.Contains("outside the west gate", brief.Presence);
+        Assert.DoesNotContain("Cobb", brief.Presence);
     }
 
     [Fact]
@@ -67,6 +72,18 @@ public class MissionFileTests
         var bekker = new NodeId(new Hex(-19, -3), 0);
         var reach = Pathfinder.Reachable(graph, bekker, int.MaxValue);
         Assert.All(exit, node => Assert.True(reach.CanReach(node), $"{node} cannot be walked to"));
+    }
+
+    [Fact]
+    public void TheGroundTheBriefingTalksAboutIsNamedSoTheObjectiveCanPointAtIt()
+    {
+        var mission = MissionLibrary.Load("waystation");
+
+        // The task is a look at the house, inside the compound, and out by the cottages. All
+        // three are places, because an objective at a place cannot refer to a coordinate.
+        Assert.Equal(["compound", "cottages", "house"], mission.Places.Keys.Order().ToList());
+        Assert.Equal(61, mission.Places["compound"].Count);
+        Assert.Equal(7, mission.Places["house"].Count);
     }
 
     [Fact]

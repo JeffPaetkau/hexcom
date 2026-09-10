@@ -235,7 +235,7 @@ Places are named rather than numbered because a briefing has to be able to say o
 
 ```
 deploy Vance  player -21,3  facing se role scout   kit infiltrator
-deploy Spotter hostile 0,1@1 facing nw role signaller kit beamer
+deploy Teague hostile 0,1@1 facing nw role signaller kit beamer
 deploy Bekker player -19,-3 facing ne              kit rifleman
 ```
 

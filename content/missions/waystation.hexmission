@@ -1,42 +1,67 @@
 # Instrument 4-11 — the waystation on the north road.
 #
 # The four things entry 030 says a mission needs that a map deliberately cannot hold, plus the
-# squads. This file replaced three copies of the same facts: a prose header in
+# squads. This file replaced three copies of the same facts — a prose header in
 # content/maps/waystation.hexmap, a scenario in game/scripts/SandboxScenario.cs, and a harness in
 # content/Hexcom.Content.Tests/Waystation. Entry 038 said what was wrong with three; entry 047
-# says what this is instead. Anything that wants to fight the waystation reads this.
+# says what this is instead, and entry 052 removed the last of them. Anything that wants to fight
+# the waystation reads this.
+#
+# The task is a look, so the register is the mission book's assessment rather than its walk, and
+# the objective it wants is reconnaissance. The rules have one shape and it is withdrawal, so the
+# line that runs today is the leaving and the line that will run is written beside it. Entry 059.
 
 mission Instrument 4-11: the waystation
 map waystation
 
 # ---- the briefing, in the mission book's six parts ------------------------------------------
+#
+# Written in the words the squad is given, which is why it names posts and not people: the
+# Commission does not know that the man outside the west gate is called Cobb. The deployments
+# below know, because a readout has to call him something. Entry 046.
 
 brief instrument  Instrument 4-11 continues in force and this is an inspection of the waystation
-brief instrument  on the north road, filed accordingly. A walk.
+brief instrument  on the north road, filed accordingly. Nobody is at war and you are a
+brief instrument  maintenance visit.
 
-brief presence    A detail of four, we think, holding the crossroads. One outside the west gate
-brief presence    watching the road. One on the roof of the house inside the compound, and that
-brief presence    is the one with the set. A rifle in the tower to the south-east, four metres
-brief presence    up, and one more in the barn on the east road. They have held this place a
-brief presence    fortnight and nobody has come up the road in that time.
+brief presence    A detail of four, we think, and the last two reports disagree about the fourth.
+brief presence    One stands on the road outside the west gate, twenty-five metres out, watching
+brief presence    the way anybody sensible would come. One is on the roof of the house inside the
+brief presence    compound and that is the one with the set, so whatever he works out, all of
+brief presence    them know. A rifle in the tower to the south-east, four metres up, too far from
+brief presence    the west road to notice what he could hit. One more in the barn on the east
+brief presence    road, who hears nothing the roof does not tell him. They are a fortnight into a
+brief presence    rotation and they are bored, which is the whole of your advantage.
 
-brief task        Enter the compound, confirm what is stored in the house, and come out.
+brief task        Get eyes on what is stored in the house inside the compound, properly on it,
+brief task        and come out with the answer.
 
-brief restraint   You will not be seen and you will not fire. The people who live in the cottages
-brief restraint   are not part of this.
+brief restraint   You will not be seen and you will not fire. If the shift sees you the task is
+brief restraint   over and you will still not fire. The people in the cottages are not part of
+brief restraint   this and they live here.
 
 brief way-off     Off by the cottages, west of the stream and north of the road, before first
-brief way-off     light. Not the road you came in by: the sentry has had all night to watch it.
+brief way-off     light. Not the road you came in by: the man at the gate has had all night to
+brief way-off     watch it, and nobody is coming to get you.
 
-brief stop        If one of them properly registers you, and lives to keep it or has already
-brief stop        passed it to the roof, the task is over. Come home by the cottages. There is
-brief stop        nothing here worth the second half of the night.
+brief stop        If one of them properly registers you and lives to keep it, or has already
+brief stop        passed it to the roof, the answer is worth nothing before you are home. Come
+brief stop        back by the cottages. There is nothing here worth the second half of the night.
 
 # ---- named ground ---------------------------------------------------------------------------
+#
+# What the briefing says out loud, so the objective can refer to it and the view can label it.
+#
+# The house is the thing to look at and it is sealed: of the 1693 places a soldier can stand
+# outside the wall, not one has a line into it. Of the 54 inside, fourteen do, all of them south
+# of the door and all fourteen overlooked by the roof. The drain under the south wall opens at
+# -1,-3, which is one of the fourteen. So the ground already says what the mission is — in by the
+# drain, the look from where you land, and the man on the roof is the whole problem. Measured,
+# and held by a test in the harness.
 
-# The way off has to be somewhere the person meeting you can find, which is why it is a place and
-# not a map edge (entry 030). The two cottages share a wall and have one door, on the road side.
 place cottages hexes -14,6 -14,7 -13,6
+place compound disc 0,0 r 4
+place house disc 0,1 r 1
 
 # ---- who is standing where ------------------------------------------------------------------
 
@@ -46,23 +71,35 @@ deploy Vance  player -21,3  facing se role scout   kit infiltrator
 deploy Orsini player -20,0  facing ne role trooper kit heavy
 deploy Bekker player -19,-3 facing ne              kit rifleman
 
-# Theirs. The sentry watches the road we are coming up. The spotter has the roof and the set, and
-# AwarenessTracker.CanReach gives a radio the whole side — so whatever the roof works out, the
-# tower and the barn know, and neither can see that far itself. The barn and the tower are both
-# outside earshot of the compound (entry 037), so if the roof goes quiet, so do they.
-deploy Sentry   hostile -5,0     facing sw                 kit beamer
-deploy Spotter  hostile 0,1@1    facing nw role signaller  kit beamer
-deploy Watchman hostile 16,-14@1 facing nw                 kit rifleman
-deploy Hollis   hostile 14,-6    facing sw                 kit beamer
+# Theirs, out of docs/setting/roster.md section 5 — the Cadre detail that holds this stretch of
+# road. Cobb has the gate, Teague has the roof and the set, Marek is in the tower and Hollis is in
+# the barn. AwarenessTracker.CanReach gives a radio the whole side, so whatever Teague works out,
+# the tower and the barn know and neither could have seen it. Both of them are outside earshot of
+# the compound (entry 037), so if the roof goes quiet, so do they.
+deploy Cobb   hostile -5,0     facing sw                 kit beamer
+deploy Teague hostile 0,1@1    facing nw role signaller  kit beamer
+deploy Marek  hostile 16,-14@1 facing nw                 kit rifleman
+deploy Hollis hostile 14,-6    facing sw                 kit beamer
 
 # ---- what we came to do ---------------------------------------------------------------------
 
-# Suspicious is a dog barking at 25; Searching is 50, the rung where a sentry stops scanning and
-# starts walking towards where he thinks you were. The brief says properly registered, so the
-# threshold is the higher one and a suspicion is survivable.
+# The shape this mission is, once the rules have it. Reconnaissance is won by holding the place
+# in full attention with a clear line to it and then getting off the ground, which is two calls
+# that already exist — SightSolver.Trace and AwarenessTracker.IsWatching — and an objective
+# nobody has written. See docs/setting/missions.md section 4, and entry 059 for what Content
+# needs from it. When it lands, uncomment this line and delete the one below it.
+#
+#   objective reconnaissance player at house out cottages unnoticed suspicious
+
+# What runs today: the leaving, and only the leaving. Suspicious is a dog barking at 25;
+# Searching is 50, the rung where a sentry stops scanning and starts walking towards where he
+# thinks you were. The brief says properly registered, so a suspicion is survivable.
+#
+# It is also achieved by turning round and going home without ever entering the compound, which
+# is what a dozen matches do — entry 048. That is the gap the line above closes.
 objective withdrawal player exit cottages unnoticed suspicious
 
 # Before first light. Thirty rounds covers every fight seen on this ground with room to spare —
-# entry 038 measured the fighting over by round 21 — and nothing in the rules reads this yet, so
-# whatever runs the battle applies it.
+# entry 038 measured the fighting over by round 21 — and nothing in the rules reads this, so
+# whatever runs the battle applies it: the harness in content/ and the sandbox both do.
 rounds 30

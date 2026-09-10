@@ -505,7 +505,9 @@ there, and what the failure looks like when they are not.
   hands back a battle deployed, ordered and started. It is a separate file rather than a block in
   the map because ground outlives missions and one battlefield can carry several of them, and the
   reasoning is in `content/README.md`. The sandbox fights from it too, so what you play and what
-  a headless match measures are the same seven soldiers standing in the same places.
+  a headless match measures are the same seven soldiers standing in the same places. Both sides
+  are named out of the roster, and the ground the briefing talks about — the compound, the house,
+  the cottages — is named ground the objective can point at and the view can label.
 
 - **The waystation has been fought over** — by the AI on both sides, a dozen seeds, headless,
   with a recorder in `content/Hexcom.Content.Tests/Waystation` that writes down where everybody
@@ -517,6 +519,14 @@ there, and what the failure looks like when they are not.
   dozen fought from the mission file all settle, in two or three rounds, because a squad told to
   leave leaves. That is the objective system working and it is also the next thing to argue
   about — see entry 048.
+
+- **And the map has been measured against its own briefing**, which turned out to say more than
+  anybody drew on purpose. The task is to get eyes on what is in the house: of the 1693 places a
+  soldier can stand outside the compound wall not one has a line into it, of the 54 inside exactly
+  fourteen do, all of them south of the door — and every one of the fourteen is overlooked by the
+  roof the man with the radio is standing on. The drain under the south wall, the way in nobody
+  watches, opens onto one of the fourteen. So the ground states the mission: in by the drain, the
+  look from where you land, and the roof is the whole problem. Entry 059, and three tests hold it.
 
 ## What is not built yet
 
@@ -537,7 +547,12 @@ Every part of that sentence but the record is a query that already exists.
 **A withdrawal is achieved by walking away.** The one mission shape there is judges the leaving
 and not the being there, so twelve matches out of twelve end with a squad that never went near
 what it was sent to look at. The task half of every shape in the mission book is the missing
-piece — entry 048.
+piece — entry 048. The waystation's file already carries the line it wants, commented out.
+
+**Nobody patrols.** A garrison is however many soldiers were deployed, standing exactly where they
+were put, and three of the waystation's four never act at all. Neither a mission file nor the AI
+can say what a soldier is *doing* rather than where it is, so the fiction's one honest patrol is
+unwritable and a fifth sentry would be a fifth sentry standing still — entry 059.
 
 **A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from
 several turns away; a marker does not, so hunting still reaches about one move and two survivors
