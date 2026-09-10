@@ -132,16 +132,31 @@ hostile nobody has found holds a slot reading `?`, with no name, roll or reserve
 
 **The asymmetry.** This is the one place in the interface where the *count* of the enemy leaks,
 and the genre has nothing to say about it, because every interleaving game in it starts with
-everybody visible. That somebody acts at that point in the order is knowable — turns are taken in
-the open. That there are four of them is not obviously yours to know.
+everybody visible.
 
-**Recommendation** — **convention** on one half, **departure** on the other, and that is what
-splits the View open question in two. Keep the slot: dropping it loses the interleaving the strip
-exists to show, which is the whole reason an interleaved game draws a strip at all. But stop
-drawing it in the shape of a soldier. An anonymous narrow tick
-reads as *somebody acts here*; a portrait-shaped slot with a `?` in it reads as *a soldier you
-have failed to identify*, which is a stronger claim than the rules make. Mark the round boundary,
-which is a plain **convention** borrowed from Battle Brothers and is missing.
+**Recommendation** — **convention** on the round boundary, **departure** on the slot, and the
+departure is the user's decision in entry 064: **the strip draws only what the player knows.** A
+hostile nobody has found holds no slot at all, not even an anonymous one. From the player's side
+their own soldiers simply act in sequence until an enemy does something they can perceive.
+
+This was argued the other way first and the argument was wrong. It ran: dropping the slot loses
+the interleaving the strip exists to show. It does not, because the interleaving a player can act
+on is the interleaving of soldiers they have found, and that is still drawn. What a slot for an
+unfound hostile adds is two things the player has not earned — that an enemy exists, and roughly
+where in the order it acts — and a mark that says *somebody acts here* is a weaker claim than a
+`?` portrait only by degree. Neither is a fact about the player's own side, which is the test
+contract 3 actually applies.
+
+**What follows from it, and it has to be built or the strip reads as broken.** An unfound
+hostile's turn passes with nothing on screen and time moving. That is the honest presentation and
+it is the game, but it means anything that turn does which the player *can* perceive — a noise
+heard, a shout picked up, a soldier of theirs shot at — has to register somewhere, or a player
+sits through a pause with no account of it. And the strip is redrawn from what is known *now*, so
+a hostile found mid-round appears in the order at once, which reads as a discovery rather than as
+bookkeeping.
+
+Mark the round boundary, which is a plain **convention** borrowed from Battle Brothers and is
+missing.
 
 ## What of the enemy is drawn
 

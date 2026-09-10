@@ -199,28 +199,36 @@ it, and taking the shot wakes exactly those.
 
 ## Five — the strip says what it knows
 
-**Branch** `view/order-strip`. **The genre's answer on the round mark; a departure on the
-anonymous slot**, which the genre never needed because its strips draw everybody.
+**Branch** `view/order-strip`. **The genre's answer on the round mark; a departure on the unfound
+hostile**, which the genre never needed because its strips draw everybody.
 
 **What it is.** Initiative is rolled per round and the strip shows the interleave, which is why
-an interleaving game draws a strip at all. Two things are missing and one is wrong. Missing: the
+an interleaving game draws a strip at all. One thing is missing and one is wrong. Missing: the
 round boundary, without which the order a player is reading looks more durable than it is —
 Battle Brothers marks it for the same reason, and recalculates initiative every round as this
-does. Wrong: an unfound hostile holds a portrait-shaped slot with a `?` in it, which reads as *a
-soldier you have failed to identify* and claims more than the rules do.
+does. Wrong: an unfound hostile holds a slot reading `?`, which tells a player that an enemy
+exists and roughly when it acts. **Entry 064 settles it and the View open question with it: the
+strip draws only what the player knows, and an unfound hostile holds no slot at all.**
 
-**The seam.** `BattleHud.DrawOrderStrip`.
+**The seam.** `BattleHud.DrawOrderStrip`, and `SandboxFrame.Sees` is already the one question
+that says whether a hostile is known — the same question the view, the HUD and the cursor ask, so
+the strip must not grow a second opinion about it.
 
-**Settle first.** The View open question, and the answer the conventions give is *keep the slot,
-change its shape*. Dropping it loses the interleaving. An anonymous narrow tick reads as
-*somebody acts here*, which is true — turns are taken in the open. Whether the count of ticks is
-itself too much to give away is the part with no precedent, because every interleaving game in
-the genre starts with everybody visible; decide it, and say which way in the entry.
+**Settle first.** *What a player sees during a turn they cannot see.* An unfound hostile's go
+passes with nothing on screen and time moving, which is the honest presentation and is the game.
+So anything that turn does which the player *can* perceive has to register — a noise heard, a
+shout picked up, one of theirs shot at — or the pause has no account and reads as a bug. Decide
+where that lands: the happenings block already exists for what happened while it was not your go,
+and it is the obvious home. And *the strip is redrawn from what is known now*, so a hostile found
+mid-round enters the order immediately, which should read as a discovery.
 
-**Out of scope.** What is drawn on the map, which is brief two.
+**Out of scope.** What is drawn on the map, which is brief two. Anything that would make an
+unfound hostile's turn *visible* — that is the fog, and it stays.
 
-**How to know it worked.** A player can say whose go is next, when the round turns over, and that
-somebody they have not found acts between two of theirs — without being able to count a squad.
+**How to know it worked.** A player can say whose go is next and when the round turns over, and
+cannot count the enemy squad from the strip or from anywhere else. A round in which a hostile
+they have not found takes a turn leaves them something to read about it if it made a sound, and
+nothing if it did not.
 
 ---
 
