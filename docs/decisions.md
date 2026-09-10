@@ -3070,3 +3070,37 @@ the same command after the move, as entry 053 did on day one.
 
 **Priority.** Ahead of anything in the interface queue and behind nothing: it costs an hour and
 it is paid for the first time a session takes a capture without the user noticing.
+
+## 064 — The turn order strip draws only what the player knows
+**2026-09-09** · **Raised by** interface, for the user · **Status** resolved — and it closes the View open question about the `?` slot
+
+The user read the turn-order section of `docs/interface/conventions.md` and overruled its
+recommendation. **An enemy the player has not found holds no slot in the strip at all** — not a
+portrait with a `?` in it, which is what the greybox draws, and not the anonymous tick the
+conventions doc proposed instead. From the player's side their own soldiers act in sequence until
+an enemy does something they can perceive.
+
+**The argument that lost, recorded because it was made twice and should not be made a third
+time.** Entry 053 gave an unfound hostile a `?` slot and entry 060 argued for narrowing it to an
+anonymous mark, both on the same ground: dropping the slot loses the interleaving, and an
+interleaved game draws a strip precisely to show the interleaving. That ground is false. The
+interleaving a player can *act on* is the interleaving of soldiers they have found, and that is
+still drawn in full. What a slot for an unfound hostile adds is two things the player has not
+earned — that an enemy exists, and roughly where in the order it acts — and *somebody acts here*
+is a weaker claim than a `?` portrait only by degree, not in kind. Neither is a fact about the
+player's own side, which is the test contract 3 actually applies. The genre offered no help here
+in either direction: every interleaving game in it starts with everybody visible.
+
+**What has to be built with it, or the strip reads as broken.** An unfound hostile's turn now
+passes with nothing on screen while time moves. That is the honest presentation and it is the
+game. But anything that turn does which the player *can* perceive — a noise heard, a shout picked
+up, one of theirs shot at — has to register somewhere, or a player sits through a pause with no
+account of it. The happenings block already exists for what happened while it was not your go and
+is the obvious home. And the strip is redrawn from what is known *now*, so a hostile found
+mid-round enters the order at once, which should read as a discovery rather than as bookkeeping.
+
+**Routed.** Brief five in `docs/interface/briefs.md` and the turn-order section of
+`conventions.md` both say this now, and the third bullet of entry 060 is superseded by it. The
+View open question *whether an unfound hostile should hold a slot in the turn order at all* is
+answered: no. `SandboxFrame.Sees` is already the one question that says whether a hostile is
+known, so the strip should ask it rather than grow a second opinion.
