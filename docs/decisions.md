@@ -3536,3 +3536,58 @@ watching a menu open.
 **What is unchanged from 071.** One game per session — that was always an argument about what a
 single context can hold and never about how many contexts run, so parallel does not touch it.
 And a reference file is still written because something needs it: Tier B stays on demand.
+
+## 073 — Two passes, not one: the documentary pass buys the question list, and the pictures come second
+**2026-09-10** · **Raised by** master, for the user · **For** interface, view · **Status** resolved
+
+Revises 071 and 072, which both had the capture happening first. The user will generate no
+screenshots or video until a first pass has run, and asked that the pass **document its own
+gaps** so the capture session fills them. Ten sessions, numbered, prompted with *read
+interface.md and do job N* — five games the user named and five added here.
+
+**Inverting the order is better than what it replaces, and the reason is not thrift.** 071 had
+each job ask for a shot list before reading anything, which meant guessing what a game's HUD
+would turn out to be unclear about. A documentary pass knows the shape of each game and is
+unreliable on precisely the details this project needs — where a thing sits, how large it is,
+what is beside it — so the most useful thing it can produce is an *aimed* list of those details.
+The capture session then photographs answers to questions instead of screens that looked
+relevant. **Pass one carries no `observed` tags at all and that is correct rather than a
+shortfall**; the gap list is its second deliverable and not an apology for the first.
+
+**The failure mode this creates, and the rule written against it.** A documentary pass does not
+know what it does not know. It will write a confident sentence about a HUD element and never
+think to flag it, and a gap list assembled from *where the session happened to feel unsure* will
+be short in exactly the places that are most wrong. So the gap list is not collected by feel:
+**every one of the ten headings ends with its own *what a picture would settle* line**, asked
+deliberately, even where the heading reads as complete. A heading with nothing to ask is an
+explicit claim that published material fully determines it, which is a claim worth being on the
+record and being wrong about.
+
+**The ten, and what the numbering is for.** Jobs 1 to 5 are the user's: XCOM 2 with War of the
+Chosen and its mods, Invisible Inc., Warhounds, Phantom Brigade, Future War Tactics. Jobs 6 to 10
+are the ones added to answer a question those five cannot: Mutant Year Zero, the Shadow Tactics
+and Desperados III line as one file, Phoenix Point, Into the Breach, Tactical Breach Wizards. The
+table in `subprojects/interface.md` carries the number, the game, the branch and the reason, so
+that *do job N* is a complete instruction. Only 1 to 5 can have their gaps filled with captures;
+6 to 10 phrase theirs as *what would settle this*, and an unanswerable question is still worth
+recording because it tells the synthesis how much weight that heading can bear.
+
+**Predicted now so it is not mistaken for failure later: job 3 will be the thinnest file in the
+set and will have the longest gap list.** Warhounds shipped too recently for published material
+to cover its HUD, and it is in the set because of entry 067 — it is the only shipped game found
+with a reserve like ours, which is exactly the kind of thing that is not written down anywhere
+yet. Twenty good questions is the right outcome there and padding would be the wrong one.
+
+**Ten parallel sessions cost one more shared-file rule than five did.** 072 already kept them out
+of `conventions.md` and `briefs.md`. `../decisions.md` now joins that list **for this pass only**,
+which is a deliberate exception to rule 3 of the map: ten simultaneous appends to an append-only
+log is the one collision the scheme has no cheap resolution for. The intent of rule 3 is
+preserved rather than waived — a finding about a neighbour goes in the file's own *what
+transfers* section, marked as a proposal for the territory it concerns, and the synthesis session
+appends all of them in one commit. **The debt is explicit and it has a named payer.**
+
+**The synthesis is reduced to a sketch on purpose.** The user will brief it properly once the ten
+files exist and their gaps are filled, on Opus or Fable in a clean session. Writing that brief now
+would mean guessing the shape of ten documents that do not exist. What is recorded now is that it
+is compulsory, what it must do, and that it is not a transcription job — the three things that
+would be expensive to rediscover.
