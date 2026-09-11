@@ -19,14 +19,18 @@ Resistance ring, but it did not touch the tactical HUD's shape.
 | **remembered** | Model knowledge of the shipped game, not checked this session. |
 | **inferred** | Reasoned from something else in this file, not observed directly. |
 
-*No source found* is written where it is true. This file was built from search results and
-community documentation, not from a running copy of the game — a fact worth stating plainly,
-because it caps how far "verified" can mean here: it means *a cited page says this*, not *a
-capture from the controller shows this*. Where a source could not be reached directly (Nexus Mods
-and Steam Workshop both return 403 to an automated fetch; StrategyWiki does too), the tag is still
-**verified** when a search engine's indexed excerpt of that exact page is what is being quoted,
-and the link is to that page. Endorsement and download counts drift daily and are stamped with
-when they were read.
+*No source found* is written where it is true. This file was built from search results, browser
+visits to Nexus Mods, Steam Workshop and StrategyWiki, and two images opened at full resolution —
+not from a running copy of the game — a fact worth stating plainly, because it caps how far
+"verified" can mean here: it means *a cited page or image says this*, not *a capture from the
+controller shows this*. A first pass tried to reach Nexus, Steam and StrategyWiki with an
+automated page-fetch tool and got HTTP 403 from all three; a second pass reached every one of them
+through an actual browser instead, which is why counts below carry exact figures rather than
+search-engine excerpts. Where a browser visit was not attempted or still failed, the tag is
+**verified** only when a search engine's indexed excerpt of that exact page is what is being
+quoted, and it says so. Endorsement and download counts drift daily and are stamped with when they
+were read — everything with an exact-looking number in this file was read via browser on
+2026-09-10, not assumed current from an earlier search.
 
 ---
 
@@ -80,18 +84,44 @@ its own terms in brief one, not copied wholesale.
 
 ## 3. The target
 
-**verified** ([Steam Community discussion on hit/graze/dodge](https://steamcommunity.com/app/268500/discussions/0/1471967615856106473/); [UFOpaedia LWOTC mechanics](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))) — a single hit-chance
-number sits on the target's card the moment a shot is aimed at them; a `?`-badged "more info"
-control (in practice, hovering the percentage) expands a breakdown. The line items, by name, are:
-base **Aim** (the weapon/soldier stat), **Cover** (a flat penalty for half or full cover, zero if
-none), **Height** (+20 for firing down at least one full storey — **remembered**, the exact figure
-is base-game and can be patched by difficulty mods, so treat the number as an example not a
-constant), **Flanked** (removes the target's cover penalty entirely and separately grants +40
-crit chance — **verified**, both halves, same source), **Squadsight** (a penalty applied when the
-shooter cannot itself see the target and is relying on a squadmate's sight — **remembered** that
-it exists as a named line, **no source found** for its exact value here since it varies by mod and
-patch), and **Dodge**, which is the target's own stat and is subtracted on their side of the same
-roll rather than the shooter's.
+**verified by screenshot** — a StrategyWiki guide image, opened at full resolution
+([source](https://cdn.wikimg.net/en/strategywiki/images/b/ba/XCOM_2_shot_menu_example.jpg), via
+[XCOM 2/Aim Bonuses](https://strategywiki.org/wiki/XCOM_2/Aim_Bonuses)), shows the actual targeting
+screen mid-aim and **corrects a claim this file first wrote from memory**: the breakdown is not a
+hover tooltip on the target's card. It is a stacked list docked bottom-left of the screen, beside
+the ability name and description, shown at the same time as a single bold **HIT 64%** headline
+directly above it. The exact rows, top to bottom, colour-coded (white/green for a bonus, red for a
+penalty): **AIM +92%**, **HEIGHT ADVANT +20%**, **DEFENSE −40%**, **SQUADSIGHT −8%**, **LOW COVER
+−20%**. A mirrored column to the right carries the damage side: **DAMAGE 6–8**, **CRIT 10%**,
+**WEAPON CRIT +10%**, and an ability-specific bonus named on its own row (**DEADSHOT +10%** in the
+captured example, a Sharpshooter perk, not a universal term). The target itself carries only a
+floating **64%** and a health bar over its head — the arithmetic lives at the shooter's HUD, not
+on the target.
+
+**What is not settled by one screenshot.** Small chevron glyphs beside the "HIT" row and the
+ability-name row suggest this may be a paged or expandable panel rather than a fixed one — whether
+the breakdown list is shown by default the instant a shot is aimed, or only after a click or hover
+past a collapsed one-line summary, could not be confirmed from a still image. Every other source
+touched this session (search excerpts of forum threads, not screenshots) describes the behaviour
+as "click to expand" or "hover for more," consistent with a collapsed default, but none of them
+is itself a picture of the collapsed state — so this file cannot rule either way and says so rather
+than picking the version that matches what was expected. **This is worth flagging to a View
+session building against Brief One before it picks a gesture**, since Brief One's own text cites
+"XCOM's hover" as the model to copy, and this screenshot's evidence is a *docked list*, not a
+hover card on the target — see the amendment appended to Brief One in `../briefs.md`.
+
+**verified** ([Steam Community discussion on hit/graze/dodge](https://steamcommunity.com/app/268500/discussions/0/1471967615856106473/); [UFOpaedia LWOTC mechanics](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))) — the line items beyond what one screenshot happened to
+show: base **Aim** (the weapon/soldier stat, and see the class-and-rank table on the same
+StrategyWiki page — a Rookie starts at 65, a Colonel Sharpshooter reaches 91), **Cover** (a flat
+penalty for half or full cover, zero if none), **Height** (+20 for firing down at least one full
+storey — **remembered**, the exact figure is base-game and can be patched by difficulty mods, so
+treat the number as an example not a constant, though it also matches the captured screenshot's
+own **+20%** row exactly), **Flanked** (removes the target's cover penalty entirely and separately
+grants +40 crit chance — **verified**, both halves, same source), **Squadsight** (a penalty applied
+when the shooter cannot itself see the target and is relying on a squadmate's sight — **verified
+by screenshot** that it appears as its own row, **−8%** in the captured case; **no source found**
+for whether that figure is fixed or scales with range), and **Dodge**, which is the target's own
+stat and is subtracted on their side of the same roll rather than the shooter's.
 
 **verified** ([diceplots.com breakdown](https://diceplots.com/games/xcom/); [Pavonis Interactive
 forum thread on the hit/graze/crit relationship](https://www.pavonisinteractive.com/phpBB3/viewtopic.php?t=23695)) —
@@ -176,11 +206,12 @@ the player has no input at all except reactions already banked (overwatch, or a 
 reactive ability). Each soldier simply has its two points available at the start of every one of
 *your* turns; there is no per-unit "acted already" indicator beyond the ability bar going grey.
 
-**verified** ([Stop Wasting My Time, Nexus page description via search excerpt](https://www.nexusmods.com/xcom2/mods/217)) —
-the enemy phase is not instant: base game inserts deliberate pauses after most actions (roughly
-1–3 seconds each, per the mod's own changelog description) and slows time by about a third during
-an overwatch interrupt. This is presentation pacing, not a turn-order convention, but it is the
-reason heading 10's most-downloaded mod exists at all.
+**verified** ([Stop Wasting My Time, Nexus page loaded directly this session](https://www.nexusmods.com/xcom2/mods/217)) —
+the enemy phase is not instant: base game inserts a 1–3 second pause after shooting, throwing,
+abilities and kills, a 2.75 second pause after taking cover, and a 33% slowdown of enemies not
+currently being attacked during an overwatch interrupt, per the mod's own changelog. This is
+presentation pacing, not a turn-order convention, but it is the reason heading 10's most-endorsed
+mod exists at all.
 
 **inferred** — because the whole-side alternation has no order to draw, this heading's genre
 convention (a phase banner, nothing else) is one this project's interleaved-initiative turn order
@@ -212,24 +243,24 @@ more alike than they are.
 
 ## 8. Camera and input
 
-**verified** ([search excerpt of gamerevolution.com/GameRevolution keybind guide](https://www.gamerevolution.com/guides/69930-xcom-2-keyboard-shortcut-commands); cross-checked against the **Free Camera Rotation** mod's own
-stated defaults, [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=616359783)) — default binds: `Q`/`E` rotate the camera
-in fixed steps (commonly described as 45°, though the mod page states its *own* configurable
-default and the base game's exact step was not independently pinned down this session —
-**remembered**, not verified, for the base-game figure specifically); mouse scroll zooms; `W`/`A`/
-`S`/`D` and screen-edge pan the camera; `Tab` and mouse button 4 cycle to the next unit, `Shift`
-and mouse button 5 to the previous. There are two fixed pitch presets, no free pitch, and no
-drag-to-rotate — rotation exists only on the two keys.
+**verified** ([search excerpt of gamerevolution.com/GameRevolution keybind guide](https://www.gamerevolution.com/guides/69930-xcom-2-keyboard-shortcut-commands)) — default binds: `Q`/`E` rotate the camera
+in fixed steps; mouse scroll zooms; `W`/`A`/`S`/`D` and screen-edge pan the camera; `Tab` and mouse
+button 4 cycle to the next unit, `Shift` and mouse button 5 to the previous. There are two fixed
+pitch presets, no free pitch, and no drag-to-rotate — rotation exists only on the two keys.
 
-**verified** ([Free Camera Rotation, Nexus Mods](https://www.nexusmods.com/xcom2/mods/1); confirmed by search excerpt describing its function) — this is the single
-most load-bearing mod for this section, and its own description is the best evidence of the gap:
-it "enables free camera rotation while holding down Q and E," "enables free camera zoom while
-holding down T and G," and additionally offers an Alt+mouse free-look mode and `[`/`]` pitch
-control. Every one of those is a control the base game does not offer at all — not a tuning
-change, an entirely missing gesture. **No source found this session for its current endorsement
-count** (the page could not be fetched directly; search results did not surface a number) — flagged
-rather than guessed, and worth a live check before anything is built on the count rather than the
-existence of the mod.
+**verified** ([Free Camera Rotation, Nexus Mods, page loaded directly this session](https://www.nexusmods.com/xcom2/mods/1)) — 3,572 endorsements, 58,202 unique downloads, 97,884 total downloads, 299,049
+page views as of 2026-09-10, created by Wasteland Ghost (wghost81), first uploaded 5 February 2016.
+Its own description states the base game's step plainly: **"Pressing Q or E … once will rotate
+camera by 45 degrees."** That is the base game's behaviour the mod is overriding, not the mod's own
+invention, which settles what this file could not pin down on the first pass — the 45° step is
+**verified**, not remembered.
+
+This is the single most load-bearing mod for this section, and its own description is the best
+evidence of the gap it fills: it "enables free camera rotation while holding down Q and E,"
+"enables free camera zoom while holding down T and G," and additionally offers an Alt+mouse
+free-look mode and `[`/`]` pitch control, a reset-to-default-view hotkey, and a toggle between free
+and fixed rotation. Every one of those is a control the base game does not offer at all — not a
+tuning change, an entirely missing gesture.
 
 **remembered** — right-click has no camera function in the base game; it is spent entirely on
 mode-cancel (heading 9). This is the fact `conventions.md`'s Selecting and ordering section
@@ -264,23 +295,25 @@ but are covering a gap the genre's best-known game leaves completely open.
 ## 10. What the game hides, and the mod that reveals it
 
 Ten rows, each a gap named against a heading above, what the mod draws, and roughly how many
-people decided the base game had not told them enough. Counts are **endorsements** on Nexus Mods
-where a search excerpt surfaced one, else left as *no count surfaced this session* rather than
-guessed — every count here should be treated as a floor, read weeks or months before this
-document, and re-checked before being used to argue priority.
+people decided the base game had not told them enough. Most counts below are **Nexus Mods
+endorsements**, read directly from each mod's own page; Gotcha Again is the exception and is not
+on Nexus at all, so its count is **Steam Workshop current subscribers** instead — the two figures
+measure different things (an endorsement is a deliberate click of approval, a subscription is
+just having the mod installed) and are not comparable across rows. Two rows have no count at all,
+recorded as such rather than guessed. Every number was current as of 2026-09-10 and drifts daily.
 
 | Mod | Fills the gap in | What it draws | Count, as surfaced |
 |---|---|---|---|
-| **[Free Camera Rotation](https://www.nexusmods.com/xcom2/mods/1)** | Heading 8 — no free yaw, no pitch control, no drag gesture at all | Hold `Q`/`E` for free rotation instead of a stepped turn, hold `T`/`G` for free zoom, Alt+mouse free-look, `[`/`]` pitch | **verified** to exist and to do exactly this ([Nexus](https://www.nexusmods.com/xcom2/mods/1), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=616359783)); no count surfaced this session |
-| **[Gotcha Again](https://steamcommunity.com/sharedfiles/filedetails/?id=1124288875)** (WotC) | Heading 4 and 9 — no tile-level warning for line of sight, flanking, or triggering an enemy's overwatch | Icons for who you flank, who has sight to whom, and whether a move would trigger an overwatch, all previewed before the click that commits | **verified**, function description via search excerpt; no count surfaced this session |
-| **[True Concealment](https://www.nexusmods.com/xcom2/mods/57)** | Heading 6/9 — the mission timer counts down even while the squad is fully concealed, which is a countdown for a state the player has no way to see coming | Suspends the timer entirely while the whole squad remains unseen | **verified**, 4,081 endorsements per search excerpt of the Nexus page |
+| **[Free Camera Rotation](https://www.nexusmods.com/xcom2/mods/1)** | Heading 8 — no free yaw, no pitch control, no drag gesture at all | Hold `Q`/`E` for free rotation instead of a stepped 45° turn, hold `T`/`G` for free zoom, Alt+mouse free-look, `[`/`]` pitch | **verified**, page loaded directly: 3,572 endorsements, 58,202 unique downloads, 97,884 total, as of 2026-09-10 |
+| **[Gotcha Again](https://steamcommunity.com/sharedfiles/filedetails/?id=1124288875)** (WotC) | Heading 4 and 9 — no tile-level warning for line of sight, flanking, triggering an overwatch, or walking a VIP into pod activation | A specific icon per situation, all previewed on the destination tile before the click that commits: a **red reticle** if the enemy will be shootable, **yellow** if also flanked; a **red diamond** if only Squadsight would reach them, **half-empty yellow diamond** if that shot would also flank; a **cog** if a Gremlin hack becomes reachable; a **green diamond outline** on a friendly who would newly be in sight; a **reticle added to an enemy's own overwatch icon**, with a marker on the tile that would trigger it, when the move would spring it; and a marker on the tile that would trigger a pod activation, restricted to pods already visible to the player so the mod cannot leak information the vanilla UI wouldn't | **verified**, Steam Workshop page loaded directly: 272,071 current subscribers, 426,508 unique visitors, as of 2026-09-10. Not on Nexus Mods — a keyword search there returned zero results |
+| **[True Concealment](https://www.nexusmods.com/xcom2/mods/57)** | Heading 6/9 — the mission timer counts down even while the squad is fully concealed, which is a countdown for a state the player has no way to see coming | Suspends the timer entirely while the whole squad remains unseen; configurable Dark Event penalty as a balancing cost | **verified**, page loaded directly: 4,098 endorsements, 74,664 unique downloads, as of 2026-09-10. Base-game only in the version checked; a WotC-era equivalent was not independently confirmed |
 | **Peek From Concealment** | Heading 5/9 — concealed movement previews nothing about what a step would newly reveal | Lets a concealed soldier preview a tile's visibility consequences before committing to the move | **remembered** that this mod exists and does this; **no source found** this session confirming exact wording or a count — flagged rather than asserted further |
-| **[Perfect Information](https://www.nexusmods.com/xcom2/mods/252)** | Heading 3/5 — enemy hit/crit/dodge numbers are computed but never shown for anything but your own shot | Restores the old Second-Wave option: configurable hit/crit/dodge percentages for both sides, plus weapon-damage tooltips on enemies | **verified** via search excerpt of the Nexus page; reported WotC-compatibility crashes noted by users, not itself verified; no count surfaced this session |
-| **[Show Health Values](https://www.nexusmods.com/xcom2/mods/150)** / Numeric Health Display | Heading 1/5 — health, armour and shields are bars, not numbers, on both sides | Prints the numeric value beside or below the health bar | **verified**, 1,707 endorsements (Show Health Values, Nexus, via search excerpt); the WotC-specific "Numeric Health Display" is a related but separately-maintained mod on Steam Workshop, count not surfaced |
-| **[Overwatch All/Others](https://www.nexusmods.com/xcom2/mods/660)** | Heading 2/7 — overwatch is declared one soldier at a time even though it is the whole squad's default end-of-turn action | One command puts every remaining soldier (or every *other* soldier) on overwatch | **verified**, 410 endorsements per search excerpt of the Nexus page |
-| **[Evac All](https://www.nexusmods.com/xcom2/mods/99)** | Heading 1/9 — extracting a full squad from an evac zone is one click per soldier | One click evacuates every soldier standing in an active zone | **verified**, 5,857 endorsements per search excerpt of the Nexus page |
-| **[Stop Wasting My Time](https://www.nexusmods.com/xcom2/mods/217)** | Heading 6/7 — deliberate 1–3 second pauses after nearly every action, and a third-slower overwatch interrupt, with no way to turn either off | Removes the pauses and the interrupt slowdown; purely cosmetic, changes no rule | **verified**, "over 150,000 downloads" per search excerpt; note this is a downloads figure, not an endorsement count, and the two are not comparable across rows of this table |
-| **Tactical HUD replacement, most-subscribed current one** | Heading 1 generally — the panel-vs-map question this whole reference exists to inform | *No single mod could be confirmed this session as the current leader.* Candidates surfaced — **Tactical Squad HUD** and **Enhanced Sitrep UI**, both by SurferJay, both War of the Chosen — but the only figures found were Steam *ratings* (115 and 86 respectively), not subscriber counts, and no authoritative current ranking of the category was reached | **Explicitly unresolved.** *No source found* for a defensible "most subscribed" answer; recorded as a gap rather than guessed, per the evidence-discipline rule this file opens with |
+| **[Perfect Information](https://www.nexusmods.com/xcom2/mods/252)** | Heading 3/5 — enemy hit/crit/dodge numbers are computed but never shown for anything but your own shot | Restores the old Second-Wave option: configurable hit/crit/dodge percentages for both sides. **Verified by screenshot** (opened from the mod's own image gallery): the readout is a short inline line reading **"Hit NN% – Crit NN%"** positioned beside the enemy's own health bar, not a separate panel | **verified**, page loaded directly: 1,314 endorsements, 23,785 unique downloads, as of 2026-09-10. Its own known-issues note says compatibility with Gotcha Again "has been broken" pending a WotC update — the two mods' authors were tracking a conflict between each other, itself a small data point on how crowded this gap is |
+| **[Show Health Values](https://www.nexusmods.com/xcom2/mods/150)** / Numeric Health Display | Heading 1/5 — health, armour and shields are bars, not numbers, on both sides | Prints the HP value **on top of the cover-icon position** next to the health bar (the mod's own wording), not merely "nearby" | **verified**, page loaded directly: 1,707 endorsements, 30,314 unique downloads, as of 2026-09-10. The WotC-specific "Numeric Health Display" is a related but separately maintained Steam Workshop mod, not checked directly this session |
+| **[Overwatch All/Others](https://www.nexusmods.com/xcom2/mods/660)** | Heading 2/7 — overwatch is declared one soldier at a time even though it is the whole squad's default end-of-turn action | One command puts every remaining soldier (or every *other* soldier) on overwatch | **verified**, page loaded directly: 411 endorsements, 11,197 unique downloads, as of 2026-09-10. The page states plainly **"Not compatible with WotC"** — this is a base-game-only mod, a fact the first pass missed |
+| **[Evac All](https://www.nexusmods.com/xcom2/mods/99)** | Heading 1/9 — extracting a full squad from an evac zone is one click per soldier | One click evacuates every soldier standing in an active zone | **verified**, page loaded directly: 5,923 endorsements, 101,848 unique downloads, as of 2026-09-10. Separate WotC-specific upload linked from the same page, not checked independently |
+| **[Stop Wasting My Time](https://www.nexusmods.com/xcom2/mods/217)** | Heading 6/7 — deliberate 1–3 second pauses after nearly every action, plus a 33% slowdown of non-targeted enemies during overwatch, with no way to turn either off | Removes the pauses (shooting, throwing, killing, taking cover) and the overwatch slowdown; raises unit movement speed by roughly 10%, configurable back down; purely cosmetic, changes no rule | **verified**, page loaded directly: 6,499 endorsements, 119,599 unique downloads, 202,529 total, as of 2026-09-10 |
+| **Tactical HUD replacement, most-subscribed current one** | Heading 1 generally — the panel-vs-map question this whole reference exists to inform | *No single mod could be confirmed this session as the current leader.* Candidates surfaced — **Tactical Squad HUD** and **Enhanced Sitrep UI**, both by SurferJay, both War of the Chosen — but the only figures found were Steam *ratings* (115 and 86 respectively), not subscriber counts, and the Nexus "most endorsed" listing was not filtered to this category before time ran out this session | **Explicitly unresolved.** *No source found* for a defensible "most subscribed" answer; recorded as a gap rather than guessed, per the evidence-discipline rule this file opens with |
 
 **What this row-by-row picture says as a whole, and it is the finding heading 10 exists to
 produce.** Every mod above with a clear count is a **prosthetic for a single missing preview or a
@@ -297,7 +330,21 @@ this file did not surface a reason it should.
 
 ## Sources
 
-Search excerpts and pages reached this session, in the order first cited above:
+**Loaded directly in a browser** (full page content, not a search excerpt):
+
+- [Nexus Mods, Free Camera Rotation](https://www.nexusmods.com/xcom2/mods/1) — description, exact stats
+- [Steam Workshop, [WotC] Gotcha Again](https://steamcommunity.com/sharedfiles/filedetails/?id=1124288875) — full feature list, exact subscriber count
+- [Nexus Mods, True Concealment](https://www.nexusmods.com/xcom2/mods/57) — description, exact stats
+- [Nexus Mods, Perfect Information](https://www.nexusmods.com/xcom2/mods/252) — description, exact stats, and its own screenshot gallery (one image opened and read)
+- [Nexus Mods, Show Health Values](https://www.nexusmods.com/xcom2/mods/150) — description, exact stats
+- [Nexus Mods, Overwatch All Others](https://www.nexusmods.com/xcom2/mods/660) — description, exact stats, WotC-incompatibility note
+- [Nexus Mods, Evac All](https://www.nexusmods.com/xcom2/mods/99) — description, exact stats
+- [Nexus Mods, Stop Wasting My Time](https://www.nexusmods.com/xcom2/mods/217) — full changelog, exact stats
+- [StrategyWiki, XCOM 2/Aim Bonuses](https://strategywiki.org/wiki/XCOM_2/Aim_Bonuses) — full text, soldier aim-by-rank tables, and its embedded shot-menu screenshot, [opened directly at full resolution](https://cdn.wikimg.net/en/strategywiki/images/b/ba/XCOM_2_shot_menu_example.jpg) — the single most valuable source in this file, since it is the only one that shows the HUD rather than describing it
+- [Nexus Mods, XCOM 2 mod search](https://www.nexusmods.com/xcom2/search/?gsearch=Gotcha%20Again) — used to confirm Gotcha Again is not hosted on Nexus (zero results)
+
+**Search excerpts only** (the page itself was not loaded, or a browser visit was not attempted this
+session):
 
 - [PCGamesN, XCOM 2 tips and War of the Chosen guide](https://www.pcgamesn.com/xcom-2/tips-guide-war-of-the-chosen)
 - [GameRevolution, XCOM 2 keyboard shortcut commands](https://www.gamerevolution.com/guides/69930-xcom-2-keyboard-shortcut-commands)
@@ -305,23 +352,25 @@ Search excerpts and pages reached this session, in the order first cited above:
 - [UFOpaedia, Mechanics (LWOTC)](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))
 - [Diceplots, XCOM 2 weapon damage math](https://diceplots.com/games/xcom/)
 - [Pavonis Interactive forum, graze/hit/crit/dodge visualization](https://www.pavonisinteractive.com/phpBB3/viewtopic.php?t=23695)
-- [StrategyWiki, Movement (EU2012)](https://www.ufopaedia.org/index.php/Movement_(EU2012))
-- [Nexus Mods, Free Camera Rotation](https://www.nexusmods.com/xcom2/mods/1)
-- [Steam Workshop, Free Camera Rotation](https://steamcommunity.com/sharedfiles/filedetails/?id=616359783)
-- [Steam Workshop, [WotC] Gotcha Again](https://steamcommunity.com/sharedfiles/filedetails/?id=1124288875)
-- [Nexus Mods, True Concealment](https://www.nexusmods.com/xcom2/mods/57)
-- [Nexus Mods, Perfect Information](https://www.nexusmods.com/xcom2/mods/252)
-- [Nexus Mods, Show Health Values](https://www.nexusmods.com/xcom2/mods/150)
-- [Nexus Mods, Overwatch All Others](https://www.nexusmods.com/xcom2/mods/660)
-- [Nexus Mods, Evac All](https://www.nexusmods.com/xcom2/mods/99)
-- [Nexus Mods, Stop Wasting My Time](https://www.nexusmods.com/xcom2/mods/217)
+- [UFOpaedia, Movement (EU2012)](https://www.ufopaedia.org/index.php/Movement_(EU2012))
 - [Nexus Mods Wiki, XCOM Squadsight Aim Penalty Mod](https://wiki.nexusmods.com/index.php/XCOM_Squadsight_Aim_Penalty_Mod)
 
-**What was not reachable.** Nexus Mods, Steam Workshop and StrategyWiki pages all return HTTP 403
-to a direct automated fetch from this session; every citation above to those domains is a search
-engine's indexed excerpt of the page, not a page this session loaded and read in full. That is
-still evidence — it is a different *kind* of evidence than a controller capture, and weaker than
-one, which is why this file leans on **remembered** more than the discipline at its head would
-prefer for a document meant to be built from. A session with browser access to Nexus and Steam
-directly would strengthen every **verified** row in the mod table and could likely resolve the
-one **explicitly unresolved** row.
+**What this changed from the first pass.** A first pass tried an automated page-fetch tool against
+Nexus, Steam and StrategyWiki and got HTTP 403 from all three, so the file's first version leaned
+almost entirely on search excerpts and reported several mod counts as "not surfaced." A second pass
+used an actual browser instead, which none of those sites blocked, and reached every page above
+directly — correcting several counts (Free Camera Rotation, Evac All, Overwatch All/Others, Stop
+Wasting My Time all drifted slightly upward; Gotcha Again's 272,071 Steam Workshop subscribers and
+Perfect Information's 1,314 Nexus endorsements were not surfaced at all on the first pass), catching
+one compatibility fact the first pass missed (Overwatch All/Others is not WotC-compatible), and —
+the most consequential correction — replacing a remembered guess about the shot HUD ("a number on
+the target, breakdown behind a hover") with a real screenshot showing a docked breakdown list
+instead, which heading 3 now covers in full and which is flagged to Brief One in
+[`../briefs.md`](../briefs.md).
+
+Two things the browser still could not do. The Nexus "most endorsed, User Interface category"
+listing was not filtered and read before time ran out, so heading 10's tactical-HUD-replacement row
+stays explicitly unresolved. And a still image answers what a HUD *looks like* at one instant; it
+cannot answer what a hover does, what a click does, or what changes over a full mission — the
+questions this file flags as open (heading 3's chevrons, the exact camera-cut timing in heading 7)
+need a controller, not a browser.

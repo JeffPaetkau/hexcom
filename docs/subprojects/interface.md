@@ -43,24 +43,29 @@ against XCOM 2 and War of the Chosen, in-mission only, each claim tagged **verif
 **remembered** or **inferred**. `conventions.md` gained the one line the brief allowed, pointing
 at `reference/`, and nothing else in it changed.
 
-Three things worth not re-deriving:
+The first pass leaned on a page-fetch tool that Nexus, Steam and StrategyWiki all returned HTTP 403
+to, so it read search excerpts rather than pages. Asked directly whether it had used screenshots,
+the honest answer was no — so a second pass opened a real browser instead, which none of those
+sites blocked, and read the pages and one screenshot directly. Three things worth not re-deriving:
 
 - **Heading 5 was thin, exactly as the brief predicted.** XCOM 2 draws a found enemy fully and
   permanently once seen and has no contact file, no rung and no marker on a lost target. There was
   nothing to stretch it with, so the heading names that and moves on — the turn-based stealth
   shelf already in `conventions.md` is where this heading's real answer lives.
-- **Nothing here amended a brief or opened a decisions.md entry.** The mods found are, without
-  exception, prosthetics for a single missing preview or a single missing shortcut — a warning
-  before a click, a number instead of a bar, one click instead of many — never a request for a
-  different game, and none of them named a query this project's briefs don't already cover or a
-  rule Core doesn't already expose. *Nothing to route* is itself a checked answer, not a skipped
-  step.
-- **Most of Nexus and Steam Workshop returned HTTP 403 to a direct fetch this session.** Every
-  citation to those domains is a search engine's indexed excerpt of the page, which is weaker than
-  a page read in full and is why the file leans more on **remembered** than the brief's discipline
-  would prefer. A session with a browser could strengthen the mod table's counts and resolve the
-  one row left explicitly unresolved — which tactical-HUD replacement is currently most
-  subscribed.
+- **One screenshot overturned a remembered claim, and it is the one amendment this job produced.**
+  A real capture of the targeting screen shows the hit-chance breakdown as a docked list at the
+  bottom of the screen, not a hover tooltip on the target's card — the opposite of what the file
+  first said from memory, and of what `../briefs.md`'s Brief One cites as "XCOM's hover" to copy
+  the gesture from. Recorded as an amendment on Brief One rather than a silent fix, per the job's
+  own rule about routing findings.
+- **The mods themselves still needed no `decisions.md` entry.** Every one found, now with exact
+  current counts read from its own page rather than a search excerpt, is a prosthetic for a single
+  missing preview or shortcut — a warning before a click, a number instead of a bar, one click
+  instead of many — never a request for a different game, and none named a query this project's
+  briefs don't already cover or a rule Core doesn't already expose.
+- **One row is still explicitly unresolved.** Which tactical-HUD replacement is currently most
+  subscribed was not settled even with a working browser — the Nexus "most endorsed" listing was
+  not filtered and read before the session's time on this ran out. Recorded as a gap, not guessed.
 
 ---
 
