@@ -136,6 +136,23 @@ occupies exactly one and walls sit on its edges. **The art spec is no longer gat
 
 ---
 
+## Roadmap
+
+Milestones, not status: each is a state a person can play and judge, in dependency order, and
+none of them says how far along anybody is. Set on 2026-09-10 with the user against a measured
+budget — entry 069 — and revised only by Master, with an entry saying why.
+
+| | Milestone | What a person can do | Roughly |
+|---|---|---|---|
+| 1 | **A mission worth playing twice** | reconnaissance on, windows aside, the six interface briefs, the first measured numbers, the clock | 8 to 10 increments |
+| 2 | **The garrison behaves** | soldiers with standing intent so a sentry patrols, the two search faults fixed, sabotage and extraction, a second map, onboarding | 10 to 14 |
+| 3 | **Three sites in sequence** | saves, a roster that persists, sites as a list, mission select, loadout as the intelligence bet of entry 027 — the strategy territory opens here | 12 to 16 |
+| 4 | **Looks like a game** | the asset spec against contract 6, a pipeline, one art pass, audio as the rule it already is — Art opens here, and it is bounded by art and play-throughs, not tokens | 10 plus art |
+| 5 | **A campaign you can lose** | neutrals, capture, suppression, denial, the clock across missions, a balance pass measured rather than argued | open, and the scope decision is made here and not before |
+
+At the cadence in `subprojects/master.md`, milestone 1 is a week and milestone 3 is inside two
+months. Past 3 the calendar is about art and a person's hours, which tokens do not buy.
+
 ## Where status actually lives
 
 Nowhere in these files. Status written by hand is a lie the moment a session ends badly, and it

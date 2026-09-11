@@ -3348,3 +3348,33 @@ built the six has run one large job and its context is the thing the review list
 it if it holds. Core, `core/measured` — Opus, fresh; the first measured numbers in the project.
 Interface's onboarding brief, Content's second map and Setting's sites are written and wait on
 the user's word.
+
+## 069 — The budget, measured: an increment costs about 2.4% of the week, and the long Master session cost most of it
+**2026-09-10** · **Raised by** master, for the user · **For** master · **Status** resolved
+
+The user runs this project on half of a Max 5x weekly limit and asked for a roadmap that fits.
+The usage meter on 2026-09-10, two days into a week that resets Tuesday at 3 PM: 48% of the
+all-models limit and 53% of the Fable limit, against about twenty increments merged in that
+window. Roughly 2.4% of the week per increment with the Master rounds folded in; the pace of the
+previous two days was three times what half a budget sustains.
+
+**What the meter blamed, and it was right.** 93% of usage ran above 150k context. That was not
+the territory sessions, which start fresh and run one brief; it was the Master session, sixteen
+jobs long on Fable, closing every round with the whole project in its context. So the cost of an
+increment was mostly the context that closed it, and the fix is Master's own shape: fresh on
+Opus for routine rounds, restarted rather than continued, Fable only to argue the breakdown.
+
+**What was set.** The cadence is in `subprojects/master.md` — two rounds a week of three or four
+fresh sessions, stop at half the meter, a play-through per round — and the roadmap is in
+`map.md` under **Roadmap**, five milestones each of which is a state a person can play. Milestone
+1 is the week after the reset; milestone 3 inside two months; past 3 the calendar is art and a
+person's hours.
+
+**Pushed back on, and where it landed.** *Years* was the horizon the user offered. The rules are
+largely built and the measured cost puts the campaign vertical slice inside a quarter, so the
+decision that decides years — a campaign you sell or a campaign you finish — belongs at
+milestone 5 and not before, and the plan does not let it shape the next three months.
+
+**This week is spent.** At 48% with five days to the reset, the rule says stop. The one hour of
+work that would change the next build — the reconnaissance uncomment at the head of Content's
+brief — waits for Tuesday with everything else.

@@ -162,6 +162,26 @@ Read the trailers off `git log` (section 1 above) before saying any of this; the
 the only record of what a session was, and they are the reason the recommendation can be
 derived rather than remembered.
 
+### The budget, and the cadence that fits it
+
+The user runs this project on half of a Max 5x weekly limit; entry 069 has the figures. Measured
+on 2026-09-10: about twenty increments in two days cost 48% of the week, roughly 2.4% each with
+Master's rounds folded in — and 93% of that usage ran above 150k context, which was one Master
+session sixteen jobs long on Fable. So the cost of an increment is mostly the context that closes
+it, and the cadence follows:
+
+- **Two rounds a week, three or four sessions each**, fresh, one brief per session. Fifteen to
+  twenty increments a week fits inside half the budget once Master's overhead is down.
+- **Master runs fresh on Opus for routine rounds** — merge, test, curate, rebuild — and is
+  restarted rather than continued past a few rounds. Fable for a round that argues the breakdown,
+  and fresh each time. The Fable meter is the tighter of the two; watch it, not the all-models one.
+- **Stop at half.** When the meter reads 50%, the week is done, whatever is in flight. Sessions
+  push and say they are ready; the merge waits for the reset.
+- **A play-through per round from milestone 1 on.** Findings arrive one play-through at a time,
+  and a week of View work without one is a week of guessing.
+
+The roadmap the cadence serves is in `../map.md` under **Roadmap**.
+
 ### 6. Rebuild the executable after each round
 
 Asked for by the user, entry 055: the game is tested by playing it, so every round of merges
