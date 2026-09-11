@@ -3426,3 +3426,62 @@ anybody, and that is what the reference pass is for.
 **The budget rule bites here.** Entry 069 set *stop at half the meter*, and the meter read 48%
 on the day this was written with five days to the reset. The brief is ready; running it is the
 user's call against a week that the rule says is already spent.
+
+## 071 — The reference set gets screenshots, five games the user owns, and a rule that a file is written because something needs it
+**2026-09-10** · **Raised by** master, for the user · **For** interface, view · **Status** resolved
+
+Extends 070. The user wants the per-game treatment across a list rather than one game, named
+five they own and can capture — XCOM 2, Warhounds, Phantom Brigade, Future War Tactics and
+Invisible, Inc. — asked for other major titles to be added, and set the condition that matters
+most: **the files reference actual screenshots and make detailed observations about them, not
+just words on the web.**
+
+**The screenshot condition is the substance of this entry, and it is right.** A report assembled
+from published prose says what a game *has*. A screenshot says where it is, how large it is, what
+sits next to it, and what the game chose not to draw at all. The second kind is what a View brief
+needs and the first kind `conventions.md` already contains. So the tag set from 070 gains a
+fourth and strongest member, **observed** — read off a named shot committed to the repository —
+ahead of verified, remembered and inferred.
+
+**The protocol, in `subprojects/interface.md` under *The reference set*.** Raw captures go to
+`reference-inbox/<game>/` at the repository root, gitignored, read by absolute path so a session
+in a worktree needs no copy. Curated crops that carry a claim are committed to
+`docs/interface/reference/shots/<game>/`, roughly twenty per game, named for what they show, and
+cited by filename from the claim. A crop is preferred to a full screen: smaller, and better
+evidence, because it records which part of the picture was being read.
+
+**Two constraints on the capture side, both found rather than assumed.** `ffmpeg` is not
+installed on this machine, so a video clip cannot be read until it is; stills are the request
+unless the thing is a transition, a timing or a hover, and then the job says which frames matter.
+And a job asks for **one shot list, before reading anything** — the exact screens, named by what
+must be visible in each. A capture session is the user's time, and a job that asks in dribs
+spends it four times over.
+
+**One game per session, and the reason is images.** Prose compresses into a summary; forty
+screenshots do not. A session that reads a game's evidence has spent most of an increment on the
+reading, which is the right price once and the wrong price twice in one context. This is the same
+conclusion 069 reached from the meter, arrived at from the other end.
+
+**The list, tiered by whether it can be photographed.** Tier A is the five the user owns and gets
+a file each. Tier B is five that answer a question Tier A cannot — Mutant Year Zero's detection
+radii, the Shadow Tactics line's cone drawing, Phoenix Point's per-body-part targeting, which is
+the nearest exemplar anywhere for contract 6's six faces, Into the Breach's perfect information,
+and Tactical Breach Wizards on legibility and undo. Tier C is the grammar and gets cited rather
+than filed: Jagged Alliance 3, Baldur's Gate 3, Xenonauts 2, Door Kickers 2, Battle Brothers,
+Classified: France '44, Commandos: Origins.
+
+**Pushed back on, and the answer is an interleave rather than a cut.** Five Tier A files is about
+five increments, against a milestone 1 the roadmap sizes at eight to ten, and it would put the
+whole of the next week into research ahead of View building anything — while the largest finding
+the interface has produced so far came from a single play-through, not from a survey. The
+recommendation is order, not scope: XCOM 2 for the grammar, then Invisible, Inc., which is the
+only game on the list with the thing this game is *about* and feeds the one queued brief that
+nothing currently draws. View builds against those two while Warhounds, Phantom Brigade and
+Future War Tactics follow. Phantom Brigade earns its place on a point the canon cannot make —
+it is the only shipped interface that draws *what the enemy is about to do* as a first-class
+object on a scrubbable timeline — and Future War Tactics is thin by the conventions doc's own
+account, so both are cheap to defer and neither is dropped.
+
+**The standing rule that came out of it: a reference file is written because something needs it.**
+The set is not a survey to be completed. Tier B is on demand, and the brief that summons a file
+names the question it is summoned to answer.

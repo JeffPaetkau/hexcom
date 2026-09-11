@@ -22,6 +22,12 @@ mono_crash.*.json
 # says how to rebuild it.
 build/
 
+# Raw captures of other games, dropped here by the user for the interface
+# territory to read. Screenshots of somebody else's game are evidence, not source:
+# the curated crops that carry a claim are committed under
+# docs/interface/reference/shots/, and the rest stays out of the history.
+reference-inbox/
+
 # Per-machine tool settings (absolute paths, local permission grants)
 .claude/settings.local.json
 

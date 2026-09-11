@@ -36,6 +36,104 @@ decisions to settle first, what is out of scope, and how to know it worked.
 
 ---
 
+## The reference set — the games, the shots, and the rules for both
+
+`conventions.md` is the recommendation layer. Underneath it sits one file per game in
+`docs/interface/reference/`, at the grain a View brief needs: where the figure sits, what gesture
+shows its terms, what a hover does, what cancel undoes. Ten fixed headings, carried even where
+the answer is *this game has no such thing*. The first file sets the template and the rest follow
+it, because a set whose files do not line up cannot be read across.
+
+**One game per session.** Not thrift — the evidence is images, and images do not compress into a
+summary the way prose does. A session that reads forty screenshots has spent most of a normal
+increment on the reading alone, which is the correct price for the thing being bought and the
+wrong price to pay twice in one context.
+
+### The games, in the order they earn a file
+
+**Tier A — the user owns these and can capture them**, so they get the deep treatment, the
+screenshots, and a file each.
+
+| | |
+|---|---|
+| **XCOM 2** + War of the Chosen, and its in-mission mods | the grammar every player arrives already knowing, plus a download-counted record of what it failed to tell them |
+| **Invisible, Inc.** | the closest relative in existence — cones with peripheral tiles distinguished, a *noticed* state short of seen, and an alarm ladder whose rungs are hidden on purpose |
+| **Warhounds** | the only shipped game found with a reserve like ours, and cone placement entered directly rather than through a nested menu |
+| **Phantom Brigade** | the only shipped interface built around *what the enemy is about to do*, drawn on a timeline the player scrubs. Nothing else on either shelf draws prediction as a first-class object |
+| **Future War Tactics** | colour-coded zones for movement and attack, and a recent small-team answer to the whole HUD at once |
+
+**Tier B — not owned**, so published material and video only, and each earns its file by answering
+a question Tier A cannot.
+
+| | |
+|---|---|
+| **Mutant Year Zero** | detection radii drawn only in the mode that needs them, and shrunk by an action the player takes |
+| **Shadow Tactics / Desperados III** | the best cone drawing shipped, and a planning mode that is a UI answer to a timing problem |
+| **Phoenix Point** | per-body-part targeting, which is the nearest exemplar anywhere for contract 6's six faces, plus a ballistic preview |
+| **Into the Breach** | perfect information and enemy intent — the answer the onboarding brief below has to argue with rather than around |
+| **Tactical Breach Wizards** | the most recent word on making a tactical turn legible: undo, and consequence shown before commitment |
+
+**Tier C — the grammar.** One line each in whichever file has cause to cite them, and a file of
+their own only when a brief needs one: Jagged Alliance 3 (interrupts, tooltips, free camera),
+Baldur's Gate 3 (reaction prompts, and the most polished readout set shipped at any budget),
+Xenonauts 2 (time units, a second model of what a soldier spends), Door Kickers 2 (a planning
+phase and cones in real time), Battle Brothers (the initiative strip), Classified: France '44 and
+Commandos: Origins (recent stealth).
+
+**A file is written because something needs it.** The set is not a survey to be completed. Tier A
+is five files and about five increments; Tier B is on-demand, and the question that summons one
+is named in the brief that asks. A reference file nobody is building from is the most expensive
+kind of prose this project can produce.
+
+### The shots, and why they are the point
+
+A report assembled from words on the web says what a game has. Only a screenshot says where it
+is, how big it is, what is next to it, and what the game chose not to draw. The second kind is
+what a View session needs and the first kind it already has.
+
+**The inbox is `reference-inbox/<game>/` at the repository root**, gitignored. The user drops raw
+captures there. Any session reads them by absolute path — `E:/hexcom/reference-inbox/<game>/...`
+— which works from inside a worktree, so the inbox is never copied and never diverges.
+
+**Ask for the shots in one list, before reading any of them.** The first thing a per-game job
+produces is a **shot list**: the exact screens needed, named by what has to be visible in each —
+*a soldier selected with the ability bar and a target under the cursor*, not *a combat screen*.
+A capture session is the user's time, and a job that asks in dribs spends it four times over.
+
+**What a still cannot show**, so the list says when it needs something else: a hover state unless
+the cursor and its tooltip are in the frame, any transition, any timing, anything audible, and
+what a key does. Ask for a short clip only for those, and say which frames matter. Note that
+`ffmpeg` is not installed on this machine — a clip cannot be read until it is, and one still per
+named moment is usually the cheaper request.
+
+**The committed evidence is curated, not the inbox.** A shot that carries a claim goes to
+`docs/interface/reference/shots/<game>/`, named for what it shows —
+`shot-hit-chance-breakdown-expanded.png`, not `screenshot_04.png` — and the claim in the file
+names the file. Roughly twenty per game, and **prefer a labelled crop to a full screen**: the
+crop is smaller, and it is also better evidence, because it says which part of the picture was
+being read. Pillow is available and ImageMagick is not:
+
+```bash
+python -c "from PIL import Image; im=Image.open('in.png'); im.crop((x0,y0,x1,y1)).save('out.png')"
+```
+
+### The four tags
+
+Every non-obvious claim in a reference file carries one, and the first is the one this exercise
+exists to buy:
+
+| | |
+|---|---|
+| **observed** | read off a named shot in `shots/`. The strongest, and the reason for the whole protocol. |
+| **verified** | a published source, with the link. |
+| **remembered** | model knowledge, unchecked. Legitimate, and never load-bearing on its own. |
+| **inferred** | from something else in the file, which it names. |
+
+*No source found* is a legitimate entry and an honest one. A fine-detail file a View session
+cannot audit is worse than no file, because it will be built from regardless.
+
+---
+
 ## The job — XCOM 2 in detail, and what its mods say it got wrong
 
 Branch `interface/reference-xcom2`. Take a worktree; the rule has no exception for prose.
@@ -97,12 +195,14 @@ Values and its numeric-display relatives, Target Preview and the perfect-informa
 Evac All, and whichever tactical-HUD replacement is currently the most subscribed. Skip anything
 that touches the Avenger, the geoscape or character creation — this territory is the mission.
 
-**Evidence discipline, and it is the part that decides whether the file is worth anything.**
-Tag every non-obvious claim one of three ways: **verified**, with the link; **remembered**, from
-model knowledge and not checked; **inferred**, from something else in the file. A fine-detail
-report a View session cannot audit is worse than none, because it will be built from. A short
-verified file beats a long remembered one, so do not pad to fill a heading — *no source found*
-is a legitimate entry and an honest one.
+**The shots are the point, and the rules for them are in *The reference set* above.** Read that
+section before starting: the inbox, the four tags, the curated `shots/` directory, and the rule
+that the first thing this job produces is **one shot list** covering everything it will need. The
+user owns XCOM 2 and can capture it. A claim about where a figure sits, how big it is and what is
+beside it should be tagged **observed** and name the shot — that is what this job is buying, and
+a file of **remembered** claims is the report we could already have written.
+
+**A short verified file beats a long remembered one**, so do not pad to fill a heading.
 
 **Settle before writing much.**
 
