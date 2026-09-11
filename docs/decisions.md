@@ -3485,3 +3485,54 @@ account, so both are cheap to defer and neither is dropped.
 **The standing rule that came out of it: a reference file is written because something needs it.**
 The set is not a survey to be completed. Tier B is on demand, and the brief that summons a file
 names the question it is summoned to answer.
+
+## 072 — Five reference jobs run at once, which costs a template written in advance and a synthesis pass afterwards
+**2026-09-10** · **Raised by** master, for the user · **For** interface, view · **Status** resolved
+
+Follows 071, and overtakes the interleave recommended there. The user is running the reference
+jobs on Sonnet, where the load is low enough that all five Tier A games can go at the same time,
+and chose to do that rather than sequence them behind View. The token argument in 071 was the
+argument for sequencing and it largely dissolves at that model, so the sequencing goes with it.
+
+**Sonnet is the right call here, and the screenshot protocol is what made it right.** The rule in
+`subprojects/master.md` reserves Sonnet for jobs whose output is transcription or lookup and
+warns off research that ends in a brief. The first version of this work was the second kind. The
+protocol in 071 turned it into the first: look at a named picture, write down where the thing is
+and what is beside it, tag the claim. The brief now **forbids a reference file from recommending
+anything** — a file that argues is a file whose evidence can no longer be separated from its
+conclusions — and that prohibition is exactly what keeps the job inside Sonnet's competence.
+
+**So a synthesis pass is now compulsory rather than optional**, and it is queued in
+`subprojects/interface.md` immediately after the five. It folds each file's *what transfers*
+footer into `conventions.md`, appends amendments to the queued briefs, and reports which of the
+ten headings the set was unanimous on and which it split on — five games agreeing is the evidence
+for **convention** under entry 058, and five games differing is the evidence that this game must
+choose and argue. That job is not a transcription job and the model note applies to it and not to
+the five that feed it. This is the real price of parallelism and it is worth paying: the
+alternative was five files each half evidence and half opinion.
+
+**The one thing that genuinely broke under parallelism was the template.** 070 and 071 both said
+the first file sets the template and four follow it, which is a sequencing dependency hiding
+inside a style note — run five at once and none of them has a template to follow, and the set
+cannot be read across, which is the whole reason it is a set. Fixed by writing the ten headings
+out in full in the brief, along with the four things every file opens with and the footer every
+file closes with. **The template is nobody's to invent now**, and that is what makes the five
+independent.
+
+**Second collision, fixed the same way: five sessions must not write shared files.** Each job
+writes `reference/<game>.md` and `reference/shots/<game>/` and nothing else — not
+`conventions.md`, not `briefs.md`. Four sessions appending to one priority queue is four
+conflicts in the file that can least afford ambiguity, and the *what transfers* footer carries
+everything a session would have wanted to put there until the synthesis pass folds it in.
+`decisions.md` remains the exception it always is.
+
+**ffmpeg is installed**, at the user's instruction: Gyan build 9.0.1 through winget. Its
+directory is not on the `PATH` of a shell that was already running, so the brief gives the full
+path. The rule that matters more than the installation: **a clip is read by pulling named frames
+out of it, never by sampling it at a fixed rate.** A frame costs about what a paragraph of
+reading costs, so half-second sampling of a ten-second clip is most of a context window spent
+watching a menu open.
+
+**What is unchanged from 071.** One game per session — that was always an argument about what a
+single context can hold and never about how many contexts run, so parallel does not touch it.
+And a reference file is still written because something needs it: Tier B stays on demand.
