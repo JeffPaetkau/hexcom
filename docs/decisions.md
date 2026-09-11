@@ -3378,3 +3378,51 @@ milestone 5 and not before, and the plan does not let it shape the next three mo
 **This week is spent.** At 48% with five days to the reset, the rule says stop. The one hour of
 work that would change the next build — the reconnaissance uncomment at the head of Content's
 brief — waits for Tuesday with everything else.
+
+## 070 — The interface gets an evidence layer: one game per file, XCOM 2 first, and its mods are the better half
+**2026-09-10** · **Raised by** master, for the user · **For** interface, view · **Status** resolved
+
+The user read the conventions doc, called it a good start, and asked for the grain underneath
+it: a detailed report on the finest details of the in-mission interface of several games,
+starting with XCOM 2 and its popular mods. They also asked that this happen **before View builds
+anything more**, which reorders the queue rather than adding to it.
+
+**Why the ask is right, and it is righter than it first looks.** `conventions.md` answers nine
+questions at the altitude of *what the genre does*. That is the correct altitude for a standard
+and the wrong one for a work order: a View brief is a sufficient prompt only if it can say where
+the figure sits, what gesture reveals its terms, what a hover does and what cancel undoes. None
+of that exists in writing. The stronger half of the idea is the mods. XCOM 2's UI mod ecosystem
+is a download-counted record of what the genre's best-selling interface *failed to tell its
+players*, written by the players who wanted it — a gap that was worth somebody's weekend, ranked
+by how many people shared the complaint. No other game on either shelf offers that, and entry
+067 already showed that the question *which shipped thing solved this* beats the question *which
+famous game is like this*.
+
+**Two things argued, and both shaped the brief rather than the answer.** First, *several games*
+was cut to one. Depth is the whole request, and a session that covers five games covers each at
+the altitude the conventions doc already has; the rest of the shelf is the next job and follows
+the template this one sets. Second, this territory cannot play — it reads. A finest-detail
+report written from model memory will be confidently wrong about exactly the specifics that make
+it useful, so every non-obvious claim in the reference files carries one of three tags:
+**verified** with a link, **remembered**, or **inferred**. *No source found* is a legitimate
+entry. A file a View session cannot audit is worse than no file, because it will be built from.
+
+**The shape that came out of it.** A new `docs/interface/reference/` directory, one file per
+game, ten fixed headings carried even where the answer is *this game has no such thing*. The
+standard is not rewritten: `conventions.md` stays the recommendation layer and the reference
+files are the evidence under it. A fine detail that changes a queued brief goes in as an
+amendment appended to that brief, on the same reasoning that keeps this log append-only.
+
+**Heading 5 is expected to be thin, and that is the finding.** XCOM 2 draws the enemy the moment
+a unit sees one and has no contact file, so contract 3's subject has almost no exemplar in the
+game this territory is about to study hardest. The brief says to record the little there is and
+not to stretch it, because the temptation in a per-game file is to fill every heading.
+
+**Onboarding moves behind it.** It was the standing brief in `subprojects/interface.md` and is
+now the queued one in the same file, kept verbatim. The order is not arbitrary: half of what a
+player must be told before turn one is what the genre's interface already teaches without telling
+anybody, and that is what the reference pass is for.
+
+**The budget rule bites here.** Entry 069 set *stop at half the meter*, and the meter read 48%
+on the day this was written with five days to the reset. The brief is ready; running it is the
+user's call against a week that the rule says is already spent.
