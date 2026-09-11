@@ -36,105 +36,40 @@ decisions to settle first, what is out of scope, and how to know it worked.
 
 ---
 
-## The job — XCOM 2 in detail, and what its mods say it got wrong
+## What landed on `interface/reference-xcom2`
 
-Branch `interface/reference-xcom2`. Take a worktree; the rule has no exception for prose.
+`docs/interface/reference/xcom2.md` exists: the first file of the evidence set, ten headings deep
+against XCOM 2 and War of the Chosen, in-mission only, each claim tagged **verified**,
+**remembered** or **inferred**. `conventions.md` gained the one line the brief allowed, pointing
+at `reference/`, and nothing else in it changed.
 
-**What it is.** `conventions.md` answers nine questions at the altitude of *what the genre does*,
-and the user has called that a good start and asked for the grain underneath it. View is about to
-build six briefs against that standard. A brief is only a sufficient prompt if it can say what
-the thing looks like and how it behaves — where the figure sits, what gesture reveals its terms,
-what happens on hover, what happens on cancel. That evidence does not exist yet. This job builds
-the first file of it.
+Three things worth not re-deriving:
 
-**One game, in depth, not five in outline.** Depth is the whole request; breadth is what makes a
-report like this read as a summary of things everybody already knew. XCOM 2 and War of the Chosen
-only. The rest of the shelf is the next job in this territory and follows the template this one
-sets.
-
-**Why XCOM 2 first, and why the mods are the better half of the idea.** The base game is the
-genre's best-selling exemplar and sets the action bar, the shot HUD, the cover pips and the
-ability hotkeys that a player arrives already knowing. But its UI mod ecosystem is something
-rarer: a decade-long, download-counted record of *what a tactics interface failed to tell its
-players*, written by the players who wanted it. A mod with hundreds of thousands of subscribers
-is a gap in the genre's best interface that was worth somebody's weekend. That is a stronger
-signal than anything the shipped game does, and no other game on either shelf offers it.
-
-**Where the output goes.** `docs/interface/reference/xcom2.md`, a new directory. Its head says
-what the template is and why, in a paragraph, because four more games follow it. `conventions.md`
-is not rewritten — the standard stands, and this is the evidence underneath it. Add one line to
-`conventions.md` pointing at the reference set, and nothing else.
-
-**What "finest detail" means here.** Ten headings, and the file carries all ten even where the
-answer is *this game has no such thing*:
-
-1. **Screen furniture** — every persistent element of the tactical HUD, where on the screen it
-   sits, what it shows, and when it appears or disappears.
-2. **The soldier** — how actions are shown and spent, the ability bar, the hotkeys, what a hover
-   over an ability does, what cancel does and how far back it goes.
-3. **The target** — the shot HUD line by line: every term in the hit-chance breakdown, whether
-   the terms are shown by default or behind a key, the target-switch gesture and the cycle order.
-4. **The tile** — movement range and the dash band, the path preview, cover pips, the
-   concealment ring, and which of those are drawn on hover versus after a commitment.
-5. **The enemy** — how a suspected or unseen enemy is drawn if at all, the alert states and their
-   icons, the pod-activation moment, the scamper.
-6. **Turn order and time** — whether there is a strip, what an interruption looks like, what the
-   player is shown during the other side's go.
-7. **Reactions** — how overwatch is declared, whether its arc is drawn, and what the trigger
-   looks like at the moment it fires.
-8. **Camera and input** — default binds, drag gestures, rotation steps and their speed, the
-   storey control, tab targeting.
-9. **Confirmation and refusal** — what takes a second click, what warns, and what the game lets a
-   player do irreversibly in silence.
-10. **What the game hides, and the mod that reveals it** — the heading the other nine exist to
-    reach.
-
-**The mods.** In-mission only. Each row says what gap it fills, what it draws, and roughly how
-many people installed it, because the count is an ordinal reading of how badly it was missed.
-The ones worth starting from, not a closed list: Gotcha Again, Free Camera Rotation, True
-Concealment, Peek From Concealment, Overwatch All/Others, Stop Wasting My Time, Show Health
-Values and its numeric-display relatives, Target Preview and the perfect-information family,
-Evac All, and whichever tactical-HUD replacement is currently the most subscribed. Skip anything
-that touches the Avenger, the geoscape or character creation — this territory is the mission.
-
-**Evidence discipline, and it is the part that decides whether the file is worth anything.**
-Tag every non-obvious claim one of three ways: **verified**, with the link; **remembered**, from
-model knowledge and not checked; **inferred**, from something else in the file. A fine-detail
-report a View session cannot audit is worse than none, because it will be built from. A short
-verified file beats a long remembered one, so do not pad to fill a heading — *no source found*
-is a legitimate entry and an honest one.
-
-**Settle before writing much.**
-
-- **The template**, because four games follow it and a reference set whose files do not line up
-  cannot be read across.
-- **Which headings this game is the authority on, and which it is merely an instance of.** One
-  game is not the genre. Where XCOM 2 is idiosyncratic, say so and leave the convention call to
-  the pass that has more than one game in it.
-- **Heading 5 will be thin, and that is the finding.** XCOM 2 draws the enemy the moment a unit
-  sees one and has no contact file, so contract 3's subject has almost no exemplar here. Record
-  what little there is — the concealment ring, the last-known-position marker on a lost target if
-  any — and do not stretch the rest into a convention it never was.
-
-**What to do with what it finds.** Two destinations and no third. A fine detail that changes a
-brief already in `briefs.md` goes in as an **amendment appended to that brief**, naming it — the
-briefs themselves are not rewritten, on the same reasoning the log is append-only. A detail that
-would need a query Core does not expose is a proposal in `../decisions.md`.
-
-**Out of scope.** Building anything. The strategy layer's interface. Rewriting the nine sections
-of `conventions.md`. Onboarding, which is the brief below and stays queued behind this.
-
-**How to know it worked.** A View session building brief one can answer, from this file alone and
-without opening a browser: where XCOM 2 puts the hit chance, what terms are on it, what gesture
-shows the arithmetic, and what its players added because that was not enough.
+- **Heading 5 was thin, exactly as the brief predicted.** XCOM 2 draws a found enemy fully and
+  permanently once seen and has no contact file, no rung and no marker on a lost target. There was
+  nothing to stretch it with, so the heading names that and moves on — the turn-based stealth
+  shelf already in `conventions.md` is where this heading's real answer lives.
+- **Nothing here amended a brief or opened a decisions.md entry.** The mods found are, without
+  exception, prosthetics for a single missing preview or a single missing shortcut — a warning
+  before a click, a number instead of a bar, one click instead of many — never a request for a
+  different game, and none of them named a query this project's briefs don't already cover or a
+  rule Core doesn't already expose. *Nothing to route* is itself a checked answer, not a skipped
+  step.
+- **Most of Nexus and Steam Workshop returned HTTP 403 to a direct fetch this session.** Every
+  citation to those domains is a search engine's indexed excerpt of the page, which is weaker than
+  a page read in full and is why the file leans more on **remembered** than the brief's discipline
+  would prefer. A session with a browser could strengthen the mod table's counts and resolve the
+  one row left explicitly unresolved — which tactical-HUD replacement is currently most
+  subscribed.
 
 ---
 
-## Next in this territory — the first five minutes, and what has to be taught
+## The job — the first five minutes, and what has to be taught
 
-Queued behind the reference job above, and deliberately: onboarding decides what a player must be
-told before turn one, and half of that answer is what the genre's interface already teaches
-without telling anybody. Branch `interface/onboarding` when it comes up.
+Branch `interface/onboarding`. Take a worktree; the rule has no exception for prose.
+
+Onboarding decides what a player must be told before turn one, and half of that answer is what
+the genre's interface already teaches without telling anybody.
 
 **What it is.** The conventions are written and the queue is written (entry 060), and both assume
 a player who already knows what a hit chance and an action point are. Neither says how anybody
