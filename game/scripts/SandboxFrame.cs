@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Hexcom.Content;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Movement;
@@ -65,6 +66,10 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// What our side holds on each hostile in play: eyes on it, or a marker with a credence. A
 /// hostile with no entry is one nobody of ours has heard a thing about.
 /// </param>
+/// <param name="AimedAt">
+/// Who the firing mode was last pointed at, as the node remembers it. Read <see cref="Aim"/>,
+/// which is the same thing checked against the moment.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
@@ -98,8 +103,46 @@ public sealed record SandboxFrame(
     bool Briefing,
     bool OutOfTime,
     bool Omniscient,
-    IReadOnlyDictionary<UnitId, Threat> Knowledge)
+    IReadOnlyDictionary<UnitId, Threat> Knowledge,
+    Unit? AimedAt)
 {
+    /// <summary>
+    /// The hostile the active soldier is aiming at, if the firing mode is on and still makes sense.
+    /// </summary>
+    /// <remarks>
+    /// Checked here rather than kept tidy wherever the moment changes, because the moment changes
+    /// in more places than anybody would list: a window opening, the target dropping out of sight
+    /// after a stance change, the picture going back from omniscient. An aim at a soldier the
+    /// picture no longer shows is not an aim — it would put a line of fire on the map pointing at
+    /// somebody the map is not drawing, which is the leak <see cref="Sees"/> exists to prevent.
+    /// </remarks>
+    public Unit? Aim
+        => AimedAt is { InPlay: true } quarry
+           && Open is null
+           && Battle.Active is { } shooter
+           && quarry.IsHostileTo(shooter)
+           && Sees(quarry)
+            ? quarry
+            : null;
+
+    /// <summary>
+    /// Everybody the active soldier could aim at, nearest first: the hostiles the picture shows.
+    /// </summary>
+    /// <remarks>
+    /// What <c>Tab</c> cycles, and a soldier the shot would be refused at is still on it — out of
+    /// range is a reason worth being told, and the shot line says it. A ghost at a marker is not:
+    /// firing needs eyes on, so a list that included ghosts would be offering shots it cannot take.
+    /// </remarks>
+    public IReadOnlyList<Unit> Targets
+        => Battle.Active is not { } shooter
+            ? []
+            : Battle.InPlay
+                .Where(u => u.IsHostileTo(shooter) && Sees(u))
+                .OrderBy(u => SandboxGeometry.NodeScene(Battle.Map, u.Position)
+                    .DistanceTo(SandboxGeometry.NodeScene(Battle.Map, shooter.Position)))
+                .ThenBy(u => u.Name)
+                .ToList();
+
     /// <summary>
     /// Where the subject of the open window is standing <em>now</em>, which is where it started.
     /// </summary>

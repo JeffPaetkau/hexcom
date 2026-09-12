@@ -90,6 +90,14 @@ public static class SandboxPalette
     /// <summary>The cursor's hex, outlined so the pick can be checked against the readout.</summary>
     public static readonly Color HoverEdge = new("dfe5ee", 0.8f);
 
+    /// <summary>The firing mode: the line of fire and the ring round the target.</summary>
+    /// <remarks>
+    /// White, and neither side's hue nor the committed yellow. Hostile red on a line pointing at a
+    /// hostile reads as a threat coming the other way, and yellow already means a walk that is
+    /// paid for; an aim is neither of those — it is a question the player has not answered yet.
+    /// </remarks>
+    public static readonly Color AimColor = new("ffffff", 0.9f);
+
     /// <summary>
     /// Things: ground, walls, bodies. Lit, opaque, coloured by their vertices.
     /// </summary>

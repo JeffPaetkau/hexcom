@@ -211,6 +211,7 @@ public sealed class BattleHud(Font font)
                 ? $"cursor {h}    {(frame.Reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    "
                   + $"{SightLine(frame, h)}{AttentionLine(frame, h)}{NoiseLine(frame, h)}"
                 : "cursor —",
+            AimLine(frame),
             ShotLine(frame),
             WorthLine(frame),
         });
@@ -369,12 +370,19 @@ public sealed class BattleHud(Font font)
     /// and, more usefully, what the brief's own test gives: a player who never presses <c>O</c>
     /// wants to know how to move and how to look, and does not want to know how to hand the
     /// hostile side to the AI.
+    /// <para>
+    /// <b>Three lines of it since brief three</b>, and the new one is the orders. Right-click
+    /// stopped firing and the shot became a mode, which is four gestures where there was one; on
+    /// the line they used to share with the posture keys they ran towards the right edge, and
+    /// splitting by purpose is the fix this legend has taken twice already.
+    /// </para>
     /// </remarks>
     private static readonly string[] PlayerKeys =
     [
         "WASD or drag: pan    Q/E or right-drag: turn    wheel/+-: zoom    F: whole map    G: whoever is up    PgUp/PgDn: storey",
-        "left-click: move    right-click: fire    space: end turn    C: stance    Z/X: turn on the spot    "
-            + "V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in",
+        "left-click: move, or aim at a hostile    1 or tab: aim, tab again for the next    "
+            + "space: fire when aiming, else end turn    right-click or esc: back out",
+        "C: stance    Z/X: turn on the spot    V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in",
     ];
 
     /// <summary>The keys that change what kind of run this is. Instruments, by the same test.</summary>
@@ -634,10 +642,35 @@ public sealed class BattleHud(Font font)
         return $"    your attention {frame.Battle.Awareness.AttentionOn(active, node):P0}";
     }
 
-    /// <summary>The shot the active unit would take at whoever is under the cursor.</summary>
+    /// <summary>That the firing mode is up, at whom, and the three ways out of it.</summary>
+    /// <remarks>
+    /// A line of its own and in capitals, because a mode nobody can see they are in is the whole
+    /// failure the genre's cancel convention exists to prevent: the space bar ends the turn when
+    /// this line is absent and fires when it is present, and that is only fair if it is impossible
+    /// to miss which. It says what confirms and what backs out in so many words, which is the brief's
+    /// test — a player backs out of a half-entered order without having been told a key.
+    /// </remarks>
+    private static string AimLine(SandboxFrame frame)
+    {
+        if (frame.Aim is not { } quarry) return "";
+
+        var targets = frame.Targets;
+        var which = targets.Count > 1 ? $", {IndexOf(targets, quarry) + 1} of {targets.Count} in sight    tab: next" : "";
+
+        return $"AIMING at {quarry.Name}{which}    space, enter or click them again: fire    right-click or esc: back out";
+    }
+
+    private static int IndexOf(IReadOnlyList<Unit> units, Unit unit)
+    {
+        for (var i = 0; i < units.Count; i++)
+            if (units[i] == unit) return i;
+        return -1;
+    }
+
+    /// <summary>The shot the active unit would take at whoever is aimed at, or else under the cursor.</summary>
     private static string ShotLine(SandboxFrame frame)
     {
-        if (HoveredShot(frame) is not { } plan) return "";
+        if (StagedShot(frame) is not { } plan) return "";
 
         var quarry = plan.Target;
         if (!plan.CanFire) return $"shot at {quarry.Name}: {plan.Refusal}";
@@ -659,7 +692,7 @@ public sealed class BattleHud(Font font)
         return $"shot at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP{listed}    "
                + $"{plan.Weapon.Name} ({plan.Weapon.Kind}){glancing}    "
                + faces
-               + "    right-click to fire";
+               + (frame.Aim is null ? "    click or 1: aim" : "");
     }
 
     /// <summary>
@@ -690,7 +723,7 @@ public sealed class BattleHud(Font font)
     /// </remarks>
     private static string WorthLine(SandboxFrame frame)
     {
-        if (HoveredShot(frame) is not { CanFire: true } plan) return "";
+        if (StagedShot(frame) is not { CanFire: true } plan) return "";
 
         var expect = frame.Battle.Gunnery.Expect(plan);
         var worth = frame.Battle.Tactics.Appraise(plan);
@@ -985,11 +1018,16 @@ public sealed class BattleHud(Font font)
         return terms.Count == 0 ? "nothing" : string.Join(", ", terms);
     }
 
-    /// <summary>The shot the active unit would take at the cursor, planned once for both lines.</summary>
-    private static ShotPlan? HoveredShot(SandboxFrame frame)
+    /// <summary>The shot the active unit would take at the aim, or at the cursor when nothing is aimed at.</summary>
+    /// <remarks>
+    /// The aim wins over the cursor so that a player can move the pointer — to orbit, to read a
+    /// label, to look at the ground they would retreat to — without the terms they are about to
+    /// confirm being replaced by somebody else's.
+    /// </remarks>
+    private static ShotPlan? StagedShot(SandboxFrame frame)
     {
         if (frame.Battle.Active is not { } shooter) return null;
-        if (HoveredUnit(frame) is not { } quarry || !quarry.IsHostileTo(shooter)) return null;
+        if ((frame.Aim ?? HoveredUnit(frame)) is not { } quarry || !quarry.IsHostileTo(shooter)) return null;
 
         return frame.Battle.PlanShot(shooter, quarry);
     }

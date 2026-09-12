@@ -223,6 +223,7 @@ public sealed class BattleView
         BuildHover(frame, cursor);
         BuildPath(frame, cursor);
         BuildWalkRoute(frame, cursor);
+        BuildAim(frame, cursor);
         _cursor.Mesh = cursor.Build();
 
         _labels.QueueRedraw();
@@ -784,9 +785,41 @@ public sealed class BattleView
         Outline(cursor, frame.Battle.Map, node, SandboxPalette.HoverEdge, 0.08f, inset: 0.02);
     }
 
+    /// <summary>The firing mode, drawn: a line from the shooter's eye to the target, and a ring round the target.</summary>
+    /// <remarks>
+    /// In the cursor mesh because it follows a gesture and not the rules — pointing the mode at
+    /// somebody else changes nothing true, so it must not cost a sight sweep. The line runs eye to
+    /// chest so that it reads as a shot rather than a route, and it is drawn whether or not the
+    /// shot is possible: the shot line says why not, and a line that vanished when the answer was
+    /// no would be the map hiding the one thing the player is looking at.
+    /// </remarks>
+    private static void BuildAim(SandboxFrame frame, MeshBuilder cursor)
+    {
+        if (frame.Aim is not { } quarry || frame.Battle.Active is not { } shooter) return;
+
+        var map = frame.Battle.Map;
+        var from = SandboxGeometry.NodePlane(map, shooter.Position);
+        var to = SandboxGeometry.NodePlane(map, quarry.Position);
+        var eye = SandboxGeometry.FloorOf(map, shooter.Position) + StanceProfile.For(shooter.Stance).EyeHeight;
+        var floor = SandboxGeometry.FloorOf(map, quarry.Position);
+        var chest = floor + StanceProfile.For(quarry.Stance).BodyHeight * 0.6;
+
+        cursor.Ribbon([SandboxScale.ToScene(from, eye), SandboxScale.ToScene(to, chest)], 0.08f, SandboxPalette.AimColor);
+
+        // Outside the side-coloured ring, so the two are never mistaken: that one says whose
+        // soldier it is and this one says it is the one being aimed at.
+        var radius = quarry.Stance == Stance.Prone ? 1.8 : 0.95;
+        var scale = frame.TileDetail ? 1f : 2.2f;
+        cursor.Ribbon(Ring(to, radius * scale, floor + Lift * 3, 32), 0.14f * scale, SandboxPalette.AimColor);
+    }
+
     private static void BuildPath(SandboxFrame frame, MeshBuilder cursor)
     {
         if (frame.Battle.Active is not { } active) return;
+
+        // While aiming a click on the ground drops the aim and moves nobody, so a route drawn out
+        // to it would be promising a move the click will not make.
+        if (frame.Aim is not null) return;
         if (frame.Hover is not { } goal || !frame.Reach.TryGetPath(goal, out var path) || path.Count == 0) return;
 
         var map = frame.Battle.Map;
@@ -884,7 +917,7 @@ public sealed class BattleView
             foreach (var step in window.Move.Steps.Skip(1))
                 Label(canvas, SandboxGeometry.NodeScene(map, step.Node) + Vector3.Up * 0.5f, $"t{step.Tick}", 11, SandboxPalette.CommittedColor);
 
-        if (frame.Hover is { } goal && frame.Reach.TryGetPath(goal, out var path))
+        if (frame.Aim is null && frame.Hover is { } goal && frame.Reach.TryGetPath(goal, out var path))
             foreach (var link in path.Where(l => l.Kind != TraversalKind.Walk))
                 Label(canvas, SandboxGeometry.NodeScene(map, link.To) + Vector3.Up * 0.5f, link.Kind.ToString().ToUpperInvariant(), 11, SandboxPalette.PathColor);
     }

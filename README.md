@@ -97,7 +97,7 @@ creation instead.
 **And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
 `--ai`, `--windows`, `--omniscient`, `--instruments`, `--still`, `--aside`, `--edge-pan` and
 `--pace` is a step, run in the order it
-was typed: `--move`, `--fire`, `--stance`,
+was typed: `--move`, `--fire`, `--aim`, `--next-target`, `--confirm`, `--back-out`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
 `--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
 method its key calls, so a picture can only ever show a state somebody at the keyboard could
@@ -139,8 +139,8 @@ starts on.
 | PgUp / PgDn | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
 
 **The mouse drives it too.** A middle-drag pans and a right-drag turns the camera freely. The
-arrow keys pan as well. A right *click* still fires — the two are told apart by whether the
-pointer moved, so the shot goes off when the button comes back up having stayed put. The pointer
+arrow keys pan as well. A right *click* backs out of whatever you were half way through and never
+spends a point; it is told apart from a drag by whether the pointer moved. The pointer
 resting near an edge of the window can push the view that way, and does not unless `--edge-pan`
 asks for it: it is the one camera gesture that happens while your hand is doing nothing.
 
@@ -148,10 +148,12 @@ asks for it: it is the one camera gesture that happens while your hand is doing 
 
 | | |
 |---|---|
-| left-click | move whoever is up |
+| left-click | move whoever is up — or, on a hostile, aim at it; on the one already aimed at, fire |
 | hover | show the route, the cost of each awkward step, and what cover the cursor has |
-| right-click | fire at whoever is under the cursor |
-| space | end the turn |
+| `1` | aim: at the hostile under the cursor, or the nearest one in sight |
+| tab | aim at the next hostile in sight — including one on a storey the cursor cannot reach |
+| space | fire, while aiming; end the turn, while not |
+| right-click, `Esc` | back out: stop aiming, or put the briefing away |
 | `C` | cycle stance: standing, crouching, prone |
 | `Z` / `X` | turn on the spot |
 | `V` | cycle the overwatch arc: none, narrow, standard, wide |
