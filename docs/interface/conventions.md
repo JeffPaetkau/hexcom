@@ -5,7 +5,15 @@ already does, what the asymmetry of contract 3 changes, and what to build. One s
 question a player meets, in the order they meet it.
 
 Read [../map.md](../map.md) and [../subprojects/interface.md](../subprojects/interface.md) first.
-The queue of jobs that follow from this is [briefs.md](briefs.md).
+The queue of jobs that follow from this is [briefs.md](briefs.md). The evidence underneath it is
+ten files under [reference/](reference/), one game each; what a picture would still change is
+ranked in [captures.md](captures.md), cited below as **C1**, **C2** and so on.
+
+**Every recommendation here rests on published material and none of it on a screenshot taken
+against this project.** The reference set carries no `observed` tag, by design — the documentary
+pass ran first and the pictures come second. A recommendation resting on a `remembered` claim is
+marked **provisional**, says so, and names the capture-list entry that would settle it. A
+recommendation with no such mark rests on a `verified` source or on several files agreeing.
 
 ## What a standard is for
 
@@ -40,6 +48,208 @@ chose to leave.
 
 ---
 
+## What ten games said, heading by heading
+
+*Written by the synthesis pass, which is the only session that could: a convention is a thing a
+player arrives already knowing, so the unit of evidence is the set agreeing, and no single
+reference file can see that. Ten files under [reference/](reference/), one game each, against the
+same ten headings. The ranked list of what a picture would still change is
+[captures.md](captures.md), and entries below cite it as **C1**, **C2** and so on.*
+
+**Read the counts with the right denominator.** *The set agrees* means the games that have the
+mechanic agree, not that ten out of ten said the same thing. Eight games with no alarm ladder are
+silent on how to draw one; they are not eight votes against it. Where the denominator is small
+this section says so, because a two-for-two is a different kind of evidence from a nine-for-ten
+and the difference decides how much weight a recommendation can carry.
+
+| # | Heading | Verdict | The count |
+|---|---|---|---|
+| 1 | Screen furniture | **unanimous** | every game puts its furniture at the edges and leaves the centre to the map; every game scopes a soldier's own facts to that soldier's card |
+| 2 | The soldier | **unanimous on cancel, empty on hover** | ten of ten cancel a mode and never a commitment; what a hover reveals is verified in **one** game of ten |
+| 3 | The target | **split, and against the assumption** | three of ten show a hit chance as a percentage; five show none at all; two show a number that is not one or is not established as one |
+| 4 | The tile | **unanimous where it counts** | four of the six grid games band the move range by *which point pays*; drawing the warning to be seen on the destination tile is two of the three games that need one, and the third's absence is the set's most-subscribed mod |
+| 5 | The enemy | **empty — and this is the strongest finding in the set** | zero of ten carry a belief about an enemy that can be wrong and persist. A state short of seen is two of ten, but two of *two* among games that have one |
+| 6 | Turn order and time | **empty** | **zero of ten** draw a per-unit initiative strip. The phase banner is the only turn-order element with positive evidence anywhere |
+| 7 | Reactions | **split, and the split is by whose arc it is** | two of ten draw the player's *own* held arc on the ground; **zero** draw a hostile's, and one game's players asked and were refused. Nobody documents the moment one fires |
+| 8 | Camera and input | **split by year, and both directions get asked for** | stepped in the four oldest, free-drag in the four newest; XCOM 2's players modded free rotation in, Tactical Breach Wizards' players are asking for the step back |
+| 9 | Confirmation and refusal | **unanimous** | one modal confirmation for a tactical action in ten games. Refusal is a disabled affordance or a rule drawn on the world, never a dialogue |
+| 10 | What players added | **unanimous** | every counted community fix in the set is a legibility fix. Nobody modded a new turn order, cover system or hit formula into any of these games |
+
+### The one law the set obeys without exception
+
+**A game in this set lets a player take something back exactly as far as it told them the
+truth.** Seven of the ten hide something — a pod, a guard, a patrol, a contact — and not one of
+them permits an undo of a committed action; the safety net is a quicksave, an Ironman toggle, or
+nothing. The three that hide nothing inside a battle all permit free revision right up to
+resolution: Into the Breach's unlimited pre-fire move undo plus one turn reset, Tactical Breach
+Wizards' unlimited rewind, Phantom Brigade's draggable and deletable orders, which stop being
+editable at exactly the moment its five-second certainty window starts running. Warhounds is the
+tenth and does not break it — it has no undo either; only its fog is unconfirmed (**C6**).
+
+**This is entry 058's no-undo ruling arrived at by mechanism rather than assertion, and it is
+worth more than the ruling.** A rewind is cheap in a game where nothing was hidden when the
+choice was made, and expensive in one where it makes reconnaissance free. Tactical Breach
+Wizards is the case a future session will be tempted to cite as a counter-example; its rewind is
+*enabled by* its lack of fog, not independent of it. Do not soften the rule here, and do not
+re-argue it — but do notice what the law implies in the other direction: **this game owes its
+player the figures before the click precisely because it will not give them the click back.**
+That is not a nicety. It is the other half of the same bargain every game in the set has struck.
+
+### Heading by heading, and what moved
+
+**1. Screen furniture — unanimous, and this game is the outlier.** Every layout in the set is a
+set of edges: a left column and a right corner (Invisible, Inc.), a top-left stack and a
+bottom-left card (Into the Breach), portraits down one side and an item panel in a corner (Future
+War Tactics, Shadow Tactics, XCOM 2). Nothing sits in the middle in any of them. Second and
+sharper: **a soldier's own facts live on that soldier's card**, not in a shared panel — Mutant
+Year Zero draws each character's action points above that character's own ability bar rather than
+gathering them, Into the Breach puts each mech's weapons inside that mech's roster row, Phoenix
+Point's whole bar is soldier-scoped and appears only on selection. The twenty-line panel at the
+top left is not a variation on this; it is the thing the whole set avoids, and the avoidance is
+structural rather than stylistic.
+
+**2. The soldier — unanimous on cancel, empty on hover.** Cancel backs out of a mode, a prompt or
+an aim preview, and never out of a spent point: XCOM 2, Invisible, Inc., Phoenix Point, Warhounds
+and Shadow Tactics all say so in the same words, and the two apparent exceptions are the
+undo-games from the law above. **But what a hover over an ability actually reveals is verified in
+exactly one game of the ten** — Shadow Tactics, a tooltip with cost and effect. Phoenix Point's
+own developers say hovering rebuilds the ability bar's canvas and no source says what appears in
+it; XCOM 2's is remembered; Phantom Brigade's, Tactical Breach Wizards' and Warhounds' are
+unknown; Into the Breach replaces hover with two held keys, `Ctrl` and `Alt`. **Brief one is
+about to pick one gesture for *show me the terms* and the reference set does not contain a
+verified example of the gesture it was told to copy.** See the Readouts section below and
+**C1**.
+
+**3. The target — split, and it flips the section that cited it.** Three games show a hit chance
+as a percentage (XCOM 2, Mutant Year Zero, Warhounds); five show none at all, three of those five
+because nothing is rolled (Invisible, Inc., Shadow Tactics, Into the Breach, Tactical Breach
+Wizards) and one because it draws dispersion as two concentric circles instead (Phoenix Point);
+and two show a number that is not a hit chance (Phantom Brigade's damage effectiveness) or is not
+established as one (Future War Tactics). **A hit-chance percentage is the tactics canon's answer,
+not the genre's**, and the two newest games in the set removed it on purpose. This game keeps
+one, and should — `GunneryModel` computes a real probability and contract 3 makes it the player's
+own side's knowledge, exact by right. What does not survive is the claim that *one number with
+the breakdown on demand* is a convention. It is one game's answer, and see Readouts for the
+failure mode the set records twice.
+
+**Target cycling is one game of ten.** `Tab` cycles in XCOM 2. Nowhere else in the set is a
+cycle-target key documented at all: Phoenix Point offers a list of visible enemies at the foot of
+the screen, Phantom Brigade uses `Ctrl`+click, and the other seven appear to expect the player to
+point at the body. Brief three carries *Tab to cycle bodies* as though it were the genre's
+answer; it is XCOM's.
+
+**4. The tile — unanimous where it counts, and it hands the reserve a better drawing.** Four of
+the six grid games with a point economy band the reachable area by **which point pays for it** —
+XCOM 2 and Phoenix Point and Warhounds all in blue and yellow, Mutant Year Zero in white and
+orange — and in three of those four the band falls exactly at *can I still act when I arrive*.
+That is the same cliff the reserve has, drawn on the ground instead of on the soldier. See
+**Points, and the reserve**, which is where it changes a recommendation.
+
+The other tile finding is the set's strongest single piece of quantitative evidence. Among the
+games where being seen is the thing that matters, **the warning is drawn on the destination tile
+before the click**: Mutant Year Zero puts a struck-through mask icon on the tile that would
+expose you, Invisible, Inc. shades every tile watched, peripheral or hidden. Shadow Tactics puts
+it on the cone rather than the ground, on a held key. XCOM 2 draws nothing at all — and **Gotcha
+Again**, the mod that draws it, has 272,071 subscribers, more than any other community fix in the
+set by an order of magnitude. That is brief four's case, made by somebody else's players.
+
+**5. The enemy — empty, and the emptiness is worth more than any borrowing.** No game in the set
+carries a belief about an enemy that persists and can be wrong. Invisible, Inc.'s red ghost lasts
+the remainder of one turn and carries no belief about where the guard went. Mutant Year Zero has
+a directional last-enemy marker that has pointed at corpses and off the map since 2018 and was
+never fixed. Phoenix Point draws nothing at all and announces a state change in a popup its own
+players describe as impossible to recover once missed — with a mod built solely to draw a
+persistent icon instead. **Brief two is not adapting a convention. It is building the thing ten
+games did without, and the two games that tried a cheap version of it shipped the two failures
+above.** One requirement follows directly and is not negotiable: **persistent, not announced.**
+
+*A state short of seen* is the one borrowing available and it is a good one: Invisible, Inc.'s
+investigating (a yellow `?` triangle, plus a floating `?` at the point being walked to) and
+Shadow Tactics' `?` badge are two unrelated lineages reaching the same answer, and both draw it
+as a glyph on the body rather than as a position on a scale. Two of ten looks thin until the
+denominator is read properly: of the games in the set that have a state between unaware and
+engaged, it is two of two. Under entry 058 that is about as strong as evidence for **convention**
+gets.
+
+**6. Turn order and time — empty, and emptier than anyone thought.** The brief that ordered this
+synthesis said three of the ten have no initiative strip. The true count is **zero of ten**.
+XCOM 2, Into the Breach, Mutant Year Zero and Warhounds alternate whole sides; Phoenix Point runs
+a faction phase in whatever order the player picks; Invisible, Inc. does the same; Phantom Brigade
+resolves both sides at once; Shadow Tactics has no turns; Future War Tactics has a
+rounds-remaining dial and nothing else; Tactical Breach Wizards shows the enemies' order only
+while the cursor rests on the end-turn button. The strip in `conventions.md` was attributed to
+Battle Brothers, which is Tier C and has no file. **So this game's turn structure has exactly one
+precedent and it is outside the evidence set.**
+
+What *is* evidenced is the phase banner: XCOM 2's over the whole enemy phase and Into the
+Breach's full-width `ENEMY TURN` bar, verified, contradicted by nothing, unknown in the rest.
+Entry 065 chose a banner for the pause; the set says the banner is not a fallback for a strip
+that cannot be drawn, it is the only thing the genre reliably does here.
+
+**7. Reactions — split, and the split is between your arc and theirs.** A correction first,
+because the skim that briefed this session had it the wrong way round: **two games in the set do
+draw a held, not-yet-fired action on the map.** Phoenix Point draws the overwatch arc on the
+ground from the soldier's eye position, adjustable with `Ctrl`+scroll before confirming, with its
+maximum width set by weapon class — which is `OverwatchArc`'s shape, arrived at independently.
+Warhounds draws a firing area in front of the operator and its guides single out fast enter,
+adjust and cancel as what makes it usable. XCOM 2 has no cone at all, and the stealth shelf's
+traps are invisible until sprung, which is where the *no shipped analogue* reading came from — it
+is true of that shelf and false of the set.
+
+**What has no analogue is drawing a *hostile's* held arc, and there is a refusal on the record.**
+Asked directly whether a player can tell which move will spring an enemy's overwatch, Mutant Year
+Zero's answer was no, and "an indicator for the area the enemies can see would be nice, but is
+not implemented." Brief two proposes exactly that indicator and argues it from the stealth shelf
+— but what the stealth shelf draws is a *vision* cone, not a reaction arc, so the borrowing is
+thinner than it reads. The case still holds and it holds on its own terms: a player who walks
+into an arc held by a soldier they could see holding it will say the picture lied. It is a
+departure, it is the right one, and it should stop citing a precedent it does not have.
+
+**And nobody in ten games documents what a reaction looks like at the moment it fires.** Every
+one of the ten gap lists asks for the same clip and none of them has it. This game's reaction
+window is the one place it is unambiguously ahead of the genre, and the genre cannot tell it
+anything about the half it has not built.
+
+**8. Camera and input — split by year, and the split argues the recommendation from both ends.**
+Stepped yaw in the four oldest entries (XCOM 2 at 45 degrees, Invisible, Inc. and Phoenix Point at
+90, Into the Breach with no camera control found at all); free drag in the newer ones (Warhounds'
+full 360 in 2026, Mutant Year Zero, Desperados III, Tactical Breach Wizards). The two complaints
+are mirror images: XCOM 2's most-endorsed interface mod adds free rotation, and Tactical Breach
+Wizards' players are on the forum asking for `Q`/`E` steps it never shipped. **That is both halves
+of this document's existing recommendation evidenced separately** — free yaw on a drag, with the
+keyed step kept as a snap — and it is now a finding rather than a compromise.
+
+Right-click is where brief three needs correcting. It is not true that the genre binds right-click
+to cancel: Desperados III and Future War Tactics bind it to *move*, and Phoenix Point binds it to
+both move and cancel at once. What *is* true, and is the stronger argument, is that **every game
+in the set that puts a committing action on right-click produced a documented player complaint
+about it** — Phoenix Point's is a mod that disables right-click-to-move so the button can only
+cancel, Future War Tactics' is a forum post asking to swap it in a game that cannot rebind
+anything. This game has the most committing action there is on that button.
+
+**9. Confirmation and refusal — unanimous.** One modal confirmation for a tactical action in ten
+games: Mutant Year Zero asks whether to bring a hidden character out of hiding. Phantom Brigade
+warns before executing a plan with an idle unit, which is a plan-level check rather than an
+action-level one. Everything else commits silently on the click. **Refusal is drawn as a disabled
+affordance or as the world saying no** — Invisible, Inc. refuses an under-pierced attack by never
+offering the target and greys a taser with no charge rather than hiding it; Shadow Tactics refuses
+an over-armoured kill by having the outcome change shape rather than by warning first. This is the
+pattern to generalise, and it is the same family as the concealment ring: **a refusal belongs on
+the thing being refused.**
+
+**10. What players added — unanimous, and it is how to read the queue.** Every counted community
+fix in the set is a legibility fix. XCOM 2's mods are a missing preview, a number instead of a
+bar, or one click instead of many; Invisible, Inc.'s UI Tweaks is precision and disambiguation and
+says outright it changes no balance; Phoenix Point's three are all *a state the game tracks and
+does not show*; Phantom Brigade's community-requested 2.0 fixes were font size and dialogue
+duration. Nobody in ten games modded in a new turn order, a new cover system or a new hit-chance
+formula. Two of them — Into the Breach's undo sitting close enough to end-turn to mis-click, and
+Invisible, Inc.'s action-point figure sitting above the agent rather than at the cursor — are
+complaints about **distance**, which is the sharpest available statement of what brief one is for:
+a figure belongs where the cursor already is.
+
+---
+
 ## The camera
 
 **Standard.** Split, and the split is historical rather than considered. XCOM 2 turns the camera
@@ -69,6 +279,16 @@ which is *put the grid square with the screen*. Allow pitch within a clamp that 
 wall. Make edge-pan a setting, default off — at close zoom under a pitched camera an accidental
 edge-pan loses the soldier you were looking at.
 
+**The reference set evidences both halves of that separately, which it could not do before.** The
+split runs by year rather than by taste: stepped yaw in the four oldest entries — XCOM 2 at 45
+degrees, Invisible, Inc. and Phoenix Point at 90, Into the Breach with no camera control found at
+all — and free drag in the newer ones, Warhounds' full 360 in 2026, Mutant Year Zero, Desperados
+III, Tactical Breach Wizards. And the two complaints are mirror images: XCOM 2's most-endorsed
+interface mod exists to add free rotation, while Tactical Breach Wizards' players are on the forum
+asking for the `Q`/`E` step their game never shipped, for the reason the older games had one. Both
+directions get asked for, so *free drag plus a keyed snap* is the recommendation the set actually
+supports rather than a compromise between two camps.
+
 **Entry 058 closed the argument underneath this and it should not be reopened.** The case for the
 snapped camera was that arcs and facing wedges smear between bearings; the user held that smooth
 matters more. So if an arc proves illegible from an odd angle, **the answer is a better arc**,
@@ -93,8 +313,31 @@ back is not a decision. Attacks are different: they are a *mode*, entered from a
 key, with target cycling on Tab and an explicit confirm. So confirmation sits on the shot and not
 on the move, because the shot is the one that announces you.
 
-**Right-click cancels.** In XCOM 2 and Jagged Alliance 3 it backs out of a mode or clears a
-selection. It does not fire in any game in the list.
+**The no-undo rule is the strongest finding the reference set produced, and it comes with its
+reason.** All ten games obey one law: *a game lets a player take something back exactly as far as
+it told them the truth.* The seven that hide something permit no undo at all and offer a quicksave
+or an Ironman toggle instead; the three that hide nothing inside a battle all permit free revision
+up to resolution — Into the Breach's unlimited pre-fire move undo plus one turn reset, Tactical
+Breach Wizards' unlimited rewind, Phantom Brigade's draggable and deletable orders, which stop
+being editable at exactly the moment its five-second certainty window begins. Tactical Breach
+Wizards is the case a future session will cite as a counter-example; its rewind is *enabled by*
+its lack of fog, not independent of it.
+
+**The other half of that bargain is owed, and it is the reason brief four exists.** A game that
+will not give the click back has to give the figures before it. Every game in the set that both
+hides something and matters about being seen draws the warning before the commit — Mutant Year
+Zero on the destination tile, Invisible, Inc. as shading on every tile, Shadow Tactics on a
+held-key cone. The one that draws nothing is XCOM 2, and Gotcha Again, the mod that draws it, has
+272,071 subscribers.
+
+**Right-click is not reliably cancel, and the real finding is better than the one this section
+claimed.** In XCOM 2 and Jagged Alliance 3 it backs out of a mode or clears a selection, and in
+Invisible, Inc. it backs out of a prompt. But Desperados III and Future War Tactics bind it to
+*move*, and Phoenix Point binds it to move and cancel at once. What holds across all of them is
+this: **every game in the set that puts a committing action on right-click produced a documented
+complaint about it.** Phoenix Point's is a mod that disables right-click-to-move so the button can
+only cancel; Future War Tactics' is a forum post asking to swap it, in a game that cannot rebind
+anything at all. Nothing in the set fires on right-click. This game does.
 
 **The action bar** is a row of icons along the bottom, bound to `1`–`9`, each showing its cost and
 a tooltip of what it does.
@@ -112,20 +355,50 @@ owed instead is the shown-before-committing figure — attention on the destinat
 there, and who would hear you is already there. See Readouts.
 
 **Recommendation** — **convention**, and it is not cosmetic. Right-click becomes cancel. Firing
-becomes a targeting mode: an action bar entry and a key, Tab to cycle bodies, a confirm to
-commit. This also unblocks the mouse camera, since a plain right-drag is the gesture the genre
-uses for orbit or pan and it is currently spent on the most irreversible action in the game.
+becomes a targeting mode: an action bar entry and a key, a confirm to commit. This also unblocks
+the mouse camera, since a plain right-drag is the gesture the genre uses for orbit or pan and it
+is currently spent on the most irreversible action in the game.
+
+**Target cycling is XCOM's, not the genre's, and this section over-claimed it.** `Tab` cycles in
+XCOM 2 and in no other game in the set: Phoenix Point offers a list of visible enemies along the
+foot of the screen, Phantom Brigade uses `Ctrl`+click, and the remaining seven appear to expect
+the player to point at the body. Invisible, Inc. says why in one line — there is no targeting mode
+to cycle within, because a shot is one click on one guard exactly as a move is one click on one
+tile. So a cycle key is worth building here for the reason this game has and XCOM does not — a
+hostile can be a see-through body at a marker, which is harder to point at than a lit silhouette —
+and not because a player arrives expecting it. **Departure**, mildly, and cheap either way.
 
 ## Turn order and whose go it is
 
-**Standard, and here the genre really is split in two.** XCOM, Phoenix Point, Mutant Year Zero
-and Into the Breach alternate whole sides, so there is no order to show — a banner says whose go
-it is and each soldier carries its own points. Battle Brothers and the older line interleave by
-initiative, and every interleaving game draws the same thing: a strip of portraits in order along
-the top edge, the current actor picked out, and the round boundary marked. Battle Brothers
-recalculates initiative every round from fatigue and armour, which is why its strip needs a
-slider and why the round mark matters — the order you are reading is only good until the round
-ends.
+**Standard — and the reference set says there is barely a standard to have.** XCOM 2, Phoenix
+Point, Mutant Year Zero, Warhounds and Into the Breach alternate whole sides, so there is no order
+to show; a banner says whose go it is and each soldier carries its own points. Battle Brothers and
+the older line interleave by initiative, and every interleaving game draws the same thing: a strip
+of portraits in order along the top edge, the current actor picked out, and the round boundary
+marked. Battle Brothers recalculates initiative every round from fatigue and armour, which is why
+its strip needs a slider and why the round mark matters — the order you are reading is only good
+until the round ends.
+
+**But zero of the ten reference games draw a per-unit initiative strip**, and that is a correction
+to this section rather than a detail. Five alternate sides, two run a faction phase in whatever
+order the player picks, one resolves both sides simultaneously, one has no turns at all, and
+Tactical Breach Wizards shows the enemies' order only while the cursor rests on the end-turn
+button. Battle Brothers is Tier C and has no file. **So the strip this game already draws has
+exactly one precedent and it is outside the evidence set**, and the burden entry 058 puts on a
+departure cannot be discharged here by pointing at the genre in either direction.
+
+What *is* evidenced is the banner. XCOM 2 says *enemy turn* over the whole phase; Into the Breach
+draws a full-width `ENEMY TURN` bar across the middle of the screen with the mech roster still
+visible beside it. Verified in two, contradicted by none, unknown in the rest. That makes entry
+065's choice better supported than it looked when it was made: the banner is not a consolation for
+a strip that cannot be drawn, it is the one turn-order element the genre reliably has.
+
+**And there is a third answer worth naming even though this game cannot take it.** Tactical Breach
+Wizards' order preview on the end-turn hover withholds nothing and shouts nothing — a cheaper way
+to be honest than a permanent strip, and a good fit for a game where the player replans constantly.
+It is unavailable here for the reason entry 064 gives: a preview of the full order would hand back
+the count of hostiles nobody has found. Worth recording so a future session does not rediscover it
+and assume it was missed.
 
 **Here.** Interleaved, initiative rolled per round, and there is a strip: `DrawOrderStrip`. A
 hostile nobody has found holds a slot reading `?`, with no name, roll or reserve.
@@ -195,8 +468,16 @@ game's rules also distinguish: seen, *peripheral* — tiles that look watched an
 *noticed*, a state short of seen in which the guard will come and look next turn. Its alarm runs
 on a ladder of six, and each rung has five sub-levels that are deliberately given no effect and
 no display, so that the only thing a player ever reads is a transition. The Commandos line —
-Shadow Tactics, Desperados III — draws a cone per guard plus a meter over the head that fills as
-you are noticed.
+Shadow Tactics, Desperados III — draws a cone per guard, and **the detection fill is on the cone
+itself**: it starts at the guard's eyes and spreads toward the intruder, and detection completes
+when it arrives.
+
+*Corrected by the synthesis. An earlier draft said the fill was a meter over the guard's head.
+The reference file found no separate gauge in either game and no source describing one — the fill
+is the cone's own colour, and the nearest head-mounted thing in that line is the `?`/`!` badge
+pair, which is a state glyph and not a meter. That pair is a real borrowing and the enemy section
+below takes it separately. **Provisional**, on a `verified` claim rather than an `observed` one;
+**C13** would settle it outright by framing one guard's head and cone in the same shot.*
 
 **Here.** Three states already, chosen in entry 053: a body while one of ours has eyes on it, a
 see-through body at its marker with the credence beside it otherwise, and nothing at all before
@@ -224,13 +505,40 @@ available.
   because nothing in the genre has it.
 - **Borrow *noticed* explicitly.** `Suspicious` is the rung a player will misread as *seen*, and
   Invisible Inc's answer — a distinct mark meaning *coming to look, does not know what for* — is
-  a convention that already exists for exactly this state.
+  a convention that already exists for exactly this state. It is two of ten across the set and two
+  of *two* among games that have such a state, reached independently by Invisible, Inc.'s yellow
+  `?` triangle and Shadow Tactics' `?` badge, and drawn in both as a glyph on the body rather than
+  as a position on a scale.
 
-**And it answers a View open question.** Draw a hostile's held arc whenever the hostile itself is
-drawn. The stealth shelf draws what a guard will do, because beating it is the game; the tactics
-shelf hides it, because there the enemy shoots on its turn anyway. This game is on the first
-shelf. A player who walks into an arc held by a soldier they could see holding it will say the
-picture lied, and they will be right.
+**Three things the reference set added to this section, all of them requirements rather than
+suggestions.**
+
+- **Persistent, not announced.** Phoenix Point tracks alert state and surfaces it as a brief
+  orange popup that its own players describe as impossible to recover once missed; a mod exists
+  solely to draw a persistent icon instead. That is the failure mode nearest this game's, proven
+  by somebody else's players, and it rules out any design where a rung change is a transient
+  message.
+- **The name of the ladder sets how precisely it is read.** Klei renamed Invisible, Inc.'s alarm
+  to `SECURITY LEVEL` because playtesters read the original naming and numbering as more
+  informative than it was meant to be. This game's rungs are `Unaware`, `Suspicious`, `Searching`,
+  `Alerted`, `Engaged` in the rules, and `Searching` and `Alerted` are exactly the pair a player
+  will read as a measured scale rather than as two words. What the rungs are *called on screen* is
+  therefore an interface decision with a shipped precedent behind it, not a passthrough of the
+  enum.
+- **A rung that goes back down has no analogue anywhere.** Invisible, Inc.'s escalation is one-way
+  at the top: investigating resolves either way, alerted never resolves for the rest of the
+  mission. This game's contact file decays, so a rung can fall. A player borrowing the genre's
+  only ladder will assume it cannot, and the drawing has to make the fall as visible as the rise
+  or the rules will be read wrong in the one direction that costs a player a soldier.
+
+**And it answers a View open question, with a correction to how it is argued.** Draw a hostile's
+held arc whenever the hostile itself is drawn. A player who walks into an arc held by a soldier
+they could see holding it will say the picture lied, and they will be right. **But it is a
+departure from nothing and should stop citing the stealth shelf as though it were a precedent** —
+what that shelf draws is a *vision* cone, not a held reaction arc, and no game in the set draws a
+hostile's reaction zone at all. Mutant Year Zero's players asked for exactly this indicator and
+were told it is not implemented. The recommendation stands on its own reasoning, which is enough;
+it does not need a borrowing it does not have.
 
 ## Reactions
 
@@ -264,6 +572,22 @@ player should be handed.
   family as the orders readout: an instrument, and it belongs behind the same switch. That
   settles the View open question with a genre reason rather than a tidiness one.
 
+**Two things the reference set changed here.** First, **drawing your own held arc on the ground is
+a convention after all**, which an earlier reading of the set denied. Phoenix Point draws the
+overwatch arc from the soldier's eye position, adjustable with `Ctrl`+scroll before confirming,
+with its maximum width set by weapon class — `OverwatchArc`'s own shape, reached independently.
+Warhounds draws a firing area in front of the operator and its guides single out fast enter,
+adjust and cancel as what makes overwatch usable mid-fight. Here `V` and `HoldArc` take an arc in
+one press with no adjust step, which is faster than both and gives up the thing both shipped
+games thought worth building. An adjust step is **convention**, and it is cheap.
+
+Second, **nobody in ten games documents what a reaction looks like at the moment it fires.** All
+ten gap lists ask for the same clip and none of them has it. The window this game already has —
+the reactors named, the options scored, a tick clock, the route drawn with the tick each step
+lands on — is the one place in this interface that is unambiguously ahead of the genre, and the
+genre has nothing to tell it about the resolution half. That is a reason to build the resolution
+carefully rather than by analogy, and it is why **C7** and **C16** are on the capture list at all.
+
 ## Movement and shooting animation
 
 **Standard.** The soldier walks the path, the camera follows only if the mover would otherwise
@@ -292,10 +616,44 @@ for a rule.
 
 ## Readouts
 
-**Standard: one number, at the thing, expandable.** XCOM 2 puts a single hit chance on the target
-card and hides the modifier arithmetic behind a hover; cover is a shield icon on the tile; points
+**Standard: one number, at the thing — and the *expandable* half did not survive the evidence.**
+XCOM 2 puts a single hit chance over the target's head; cover is a shield icon on the tile; points
 are pips on the soldier. Battle Brothers is the exception that proves it — it shows every modifier
 in a long tooltip, and it is also the game in the list with a reputation for opacity.
+
+**Two corrections from the reference set, and the first one matters because brief one was built on
+it.** The arithmetic behind XCOM 2's number is **not** a hover card on the target. A guide
+screenshot opened at full resolution shows a stacked list docked at the bottom left of the screen,
+beside the ability name, under a bold `HIT 64%` headline: `AIM +92%`, `HEIGHT ADVANT +20%`,
+`DEFENSE −40%`, `SQUADSIGHT −8%`, `LOW COVER −20%`, with a mirrored damage column to its right.
+The target itself carries only the floating `64%` and a health bar. **So *XCOM's hover* names a
+gesture that does not exist**, and whether that docked list is shown by default or sits behind a
+collapsed headline could not be settled from a still — small chevron glyphs suggest it is
+collapsible. That question is **C1**, the highest-ranked entry in the capture list, precisely
+because brief one has to choose a gesture and this is the game it was told to copy.
+
+**The second correction is that a hit chance is not the genre's answer at all.** Three of ten show
+one as a percentage; five show none; two show a number that is not one. This game keeps its
+percentage and should — `GunneryModel` computes a real probability, and contract 3 makes a figure
+about your own shot exact by right. But *one number, breakdown on demand* is one game's habit, not
+a convention, and it has a **documented failure mode recorded twice in the set**. Phantom Brigade
+folds accuracy and damage into a single percentage that its own players argue about in public as
+though it were a hit chance, which it is not. XCOM 2's single number silently omits a flat 20%
+graze band that applies to almost every shot it draws. In both cases the failure is the same: **a
+folded number invites a wrong model of what it means, and the breakdown behind it does not undo
+the first impression.** Warhounds is the counter-case and it is worth weighing — it shows a
+percentage per bullet in a burst, several numbers at once by design, on a deliberate transparency
+pitch.
+
+**What the set says a figure's *place* is worth, which is the rule brief one actually needs.**
+Invisible, Inc.'s own designers put its abilities on context buttons that appear on the world
+object, and the interface critique that praises it gives the reason in one line: your mouse never
+leaves the area you are focusing on. The same critique's complaint about the same game is that its
+action-point figure sits above the agent rather than at the cursor, so a player planning a long
+path has to look away from where they are pointing. Into the Breach's players have twice asked for
+its undo button to be moved further from end-turn. Three independent complaints, three games, one
+rule: **a figure belongs where the cursor already is.** That is a sharper test than *on the thing
+it describes*, and it decides several of brief one's placements on its own.
 
 **Here.** The audit in `../subprojects/view.md` shows that almost everything the AI weighs is on
 screen, exactly, which was the right thing to check and it passed. What was never asked is
@@ -314,9 +672,19 @@ the thing it is about makes the difference visible without a word of explanation
   held arc on the soldier. The alarm rung on the enemy. Attention on the ground, where it already
   is.
 - The panel keeps only what has no place on the map: the mission, the clock, the weapon.
-- Headline at the thing, breakdown on demand. That is XCOM's hover, and it answers *how much
-  arithmetic to show* without having to choose between the audit and the genre — the audit's
-  figures all stay reachable, they just stop being simultaneous.
+- Headline at the thing, breakdown on demand — but **pick the gesture on this game's own terms,
+  because the set does not supply one.** A hover's contents are verified in exactly one of the ten
+  games. XCOM 2 docks a list; Into the Breach uses two held keys, `Ctrl` for a unit's detail and
+  `Alt` for the turn's resolution order; Phantom Brigade splits its folded number on a held
+  `Ctrl`; Shadow Tactics and Desperados III hold `Alt` to show every cone at once. **Held-key
+  disclosure is the pattern with the most support in the set** — four games, three of them for
+  exactly the *show me everything for a moment* job — and it has the property a hover card lacks:
+  it is one gesture for every figure at once rather than one card per figure, which is how this
+  ends up worse than the panel. Take that, one key, everywhere. **Provisional until C1.**
+- **Name the headline so it cannot be read as something else.** Phantom Brigade's number is the
+  set's warning and it cost its players years of public argument. Whatever a single figure folds
+  together, the label says which quantity it is, and a term that is the whole reason the number
+  has the shape it does is not one of the things folded away.
 
 **One gap the genre would not have tolerated.** Firing is the loudest thing a soldier can do,
 the scorer charges the shot for what it announces, and there is no preview of who it would wake.
@@ -366,6 +734,32 @@ why a number is the wrong drawing for either. It is also why the ladder was the 
 here and not merely an analogy — the rules are already stepped, and the interface is what has
 been smoothing them.
 
+**The reference set moved this recommendation, and it is the largest single change the synthesis
+made.** The genre already draws this cliff — **on the ground, not on the soldier.** Four of the
+six grid games in the set band the reachable area by which point pays for it, and in three of the
+four the band falls exactly at *can I still act when I arrive*: XCOM 2's blue is a move you can
+still fire after and its yellow is a dash that leaves nothing, Phoenix Point's blue keeps an
+action in reserve and its yellow spends everything, Warhounds' blue is the first action and its
+yellow the second. That is not a different mechanic from the reserve. It is the same question —
+*what will I still be holding when I get there* — asked at the place where the player is actually
+asking it, which is the tile under the cursor.
+
+**So the cliffs belong on the move range as well as on the pips, and the ground is the stronger
+of the two.** The pip row says what a soldier holds now; the banded range says what they will hold
+*there*, which is the decision being taken. This game's move overlay is a graded tint where the
+genre's is a small number of bands, and a graded field cannot show a cliff — it is the smoothing
+problem again, in the one place it costs most. Recommendation: **convention**, adopted as the
+genre has it, with the bands cut at the reserve's own thresholds rather than at whole action
+points. A player hovering a tile should be able to see, without reading a figure, whether arriving
+there still leaves an aimed shot in hand. **Provisional on C10** as to whether any shipped game
+bands a graded field rather than a discrete one, which is the one thing Future War Tactics is in
+the set for and the one thing no screenshot of it caught.
+
+**One thing this does not license.** The bands stay a property of the tile under consideration.
+Nothing here argues for painting the whole map in more colour; the set's own lesson from Invisible,
+Inc.'s striped vision shading is that a second overlay competing with an existing one is where
+legibility goes, and this game already paints attention per tile.
+
 **Two things Warhounds does with the arc rather than the points**, both **convention** and both
 cheap: overwatch enters cone placement directly rather than through a nested menu, and its guides
 single out fast enter, adjust and cancel as what makes it usable mid-fight. Here `V` and
@@ -414,7 +808,7 @@ that transfer to the sections that matter most here come from turn-based and rea
 |---|---|
 | **Invisible, Inc.** | The closest relative in existence. Vision cones with peripheral tiles distinguished, a *noticed* state short of seen, and an alarm ladder whose sub-levels are hidden on purpose so that only transitions are ever read. That last is contract 3's coarse rung, designed deliberately by somebody else and shipped. |
 | **Mutant Year Zero** | Detection radii drawn only in the mode where they matter, and shrunk by an action the player takes. Stealth as a non-twitch tactical decision, which is this game exactly. |
-| **Shadow Tactics / Desperados III / Commandos** | Real-time, so the input conventions do not transfer, but the drawing does: a cone per guard, and a meter over the head that fills as you are noticed. |
+| **Shadow Tactics / Desperados III / Commandos** | Real-time, so the input conventions do not transfer, but the drawing does: a cone per guard, with the detection fill on the cone itself rather than on a gauge, and a `?`/`!` badge pair over the head carrying the coarse state. |
 
 **A third shelf, and the first draft did not know it existed: what shipped while this was being
 built.** The canon list stops at games old enough to have a settled reputation, which is exactly
@@ -426,6 +820,14 @@ time. Both were added on the user's prompt.
 | **Warhounds** (2026) | XCOM- and Jagged Alliance-inspired, and the only shipped game found with a reserve like ours: declaring overwatch commits the operator's remaining action points. It is all or nothing where ours is graded, which is the whole of the *Points, and the reserve* section above. Also: cone placement entered directly rather than through a nested menu, with fast adjust and cancel. |
 | **Future War Tactics** (2025) | Colour-coded zones for movement and attack radius, which is the thing this game already does with graded tints rather than bands. Little else here that the canon does not say better. |
 
+**A fourth lineage, found by the reference set rather than reasoned to: breach and clear.** XCOM:
+Chimera Squad and, after it, Tactical Breach Wizards answer the enemy question a third way that is
+neither the canon's nor the stealth shelf's — a room's occupants are established the moment the
+door goes in, so nobody is hidden and nothing is remembered. It matters here because Tactical
+Breach Wizards is the newest game in the whole set, released 2024, and it still has no contact
+file. **The two shelves have not converged**, and the thing this game is about has no ancestor on
+any of the three as of the last game anyone has shipped.
+
 **The lesson about the list itself is worth more than either row.** The reserve section exists
 because somebody asked whether a game outside the list had solved a problem we had, and one had —
 by removing it. A canon is a list of games whose conventions are *settled*, which is what makes it
@@ -433,13 +835,17 @@ the right starting point and also guarantees it is silent on any mechanic newer 
 The next question of this shape should be asked the same way: which shipped game has this
 mechanic, rather than which famous game has something like it.
 
-**Nothing here is a proposal for Core.** Every recommendation above is answerable from a query
-that exists — `ReadoutFor` for the rung, `Contact.LastKnownPosition` for the marker, `Reachable`
+**Nothing here needs a query Core does not have**, and that has survived the reference set: the
+synthesis filed three findings for Core in `../decisions.md` and not one of them asks for a new
+surface. Every recommendation above is answerable from a query that exists — `ReadoutFor` for the rung, `Contact.LastKnownPosition` for the marker, `Reachable`
 and `CostTo` for the tile, `Appraise` for the window's default. The one thing the interface
 cannot show is already an open entry rather than a new one: entry 012's second item, who a shot
 would wake.
 
-**Where this came from.** Play, plus the interface documentation and community threads for
+**Where this came from.** The ten reference files under [reference/](reference/) carry the
+evidence and its sources file by file, and every count in *What ten games said* is drawn from
+them. The first draft of this document predates them and came from play plus the interface
+documentation and community threads for
 [XCOM 2's Free Camera Rotation mod](https://www.nexusmods.com/xcom2/mods/1),
 [Jagged Alliance 3's camera controls](https://steamcommunity.com/app/1084160/discussions/0/3807280781155752599/),
 [Klei's design deep dive on the alarm system in Invisible, Inc.](https://www.gamedeveloper.com/design/game-design-deep-dive-alarm-systems-in-klei-s-i-invisible-inc-i-),

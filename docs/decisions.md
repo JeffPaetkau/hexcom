@@ -3730,3 +3730,130 @@ have been bookkeeping.
 **The log debt from 073 is now assigned.** The ten jobs were barred from `decisions.md` to avoid
 ten simultaneous appends; the synthesis session is the named payer and sweeps the ten files for
 findings addressed elsewhere, filing them in one commit.
+
+---
+
+## 077 — Ten games, ruled: four briefs were wrong about the genre, and the set obeys one law about undo
+**2026-09-11** · **Raised by** interface · **For** view, master, interface · **Status** resolved
+
+The synthesis of the ten reference files. `conventions.md` has a new section near the top ruling
+each of the ten headings unanimous, split or empty across the set; `briefs.md` carries an
+amendment block per brief, appended and not folded in; and the 89 per-game gap questions are
+replaced by one ranked list in `docs/interface/captures.md`, twelve entries above a cut line and
+eight below it. What follows is what a reader of only this entry needs.
+
+**The law, and it is the finding worth more than the rest put together.** *A game in this set lets
+a player take something back exactly as far as it told them the truth.* Seven of the ten hide
+something and not one permits an undo; the safety net is a quicksave, an Ironman toggle or
+nothing. The three that hide nothing inside a battle all permit free revision up to resolution —
+Into the Breach's unlimited pre-fire move undo plus one turn reset, Tactical Breach Wizards'
+unlimited rewind, Phantom Brigade's draggable and deletable orders, which stop being editable at
+exactly the moment its five-second certainty window starts running. Warhounds is the tenth and
+does not break it; only its fog is unconfirmed. **This is entry 058's no-undo ruling arrived at by
+mechanism rather than assertion**, and it says what the ruling costs: a game that will not give
+the click back owes the figures before it. Brief four is that debt.
+
+**Four corrections, three of them to briefs View is due to build.**
+
+1. **Brief one's central reference does not exist.** It names *XCOM's hover* for *show me the
+   terms*; XCOM 2 docks a stacked breakdown at the bottom left under a bold headline and the
+   target carries only a floating percentage. Worse, what a hover reveals is `verified` in exactly
+   one of the ten games. What has real support is **held-key disclosure** — four games, three of
+   them for the *show me everything for a moment* job — and it has the property the brief wanted
+   and a hover card cannot give: one gesture for every figure rather than one card per figure.
+   Provisional against capture C1.
+2. **Zero of ten draw a per-unit initiative strip**, where the skim that briefed the synthesis
+   said three. The strip in `conventions.md` was attributed to Battle Brothers, which is Tier C
+   and has no file, so **this game's turn structure has one precedent and it is outside the
+   evidence set.** Entry 064 stands, because it was argued on contract 3 rather than on
+   convention, but brief five should stop calling the dropped slot a departure from a standard.
+   The phase banner is the one turn-order element with positive evidence anywhere, which makes
+   entry 065 better supported than it looked when it was made.
+3. **Two games do draw a held, not-yet-fired action on the map**, against entry 076's reading.
+   Phoenix Point draws the overwatch arc from the soldier's eye position with its width set by
+   weapon class, which is `OverwatchArc`'s own shape reached independently; Warhounds draws a
+   firing area in front of the operator. The *no shipped analogue* claim is true of the stealth
+   shelf and false of the set. **What has no analogue is a *hostile's* arc**, and Mutant Year
+   Zero's players asked for exactly that indicator and were told it is not implemented — so brief
+   two's recommendation is right and its citation of the stealth shelf is wrong, because that
+   shelf draws a vision cone and not a reaction arc.
+4. **Target cycling is one game of ten.** `Tab` cycles in XCOM 2 and nowhere else in the set.
+   Brief three should build the cycle key for this game's reason — a hostile can be a see-through
+   body at a marker, which is harder to point at than a lit silhouette — and not as a convention.
+
+**The largest change to a recommendation, and it came from reading two headings together.** The
+genre already draws the reserve's cliff, on the ground rather than on the soldier: four of the six
+grid games band the reachable area by which point pays for it, and in three of the four the band
+falls exactly at *can I still act when I arrive*. That is not a different figure from entry 067's
+two cliffs; it is the same question asked at the tile under the cursor, which is where the player
+is asking it. So the cliffs go on the move range as well as the pip row and **the ground is the
+stronger of the two**. The consequence is a problem this game already has in the same shape the
+reserve line had: the move overlay is a graded tint, and a graded field cannot show a cliff.
+
+**Three smaller findings that will otherwise be rediscovered.** *Persistent, not announced* —
+Phoenix Point tracks alert state, announces it in a popup its players call impossible to recover
+once missed, and has a mod built solely to draw a persistent icon. *A figure belongs where the
+cursor already is*, which is sharper than *on the thing it describes* and comes from three
+distance complaints in three unrelated games. And *every counted community fix in the set is a
+legibility fix* — nobody in ten games modded in a new turn order, cover system or hit formula,
+which is the evidence that brief one is correctly first in the queue.
+
+**Two errors in the standard, both corrected in place.** The Shadow Tactics line's detection fill
+is on the **cone**, not on a meter over the guard's head; no source found a separate gauge, and
+the nearest head-mounted thing in that line is the `?`/`!` badge pair, which is a state glyph. And
+a hit-chance percentage is not the genre's answer at all: three of ten show one, five show none,
+two show a number that is not one. This game keeps its percentage and should, but *one number with
+the breakdown on demand* is one game's habit with a failure mode the set records twice — Phantom
+Brigade's folded figure is argued about in public as though it were a hit chance, and XCOM 2's
+single number silently omits a graze band that applies to nearly every shot it draws.
+
+**What this cost and what it bought.** One session against about 3,700 lines of evidence, with no
+`observed` tag in any of it. Every recommendation now carries its grade and the provisional ones
+name the capture that would settle them, which is the mitigation entry 076 promised. The order —
+synthesis before pictures — was right: the capture list is twelve questions that would change
+something, and eleven of the twelve are about a game the user can play.
+
+---
+
+## 078 — Three findings from the reference set that belong to Core, and a fourth for contract 6
+**2026-09-11** · **Raised by** interface · **For** core, master · **Status** open
+
+The sweep entry 076 assigned. Nothing here asks for a new query — contract 2 is intact and the
+conventions doc says so — and nothing here is urgent. Each is a fact about a shipped game that
+bears on a rule or a config Core owns, filed rather than acted on because it is not interface's to
+change.
+
+**1. `OverwatchArc`'s shape is corroborated by a shipped game, which is evidence for convention
+rather than departure.** Phoenix Point draws the overwatch arc on the ground from the soldier's
+eye position and sets its maximum width by weapon class — assault rifles and handguns wide, sniper
+rifles and heavy weapons narrow — with the cone's height cutoff being the soldier's own perception.
+That is `OverwatchArc`'s arc-widths-per-weapon-class shape arrived at independently. No change
+asked for; the point is that the next session tempted to flatten it should know somebody else
+built the same thing.
+
+**2. The naming of the awareness rungs is load-bearing in a way the enum does not advertise.**
+Klei renamed Invisible, Inc.'s alarm from `ALARM` to `SECURITY LEVEL` because playtesters read the
+original naming and numbering as more informative than it was meant to be — the underlying meter
+has six levels of five invisible sub-steps each, and the rename was to stop players inferring a
+precision the design deliberately withheld. `Unaware`, `Suspicious`, `Searching`, `Alerted`,
+`Engaged` is a good enum and `Searching`/`Alerted` is exactly the pair a player will read as a
+measured scale. What they are *called on screen* is interface's decision and is recorded in brief
+two; what Core may want to know is that the rung names in the rules will leak into the interface
+unless somebody decides otherwise, and that a shipped game found this out the expensive way.
+
+**3. A rung that falls has no shipped analogue, and the one precedent is one-way.** Invisible,
+Inc.'s escalation is irreversible at the top: investigating resolves either way, but alerted never
+resolves for the rest of the mission. `AwarenessTracker`'s contact file decays, so a rung comes
+back down. This is not a request to change the rule — decay is the better rule and it is what makes
+a contact a file rather than a flag — but it is the one place where a player's genre knowledge will
+be actively wrong about this game's rules, and it is worth a line in the `<remarks>` where the
+decay is priced, because the interface cannot fix a rule a player has mis-modelled.
+
+**4. For contract 6, and it is a caution rather than a finding.** Phoenix Point is the nearest
+shipped exemplar anywhere for per-part targeting — a hover in free aim reveals a named part with
+its own armour rating, hit points and what disabling it does — and its parts are **anatomical**,
+not directional: head, torso, arms, legs, held equipment. Contract 6's six faces are front, two
+shoulders, two flanks, back. The transfer is *a hover reveals a named part with its own terms*, and
+not the taxonomy. So **the six directional faces have no interface exemplar in ten games**, which
+the asset spec and whichever brief eventually draws a called shot should both know before either
+assumes one exists.
