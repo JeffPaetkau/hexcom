@@ -18,6 +18,18 @@ public sealed record TurnRecord(int Round, string Unit, Side Side, NodeId From, 
 /// <summary>Somebody going down: who, when, where, and who was shooting at the time.</summary>
 public sealed record Casualty(int Round, string Unit, Side Side, NodeId Where, string By);
 
+/// <summary>The job in the middle of a sortie: where it was, whether it was done, and by whom.</summary>
+/// <param name="Where">The node the objective points at, or null for a sortie with no job.</param>
+/// <param name="By">Who did it and in which round, or null if nobody did.</param>
+public sealed record TaskRecord(string Brief, NodeId? Where, bool Done, (string Unit, int Round)? By)
+{
+    public override string ToString()
+        => By is { } who ? $"done by {who.Unit} in round {who.Round}"
+            : Done ? "done"
+            : Where is { } at ? $"not done; the job was at {at}"
+            : "nothing to do but leave";
+}
+
 /// <summary>
 /// What one match came to. Everything a reader needs to say where the fighting happened,
 /// which is the question the first battlefield brief asks and the win check does not answer.
@@ -28,6 +40,12 @@ public sealed record Casualty(int Round, string Unit, Side Side, NodeId Where, s
 /// somebody walked off the field looks nothing like one that ends because a side was wiped out.
 /// </param>
 /// <param name="Departures">How each soldier left the field, and what the enemy held on them as they went.</param>
+/// <param name="Task">
+/// What the thing in the middle of the mission came to, or null for an objective with nothing in
+/// the middle of it. A verdict alone cannot tell a squad that never got near the job from one that
+/// did it and was seen walking home, and those are opposite findings about the same map — so
+/// since entry 061 put something in the middle, the recorder writes down whether it was done.
+/// </param>
 public sealed record MatchReport(
     int Seed,
     bool Decided,
@@ -40,7 +58,8 @@ public sealed record MatchReport(
     IReadOnlyList<Casualty> Casualties,
     IReadOnlyDictionary<string, AwarenessState> AlarmPeaks,
     IReadOnlyDictionary<string, int> Standing,
-    IReadOnlyDictionary<string, Departure> Departures)
+    IReadOnlyDictionary<string, Departure> Departures,
+    TaskRecord? Task)
 {
     /// <summary>Whether it settled on the objective rather than on the round cap.</summary>
     public bool Settled => Verdict != Verdict.Undecided;
@@ -139,7 +158,17 @@ public static class MatchRecorder
             casualties,
             peaks,
             everyone.ToDictionary(u => u.Name, u => u.InPlay ? u.Vitality : 0),
-            everyone.Where(u => u.Left is not null).ToDictionary(u => u.Name, u => u.Left!));
+            everyone.Where(u => u.Left is not null).ToDictionary(u => u.Name, u => u.Left!),
+            TaskOf(battle, orders));
+    }
+
+    /// <summary>What the side with orders was asked to do besides leave, and whether it did it.</summary>
+    private static TaskRecord? TaskOf(Battle battle, Side side)
+    {
+        if (battle.ObjectiveOf(side) is not Sortie sortie) return null;
+
+        var by = sortie is Reconnaissance { Confirmed: { } seen } ? (seen.By.Name, seen.Round) : ((string, int)?)null;
+        return new TaskRecord(sortie.Brief, sortie.Place, sortie.Done, by);
     }
 
     /// <summary>A named place on the waystation, so a route can be read as a story.</summary>
@@ -169,6 +198,11 @@ public static class MatchRecorder
         var sb = new StringBuilder();
         var outcome = r.Settled ? r.Verdict.ToString().ToLowerInvariant() : r.Decided ? $"decided for {r.Winner}" : "UNDECIDED";
         sb.AppendLine($"seed {r.Seed}: {outcome} at round {r.Rounds} after {r.Turns} turns, {r.Seconds:F1} s; {r.Shots} shots, {r.Throws} throws, last fire round {r.LastFire}");
+
+        // Before the routes, because it is the question the routes are read to answer: an
+        // abandoned match where the look was taken and an abandoned match where nobody went near
+        // the house are opposite findings and the verdict calls them the same thing.
+        if (r.Task is { } task) sb.AppendLine($"  task: {task}");
 
         if (r.FirstShot is { } first)
         {

@@ -248,9 +248,12 @@ applies and counts down in the status line, because the rules have no clock of t
 Losing a man usually costs the mission rather than being counted as a loss of its own, because
 what is judged is the highest rung any enemy held on each soldier as they left, which is the
 right way round for a squad whose orders were to go unnoticed. Hand both sides to the AI and
-watch it settle in five rounds: the squad walks straight to the cottages and out, unnoticed and
-achieved, without going near the compound the task is about. That is not a bug in the loader. It
-is what a squad told only how to leave will do, and the missing half is in the design doc.
+watch it settle in three or four rounds: the scout walks down the road in plain view, through the
+gate, takes the look from two hexes outside the door, and is killed there by the man on the roof
+while the other two wait at the cottages and leave. The look is taken every time and the mission
+is achieved none of the time. That is not a bug in the loader. It is what a squad that is paid
+for arriving and charged nothing for being seen on the way will do, and the missing half is in
+the design doc.
 
 Go prone and watch the visible area collapse. Pass a few turns and watch the order interleave
 rather than alternate. Walk round behind a sentry and watch it stay unaware while the same walk
@@ -552,18 +555,24 @@ there, and what the failure looks like when they are not.
   about each of ours. The map was redrawn from what the routes said: a tree line so the west road
   is a queue and the fields an approach, a stream too deep to wade so the bridge and the ford are
   the crossings, and sandbags at the gate the sentry stands at. What the matches measured is in
-  `docs/decisions.md` from entry 037. The first dozen never reached a decision at all; the same
-  dozen fought from the mission file all settle, in two or three rounds, because a squad told to
-  leave leaves. That is the objective system working and it is also the next thing to argue
-  about — see entry 048.
+  `docs/decisions.md` from entry 037. The first dozen never reached a decision at all. The same
+  dozen fought from the mission file all settle, and what they settle *as* has moved twice: with
+  only a way off the field written down they walked out in round 2 without going near the house
+  (entry 048), and now that the file states the real task they cross the map and take the look in
+  round 2 instead, twelve times out of twelve, and are seen doing it twelve times out of twelve
+  (entry 079). The recorder writes the job down separately from the verdict for that reason —
+  abandoned with the look taken and abandoned without leaving the road are opposite findings.
 
 - **And the map has been measured against its own briefing**, which turned out to say more than
   anybody drew on purpose. The task is to get eyes on what is in the house: of the 1693 places a
   soldier can stand outside the compound wall not one has a line into it, of the 54 inside exactly
   fourteen do, all of them south of the door — and every one of the fourteen is overlooked by the
-  roof the man with the radio is standing on. The drain under the south wall, the way in nobody
-  watches, opens onto one of the fourteen. So the ground states the mission: in by the drain, the
-  look from where you land, and the roof is the whole problem. Entry 059, and three tests hold it.
+  roof the man with the radio is standing on. Ask it of the node the objective actually aims at,
+  the middle of the room rather than the house at large, and the fourteen become four in a line
+  straight out from the door; the drain under the south wall, the way in nobody watches, opens one
+  stride short of the nearest of them. So the ground states the mission: in by the drain, a stride
+  to the only place the room can be read from, and the roof is the whole problem. Entries 059 and
+  079, and four tests hold it.
 
 ## What is not built yet
 

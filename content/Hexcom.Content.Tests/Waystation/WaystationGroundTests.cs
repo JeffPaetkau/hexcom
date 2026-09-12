@@ -1,6 +1,8 @@
 using System.Linq;
+using Hexcom.Core.Battles;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Units;
 using Hexcom.Core.Vision;
 using Xunit.Abstractions;
 
@@ -58,6 +60,53 @@ public class WaystationGroundTests(ITestOutputHelper output)
         // see. Either the roof is dealt with or the answer is not worth carrying home.
         var hidden = canSeeIn.Where(y => !_sight.CanSee(Roof, new Vantage(y))).ToList();
         Assert.Empty(hidden);
+    }
+
+    /// <summary>
+    /// The objective aims at one node and not at seven, and that narrows the standoff to four.
+    /// </summary>
+    /// <remarks>
+    /// The two tests above ask the briefing's question — can the house be seen into at all — and
+    /// the answer is fourteen places in the yard. What the objective wants is narrower: a line to
+    /// the <em>middle</em> of the room, which is what <c>at house</c> resolves to. Square on
+    /// through a doorway is the only way to see the far side of a room, so the fourteen become
+    /// four, in a line straight south of the door, and the drain lands one step off the nearest
+    /// rather than on it. That is a tighter mission than entry 059 measured and the same one: the
+    /// four are a subset of the fourteen, so the roof still overlooks every one of them.
+    /// </remarks>
+    [Fact]
+    public void TheLookTheObjectiveWantsIsTakenFromFourPlacesOnTheDoorAxis()
+    {
+        var battle = WaystationFight.Start(seed: 1);
+        var target = WaystationFight.Mission.NodeOf("house", battle.Graph);
+        var recce = Assert.IsType<Reconnaissance>(battle.ObjectiveOf(Side.Player));
+
+        Assert.Equal(new NodeId(HouseCentre, 0), target);
+        Assert.Equal(target, recce.Place);
+
+        var everywhere = Standable(_ => true);
+        var lines = everywhere
+            .Where(n => _sight.Trace(new Vantage(n), new Vantage(target)) is { CanSee: true } t && t.Distance <= recce.Within)
+            .ToList();
+        var yard = lines.Except(House).ToList();
+
+        output.WriteLine(
+            $"the middle of the house is in view from within {recce.Within:0} m at {lines.Count} of " +
+            $"{everywhere.Count} standable places, {yard.Count} of them outside the house: " +
+            string.Join(", ", yard.Select(n => n.Hex)));
+
+        // Four, all on the axis straight out from the door, and none of them outside the wall.
+        Assert.Equal(4, yard.Count);
+        Assert.All(yard, n => Assert.Equal(0, n.Hex.Q));
+        Assert.All(yard, n => Assert.True(n.Hex.DistanceTo(Hex.Zero) <= 4, $"{n.Hex} is outside the compound wall"));
+
+        // Every one of them is still under the roof, which is what makes the set the mission.
+        Assert.All(yard, n => Assert.True(_sight.CanSee(Roof, new Vantage(n)), $"{n.Hex} is out of the set's view"));
+
+        // And the drain no longer opens onto the look; it opens one stride from it.
+        var drain = new NodeId(new Hex(-1, -3), 0);
+        Assert.DoesNotContain(drain, lines);
+        Assert.Contains(yard, n => n.Hex.DistanceTo(drain.Hex) == 1);
     }
 
     [Fact]

@@ -244,39 +244,125 @@ public static class MissionFile
             if (_objectives.Any(o => o.Side == side))
                 throw Error($"The {side} side already has an objective; a battle holds one per side.");
 
-            if (kind != ObjectiveKind.Withdrawal)
-                throw Error(
+            _objectives.Add(kind switch
+            {
+                ObjectiveKind.Withdrawal => Withdrawal(c, side),
+                ObjectiveKind.Reconnaissance => Reconnaissance(c, side),
+                ObjectiveKind.Sabotage => Sabotage(c, side),
+                _ => throw Error(
                     $"'{kind.ToString().ToLowerInvariant()}' is one of the six mission shapes, but the rules only " +
-                    "have withdrawal so far. See docs/decisions.md entry 041.");
-
-            _objectives.Add(Withdrawal(c, side));
+                    "have withdrawal, reconnaissance and sabotage so far. See docs/decisions.md entries 041 and 061."),
+            });
         }
 
         private WithdrawalOrder Withdrawal(Cursor c, Side side)
         {
-            string? place = null;
-            var unnoticed = AwarenessState.Suspicious;
+            var shared = new SortieOptions(this);
 
             while (!c.Done)
             {
                 var option = c.Next("an option");
+                if (!shared.Take(option, c))
+                    throw Error($"Unknown withdrawal option '{option}'. Known: exit, unnoticed.");
+            }
+
+            return new WithdrawalOrder(side, shared.RequiredExit("A withdrawal"), shared.Unnoticed, LineNumber);
+        }
+
+        private ReconnaissanceOrder Reconnaissance(Cursor c, Side side)
+        {
+            var shared = new SortieOptions(this);
+            string? at = null;
+            double? within = null;
+
+            while (!c.Done)
+            {
+                var option = c.Next("an option");
+                if (shared.Take(option, c)) continue;
+
                 switch (option)
                 {
-                    case "exit":
-                        place = c.Next("a place name");
-                        if (!_places.ContainsKey(place))
-                            throw Error($"No place called '{place}' has been declared yet. A place comes before the objective that names it.");
-                        break;
-                    case "unnoticed":
-                        unnoticed = c.Enum<AwarenessState>("an awareness rung: unaware, suspicious, searching, alerted or engaged");
-                        break;
-                    default:
-                        throw Error($"Unknown withdrawal option '{option}'. Known: exit, unnoticed.");
+                    case "at": at = PlaceName(c); break;
+                    case "within": within = Metres(c); break;
+                    default: throw Error($"Unknown reconnaissance option '{option}'. Known: at, exit, within, unnoticed.");
                 }
             }
 
-            if (place is null) throw Error("A withdrawal needs somewhere to leave from: 'exit <place>'.");
-            return new WithdrawalOrder(side, place, unnoticed, LineNumber);
+            if (at is null) throw Error("A reconnaissance needs something to look at: 'at <place>'.");
+            return new ReconnaissanceOrder(side, at, shared.RequiredExit("A reconnaissance"), within, shared.Unnoticed, LineNumber);
+        }
+
+        private SabotageOrder Sabotage(Cursor c, Side side)
+        {
+            var shared = new SortieOptions(this);
+            string? at = null;
+            int? effort = null;
+
+            while (!c.Done)
+            {
+                var option = c.Next("an option");
+                if (shared.Take(option, c)) continue;
+
+                switch (option)
+                {
+                    case "at": at = PlaceName(c); break;
+                    case "effort":
+                        effort = c.Int("action points the job takes");
+                        if (effort <= 0) throw Error("A sabotage nobody has to spend anything on is not a sabotage.");
+                        break;
+                    default: throw Error($"Unknown sabotage option '{option}'. Known: at, exit, effort, unnoticed.");
+                }
+            }
+
+            if (at is null) throw Error("A sabotage needs something to do it to: 'at <place>'.");
+            return new SabotageOrder(side, at, shared.RequiredExit("A sabotage"), effort, shared.Unnoticed, LineNumber);
+        }
+
+        /// <summary>A distance in metres, which is the only unit any content file is written in.</summary>
+        private double Metres(Cursor c)
+        {
+            var metres = c.Double("a distance in metres");
+            if (metres <= 0) throw Error("A look has to be taken from somewhere, so the distance is more than nothing.");
+            return metres;
+        }
+
+        /// <summary>The name of a place already declared, which is the only kind an objective may name.</summary>
+        private string PlaceName(Cursor c)
+        {
+            var name = c.Next("a place name");
+            if (!_places.ContainsKey(name))
+                throw Error($"No place called '{name}' has been declared yet. A place comes before the objective that names it.");
+            return name;
+        }
+
+        /// <summary>
+        /// The two options every sortie has, read the same way whichever shape is asking.
+        /// </summary>
+        /// <remarks>
+        /// The grammar's half of <see cref="SortieOrder"/>: <c>exit</c> and <c>unnoticed</c> mean
+        /// one thing each, so they are parsed in one place and cannot drift apart per shape.
+        /// </remarks>
+        private sealed class SortieOptions(Reader reader)
+        {
+            private string? _exit;
+
+            public AwarenessState Unnoticed { get; private set; } = AwarenessState.Suspicious;
+
+            /// <summary>Whether this option was one of the shared ones, having consumed it if so.</summary>
+            public bool Take(string option, Cursor c)
+            {
+                switch (option)
+                {
+                    case "exit": _exit = reader.PlaceName(c); return true;
+                    case "unnoticed":
+                        Unnoticed = c.Enum<AwarenessState>("an awareness rung: unaware, suspicious, searching, alerted or engaged");
+                        return true;
+                    default: return false;
+                }
+            }
+
+            public string RequiredExit(string shape)
+                => _exit ?? throw reader.Error($"{shape} needs somewhere to leave from: 'exit <place>'.");
         }
     }
 }

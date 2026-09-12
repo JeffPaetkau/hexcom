@@ -102,10 +102,16 @@ public class MissionFileTests
         Assert.Equal(7, battle.Units.Count);
         Assert.Equal(1, battle.Round);
 
-        var objective = Assert.IsType<Withdrawal>(battle.ObjectiveOf(Side.Player));
+        var objective = Assert.IsType<Reconnaissance>(battle.ObjectiveOf(Side.Player));
         Assert.Equal(AwarenessState.Suspicious, objective.Unnoticed);
         Assert.True(objective.IsExit(new NodeId(new Hex(-14, 6), 0)));
         Assert.False(objective.IsExit(new NodeId(new Hex(0, 0), 0)));
+
+        // Two places, and the one to be looked at is a point: the middle of the house, from
+        // within the rule's own twelve metres, because the file says nothing about the distance.
+        Assert.Equal(new NodeId(new Hex(0, 1), 0), objective.Place);
+        Assert.Equal(12.0, objective.Within);
+        Assert.False(objective.Done);
 
         // The other side is holding the place, not withdrawing from it.
         Assert.Null(battle.ObjectiveOf(Side.Hostile));
@@ -141,8 +147,13 @@ public class MissionFileTests
 
         // And it really is lowered: no shapes, and every default spelled out.
         Assert.Contains("place cottages hexes -14,6 -14,7 -13,6", lowered);
-        Assert.Contains("objective withdrawal player exit cottages unnoticed suspicious", lowered);
+        Assert.Contains("objective reconnaissance player at house exit cottages unnoticed suspicious", lowered);
         Assert.DoesNotContain(" disc ", lowered);
+
+        // The one silence lowering leaves alone. 'within' is the rules' default and not the
+        // format's, so Content has no name to print for it and prints nothing rather than a
+        // second copy of a number that lives in Reconnaissance.
+        Assert.DoesNotContain(" within ", lowered);
     }
 
     [Fact]
@@ -152,6 +163,81 @@ public class MissionFileTests
 
         Assert.Equal(7, mission.Places["yard"].Count);
         Assert.Contains(new TileAddress(Hex.Zero, 0), mission.Places["yard"]);
+    }
+
+    // ---- two places and something in the middle --------------------------------------
+
+    [Fact]
+    public void AReconnaissanceAimsAtTheMiddleOfThePlaceRatherThanTheCornerItWasWrittenFrom()
+    {
+        // The same seven hexes listed in two orders. A place is ground and Reconnaissance wants a
+        // point, so the reader has to choose one, and the choice cannot depend on the writing.
+        var drawn = Parse(
+            "place vault disc 0,1 r 1",
+            "place gate hex -4,0",
+            "objective reconnaissance player at vault exit gate");
+        var listed = Parse(
+            "place vault hexes 1,1 0,2 -1,2 -1,1 0,0 1,0 0,1",
+            "place gate hex -4,0",
+            "objective reconnaissance player at vault exit gate");
+
+        var graph = MovementGraph.Build(MapLibrary.Load("waystation"));
+
+        Assert.Equal(new NodeId(new Hex(0, 1), 0), drawn.NodeOf("vault", graph));
+        Assert.Equal(drawn.NodeOf("vault", graph), listed.NodeOf("vault", graph));
+    }
+
+    [Fact]
+    public void AReconnaissanceCanSayHowCloseTheLookHasToBeTakenFrom()
+    {
+        var mission = Parse(
+            "place vault disc 0,1 r 1",
+            "place gate hex -4,0",
+            "objective reconnaissance player at vault exit gate within 4.5 unnoticed unaware");
+
+        var order = Assert.IsType<ReconnaissanceOrder>(mission.Objectives.Single());
+        Assert.Equal("vault", order.Place);
+        Assert.Equal("gate", order.Exit);
+        Assert.Equal(4.5, order.Within);
+        Assert.Equal(AwarenessState.Unaware, order.Unnoticed);
+
+        // And a distance written down is a distance written back out, unlike the default.
+        Assert.Contains("within 4.5", MissionWriter.Write(mission));
+    }
+
+    [Fact]
+    public void ASabotageIsTheSameTwoPlacesWithThePricedJob()
+    {
+        var mission = Parse(
+            "place mast hex 0,1",
+            "place gate hex -4,0",
+            "objective sabotage player at mast exit gate effort 25");
+
+        var order = Assert.IsType<SabotageOrder>(mission.Objectives.Single());
+        Assert.Equal(25, order.Effort);
+
+        var sabotage = Assert.IsType<Sabotage>(mission.Begin().ObjectiveOf(Side.Player));
+        Assert.Equal(25, sabotage.Effort);
+        Assert.Equal(25, sabotage.Owing);
+    }
+
+    [Fact]
+    public void ASortieWithNothingToLookAtIsRefusedAndSaysWhatIsMissing()
+    {
+        var error = Assert.Throws<MissionFormatException>(
+            () => Parse("place gate hex -4,0", "objective reconnaissance player exit gate"));
+        Assert.Contains("something to look at", error.Message);
+    }
+
+    [Fact]
+    public void EverySortieSpellsTheExitTheSameWay()
+    {
+        // One grammar, one word. The line entry 059 left commented in the waystation said
+        // 'out cottages', and this is the test that there is no second spelling of it.
+        var error = Assert.Throws<MissionFormatException>(
+            () => Parse("place gate hex -4,0", "objective reconnaissance player at gate out gate"));
+        Assert.Contains("Unknown reconnaissance option 'out'", error.Message);
+        Assert.Contains("exit", error.Message);
     }
 
     [Fact]
@@ -190,9 +276,11 @@ public class MissionFileTests
     [Fact]
     public void AMissionShapeTheRulesDoNotHaveYetIsRefusedByNameRatherThanAsAMisspelling()
     {
-        var error = Assert.Throws<MissionFormatException>(() => Parse("objective sabotage player"));
+        // Three of the six can be built now; the other three are still names the grammar knows
+        // and the rules do not, which is a true and useful thing to be told.
+        var error = Assert.Throws<MissionFormatException>(() => Parse("objective capture player"));
         Assert.Contains("one of the six mission shapes", error.Message);
-        Assert.Contains("entry 041", error.Message);
+        Assert.Contains("entries 041 and 061", error.Message);
     }
 
     [Fact]

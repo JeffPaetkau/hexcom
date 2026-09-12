@@ -85,8 +85,36 @@ public static class MissionWriter
         foreach (var order in mission.Objectives)
         {
             sb.Append("objective ").Append(Lower(order.Kind)).Append(' ').Append(Lower(order.Side));
-            if (order is WithdrawalOrder w)
-                sb.Append(" exit ").Append(w.Place).Append(" unnoticed ").Append(Lower(w.Unnoticed));
+
+            // The shape's own half first, then the half every sortie shares, so a written line
+            // reads in the order the grammar in content/README.md gives it.
+            var at = order switch
+            {
+                ReconnaissanceOrder r => r.Place,
+                SabotageOrder s => s.Place,
+                _ => null,
+            };
+
+            if (at is not null) sb.Append(" at ").Append(at);
+            if (order is SortieOrder sortie) sb.Append(" exit ").Append(sortie.Exit);
+
+            // The one thing lowering deliberately does not spell out. Everywhere else a silence in
+            // the file is the format's default and gets written back as a value; these two are
+            // the rules' defaults, they live on Reconnaissance and Sabotage as optional
+            // parameters, and Content has no name to print for them. Printing a copy would be a
+            // balance number in two places, which is the thing the format exists to prevent.
+            switch (order)
+            {
+                case ReconnaissanceOrder { Within: { } within }:
+                    sb.Append(" within ").Append(within.ToString("0.###", CultureInfo.InvariantCulture));
+                    break;
+                case SabotageOrder { Effort: { } effort }:
+                    sb.Append(" effort ").Append(effort.ToString(CultureInfo.InvariantCulture));
+                    break;
+            }
+
+            if (order is SortieOrder ending) sb.Append(" unnoticed ").Append(Lower(ending.Unnoticed));
+
             sb.AppendLine();
         }
     }

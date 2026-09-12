@@ -2770,7 +2770,7 @@ expect.
 ---
 
 ## 059 — The waystation mission is finished but for the rule it needs, and the ground already says what the mission is
-**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for content — Core landed the objective in 061; the one-line uncomment is the head of Content's brief, see 068
+**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for core — item 1 is resolved (Core landed the objective in 061, Content ran it in 079, and 079 re-measures the standoff); item 2, a garrison that moves, is still Core's and still the largest thing between this and a site that reads as inhabited
 
 Content's half of entry 057's *make what we have playable*. Everything about
 `waystation.hexmission` that is content is now written, so that when Core has an objective at a
@@ -3857,3 +3857,135 @@ shoulders, two flanks, back. The transfer is *a hover reveals a named part with 
 not the taxonomy. So **the six directional faces have no interface exemplar in ten games**, which
 the asset spec and whichever brief eventually draws a called shot should both know before either
 assumes one exists.
+
+---
+
+## 079 — The waystation is a reconnaissance: the look is taken twelve times out of twelve, and abandoned twelve times out of twelve
+**2026-09-12** · **Raised by** content · **For** core, view, master · **Status** open for core — the two findings under *For Core* below
+
+The head of Content's brief, which entry 068 called a one-line uncomment. It was one line, and the
+line changed three things around it.
+
+**The mission is what it says it is now.** `objective reconnaissance player at house exit cottages
+unnoticed suspicious` is what `waystation.hexmission` runs; the withdrawal it was standing in for
+is gone, and with it the thing entry 048 measured, which was a squad achieving a mission by
+turning round in round 2 and going home.
+
+### One word for the exit, not two
+
+Entry 059 wrote the line as `at house out cottages`. It is `exit cottages` instead. Every shape the
+rules have is a `Sortie` — entry 061 — so every statement names somewhere to leave from, and a
+grammar with two words for one thing is a wart whichever word you pick. `exit` is the one already
+in the format, already in `content/README.md`, and already the name of the property on
+`Sortie.Exit`. The shared half is now a `SortieOrder` record and one parser that all three shapes
+call, so the two options cannot drift apart per shape; there is a test that `out` is refused.
+
+### An exit is a place and the thing in the middle is a point, which narrows the mission
+
+`exit` keeps every node of its place, because any of them will do. `at` cannot: `Reconnaissance`
+traces a line to one node. So `at house` has to choose, and the rule is **the middle** — the node
+with the least total distance to the rest of the place, chosen from the ones a soldier could stop
+in. Deterministic, independent of the order the file listed the ground in, and the room rather
+than the doorway. `Mission.NodeOf` is it.
+
+**Choosing the middle re-answers entry 059's measurement, and tighter.** That entry asked whether
+the house can be seen into at all and found fourteen places in the yard. What the objective wants
+is a line to the middle of the room, and square on through a doorway is the only way to see the
+far side of one:
+
+| | |
+|---|---|
+| yard places with a line into the house at all (entry 059) | 14 |
+| yard places with a line to the **middle** of it, within 12 m | **4** |
+| where they are | `0,-1` `0,-2` `0,-3` `0,-4` — the axis straight out from the door |
+| overlooked by the roof | 4 of 4, so entry 059's finding survives the narrowing |
+| where the drain opens | `-1,-3`, which is **not** one of them, and is one stride from `0,-3` |
+
+So the drain no longer lands you on the shot; it lands you one stride short of it. That is a
+better mission than the one entry 059 described and it was not designed, it fell out of aiming at
+a point. Held by a test in `WaystationGroundTests`.
+
+**The limit this rule has**, worth knowing before the second map: a place nobody can stand in
+cannot be looked at, because the target is chosen from standable nodes. A sealed vault is a fair
+thing to be sent to photograph and the format cannot name one.
+
+### Sabotage is wired too, and that was not scope creep
+
+The grammar refuses shapes the rules do not have, by name, with a message saying so. Entry 061
+built `Sabotage` as well as `Reconnaissance`, which made that message untrue for one of the six.
+`SabotageOrder` is the same two places with `effort` instead of `within`. No mission in the
+library is one. Three of the six build now; `extraction`, `denial` and `capture` are still names
+the grammar knows and the rules do not.
+
+### Twelve matches, against entry 048 as the baseline
+
+`HEXCOM_SEEDS=12`, the mission's own thirty-round clock, `Commander` on both sides.
+
+| | entry 048 | now |
+|---|---|---|
+| settled on the objective | 12 of 12 | 12 of 12 |
+| **task done** | no task existed | **12 of 12, by Vance, in round 2** |
+| achieved | 3 | **0** |
+| abandoned | 9 | **12** |
+| nearest anybody got to the house | twenty hexes | **two hexes, every seed** |
+| ends at round | 2 or 3 | 3 or 4 |
+
+The route is the same story every seed. Vance crosses from `-21,3` to the bridge at `-8,0` in one
+turn — thirteen hexes, twenty-two metres — walks through the west gate to `0,-1` in the second,
+takes the look, and is killed there or shortly after by the man on the roof. Bekker and Orsini are
+at the cottages by round 2 and 3 and walk off the moment the look is confirmed, because leaving is
+not offered until the job is done and the job is done early.
+
+**Nought achieved is the map being right rather than the map being broken.** Entry 059 measured
+that every place the house can be seen from is overlooked by the roof, and concluded that the man
+on the roof is not an obstacle on the way to the mission, he *is* the mission. Twelve matches now
+say so from the other end: the look is free and getting away with it is the whole game. The
+recorder writes the task down separately from the verdict for exactly this reason — *abandoned
+with the look taken* and *abandoned without going near the house* are opposite findings and
+`Verdict` calls them the same thing.
+
+### For Core
+
+**1. Nothing prices being seen on the way in, and it is now the sharpest thing the search cannot
+do.** `unnoticed` is read once, in `Sortie.Judge`, off the reading each soldier carries at the
+moment they leave. Nowhere between deployment and departure does the commander pay anything for
+raising the alarm, so `Remaining` pulls it down the fastest line to the place and the fastest line
+is the road, in the open, past the sentry at the gate, at a walking pace loud enough to be heard
+from the compound (entry 037). Twelve matches out of twelve take it. This is the same class of
+gap entry 048 found and the opposite end of it: the objective now makes the AI *go*, and nothing
+makes it *creep*. Until something does, a stealth mission is played as a footrace, and the
+waystation cannot demonstrate the thing the game is about even though its ground states it
+perfectly.
+
+**2. A rule's default has no name Content can print.** `Reconnaissance.Within` and
+`Sabotage.Effort` default to twelve metres and forty points as optional constructor parameters, so
+a mission file may omit them — and `MissionWriter` then has nothing to lower them to. It writes
+nothing rather than a copy, because a balance number with two homes is worse than a silence in a
+lowered file, but that is the one place the lowering claim in `content/README.md` now has an
+exception. A public constant on each would remove it.
+
+### For View
+
+`SandboxScenario` names this mission, so the sandbox is a reconnaissance from the next build
+onwards and the status line reads *Get eyes on (0,1)@0 from within 12 m...* rather than the
+withdrawal brief.
+
+**One thing has quietly stopped being drawn, and it is the reason this is addressed to View
+rather than filed as a nicety.** `BattleView.BuildExit` opens with `is not Withdrawal way`, so
+with a reconnaissance set the cottages are no longer tinted and the player can no longer see
+where the way off is. The solution builds and nothing throws — the test is a type test and it
+simply fails — which is exactly why it is written down here instead of being noticed on a
+capture. `Sortie` is the type that has `Exit`, and all three shapes are one.
+
+Three things View can now show that did not exist before: `Reconnaissance.Confirmed` is who took
+the look and in which round, `Sortie.Done` is whether the job is done at all, and `Sortie.Place`
+is a point on the map that is not an exit. The third is the one the player most needs, because on
+this mission the place to get to and the place to leave by are in opposite directions.
+
+### For master, and for the second map
+
+**A turn is thirteen hexes on a road.** Vance covers twenty-one hexes in two turns and is at the
+objective at the start of round 3, from a deployment twenty hexes out on a radius-24 map. That is
+the *one size or a range* question answering itself from the other direction: on this ground the
+approach is two decisions long, and a tight map of radius 12 to 16 would make it one. Worth
+having in hand before the second battlefield is drawn rather than after.

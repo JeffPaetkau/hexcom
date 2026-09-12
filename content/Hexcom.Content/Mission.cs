@@ -127,18 +127,95 @@ public abstract record ObjectiveOrder(ObjectiveKind Kind, Side Side, int Line = 
     public abstract Objective Build(Mission mission, Battle battle);
 }
 
-/// <summary>Leave by a named place with nobody the wiser.</summary>
-/// <param name="Place">The name of a <c>place</c> the file declared.</param>
+/// <summary>
+/// Go out, do something, and come back — the shape all three buildable objectives share.
+/// </summary>
+/// <remarks>
+/// Entry 061 settled that the mission book's shapes are one shape and several tasks, and this is
+/// the file format agreeing with it rather than restating it. Every sortie names somewhere to
+/// leave from and how loudly it may be done, so both are here, spelled the same way in every
+/// statement — <c>exit</c> and <c>unnoticed</c> — and a shape adds only what is its own. The
+/// commented line entry 059 left in the waystation said <c>out cottages</c>; one grammar with two
+/// words for the exit is a wart, and the word that survived is the one already in the format, in
+/// <c>content/README.md</c> and on <see cref="Sortie.Exit"/>.
+/// </remarks>
+/// <param name="Exit">The name of a <c>place</c> this side may walk off the field from.</param>
 /// <param name="Unnoticed">The highest rung any enemy may hold on a departing soldier.</param>
+public abstract record SortieOrder(
+    ObjectiveKind Kind,
+    Side Side,
+    string Exit,
+    AwarenessState Unnoticed,
+    int Line)
+    : ObjectiveOrder(Kind, Side, Line);
+
+/// <summary>Leave by a named place with nobody the wiser. The sortie with nothing in the middle.</summary>
 public sealed record WithdrawalOrder(
     Side Side,
-    string Place,
+    string Exit,
     AwarenessState Unnoticed = AwarenessState.Suspicious,
     int Line = 0)
-    : ObjectiveOrder(ObjectiveKind.Withdrawal, Side, Line)
+    : SortieOrder(ObjectiveKind.Withdrawal, Side, Exit, Unnoticed, Line)
 {
     public override Objective Build(Mission mission, Battle battle)
-        => new Withdrawal(Side, mission.NodesOf(Place, battle.Graph, Line), Unnoticed);
+        => new Withdrawal(Side, mission.NodesOf(Exit, battle.Graph, Line), Unnoticed);
+}
+
+/// <summary>Get eyes on a named place from close enough to count, then leave by another.</summary>
+/// <remarks>
+/// Two places and a distance. The distance is the only number in the statement, and it is
+/// optional because the rules already have an opinion about it — twelve metres, on
+/// <see cref="Reconnaissance"/> — which a file that says nothing inherits rather than copies.
+/// That is why <see cref="Within"/> is nullable instead of defaulted here: a balance number
+/// written down in two places is a balance number that will disagree with itself.
+/// </remarks>
+/// <param name="Place">The name of the <c>place</c> to be looked at.</param>
+/// <param name="Within">How close the look has to be taken from, in metres, or null for the rule's own.</param>
+public sealed record ReconnaissanceOrder(
+    Side Side,
+    string Place,
+    string Exit,
+    double? Within = null,
+    AwarenessState Unnoticed = AwarenessState.Suspicious,
+    int Line = 0)
+    : SortieOrder(ObjectiveKind.Reconnaissance, Side, Exit, Unnoticed, Line)
+{
+    public override Objective Build(Mission mission, Battle battle)
+    {
+        var place = mission.NodeOf(Place, battle.Graph, Line);
+        var exit = mission.NodesOf(Exit, battle.Graph, Line);
+
+        return Within is { } within
+            ? new Reconnaissance(Side, place, exit, within, Unnoticed)
+            : new Reconnaissance(Side, place, exit, unnoticed: Unnoticed);
+    }
+}
+
+/// <summary>Spend long enough on a named place to break it, then leave by another.</summary>
+/// <remarks>
+/// The same two places with the task priced instead of free, and written here for the same reason
+/// the grammar names all six shapes: the alternative was an error message saying the rules have
+/// no sabotage, which entry 061 made untrue. No mission in the library is one yet.
+/// </remarks>
+/// <param name="Effort">Action points the job takes in total, or null for the rule's own.</param>
+public sealed record SabotageOrder(
+    Side Side,
+    string Place,
+    string Exit,
+    int? Effort = null,
+    AwarenessState Unnoticed = AwarenessState.Suspicious,
+    int Line = 0)
+    : SortieOrder(ObjectiveKind.Sabotage, Side, Exit, Unnoticed, Line)
+{
+    public override Objective Build(Mission mission, Battle battle)
+    {
+        var place = mission.NodeOf(Place, battle.Graph, Line);
+        var exit = mission.NodesOf(Exit, battle.Graph, Line);
+
+        return Effort is { } effort
+            ? new Sabotage(Side, place, exit, effort, Unnoticed)
+            : new Sabotage(Side, place, exit, unnoticed: Unnoticed);
+    }
 }
 
 /// <summary>
@@ -249,5 +326,35 @@ public sealed record Mission(
             throw new MissionFormatException($"Nobody can stand anywhere in '{place}'.", Name, line);
 
         return nodes;
+    }
+
+    /// <summary>
+    /// The one place in a named piece of ground that stands for the whole of it: its middle.
+    /// </summary>
+    /// <remarks>
+    /// An exit is a set of nodes because any of them will do, and a thing to look at is one node
+    /// because <see cref="Reconnaissance"/> traces a line to it. So a statement that says
+    /// <c>at house</c> has to choose, and the rule is the node with the least total distance to
+    /// the rest of the place — the middle of the room rather than a corner of it, and the same
+    /// answer whatever order the file happened to list the ground in.
+    /// <para>
+    /// Chosen from the nodes a soldier could stop in, which is what <see cref="NodesOf"/> gives,
+    /// for two reasons: the objective prices the walk to the place as well as the look at it, so
+    /// an unreachable target would flatten the gradient the commander follows; and a place nobody
+    /// can enter is a place the format should refuse rather than quietly aim at a wall. The
+    /// second of those is a limit worth knowing about — a sealed vault is a real thing to
+    /// photograph and this cannot yet name one.
+    /// </para>
+    /// </remarks>
+    public NodeId NodeOf(string place, MovementGraph graph, int line = 0)
+    {
+        var nodes = NodesOf(place, graph, line);
+
+        return nodes
+            .OrderBy(n => nodes.Sum(other => n.Hex.DistanceTo(other.Hex)))
+            .ThenBy(n => n.Layer)
+            .ThenBy(n => n.Hex.Q)
+            .ThenBy(n => n.Hex.R)
+            .First();
     }
 }

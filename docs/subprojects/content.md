@@ -73,37 +73,34 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
 - **`WallProfile` as data, not an enum** — the reason `profile hedge ...` is a line in a map
   rather than a pull request against the rules.
 - **`Objective` as a polymorphic strategy** — `Battle.SetObjective` before `Start`,
-  `Withdrawal(side, exits, unnoticed)` over a collection of nodes, `Battle.Extract()` as the free
-  turn action, and `Battle.VerdictFor(side)` for how it came out. Entry 041. A mission file's
-  `objective` statement lowers to one of these, and a new shape in Core is a new
-  `ObjectiveOrder` here and no change to the grammar.
+  `Battle.Extract()` as the free turn action, and `Battle.VerdictFor(side)` for how it came out.
+  Entry 041. A mission file's `objective` statement lowers to one of these, and a new shape in
+  Core is a new `ObjectiveOrder` here and no change to the grammar.
+- **`Sortie` as the shape all three buildable objectives share** — go out, do something, come
+  back, with the task and the walking priced in one currency. `Withdrawal(side, exits,
+  unnoticed)`, `Reconnaissance(side, place, exits, within, unnoticed)` and `Sabotage(side, place,
+  exits, effort, unnoticed)`. Entry 061. The exit is a collection of nodes and the place is one
+  node, which is why the grammar's `exit` keeps a whole place and its `at` takes the middle of
+  one — entry 079.
 - **`Unit.Left`** — a `Departure` saying whether a soldier walked off or was put down, and what
   the other side held on them as they went. It is what lets the harness tell a mission achieved
   from a squad wiped out, which before objectives were the same state.
 
 ---
 
-## The job — first, the one line; then a second battlefield
+## The job — a second battlefield, of a different shape
 
-**First, and it is an hour: turn the waystation's reconnaissance objective on.** Entry 059 left
-`objective reconnaissance player at house out cottages unnoticed suspicious` commented out in
-`waystation.hexmission` until Core had the shape. Entry 061 built it — `Reconnaissance(side,
-place, exit, within, unnoticed)`, one sortie carrying its own exit and threshold — and says the
-statement maps straight onto it, with `within` defaulting to twelve metres, which entry 059's
-own measurement of the house says is very likely right. So: the `ObjectiveOrder` for
-reconnaissance in `Hexcom.Content`, the line uncommented and the withdrawal line retired, and
-a dozen seeds through the harness to see the mission fought to a verdict *with something in the
-middle of it* for the first time. Record what the routes did in `../decisions.md`; entry 048
-is the baseline it is measured against. **Until this lands, every build the user tests still
-has the walk-out mission in it**, which is why it comes before the map. Branch
-`content/reconnaissance`, and merge it before starting the one below.
+Branch `content/second-battlefield`. The waystation's mission is finished: entry 061 built the
+objective and entry 079 ran it, so the mission the user's build fights is the reconnaissance the
+briefing describes rather than the walk-out that stood in for it. This is the other thing entry
+057's *make what we have playable* wants from Content, and it is the last map job before the
+campaign: one battlefield is one data point, and every claim the format makes rests on it.
 
-### Then — a second battlefield, of a different shape
-
-Branch `content/second-battlefield`. The waystation's mission is written as far as content can
-take it (entry 059) and the rest of it is Core's objective, which has now landed (entry 061). This is the other thing entry 057's
-*make what we have playable* wants from Content, and it is the last map job before the campaign:
-one battlefield is one data point, and every claim the format makes rests on it.
+**Read entry 079 before drawing.** Three of its findings bear on this map: aiming at a place
+means aiming at its middle, which narrows a standoff more than a drawing suggests; a turn is
+thirteen hexes on a road, so a radius-24 approach is two decisions long; and nothing yet prices
+being seen on the way in, which is Core's and is why a route that *should* be creeping will be
+walked in the open when you fight this one.
 
 A second map, of the other kind, so that the mission format is argued from two shapes rather than
 one and the *one size or a range* question below gets a second data point.
@@ -112,7 +109,8 @@ one and the *one size or a range* question below gets a second data point.
 example, forty-five statements of ground; `waystation.hexmission` is the mission on it, and
 `content/Hexcom.Content.Tests/Waystation` is the harness — `WaystationFight` is now a name and one
 call, `MatchRecorder` runs `Commander` against itself and writes down routes, throws, casualties,
-alarm peaks, departures, verdict and pacing, and `HEXCOM_SEEDS`, `HEXCOM_SEED_FROM`,
+alarm peaks, departures, verdict, pacing and — since entry 079 — whether the job in the middle of
+the mission was actually done and by whom, and `HEXCOM_SEEDS`, `HEXCOM_SEED_FROM`,
 `HEXCOM_ROUNDS` and `HEXCOM_TRANSCRIPT` steer it. Copy the shape for the new map; the recorder is
 not waystation-specific except for its landmarks, which want generalising now that a second map
 needs them — and a `place` in a mission file is most of what a landmark is.
@@ -145,23 +143,19 @@ that contains another place. If any of those is awkward, that is a finding about
 it is yours to fix.
 
 **Fight it before calling it done.** A dozen seeds through the harness, and read the routes the
-way entry 038 did. Expect two things and draw around neither. A squad told to leave leaves
-immediately, because the task half of a mission is not in the rules (entry 048) — setting the exit
-somewhere it has to cross the map to reach would be exactly the mistake. And the garrison does not
-move, because nothing in the game patrols (entry 059) — a fifth soldier would be a fifth soldier
-standing still. Both are Core's and a map cannot fix a search. Do redraw around anything that is
-the map's: a firing lane where a street was meant, a crossing nobody uses because there is an
-easier one.
+way entry 038 did. Expect two things and draw around neither. The squad will walk to the job in
+the open and be seen doing it, because nothing prices being noticed on the way in (entry 079) —
+so a route drawn to be crept along will be marched along, and drawing a shorter one to suit is
+exactly the mistake. And the garrison does not move, because nothing in the game patrols (entry
+059) — a fifth soldier would be a fifth soldier standing still. Both are Core's and a map cannot
+fix a search. Do redraw around anything that is the map's: a firing lane where a street was
+meant, a crossing nobody uses because there is an easier one.
 
 **Settle before drawing much.** Whether the compound goes. It is the demo map, radius 6,
 everything in earshot of everything (entry 030), and `DemoMaps.cs` is gone (entry 043). A second
 map at the right size that carries a mission would make the compound the third map and the only
 one too small to fight on. Do not delete it — the view's captures diff against it — but say in
 `../decisions.md` whether it is a map or a fixture.
-
-**Also on this branch, if the objective has landed by the time you get here:** swap the two lines
-at the bottom of `waystation.hexmission`, write the `ObjectiveOrder` for the new shape, and fight
-it. Entry 059 says what it will need. If it has not landed, leave the file exactly as it is.
 
 **Out of scope.** New objective kinds, the task term (entry 048) and anything that would make a
 garrison patrol (entry 059) are Core's. Anything in `game/`: the sandbox reads whatever mission
@@ -193,6 +187,12 @@ hat. And it carries a round limit that no rule reads, because the clock of entry
 nobody's — so the file states the mission's own answer to *when it stops* and whatever runs the
 battle applies it.
 
+There is now a third thing it cannot say, found by making it say the second one. **A place that
+nobody can stand in cannot be the thing a mission points at** — `at <place>` picks the middle of
+the standable ground in it, so a sealed vault, a locked room or a crate is not nameable as a
+target. Entry 079. It has cost nothing yet because the waystation's house has a door and a floor,
+and the second map is where it will either bite or turn out not to matter.
+
 **Can a mission say anything about behaviour?** Everything the format holds is a fact about the
 opening frame — who is where, facing which way, with what. Nothing in it, and nothing in the
 rules, can say what a soldier is *doing*: the roster gives the Cadre one honest patrol and neither
@@ -218,21 +218,29 @@ in a mission are content *naming* one where declaring it would be the balance ch
 
 **Almost nothing has been measured, and here is what has.** Every number in the game was set by
 reasoning; the waystation harness is the first thing to check any of them against a match, and
-what it found is in entries 037 to 039 and 048: a rifle is heard at 18 m against a design that
-says a hundred, a turn's walk on gravel is heard further than a shot, the AI throws every charge
-at the first crater and paces between two tiles on a shot it never takes, and a squad told to
-leave leaves in round 2 without doing what it came for. The one thing that has been measured
-*right* is that an objective ends a battle: twelve matches out of twelve, where twelve out of
-twelve used to run out of rounds. A dozen seeds is two seconds now rather than nine minutes,
-which makes the harness cheap enough to be the first thing anybody with a number to test
-reaches for.
+what it found is in entries 037 to 039, 048 and 079: a rifle is heard at 18 m against a design
+that says a hundred, a turn's walk on gravel is heard further than a shot, the AI throws every
+charge at the first crater and paces between two tiles on a shot it never takes, and a turn is
+thirteen hexes of road, which makes a radius-24 approach two decisions long.
+
+Two things have been measured *right*. An objective ends a battle — twelve matches out of twelve,
+where twelve out of twelve used to run out of rounds. And an objective with a job in the middle
+of it is gone after: the squad that used to turn round in round 2 and go home now crosses the map
+and takes the look in round 2, every seed. What replaced the old fault is the new one, and it is
+Core's: nothing prices being seen on the way in, so every one of those twelve is abandoned rather
+than achieved, and the mission is played as a footrace. A dozen seeds is four seconds rather than
+nine minutes, which makes the harness cheap enough to be the first thing anybody with a number to
+test reaches for.
 
 **And one thing measured about the ground rather than the numbers.** Entry 059 asked the mission
 book's question of the waystation — is there anywhere to look at the house *from* — and got an
 answer the drawing never advertised: nowhere outside the wall at any range, fourteen places
-inside, every one of them overlooked by the roof. That is a whole mission stated by the ground,
-and it was arrived at by accident. **Measure a map against its own briefing before calling it
-drawn**, because a map can be wrong about what it offers for a long time without anybody noticing.
+inside, every one of them overlooked by the roof. Entry 079 asked it again of the node the
+objective actually aims at, the middle of the room, and the fourteen became four in a line
+straight out from the door, with the drain opening one stride short of the nearest rather than
+onto it. That is a whole mission stated by the ground, and neither measurement was arrived at on
+purpose. **Measure a map against its own briefing before calling it drawn**, because a map can be
+wrong about what it offers for a long time without anybody noticing.
 
 ## Recent work
 

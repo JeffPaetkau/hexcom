@@ -255,25 +255,53 @@ open question in [`../docs/subprojects/content.md`](../docs/subprojects/content.
 ## Objectives
 
 ```
-objective withdrawal player exit cottages unnoticed suspicious
+objective reconnaissance player at house exit cottages unnoticed suspicious
 ```
 
 `objective <shape> <side>`, then options belonging to the shape. One per side, and a side with
 none behaves as it always did.
 
 All six shapes of the mission book are names the grammar knows — `withdrawal`,
-`reconnaissance`, `sabotage`, `extraction`, `denial`, `capture` — and only `withdrawal` can be
-built, because it is the only one the rules have. The other five are refused with a message
-saying so rather than as a misspelling, which is a true and useful thing to be told.
+`reconnaissance`, `sabotage`, `extraction`, `denial`, `capture` — and three of them can be built,
+because three of them are what the rules have. The other three are refused with a message saying
+so rather than as a misspelling, which is a true and useful thing to be told.
 
-`withdrawal` takes `exit <place>`, required, and `unnoticed <rung>`, which is the highest
-awareness rung any enemy may hold on a departing soldier and still have it count. Rungs are
-`unaware`, `suspicious`, `searching`, `alerted`, `engaged`; the default is `suspicious`, which is
-a dog barking rather than a sentry walking towards where he thinks you were.
+The three that build are one shape with different things in the middle of it, so they share two
+options and spell them the same way:
+
+| | |
+|---|---|
+| `exit <place>` | where this side may walk off the field. Required, in all three |
+| `unnoticed <rung>` | the highest rung any enemy may hold on a departing soldier and still have it count |
+
+Rungs are `unaware`, `suspicious`, `searching`, `alerted`, `engaged`; the default is
+`suspicious`, which is a dog barking rather than a sentry walking towards where he thinks you
+were.
+
+Then each shape adds its own:
+
+| | |
+|---|---|
+| `withdrawal` | nothing. Be there, leave, and be nobody's problem |
+| `reconnaissance` | `at <place>`, required, and `within <metres>` — how close the look has to be taken from |
+| `sabotage` | `at <place>`, required, and `effort <points>` — action points the job takes, from however many soldiers |
+
+**An exit is a place and the thing in the middle is a point.** Any node in the exit will do, so
+`exit` keeps all of them; a look is a line traced to one node, so `at` takes the place's *middle*
+— the node with the least total distance to the rest of it. That is the room rather than the
+doorway, and it is the same answer whichever order the file listed the ground in. It also means a
+place nobody can stand in cannot be looked at, which is a real limit: a sealed vault is a fair
+thing to photograph and this cannot yet name one.
+
+**`within` and `effort` are the two silences the writer leaves alone.** Everywhere else a default
+is the format's and gets spelled out when lowered. These two belong to the rules, on
+`Reconnaissance` and `Sabotage`, and a file that omits one inherits it rather than copying it —
+so the writer prints nothing rather than a second home for a balance number.
 
 ## Lowering
 
 `MissionWriter.Write` spells everything out: every place an explicit list of tiles, every facing,
 role, kit and threshold. There is only one piece of shorthand in the format — `place` takes the
 map's shapes — so the claim this proves is mostly about the *defaults*, which are the part of any
-format that quietly stops meaning what the reader thinks.
+format that quietly stops meaning what the reader thinks. The two exceptions are `within` and
+`effort`, for the reason given above: they are the rules' defaults, not the format's.

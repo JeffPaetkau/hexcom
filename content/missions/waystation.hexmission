@@ -8,8 +8,8 @@
 # the waystation reads this.
 #
 # The task is a look, so the register is the mission book's assessment rather than its walk, and
-# the objective it wants is reconnaissance. The rules have one shape and it is withdrawal, so the
-# line that runs today is the leaving and the line that will run is written beside it. Entry 059.
+# the objective it wants is reconnaissance. Entry 059 wrote everything but that line and entry 061
+# built the rule under it; it runs now, and the walk-out this file used to state is gone.
 
 mission Instrument 4-11: the waystation
 map waystation
@@ -83,21 +83,24 @@ deploy Hollis hostile 14,-6    facing sw                 kit beamer
 
 # ---- what we came to do ---------------------------------------------------------------------
 
-# The shape this mission is, once the rules have it. Reconnaissance is won by holding the place
-# in full attention with a clear line to it and then getting off the ground, which is two calls
-# that already exist — SightSolver.Trace and AwarenessTracker.IsWatching — and an objective
-# nobody has written. See docs/setting/missions.md section 4, and entry 059 for what Content
-# needs from it. When it lands, uncomment this line and delete the one below it.
+# In to look at the house, out by the cottages, and nobody the wiser. Reconnaissance is won by
+# holding the place in full attention with a clear line to it and then getting off the ground —
+# SightSolver.Trace and AwarenessTracker.IsWatching, two calls that already existed, plus the
+# objective entry 061 built around them. See docs/setting/missions.md section 4.
 #
-#   objective reconnaissance player at house out cottages unnoticed suspicious
-
-# What runs today: the leaving, and only the leaving. Suspicious is a dog barking at 25;
-# Searching is 50, the rung where a sentry stops scanning and starts walking towards where he
-# thinks you were. The brief says properly registered, so a suspicion is survivable.
+# This line used to be a comment beside a withdrawal, because the rules had only the leaving and
+# the leaving alone is achieved by turning round and going home: twelve matches out of twelve did
+# exactly that in round 2, which is entry 048. There is something in the middle of it now.
 #
-# It is also achieved by turning round and going home without ever entering the compound, which
-# is what a dozen matches do — entry 048. That is the gap the line above closes.
-objective withdrawal player exit cottages unnoticed suspicious
+# 'at house' is the seven hexes named above and the look is aimed at the middle of them, which is
+# the room rather than the doorway. How close it has to be taken from is left to the rule — twelve
+# metres — because the house is only seen into from inside the yard anyway, and a distance written
+# here as well as there is a number with two homes.
+#
+# Suspicious is a dog barking at 25; Searching is 50, the rung where a sentry stops scanning and
+# starts walking towards where he thinks you were. The brief says properly registered, so a
+# suspicion is survivable.
+objective reconnaissance player at house exit cottages unnoticed suspicious
 
 # Before first light. Thirty rounds covers every fight seen on this ground with room to spare —
 # entry 038 measured the fighting over by round 21 — and nothing in the rules reads this, so
