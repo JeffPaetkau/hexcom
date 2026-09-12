@@ -367,6 +367,167 @@ public class ObjectiveTests
         Assert.Equal(Verdict.Achieved, battle.VerdictFor(Side.Player));
     }
 
+    /// <summary>
+    /// What <c>within</c> should be for the mission that is about to carry it, asked of the ground
+    /// rather than guessed.
+    /// </summary>
+    /// <remarks>
+    /// The reconnaissance line waiting to be uncommented in <c>waystation.hexmission</c> does not
+    /// name a distance, so it takes the default twelve metres, and whether that is right is a
+    /// question about a particular house on a particular map. It is: <b>the default is inert
+    /// here</b>. Every place on the waystation a soldier can stand and see into the house is
+    /// already close enough, so no look that has a line is refused by the distance and the
+    /// parameter can stay unwritten. See <c>../decisions.md</c>.
+    /// <para>
+    /// Asserted as the property and not as the count. Content owns that map and may redraw it —
+    /// entry 038 already did once — and a test pinning a number would then fail for the wrong
+    /// reason. What matters is that nothing with a line is out of range.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void EverywhereOnTheWaystationWithALineIntoTheHouseIsCloseEnoughToCount()
+    {
+        var battle = Measured.Waystation.Begin(seed: 1);
+        var recce = (Reconnaissance)battle.ObjectiveOf(Side.Player)!;
+        var house = new Vantage(recce.Place!.Value);
+
+        var looks = battle.Graph.Nodes
+            .Where(n => n.CanEndTurn)
+            .Select(n => battle.Sight.Trace(new Vantage(n.Id), house))
+            .Where(sight => sight.CanSee)
+            .ToList();
+
+        Assert.NotEmpty(looks);
+        Assert.All(looks, sight => Assert.True(
+            sight.Distance <= recce.Within,
+            $"a line into the house from {sight.Distance:0.0} m, past the {recce.Within:0} m bar"));
+    }
+
+    // ---- the clock ---------------------------------------------------------------
+
+    /// <summary>
+    /// The sixth part of every briefing in the book, and the one thing the six shapes wanted that
+    /// nothing had: what ends the task short. Two halves in two places, meeting here.
+    /// </summary>
+    [Fact]
+    public void AMissionEndsBecauseTheAlarmHasBeenOutForThreeRounds()
+    {
+        var battle = Watched(out var leaver, out var set, new Deadline(AfterAlarm: 3));
+
+        // Nobody has worked anything out yet, so there is no hour to be late for.
+        Advance(battle, rounds: 6);
+        Assert.Null(battle.Awareness.AlarmAgainst(Side.Player));
+        Assert.Equal(Verdict.Undecided, battle.VerdictFor(Side.Player));
+        Assert.False(battle.IsDecided);
+
+        Signal(battle, set, leaver);
+        var raised = battle.Awareness.AlarmAgainst(Side.Player)!.Round;
+        Assert.Equal(battle.Round, raised);
+
+        // Three rounds is three rounds, not two and not four.
+        Advance(battle, until: raised + 3);
+        Assert.Equal(Verdict.Undecided, battle.VerdictFor(Side.Player));
+
+        Advance(battle, until: raised + 4);
+        Assert.Equal(Verdict.Abandoned, battle.VerdictFor(Side.Player));
+        Assert.True(battle.IsDecided);
+    }
+
+    /// <summary>
+    /// The plain form, which is a round number and a comparison — and which has lived outside the
+    /// rules since missions were files, applied by whatever happened to be running the battle.
+    /// </summary>
+    [Fact]
+    public void AMissionCanSimplyRunOutOfNight()
+    {
+        var battle = Watched(out _, out _, new Deadline(Round: 4));
+
+        Advance(battle, until: 4);
+        Assert.Equal(Verdict.Undecided, battle.VerdictFor(Side.Player));
+
+        Advance(battle, until: 5);
+        Assert.Equal(Verdict.Abandoned, battle.VerdictFor(Side.Player));
+    }
+
+    /// <summary>
+    /// A squad that got out before the hour keeps what it came for. The clock stops a mission that
+    /// is still on the field; it does not reach back and spoil one that is finished.
+    /// </summary>
+    [Fact]
+    public void GettingOutBeforeTheHourKeepsTheMission()
+    {
+        var battle = Watched(out var leaver, out _, new Deadline(Round: 4));
+
+        WaitFor(battle, leaver);
+        Assert.True(battle.Extract());
+        Assert.Equal(Verdict.Achieved, battle.VerdictFor(Side.Player));
+
+        Advance(battle, until: 12);
+        Assert.Equal(Verdict.Achieved, battle.VerdictFor(Side.Player));
+    }
+
+    /// <summary>
+    /// Whichever comes first, and on this one it is the alarm rather than the hour — which is the
+    /// case a mission file writes both halves for.
+    /// </summary>
+    [Fact]
+    public void BeingFoundOutCanCutTheNightShort()
+    {
+        var battle = Watched(out var leaver, out var set, new Deadline(Round: 30, AfterAlarm: 1));
+
+        Signal(battle, set, leaver);
+        var raised = battle.Awareness.AlarmAgainst(Side.Player)!.Round;
+
+        Advance(battle, until: raised + 1);
+        Assert.Equal(Verdict.Undecided, battle.VerdictFor(Side.Player));
+
+        Advance(battle, until: raised + 2);
+        Assert.Equal(Verdict.Abandoned, battle.VerdictFor(Side.Player));
+    }
+
+    /// <summary>
+    /// One of ours with somewhere to leave from, and one of theirs carrying a set — the two things
+    /// a clock needs before it means anything.
+    /// </summary>
+    private static Battle Watched(out Unit leaver, out Unit set, Deadline clock)
+    {
+        var battle = Field();
+
+        leaver = battle.Deploy("Vance", Side.Player, Node(2, 0), Quick, HexDirection.SouthWest);
+
+        // Far enough off, and looking the other way, that nothing drifts up the ladder while the
+        // turns are handed round. The word goes out when this test says it does and not before.
+        set = battle.Deploy("Teague", Side.Hostile, Node(15, 0), UnitStats.Signaller with { Initiative = 1 }, HexDirection.NorthEast);
+
+        battle.SetObjective(new Withdrawal(Side.Player, [Node(2, 0), Node(2, 1)]) { Stop = clock });
+        battle.Start();
+
+        return battle;
+    }
+
+    /// <summary>Hand turns round until the round number reaches there.</summary>
+    private static void Advance(Battle battle, int until = 0, int rounds = 0)
+    {
+        var target = rounds > 0 ? battle.Round + rounds : until;
+        for (var guard = 0; battle.IsRunning && battle.Round < target && guard < 400; guard++)
+            battle.EndTurn();
+    }
+
+    /// <summary>
+    /// Get the word out, at the moment the test wants it out.
+    /// </summary>
+    /// <remarks>
+    /// By being shot at, which is the one channel that puts a man straight to Alerted with no
+    /// looking and no rolling — and which is also how a quiet mission most often stops being one.
+    /// Hearing cannot do it: a noise is capped a rung below Alerted on purpose, so a squad is
+    /// never given away by footsteps alone.
+    /// </remarks>
+    private static void Signal(Battle battle, Unit set, Unit about)
+    {
+        battle.Awareness.TakeFireFrom(set, about, battle.Round);
+        Assert.NotNull(battle.Awareness.AlarmOf(set.Side));
+    }
+
     // ---- what an objective does to the search ------------------------------------
 
     /// <summary>

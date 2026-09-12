@@ -19,9 +19,11 @@ namespace Hexcom.Core.Tactics;
 /// one that arrives after they reach cover.
 /// </para>
 /// <para>
-/// <b>Every figure below is an argument rather than a measurement</b>, like every other number in
-/// this game. Unlike the others, these are the ones the AI-versus-AI runs will actually be able
-/// to test, because a scorer that plays badly loses matches and says so.
+/// <b>Most figures below are arguments rather than measurements</b>, like every other number in
+/// this game. Three have now been measured by a batch of headless matches —
+/// <see cref="ObjectiveValue"/>, <see cref="ObjectiveHorizon"/> and <see cref="RemovalBonus"/> —
+/// and each says what was found in its own remarks. The instrument is
+/// <c>tests/Hexcom.Core.Tests/Measured</c> and the figures are <c>docs/decisions.md</c> entry 080.
 /// </para>
 /// </remarks>
 public sealed record UtilityModel
@@ -92,6 +94,12 @@ public sealed record UtilityModel
     /// standing next to them, and it plainly is. Weighting removal by what the soldier does for
     /// its side — carrying the net, holding the only arc that covers the door — is the obvious
     /// next thing this wants and is not yet derived from anything.
+    /// </para>
+    /// <para>
+    /// <b>Measured, and a bigger number is not the answer.</b> On the waystation at nought, one and
+    /// four, the first shot went at the sentry on the road four times in five and at the signaller
+    /// once in twenty, at every setting: this turns wounds into kills and cannot say which soldier
+    /// first. Whatever values the set has to be a per-soldier term. Entry 080.
     /// </para>
     /// </remarks>
     public double RemovalBonus { get; init; } = 1.0;
@@ -191,6 +199,14 @@ public sealed record UtilityModel
     /// what happens on the way, and the design's whole complaint about elimination is that the
     /// rules made the fight the only thing worth wanting.
     /// </para>
+    /// <para>
+    /// <b>Measured: saturated.</b> On the waystation 60, 120 and 240 play identically — the squad
+    /// runs in, looks in round two and runs out, returning a tenth of a shot for every three taken —
+    /// and 15 stands and fights until the night runs out. The live range is between 30 and 60. It
+    /// stays at 120 on purpose: in every arm the squad was seen and the mission abandoned, because
+    /// nothing in this model prices getting there <em>unseen</em>, and choosing a value before that
+    /// term exists would be tuning a race. Entry 080.
+    /// </para>
     /// </remarks>
     public double ObjectiveValue { get; init; } = 120.0;
 
@@ -210,6 +226,14 @@ public sealed record UtilityModel
     /// mission until they are nearly on top of it; turned up, they set off from anywhere and the
     /// objective drowns out everything happening in front of them. It is the dial to reach for if
     /// a squad walks past a firefight to reach an exit, or stands in one ignoring the exit.
+    /// </para>
+    /// <para>
+    /// <b>Measured: the same dial as <see cref="ObjectiveValue"/>.</b> Below the journey it is
+    /// stretched and does nothing; above it the scorer answers to value per point of ground, so
+    /// horizon sixteen at 120 plays like horizon four at 30, and horizon sixteen at 30 stops the
+    /// squad going at all. Do not tune the two separately. It is read off the battle's own model at
+    /// <c>Start</c>, never a commander's, so a batch varying it has to build the battle with it.
+    /// Entry 080.
     /// </para>
     /// </remarks>
     public double ObjectiveHorizon { get; init; } = 4.0;

@@ -70,6 +70,11 @@ public sealed record UnitStats(
     /// carried one, so every unit in every match paid list price and <c>CostProfile</c> was a
     /// record the design doc described as load-bearing and nothing loaded. See
     /// <c>docs/decisions.md</c> entry 046.
+    /// <para>
+    /// Turning them on changed nothing any test could see and a great deal a batch could: on the
+    /// waystation the squad with its archetypes kills about half what the same squad kills at list
+    /// price, and takes its look from further out a round sooner. Kept, measured. Entry 080.
+    /// </para>
     /// </remarks>
     public static readonly UnitStats Scout = new(ActionPoints: 55, Initiative: 14, Perception: 13)
     {

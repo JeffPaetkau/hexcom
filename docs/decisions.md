@@ -3857,3 +3857,249 @@ shoulders, two flanks, back. The transfer is *a hover reveals a named part with 
 not the taxonomy. So **the six directional faces have no interface exemplar in ten games**, which
 the asset spec and whichever brief eventually draws a called shot should both know before either
 assumes one exists.
+
+## 079 — A mission stops: the limit is on the mission, the alarm is on the awareness model, and the waystation's look is close enough
+**2026-09-12** · **Raised by** core · **For** content, view · **Status** open for content and view — Core's half is built
+
+Entry 030 named the mission clock as the one genuinely new thing the six shapes wanted, and it has
+been nobody's for four increments. It exists now, and the decision worth recording is where its
+two halves went, because the brief was right that putting them in the wrong places makes the other
+one awkward for good.
+
+**A round limit is a property of the mission.** The same ground and the same garrison carry a
+different clock under a different briefing, so it hangs on the objective: `Objective.Stop` is a
+`Deadline(Round, AfterAlarm)`, and `Sortie.Judge` settles to `Abandoned` once `Battle.Round` is past
+it with anybody still on the field. Either half may be null, and whichever comes first wins. It is
+a round number and a comparison, and nothing more.
+
+**The alarm going out is a fact about the awareness model.** `AwarenessTracker.AlarmOf(side)` and
+`AlarmAgainst(side)` hand back an `Alarm(Side, Round, Raised, About)` — the first moment somebody
+carrying a set held a contact at `AlertedAt` and passed it on. It is raised in `Relay`, the one
+place word leaves the person who has it, so it covers seeing, being shot at and calling it in
+without three copies of a test. No new dial: the bar is the one that already decides whether a
+contact is worth passing on.
+
+Three things about it that were choices rather than consequences:
+
+1. **A set and not a shout.** A voice reaches fifteen metres and seeing a comrade react reaches as
+   far as you can see; neither raises the alarm. On the waystation the barn and the tower are both
+   outside earshot of the compound (entry 030's measurement), so who has the radio decides whether
+   a sighting is an incident or the end of the night.
+2. **`Forget` does not take it back.** Everything a departing soldier knew is wiped, which is what
+   makes silencing a witness work; an alarm he already raised is not. That is the asymmetry that
+   makes the set worth killing *first* rather than merely killing, and it is the counter-play
+   entry 030 asked to keep from the other side.
+3. **It is recorded at the moment of the relay, not a turn later.** The brief's sentence asks for
+   the moment a hostile with a set *has registered somebody and then had a turn in which to use
+   it*. The relay already pushes the contact side-wide in that instant — the garrison genuinely
+   knows — so a record delayed by a turn would disagree with the state of the game. The turn in
+   which to use it is what a grace of one or more rounds on `AfterAlarm` expresses, and the
+   waystation's briefing is the grace to write.
+
+**The clock running out is abandonment, not failure.** A squad still standing at first light has
+lost the mission and not the squad, which is the distinction the third verdict exists for.
+
+**For Content, two things.**
+
+- **The grammar has somewhere to write `rounds` now.** `waystation.hexmission` says `rounds 30`
+  and nothing in the rules has ever read it; `Deadline(Round: mission.Rounds)` on the objective is
+  what makes the rules read it. The briefing's own stop — *if one of them properly registers you
+  and lives to keep it, or has already passed it to the roof* — is `AfterAlarm`, and how many
+  rounds that is is the mission's to say. Entry 080 has what a batch says about three.
+- **`within` can stay unwritten on the reconnaissance line.** Entry 059 said the default twelve
+  metres was probably right. It is inert: every place on the waystation a soldier can stand with a
+  line to the middle of the house is already within twelve metres of it — measured, eighteen
+  places, and the same eighteen at twenty metres. So no look that has a line is refused by the
+  distance. `ObjectiveTests.EverywhereOnTheWaystationWithALineIntoTheHouseIsCloseEnoughToCount`
+  holds the property rather than the count, so a redrawn map fails it only if the default stops
+  being inert. The eighteen against entry 059's fourteen is a different question rather than a
+  disagreement: 059 counts ground-level places in the yard with a line to any of the house's seven
+  tiles, and this counts every standable place on any floor with a line to the one node the
+  objective is built on — which takes in the house's own floor and anything above it.
+
+  **Uncomment the line.**
+
+**For View, one.** `HexSandbox.OutOfTime` applies `Mission.Rounds` itself with the same comparison
+`Deadline` makes. Once the mission file writes a deadline into the objective, that check agrees
+with `Battle.VerdictFor` and can go, and the status line can read the verdict instead of the
+mission. Nothing breaks in the meantime: a mission with no `Stop` behaves exactly as it did.
+
+## 080 — The first measured numbers: nothing wins the waystation, and the reason is not a dial
+**2026-09-12** · **Raised by** core · **For** core, master · **Status** open — the finding is the head of Core's next brief
+
+The first entry in this project to say a figure *was measured*. Entries 044, 046 and 062 asked for
+it; `tests/Hexcom.Core.Tests/Measured/` is the instrument, checked in and off by default, and
+anybody can take every number below again with the same seeds.
+
+```bash
+HEXCOM_BATCH=1 HEXCOM_SEEDS=100 dotnet test tests/Hexcom.Core.Tests --filter "FullyQualifiedName~Measured" --logger "console;verbosity=detailed"
+```
+
+**How it was run.** The waystation as the briefing describes it — the reconnaissance line entry
+059 wrote and Content has not yet uncommented, built off the file's own places, with everything
+else read from the file — and the file's thirty-round limit as a `Deadline` (entry 079). Seeds 1
+to 100 in every arm, so arms are paired: the same initiative rolls, the same deployments, one
+thing moved. A commander per side, with the dial under test given only to ours. A match costs
+three to fourteen seconds of one core, longest where the squad fights; the whole batch is a few
+hours of matches and runs in a little over an hour of wall clock with one question per class.
+
+### The headline: nothing wins, in any arm
+
+**Across 2,400 matches in twenty-four arms, the mission was achieved twice.** In every one of them
+some hostile held a squad member at `Engaged` at some point. The verdict is `Abandoned` because
+the departure reading is too high — never `Failed` by more than one match in a hundred, and never
+for want of doing the job: the squad got eyes on the house in between 70 and 100 matches of every
+hundred, in almost every arm by round two or three.
+
+**That is not a dial being wrong, and no dial below fixes it.** `Sortie.Unnoticed` is a win
+condition the scorer has no term for. `ObjectiveValue × Progress` prices getting to the house and
+getting home; nothing prices getting there *unseen*. So a reconnaissance is scored as a race, and a
+race is what every commander ran. `GivenAway` exists and prices what a listener could *do* from
+where they stand — entry 044's gap — not what their knowing does to the mission. The next brief is
+the missing term.
+
+### What an objective is worth
+
+| `ObjectiveValue` | looked | alarm out | our shots / theirs | ours down / theirs | got out | rounds |
+|---|---|---|---|---|---|---|
+| 15 | 89 | 100 | 3.8 / 5.1 | 0.86 / 1.32 | 0.78 | 31.0 |
+| 30 | 98 | 93 | 2.9 / 4.3 | 0.83 / 0.67 | 1.89 | 13.3 |
+| 60 | 100 | 88 | 0.4 / 3.8 | 0.87 / 0.05 | 2.13 | 5.1 |
+| **120** shipped | 100 | 88 | 0.3 / 3.4 | 0.84 / 0.02 | 2.16 | 4.5 |
+| 240 | 100 | 88 | 0.2 / 3.4 | 0.84 / 0.00 | 2.16 | 4.3 |
+
+Means per match over a hundred; *looked* and *alarm* are matches out of a hundred.
+
+- **The dial is saturated by 60.** Above it the squad runs in, looks in round two, and runs out,
+  and the only thing still moving is a trickle of return fire. The shipped figure is at least
+  twice the point at which it stops doing anything. Entry 044's first failure mode — *walks past a
+  firefight to reach an exit* — is exactly what 60 and above do: three shots taken at us for every
+  tenth of one returned.
+- **Below 30 it becomes the second failure mode.** At 15 every match runs into the thirty-round
+  limit, the squad kills more than it loses and fewer than one soldier gets home.
+- **We lose about 0.85 of a soldier a mission at every value.** What moves is how many of theirs
+  go down with him. Losses are set by the approach, not by how much the squad wants the job.
+- **Recommendation, and it is not to change the number yet.** Somewhere between 30 and 60 is the
+  live range on this ground, but choosing within it before the unnoticed term exists is tuning a
+  race. Leave 120 until the term lands, then measure again.
+
+### What the two cost archetypes do
+
+| | looked (round) | closest hex | our shots / theirs | theirs down | got out | rounds |
+|---|---|---|---|---|---|---|
+| posts as written, value 120 | 100 (r2) | 1.9 | 0.3 / 3.4 | 0.02 | 2.16 | 4.5 |
+| list price, value 120 | 100 (r3) | 0.2 | 1.2 / 3.0 | 0.09 | 2.20 | 5.2 |
+| posts as written, value 30 | 98 (r3) | 1.2 | 2.9 / 4.3 | 0.67 | 1.89 | 13.3 |
+| list price, value 30 | 98 (r3) | 0.2 | 4.6 / 4.1 | 1.29 | 1.72 | 17.5 |
+
+**Entry 062 was a live behaviour change, and a large one.** With the archetypes on, the squad
+takes its look from further out a round sooner, and fires less: at value 30 the posts as written
+kill half what the same squad kills at list price, 0.67 against 1.29. The likeliest reading is the
+scout's seven-fifths trigger, but this batch moves both profiles at once and does not separate
+them. The 391 tests that passed unchanged could not have seen any of it. **Keep them on**: the shape is what
+the profiles were written to produce, and one of the two achieved matches in the whole batch is in
+the list-price arm, which is one match and not a finding.
+
+### What a signaller is worth
+
+At value 30, where the squad fights at all — at 120 it fires in fourteen matches of a hundred.
+
+| `RemovalBonus` | first aimed at: Cobb / Teague | first down: Cobb / Teague | theirs down |
+|---|---|---|---|
+| 0 | 83 / 4 | 23 / 7 | 0.37 |
+| **1** shipped | 79 / 5 | 50 / 3 | 0.67 |
+| 4 | 79 / 5 | 55 / 1 | 0.69 |
+
+- **The scorer never prefers the man with the set, at any setting.** The first shot goes at Cobb,
+  the sentry on the road, four times in five, and the bonus does not move that at all.
+  `RemovalBonus` is a *finish him* dial and not a *which one* dial: it turns wounds into kills and
+  it cannot express that one soldier matters more than another. Turning it up puts Teague down
+  first less often, not more — seven, three, one — which fits fire concentrating on whoever was
+  hit first, though nothing here isolates that.
+- **And it would barely matter today if it did.** The alarm is out in 93 matches of a hundred, at
+  a median of round two — the same round the look is taken. Teague is on the roof that entry 059
+  measured overlooking every place the look can be taken from. What a signaller is worth to
+  *remove* is a question about a squad that acts before his word is out, and on this ground almost
+  none does yet.
+- **Leave `RemovalBonus` at one.** Whatever values the set has to be per soldier and derived from
+  what the soldier does for its side — entry 046's argument — rather than a larger flat figure.
+
+### How long three rounds is
+
+At value 30, so that matches last long enough for a clock to reach.
+
+| | looked | got out | ours down / theirs | rounds |
+|---|---|---|---|---|
+| the thirty-round limit alone | 98 | 1.89 | 0.83 / 0.67 | 13.3 |
+| five rounds once they know | 96 | 1.69 | 0.81 / 0.61 | 6.8 |
+| three rounds once they know | 89 | 1.38 | 0.78 / 0.52 | 6.0 |
+| one round once they know | 70 | 0.71 | 0.68 / 0.37 | 4.7 |
+
+**Three rounds is fatal to a squad that does not know it has three rounds.** With the alarm out in
+round two, three rounds ends most matches before round six; the look does not happen in eleven of
+a hundred, and fewer than half the squad is off the field when the hour comes. The clock never
+changes a verdict here only because every verdict is already abandonment. **Nothing in the scorer
+knows the clock exists**, which is the second half of the same gap as the headline: a squad that
+cannot price being seen cannot price what being seen starts either. For Content, three is a
+defensible figure for the waystation's stop *once the AI can see it* — and a harsh one for a
+player who can, which is the playtest's to say.
+
+### How far an objective pulls
+
+| | looked (round) | closest hex | our shots / theirs | theirs down | got out | rounds |
+|---|---|---|---|---|---|---|
+| horizon 2, value 120 | 100 (r2) | 1.9 | 0.3 / 3.4 | 0.02 | 2.16 | 4.5 |
+| **horizon 4, value 120** shipped | 100 (r2) | 1.9 | 0.3 / 3.4 | 0.02 | 2.16 | 4.5 |
+| horizon 16, value 120 | 99 (r3) | 1.2 | 2.9 / 4.2 | 0.67 | 1.90 | 13.5 |
+| horizon 1 or 2, value 30 | 98 (r3) | 1.2 | 2.9 / 4.3 | 0.67 | 1.89 | 13.3 |
+| horizon 4, value 30 | 98 (r3) | 1.2 | 2.9 / 4.3 | 0.67 | 1.89 | 13.3 |
+| horizon 8, value 30 | 89 (r4) | 0.7 | 3.7 / 4.8 | 1.28 | 0.77 | 31.0 |
+| horizon 16, value 30 | 12 (r11) | 5.7 | 8.1 / 7.8 | 1.56 | 0.00 | 30.5 |
+
+- **Below the length of the journey the horizon is inert, exactly as designed.** The waystation's
+  reconnaissance is about four turns of ground from the deployment, so a configured horizon of one,
+  two or four is stretched to the journey at `Start` and all three rows are identical.
+- **Above it, the horizon and the value are one dial.** Horizon 16 at value 120 reproduces horizon 4
+  at value 30, and horizon 8 at value 30 reproduces value 15 at the shipped horizon in the first
+  table: 89 looked in round four, a thirty-one round match, 1.28 of theirs down against 1.32. What
+  the scorer responds to is value per point of journey, so on any mission longer than the
+  configured horizon there is one number, not two.
+- **Far enough out, the pull stops pulling.** At horizon 16 and value 30 the squad takes the look in
+  twelve matches of a hundred, fights the whole night from outside the wall, and gets nobody home.
+  That is entry 044's second failure mode — standing in a firefight ignoring the job — reached by
+  the horizon rather than the value.
+- **Leave the horizon at four**, and do not tune the two separately: on this ground there is only
+  their ratio.
+
+### Whether the quiet one is the man or the post
+
+At value 30. The readings are the worst rung any hostile held on each soldier, in matches of a
+hundred; Vance is the scout and Orsini the trooper wherever they stand.
+
+| | Vance at Engaged | Orsini at Engaged | Bekker at Engaged | theirs down |
+|---|---|---|---|---|
+| posts as written | 99 | 67 | 57 | 0.67 |
+| scout and trooper swapped | 100 | 48 | 83 | 0.92 |
+
+**It is the man, and it is the job rather than his feet.** Entry 048 read the scout as the one nobody
+notices, across twelve matches of a mission whose only task was leaving. With something to look at,
+the scout is the one who goes and looks — he is fastest and gets closest — and he is held at
+`Engaged` in every match from either post. So entry 048's quiet scout was an artefact of a mission
+in which nobody went in, and not a property of the archetype. Bekker, who did not move, goes from 57
+to 83: the swap changes how the whole squad approaches, so this separates the man from the post and
+**does not** separate footsteps from eyes. Entry 037's question stays open, and wants a batch that
+moves loudness alone.
+
+### What the instrument itself found
+
+**A horizon handed to a commander is silently ignored.** `Objective.Begin` reads
+`ObjectiveHorizon` off `Battle.Tactics` at `Start`, not off whoever is deciding, so the first run
+of the horizon question measured the shipped slope six times over and printed six identical rows.
+That is right for the rules — the slope is a property of the objective and two commanders on one
+battle share it — but it is an easy thing to get wrong from outside, and the batch now builds the
+battle with the model rather than only the commander.
+
+**The same is true of anything a reaction window scores.** `ReactionWindow.Best` ranks with
+`battle.Tactics`, so ours react with the shipped model in every arm above however their own turns
+were scored. No row above turns on a reaction, so none of them is affected; a question about
+`ShieldValue` or `FutureDiscount` would be, and should build the battle with its model.

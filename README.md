@@ -524,6 +524,23 @@ there, and what the failure looks like when they are not.
   something. The horizon the pull is measured over stretches to the length of the job, so a
   mission longer than a few turns still slopes all the way back to where the squad started.
 
+- **A mission stops** — the sixth part of every briefing in the book, and the first thing in the
+  rules that reads a round number. Two halves, in two places, and keeping them apart is the whole
+  of it. A limit is a property of the *mission*: the same ground under a different briefing is
+  over at a different hour, so it hangs on the objective as a round number and a comparison. *The
+  alarm went out* is a fact about the *awareness model*: somebody carrying a set worked out that
+  there is a person here and passed it on, which would be true of that ground with no mission on
+  it at all. A mission can stop at an hour, or so many rounds after the garrison knows, or
+  whichever comes first.
+
+  A set and not a shout, and on real ground that is the difference between an incident and a
+  mission: the waystation's barn and watchtower are both outside earshot of the compound, so a
+  sentry who shouts has told one man. And word already sent cannot be unsent — everything a
+  departing soldier knew is forgotten, which is what makes silencing a witness work, but an alarm
+  they raised first survives them. That is why the man with the radio is worth killing *first*
+  rather than merely killing. The clock running out is abandonment and not failure: a squad still
+  in the field at first light has lost the mission and has not lost the squad.
+
 - **Maps are text** — `content/maps/*.hexmap`, and `MapLibrary.Load("compound")` from anywhere.
   The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
   an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
@@ -571,13 +588,12 @@ Suppression, saves, art, and the strategy layer. See the design doc for where th
 heading.
 
 **Three of the six mission shapes are built and three are not.** Extraction wants a thing that can
-be carried; capture wants a way to put somebody down that is not damage; denial wants a clock.
-None needs new geometry.
+be carried; capture wants a way to put somebody down that is not damage; denial wants the mirror
+of the others. The clock all three were waiting on exists. None needs new geometry.
 
-**Nothing hangs a clock on.** A mission file names a round limit and whatever runs the battle
-applies it, but no rule reads one. A mission that runs out of time also wants a record of the
-moment a hostile with a radio has registered somebody and then had a turn in which to use it.
-Every part of that sentence but the record is a query that already exists.
+**A mission file cannot say when it stops yet.** The rules read a clock now; the format that
+writes one is Content's, and until it lands the round limit in `waystation.hexmission` is still
+applied by whatever runs the battle rather than by the mission.
 
 **Nobody patrols.** A garrison is however many soldiers were deployed, standing exactly where they
 were put, and three of the waystation's four never act at all. Neither a mission file nor the AI
@@ -589,10 +605,17 @@ one moment, so it cannot weigh cutting its losses against pressing on — and it
 offered the choice, which the rules allow and which is one of the three endings. A squad being
 cut to pieces stands and takes it.
 
-**Every number in the game is still an argument.** Not one has been measured against a batch of
-matches, and the four that most want it are what an objective is worth, how far its pull reaches,
-what a soldier's own cost profile does now that the archetypes carry one, and what removing a
-signaller is worth against removing a rifleman.
+**Nothing wins the waystation.** A batch of headless matches — `tests/Hexcom.Core.Tests/Measured`,
+off by default, `HEXCOM_BATCH=1` to run it — played the reconnaissance a hundred times an arm and
+achieved it twice in 2,400. The squad reaches the house and gets its look in nearly every match,
+and is seen in every one, because nothing in the scorer prices getting there unseen. It is
+`docs/decisions.md` entry 080 and the head of Core's next brief. The same batch measured four
+numbers for the first time: what an objective is worth is saturated well below the shipped figure,
+its horizon is the same dial as its value on any journey longer than the horizon, the two cost
+archetypes halve what a squad kills, and a bigger bonus for removing a soldier never makes the
+signaller the first target.
+
+**Most numbers in the game are still arguments.** Four have been measured; the rest have not.
 
 **A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from
 several turns away; a marker does not, so hunting still reaches about one move and two survivors

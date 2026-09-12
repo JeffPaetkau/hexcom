@@ -320,6 +320,81 @@ public class AwarenessTests
         Assert.Equal(0, WordReaching(signallerAlive: false));
     }
 
+    // ---- the alarm -------------------------------------------------------------
+
+    [Fact]
+    public void TheWordGoesOutWhenTheManWithTheSetWorksItOut()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Player, Node(0, 0));
+        var signaller = battle.Deploy("Signaller", Side.Hostile, Node(3, 0), UnitStats.Signaller, facing: HexDirection.SouthWest);
+        battle.Start();
+
+        // Being on the same map is not knowing, so nothing has gone out yet.
+        Assert.Null(battle.Awareness.AlarmOf(Side.Hostile));
+
+        Look(battle, signaller);
+        Look(battle, signaller);
+        var alarm = battle.Awareness.AlarmOf(Side.Hostile);
+
+        Assert.True(
+            battle.Awareness.Of(signaller.Id, target.Id).Detection >= battle.Awareness.Model.AlertedAt,
+            "he never got sure enough to call it in, so this proves nothing");
+
+        Assert.NotNull(alarm);
+        Assert.Equal(signaller.Id, alarm.Raised);
+        Assert.Equal(target.Id, alarm.About);
+        Assert.Equal(battle.Round, alarm.Round);
+
+        // The squad's own clock runs off the other side's word rather than its own.
+        Assert.Equal(alarm, battle.Awareness.AlarmAgainst(Side.Player));
+        Assert.Null(battle.Awareness.AlarmAgainst(Side.Hostile));
+    }
+
+    /// <summary>
+    /// A shout tells the man beside you and a set tells the garrison, and on real ground that is
+    /// the difference between a mission and an incident. Entry 037 measures the barn and the
+    /// tower as both being outside earshot of the compound.
+    /// </summary>
+    [Fact]
+    public void ShoutingAtTheManBesideYouIsNotAnAlarm()
+    {
+        var battle = Field();
+        var target = battle.Deploy("Target", Side.Player, Node(0, 0));
+        var spotter = battle.Deploy("Spotter", Side.Hostile, Node(3, 0), facing: HexDirection.SouthWest);
+        battle.Deploy("Mate", Side.Hostile, Node(5, 0), facing: HexDirection.SouthWest);
+        battle.Start();
+
+        Look(battle, spotter);
+        Look(battle, spotter);
+        battle.Awareness.CallOut(spotter, target.Id, battle.Round);
+
+        Assert.True(battle.Awareness.Of(spotter.Id, target.Id).State >= AwarenessState.Alerted);
+        Assert.Null(battle.Awareness.AlarmOf(Side.Hostile));
+    }
+
+    /// <summary>
+    /// The counter-play to the quiet kill, from the other side. Silencing a witness takes his
+    /// contact out of the world; it does not take back what he already sent.
+    /// </summary>
+    [Fact]
+    public void KillingTheManWhoRaisedItDoesNotTakeTheWordBack()
+    {
+        var battle = Field();
+        battle.Deploy("Target", Side.Player, Node(0, 0));
+        var signaller = battle.Deploy("Signaller", Side.Hostile, Node(3, 0), UnitStats.Signaller, facing: HexDirection.SouthWest);
+        battle.Start();
+
+        Look(battle, signaller);
+        Look(battle, signaller);
+        var alarm = battle.Awareness.AlarmOf(Side.Hostile);
+        Assert.NotNull(alarm);
+
+        battle.Withdraw(signaller);
+
+        Assert.Equal(alarm, battle.Awareness.AlarmOf(Side.Hostile));
+    }
+
     [Fact]
     public void WatchingAComradeReactTellsYouSomething()
     {

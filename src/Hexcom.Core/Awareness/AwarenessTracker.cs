@@ -36,6 +36,7 @@ public sealed class AwarenessTracker
 {
     private readonly Battle _battle;
     private readonly Dictionary<(UnitId Observer, UnitId Subject), Contact> _contacts = [];
+    private readonly Dictionary<Side, Alarm> _alarms = [];
 
     internal AwarenessTracker(Battle battle, AwarenessModel model)
     {
@@ -92,7 +93,35 @@ public sealed class AwarenessTracker
     /// <summary>True while nobody on the other side has so much as a suspicion.</summary>
     public bool IsUndetected(UnitId subject) => HighestAwarenessOf(subject) == AwarenessState.Unaware;
 
+    /// <summary>
+    /// When this side's word first got out, or null while it has not.
+    /// </summary>
+    /// <remarks>
+    /// The first one and not the last: an alarm is a thing that happens once, and everything that
+    /// follows is the garrison acting on it. See <see cref="Alarm"/> for why it lives here.
+    /// </remarks>
+    public Alarm? AlarmOf(Side side) => _alarms.GetValueOrDefault(side);
+
+    /// <summary>
+    /// The first alarm anybody opposing this side let out, or null while nobody has.
+    /// </summary>
+    /// <remarks>
+    /// What a mission clock counts from, since a squad's own time runs out because the other side
+    /// knows rather than because it does. Neutrals are not an opposing side and never will be:
+    /// the people in the cottages are not part of this.
+    /// </remarks>
+    public Alarm? AlarmAgainst(Side side) => _alarms
+        .Where(a => a.Key != side && a.Key != Side.Neutral)
+        .Select(a => a.Value)
+        .OrderBy(a => a.Round)
+        .FirstOrDefault();
+
     /// <summary>Drop everything about a unit that has left the fight.</summary>
+    /// <remarks>
+    /// Contacts only. An alarm already raised is not forgotten when whoever raised it goes down —
+    /// word sent cannot be unsent, and that asymmetry is what makes the set worth killing
+    /// <em>first</em> rather than merely killing. See <see cref="Alarm"/>.
+    /// </remarks>
     internal void Forget(UnitId unit)
     {
         foreach (var key in _contacts.Keys.Where(k => k.Observer == unit || k.Subject == unit).ToList())
@@ -332,8 +361,20 @@ public sealed class AwarenessTracker
     }
 
     /// <summary>Pass a contact to whoever can be reached, at a discount.</summary>
+    /// <remarks>
+    /// Also where the alarm is raised, because this is the one place word leaves the person who
+    /// has it. The bar is the same <see cref="AwarenessModel.AlertedAt"/> that decides whether a
+    /// contact is worth passing on at all, so no new dial appears — and it is raised before
+    /// anybody is reached rather than after, because a garrison signaller who has worked it out
+    /// has raised the alarm whether or not there is still anyone alive to hear him.
+    /// </remarks>
     private void Relay(Unit caller, Contact source, int round)
     {
+        if (caller.Stats.Radio
+            && source.Detection >= Model.AlertedAt
+            && !_alarms.ContainsKey(caller.Side))
+            _alarms[caller.Side] = new Alarm(caller.Side, round, caller.Id, source.Subject);
+
         foreach (var ally in _battle.Allies(caller))
         {
             if (!CanReach(caller, ally)) continue;

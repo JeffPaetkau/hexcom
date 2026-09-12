@@ -76,6 +76,68 @@ public enum Verdict
 }
 
 /// <summary>
+/// When a mission stops, whether or not it is finished.
+/// </summary>
+/// <remarks>
+/// The sixth part of every briefing in the book, and the one genuinely new thing the six mission
+/// shapes wanted. It is a property of the <b>mission</b> rather than of the world: the same ground
+/// with the same garrison carries a different clock under a different briefing, and there is
+/// nothing about a waystation that says an inspection has to be over before first light. So it
+/// hangs on the objective, where a mission file can set it.
+/// <para>
+/// <b>The fact it counts from does not live here</b>, and separating the two is the whole of the
+/// decision. <em>The alarm went out</em> is a fact about what a side knows, produced by the relay
+/// that already carries a contact side-wide, and it is true with no mission on the ground at all —
+/// so it is <see cref="Awareness.Alarm"/>, on the awareness model. This is the comparison, and it
+/// is deliberately nothing more than one: a round number, or a count of rounds since the word got
+/// out, whichever comes first.
+/// </para>
+/// <para>
+/// Neither is a balance number. A mission's hours are content, like the effort a charge takes to
+/// set — see <c>docs/map.md</c> contract 4, whose nine homes are for figures that describe the
+/// world rather than the briefing.
+/// </para>
+/// </remarks>
+/// <param name="Round">The last round the mission runs to, or null for no fixed hour.</param>
+/// <param name="AfterAlarm">
+/// How many rounds the squad has once the other side's word is out, or null if being found out
+/// does not itself stop the clock. Nought means the round it went out in is the last one.
+/// </param>
+public sealed record Deadline(int? Round = null, int? AfterAlarm = null)
+{
+    /// <summary>
+    /// The last round this mission runs to as things stand, or null while nothing limits it.
+    /// </summary>
+    /// <remarks>
+    /// Read live rather than fixed at the start, because the alarm half of it is not known until
+    /// it happens — before the word is out there is no hour to be late for, and the moment it is
+    /// out the squad may have less time left than the briefing's own limit gave them.
+    /// </remarks>
+    public int? LastRound(Battle battle, Side side)
+    {
+        int? byAlarm = AfterAlarm is { } grace && battle.Awareness.AlarmAgainst(side) is { } alarm
+            ? alarm.Round + grace
+            : null;
+
+        return (Round, byAlarm) switch
+        {
+            (null, null) => null,
+            (null, var a) => a,
+            (var r, null) => r,
+            var (r, a) => Math.Min(r!.Value, a!.Value),
+        };
+    }
+
+    public override string ToString() => (Round, AfterAlarm) switch
+    {
+        (null, null) => "no limit",
+        (null, var a) => $"{a} rounds once they know",
+        (var r, null) => $"by round {r}",
+        var (r, a) => $"by round {r}, or {a} rounds once they know",
+    };
+}
+
+/// <summary>
 /// What one side is on the field to do.
 /// </summary>
 /// <remarks>
@@ -106,6 +168,20 @@ public abstract class Objective(Side side)
     private double _horizon;
 
     public Side Side { get; } = side;
+
+    /// <summary>
+    /// When this mission stops, whether or not it is finished. Null for a mission with all night.
+    /// </summary>
+    /// <remarks>
+    /// Set by whoever writes the mission rather than passed to a constructor, because it is the
+    /// one part of an objective that every shape shares and none of them varies — a clock does the
+    /// same thing to a reconnaissance as to a sabotage.
+    /// </remarks>
+    public Deadline? Stop { get; init; }
+
+    /// <summary>Whether the clock has run out on this mission.</summary>
+    protected bool Expired(Battle battle)
+        => Stop?.LastRound(battle, Side) is { } last && battle.Round > last;
 
     /// <summary>Words fit to show a player, or to put in a test failure.</summary>
     public abstract string Brief { get; }
@@ -270,14 +346,22 @@ public abstract class Sortie(
     /// the <em>mission</em> rather than being counted as a loss in its own right, which is the
     /// right way round for a squad whose orders were to go unnoticed. Nobody grades the body
     /// count here; the campaign holds the roster.
+    /// <para>
+    /// <b>The clock running out is abandonment and not failure</b>, which is the distinction the
+    /// third verdict was added for. A squad still standing in the field when its hour passes has
+    /// lost the mission and has not lost the squad, and the briefing says as much: the answer is
+    /// worth nothing before you are home. Failure is reserved for there being nobody left who
+    /// could have brought it back.
+    /// </para>
     /// </remarks>
     public override Verdict Judge(Battle battle)
     {
         var ours = battle.Units.Where(u => u.Side == Side).ToList();
         if (ours.Count == 0) return Verdict.Undecided;
 
-        // Still somebody on the field who could yet finish it, or walk out.
-        if (ours.Any(u => u.InPlay)) return Verdict.Undecided;
+        // Still somebody on the field who could yet finish it, or walk out — unless the hour has
+        // passed, in which case what they could yet do no longer counts for anything.
+        if (ours.Any(u => u.InPlay)) return Expired(battle) ? Verdict.Abandoned : Verdict.Undecided;
 
         if (ours.All(u => u.Left!.Kind == DepartureKind.Down)) return Verdict.Failed;
         if (!Done) return Verdict.Abandoned;
