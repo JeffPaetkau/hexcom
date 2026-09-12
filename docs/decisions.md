@@ -4347,3 +4347,91 @@ battle with the model rather than only the commander.
 `battle.Tactics`, so ours react with the shipped model in every arm above however their own turns
 were scored. No row above turns on a reaction, so none of them is affected; a question about
 `ShieldValue` or `FutureDiscount` would be, and should build the battle with its model.
+
+---
+
+## 084 — Right-click backs out and firing is a mode; the cycle key's reason is the storey, not the ghost
+**2026-09-12** · **Raised by** view · **For** view, interface, master · **Status** resolved
+
+Brief three, built on `view/gestures`. What the brief left to be settled, what was settled, and two
+findings against the brief and its amendment that the interface territory should have back.
+
+**What was built.** Right-click never fires. A shot is two gestures: point the firing mode at a
+hostile — `1`, `Tab`, or a left-click on the body — then confirm with space, enter, or a second click
+on the same body. Right-click and `Esc` back out and never spend a point. `--aim`, `--next-target`,
+`--confirm` and `--back-out` are the script twins, and `--fire NAME` is unchanged and, for a shot the
+rules allow, hashes the same as `--aim NAME --confirm`.
+
+**Settled first, as the brief asked.**
+
+1. **One confirmation in the game, on the shot.** A move is one click and there is no undo. Entry
+   077's law is the reason and nothing was added to soften the fog.
+2. **The number keys are an action bar with one slot, live only outside a window.** The window keeps
+   `1`–`9`. Every action already refuses while a window is open and the window takes the numbers
+   first, so no number ever has two live meanings, and the readout, the keys and `--place NAME:N`
+   still agree. This is what brief six inherits.
+3. **A left-click on the ground while aiming backs out and moves nobody.** The one decision the brief
+   did not name. A cancel that also walked the soldier off and spent the points would not be a
+   cancel.
+
+**Finding for interface: the amendment's reason for `Tab` does not hold, and a better one does.** The
+amendment says to build the cycle key because a hostile can be a see-through body at a marker. A ghost
+is not a target: firing needs eyes on, so a cycle that offered ghosts would be offering shots the rules
+refuse, and this one does not. The reason that holds is the cursor, which picks only on the storey
+being looked at — a hostile on a roof cannot be clicked from the ground floor at all. On the compound,
+Spotter is up the ladder and `Tab` from Orsini reaches it with a 45 per cent shot no click from storey
+0 can ask for. The conclusion stands and the argument for it should change, since the next reader of
+the amendment will otherwise cite a case the code does not have.
+
+**Finding for view: right-click cancel still needs the click-and-drag split.** `view.md` expected
+`ClickSlop` to be a deletion once firing left the right button. It assumed the button would be free,
+and the brief gives it to cancel. A cancel on the press would drop the aim on every camera turn — at
+the moment a player most wants to look round — so the back-out still waits for the release. What
+changed is the cost of a misread: a drag taken for a click used to be a shot, and is now an aim
+dropped.
+
+**Left open, in `view.md`.** Whether `B` — spring an ambush on whoever is under the cursor, at once —
+belongs in the firing mode, since it is the same irreversible and announcing act on the same kind of
+gesture. Whether the one-slot action bar should be drawn. `Ctrl` and `Alt` stay unbound for brief one.
+
+**Measured.** The branch's `game/` against master's, same commands: `--place` and `--resolve` on the
+waystation and the reaction script with a shot on the compound print identical steps, and the pinned
+scene differs only in the legend's rows. **Not measured:** the mouse and the keys themselves, since a
+capture is deaf. The play-through is where they are checked.
+
+---
+
+## 085 — A reaction window offers your own side, and a window with nothing of yours in it does not stop
+**2026-09-12** · **Raised by** view · **For** view, interface, master · **Status** resolved
+
+Brief six, built on `view/window-default`, which is stacked on `view/gestures` and merges after it.
+
+**Settled first, as the brief asked: whose windows a player is offered.** Our own side's reactors.
+The other side's are behind the instruments window, the switch the AI's orders already sit behind.
+The brief's argument was the harness one — answering the enemy's reaction is playing both sides. The
+stronger one turned up while building it: **the list was a leak**. A hostile offered a reaction is a
+hostile with a line on the mover and a reserve to spend, and the window named it whether or not
+anybody of ours had found it. So the filter goes everywhere a window's offers reach the screen,
+counts included.
+
+**A window nobody of ours can answer runs at once, on the other side's recommendations.** The
+recommendations must be placed before resuming. `Commander.Resume` reads an empty placement as
+everybody holding fire, so skipping such a window the way an empty one was skipped would have
+switched the other side's reactions off silently. That is the finding in this entry most likely to be
+got wrong again, and it is a gotcha in `view.md`.
+
+**The default is drawn as a state.** Each of ours reads *will: …*, space is *run it, every answer not
+changed stands*, and one key answers the common case. A scored window is kept rather than per-soldier
+reaction abilities (the amendment's Tactical Breach Wizards alternative) because scoring is what makes
+a default possible at all; a per-ability reaction has nothing to default to.
+
+**Measured.** The recorded `--place`/`--resolve` script prints what it printed on master. The
+compound's reaction script with `--windows` added is byte-identical to the same script without it.
+A waystation mission with both sides on the AI and one `--resolve` offered per window stopped twice
+on brief three's code — both times to ask the player for the enemy's reaction — and not at all on
+this; the two runs end the same, the pictures differing by 38 pixels along a ghosted wall edge.
+
+**Not built, and recorded in `view.md`.** The amendment's adjust step for a held arc, which it calls
+arguably another brief's. **Found and left for brief five:** when a hostile's turn stops at a window,
+the situation block describes that hostile, including the exact certainty it holds on each of ours —
+the enemy's contact file as a number, which contract 3 forbids.

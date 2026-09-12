@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Hexcom.Content;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Movement;
@@ -44,7 +45,8 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// The reaction window waiting to be answered, if there is one.
 /// </param>
 /// <param name="Chooser">
-/// Which of that window's offers the keyboard is pointed at. Meaningless without one.
+/// Which of that window's <see cref="Answerable"/> offers the keyboard is pointed at. Meaningless
+/// without one.
 /// </param>
 /// <param name="AnswerByHand">
 /// Whether a move stops at its window rather than taking every recommendation.
@@ -64,6 +66,14 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// <param name="Knowledge">
 /// What our side holds on each hostile in play: eyes on it, or a marker with a credence. A
 /// hostile with no entry is one nobody of ours has heard a thing about.
+/// </param>
+/// <param name="Instruments">
+/// Whether the instruments window is open, which is also what lets a player answer reactions for
+/// the other side. See <see cref="Answerable"/>.
+/// </param>
+/// <param name="AimedAt">
+/// Who the firing mode was last pointed at, as the node remembers it. Read <see cref="Aim"/>,
+/// which is the same thing checked against the moment.
 /// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
@@ -98,8 +108,71 @@ public sealed record SandboxFrame(
     bool Briefing,
     bool OutOfTime,
     bool Omniscient,
-    IReadOnlyDictionary<UnitId, Threat> Knowledge)
+    IReadOnlyDictionary<UnitId, Threat> Knowledge,
+    bool Instruments,
+    Unit? AimedAt)
 {
+    /// <summary>
+    /// The offers in the open window a player is handed: our own side's, or everybody's while the
+    /// instruments are open. <see cref="Chooser"/> indexes into this.
+    /// </summary>
+    public IReadOnlyList<ReactionOffer> Answerable => Open is { } window ? AnswerableIn(window, Instruments) : [];
+
+    /// <summary>The offers in a window a player is handed. See <see cref="Answerable"/>.</summary>
+    /// <remarks>
+    /// <b>Brief six: your own side only, and the other side's behind the same switch as the AI's
+    /// orders.</b> A window used to offer every reactor in it whichever side they were on, which is
+    /// right for a harness that drives both sides and wrong for a player on two counts. Answering
+    /// the enemy's reaction is playing both sides of the fight; and the list itself was a leak, since
+    /// a hostile offered a reaction is a hostile with a line on the mover and a reserve to spend,
+    /// named, whether or not anybody of ours has found it. The hostile offers still exist and still
+    /// get answered — by their recommendation, the same answer <c>Commander</c> would have given —
+    /// they are just not put in front of a player unless the instruments window is.
+    /// <para>
+    /// Static as well as a property because the sandbox has to ask it of a window before that
+    /// window is the open one, to decide whether to stop at it at all.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<ReactionOffer> AnswerableIn(ReactionWindow window, bool instruments)
+        => instruments ? window.Offers : window.Offers.Where(o => o.Reactor.Side == Side.Player).ToList();
+
+    /// <summary>
+    /// The hostile the active soldier is aiming at, if the firing mode is on and still makes sense.
+    /// </summary>
+    /// <remarks>
+    /// Checked here rather than kept tidy wherever the moment changes, because the moment changes
+    /// in more places than anybody would list: a window opening, the target dropping out of sight
+    /// after a stance change, the picture going back from omniscient. An aim at a soldier the
+    /// picture no longer shows is not an aim — it would put a line of fire on the map pointing at
+    /// somebody the map is not drawing, which is the leak <see cref="Sees"/> exists to prevent.
+    /// </remarks>
+    public Unit? Aim
+        => AimedAt is { InPlay: true } quarry
+           && Open is null
+           && Battle.Active is { } shooter
+           && quarry.IsHostileTo(shooter)
+           && Sees(quarry)
+            ? quarry
+            : null;
+
+    /// <summary>
+    /// Everybody the active soldier could aim at, nearest first: the hostiles the picture shows.
+    /// </summary>
+    /// <remarks>
+    /// What <c>Tab</c> cycles, and a soldier the shot would be refused at is still on it — out of
+    /// range is a reason worth being told, and the shot line says it. A ghost at a marker is not:
+    /// firing needs eyes on, so a list that included ghosts would be offering shots it cannot take.
+    /// </remarks>
+    public IReadOnlyList<Unit> Targets
+        => Battle.Active is not { } shooter
+            ? []
+            : Battle.InPlay
+                .Where(u => u.IsHostileTo(shooter) && Sees(u))
+                .OrderBy(u => SandboxGeometry.NodeScene(Battle.Map, u.Position)
+                    .DistanceTo(SandboxGeometry.NodeScene(Battle.Map, shooter.Position)))
+                .ThenBy(u => u.Name)
+                .ToList();
+
     /// <summary>
     /// Where the subject of the open window is standing <em>now</em>, which is where it started.
     /// </summary>

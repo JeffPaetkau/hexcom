@@ -35,55 +35,25 @@ reaching into `src/`.
 
 ---
 
-## The job — brief three, the gesture set: right-click stops firing
+## The job — Master's to set
 
-**Promoted by Master out of order, and on purpose.** `../interface/briefs.md` puts brief one
-first, and brief one is still first in value. But its central gesture is marked **provisional**
-against the capture list in `../interface/captures.md`, and those pictures do not exist yet. Brief
-three is the one brief in the queue that no capture bears on and nothing else blocks, and it has
-to land before brief six anyway because it settles the number-key collision six inherits. Take
-brief one when the captures are in.
+**Briefs three and six have both landed, and nothing in this file names the next one.** Brief one is
+still first in value and still waits on the captures in `../interface/captures.md`; the rest of the
+queue in `../interface/briefs.md` is Master's to order, and a session pointed here should ask for
+the next brief rather than pick one.
 
-Branch `view/gestures`. Take a worktree.
+**Merge order, because the two branches are stacked.** `view/window-default` was branched from
+`view/gestures` rather than from `master`, since six inherits three's key decisions and three was
+not merged when six started. Merge `view/gestures` first; `view/window-default` then carries only
+six.
 
-**Read brief three and its amendment, and nothing else from that file.** Both are in
-`../interface/briefs.md` — the brief under *Three — the gesture set* and the correction under
-*Amending Three*. The amendment is not optional reading; it changes the case for one of the
-brief's own instructions.
+**What the next View brief inherits from these two, so it is not re-argued.**
 
-**Why this one is worth doing before the next play-through, not merely available.** Right-click
-fires. The most irreversible action in the game sits on the button every player of the genre
-presses to back out of something, and the synthesis found that **ten games out of ten** cancel a
-mode, a prompt or an aim preview with it and never a spent point. That is as close to unanimous as
-anything in the reference set. The user is about to play a build; a play-through where right-click
-kills a hostile is a play-through that measures this binding instead of the game.
-
-**What the amendment changes, in one line each.**
-
-- **`Tab` cycles targets in one game of ten, not the genre.** Build the cycle key anyway, for this
-  game's reason: a hostile here can be a see-through body at a marker, which is harder to point at
-  than a lit silhouette. Say that in the commit rather than calling it a convention.
-- **Reserve a held modifier for *show me the terms*, and do not bind anything to it.** Brief one
-  will decide that gesture once the captures land, and the synthesis says it has to be held rather
-  than tapped. `Ctrl` and `Alt` are what the set uses and both are free here. This job's only
-  obligation is not to spend them.
-
-**Settle first, both from the brief.** What confirmation the genre asks for — one click commits a
-move, no undo, the confirm lives on the shot — and **do not add a move confirmation to soften the
-fog**; entry 077's law is the reason, and it now has ten games behind it. And where the `1`–`9`
-keys go, given the reaction window already uses them.
-
-**The seam is small and already cut.** Entry 049 put every action behind a named method on
-`HexSandbox`, so this job rebinds callers and adds a firing mode; it does not touch what an action
-does. Every new interaction gets a script step or a stated reason it cannot, per entry 049.
-
-**How to know it worked.** The brief's own test, which is the right one: a player who has played
-XCOM selects a soldier, moves, takes a shot and backs out of a half-entered order without being
-told a key, and **right-click over a hostile does not kill it**. Plus one of this project's own —
-every existing `--place`, `--resolve` and capture script still runs unchanged.
-
-**Out of scope.** Brief one's disclosure gesture beyond reserving its key. The reaction window's
-default, which is brief six and follows this. Any rule.
+- **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
+  turn; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
+  `Esc` back out and never spend a point. `Ctrl` and `Alt` are unbound, reserved for brief one.
+- **Whose knowledge is on screen.** A window offers our own side's reactors; the other side's are
+  behind the instruments window, the same switch as the AI's orders.
 
 ---
 
@@ -101,6 +71,163 @@ so it is not rediscovered; it is not urgent and it is not a brief yet.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/window-default`
+
+Brief six. `../decisions.md` entry 085 is the reasoning; this is the shape.
+
+**A window offers our own side's reactors, and the other side's only while the instruments window
+is open.** That was the brief's *settle first*, and its default. `SandboxFrame.Answerable` is the
+list and `SandboxFrame.AnswerableIn` asks it of a window before it is the open one; the chooser, the
+number keys, `Tab`, `--place` and the readout all go through it, so there is no second place a
+hostile's offer can reach the screen. The count in the readout goes through it too — *1 of 3
+answered* would have said how many of the other side have a line on the mover.
+
+**A window with nothing of ours in it does not stop.** The other side takes its recommendations and
+the move goes through, in both places a window is born: `MoveTo` for a move made here, and
+`SkipUnanswerableWindows` — which was `SkipEmptyWindows` — for a turn a `Commander` is taking. **The
+recommendations are placed before resuming, and that is the one thing in this branch that would
+have been easy to get wrong**: `Commander.Resume` reads a window with nothing placed as everybody
+holding fire, so skipping one the way an empty window is skipped would have switched the other side's
+reactions off without a trace.
+
+**The default is drawn as a state, not a suggestion.** Every one of ours not being chosen for reads
+*will: Vance goes Prone at t15*; the one being chosen for lists its options with *← will, unless
+changed*; one already answered reads *CHANGED TO*. The header says what space does in words —
+*run it, every answer not changed stands* — so the common case is one key, and the brief's own
+framing is what the words say: overwatch is a state the soldier is in, and the window is where you
+may overrule it. Before this the readout said *recommended*, which is advice, and space's clause was
+at the far end of a long line.
+
+**Why a scored window rather than the alternative the amendment names.** Tactical Breach Wizards'
+reactions are named abilities a soldier owns. A scored window is what makes a default answer possible
+at all — `ReactionWindow.Appraise` ranks arbitrary soldiers and options — and a per-ability reaction
+has nothing to default to.
+
+**Closing or opening the instruments mid-window** re-points the chooser from the top, and a window
+left with nothing of ours in it stays open and says *nothing here is yours to answer — space: run
+it*. Closing a window of instruments is not an answer to anything.
+
+**What was measured.**
+
+- **The recorded scripts run unchanged**: `--windows --ai --omniscient --pass 30 --place Vance:1
+  --resolve --pass 2` prints the same steps as on master.
+- **Skipping a hostile-only window is the same battle as windows off.** The reaction script on the
+  compound with `--windows` added — Orsini across Watchman's narrow arc — now moves straight through
+  (*nobody of ours could answer*) and the capture is **byte-identical** to the same script without
+  `--windows`. With `--instruments` it stops, and offers Watchman.
+- **A whole waystation mission, both sides on the AI, one step per window.** Ninety `--ai-turn
+  --resolve` pairs with `--windows --ai`, run on brief three's code and on this. Three's stopped at
+  two windows, both of them asking the player to answer *the enemy's* reaction to one of our moves;
+  this stopped at none. The mission ends *abandoned* in round 3 on both, with the same reaction line,
+  strip and readouts — the pictures differ by 38 pixels along one ghosted wall edge and in nothing a
+  label or a body carries.
+
+**One thing lost, and it is small.** A move that stopped at its window used to be walked along its
+route when the window resolved. A skipped window's move jumps, which is what an empty window's move
+has always done. The moves affected are our own soldiers' turns handed to the AI with `J`, an
+instrument, and the walk for an AI turn is already partial — entry 066.
+
+**The amendment's arc adjust step was not built.** Both shipped precedents give a held arc an adjust
+step before confirming, and `V` takes an arc in one press and charges for each. The amendment itself
+calls it arguably another brief's; it is an open question below, and it belongs with brief two's
+drawing of the arc if it is taken.
+
+---
+
+## What landed on `view/gestures`
+
+Brief three. `../decisions.md` entry 084 is the reasoning and the two findings; this is the shape.
+
+**Right-click never fires. Firing is a mode, and a shot is two gestures.** Point the mode at a
+hostile — `1` (the one under the cursor, else the nearest), `Tab` (the next in sight, nearest
+first), or a left-click on the body — read the terms, and confirm with space, enter, or a second
+click on the same body. Right-click and `Esc` back out, spending nothing. The mode is `_aim` on the
+node and `SandboxFrame.Aim` in the frame, and the frame is where it is checked: an aim is dropped
+the moment it stops being a shot worth describing, so a window opening, the target leaving sight or
+`O` being turned off cannot leave a line of fire on the map pointing at somebody it is not drawing.
+
+**The two things the brief asked to be settled first.**
+
+- **One confirmation in the game, and it is on the shot.** A move is still one click, there is
+  still no undo, and nothing was added to soften the fog. Entry 077's law is the reason — a game
+  lets a player take something back exactly as far as it told them the truth — and the shot carries
+  the confirm because the shot is what announces you.
+- **The number keys are an action bar with one slot, live only outside a window.** `1` aims. The
+  window keeps `1`–`9`. Every action already refuses while a window is open and `AnswerKey` takes
+  the numbers first, so a number never has two live meanings; moving the window's numbers would have
+  broken the match between the readout, the keys and `--place NAME:N` for nothing. The letter keys
+  for the other actions stay letters — none of them has a target to stage, so none needs a mode.
+
+**What a click does now depends on two things, and the table is short.**
+
+| | not aiming | aiming |
+|---|---|---|
+| left-click a hostile | aim at it | aim at it — or fire, if it is the one aimed at |
+| left-click anywhere else | move | back out, **and do not move** |
+| right-click | back out of the briefing, if it is up | back out |
+| space / enter | end the turn | fire |
+
+The ground click while aiming was the one real decision the brief left: a player who clicks the
+ground mid-aim has changed their mind about the shot, and a cancel that also walked the soldier off
+and spent the points would be a strange cancel. The path preview is not drawn while aiming, for the
+same reason — it would be promising a move the click will not make.
+
+**An aim survives the orders taken on the spot and nothing else.** Stance, facing, an arc, a shout:
+the aim stays and the shot line re-plans, because crouching to see whether the shot improves is part
+of deciding to take it. A move, a shot, a pass, or a turn handed to the AI all go through
+`AfterAction`, which drops it. A refused confirm stays aimed and says why — out of range, no line —
+because what a player wants after *no* is to change something and try again.
+
+**`ClickSlop` and `_orbitTravel` were meant to be a deletion and are not.** The section on
+`view/playable` below says so and was wrong in one respect: it assumed the right button would be
+free once firing left it, and the brief gives it to cancel. Cancel on the press would make every
+orbit throw the aim away — at exactly the moment a player most wants to look round. So the slop
+stays, and what changed is its stakes: a drag misread as a click used to be a shot nobody meant,
+and is now an aim dropped.
+
+**`Tab` is built for this game's reason, and the amendment's reason turned out to be the wrong
+one.** It said a hostile can be a see-through body at a marker. A ghost is not a target — `Sees`
+needs eyes on, and so does `FireAt` — so the cycle never offers one. The reason that holds is the
+cursor: it picks only on the storey being looked at, so a hostile on a roof cannot be clicked from
+the ground at all. On the compound, Spotter is up the ladder and Orsini's `Tab` reaches it with a
+45 per cent shot that no click from storey 0 could have asked for. Entry 084.
+
+**What is drawn.** A white line from the shooter's eye to the target's chest and a white ring outside
+the target's own rings, both in the cursor mesh because pointing the mode elsewhere changes nothing
+true and must not cost a sight sweep. White because hostile red on a line would read as a shot
+coming the other way and yellow already means a walk that is paid for. The line is drawn whether or
+not the shot is possible; the shot line says why not. In the HUD, an `AIMING` line in capitals above
+the shot line says at whom, which of how many, and the ways out in words — space ends the turn when
+that line is absent and fires when it is present, which is only fair if nobody can miss which. The
+shot and worth lines quote the aim rather than the cursor while one is up, so the pointer can go and
+orbit without the terms being swapped for somebody else's.
+
+**Every new interaction has a script step.** `--aim [NAME]` is `1` bare and a left-click on NAME
+named; `--next-target` is `Tab`; `--confirm` is space while aiming; `--back-out` is right-click and
+`Esc`. `--fire NAME` is unchanged, and for a shot the rules allow it is exactly `--aim NAME
+--confirm` — the two captures hash the same. For one they refuse the two part company on purpose:
+`--fire` spends the step and reports *no shot*, `--confirm` stays aimed and says why. `Ctrl` and
+`Alt` are unbound, as brief one's amendment asked.
+
+**What was measured, and what could not be.**
+
+- Master's `game/` and this branch's, the same commands: `--place Vance:1 --resolve` on the
+  waystation and the reaction script with a `--fire` added on the compound print identical steps.
+  The pinned scene differs only in rows 822 to 892, which is the legend; the two scripted captures
+  differ from row 788 down, which is the legend and the block stacked above it moving up a line.
+  Nothing above that changed by a pixel.
+- **The mouse and the keys were not driven.** A capture is deaf, so `LeftClick`, the right release
+  and the key bindings are checked by reading and by their script twins, not by a hand. The
+  play-through is where they get measured.
+- **The exported build hung** when run with `--shot` from this session and wrote nothing; the
+  editor harness was used instead. Not investigated — it is master's build and not this branch's.
+
+**The pinned scene changes along the bottom edge.** The player's legend is three lines — looking,
+orders, posture — because the shot's four gestures would have run the old second line towards the
+right edge.
 
 ---
 
@@ -429,7 +556,8 @@ Entry 049 is the reasoning; this is the shape.
   it on; a move then becomes `Commit`, a pause, and `Resolve`, and a hostile turn goes to a
   `Commander` built with `WindowAnswer.HandedOut`. `HexSandbox.Open` is the one question the rest
   of the code asks, because from the interface's side the two cases are identical.
-- **Windows with no offers are skipped**, in `SkipEmptyWindows`. Core stops at every window when
+- **Windows with no offers are skipped**, in `SkipEmptyWindows` — `SkipUnanswerableWindows` since
+  brief six, which skips windows with no offers *of ours* too. Core stops at every window when
   it is handing them out and is right to; a screen that stopped to ask a question with no answers
   in it would stop twice a turn on this map.
 - **The committed route is drawn** while a window is open, with the tick each step lands on,
@@ -677,6 +805,8 @@ Entry 053 records the count.
   before the key remap diffs against anything after it — the legend grew from one line to three —
   and nothing captured before `view/playable` diffs against anything after it either: the legend
   went back down to two, the mode line left the top block, and every soldier gained two rings.
+  **`view/gestures` breaks it along the bottom edge only**: the legend is three lines again, and
+  measured against master everything above row 822 of the pinned scene is unchanged by a pixel.
   **`--aside` breaks none of this and that was measured, not assumed** — a capture on the left
   monitor and the same one where Windows put it are byte-identical. The one break is narrower than
   it looks: a capture taken with `--instruments` before the subwindow fix has the instruments panel
@@ -765,6 +895,29 @@ Entry 053 records the count.
   `HandleKey`, a case in `Perform`. The script is an argument list rather than a second input
   system, so nothing but those methods may touch `Battle` — otherwise a capture can show a state
   the keyboard cannot reach, which is the opposite of what a harness is for.
+- **Space means two things, and the `AIMING` line is the only thing telling a player which.** It
+  fires while an aim is up and ends the turn while one is not. That is the window's convention —
+  space commits whatever is open — and it is fair only because the mode cannot be missed. Anything
+  that hides or moves the `AIMING` line, or keeps an aim alive where the line is not drawn, puts a
+  shot on the key a player presses to pass.
+- **An aim is checked in the frame, not tidied up wherever the moment changes.** `_aim` is only a
+  unit; `SandboxFrame.Aim` is that unit if the mode still makes sense — a window shut, somebody up,
+  the target hostile, in play and in sight. Read `Aim`, never `AimedAt`, or an aim can outlive the
+  stance change or the `O` press that made it a leak. The one place `_aim` *is* cleared on purpose
+  is `AfterAction`, which is how a move or a pass drops it.
+- **The right button still has a slop, and changing it costs nothing now.** `ClickSlop` tells a
+  back-out from an orbit. Before brief three a misread drag was a shot nobody meant; now it is an
+  aim dropped. If it ever becomes a shot again — any binding that spends points on a right *click* —
+  the slop is back to being the only thing between a camera turn and an irreversible action.
+- **Skipping a window is placing its recommendations and then resuming, never just resuming.**
+  `Commander.Resume` and `Battle.Resolve` both treat what was placed as the whole answer, so a window
+  resumed with nothing in it is everybody in it holding fire. That was harmless while only empty
+  windows were skipped and is not now that windows the other side could answer are. Anything new
+  that runs past a window — a fast-forward, a second skip — places first.
+- **Every list of a window's offers goes through `Answerable`, including counts.** The readout, the
+  chooser, the number keys, `Tab` and `--place` all read the filtered list; `window.Offers` is read
+  directly only to decide whether a window did anything at all. A readout that counted the raw list
+  would say how many hostiles have a line on the mover, named or not.
 - **A window is modal, and the camera keys are the exception.** While one is open the battle is
   held still around a question, so only the answers and the camera do anything. Looking is not
   answering, and the reactor being chosen for is usually somewhere else on the map.
@@ -889,21 +1042,21 @@ Interactively it is `W` `A` `S` `D` or a middle-drag to pan, `Q` and `E` or a ri
 the wheel or `+`/`-` to zoom, `F` for the whole map and `G` for whoever is up. The camera never
 re-asks the rules anything, so none of it can change what is true — only what is on screen.
 
-**The mouse, settled.** Right-click had to keep firing, so the gesture set is arranged around
-that and nothing else was free to move:
+**The mouse, settled.** Right-click never fires — brief three, and *What landed on
+`view/gestures`* above:
 
 | | |
 |---|---|
 | middle-drag | pan |
 | right-drag | turn the camera freely, to anywhere between the six bearings; no snap on release |
-| right-click | fire — **on release**, and only if the pointer moved under `ClickSlop` pixels since the press |
+| right-click | back out — **on release**, and only if the pointer moved under `ClickSlop` pixels since the press; never spends a point |
 | pointer near an edge | push the view that way, faster the further into the margin it goes — **off unless `--edge-pan`** |
 | wheel | zoom |
-| left-click | move whoever is up |
+| left-click | move whoever is up; on a hostile, aim; on the hostile already aimed at, fire; while aiming, anywhere else backs out and moves nobody |
 
 A right press starts a candidate orbit either way; which of the two it turns out to have been is
-not knowable until the button comes back up, which is the whole reason firing moved off the
-press.
+not knowable until the button comes back up, which is why the back-out waits for the release —
+so that turning the camera to look at a target does not drop the aim at it.
 
 **Edge-pan is off unless it is asked for**, which is brief Zero's rider and the genre's answer: it
 is the one camera gesture that fires while the hand is doing nothing, so a pointer parked near an
@@ -916,7 +1069,7 @@ nobody was looking at it would be the worst kind of bug to find.
 and the instruments window's is `InstrumentKeys`; this table is the same content, and they are
 two copies of one list — changing one without the other is how a legend starts lying.
 
-The first two are on screen in the main view; the third is in the instruments window, which is
+The first three are on screen in the main view; the last is in the instruments window, which is
 where the split falls and why. The test is *would a player who never presses `O` want it* — a
 player wants to know how to move and how to look, and does not want to know how to hand the
 hostile side to the AI.
@@ -930,12 +1083,21 @@ hostile side to the AI.
 | `F` / `G` | the whole map / whoever is up |
 | PgUp / PgDn | change storey |
 
-| What the soldier does — **player's legend** | |
+| Orders — **player's legend** | |
 |---|---|
-| left-click · right-click · space | move · fire · end the turn |
+| left-click | move, or aim at a hostile; on the one aimed at, fire |
+| `1` · tab | aim at the hostile under the cursor or else the nearest · aim at the next in sight |
+| space, enter | fire while aiming; end the turn while not |
+| right-click, `Esc` | back out: the aim, or else the briefing |
+| tab, `1`–`9`, space | while a window is open: whose answer, change it, and run it — every answer not changed stands; only our side's reactors are offered unless the instruments window is open |
+
+| Posture — **player's legend** | |
+|---|---|
 | `C` · `Z`/`X` · `V` · `B` · `T` | stance · turn on the spot · overwatch arc · arm or spring an ambush · leave the field |
 | `L` | call a contact in |
-| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
+
+`Ctrl` and `Alt` are unbound on purpose: brief one's amendment reserves a held modifier for *show
+me the terms*, and it has to be free when that lands.
 
 | What the run is set to — **instruments window** | |
 |---|---|
@@ -967,6 +1129,7 @@ one prints what it did. They are the keys under another name:
 |---|---|
 | `--pass [N]` · `--until NAME` | hand the turn on; or hand it on until a named soldier is up |
 | `--move q,r[,l[,g]]` · `--fire NAME` | the active soldier moves or shoots — at a soldier the picture shows |
+| `--aim [NAME]` · `--next-target` · `--confirm` · `--back-out` | the firing mode: `1` or a click on NAME · `Tab` · space · right-click. `--fire NAME` is `--aim NAME --confirm` for any shot the rules allow |
 | `--stance NAME` · `--face DIR` · `--overwatch NAME\|none` | posture, facing, the arc being held |
 | `--arm` · `--spring NAME` · `--shout NAME` · `--extract` | ambush, call it in, walk off the field |
 | `--ai-turn` · `--hostiles ai\|hand` | give this turn to the search; give the side to it or take it back |
@@ -987,7 +1150,11 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --s
 sentry holding an arc answered it, and the reaction line says what it did.
 
 With `--windows`, a move stops at its reaction window instead and the picture can be taken with
-the question still on screen. `--windows --ai --omniscient --pass 30 --zoom 40` on the waystation
+the question still on screen — **if one of ours is offered an answer in it.** A window only the
+other side could answer runs at once on its recommendations, since brief six; add `--instruments`
+to stop at those too and answer for both sides. So the command above with `--windows` added moves
+Orsini straight through, byte-identical to the command without it, and with `--instruments` as
+well it stops with Watchman offered. `--windows --ai --omniscient --pass 30 --zoom 40` on the waystation
 stops in round 4 with the sentry committed to a 15-tick walk it has not taken, Vance offered three
 answers and their scores, and the route drawn out of the sentry with the tick each step lands on.
 `--ai --pass 16 --zoom 60` without `--omniscient` is the game's own view of the same fight two
@@ -1138,6 +1305,16 @@ Desktop-only is the design and Windows is the machine.
   `../decisions.md` entry 064, and the answer is no. The strip still draws a `?` slot because the
   change is brief Five's and the brief has not been promoted; the question is settled and the code
   has not caught up.
+- **Whether springing an ambush belongs in the firing mode.** `B` with an armed soldier up springs
+  on whoever is under the cursor, at once — the same irreversible, announcing action on the same
+  kind of gesture brief three took off the right button, just on a letter. It was left alone as out
+  of scope. The argument for folding it in is that the confirm is meant to live on everything that
+  announces you; the argument against is that arming is already a deliberate first step, which is
+  the half of a mode that `B` has had all along.
+- **Whether the action bar should be drawn.** `1` aims, and nothing on screen is a bar with a slot
+  in it; the legend names the key and a click on a body does the same. A player of the genre looks
+  for icons along the bottom, and whether that is worth the pixels over the map is the play-through's
+  to say.
 - **Whether a hostile's held arc should be drawn when the hostile is.** It is not, now: a body
   shows where a soldier is and which way it faces, and the attention field shows where it is
   looking, but what it would shoot at is its intent. Omniscient draws every arc. A player who
@@ -1157,13 +1334,21 @@ Desktop-only is the design and Windows is the machine.
   leaks nothing the window did not. But the two together now draw a moving line out of a soldier
   the picture is not showing, which is a stronger claim than a static one, and nobody has watched
   it happen yet.
-- **Whether a player should be answering the enemy's reactions.** The sandbox drives both sides
-  by hand, so an open window offers every reactor in it whichever side they are on — which is
-  right for a thing built to try both sides and is not what a shipped interface would do. The
-  window readout says whose each offer is; nothing stops you answering for the other lot. Same
-  family as the orders readout, which is the opponent's mind and lives in the instruments window.
-  It has got sharper rather than easier: answering the enemy's reactions is now the *default*,
-  since the keys open with windows handed out.
+- ~~**Whether a player should be answering the enemy's reactions.**~~ Answered by brief six and
+  entry 085: no. A window offers our side's reactors, and the other side's are behind the
+  instruments window, the same switch as the orders readout.
+- **Whether a held arc gets an adjust step.** Brief six's amendment: Phoenix Point adjusts the cone
+  before confirming and Warhounds' guides single out enter, adjust and cancel as what makes
+  overwatch usable. `V` takes the next arc in one press and charges for each, so finding the one you
+  want can cost three declarations. Cheap, and it would be a second mode beside the firing mode — it
+  should take the same keys (space confirms, right-click backs out) if it is built. The amendment
+  calls it arguably brief two's or a job of its own.
+- **Whether the top block should describe a hostile who is up.** When a hostile's turn stops at a
+  window in the game's own view, the situation block is the hostile's: its reserve, what it is
+  *taking seriously* and the exact certainty it holds on each of ours (*you hold 63/100*). That is
+  the enemy's contact file as a number, which contract 3 says stays a rung, and it is the pause that
+  brief five is about. Found while capturing brief six's window and not touched, since it is five's
+  seam rather than six's.
 - **Whether the mission line belongs to a player at all, or only to a tester.** It shows the
   verdict, which is the scoreboard, and the reading each departed soldier left with, which is
   how the mission is judged. Both are ours by contract 3, so there is no leak; the question is

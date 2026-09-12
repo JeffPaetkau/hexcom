@@ -97,7 +97,7 @@ creation instead.
 **And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
 `--ai`, `--windows`, `--omniscient`, `--instruments`, `--still`, `--aside`, `--edge-pan` and
 `--pace` is a step, run in the order it
-was typed: `--move`, `--fire`, `--stance`,
+was typed: `--move`, `--fire`, `--aim`, `--next-target`, `--confirm`, `--back-out`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
 `--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
 method its key calls, so a picture can only ever show a state somebody at the keyboard could
@@ -139,8 +139,8 @@ starts on.
 | PgUp / PgDn | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
 
 **The mouse drives it too.** A middle-drag pans and a right-drag turns the camera freely. The
-arrow keys pan as well. A right *click* still fires — the two are told apart by whether the
-pointer moved, so the shot goes off when the button comes back up having stayed put. The pointer
+arrow keys pan as well. A right *click* backs out of whatever you were half way through and never
+spends a point; it is told apart from a drag by whether the pointer moved. The pointer
 resting near an edge of the window can push the view that way, and does not unless `--edge-pan`
 asks for it: it is the one camera gesture that happens while your hand is doing nothing.
 
@@ -148,17 +148,19 @@ asks for it: it is the one camera gesture that happens while your hand is doing 
 
 | | |
 |---|---|
-| left-click | move whoever is up |
+| left-click | move whoever is up — or, on a hostile, aim at it; on the one already aimed at, fire |
 | hover | show the route, the cost of each awkward step, and what cover the cursor has |
-| right-click | fire at whoever is under the cursor |
-| space | end the turn |
+| `1` | aim: at the hostile under the cursor, or the nearest one in sight |
+| tab | aim at the next hostile in sight — including one on a storey the cursor cannot reach |
+| space | fire, while aiming; end the turn, while not |
+| right-click, `Esc` | back out: stop aiming, or put the briefing away |
 | `C` | cycle stance: standing, crouching, prone |
 | `Z` / `X` | turn on the spot |
 | `V` | cycle the overwatch arc: none, narrow, standard, wide |
 | `B` | arm an ambush, or spring it on whoever is under the cursor |
 | `T` | walk off the field, if you are standing somewhere your side may leave from |
 | `L` | call a contact in, so everybody in earshot knows |
-| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
+| space, `1`–`9`, tab | while a window is open: run it, with every soldier doing what the window says they will unless you changed it; change the chosen soldier's answer; choose somebody else. Only your own side's soldiers are offered, and a window with nothing of yours in it does not stop |
 
 **What the whole run is set to.**
 
@@ -285,7 +287,9 @@ shot went off on and where the target was standing when it landed.
   into the arc. All of them fire in one window, before you get to answer. Or hover a target and
   press `B` again with an armed unit active to spring it deliberately.
 
-Press `K` first and you get to answer any of those by hand rather than watch them happen.
+Those are the other side reacting, so a window only stops for them with the instruments window open
+(`I`, then `K` if windows are not already being answered by hand) — answering the enemy's reactions
+is a tester's job, not a player's.
 
 ### Building something to hand somebody
 

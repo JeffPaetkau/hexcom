@@ -139,13 +139,37 @@ public partial class HexSandbox : Node3D
     /// How far the pointer has travelled since the right button went down.
     /// </summary>
     /// <remarks>
-    /// The right button has to do two jobs — it fires, and it orbits — so the two are told apart
-    /// by whether the pointer moved. Under <see cref="ClickSlop"/> pixels between press and
-    /// release it was a click and the shot goes off; over it, it was a drag and nothing is
-    /// fired. Which is why firing happens on <em>release</em> now and not on press: on press
-    /// there is nothing yet to tell the two apart by.
+    /// The right button does two jobs — it backs out of a half-entered order, and it orbits — so
+    /// the two are told apart by whether the pointer moved. Under <see cref="ClickSlop"/> pixels
+    /// between press and release it was a click; over it, a drag. So the click is acted on at
+    /// <em>release</em>, which is the only moment the two are distinguishable.
+    /// <para>
+    /// <b>This was expected to be a deletion and it is not, but its stakes went to nothing.</b>
+    /// While right-click fired, a drag misread as a click was a shot nobody meant and could not
+    /// take back. Now it is an aim dropped, which costs no point and is one key to pick up again.
+    /// Cancelling on the press instead would have been simpler and would mean that turning the
+    /// camera to get a better look at a target throws the aim away — the one moment a player
+    /// most wants to look round is while they are deciding whether to fire.
+    /// </para>
     /// </remarks>
     private float _orbitTravel;
+
+    /// <summary>
+    /// Who the firing mode is pointed at, or null when it is off. Read through
+    /// <see cref="SandboxFrame.Aim"/>, which checks it is still a shot worth describing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Firing is a mode, and that is brief three.</b> Right-click used to fire, which put the
+    /// most irreversible action in the game on the button every player of the genre presses to
+    /// back out of something — ten games of ten spend it on cancel. So a shot is now two
+    /// gestures: point the mode at somebody (<c>1</c>, <c>Tab</c>, or a left-click on a hostile),
+    /// read the terms, and confirm (space, enter, or a click on the same hostile). Right-click and
+    /// escape drop it. <b>Nothing else acquired a confirmation</b>: a move is still one click and
+    /// there is still no undo, because entry 077 found that a game lets a player take something
+    /// back exactly as far as it told them the truth, and this one hides things. The confirm lives
+    /// on the shot because the shot is what announces you.
+    /// </remarks>
+    private Unit? _aim;
 
     /// <summary>What the last committed move got shot at with, if anything. Debug readout only.</summary>
     private string _lastWindow = "";
@@ -513,6 +537,7 @@ public partial class HexSandbox : Node3D
         _committed = null;
         _handed = null;
         _chooser = 0;
+        _aim = null;
         _lastWindow = "";
         _hover = null;
 
@@ -575,12 +600,13 @@ public partial class HexSandbox : Node3D
             _battle, windows: _byHand ? WindowAnswer.HandedOut : WindowAnswer.Recommended);
 
         commander.TakeTurn();
-        SkipEmptyWindows(commander);
+        SkipUnanswerableWindows(commander);
         Record(unit, commander);
     }
 
     /// <summary>
-    /// Run straight past any window nobody was offered anything in.
+    /// Run straight past any window with nothing in it for a player to answer, taking the
+    /// recommendation for whoever was offered something.
     /// </summary>
     /// <remarks>
     /// A commander handing its windows out stops at every one of them, which is right for Core —
@@ -589,10 +615,27 @@ public partial class HexSandbox : Node3D
     /// stopping, and it is the common case rather than the corner: most moves on a map this size
     /// are watched by nobody, so without this the sandbox stops twice a turn to say <em>0 of 0
     /// answered</em> and a script has to spell out a <c>--resolve</c> for each.
+    /// <para>
+    /// <b>Since brief six "nothing to answer" includes "nothing of ours to answer"</b> — see
+    /// <see cref="SandboxFrame.AnswerableIn"/>. The recommendations have to be placed before
+    /// resuming, and that is not tidiness: <c>Commander.Resume</c> treats a window with nothing
+    /// placed as everybody holding fire, so skipping one the way an empty one is skipped would
+    /// quietly switch the other side's reactions off.
+    /// </para>
     /// </remarks>
-    private static void SkipEmptyWindows(Commander commander)
+    private void SkipUnanswerableWindows(Commander commander)
     {
-        while (commander.Waiting is { Offers.Count: 0 }) commander.Resume();
+        while (commander.Waiting is { } window && SandboxFrame.AnswerableIn(window, _instruments.Visible).Count == 0)
+        {
+            window.PlaceRecommended();
+            commander.Resume();
+
+            // A window somebody was offered something in did something, and what the other side did
+            // about a move of ours is a player's to read — it is what stopping at the window used to
+            // put on screen, and skipping it must not take the reaction line away with the question.
+            // An empty window did nothing and leaves the last one standing, as it always has.
+            if (window.Offers.Count > 0) _lastWindow = BattleHud.Describe(window);
+        }
     }
 
     /// <summary>
@@ -621,6 +664,13 @@ public partial class HexSandbox : Node3D
     /// </summary>
     private void AfterAction(bool keepRecord = false)
     {
+        // Any order that goes through here — a move, a shot, a pass, a turn handed to the AI —
+        // abandons an aim. The ones that do not come through here are the ones taken on the spot
+        // (stance, facing, an arc, a shout), and an aim survives those on purpose: crouching to
+        // see whether the shot gets better is part of deciding to take it, and the shot line
+        // re-plans from the new stance.
+        _aim = null;
+
         var before = _battle.Active;
         Settle(keepRecord);
         if (_battle.Active is { } next && next != before) _layer = next.Position.Layer;
@@ -703,6 +753,18 @@ public partial class HexSandbox : Node3D
     private void ShowInstruments(bool open)
     {
         _instruments.Visible = open;
+
+        // The window's list of answerable offers just grew or shrank, so the keyboard is pointed
+        // again from the top rather than at an index that now means somebody else. A window left
+        // with nothing of ours in it stays open: closing a window of instruments is not an answer,
+        // and the readout says space runs it.
+        if (Open is not null)
+        {
+            _chooser = -1;
+            NextChooser();
+            Redraw();
+        }
+
         if (!open) return;
 
         // Placed on opening rather than on building: a hidden window has no position worth
@@ -724,7 +786,7 @@ public partial class HexSandbox : Node3D
             _battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto,
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
-            _omniscient, _knowledge);
+            _omniscient, _knowledge, _instruments.Visible, _aim);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -772,6 +834,17 @@ public partial class HexSandbox : Node3D
             _lastWindow = BattleHud.Describe(_battle.Resolve(commitment));
             AfterMove(mover, commitment.Path);
             return $"moved to {destination}, {commitment.ApCost} AP, nobody could answer";
+        }
+
+        // Somebody could answer, and none of them is a player's to answer: the other side takes its
+        // recommendations and the move goes through, exactly as if windows were not handed out.
+        // See SandboxFrame.AnswerableIn for why their offers are not put in front of anybody.
+        if (SandboxFrame.AnswerableIn(commitment.Window, _instruments.Visible).Count == 0)
+        {
+            commitment.Window.PlaceRecommended();
+            _lastWindow = BattleHud.Describe(_battle.Resolve(commitment));
+            AfterMove(mover, commitment.Path);
+            return $"moved to {destination}, {commitment.ApCost} AP, nobody of ours could answer";
         }
 
         _committed = commitment;
@@ -954,6 +1027,154 @@ public partial class HexSandbox : Node3D
             : $"fired at {quarry.Name}: " + (outcome.AnyHit ? $"hit for {outcome.TotalDamage}" : "missed");
     }
 
+    // ---- the firing mode --------------------------------------------------------
+    //
+    // A shot is two gestures: point the mode at somebody, then confirm. See _aim for why. These
+    // four stage a shot and FireAt above takes it; --fire NAME still goes straight there, which
+    // for any shot the rules allow is the same as --aim NAME --confirm, and is kept so that no
+    // script written before the mode existed changes meaning.
+
+    /// <summary>
+    /// Point the firing mode at a hostile the picture shows: the one named, or failing that whoever
+    /// is under the cursor, or failing that the nearest.
+    /// </summary>
+    /// <remarks>
+    /// The fallbacks are what make <c>1</c> one key rather than two. A player with the cursor on a
+    /// hostile means that one; a player without means <i>somebody</i>, and the nearest is the
+    /// answer that needs no explaining. <c>Tab</c> is there for when it is the wrong one.
+    /// </remarks>
+    private string AimAt(Unit? quarry)
+    {
+        if (Open is not null) return "a reaction window is open";
+        if (_battle.Active is not { } shooter) return "nobody is up";
+
+        var frame = Frame();
+        quarry ??= frame.HoveredUnit is { } hovered && hovered.IsHostileTo(shooter)
+            ? hovered
+            : frame.Targets.FirstOrDefault();
+
+        if (quarry is null) return "nobody in sight to aim at";
+        if (!quarry.IsHostileTo(shooter)) return $"{quarry.Name} is not a hostile";
+        if (!frame.Sees(quarry)) return $"nobody of ours can see {quarry.Name}";
+
+        _aim = quarry;
+
+        // Keep the target on screen, and only if it is not already — the same test FollowActive
+        // uses, for the same reason. A left-click aim is already under the pointer and never moves
+        // the view; a Tab to somebody behind the camera has to.
+        if (!_camera.Frames(SandboxGeometry.NodeScene(_battle.Map, quarry.Position), Viewport))
+        {
+            _camera.LookAt(_battle.Map, quarry.Position.Tile.Hex, quarry.Position.Layer);
+            CameraMoved();
+        }
+
+        HoverChanged();
+
+        var plan = _battle.PlanShot(shooter, quarry);
+        return plan.CanFire
+            ? $"aiming at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP"
+            : $"aiming at {quarry.Name}: {plan.Refusal}";
+    }
+
+    /// <summary>Aim at the next hostile in sight, nearest first, wrapping round.</summary>
+    /// <remarks>
+    /// <b>Built for this game's reason and not the genre's.</b> The brief called <c>Tab</c> the
+    /// convention and the reference set says otherwise — XCOM 2 cycles and nine games of ten
+    /// expect the player to point at the body. What this game has that they do not is a cursor
+    /// that picks only on the storey being looked at: a hostile on a roof cannot be clicked from
+    /// the ground floor at all without <c>PgUp</c> first, and at the distance a rifle reaches a body
+    /// is a few pixels behind a ghosted wall. The cycle never goes near the cursor, so it reaches
+    /// both. It does not cycle through ghosts at markers — see <see cref="SandboxFrame.Targets"/>.
+    /// </remarks>
+    private string NextTarget()
+    {
+        if (Open is not null) return "a reaction window is open";
+        if (_battle.Active is null) return "nobody is up";
+
+        var frame = Frame();
+        var targets = frame.Targets;
+        if (targets.Count == 0) return "nobody in sight to aim at";
+
+        var at = frame.Aim is { } current ? targets.ToList().IndexOf(current) : -1;
+        return AimAt(targets[(at + 1) % targets.Count]);
+    }
+
+    /// <summary>Fire at whoever the mode is aimed at. The confirm, and the only one in the game.</summary>
+    /// <remarks>
+    /// A shot the rules would refuse stays aimed and says why, rather than dropping the mode: the
+    /// player asked to fire, the answer is no, and what they most likely want next is to change
+    /// something — a stance, a target — and try again, not to start the gesture over.
+    /// </remarks>
+    private string ConfirmShot()
+    {
+        if (Frame().Aim is not { } quarry) return "not aiming at anybody";
+
+        var plan = _battle.PlanShot(_battle.Active!, quarry);
+        if (!plan.CanFire) return $"no shot at {quarry.Name}: {plan.Refusal}";
+
+        return FireAt(quarry);
+    }
+
+    /// <summary>
+    /// Back out of whatever is half entered, spending nothing: the aim, or else the briefing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Never a spent point</b>, which is the one thing the reference set is unanimous on. So an
+    /// open reaction window is not something to back out of — the move in it is paid for, and a
+    /// cancel that refunded it would be the undo entry 077 rules out — and this says so rather
+    /// than doing nothing, since right-click on a window is exactly what a player will try.
+    /// </remarks>
+    private string BackOut()
+    {
+        if (Frame().Aim is { } was)
+        {
+            _aim = null;
+            HoverChanged();
+            return $"stopped aiming at {was.Name}";
+        }
+
+        _aim = null;
+
+        if (_briefing)
+        {
+            _briefing = false;
+            Redraw();
+            return "put the briefing away";
+        }
+
+        return Open is not null ? "a move already paid for cannot be backed out of" : "nothing to back out of";
+    }
+
+    /// <summary>
+    /// A left-click. Aims at a hostile, fires at the one already aimed at, and otherwise moves —
+    /// unless an aim is up, when a click on the ground only drops it.
+    /// </summary>
+    /// <remarks>
+    /// The last clause is the one that needed deciding. A click on the ground while aiming is a
+    /// player who has changed their mind about the shot, and it would be a strange cancel that
+    /// also walked the soldier somewhere and spent the points. So it backs out and does nothing
+    /// else, and the path preview is not drawn while aiming because it would be promising a move
+    /// the click will not make.
+    /// </remarks>
+    private void LeftClick()
+    {
+        var frame = Frame();
+        var hostile = frame.HoveredUnit is { } unit && _battle.Active is { } shooter && unit.IsHostileTo(shooter)
+            ? unit
+            : null;
+
+        if (frame.Aim is { } aim)
+        {
+            if (hostile == aim) ConfirmShot();
+            else if (hostile is not null) AimAt(hostile);
+            else BackOut();
+            return;
+        }
+
+        if (hostile is not null) AimAt(hostile);
+        else if (NodeUnderMouse() is { } target) MoveTo(target);
+    }
+
     private string SetStance(Stance stance)
     {
         if (Open is not null) return "a reaction window is open";
@@ -1076,8 +1297,9 @@ public partial class HexSandbox : Node3D
 
     // ---- answering a window ----------------------------------------------------
 
-    /// <summary>The offers of the open window, or nothing.</summary>
-    private IReadOnlyList<ReactionOffer> Offers => Open?.Offers ?? [];
+    /// <summary>The offers of the open window a player may answer, or nothing. See <see cref="SandboxFrame.AnswerableIn"/>.</summary>
+    private IReadOnlyList<ReactionOffer> Offers
+        => Open is { } window ? SandboxFrame.AnswerableIn(window, _instruments.Visible) : [];
 
     /// <summary>Point the keyboard at the next reactor that has not answered yet.</summary>
     private void NextChooser()
@@ -1109,8 +1331,11 @@ public partial class HexSandbox : Node3D
     {
         if (Open is not { } window) return "no window is open";
 
-        var offer = window.Offers.FirstOrDefault(o => o.Reactor == reactor);
-        if (offer is null) return $"{reactor.Name} was not offered a reaction";
+        var offer = Offers.FirstOrDefault(o => o.Reactor == reactor);
+        if (offer is null)
+            return window.Offers.Any(o => o.Reactor == reactor)
+                ? $"{reactor.Name} is not ours to answer; the instruments window answers for both sides"
+                : $"{reactor.Name} was not offered a reaction";
         if (Answered(reactor)) return $"{reactor.Name} has already answered";
         if (option < 0 || option >= offer.Options.Count)
             return $"{reactor.Name} has {offer.Options.Count} options, not one numbered {option + 1}";
@@ -1155,7 +1380,7 @@ public partial class HexSandbox : Node3D
         // The route the hostile is about to walk, taken before it walks it. This is the only
         // hostile move the view can draw travelling: the window carries its steps, and the
         // sandbox is holding the resolution rather than watching it go past. A hostile move that
-        // nobody could have reacted to opens no window, is resumed past by SkipEmptyWindows, and
+        // nobody could have reacted to opens no window, is resumed past by SkipUnanswerableWindows, and
         // jumps — see the note for Core in decisions entry 066.
         var hostile = window.Mover;
         var route = window.Move.Steps.Select(step => step.Node).ToList();
@@ -1164,7 +1389,7 @@ public partial class HexSandbox : Node3D
         _chooser = 0;
 
         commander.Resume();
-        SkipEmptyWindows(commander);
+        SkipUnanswerableWindows(commander);
 
         _lastWindow = BattleHud.Describe(window);
         Record(unit, commander);
@@ -1245,6 +1470,21 @@ public partial class HexSandbox : Node3D
 
             case "--fire":
                 return Named(step.Argument) is { } quarry ? FireAt(quarry) : $"no unit called {step.Argument}";
+
+            case "--aim":
+                // Bare, it is the 1 key: the hovered hostile or the nearest. Named, it is a
+                // left-click on that soldier, without having to --hover one first.
+                if (step.Argument is null) return AimAt(null);
+                return Named(step.Argument) is { } target ? AimAt(target) : $"no unit called {step.Argument}";
+
+            case "--next-target":
+                return NextTarget();
+
+            case "--confirm":
+                return ConfirmShot();
+
+            case "--back-out":
+                return BackOut();
 
             case "--stance":
                 return ParseStance(step.Argument) is { } stance ? SetStance(stance) : "wanted standing, crouching or prone";
@@ -1429,21 +1669,21 @@ public partial class HexSandbox : Node3D
                 break;
 
             case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }:
-                if (NodeUnderMouse() is { } target) MoveTo(target);
+                LeftClick();
                 break;
 
-            // The right button orbits and fires, told apart by whether the pointer moved — so
-            // the shot goes off on release, which is the only moment that is known. See
-            // _orbitTravel.
-            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right } aim:
-                _orbiting = aim.Position;
+            // The right button orbits and backs out, told apart by whether the pointer moved —
+            // so the back-out happens on release, which is the only moment that is known. It
+            // never fires. See _orbitTravel and _aim.
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right } press:
+                _orbiting = press.Position;
                 _orbitTravel = 0f;
                 break;
 
             case InputEventMouseButton { Pressed: false, ButtonIndex: MouseButton.Right }:
                 var wasClick = _orbiting is not null && _orbitTravel < ClickSlop;
                 _orbiting = null;
-                if (wasClick && HoveredUnit() is { } quarry) FireAt(quarry);
+                if (wasClick) BackOut();
                 break;
 
             case InputEventKey { Pressed: true, Echo: false } key:
@@ -1462,8 +1702,28 @@ public partial class HexSandbox : Node3D
 
         switch (key)
         {
+            // Space confirms whatever is up, which is the window's convention as well: it resolves
+            // a window, it fires an aim, and with neither it ends the turn. A player who pressed
+            // 1 and then space has read a line that says space fires.
             case Key.Space or Key.Enter:
-                EndTurn();
+                if (Frame().Aim is not null) ConfirmShot();
+                else EndTurn();
+                break;
+
+            // The number keys are an action bar with one slot in it, and it is live only outside
+            // a window — AnswerKey has already taken them if one is open, and every action refuses
+            // while one is anyway, so a number never has two meanings at once. The window keeps its
+            // numbers because the readout prints them and --place NAME:N takes them.
+            case Key.Key1:
+                AimAt(null);
+                break;
+
+            case Key.Tab:
+                NextTarget();
+                break;
+
+            case Key.Escape:
+                BackOut();
                 break;
 
             case Key.J:
