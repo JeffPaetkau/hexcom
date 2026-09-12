@@ -35,17 +35,41 @@ reaching into `src/`.
 
 ---
 
-## The job — Master's to set
+## The job — brief four, who a shot would wake
 
-**Briefs three and six have both landed, and nothing in this file names the next one.** Brief one is
-still first in value and still waits on the captures in `../interface/captures.md`; the rest of the
-queue in `../interface/briefs.md` is Master's to order, and a session pointed here should ask for
-the next brief rather than pick one.
+Branch `view/shot-bill`. Take a worktree.
 
-**Merge order, because the two branches are stacked.** `view/window-default` was branched from
-`view/gestures` rather than from `master`, since six inherits three's key decisions and three was
-not merged when six started. Merge `view/gestures` first; `view/window-default` then carries only
-six.
+**Read brief four and its amendment in `../interface/briefs.md`, and nothing else from that
+file.** The brief is *Four — who a shot would wake*; the amendment is *Amending Four*. It is the
+oldest open interface gap, entry 012's second item, and the synthesis calls its case the
+best-evidenced thing in the queue: the XCOM 2 mod that draws this warning has 272,071 subscribers,
+an order of magnitude more than any other community fix in ten games.
+
+**Its first settle-first question is answered, so do not spend the session re-asking it.** The
+brief worried the noise a shot makes might need a new query on Core. It does not.
+`AwarenessTracker.WouldHear(source, place, loudness)` is public and takes any loudness, and every
+`WeaponProfile` and `ThrownProfile` carries its own `Loudness`. The move's half already uses the
+first against `Battle.Loudness`; the shot's half uses it against the weapon's.
+
+**The one thing to check before drawing.** Read what the battle does when it resolves a shot — how
+`FireAt` makes its noise heard — and make the preview ask the same question with the same numbers.
+The test in the brief is *taking the shot wakes exactly those it named*, and a preview computed by
+a parallel route passes that test until the day somebody tunes one route and not the other. If the
+two cannot be made the same call without a change to Core, that is an entry, not a workaround.
+
+**Build the names now; hold the glyphs lightly.** Names without figures on the shot line, the same
+rung discipline `BattleHud.NoiseLine` already uses for a move, needs no picture. What the amendment
+adds from the mod — which icon on which tile reads at a glance — is capture **C8** in
+`../interface/captures.md`, and that is XCOM 2, which is now installed. So draw the warning where
+the amendment says it belongs, on the thing under the cursor, and treat the glyph choice as
+provisional until C8 lands. Say so in the commit.
+
+**How to know it worked.** The brief's own: hovering a shot on the waystation names the sentries
+that would hear it, and taking the shot wakes exactly those. Plus a script step that captures the
+named list, per entry 049, so the equality can be checked headless rather than by eye.
+
+**Out of scope.** What a shot costs. The rules of earshot. Brief one's disclosure gesture, whose
+`Ctrl` and `Alt` stay unbound.
 
 **What the next View brief inherits from these two, so it is not re-argued.**
 
