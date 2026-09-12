@@ -5,9 +5,7 @@ already does, what the asymmetry of contract 3 changes, and what to build. One s
 question a player meets, in the order they meet it.
 
 Read [../map.md](../map.md) and [../subprojects/interface.md](../subprojects/interface.md) first.
-The queue of jobs that follow from this is [briefs.md](briefs.md). The evidence underneath this
-standard, one file per game and each verified against a source rather than remembered, is
-[reference/](reference/) — [reference/xcom2.md](reference/xcom2.md) is the first.
+The queue of jobs that follow from this is [briefs.md](briefs.md).
 
 ## What a standard is for
 

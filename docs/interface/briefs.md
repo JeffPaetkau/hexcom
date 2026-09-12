@@ -102,20 +102,6 @@ and the panel is short enough to read in one glance. A capture at `--fit` has no
 map that is not attached to something on it. And a player who has spent no points can say, from
 the soldier alone, how far they may move and still hold an aimed shot.
 
-**Amendment, from `../reference/xcom2.md` heading 3.** "Which is XCOM's hover," above, was written
-from memory and turns out to describe the wrong picture. A screenshot of the actual targeting
-screen ([source](https://cdn.wikimg.net/en/strategywiki/images/b/ba/XCOM_2_shot_menu_example.jpg))
-shows the breakdown as a **docked list at the bottom of the screen**, next to the ability name, not
-a tooltip that appears over the target on hover — five rows (`AIM`, `HEIGHT ADVANT`, `DEFENSE`,
-`SQUADSIGHT`, `LOW COVER` in the case captured), colour-coded by sign, shown beside a mirrored
-damage/crit column. Whether that list is the default state the instant a shot is aimed, or sits
-behind one click past a collapsed headline, could not be confirmed from a still image — small
-chevron glyphs in the capture hint at a paged or expandable panel, but no source found this session
-is itself a picture of the collapsed state. This does not change *what* the panel should show, which
-the brief already gets right, but it means "copy XCOM's hover" is not a settled reference to build
-the gesture from — settle the gesture on its own terms rather than assuming a hover is what is
-being copied.
-
 ---
 
 ## Two — the enemy's file, drawn

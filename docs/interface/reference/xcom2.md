@@ -11,6 +11,17 @@ Avenger, the geoscape, the Chosen's strategic hunt, character creation, or the m
 game plus War of the Chosen, treated as one game: WotC changes classes and adds the Chosen and the
 Resistance ring, but it did not touch the tactical HUD's shape.
 
+**What this game is the authority on, and what it is only an instance of.** For the camera, the
+ability bar, whole-side turn order and movement/shooting animation (headings 2, 6, 8), XCOM 2 is
+the genre's best-selling exemplar and its own most-installed mods are a direct record of what its
+players found missing — that is this file's strongest evidence. For the enemy (heading 5), it is
+merely one instance of a shelf that has nothing to offer this project regardless of which member
+is chosen: XCOM 2 draws a known enemy permanently and has no contact file at all, so its silence on
+heading 5 is the tactics canon's silence, not something particular to this title (see heading 5's
+own closing note). The reactions heading (7) sits between the two: XCOM 2 is authoritative on what
+the genre's overwatch convention *is*, and merely an instance of the "state, not interaction" idea
+that `conventions.md` names independently.
+
 **Evidence discipline.** Every non-obvious claim is tagged:
 
 | Tag | Means |
@@ -31,6 +42,54 @@ search-engine excerpts. Where a browser visit was not attempted or still failed,
 quoted, and it says so. Endorsement and download counts drift daily and are stamped with when they
 were read — everything with an exact-looking number in this file was read via browser on
 2026-09-10, not assumed current from an earlier search.
+
+**Sources, loaded directly in a browser** (full page content, not a search excerpt):
+
+- [Nexus Mods, Free Camera Rotation](https://www.nexusmods.com/xcom2/mods/1) — description, exact stats
+- [Steam Workshop, [WotC] Gotcha Again](https://steamcommunity.com/sharedfiles/filedetails/?id=1124288875) — full feature list, exact subscriber count
+- [Nexus Mods, True Concealment](https://www.nexusmods.com/xcom2/mods/57) — description, exact stats
+- [Nexus Mods, Perfect Information](https://www.nexusmods.com/xcom2/mods/252) — description, exact stats, and its own screenshot gallery (one image opened and read)
+- [Nexus Mods, Show Health Values](https://www.nexusmods.com/xcom2/mods/150) — description, exact stats
+- [Nexus Mods, Overwatch All Others](https://www.nexusmods.com/xcom2/mods/660) — description, exact stats, WotC-incompatibility note
+- [Nexus Mods, Evac All](https://www.nexusmods.com/xcom2/mods/99) — description, exact stats
+- [Nexus Mods, Stop Wasting My Time](https://www.nexusmods.com/xcom2/mods/217) — full changelog, exact stats
+- [StrategyWiki, XCOM 2/Aim Bonuses](https://strategywiki.org/wiki/XCOM_2/Aim_Bonuses) — full text, soldier aim-by-rank tables, and its embedded shot-menu screenshot, [opened directly at full resolution](https://cdn.wikimg.net/en/strategywiki/images/b/ba/XCOM_2_shot_menu_example.jpg) — the single most valuable source in this file, since it is the only one that shows the HUD rather than describing it
+- [Nexus Mods, XCOM 2 mod search](https://www.nexusmods.com/xcom2/search/?gsearch=Gotcha%20Again) — used to confirm Gotcha Again is not hosted on Nexus (zero results)
+
+**Search excerpts only** (the page itself was not loaded, or a browser visit was not attempted this
+session):
+
+- [PCGamesN, XCOM 2 tips and War of the Chosen guide](https://www.pcgamesn.com/xcom-2/tips-guide-war-of-the-chosen)
+- [GameRevolution, XCOM 2 keyboard shortcut commands](https://www.gamerevolution.com/guides/69930-xcom-2-keyboard-shortcut-commands)
+- [Steam Community discussion, Dodge vs. Hit vs. Crit](https://steamcommunity.com/app/268500/discussions/0/1471967615856106473/)
+- [UFOpaedia, Mechanics (LWOTC)](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))
+- [Diceplots, XCOM 2 weapon damage math](https://diceplots.com/games/xcom/)
+- [Pavonis Interactive forum, graze/hit/crit/dodge visualization](https://www.pavonisinteractive.com/phpBB3/viewtopic.php?t=23695)
+- [UFOpaedia, Movement (EU2012)](https://www.ufopaedia.org/index.php/Movement_(EU2012))
+- [Nexus Mods Wiki, XCOM Squadsight Aim Penalty Mod](https://wiki.nexusmods.com/index.php/XCOM_Squadsight_Aim_Penalty_Mod)
+
+A first pass tried an automated page-fetch tool against Nexus, Steam and StrategyWiki and got HTTP
+403 from all three, so an early draft leaned almost entirely on search excerpts and reported
+several mod counts as "not surfaced." A second pass used an actual browser instead, which none of
+those sites blocked, and reached every page above directly — correcting several counts upward
+(Free Camera Rotation, Evac All, Overwatch All/Others, Stop Wasting My Time), surfacing two that a
+search-only pass missed entirely (Gotcha Again's Steam Workshop count, Perfect Information's Nexus
+count), catching one compatibility fact a search-only pass would have missed (Overwatch
+All/Others is not WotC-compatible), and — the most consequential correction — replacing a
+remembered guess about the shot HUD ("a number on the target, breakdown behind a hover") with a
+real screenshot showing a docked breakdown list instead, which heading 3 covers in full and which
+the gap list and *What transfers* below both carry forward.
+
+Two things a browser still could not do. The Nexus "most endorsed, User Interface category"
+listing was not filtered and read before time ran out, so heading 10's tactical-HUD-replacement
+row stays explicitly unresolved (gap list, item 7). And a still image answers what a HUD *looks
+like* at one instant; it cannot answer what a hover does, what a click does, or what changes over
+a full mission — several gap-list items name a clip for exactly that reason.
+
+**Nothing found.** No heading came back empty for this game — the closest is heading 5, which is
+thin by design rather than blank: XCOM 2 has a convention for drawing an enemy once found, it is
+just one with nothing to say about the belief-tracking this project's own heading 5 is actually
+about. Every other heading has at least one **remembered** or **verified** observation.
 
 ---
 
@@ -108,7 +167,7 @@ is itself a picture of the collapsed state — so this file cannot rule either w
 than picking the version that matches what was expected. **This is worth flagging to a View
 session building against Brief One before it picks a gesture**, since Brief One's own text cites
 "XCOM's hover" as the model to copy, and this screenshot's evidence is a *docked list*, not a
-hover card on the target — see the amendment appended to Brief One in `../briefs.md`.
+hover card on the target — see *What transfers* and gap-list item 1, below.
 
 **verified** ([Steam Community discussion on hit/graze/dodge](https://steamcommunity.com/app/268500/discussions/0/1471967615856106473/); [UFOpaedia LWOTC mechanics](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))) — the line items beyond what one screenshot happened to
 show: base **Aim** (the weapon/soldier stat, and see the class-and-rank table on the same
@@ -328,49 +387,70 @@ this file did not surface a reason it should.
 
 ---
 
-## Sources
+## What transfers
 
-**Loaded directly in a browser** (full page content, not a search excerpt):
+- **Heading 3 corrects Brief One's own reference.** Brief one's text names "XCOM's hover" as the
+  gesture to copy; the screenshot in heading 3 shows a docked breakdown list, not a hover card, so
+  that phrase does not point at a settled gesture to build from.
+- **Heading 3's graze/crit die-roll interaction bears on `conventions.md`'s Readouts section.**
+  The genre's most-copied exemplar hides part of its own arithmetic even behind the hover it does
+  have, which weakens "one number, breakdown on demand" as a claim about full disclosure.
+- **Heading 4 sets the floor `conventions.md`'s panel-vs-map argument already assumes.** Cover and
+  move-range are the only tile-level facts this genre draws; a tile in this project necessarily
+  carries more, which is the boundary condition Brief One's tile figures start from.
+- **Heading 5 confirms there is nothing further to inherit for Brief Two.** The tactics canon has
+  no contact-file exemplar; this file's job was to check XCOM 2 specifically and it has nothing
+  beyond what `conventions.md` already attributes to the stealth shelf.
+- **Heading 8 and heading 9 together are the strongest evidence for Brief Three.** The base game's
+  right-click is idle where this project's fires, and its own most-endorsed camera mod exists only
+  because the stepped `Q`/`E` turn has no free gesture at all — both are named as reasons already
+  in Brief Three, and this file is where the mod counts behind them live.
+- **Heading 10's row-by-row pattern sorts into two of the six briefs and no others.** Every mod
+  with a clear count is either a missing preview before a commit (Gotcha Again, True Concealment —
+  Brief One's shape, and Brief Four's) or a missing shortcut for repetitive input (Overwatch
+  All/Others, Evac All, Stop Wasting My Time — outside this project's current queue). None asks for
+  a different turn order, cover system or hit-chance formula.
 
-- [Nexus Mods, Free Camera Rotation](https://www.nexusmods.com/xcom2/mods/1) — description, exact stats
-- [Steam Workshop, [WotC] Gotcha Again](https://steamcommunity.com/sharedfiles/filedetails/?id=1124288875) — full feature list, exact subscriber count
-- [Nexus Mods, True Concealment](https://www.nexusmods.com/xcom2/mods/57) — description, exact stats
-- [Nexus Mods, Perfect Information](https://www.nexusmods.com/xcom2/mods/252) — description, exact stats, and its own screenshot gallery (one image opened and read)
-- [Nexus Mods, Show Health Values](https://www.nexusmods.com/xcom2/mods/150) — description, exact stats
-- [Nexus Mods, Overwatch All Others](https://www.nexusmods.com/xcom2/mods/660) — description, exact stats, WotC-incompatibility note
-- [Nexus Mods, Evac All](https://www.nexusmods.com/xcom2/mods/99) — description, exact stats
-- [Nexus Mods, Stop Wasting My Time](https://www.nexusmods.com/xcom2/mods/217) — full changelog, exact stats
-- [StrategyWiki, XCOM 2/Aim Bonuses](https://strategywiki.org/wiki/XCOM_2/Aim_Bonuses) — full text, soldier aim-by-rank tables, and its embedded shot-menu screenshot, [opened directly at full resolution](https://cdn.wikimg.net/en/strategywiki/images/b/ba/XCOM_2_shot_menu_example.jpg) — the single most valuable source in this file, since it is the only one that shows the HUD rather than describing it
-- [Nexus Mods, XCOM 2 mod search](https://www.nexusmods.com/xcom2/search/?gsearch=Gotcha%20Again) — used to confirm Gotcha Again is not hosted on Nexus (zero results)
+## The gap list
 
-**Search excerpts only** (the page itself was not loaded, or a browser visit was not attempted this
-session):
-
-- [PCGamesN, XCOM 2 tips and War of the Chosen guide](https://www.pcgamesn.com/xcom-2/tips-guide-war-of-the-chosen)
-- [GameRevolution, XCOM 2 keyboard shortcut commands](https://www.gamerevolution.com/guides/69930-xcom-2-keyboard-shortcut-commands)
-- [Steam Community discussion, Dodge vs. Hit vs. Crit](https://steamcommunity.com/app/268500/discussions/0/1471967615856106473/)
-- [UFOpaedia, Mechanics (LWOTC)](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))
-- [Diceplots, XCOM 2 weapon damage math](https://diceplots.com/games/xcom/)
-- [Pavonis Interactive forum, graze/hit/crit/dodge visualization](https://www.pavonisinteractive.com/phpBB3/viewtopic.php?t=23695)
-- [UFOpaedia, Movement (EU2012)](https://www.ufopaedia.org/index.php/Movement_(EU2012))
-- [Nexus Mods Wiki, XCOM Squadsight Aim Penalty Mod](https://wiki.nexusmods.com/index.php/XCOM_Squadsight_Aim_Penalty_Mod)
-
-**What this changed from the first pass.** A first pass tried an automated page-fetch tool against
-Nexus, Steam and StrategyWiki and got HTTP 403 from all three, so the file's first version leaned
-almost entirely on search excerpts and reported several mod counts as "not surfaced." A second pass
-used an actual browser instead, which none of those sites blocked, and reached every page above
-directly — correcting several counts (Free Camera Rotation, Evac All, Overwatch All/Others, Stop
-Wasting My Time all drifted slightly upward; Gotcha Again's 272,071 Steam Workshop subscribers and
-Perfect Information's 1,314 Nexus endorsements were not surfaced at all on the first pass), catching
-one compatibility fact the first pass missed (Overwatch All/Others is not WotC-compatible), and —
-the most consequential correction — replacing a remembered guess about the shot HUD ("a number on
-the target, breakdown behind a hover") with a real screenshot showing a docked breakdown list
-instead, which heading 3 now covers in full and which is flagged to Brief One in
-[`../briefs.md`](../briefs.md).
-
-Two things the browser still could not do. The Nexus "most endorsed, User Interface category"
-listing was not filtered and read before time ran out, so heading 10's tactical-HUD-replacement row
-stays explicitly unresolved. And a still image answers what a HUD *looks like* at one instant; it
-cannot answer what a hover does, what a click does, or what changes over a full mission — the
-questions this file flags as open (heading 3's chevrons, the exact camera-cut timing in heading 7)
-need a controller, not a browser.
+1. **Heading 3 — is the shot breakdown shown by default, or behind a click past a collapsed
+   headline?** The screenshot shows the list open; small chevron glyphs beside "HIT" and the
+   ability name suggest it may be collapsible, and no source this session is itself a picture of
+   the collapsed state. **The picture:** a soldier just entered targeting mode on a visible
+   target, the instant after the ability is chosen and before any further click, full HUD in
+   frame. **Changes:** which gesture Brief One recovers for "headline and breakdown" — a genre
+   that defaults to showing the terms is a different reference than one that gates them.
+2. **Heading 3 — is the Squadsight penalty a fixed number or does it scale with range?** The
+   captured example shows −8% once, and no second capture exists to compare against.
+   **The picture:** two shots at visibly different ranges through a squadmate's sight rather than
+   the shooter's own, same breakdown panel in frame both times. **Changes:** whether this project's
+   own long-sight penalty, if it ever draws one, should be flagged as a fixed cost or a graded one
+   when this file is cited for it.
+3. **Heading 1 — does the screen furniture reflow for a larger squad?** Claimed from memory that a
+   four- and an eight-soldier strip look the same, scrolled if needed, with no source found for the
+   scrolled case specifically. **The picture:** the squad portrait strip at minimum and at maximum
+   squad size, same resolution, ideally the same mission type. **Changes:** whether Brief One's own
+   soldier strip needs an overflow affordance built in from the start or can add one later.
+4. **Heading 5 — what, if anything, marks the instant a pod activates?** A stylised alert glyph is
+   widely described and never named consistently. **This needs a clip, not a still** — the moment
+   is a transition (the scamper, the camera cut) rather than a state. **The clip:** from the last
+   frame of player control to the first frame back, across one pod activation. **Changes:** whether
+   Brief Two's "ladder shows transitions only" needs a distinct one-shot sting for a *newly
+   created* contact, separate from an existing rung advancing.
+5. **Heading 4 — which edge of a tile does the cover icon mark at a corner?** Described from memory
+   as oriented to the covered edge, not confirmed at a tile with cover on two sides. **The
+   picture:** a soldier hovering a destination tile at an L-shaped piece of cover, both edges in
+   frame. **Changes:** nothing structural; it would only sharpen heading 4's completeness, since
+   this project's own cover drawing is not being copied wholesale (see heading 2's note on the same
+   point).
+6. **Heading 7 — exact camera-cut and resolution timing for a triggered reaction.** Called
+   "unskippable" by every source touched, with no source giving seconds. **This needs a clip**:
+   from the frame a hostile's move enters the overwatch arc to the frame control returns, one
+   trigger. **Changes:** nothing this project's own reaction window does, since it is a scored
+   pause rather than an automatic cutscene, but it would turn the "widely complained about" claim
+   heading 10 leans on from remembered into verified.
+7. **Heading 10 — which tactical-HUD-replacement mod is currently most subscribed.** This is the
+   one row a still or a clip cannot settle at all: it needs a Nexus category listing sorted by
+   endorsements and read in full, which a first browser pass did not reach before time ran out.
+   **Changes:** whether the panel-vs-map finding this whole reference exists to inform has a single
+   named exemplar behind it, or stays an inference from the shipped HUD alone.
