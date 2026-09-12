@@ -3680,3 +3680,53 @@ memory has changed a decision.
 survives for its other reason — *read interface.md and do job N* has never been executed, and ten
 sessions sharing one undetected defect is ten files to redo. Run one, read the file, read the
 meter. The first reading calibrates the other nine and the first file proves the prompt.
+
+## 076 — Ten reference files, merged: the documentary pass cost about a point, and it found errors in the standard it was written under
+**2026-09-11** · **Raised by** master · **For** interface, view · **Status** resolved
+
+All ten jobs from 073 ran in parallel and are merged. About 3,700 lines across ten files, 89 gap
+questions, 53 lines of *what transfers*. **Nine of the ten wrote only their own file**, which is
+the parallel rule from 072 holding under its first real test; the tenth also carried the
+restructured brief forward, which was its own earlier job catching up rather than a breach.
+
+**It cost about 1% of the week** — the user's figure, roughly 11% of a five-hour window for all
+ten. Set against the 2.4%-per-increment average in 069 that is an order of magnitude out, and in
+the direction 075 predicted: short Sonnet sessions and long Fable ones are not the same unit and
+should never have been averaged together. **The method change in 075 is now evidenced rather than
+argued** — measure a job, do not estimate a round.
+
+**The pass found errors in the document it was written under, which is the strongest possible
+result for it.** Two are worth naming here because they were expensive and are now cheap.
+`conventions.md` describes the Shadow Tactics line as drawing a meter over a guard's head that
+fills as you are noticed; the reference file found the fill is on the **cone** itself, with no
+separate gauge. And brief one — the first thing View is due to build — names *XCOM's hover* as
+the gesture to copy for showing a shot's terms, where the XCOM 2 file found a docked breakdown
+list rather than a hover card. A brief whose central reference does not exist is exactly the
+failure the evidence layer was built to catch, and it was caught before anybody drew anything.
+
+**The finding that changes the most, and it is an absence.** Nothing in the set draws a held,
+not-yet-fired action on the map. Traps are invisible until sprung across the whole stealth shelf;
+no tactics game in the set draws a reserve either. So brief two and the reserve section are
+proposing something with **no shipped analogue anywhere in ten games**, which raises the stakes
+on getting the drawing right rather than lowering them. Related and pointing the same way: two
+unrelated lineages — Invisible, Inc.'s investigating/alerted pair and Shadow Tactics' `?`/`!`
+badges — converged on a *noticed* state short of *seen*, which under entry 058 is about as strong
+as evidence for **convention** gets. And three of the ten have no initiative strip at all with a
+fourth showing turn order only on request, against a conventions section written as though a
+strip were the genre standard.
+
+**The synthesis runs before pass two, not after, and that is a change from 073.** The ten gap
+lists are 89 questions ranked within their own file and not against each other. Only a session
+holding all ten can say which of them would actually change a recommendation, so **producing one
+ranked capture list is the synthesis's fourth deliverable** and the reason for the reorder. The
+user then captures once, against questions that matter, instead of choosing among eighty-nine.
+
+**What this costs, stated plainly: the synthesis will recommend from evidence with no `observed`
+tag in it.** The mitigation is in the brief — every recommendation carries its evidence grade,
+and one resting on a `remembered` claim is marked provisional and names the capture-list entry
+that would settle it. That is the moment the four tags either pay for themselves or turn out to
+have been bookkeeping.
+
+**The log debt from 073 is now assigned.** The ten jobs were barred from `decisions.md` to avoid
+ten simultaneous appends; the synthesis session is the named payer and sweeps the ten files for
+findings addressed elsewhere, filing them in one commit.

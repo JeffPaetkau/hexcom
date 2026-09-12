@@ -36,95 +36,88 @@ decisions to settle first, what is out of scope, and how to know it worked.
 
 ---
 
-## The reference set — ten games, two passes, and one fixed shape
+## The reference set — what it is and the rules that built it
 
 `conventions.md` is the recommendation layer. Underneath it sits one file per game in
 `docs/interface/reference/`, at the grain a View brief needs: where the figure sits, what gesture
-shows its terms, what a hover does, what cancel undoes.
+shows its terms, what a hover does, what cancel undoes. Ten files, about 3,700 lines, built in
+one parallel round.
 
-**There are two passes and you are in the first one.**
+**Two passes, and only the first has run.**
 
 | | |
 |---|---|
-| **Pass one — documentary** | Published material only. No screenshots exist yet. Every file ends with a numbered list of **what a picture would settle**, and that list is the pass's second deliverable, not an apology for the first. |
-| **Pass two — observed** | The user captures against those lists, drops them in the inbox, and the gaps are filled in place. Only then does a file carry the **observed** tag at all. |
+| **Pass one — documentary** | Published material only. **No file carries a single `observed` tag**, which is correct rather than a shortfall. Each ends with a numbered list of what a picture would settle, and those 89 questions are the pass's second deliverable. |
+| **Pass two — observed** | The user captures against a *ranked* list, drops the results in the inbox, and the gaps are filled in place. The ranking is the synthesis's job, because a question's importance is only visible once all ten files are read together. |
 
-**Pass one has no `observed` tags in it and that is correct, not a shortfall.** What it is buying
-is the question list. A survey written from published material knows the shape of each game and
-is unreliable on exactly the details that matter here — where a thing sits, how big it is, what
-is beside it — so its job is to find out precisely which details those are, per heading, and name
-the picture that would settle each. That is cheaper to do from prose than from photographs, and
-it means the capture session is aimed rather than speculative.
+### The ten files, and what each was brought in to answer
 
-**The trap, and the one rule that avoids it.** A documentary pass does not know what it does not
-know: it will write a confident sentence about a HUD element and never think to flag it. So the
-gap list is **not** a record of where the session happened to feel unsure. Every one of the ten
-headings ends with its own *what a picture would settle* line, asked and answered deliberately,
-even when the heading reads as complete. A heading with nothing to ask is a claim that the game's
-published material fully determines it, and that claim is worth making explicitly.
+| # | File | Why it is in the set |
+|---|---|---|
+| 1 | `xcom2.md` | the grammar every player arrives already knowing, plus a download-counted record of what it failed to tell them |
+| 2 | `invisible-inc.md` | the closest relative in existence — cones, a *noticed* state short of seen, an alarm ladder whose rungs are hidden on purpose |
+| 3 | `warhounds.md` | the only shipped game found with a reserve like ours, and a 2026 free camera |
+| 4 | `phantom-brigade.md` | the only shipped interface that draws what is about to happen as a first-class object on a scrubbable timeline |
+| 5 | `future-war-tactics.md` | colour-coded zones for movement and attack, and a recent small-team answer to the whole HUD |
+| 6 | `mutant-year-zero.md` | detection radii drawn only in the mode that needs them, and shrunk by an action the player takes |
+| 7 | `shadow-tactics.md` | the best cone drawing shipped, and a pause-plan-execute mode. Covers Desperados III too |
+| 8 | `phoenix-point.md` | per-body-part targeting, the nearest exemplar anywhere for contract 6's six faces, and a dispersion reticle instead of a percentage |
+| 9 | `into-the-breach.md` | perfect information and enemy intent, with contract 3's asymmetry switched off |
+| 10 | `tactical-breach-wizards.md` | the newest game in the set: no hit chance at all, binary cover, and rewind as confirmation |
 
-### The ten jobs
+**Jobs 1 to 5 can have their gaps filled from play; 6 to 10 probably cannot**, so a question
+about those is phrased as *what would settle this* rather than *please capture this*. An
+unanswerable question still earns its place: it says how much weight a heading can bear.
 
-**You were given a number. It is here.** Each job is one game, one file, one branch, one
-worktree, and they are written to run all at once. The prompt *read this file and do job N* is
-meant to be sufficient; if it is not, that is a defect in this file and worth an entry.
+**Tier C, cited but not filed:** Jagged Alliance 3, Baldur's Gate 3, Xenonauts 2, Door Kickers 2,
+Battle Brothers, Classified: France '44, Commandos: Origins. A file of their own only when a
+brief names the question it wants answered.
 
-| # | Game | Branch | Why it is in the set |
-|---|---|---|---|
-| 1 | **XCOM 2**, with War of the Chosen and its in-mission mods | `interface/reference-xcom2` | the grammar every player arrives already knowing, plus a download-counted record of what it failed to tell them |
-| 2 | **Invisible, Inc.** | `interface/reference-invisible-inc` | the closest relative in existence — cones with peripheral tiles distinguished, a *noticed* state short of seen, and an alarm ladder whose rungs are hidden on purpose |
-| 3 | **Warhounds** | `interface/reference-warhounds` | the only shipped game found with a reserve like ours, and cone placement entered directly rather than through a nested menu |
-| 4 | **Phantom Brigade** | `interface/reference-phantom-brigade` | the only shipped interface that draws *what is about to happen* as a first-class object, on a timeline the player scrubs |
-| 5 | **Future War Tactics** | `interface/reference-future-war-tactics` | colour-coded zones for movement and attack, and a recent small-team answer to the whole HUD at once |
-| 6 | **Mutant Year Zero** | `interface/reference-mutant-year-zero` | detection radii drawn only in the mode that needs them, and shrunk by an action the player takes |
-| 7 | **Shadow Tactics and Desperados III** | `interface/reference-shadow-tactics` | the best cone drawing shipped, and a planning mode that is a UI answer to a timing problem. One file for the line, not one each |
-| 8 | **Phoenix Point** | `interface/reference-phoenix-point` | per-body-part targeting, the nearest exemplar anywhere for contract 6's six faces, plus a ballistic preview |
-| 9 | **Into the Breach** | `interface/reference-into-the-breach` | perfect information and enemy intent — the answer the onboarding brief has to argue with rather than around |
-| 10 | **Tactical Breach Wizards** | `interface/reference-tactical-breach-wizards` | the most recent word on making a tactical turn legible: undo, and consequence shown before commitment |
+### The template, which is fixed and is nobody's to invent
 
-**Jobs 1 to 5 can have their gaps filled; jobs 6 to 10 probably cannot.** The user owns the first
-five and can photograph them. For the rest, pass two is published video at best, so a gap list
-there should say *what would settle this* rather than *please capture this* — and a question that
-can never be answered is still worth writing down, because it tells the synthesis how much weight
-that heading can bear.
+Ten headings, in this order, in every file, carried **even where the answer is *this game has no
+such thing*** — an empty heading is a finding about the game, and several of the most valuable
+rows in the set turned out to be the empty ones. Under each: the observations with their tags,
+then that heading's *what a picture would settle* line.
 
-**What to expect before you look, per game.** Job 1's mods are the better half of it: a
-decade-long, download-counted record of what the genre's best-selling interface failed to tell
-its players, and the subscriber count is an ordinal reading of how badly each gap was missed. In-
-mission only, so skip the Avenger, the geoscape and character creation. Job 1's heading 5 will be
-thin, because the game draws a unit the moment it is seen and has no contact file at all — that
-is the finding, not a hole. Job 2 is the opposite and is the file brief two will be built from.
-**Job 3 will be the thinnest in the set and its gap list the longest**: Warhounds is new enough
-that published material barely covers its HUD, and an honest short file with twenty good
-questions is exactly the right outcome there. Job 4 will not fit heading 6's shape and should say
-so rather than forcing it; its planning model is not ours and what transfers is how prediction is
-*drawn*. Job 5 is thin by `conventions.md`'s own account, and padding it is the wrong instinct.
-Job 7 is real-time, so its input conventions do not transfer and its drawing does.
+1. **Screen furniture** — every persistent element of the tactical HUD: where it sits, what it
+   shows, when it appears and when it goes away.
+2. **The soldier** — how actions are shown and spent, the ability bar, the hotkeys, what a hover
+   over an ability reveals, what cancel does and how far back it goes.
+3. **The target** — the shot readout line by line: every term in the breakdown, whether the terms
+   are shown by default or behind a gesture, how targets are switched and in what order.
+4. **The tile** — movement range and its bands, the path preview, cover indicators, any
+   concealment or detection ring, and which are drawn on hover versus after a commitment.
+5. **The enemy** — how a suspected, remembered or unseen enemy is drawn if at all; the alert
+   states and their icons; the moment the game admits a contact.
+6. **Turn order and time** — whether there is a strip, what an interruption looks like, and what
+   the player is shown while it is not their go.
+7. **Reactions** — how a held action is declared, whether its arc or zone is drawn, and what the
+   trigger looks like at the moment it fires.
+8. **Camera and input** — default binds, drag gestures, rotation steps and their speed, the
+   storey or level control, cycle-target keys.
+9. **Confirmation and refusal** — what takes a second click, what warns, what the game lets a
+   player do irreversibly in silence, and what it will not let them do at all.
+10. **What the game hides, and what its players added** — mods, community fixes, options buried
+    in a menu.
 
-**Tier C, for citation only and not a job:** Jagged Alliance 3 (interrupts, tooltips, free
-camera), Baldur's Gate 3 (reaction prompts, and the most polished readout set shipped at any
-budget), Xenonauts 2 (time units, a second model of what a soldier spends), Door Kickers 2 (a
-planning phase and cones in real time), Battle Brothers (the initiative strip), Classified:
-France '44 and Commandos: Origins (recent stealth). A file of their own only if a later brief
-names the question it wants answered.
+**Each file opens with** a paragraph on what this game is the authority on and what it is only an
+instance of; the tag key; the sources; and a *nothing found* list. **Each file closes with** *What
+transfers* — naming the brief or conventions section each line bears on, without writing the
+recommendation itself — and *The gap list*.
 
 ### The four tags
 
-Every non-obvious claim carries one. In pass one only three of them are available:
-
 | | |
 |---|---|
-| **observed** | read off a named shot in `shots/`. Pass two only. The strongest, and what the exercise is ultimately for. |
+| **observed** | read off a named shot in `shots/`. Pass two only. The strongest. |
 | **verified** | a published source, with the link. The best pass one can do, and most of a good file. |
-| **remembered** | model knowledge, unchecked. Legitimate, never load-bearing alone, and every one of these is a candidate for the gap list. |
+| **remembered** | model knowledge, unchecked. Never load-bearing alone, and every one is a candidate for the gap list. |
 | **inferred** | from something else in the file, which it names. |
 
-*No source found* is a legitimate entry and an honest one. A file a View session cannot audit is
-worse than no file, because it will be built from regardless.
+*No source found* is a legitimate entry and an honest one.
 
 ### The inbox and the shots, for pass two
-
-The mechanism is set up already so that pass two is a fill rather than a redesign.
 
 **The inbox is `reference-inbox/<game>/` at the repository root**, gitignored, read by absolute
 path — `E:/hexcom/reference-inbox/<game>/...` — which works from inside a worktree, so it is
@@ -147,128 +140,121 @@ installed; its directory is not on the `PATH` of an already-running shell, so ca
 "$LOCALAPPDATA/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.1-full_build/bin/ffmpeg.exe" -ss 4.5 -i clip.mp4 -frames:v 1 moment.png
 ```
 
-A frame costs about what a paragraph of reading costs, so pull the named moment and its
-neighbours rather than sampling a clip at a fixed rate.
+A frame costs about what a paragraph costs, so pull the named moment and its neighbours rather
+than sampling at a fixed rate.
 
 ---
 
-## The job — one game, documented in detail, and the questions a picture would settle
+## The job — the synthesis: what ten games agree on, and what View builds next
 
-Branch as the table above gives it. **Take a worktree; the rule has no exception for prose.**
+Branch `interface/synthesis`. Take a worktree. A clean session, and **not a transcription job** —
+the model note in `master.md` applies to this one and not to the ten that fed it.
 
-**What it is.** `conventions.md` answers nine questions at the altitude of *what the genre does*.
-View builds six briefs against that standard, and a brief is a sufficient prompt only if it can
-say where the figure sits, what gesture reveals its terms, what a hover does and what cancel
-undoes. This job builds the evidence layer underneath, for one game, and names what it could not
-settle without a picture.
+**What it is.** Every reference file was forbidden to recommend anything, so that its evidence
+stayed separable from its conclusions. This is the session that draws the conclusions, with all
+ten open at once. It is the only session that can: a convention is a thing a player arrives
+already knowing, so the unit of evidence is *the set agreeing*, and no single file can see that.
 
-**Where the output goes.** `docs/interface/reference/<game>.md`. **Nothing else.** Not
-`conventions.md`, not `briefs.md`, not another game's file, and in this pass not
-`../decisions.md` either — see the rules at the foot.
+**Read the ten files and `conventions.md`.** You do not need to re-read the games.
 
-### The template, which is fixed so that nobody has to invent it
+### The four deliverables
 
-Ten headings, in this order, in every file, carried **even where the answer is *this game has no
-such thing*** — an empty heading is a finding about the game, and some of the most valuable rows
-in the set will be the empty ones. Under each: the observations, each with its tag, and then that
-heading's *what a picture would settle* line.
+**1. Fold each file's *What transfers* into `conventions.md`.** That doc is where a recommendation
+is allowed to live, and it has nine sections. Each of the 53 transfer lines names the section or
+brief it bears on, so the routing is done; what is not done is the weighing. Update a section's
+recommendation where the evidence moved it, and say in one clause what moved it.
 
-1. **Screen furniture** — every persistent element of the tactical HUD: where on the screen it
-   sits, what it shows, when it appears and when it goes away.
-2. **The soldier** — how actions are shown and spent, the ability bar, the hotkeys, what a hover
-   over an ability reveals, what cancel does and how far back it goes.
-3. **The target** — the shot readout line by line: every term in the breakdown, whether the terms
-   are shown by default or behind a gesture, how targets are switched and in what order.
-4. **The tile** — movement range and its bands, the path preview, cover indicators, any
-   concealment or detection ring, and which of those are drawn on hover versus after a commitment.
-5. **The enemy** — how a suspected, remembered or unseen enemy is drawn if at all; the alert
-   states and their icons; the moment the game admits a contact.
-6. **Turn order and time** — whether there is a strip, what an interruption looks like, and what
-   the player is shown while it is not their go.
-7. **Reactions** — how a held action is declared, whether its arc or zone is drawn, and what the
-   trigger looks like at the moment it fires.
-8. **Camera and input** — default binds, drag gestures, rotation steps and their speed, the
-   storey or level control, cycle-target keys.
-9. **Confirmation and refusal** — what takes a second click, what warns, what the game lets a
-   player do irreversibly in silence, and what it simply will not let them do.
-10. **What the game hides, and what its players added** — mods, community fixes, options buried
-    in a menu. The heading the other nine exist to reach.
+**2. Rule on each of the ten headings: unanimous, split, or empty across the set.** This is the
+heart of the job and the reason entry 058's rule needs it. Ten games agreeing is the evidence for
+**convention**; ten games differing is the evidence that this game must choose and argue its
+case; and a heading the whole set leaves empty is the strongest possible finding — it means this
+project is building something with no shipped analogue, and the stakes of getting it right are
+higher than anyone assumed. Put this in `conventions.md` as a new section near the top, because
+it is the thing a future session will want first.
 
-**Each file opens with the same four things**: one paragraph on what this game is the authority
-on and what it is only an instance of; the tag key; the sources, listed; and a *nothing found*
-list, which is the headings that came back empty and why.
+**3. Amend the queued briefs in `briefs.md`.** Appended, naming the brief, never rewriting it —
+same reasoning that keeps the log append-only. Some of these are corrections rather than
+refinements and they are the most valuable output of the whole exercise.
 
-**Each file closes with two sections and no third.**
+**4. Produce *the* capture list**, replacing 89 per-game questions with one ranked cross-file
+list. Rank by **what a picture would change**, not by heading and not by game. A question whose
+answer would flip a recommendation outranks one that would merely confirm it, and a question
+about a game the user owns outranks an equally important one about a game nobody can photograph.
+This goes at the foot of `conventions.md` or in a file of its own; it is what the user works from
+in a single sitting, and it is the reason the synthesis runs *before* pass two rather than after.
 
-- ***What transfers*** — three to six lines, each naming the brief in `briefs.md` or the section
-  of `conventions.md` it bears on. Do **not** write the recommendation itself. This file is
-  evidence; the recommendation is the synthesis pass, which will have all ten files in front of
-  it. A file that argues is a file whose evidence can no longer be separated from its conclusions.
-- ***The gap list*** — numbered, and the second deliverable of this pass. Each entry: which
-  heading, what is unsettled, **the exact picture or clip that would settle it** named by what
-  must be visible in the frame (*a soldier selected with the ability bar and a target under the
-  cursor*, not *a combat screen*), and what the answer would change. Order it by what it would
-  change, not by heading. Say when a still cannot do it — a hover state without the cursor and
-  tooltip in frame, a transition, a timing, anything audible — and then name the moment in a clip.
+### Five things already visible, so the session does not have to rediscover them
 
-### Running ten at once, and the rules that make it safe
+These came out of a skim of the transfer sections. They are starting points, not conclusions, and
+each needs checking against the file it came from.
 
-1. **Write your own one path and nothing else.** `docs/interface/reference/<game>.md`. Ten
-   sessions appending to one shared queue is ten conflicts in the files that can least afford
-   ambiguity, and your *what transfers* and gap-list sections carry everything you would have
-   wanted to put there.
-2. **Not `../decisions.md` either, in this pass, and that is a deliberate exception to rule 3 of
-   the map.** The rule exists so a finding about somebody else's territory gets written down
-   instead of acted on, and that intent is preserved: put it in *What transfers*, clearly marked
-   as a proposal for the territory it concerns. One later session appends the entries. Ten
-   parallel appends to an append-only log is the one collision the scheme has no cheap answer to.
-3. **Read your own game only.** Do not read another job's file, and do not wait on one.
-4. **Nothing here is a status board.** Do not write what is in flight, and do not name a branch
-   that is not merged.
+- **A factual error in `conventions.md`.** Its stealth-shelf table says Shadow Tactics and
+  Desperados III draw "a meter over the head that fills as you are noticed". The reference file
+  found the fill is on the **cone**, not a separate gauge. Fix the wording, and check whether the
+  original claim was another game's detection ring conflated in.
+- **Brief one names a gesture that does not exist.** It cites "XCOM's hover" as the model for
+  *show me the terms*. The XCOM 2 file found a docked breakdown list, not a hover card. Brief one
+  is the first thing View builds and its central reference is wrong.
+- **Nothing in the set draws a held, not-yet-fired action on the map.** Traps are invisible until
+  sprung across the whole stealth shelf, and no tactics game in the set draws a reserve either.
+  Brief two and the reserve section are proposing something with **no shipped analogue anywhere**.
+  That raises the stakes on the drawing rather than lowering them, and it deserves saying loudly.
+- **Two unrelated lineages reached the same two-state answer.** Invisible, Inc.'s
+  investigating/alerted pair and Shadow Tactics' `?`/`!` badges converge on *noticed* short of
+  *seen*. Under entry 058 that convergence is about as strong as evidence for **convention** gets.
+- **Three of the ten have no initiative strip at all**, and a fourth shows turn order only on
+  request. The conventions section on turn order was written as though a strip is the genre
+  standard; faction-phase-with-free-order is at least as live.
 
-**Out of scope.** Building anything. The strategy layer's interface. Rewriting `conventions.md`.
-Recommending what this game should do.
+### Settle before writing much
 
-**How to know it worked.** Two tests, and the second is the one this pass is really for. A View
-session can answer from your file alone: where this game puts the figure it is about to move,
-what is written on it, what gesture shows the arithmetic behind it, and what its players added
-because that was not enough. And the user can sit down with your gap list, play the game once
-with a capture key, and come back with every picture the file needs — without having to work out
-what to photograph.
+- **Every recommendation carries its evidence grade.** The set has no `observed` tags in it.
+  A recommendation resting on a `remembered` claim is **provisional**, says so, and names the
+  capture-list entry that would settle it. This is the whole reason the tags exist and the point
+  at which they either pay for themselves or do not.
+- **Do not re-argue what entry 058 settled.** Convention is the default; a departure argues its
+  case. Where the set is unanimous and this game wants to differ, the burden is on this game.
+- **The transfer lines are other sessions' readings, not ground truth.** Where one says something
+  surprising, open the file and check the heading it came from before building on it.
 
----
+### What to do with the debt the ten files are carrying
 
-## Next in this territory — the synthesis, which is what the ten files are for
+`../decisions.md` was closed to the ten parallel jobs, because ten simultaneous appends to an
+append-only log is the one collision the scheme has no cheap answer for. **This session is the
+named payer.** Sweep the ten files for findings addressed to another territory, and file them as
+entries — one commit, correctly numbered. There is at least one, in `phoenix-point.md`.
 
-**A sketch, not a brief.** It is written properly once the ten files and their filled gaps exist,
-because a brief for reading ten documents that do not exist yet would be guessing at their shape.
-What is fixed now is that the job is **required**, and why: every reference file is forbidden to
-recommend anything so that its evidence stays separable from its conclusions, which means
-somebody has to draw the conclusions with all ten open at once. Branch `interface/synthesis`, a
-clean session, and not a transcription job — the model note in `master.md` applies to this one
-and not to the ten that feed it.
+**Out of scope.** Building anything. Editing a reference file's evidence, which is immutable the
+way the log is; a correction goes in the synthesis, naming the file and the heading. The strategy
+layer's interface. Onboarding, which is queued below and is a separate job deliberately.
 
-The shape it will have. It folds each file's *what transfers* footer into the nine sections of
-`conventions.md`, which is where a recommendation is allowed to live. It appends amendments to
-the queued briefs in `briefs.md` where an observation changes one — appended and naming the
-brief, never rewriting it. It appends to `../decisions.md` the findings the ten files were told
-to hold rather than file, which is the whole of that debt paid by one session in one commit. And
-it says, once, **which of the ten headings the set was unanimous on and which it split on**: a
-convention is a thing a player arrives already knowing, so ten games agreeing is the evidence for
-*convention* under entry 058, and ten games differing is the evidence that this game must choose
-and argue its case.
-
-Expect heading 5 to be the interesting one, and expect it to split hard. Most of the set draws
-the enemy the moment it is seen and has nothing to say about a remembered contact; two of the ten
-have almost all of it.
+**How to know it worked.** Three tests. A View session can be pointed at any brief in `briefs.md`
+and find its amendments beside it. The user can sit down with the capture list, play for an hour,
+and fill the gaps that matter without choosing between 89 questions. And somebody reading
+`conventions.md` can see, for each of the ten headings, whether this game is following the genre
+or leaving it — and on what evidence.
 
 ---
 
-## Then — the first five minutes, and what has to be taught
+## Then — pass two, the captures
 
-Queued behind the reference jobs and the synthesis, and deliberately: onboarding decides what a
-player must be told before turn one, and half of that answer is what the genre's interface
-already teaches without telling anybody. Branch `interface/onboarding` when it comes up.
+Not yet a brief, and deliberately: it is written against the synthesis's ranked capture list,
+which does not exist yet. What is fixed is the mechanism, which is set up already and is in *The
+inbox and the shots* above. The work is a fill rather than a redesign: the same ten files, the
+same ten headings, `remembered` and `inferred` claims upgraded to **observed** where a shot
+settles them, and the gap entries struck as they are answered. One game per session, and only the
+five the user owns can be done from play.
+
+---
+## After that — the first five minutes, and what has to be taught
+
+Last of the queue, and deliberately: onboarding decides what a player must be told before turn
+one, and half of that answer is what the genre's interface already teaches without telling
+anybody — which is exactly what the synthesis is about to write down. Branch
+`interface/onboarding` when it comes up. The ten reference files give it something the earlier
+version of this brief did not have: Into the Breach's total disclosure is now documented in
+detail rather than cited, and it is the argument this job has to answer rather than route
+around.
 
 **What it is.** The conventions are written and the queue is written (entry 060), and both assume
 a player who already knows what a hit chance and an action point are. Neither says how anybody
