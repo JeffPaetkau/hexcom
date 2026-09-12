@@ -35,27 +35,66 @@ reaching into `src/`.
 
 ---
 
-## The job — the queue, once Master promotes one of it
+## The job — brief three, the gesture set: right-click stops firing
 
-**`--aside` and brief Zero's review list are both done** — `../decisions.md` entry 079 says what
-each cost and what the first of them found. Entry 063 is closed with it. Nothing in this section
-is startable without Master, and that is the state rather than an omission.
+**Promoted by Master out of order, and on purpose.** `../interface/briefs.md` puts brief one
+first, and brief one is still first in value. But its central gesture is marked **provisional**
+against the capture list in `../interface/captures.md`, and those pictures do not exist yet. Brief
+three is the one brief in the queue that no capture bears on and nothing else blocks, and it has
+to land before brief six anyway because it settles the number-key collision six inherits. Take
+brief one when the captures are in.
 
-**1. The queue, in the order `../interface/briefs.md` sets.** Six briefs, and **none of them is
-this territory's job until Master promotes it into this section** — one file is never two
-territories' brief. Two of them bear directly on what entry 066's six changed and a session
-touching either area should read them first: brief Three rebinds right-click away from firing,
-which retires the click-versus-drag disambiguation the gesture set is currently built on; and
-brief Six gives the reaction window a default and settles whose reactors a player is offered,
-which the six made sharper by opening with windows handed out. Entry 012's second item — the shot
-line saying who a shot would wake — is brief Four and is half a day whenever it fits.
+Branch `view/gestures`. Take a worktree.
 
-**2. The measurement a session cannot take.** A person plays `build/Hexcom.exe` to a verdict and
+**Read brief three and its amendment, and nothing else from that file.** Both are in
+`../interface/briefs.md` — the brief under *Three — the gesture set* and the correction under
+*Amending Three*. The amendment is not optional reading; it changes the case for one of the
+brief's own instructions.
+
+**Why this one is worth doing before the next play-through, not merely available.** Right-click
+fires. The most irreversible action in the game sits on the button every player of the genre
+presses to back out of something, and the synthesis found that **ten games out of ten** cancel a
+mode, a prompt or an aim preview with it and never a spent point. That is as close to unanimous as
+anything in the reference set. The user is about to play a build; a play-through where right-click
+kills a hostile is a play-through that measures this binding instead of the game.
+
+**What the amendment changes, in one line each.**
+
+- **`Tab` cycles targets in one game of ten, not the genre.** Build the cycle key anyway, for this
+  game's reason: a hostile here can be a see-through body at a marker, which is harder to point at
+  than a lit silhouette. Say that in the commit rather than calling it a convention.
+- **Reserve a held modifier for *show me the terms*, and do not bind anything to it.** Brief one
+  will decide that gesture once the captures land, and the synthesis says it has to be held rather
+  than tapped. `Ctrl` and `Alt` are what the set uses and both are free here. This job's only
+  obligation is not to spend them.
+
+**Settle first, both from the brief.** What confirmation the genre asks for — one click commits a
+move, no undo, the confirm lives on the shot — and **do not add a move confirmation to soften the
+fog**; entry 077's law is the reason, and it now has ten games behind it. And where the `1`–`9`
+keys go, given the reaction window already uses them.
+
+**The seam is small and already cut.** Entry 049 put every action behind a named method on
+`HexSandbox`, so this job rebinds callers and adds a firing mode; it does not touch what an action
+does. Every new interaction gets a script step or a stated reason it cannot, per entry 049.
+
+**How to know it worked.** The brief's own test, which is the right one: a player who has played
+XCOM selects a soldier, moves, takes a shot and backs out of a half-entered order without being
+told a key, and **right-click over a hostile does not kill it**. Plus one of this project's own —
+every existing `--place`, `--resolve` and capture script still runs unchanged.
+
+**Out of scope.** Brief one's disclosure gesture beyond reserving its key. The reaction window's
+default, which is brief six and follows this. Any rule.
+
+---
+
+**Standing, behind the brief.**
+
+**The measurement a session cannot take.** A person plays `build/Hexcom.exe` to a verdict and
 says what read wrong. That is the second play-through and it is the same measurement as last time.
 The walking pace was the other one and it has been taken: **ten metres a second, watched rather
 than argued** — entry 080, and it is the first interface figure in the project settled that way.
 
-**3. One thing the build is owed and nobody has scheduled.** `--edge-pan`, `--pace` and `--still`
+**One thing the build is owed and nobody has scheduled.** `--edge-pan`, `--pace` and `--still`
 are three player preferences that live on a command line, and a player who double-clicks
 `build/Hexcom.exe` cannot reach any of them. That is the case for an options screen, stated here
 so it is not rediscovered; it is not urgent and it is not a brief yet.
