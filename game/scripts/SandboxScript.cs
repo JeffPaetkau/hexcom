@@ -62,6 +62,12 @@ public sealed class SandboxScript
     /// taken. It is here for the person who wants the camera and the walk to stop moving and is
     /// not taking one, and it is a setting because it is a property of the whole run.
     /// </para>
+    /// <para>
+    /// The last three are all *which run is this*. <c>--aside</c> says the windows belong on the
+    /// monitor nobody is working on, which nobody at the keyboard could have decided;
+    /// <c>--edge-pan</c> and <c>--pace</c> are preferences that will live in an options screen the
+    /// day there is one, and are flags until then.
+    /// </para>
     /// </remarks>
     private static readonly Dictionary<string, bool> Settings = new()
     {
@@ -73,6 +79,9 @@ public sealed class SandboxScript
         ["--omniscient"] = false,
         ["--still"] = false,
         ["--instruments"] = false,
+        ["--aside"] = false,
+        ["--edge-pan"] = false,
+        ["--pace"] = true,
     };
 
     /// <summary>Steps that take no argument, so the next word is not swallowed as one.</summary>

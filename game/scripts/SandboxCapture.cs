@@ -26,9 +26,10 @@ namespace Hexcom.Game;
 /// Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --zoom 44
 /// </code>
 /// <para>
-/// Eight of the flags are settings: <c>--shot</c>, <c>--shot-after</c>, <c>--scenario</c>,
-/// <c>--ai</c>, <c>--windows</c> and <c>--omniscient</c> live here, and <c>--instruments</c> and
-/// <c>--still</c> are read by <see cref="HexSandbox"/> itself because they mean something on a
+/// Eleven of the flags are settings: <c>--shot</c>, <c>--shot-after</c>, <c>--scenario</c>,
+/// <c>--ai</c>, <c>--windows</c> and <c>--omniscient</c> live here, and <c>--instruments</c>,
+/// <c>--still</c>, <c>--aside</c>, <c>--edge-pan</c> and <c>--pace</c> are read by
+/// <see cref="HexSandbox"/> itself because they mean something on a
 /// run with no capture in it. Everything else on the line is a
 /// <see cref="SandboxScript"/> step, run in the order it was typed, because <c>--move</c> then
 /// <c>--pass</c> is a different battle from <c>--pass</c> then <c>--move</c>. The test for which

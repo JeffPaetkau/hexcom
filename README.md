@@ -43,7 +43,7 @@ The sandbox needs **Godot 4.7 .NET edition** ([godotengine.org](https://godoteng
 Windows). Open `game/project.godot` in the editor and press F5, or from a shell:
 
 ```bash
-dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game
+dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game -- --aside
 ```
 
 That long name is the executable's real one. The WinGet package puts its directory on the PATH
@@ -60,7 +60,7 @@ To render a frame and write it to a file rather than watch it — useful in CI, 
 automated session can check its own drawing:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png
 ```
 
 A capture ignores the mouse and the keyboard, so that two runs of it agree. `--hover q,r[,layer]`
@@ -70,7 +70,7 @@ sight figures, and the shot under the cursor. `--ai` hands every hostile turn to
 those passes, so the picture shows a situation the enemy made rather than the opening deployment:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --hover 2,0 --pass 6 --ai
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --hover 2,0 --pass 6 --ai
 ```
 
 `--fit` pulls back until the whole map is in one picture, `--zoom N` puts the camera N metres
@@ -84,10 +84,19 @@ it the picture is the game, and a hostile nobody of yours has found is not in it
 a person is playing; with `--shot` on the line both land on their end state within the call that
 starts them, so `--yaw N` still lands on the frame it names and two runs of one command still
 produce the same file to the byte. `--still` turns the same two off for a person who would rather
-they were.
+they were, and `--pace N` sets the walking pace in metres a second, ten by default.
+
+**`--aside` opens this run's windows on the leftmost monitor**, which is what keeps an automated
+session from putting a window in front of whoever is working on another one. `--shot` implies it.
+It changes no pixels — the same command on either monitor produces the same file — and the game
+you double-click opens where your window manager puts it, as it should. The window appears where
+your system put it for an instant first, because Godot opens it before any script runs; add
+Godot's own `--screen N` before the `--`, using the index `--aside` prints, to place it at
+creation instead.
 
 **And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
-`--ai`, `--windows`, `--omniscient`, `--instruments` and `--still` is a step, run in the order it
+`--ai`, `--windows`, `--omniscient`, `--instruments`, `--still`, `--aside`, `--edge-pan` and
+`--pace` is a step, run in the order it
 was typed: `--move`, `--fire`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
 `--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
@@ -96,7 +105,7 @@ have reached, and each one prints what it did — a misspelt name would otherwis
 good picture of the wrong moment.
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound --omniscient   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini --move 1,0
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --scenario compound --omniscient   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini --move 1,0
 ```
 
 That one walks Orsini across the front of a rifleman holding an arc, and the picture reports
@@ -129,10 +138,11 @@ starts on.
 | `F` / `G` | see the whole map / go back to whoever is up |
 | PgUp / PgDn | change storey (the roof is storey 1); the storeys above the one you are on are ghosted |
 
-**The mouse drives it too.** A middle-drag pans, a right-drag turns the camera freely, and the
-pointer near an edge of the window pushes the view that way. The arrow keys pan as well. A right
-*click* still fires — the two are told apart by whether the pointer moved, so the shot goes off
-when the button comes back up having stayed put.
+**The mouse drives it too.** A middle-drag pans and a right-drag turns the camera freely. The
+arrow keys pan as well. A right *click* still fires — the two are told apart by whether the
+pointer moved, so the shot goes off when the button comes back up having stayed put. The pointer
+resting near an edge of the window can push the view that way, and does not unless `--edge-pan`
+asks for it: it is the one camera gesture that happens while your hand is doing nothing.
 
 **What the soldier does.**
 
@@ -560,7 +570,7 @@ there, and what the failure looks like when they are not.
   only a way off the field written down they walked out in round 2 without going near the house
   (entry 048), and now that the file states the real task they cross the map and take the look in
   round 2 instead, twelve times out of twelve, and are seen doing it twelve times out of twelve
-  (entry 079). The recorder writes the job down separately from the verdict for that reason —
+  (entry 081). The recorder writes the job down separately from the verdict for that reason —
   abandoned with the look taken and abandoned without leaving the road are opposite findings.
 
 - **And the map has been measured against its own briefing**, which turned out to say more than
@@ -572,7 +582,7 @@ there, and what the failure looks like when they are not.
   straight out from the door; the drain under the south wall, the way in nobody watches, opens one
   stride short of the nearest of them. So the ground states the mission: in by the drain, a stride
   to the only place the room can be read from, and the roof is the whole problem. Entries 059 and
-  079, and four tests hold it.
+  081, and four tests hold it.
 
 ## What is not built yet
 

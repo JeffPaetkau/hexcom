@@ -2770,7 +2770,7 @@ expect.
 ---
 
 ## 059 — The waystation mission is finished but for the rule it needs, and the ground already says what the mission is
-**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for core — item 1 is resolved (Core landed the objective in 061, Content ran it in 079, and 079 re-measures the standoff); item 2, a garrison that moves, is still Core's and still the largest thing between this and a site that reads as inhabited
+**2026-09-09** · **Raised by** content · **For** core, view, setting · **Status** open for core — item 1 is resolved (Core landed the objective in 061, Content ran it in 081, and 081 re-measures the standoff); item 2, a garrison that moves, is still Core's and still the largest thing between this and a site that reads as inhabited
 
 Content's half of entry 057's *make what we have playable*. Everything about
 `waystation.hexmission` that is content is now written, so that when Core has an objective at a
@@ -3046,7 +3046,7 @@ them itself. If a second interface wants the same, the place for it is a flag he
 the same code written twice.
 
 ## 063 — Windows a session opens go on the left monitor
-**2026-09-09** · **Raised by** master, for the user · **For** view · **Status** open until the flag is in Seeing it
+**2026-09-09** · **Raised by** master, for the user · **For** view · **Status** resolved by 079 — the flag is built and is on every command in Seeing it
 
 The user has three monitors and works on the centre one. Every Godot window a session opens — a
 capture, a scene-load check, a run to look at something — lands on it, and with four sessions
@@ -3858,9 +3858,121 @@ not the taxonomy. So **the six directional faces have no interface exemplar in t
 the asset spec and whichever brief eventually draws a called shot should both know before either
 assumes one exists.
 
+## 079 — `--aside` costs nothing in pixels, and the second window was never a second window
+**2026-09-12** · **Raised by** view · **For** view, master · **Status** resolved; entry 063 closed and brief Zero's review list settled
+
+Entry 063's flag, built, plus the three riders the review list in `view.md` held against entry
+066's six. Three of the four are small and one of them turned over a rock.
+
+**The window really does move, and it does not cost a single byte.** `SandboxAside` walks
+`DisplayServer.ScreenGetPosition` and takes the smallest X, which is the left monitor on any
+machine where an index would be right on this one. Entry 063 asked for a check rather than an
+assumption — a window moved before the display server has settled might not rasterise — and the
+check came back better than it needed to: the pinned command captured on the left monitor and the
+same command captured where Windows put it produce **one SHA-256**, and two runs on the left
+monitor produce the same one again. So nothing hashed before this diffs against anything hashed
+after it, and a capture on the left monitor is fully drawn rather than blank.
+
+**Godot reports screens in unscaled pixels with the origin at the leftmost, which is worth knowing
+before somebody debugs it twice.** Windows has this machine's left monitor at X −1920 and Godot has
+it at X 0, because Godot works in physical pixels at 175 per cent scaling and shifts the origin. The
+ordering is what the rule needs and the ordering is preserved, so the mechanism is unaffected — but
+a position printed by Godot and a position printed by Windows are different numbers for the same
+window, and the flag says where it put things for exactly that reason.
+
+**The finding: the instruments window was embedded in the game's viewport all along.**
+`display/window/subwindows/embed_subwindows` defaults to true in Godot 4, so a `Window` node is
+drawn *inside* the parent viewport rather than opened by the operating system. Entry 066 says the
+second window exists so that it can be dragged onto another monitor, and it could not be dragged
+anywhere: it was a 1120×620 panel pinned to the top-left corner of the game. Worse and quieter,
+every capture taken with `--instruments` had that panel painted over the map, so `out.png` was not
+a picture of the game whenever the flag was on — which is the one thing the *`--shot` always means
+the game* rule in 066 exists to guarantee. One line of `project.godot` fixes it. **The general
+shape: a flag whose whole purpose is a second operating-system window has to be checked against the
+operating system**, and a capture of the second window succeeding is not that check, because an
+embedded window has its own viewport texture and photographs perfectly. The fix is visible as a
+number: the pinned scene taken *with* `--instruments` now hashes the same as the pinned scene taken
+without it, where before the two could not have agreed.
+
+**Edge-pan is off, per brief Zero, and it is a flag rather than a key on purpose.** The reason the
+genre makes it a setting is that it is the only camera gesture that fires when the hand is doing
+nothing — a pointer parked near an edge while a player reads a panel moves the map out from under
+what they are reading. There is no options screen to keep it in, so `--edge-pan` and an export are
+the switch. **It, `--pace` and `--still` are now three player preferences living on a command line
+a player of the exported game cannot reach**, and that is the size of the case for an options
+screen; it is not an emergency and it is not this job.
+
+**The walk keeps the sheet's rule and departs from the sheet's figure, and the cap is gone.**
+`WalkLongest` capped a walk at 1.6 seconds, which above about eleven metres is seconds-a-move
+wearing a metres-a-second coat: a long route and a short one arrive together again, which is the
+one thing pricing a walk in metres exists to prevent. Removed. The escape hatch for somebody who
+does not want to watch it is `--still`, which is the instant setting brief Zero asked for on Zip
+Mode's precedent and which already existed.
+
+**The pace is 3.5 metres a second and is an argument until a person watches it.** Brief Zero says
+1.4 for a tactical walk and 2.5 for a hustle; both are how fast a person moves, which is a claim
+about the world, where this number decides how long a player watches a transition before it stops
+being one. At 1.4 the longest walk 50 action points buys — ten hexes of flat ground, 17 metres —
+takes twelve seconds. It was 7.0, which is a sprint. 3.5 makes one hex about half a second and that
+longest walk five. **`--pace N` exists so the verdict costs a run rather than a rebuild**, and the
+review list's *settle it against a person watching it* is the one item here a session cannot do for
+itself. Whoever runs the second play-through should try 2.5, 3.5 and 5 and say which won, and the
+answer belongs in an entry.
+
+**For Master.** 063 closes. Brief Zero's review list is done. The queue in
+`docs/interface/briefs.md` is what `view.md`'s job section now points at, unpromoted, and the second
+play-through is still the measurement nobody here can take.
+
+## 080 — The walk is ten metres a second, measured, and a window cannot be put aside before it exists
+**2026-09-12** · **Raised by** view, for the user · **For** view, interface · **Status** resolved
+
+The user ran `--pace` and answered, and reported what `--aside` looks like from a chair. Both
+answers are corrections to entry 079, which was a day old.
+
+**Ten metres a second. The first interface figure in this project that was watched rather than
+argued.** Brief Zero puts a walk at 1.4 and a hustle at 2.5; 079 departed to 3.5 on the grounds
+that the sheet's figures describe how fast a soldier moves where this one describes how long a
+player watches a transition. The direction was right and the size was not: the answer is **ten**,
+which is four times the sheet's top figure, half as fast again as the seven it shipped at, and
+nearly three times what a session reasoned its way to. A hex goes by in about a sixth of a second
+and the longest walk 50 action points can buy is under two.
+
+**What that says about the sheet, and it is worth more than the number.** The genre's figure was
+not merely imprecise here, it was the wrong *kind* of quantity — a walking speed, offered as an
+animation speed. Entry 058 makes convention the default in doubt, and this is not a case against
+that rule; it is a case for asking, before adopting a figure, what question the figure is an answer
+to. A number that describes the world is not automatically a number that describes an interface
+drawing the world.
+
+**And it quietly settles the cap as well.** 079 removed `WalkLongest`, at 1.6 seconds, arguing it
+reinstated seconds-a-move above about eleven metres. At ten metres a second that cap would have
+bitten only above sixteen — past the longest walk the rules can buy — so at the pace the user
+actually wants, the cap and the pace were never both live. The removal still stands, because a cap
+that never fires is a cap waiting for somebody to lower the pace and be surprised.
+
+**`--aside` moves the window after it has already appeared, and that cannot be fixed from inside
+the game.** The user's words: *the windows opened on my main monitor then moved over to the left
+monitor.* Godot creates and maps the window while bringing the display server up, which is before
+any script exists to have an opinion — the C# assembly is not loaded until the scene layer
+initialises, after the window. `--screen N` and `--position X,Y` are the only placements that
+happen at creation and both are engine arguments, which is to say they are decided outside the
+process by somebody who already knows the answer.
+
+**So the flash is shortened rather than removed**, by moving the placement from `_Ready` to
+`_EnterTree`: the window is now put aside before the world is built, the mission loaded or the
+opening sight sweep run, rather than after. **If that is still too long, the fix is outside the
+game**: `--aside` prints the screen index it chose, and passing that index to Godot's own
+`--screen N` before the `--` places the window at creation with nothing to see. The reason that is
+not the default is entry 063's own — an index is a fact about this machine and the smallest X is
+true everywhere — so the index belongs in a command somebody wrote on this machine, not in the
+rule.
+
+**Unchanged by either.** The pinned scene still hashes the same, since nothing animates in a
+capture and moving the window costs no pixels.
+
 ---
 
-## 079 — The waystation is a reconnaissance: the look is taken twelve times out of twelve, and abandoned twelve times out of twelve
+## 081 — The waystation is a reconnaissance: the look is taken twelve times out of twelve, and abandoned twelve times out of twelve
 **2026-09-12** · **Raised by** content · **For** core, view, master · **Status** open for core — the two findings under *For Core* below
 
 The head of Content's brief, which entry 068 called a one-line uncomment. It was one line, and the

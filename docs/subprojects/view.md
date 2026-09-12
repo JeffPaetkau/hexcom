@@ -35,56 +35,78 @@ reaching into `src/`.
 
 ---
 
-## The job — `--aside`, then the review list, then the queue
+## The job — the queue, once Master promotes one of it
 
-**The six findings of the first play-through are built** — `../decisions.md` entry 066 says what
-each cost. Three things are waiting behind them and they are in this order.
+**`--aside` and brief Zero's review list are both done** — `../decisions.md` entry 079 says what
+each cost and what the first of them found. Entry 063 is closed with it. Nothing in this section
+is startable without Master, and that is the state rather than an omission.
 
-**1. `--aside`, and it is ahead of everything.** Entry 063: every Godot window a session opens
-lands on the user's centre monitor, and with several sessions running that is a window every few
-minutes in the middle of whatever they are reading. A setting on the command line — a setting and
-not a step, in the sense entry 049 draws — that moves the window to the leftmost screen before
-the first frame. **Leftmost by position, not by index**: `DisplayServer.ScreenGetPosition` over
-every screen and the smallest X is true on any machine where `--screen N` is true only on this
-one. `--shot` implies it, since a capture is always a session's. The exported game with no flags
-opens where Windows puts it, which is the user's monitor and correct. Then every command in
-**Seeing it** gains it, which is what the entry's Status is waiting on. **Check rather than
-assume that a capture still rasterises after the move** — two captures of one command, same hash,
-the way entry 053 checked on day one. It also now has a second window to place, which the entry
-predates: the instruments window is a session's window too.
-
-**2. The review list against the six.** `../interface/briefs.md` brief Zero is not a brief; it is
-what `conventions.md` says the genre's answer to each of the six is, and it landed while they were
-being built. Three of its riders were missed and are small:
-
-- **Edge-pan should be a setting, default off.** It is always on. `EdgeMargin` and `EdgePanRate`
-  in `HexSandbox` are the figures; the switch is what is missing.
-- **The walk is paced at 7 metres a second and the sheet says 1.4 to 2.5.** Both of the sheet's
-  figures are arguments rather than measurements, and they are in tension with the user's own
-  words in entry 057 — *not slow, but not instant*. Settle it against a person watching it, and
-  record which won.
-- **`WalkLongest` caps a walk at 1.6 seconds, which is the thing the sheet's metres-per-second
-  rule exists to prevent** — above about eleven metres the pace stops being a pace and a long
-  route and a short one arrive equally fast. Either the cap goes or the entry says why it stays.
-
-Everything else on that sheet the six already match, including the two figures it puts numbers
-on: the keyed turn is about 330 degrees per second against its 300 to 450, and the drag is 0.34
-degrees per pixel against its 0.2 to 0.4.
-
-**3. The queue, in the order `../interface/briefs.md` sets.** Six briefs, and **none of them is
+**1. The queue, in the order `../interface/briefs.md` sets.** Six briefs, and **none of them is
 this territory's job until Master promotes it into this section** — one file is never two
-territories' brief. Two of them bear directly on what the six just changed and a session touching
-either area should read them first: brief Three rebinds right-click away from firing, which
-retires the click-versus-drag disambiguation the gesture set is currently built on; and brief Six
-gives the reaction window a default and settles whose reactors a player is offered, which the six
-made sharper by opening with windows handed out.
+territories' brief. Two of them bear directly on what entry 066's six changed and a session
+touching either area should read them first: brief Three rebinds right-click away from firing,
+which retires the click-versus-drag disambiguation the gesture set is currently built on; and
+brief Six gives the reaction window a default and settles whose reactors a player is offered,
+which the six made sharper by opening with windows handed out. Entry 012's second item — the shot
+line saying who a shot would wake — is brief Four and is half a day whenever it fits.
 
-**The second play-through is the other measurement and a session cannot run it.** A person plays
-`build/Hexcom.exe` to a verdict and says what read wrong. Entry 012's second item — the shot line
-saying who a shot would wake — is brief Four and is half a day whenever it fits.
+**2. The measurement a session cannot take.** A person plays `build/Hexcom.exe` to a verdict and
+says what read wrong. That is the second play-through and it is the same measurement as last time.
+The walking pace was the other one and it has been taken: **ten metres a second, watched rather
+than argued** — entry 080, and it is the first interface figure in the project settled that way.
+
+**3. One thing the build is owed and nobody has scheduled.** `--edge-pan`, `--pace` and `--still`
+are three player preferences that live on a command line, and a player who double-clicks
+`build/Hexcom.exe` cannot reach any of them. That is the case for an options screen, stated here
+so it is not rediscovered; it is not urgent and it is not a brief yet.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/aside`
+
+Entry 063's flag and brief Zero's three riders. `../decisions.md` entry 079 is the reasoning; this
+is the shape.
+
+**`SandboxAside` is one method and the whole of the mechanism.** It takes the smallest X over
+`DisplayServer.ScreenGetPosition`, reads the usable rect of that screen so a centred window does
+not sit under the taskbar, and centres the window in it. Both windows go through it: the main one
+in `_EnterTree`, the instruments one when it opens, since a hidden window has no position worth
+setting and `I` can open it long after `_Ready`. It says where it put things, for the same reason
+every script step says what it did — a run that asked to be put aside and silently was not is a
+window in the user's face with nothing in the log about it.
+
+**The window appears before it moves, and no script can prevent that.** The user watched it happen:
+Godot creates and maps the window while bringing the display server up, and the C# assembly is not
+loaded until the scene layer initialises, which is after. `_EnterTree` is the earliest hook there
+is and it shortens the flash rather than removing it — the world building, the mission load and the
+opening sight sweep now all happen on the monitor the window is going to stay on. **The placement
+that has nothing to see is Godot's own `--screen N`**, before the `--`, using the index `--aside`
+prints; it is not the default because an index is a fact about one machine and the smallest X is
+true everywhere. Entry 080.
+
+**The check entry 063 asked for came back stronger than it asked.** Moving the window costs no
+pixels at all: the pinned command on the left monitor and the same command where Windows put it
+hash to one SHA-256, and so do two runs on the left monitor. Nothing hashed before this diffs
+against anything hashed after it.
+
+**And it found that the instruments window was not a window.** Godot embeds `Window` nodes in the
+parent viewport by default, so the second window was a panel in the corner of the first: it could
+not be dragged to another monitor, which is the only reason entry 066 built it, and a capture taken
+with `--instruments` had it painted over the map. `project.godot` now says otherwise. The gotchas
+carry the general shape, which is that photographing the second window is not a check that it *is*
+one.
+
+**The three riders.** Edge-pan is off and `--edge-pan` is the switch. `WalkLongest` is gone,
+because a cap on a walk's duration is seconds-a-move wearing a metres-a-second coat and reinstates
+exactly what pricing the walk in metres exists to prevent. **The pace is ten metres a second, and
+it is measured** — the sheet says 1.4 to 2.5, this branch reasoned its way to 3.5, and the user
+watched it and said ten. A hex goes by in about a sixth of a second and the longest walk the rules
+can buy is under two. `--pace N` stays so the next person to disagree can show it rather than argue
+it. Entry 080 has what the gap says about taking a figure from the genre: those figures describe
+how fast a soldier moves, and this one describes how long a player watches a transition.
 
 ---
 
@@ -153,7 +175,7 @@ catching up. The route is truncated at wherever the unit actually ended up, so a
 dropped it part way is drawn stopping there rather than walking on. The remaining route is drawn
 ahead of it in the committed colour with its tick labels — the same line the reaction options were
 quoted against, running out from under the soldier's feet. Seven metres a second, capped at 1.6
-seconds so a long route is covered faster rather than for longer.
+seconds — both superseded on `view/aside`, which is ten and no cap.
 
 **Two things the walk needed that were not obvious.** The unit rings moved out of the overlay mesh
 into the bodies mesh, because a ring left in the overlay stays on the tile the soldier set off
@@ -616,6 +638,11 @@ Entry 053 records the count.
   before the key remap diffs against anything after it — the legend grew from one line to three —
   and nothing captured before `view/playable` diffs against anything after it either: the legend
   went back down to two, the mode line left the top block, and every soldier gained two rings.
+  **`--aside` breaks none of this and that was measured, not assumed** — a capture on the left
+  monitor and the same one where Windows put it are byte-identical. The one break is narrower than
+  it looks: a capture taken with `--instruments` before the subwindow fix has the instruments panel
+  drawn over the map and diffs against every one taken after it. A capture without that flag does
+  not.
 - **Animation cannot break the determinism, and the reason is worth keeping straight.** It is not
   that the animations settle quickly. It is that a run with `--shot` on it never starts one — see
   `HexSandbox.Animate`. A change that made any animation conditional on something other than that
@@ -638,6 +665,18 @@ Entry 053 records the count.
   `DrawUnitLabels` puts the name over it. Only the first is obvious, and with only the first done
   the name hangs over the destination while the soldier is half way there — the map disagreeing
   with itself, which is exactly what a single frame is supposed to prevent.
+- **A `Window` node is not an operating-system window until the project says so.** Godot 4 defaults
+  `display/window/subwindows/embed_subwindows` to true, which draws a `Window` *inside* the parent
+  viewport. The instruments window shipped like that and nobody noticed for a whole increment: it
+  could not be dragged to another monitor, which is the only reason it is a window, and every
+  capture taken with `--instruments` had it painted over the map. `project.godot` sets the setting
+  false. **A capture of the second window is not a check that it is a window** — an embedded one
+  has its own viewport texture and photographs perfectly.
+- **Godot's screen coordinates are not Windows'.** `ScreenGetPosition` reports unscaled physical
+  pixels with the origin moved to the leftmost screen, so this machine's left monitor is at X
+  −1920 in Windows and at X 0 in Godot. The *ordering* survives, which is all `--aside` needs, but
+  a position printed by one and a position printed by the other are different numbers for the same
+  window. `SandboxAside` prints the one Godot believes.
 - **A window sized to fit its widest line is already broken.** The instruments window's mode line
   ran off its right edge on the first attempt, which is the legend's failure of the key remap in a
   narrower box. Anything added to that window has to be checked against `InstrumentsSize`, and the
@@ -707,14 +746,14 @@ they run as pasted from either `bash` or PowerShell. Use the `_console` one when
 keeps stdout on the terminal, which is where the capture reports where it wrote to.
 
 ```bash
-dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game
+dotnet build Hexcom.sln && Godot_v4.7.2-stable_mono_win64_console --path game -- --aside
 ```
 
 To capture the sandbox without anyone at the keyboard — which is how a session with no human
 watching can check its own work:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png
 ```
 
 `--shot-after N` waits N frames first, default 4; the first frame is drawn before the font atlas
@@ -727,7 +766,7 @@ and the keyboard on purpose — the window opens under whatever the pointer was 
 a capture that read it would not reproduce. Flags put back what that took away:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --omniscient --hover 2,0 --pass 6 --ai
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --omniscient --hover 2,0 --pass 6 --ai
 ```
 
 - `--hover q,r[,layer[,region]]` parks the cursor on a node, axial, the way the maps are
@@ -752,6 +791,34 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --omniscien
 - `--still` turns off the camera turn and the walk for a person at the keyboard. A capture does
   not need it — nothing animates while a picture is being taken, by construction — so it is here
   for somebody watching rather than capturing.
+- `--pace N` sets the walking pace in metres a second, ten by default. The default is measured
+  rather than argued — `../decisions.md` entry 080 — and the flag stays so the next person to
+  disagree can show it instead.
+- `--edge-pan` turns on the pointer-at-the-edge push, which is **off**. Brief Zero's rider, and
+  the reason is that it is the only camera gesture that runs while the hand is doing nothing.
+
+**`--aside` puts this run's windows on the leftmost monitor, and every command above carries it.**
+The user works on the centre screen of three and a window landing on it mid-thought is the most
+distracting thing a session does; `../decisions.md` entry 063 is the rule and 079 is the build.
+Leftmost is by position rather than by index, so it is right on any machine. **`--shot` implies
+it** — a capture is always a session's — and the flag is written out anyway so that a command
+without it can be read as one meant for a person. It places the instruments window too, whenever
+that is opened. The exported game with no flags opens where Windows puts it, which is the user's
+own screen and is correct.
+
+**The window appears on the usual monitor for an instant before it moves.** Godot maps it while the
+display server comes up, before any script is loaded, so a placement from inside the process is
+always a correction. It happens in `_EnterTree`, ahead of everything else this run does, which is
+as early as a script can be. **To place it with nothing to see, add Godot's own `--screen N`**
+before the `--`, taking N from the index `--aside` printed — that is applied at creation. It is not
+the default because an index is a fact about one machine, which is the whole reason `--aside`
+measures instead. Entry 080.
+
+**Moving the window changes no pixels, which was worth checking rather than assuming.** The pinned
+command captured on the left monitor and the same command captured where Windows put it produce one
+SHA-256, and so do two runs on the left monitor. So every hash in this file survives the flag, and
+a capture on another screen rasterises in full rather than coming back blank the way a headless one
+does.
 
 **A capture is still, and that is a switch rather than a wait.** `HexSandbox.Animate` is false
 for the whole of any run with `--shot` on it, so `--yaw N` lands on the frame it names, a
@@ -763,8 +830,8 @@ anything else; this is the one flag and everything that moves asks it.
 **A map 85 metres across needs the camera told about, so five flags do that.**
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot map.png --fit
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot old.png --scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot map.png --fit
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot old.png --scenario compound --omniscient --zoom 30 --look 0,0 --yaw 1
 ```
 
 - `--fit` pulls back until the whole map is in one picture, working the figure out rather than
@@ -791,15 +858,20 @@ that and nothing else was free to move:
 | middle-drag | pan |
 | right-drag | turn the camera freely, to anywhere between the six bearings; no snap on release |
 | right-click | fire — **on release**, and only if the pointer moved under `ClickSlop` pixels since the press |
-| pointer near an edge | push the view that way, faster the further into the margin it goes |
+| pointer near an edge | push the view that way, faster the further into the margin it goes — **off unless `--edge-pan`** |
 | wheel | zoom |
 | left-click | move whoever is up |
 
 A right press starts a candidate orbit either way; which of the two it turns out to have been is
 not knowable until the button comes back up, which is the whole reason firing moved off the
-press. Edge-pan runs only while the pointer is genuinely inside the viewport — with a second
-window in play the pointer spends time on another monitor, and a view that crept while nobody was
-looking at it would be the worst kind of bug to find.
+press.
+
+**Edge-pan is off unless it is asked for**, which is brief Zero's rider and the genre's answer: it
+is the one camera gesture that fires while the hand is doing nothing, so a pointer parked near an
+edge while a player reads the panel moves the map out from under what they are reading. `--edge-pan`
+turns it on. When it is on it runs only while the pointer is genuinely inside the viewport — with a
+second window in play the pointer spends time on another monitor, and a view that crept while
+nobody was looking at it would be the worst kind of bug to find.
 
 **The keys, in the groups the two legends use.** The player's legend is `BattleHud.PlayerKeys`
 and the instruments window's is `InstrumentKeys`; this table is the same content, and they are
@@ -847,10 +919,10 @@ is on `Commander`, reaction windows are handed out, and the other side is hidden
 off — so `--ai`, `--windows` and `--omniscient` still mean what they meant and every command in
 this file still opens the run it was written against.
 
-**And a capture can act.** Everything on the line that is not one of the eight settings —
+**And a capture can act.** Everything on the line that is not one of the eleven settings —
 `--shot`, `--shot-after`, `--scenario`, `--ai`, `--windows`, `--omniscient`, `--instruments`,
-`--still` — is a step, run in the order it was typed, and each one prints what it did. They are
-the keys under another name:
+`--still`, `--aside`, `--edge-pan`, `--pace` — is a step, run in the order it was typed, and each
+one prints what it did. They are the keys under another name:
 
 | | |
 |---|---|
@@ -869,7 +941,7 @@ last, since anything a soldier does afterwards may pull the view to whoever is u
 The test this was built for, and what it prints — the same line in three dimensions as in two:
 
 ```bash
-Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --scenario compound --omniscient   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini   --move 1,0 --zoom 24
+Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --scenario compound --omniscient   --ai --pass 3 --hostiles hand --until Watchman --overwatch narrow --until Orsini   --move 1,0 --zoom 24
 ```
 
 *reactions — t15 Watchman (overwatch) snap at (0,1)@0: hit Front for 0.* One of ours moved, a
@@ -964,7 +1036,11 @@ against `game/`. Pass an absolute path to either and the question goes away.
   editor-only. **Re-checked after `view/playable`**, because that branch added a second `Window`
   to the scene and two settings: the export honours `--instruments` and `--still`, writes both
   PNGs, and the pinned scene from the executable has the same SHA-256 as the pinned scene from
-  the editor.
+  the editor. **Re-checked again after `view/aside`**, because that branch moves the windows and
+  un-embeds one of them: the export honours `--aside` and places both, and the pinned scene still
+  hashes the same from the executable as from the editor. It now also hashes the same *with*
+  `--instruments` as without, which is the subwindow fix visible as a number — the panel is no
+  longer painted over the map.
 
 ### Setting this up on a machine that has never done it
 
@@ -1019,11 +1095,10 @@ Desktop-only is the design and Windows is the machine.
 
 ## Open questions
 
-- **Whether an unfound hostile should hold a slot in the turn order at all.** It holds a `?` now:
-  that somebody acts at that point is known, because turns are taken in the open, but the count
-  of the enemy is a thing a stealth game might want to keep. The alternative is to drop the slot
-  and let the strip show only what is found, which loses the interleaving the strip exists to
-  show. The first play-through is the way to decide.
+- ~~**Whether an unfound hostile should hold a slot in the turn order at all.**~~ Answered by
+  `../decisions.md` entry 064, and the answer is no. The strip still draws a `?` slot because the
+  change is brief Five's and the brief has not been promoted; the question is settled and the code
+  has not caught up.
 - **Whether a hostile's held arc should be drawn when the hostile is.** It is not, now: a body
   shows where a soldier is and which way it faces, and the attention field shows where it is
   looking, but what it would shoot at is its intent. Omniscient draws every arc. A player who

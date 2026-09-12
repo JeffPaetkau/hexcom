@@ -81,7 +81,7 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
   unnoticed)`, `Reconnaissance(side, place, exits, within, unnoticed)` and `Sabotage(side, place,
   exits, effort, unnoticed)`. Entry 061. The exit is a collection of nodes and the place is one
   node, which is why the grammar's `exit` keeps a whole place and its `at` takes the middle of
-  one — entry 079.
+  one — entry 081.
 - **`Unit.Left`** — a `Departure` saying whether a soldier walked off or was put down, and what
   the other side held on them as they went. It is what lets the harness tell a mission achieved
   from a squad wiped out, which before objectives were the same state.
@@ -91,12 +91,12 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
 ## The job — a second battlefield, of a different shape
 
 Branch `content/second-battlefield`. The waystation's mission is finished: entry 061 built the
-objective and entry 079 ran it, so the mission the user's build fights is the reconnaissance the
+objective and entry 081 ran it, so the mission the user's build fights is the reconnaissance the
 briefing describes rather than the walk-out that stood in for it. This is the other thing entry
 057's *make what we have playable* wants from Content, and it is the last map job before the
 campaign: one battlefield is one data point, and every claim the format makes rests on it.
 
-**Read entry 079 before drawing.** Three of its findings bear on this map: aiming at a place
+**Read entry 081 before drawing.** Three of its findings bear on this map: aiming at a place
 means aiming at its middle, which narrows a standoff more than a drawing suggests; a turn is
 thirteen hexes on a road, so a radius-24 approach is two decisions long; and nothing yet prices
 being seen on the way in, which is Core's and is why a route that *should* be creeping will be
@@ -109,7 +109,7 @@ one and the *one size or a range* question below gets a second data point.
 example, forty-five statements of ground; `waystation.hexmission` is the mission on it, and
 `content/Hexcom.Content.Tests/Waystation` is the harness — `WaystationFight` is now a name and one
 call, `MatchRecorder` runs `Commander` against itself and writes down routes, throws, casualties,
-alarm peaks, departures, verdict, pacing and — since entry 079 — whether the job in the middle of
+alarm peaks, departures, verdict, pacing and — since entry 081 — whether the job in the middle of
 the mission was actually done and by whom, and `HEXCOM_SEEDS`, `HEXCOM_SEED_FROM`,
 `HEXCOM_ROUNDS` and `HEXCOM_TRANSCRIPT` steer it. Copy the shape for the new map; the recorder is
 not waystation-specific except for its landmarks, which want generalising now that a second map
@@ -144,7 +144,7 @@ it is yours to fix.
 
 **Fight it before calling it done.** A dozen seeds through the harness, and read the routes the
 way entry 038 did. Expect two things and draw around neither. The squad will walk to the job in
-the open and be seen doing it, because nothing prices being noticed on the way in (entry 079) —
+the open and be seen doing it, because nothing prices being noticed on the way in (entry 081) —
 so a route drawn to be crept along will be marched along, and drawing a shorter one to suit is
 exactly the mistake. And the garrison does not move, because nothing in the game patrols (entry
 059) — a fifth soldier would be a fifth soldier standing still. Both are Core's and a map cannot
@@ -190,7 +190,7 @@ battle applies it.
 There is now a third thing it cannot say, found by making it say the second one. **A place that
 nobody can stand in cannot be the thing a mission points at** — `at <place>` picks the middle of
 the standable ground in it, so a sealed vault, a locked room or a crate is not nameable as a
-target. Entry 079. It has cost nothing yet because the waystation's house has a door and a floor,
+target. Entry 081. It has cost nothing yet because the waystation's house has a door and a floor,
 and the second map is where it will either bite or turn out not to matter.
 
 **Can a mission say anything about behaviour?** Everything the format holds is a fact about the
@@ -218,7 +218,7 @@ in a mission are content *naming* one where declaring it would be the balance ch
 
 **Almost nothing has been measured, and here is what has.** Every number in the game was set by
 reasoning; the waystation harness is the first thing to check any of them against a match, and
-what it found is in entries 037 to 039, 048 and 079: a rifle is heard at 18 m against a design
+what it found is in entries 037 to 039, 048 and 081: a rifle is heard at 18 m against a design
 that says a hundred, a turn's walk on gravel is heard further than a shot, the AI throws every
 charge at the first crater and paces between two tiles on a shot it never takes, and a turn is
 thirteen hexes of road, which makes a radius-24 approach two decisions long.
@@ -235,7 +235,7 @@ test reaches for.
 **And one thing measured about the ground rather than the numbers.** Entry 059 asked the mission
 book's question of the waystation — is there anywhere to look at the house *from* — and got an
 answer the drawing never advertised: nowhere outside the wall at any range, fourteen places
-inside, every one of them overlooked by the roof. Entry 079 asked it again of the node the
+inside, every one of them overlooked by the roof. Entry 081 asked it again of the node the
 objective actually aims at, the middle of the room, and the fourteen became four in a line
 straight out from the door, with the drain opening one stride short of the nearest rather than
 onto it. That is a whole mission stated by the ground, and neither measurement was arrived at on
