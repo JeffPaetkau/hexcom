@@ -87,6 +87,24 @@ public partial class HexSandbox : Node3D
     [Export] public bool Animate { get; set; } = true;
 
     /// <summary>
+    /// Whether the pointer resting near an edge of the window pushes the view that way.
+    /// </summary>
+    /// <remarks>
+    /// <b>Off, and that is the genre's answer rather than a shortcut.</b> Brief Zero in
+    /// <c>docs/interface/briefs.md</c> asks for edge-pan as a setting defaulting off, and the
+    /// reason is that it is the one camera gesture that happens when the hand is doing nothing:
+    /// a pointer parked near an edge while a player reads the panel moves the map out from under
+    /// what they were reading. A player who wants it can have it; a player who has never heard of
+    /// it should not meet it by accident.
+    /// <para>
+    /// There is no options screen to keep it in yet, so the switch is <c>--edge-pan</c> and this
+    /// property. When there is one, this is the setting it holds and the flag becomes the way a
+    /// capture reaches it.
+    /// </para>
+    /// </remarks>
+    [Export] public bool EdgePanning { get; set; }
+
+    /// <summary>
     /// Which of <see cref="SandboxScenario.All"/> to open with. Blank takes the first.
     /// </summary>
     [Export] public string Scenario { get; set; } = "";
@@ -246,9 +264,21 @@ public partial class HexSandbox : Node3D
         _readouts.Painter = canvas => _hud.Draw(canvas, Frame(), Viewport);
         _instrumentPanel.Painter = canvas => _hud.DrawInstruments(canvas, Frame(), _instruments.Size);
 
-        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), InstrumentsFlag) >= 0) ShowInstruments(true);
+        var args = OS.GetCmdlineUserArgs();
 
-        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), StillFlag) >= 0) Animate = false;
+        // A capture is always a session's, so it is put aside whether it said so or not.
+        _aside = _capture is not null || System.Array.IndexOf(args, AsideFlag) >= 0;
+        if (_aside) SandboxAside.Place(GetWindow());
+
+        if (System.Array.IndexOf(args, EdgePanFlag) >= 0) EdgePanning = true;
+
+        if (SandboxScript.ValueOf(args, PaceFlag) is { } pace
+            && double.TryParse(pace, out var metresASecond) && metresASecond > 0)
+            WalkPace = metresASecond;
+
+        if (System.Array.IndexOf(args, InstrumentsFlag) >= 0) ShowInstruments(true);
+
+        if (System.Array.IndexOf(args, StillFlag) >= 0) Animate = false;
 
         // A capture has to be reproducible, and input is the one thing here that is not: the
         // window opens under whatever the pointer was already doing, so the cursor readout and
@@ -362,6 +392,18 @@ public partial class HexSandbox : Node3D
     /// <summary>Opens the second window on a run started from the command line. Interactively it is <c>I</c>.</summary>
     private const string InstrumentsFlag = "--instruments";
 
+    /// <summary>Opens every window this run has on the leftmost monitor. See <see cref="SandboxAside"/>.</summary>
+    private const string AsideFlag = "--aside";
+
+    /// <summary>Turns the edge push on for a run. See <see cref="EdgePanning"/>.</summary>
+    private const string EdgePanFlag = "--edge-pan";
+
+    /// <summary>Sets the walking pace in metres a second. See <see cref="WalkPace"/>.</summary>
+    private const string PaceFlag = "--pace";
+
+    /// <summary>Whether this run's windows belong on the leftmost monitor, including any opened later.</summary>
+    private bool _aside;
+
     /// <summary>Whether anything may take time. False for the whole of a capture, by <see cref="Animate"/>'s remarks.</summary>
     private bool Animated => _capture is null && Animate;
 
@@ -395,10 +437,14 @@ public partial class HexSandbox : Node3D
     /// while the pointer is genuinely inside the viewport and no drag is already holding the
     /// ground. The rate is proportional to how far into the margin the pointer has gone, which
     /// is what makes a slow nudge at the edge possible at all.
+    /// <para>
+    /// And it runs only when it has been asked for at all — see <see cref="EdgePanning"/>, which
+    /// is off. The habit described above is the reason the genre makes this a setting.
+    /// </para>
     /// </remarks>
     private void EdgePan(double delta)
     {
-        if (_dragging is not null || _orbiting is not null) return;
+        if (!EdgePanning || _dragging is not null || _orbiting is not null) return;
 
         var viewport = Viewport;
         var at = GetViewport().GetMousePosition();
@@ -640,7 +686,12 @@ public partial class HexSandbox : Node3D
     private void ShowInstruments(bool open)
     {
         _instruments.Visible = open;
-        if (open) _instrumentPanel.QueueRedraw();
+        if (!open) return;
+
+        // Placed on opening rather than on building: a hidden window has no position worth
+        // setting, and this one can be opened from the keyboard long after _Ready.
+        if (_aside) SandboxAside.Place(_instruments);
+        _instrumentPanel.QueueRedraw();
     }
 
     /// <summary>The cursor moved: rebuild what follows it and redraw what quotes it.</summary>
@@ -724,17 +775,25 @@ public partial class HexSandbox : Node3D
 
     // ---- the walk ----------------------------------------------------------------
 
-    /// <summary>Metres a second a soldier covers, at the default zoom, when it is not being hurried.</summary>
+    /// <summary>Metres a second a soldier covers when it is not being hurried.</summary>
     /// <remarks>
-    /// A jog rather than a walk — a real 1.4 metres a second would take six seconds to cross five
-    /// hexes, and the play-through asked for *not slow*. At this pace one hex takes about a
-    /// quarter of a second, which is fast enough to be a transition and slow enough that the eye
-    /// follows the route rather than being told the answer.
+    /// <b>A jog, and it is a departure from the sheet's figure while keeping the sheet's rule.</b>
+    /// Brief Zero in <c>docs/interface/briefs.md</c> asks for the pace to be priced in metres a
+    /// second rather than seconds a move — which is what stops a two-hex step and an eight-hex
+    /// step looking equally urgent — and puts the figure at 1.4 for a tactical walk and 2.5 for a
+    /// hustle. Both of those are how fast a person moves, which is an argument about the world;
+    /// what this number decides is how long a player watches a transition before it stops being a
+    /// transition, which is an argument about attention. At 1.4 a full turn's walk takes twelve
+    /// seconds and the play-through's own words were <i>not slow, but not instant</i>.
+    /// <para>
+    /// So the rule is the sheet's and the figure is not: 3.5 is a jog a soldier crossing open
+    /// ground would plausibly be at, one hex takes about half a second, and the longest walk 50
+    /// action points can buy — ten hexes of flat ground, 17 metres — comes to five seconds.
+    /// <c>--pace N</c> is here so the person watching can settle it without a rebuild, which is
+    /// what the review list asks for and what a session cannot do for itself.
+    /// </para>
     /// </remarks>
-    private const double WalkPace = 7.0;
-
-    /// <summary>The longest any one walk may take, seconds. A long route is covered faster, not for longer.</summary>
-    private const double WalkLongest = 1.6;
+    [Export] public double WalkPace { get; set; } = 3.5;
 
     /// <summary>
     /// Start drawing a move that has already happened in the rules.
@@ -785,7 +844,11 @@ public partial class HexSandbox : Node3D
 
         _walking = mover.Id;
         _walkElapsed = 0;
-        _walkSeconds = System.Math.Min(metres / WalkPace, WalkLongest);
+        // No ceiling on the duration. A cap is seconds-a-move wearing a metres-a-second coat:
+        // above it a long route and a short one arrive together again, which is the one thing
+        // pricing the walk in metres exists to prevent. Somebody who does not want to watch it
+        // has --still, which is the genre's instant setting and the sheet's own escape hatch.
+        _walkSeconds = metres / WalkPace;
 
         if (_walkSeconds <= 0) { EndWalk(); return; }
 
