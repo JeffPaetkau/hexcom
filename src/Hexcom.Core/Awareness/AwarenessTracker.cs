@@ -128,6 +128,35 @@ public sealed class AwarenessTracker
             _contacts.Remove(key);
     }
 
+    /// <summary>
+    /// Hand one unit a belief about another before anybody has looked: where they are said to
+    /// be standing, and how firmly.
+    /// </summary>
+    /// <remarks>
+    /// The briefing, as a contact. Every mission in the book tells the squad who is where before
+    /// it sets out — <em>one stands on the road outside the west gate, twenty-five metres
+    /// out</em> — and until this existed the rules had nowhere to hold that, so a squad driven
+    /// by the scorer walked into the view of a sentry its own briefing had named, at full stride,
+    /// and learned he was there when he learned they were. Entry 087 measured it.
+    /// <para>
+    /// It is a marker, not a sighting: the place is where they are said to be, and nothing is in
+    /// view. So it stands at the rung given, with a position a soldier will go and check, and it
+    /// decays like any other contact the moment the soldier looks and does not find them — a
+    /// briefing is trusted until the ground says otherwise, and no longer. Only ever raises a
+    /// contact; telling a soldier less than it already knows changes nothing.
+    /// </para>
+    /// </remarks>
+    public void Brief(Unit observer, Unit subject, NodeId place, AwarenessState state)
+    {
+        var contact = Of(observer.Id, subject.Id);
+        var told = Model.Threshold(state);
+        if (told <= contact.Detection) return;
+
+        contact.Detection = told;
+        contact.LastKnownPosition = place;
+        contact.EyesOn = false;
+    }
+
     // ---- the channels ----------------------------------------------------------
 
     /// <summary>

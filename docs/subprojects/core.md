@@ -30,46 +30,47 @@ purpose, balance numbers in their homes — nine of them since `BlastModel`, see
 
 ---
 
-## The job — a squad that is not seen
+## The job — a squad that knows what it was told
 
-Branch `core/unnoticed`. Read the rest of this file before starting; the turn loop below and the
-gotchas after it are the things that will bite, and the ones about objectives, the clock and the
-batch are the three most likely to.
+Branch `core/briefed`. Read the rest of this file before starting; the gotchas about the quiet
+term, the batch and the clock are the ones that will bite.
 
 **What exists.** Every system the design doc describes bar suppression; three of the six mission
-shapes; a mission that stops at an hour or so many rounds after the garrison's word is out
-(`../decisions.md` entry 082); and a batch of headless matches, checked in, that anybody can run
-again with the same seeds (entry 083).
+shapes; a mission that stops (`../decisions.md` entry 082); a batch of headless matches anybody can
+run again with the same seeds (083); a term that prices being seen as a share of the objective,
+the clock as the rate the objective pays, and a side that can be briefed before the fight (087).
 
-**What the batch said, in one line: nothing wins the waystation, and the reason is not a dial.**
-Across every arm the squad got eyes on the house, usually by round two, and some hostile held it
-at `Engaged` in every match — so every verdict is `Abandoned` on the departure reading. The
-objective is scored as a race because nothing in the scorer prices the mission's own win condition.
-`ObjectiveValue × Progress` pays for getting there and getting home; **nothing pays for getting
-there unseen**. Entry 083 has the tables; read its headline and the section on the clock.
+**What the batch said, in one line: briefed, the scout goes in unseen and the other two start a
+war.** Entry 087 has the tables. At the shipped value nobody registers Vance at all in forty-seven
+matches of a hundred and the look is taken in ninety-eight — the term and the briefing do what
+they were built to do for the soldier who goes in. Bekker is Engaged in ninety-five, the first
+shot goes at the gate or the roof, and the squad fires three times a match where blind it fired
+a fifth of once. Nothing is achieved at the shipped value, three at 30. The acceptance test of
+the last brief — *a reconnaissance on the waystation achieved in more than a handful of matches
+in a hundred* — is still the test, and it has still never once been true.
 
-**The job is the missing term, and then the measurement again.**
+**The job is the followers, and then the measurement again.**
 
-- **Price being noticed against the mission, not only against the fight.** `Sortie.Unnoticed` is a
-  rung, and a squad member held above it has already cost the mission — so the thing to price is
-  *what this action does to the highest rung any enemy will hold on this soldier*, in the same
-  vitality every other term is in, scaled by what the objective is worth. The raw material exists:
-  `AwarenessTracker.WouldAnnounce` and `WouldHear` already say who learns what from an act, and
-  `Tactician.Aimed` already reads an enemy's detection as a rung. What is missing is the step from
-  *he will be Searching* to *and that is most of the mission gone*. Settle deliberately whether it
-  is a cliff at the rung or a slope up to it: a cliff is what the win condition is, a slope is what
-  a one-step search can climb, and entry 044's argument for gradients over flags applies here too.
-- **The clock, as something the scorer can see.** Entry 083 measured a three-round grace ending
-  most matches before round six with fewer than half the squad home — against a squad that does
-  not know it has three rounds. Once the alarm is out, what is left of the journey against what is
-  left of the night is a number the objective already has (`Remaining`, in points) and one the
-  deadline now has (`LastRound`). A squad with the job done and the hour closing should go.
-- **Run the batch again, and record the difference.** `ObjectiveValue` above 60 is saturated on this
-  ground and 30 to 60 is the live range — but choosing inside it before this term exists is tuning a
-  race. `ObjectiveHorizon` is the same dial on this ground, so the term should not be tuned against
-  either one alone. With the term in, the value question and the clock question are the two to rerun. The test
-  that the term works is simple and has never once been true: **a reconnaissance on the waystation
-  achieved in more than a handful of matches in a hundred.**
+- **Start with a transcript of a briefed match.** `Measured/Waystation.Begin(seed, briefed: true)`
+  is the instrument arm; the content harness's `HEXCOM_TRANSCRIPT` does not brief. Read what
+  Bekker and Orsini are choosing in rounds two to six and why: the hypothesis in 087 is that four
+  posts in the contact file at full credence are four things a commander hunts — walking to where
+  a shot on a marker would open, throwing at the ground under one — and that the quiet term
+  prices each of those and loses because the fight terms are scored against markers nothing has
+  confirmed. A briefed contact has no `LastContactRound`, so `Tactician.Credence` reads it as
+  fresh for as long as it lasts; that alone may be most of it.
+- **Then decide what a briefing is.** A *place to keep out of the eye of*, which the term reads
+  and the search never walks toward; or a *threat to hunt*, which is what a marker is today; or a
+  marker that starts stale. Settle it deliberately and say why in the `<remarks>` on
+  `AwarenessTracker.Brief`, which currently argues the third and behaves as the second.
+- **Then ask again whether the term should hold a soldier back once any of the squad is seen.**
+  087 chose a soldier's own reading over the squad's worst, for the recovery it preserves. The
+  followers' behaviour is the argument against: after one look from the roof each counts himself
+  seen and the fight is free. A squad-wide reading is a one-line change and a batch says which.
+- **Run the briefed question again, and record the difference.** `WhatTheSquadKnowsGoingIn` at a
+  hundred seeds is most of an hour on its own; do the transcript and the twelve-seed run first.
+  Give `Batch.Run` a line per arm as it completes while you are in there — 087 ran three
+  questions for an hour and three quarters with no way to tell how far along the slowest was.
 
 **If that goes quickly, the two faults a one-step search shows on real ground** — entry 039, both
 still open, both invisible on a disc:
@@ -81,28 +82,26 @@ still open, both invisible on a disc:
    with a shot, and from the new tile the best option is the move back, credited with the same
    shot.
 
-**Two things the batch settled that are not this brief's to act on.** `RemovalBonus` is a *finish
-him* dial and cannot say *that one first* at any setting — a signaller worth more wants a per-soldier
-term derived from what the soldier does for its side, and on the waystation the alarm is out before
-anybody could act on it anyway. The two cost archetypes are a large live change, halving what the
-squad kills at value 30; keep them. And entry 048's quiet scout was the mission, not the man: with
-something to look at, the scout is the one who goes in and he is seen every time from either post.
+**Two things settled that are not this brief's to act on.** `ObjectiveValue` is saturated at 60
+with the term in as it was without, and for a reason that is now understood: the term is a share
+of the objective, so the value moves both sides of the trade at once. Leave it at 120. And entry
+086's relay hole is now inherited by `Tactician.Blowing` as well as `GivenAway`; the preview with
+the relay in it fixes three things at once and is worth doing, but it is not what stands between
+the waystation and a win.
 
-**Content is waiting on nothing from Core.** Entry 082 tells it to uncomment the reconnaissance line
-— `within` is inert on the waystation and can stay unwritten — and that `rounds` and the briefing's
-stop have somewhere to go. When that lands, delete `tests/Hexcom.Core.Tests/Measured/Waystation.cs`'s
-hand-built objective and read the file's.
+**Content is waiting on one thing from Core, and has it.** `Battle.Brief(side, unit, rung)` is
+the call; the grammar for the briefing's presence part is Content's (087, *For Content*). Until it
+lands, `Measured/Waystation.cs` briefs all four posts by hand in its `briefed` arm and the file
+plays blind. `Waystation.cs` also still builds the objective itself, for the clock the file cannot
+yet write (082); delete both stand-ins when the file can say them.
 
 **A garrison that does not move is still Core's, and still not this brief's.** Three of the
-waystation's four hostiles never act. It wants a notion of what a soldier is *doing* rather than
-where it is, which is also what *the mission is lost, get out* wants; neither should be built
-piecemeal, and milestone 2 on `../map.md` is where they go together.
+waystation's four hostiles never act; milestone 2 on `../map.md`.
 
-**Out of scope.** `game/**` as ever. Extraction and capture, dropped from the last brief and still
-unneeded. Suppression.
+**Out of scope.** `game/**` as ever. Extraction and capture. Suppression.
 
-**The test that it worked:** entry 083's value table rerun with the term in, and a row in it where
-the waystation is achieved.
+**The test that it worked:** entry 087's briefed table rerun, and a row in it where the
+waystation is achieved in more than a handful of matches in a hundred.
 
 ---
 
@@ -403,6 +402,36 @@ the thing to suspect when a reaction test starts failing for no reason you can s
 - **A commander per side, never one for both.** A dial turned on both sides at once measures
   nothing: the two halves move together and the match comes out where it started.
 
+- **Being seen is priced as a difference between two poses, never as a reading of one.**
+  `Tactician.Keeping` is `Quiet(after) - Quiet(before)`, both against the same list of sensed
+  enemies, for the reason the posture score is: a soldier standing in a sentry's eye has to see
+  that stepping out of it is worth something. A reading of the pose after alone would score
+  staying put at nothing and moving at the cost of the walk. If a unit ever stands in plain view
+  of a sentry it knows about with a mission that forbids it, check that both halves are being
+  asked the same question.
+- **`Quiet` takes the worst enemy, not the sum, and it clamps.** One enemy over the bar loses the
+  mission and a second loses nothing more; and a soldier predicted to be over the bar reads as
+  nought, so every further exposure is free. That is deliberate — *if the shift sees you the task
+  is over* — and it is also why the term cannot tell 60 out of 50 from 200 out of 50. The fight
+  consequence of the second is priced elsewhere, by `Aimed` and `Spared`.
+- **The term reads `Sensed`, not `Known`.** `Known` stops at `ActsOn` because a soldier does not
+  shoot at something it has half-glimpsed; `Sensed` goes down to Suspicious because a careful one
+  does not walk into the view of a place it registered something in. The Commander still passes
+  `Known` to everything else, so a stance change to get out of a merely-suspected sentry's eye is
+  not offered — `Postures` yields nothing with no known threat — while a move is, because moves
+  are offered whenever there is an objective to move toward.
+- **Nothing prices an eye the soldier has not registered.** The term is honest about what a
+  soldier knows, and on the waystation the squad deploys on the road the gate sentry watches and
+  he takes his first look before the scout has taken any. So the scout's first turn is walked
+  blind, at full stride, into the view of a man it will only know about at the end of it. That is
+  entry 087's finding and it is not a fault in the term: it is the squad not knowing what its own
+  briefing says.
+- **`Urgency` moves the level of `Progress`, not only the slope.** Above one, `Progress` can read
+  more than one; anything comparing it to a whole — a display, an assertion — has to expect that.
+  Only differences rank, so nothing in the search cares, and `Finishing` still pays exactly
+  `ObjectiveValue`. `PerPoint` is the all-night rate and is wrong once the night is short; price a
+  shortening through two `Toward` readings, which is what `WorkWorth` does.
+
 ## Open questions
 
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
@@ -414,13 +443,13 @@ the ones that block or shape what Core does next.
   one moment, and *the mission is lost, get out* is a judgement about the whole thing. This is the
   sharpest thing the search cannot do, and it arrived with objectives rather than being fixed by
   them.
-- **Nothing prices getting there unseen**, and entry 083 measured what that costs: no
-  reconnaissance on the waystation achieved in any arm, every squad held at `Engaged`. The
-  objective pays for reaching the place and coming home, and the rung `Sortie.Unnoticed` judges on
-  appears nowhere in the arithmetic. It is the job at the head of this file.
-- **`ObjectiveValue` is saturated, measured.** 60, 120 and 240 are indistinguishable on the
-  waystation; 15 stands and fights until the night runs out. Entry 083 says leave it at 120 until
-  the term above exists, because tuning it now is tuning a race.
+- **A briefed squad's followers fight, measured.** The term that prices being seen puts the scout
+  in unseen once the squad knows where the posts are, and the two who stay back are Engaged in
+  nearly every match anyway — entry 087, and the job at the head of this file.
+- **`ObjectiveValue` is saturated, measured twice.** 60, 120 and 240 are one row with the quiet
+  term in as they were without it, because the term is a share of the objective and the value
+  moves both sides of the trade at once. Leave it at 120; the live range is still 30 to 60 and
+  nothing in it is a win.
 - **`ObjectiveHorizon` and `ObjectiveValue` are one dial, measured.** Below the journey the horizon
   is stretched and inert; above it the scorer answers to value per point of ground, so horizon 16
   at 120 plays exactly like horizon 4 at 30. Do not tune the two separately.
@@ -431,11 +460,11 @@ the ones that block or shape what Core does next.
   a turn: their reachable set and a trace per node, inside every shot appraisal, per destination.
   A search inside a score. `AppraiseWord` has the same gap from the other side. Profile before
   attempting it; the obvious fix is caching the reachable set per unit per decision.
-- **A shot that kills its target still gives you away to the target.** `GivenAway` counts the man
-  being shot at among the people who now know where you are, and if he goes down he is not
-  anybody. That is the entire argument for the quiet kill and the model does not make it. Fixing
-  it means the announcement preview knowing which enemies survive the shot it is previewing,
-  which is a small change to `WouldAnnounce` and a fiddly one to get right.
+- **A shot that kills its target still gives you away to the target, in `GivenAway`.**
+  `Tactician.Blowing` now counts him only at the chance he survives, which is the quiet kill
+  priced for the mission; `GivenAway` still counts him in full for the fight. The same
+  announcement preview also leaves out the target's relay to his friends — entry 086, View's
+  finding, now with the mission term as a second consumer.
 - **`MarkerDecay` is the second dial to watch.** At a half per round past the fresh two, a marker
   three rounds old is worth a quarter of a sighting, and the trace of the acceptance test shows
   it fading to nothing in five. Whether that is too quick to hunt with or too slow to stop

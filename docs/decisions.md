@@ -4435,3 +4435,239 @@ this; the two runs end the same, the pictures differing by 38 pixels along a gho
 arguably another brief's. **Found and left for brief five:** when a hostile's turn stops at a window,
 the situation block describes that hostile, including the exact certainty it holds on each of ours —
 the enemy's contact file as a number, which contract 3 forbids.
+
+## 087 — Being seen is priced, the clock is a rate, and the squad walked its first turn blind
+**2026-09-12** · **Raised by** core · **For** core, content, master · **Status** open — item 1 under *For Content* is the grammar the instrument arm stands in for; item 2 under *For Master* is the next brief
+
+Entry 083's headline was that nothing wins the waystation because nothing prices getting there
+unseen. The term exists now, the clock is something the scorer can see, and the batch was run
+again. The mission is still not won, and the batch says why in one line: **the term prices an
+eye the soldier has registered, and the scout walks its first turn into the view of a man it
+will only register at the end of it.** Handed what its own briefing says, the squad behaves
+differently from the first move; whether it should be handed that is the design question this
+entry raises.
+
+### The term
+
+`Tactician.Keeping` is one more share of the objective. For each enemy, what they will hold on
+this soldier after the action — the rung they hold now, plus the look the new pose hands them on
+their next turn, plus what the noise hands them — is read as a share of the way to the rung the
+mission is lost at, and the worst of them is how much of the mission is gone. An action is worth
+the difference between that reading for the pose after and the pose before, times
+`ObjectiveValue`. It goes in `Prospect` beside `TowardObjective`, undiscounted, and it is nought
+for a side with no objective or one that tolerates the top of the ladder.
+
+Four choices, each deliberate:
+
+- **A slope up to the rung, not a cliff at it.** The brief asked for this to be settled. The win
+  condition is a cliff, but the reading is reached by accumulation, and a one-step search priced
+  against the cliff alone would walk a soldier to one point short of it and then find every move
+  and the sentry's own next look costing the whole mission. It is the same curve `Told` already
+  uses for how much closer to acting a listener gets, with the mission's bar and the mission's
+  price. Entry 044's argument, a third time.
+- **The worst enemy, not the sum.** One over the bar loses the mission; a second loses nothing
+  more. So going loud is free once you are seen, which is the briefing's own line. It also means
+  the term cannot tell sixty out of fifty from two hundred out of fifty — the fight consequence of
+  the second is `Aimed`'s to price, and it does.
+- **A soldier's own reading, not the squad's worst.** A contact decays and a witness can be
+  silenced; a squad that stopped being careful the moment one of its own was noticed would throw
+  the recovery away. Each keeps itself quiet.
+- **Read against `Sensed`, not `Known`.** A new list on the Tactician: the same contacts as
+  `Known`, down to Suspicious. A soldier does not shoot at something it has half-glimpsed, and a
+  careful one does not walk into the view of a place it registered something in.
+
+And the quiet kill is priced at last: a shot counts the man being shot at only at the chance he
+survives it, because `Forget` takes what he held with him. The open question in entry 083's list
+about this closes for the mission term and stays open for `GivenAway`, which still counts him in
+full.
+
+**Entry 086's hole is inherited, and it now has two consumers.** `Blowing` reads the same
+`WouldAnnounce` that `GivenAway` and View's bill line read, so a shot that does not drop a radio
+carrier is priced without the relay that tells his friends and raises the alarm. For the mission
+term the margin is the one the preview's remarks describe — a relayed contact arrives at
+`RelayFraction` of Alerted, forty-five, under a bar of fifty — and it is thin twice over here:
+forty-five banked is what the next look carries over the rung, and the alarm the relay raises is
+what starts the clock this entry just made the scorer see. The preview with the relay in it, or
+the second query 086 asks for, is the fix for all three at once; nothing here builds it.
+
+### The clock, as a rate
+
+A per-action scorer cannot price time. What it can see is a rate, so `Objective.Urgency` stretches
+the journey's slope by the ratio of the mission's length to the night left, in the same action
+points: one while the night is at least as long as the mission, steeper once it is not, read live
+because the alarm half of a deadline is not known until it happens. **Stretched rather than
+re-sloped over the night.** The first version took the larger of two slopes and was wrong twice
+over: when the night is long the night's line is higher and flatter, not steeper, and when it is
+short a soldier further from home than the night allows reads as nothing and stops wanting home.
+The stretch keeps every stride worth something however late it is, and lets `Progress` read above
+one, which only a display would notice. `WorkWorth` now prices the charge through two `Toward`
+readings rather than `PerPoint`, which is the all-night rate.
+
+### What the batch said
+
+The same instrument, the same seeds, the same arms as entry 083, with the term and the clock in.
+Read each row against 083's; the pairing is exact.
+
+**What an objective is worth**, blind — the squad knowing nothing until it looks:
+
+| `ObjectiveValue` | looked | alarm out | our shots / theirs | ours down / theirs | got out | rounds | achieved |
+|---|---|---|---|---|---|---|---|
+| 15 | 90 | 95 | 3.4 / 4.6 | 0.87 / 1.12 | 1.23 | 30.7 | 0 |
+| 30 | 100 | 91 | 2.7 / 4.6 | 0.78 / 1.01 | 2.13 | 10.2 | **2** |
+| 60 | 100 | **68** | 0.3 / 3.2 | 0.86 / 0.01 | 2.14 | 4.4 | 0 |
+| **120** shipped | 100 | **68** | 0.2 / 3.2 | 0.85 / 0.00 | 2.15 | 4.2 | 0 |
+| 240 | 100 | 68 | 0.2 / 3.2 | 0.85 / 0.00 | 2.15 | 4.2 | 0 |
+
+And the worst rung any hostile held on each soldier, at the shipped value, matches of a hundred:
+
+| | unaware | suspicious | searching | alerted | engaged |
+|---|---|---|---|---|---|
+| Vance, the scout who goes in | 0 | 0 | 0 | 0 | **100** |
+| Orsini | 0 | 3 | 54 | 10 | 33 |
+| Bekker | 9 | 0 | 51 | 0 | 40 |
+
+- **The term shows, and it shows on the two who do not go first.** The alarm is out in 68
+  matches at 60 and above where it was 88: the followers are keeping out of the eye and the set
+  is worked out less often. At the shipped value Bekker is held below Searching in nine matches
+  and at Searching in half; at 30 Orsini is under Engaged in more than half where entry 083 had
+  him under it in a third. Two matches at 30 are achieved, where that arm had none.
+- **The value is still saturated at 60, and for the same reason.** 60, 120 and 240 are one row
+  again. The term is a share of the objective, so raising the value raises both sides of the
+  trade at once and the ratio between *get there* and *do not be seen* does not move; what
+  moves is both of them against the fight, and above 60 the fight was already not in it.
+- **At 15 the squad gets more of itself home** — 1.23 against 0.78 — and at 30 it does too, in
+  fewer rounds: that is the clock steepening the last rounds of a thirty-round night, which is
+  the only time on this ground the night is shorter than the mission before the alarm.
+- **Vance is Engaged in a hundred of a hundred, in every arm.** That is the finding, and the
+  next section is about it.
+
+**How long three rounds is**, at value 30, against entry 083's rows:
+
+| | looked | got out | ours down / theirs | rounds | achieved |
+|---|---|---|---|---|---|
+| the thirty-round limit alone | 98 → 100 | 1.89 → **2.13** | 0.83 / 0.67 → 0.78 / 1.01 | 13.3 → 10.2 | 2 |
+| five rounds once they know | 96 → 97 | 1.69 → **1.90** | 0.81 / 0.61 → 0.76 / 0.82 | 6.8 → 7.0 | 1 |
+| three rounds once they know | 89 → **98** | 1.38 → **1.63** | 0.78 / 0.52 → 0.73 / 0.70 | 6.0 → 6.1 | 1 |
+| one round once they know | 70 → **83** | 0.71 → **0.82** | 0.68 / 0.37 → 0.63 / 0.48 | 4.7 → 4.9 | 1 |
+
+- **The squad can see the clock now, and it reads the right way in every row.** More looks
+  taken, more soldiers off the field, fewer of ours down, at every grace — and the matches are no
+  longer, so it is not buying time with the night. A one-round grace still gets fewer than one
+  soldier home, because one round is one turn each and the exit is two from the house; that is
+  the ground and not the scorer.
+- **It is a modest effect, and it should be.** The stretch only bites once the night is shorter
+  than the mission, which on this ground means after the alarm — and after the alarm the mission
+  is already lost by the letter, so what the clock buys is the roster, which the verdict does not
+  grade. Three is still a harsh figure for the waystation, and still the playtest's to set.
+
+
+### The finding: nothing prices an eye the soldier has not registered
+
+On the waystation the squad deploys on the road the gate sentry watches, twenty-six metres out in
+his front arc. Round one, seed 1, before the term: Vance walks thirteen hexes to the bridge in
+three hops and is seen. After the term: the same three hops, the same scores, because at the
+start of his turn Vance has registered nobody — nobody has looked yet, looking is the end of a
+turn — and the term has nothing to price. Cobb takes his first look before Vance's turn and holds
+Suspicious on all three of ours; Vance takes his at the end of a turn that ended five metres from
+him. Orsini, who goes last in the round, knows Cobb by then, and the transcript shows the term
+working exactly as designed on him: a move to a nearer hex outside Cobb's view scored `+69`, half
+the mission for stepping out of an eye. Bekker, in between, is half and half.
+
+That is not a fault in the term. It is honest about what a soldier knows, and the rules have
+nowhere to hold what the squad is *told*. The briefing's presence part names all four posts —
+*one stands on the road outside the west gate, twenty-five metres out* — and a squad that has
+read it does not walk down that road at full stride. Two things were done about it:
+
+1. **`Battle.Brief(side, unit, rung)`** hands every soldier of a side a marker on an enemy at the
+   post he is deployed to, at the rung given, before `Start`. Through
+   `AwarenessTracker.Brief`, which only raises a contact, sets no line of sight, and decays like
+   any other the moment the soldier looks and does not find him — a briefing is trusted until
+   the ground says otherwise.
+2. **A measured question, `WhatTheSquadKnowsGoingIn`**, that plays the same seeds blind and
+   briefed, the four posts at Searching. The same seeds, the same
+   arms, the term in both:
+
+   | | looked (round) | alarm out | our shots / theirs | ours down / theirs | got out | rounds | achieved |
+   |---|---|---|---|---|---|---|---|
+   | blind, value 120 | 100 (r2) | 68 | 0.2 / 3.2 | 0.85 / 0.00 | 2.15 | 4.2 | 0 |
+   | **briefed, value 120** | 98 (r4) | 84 | 3.0 / 4.1 | 0.76 / 0.50 | 2.16 | 13.5 | 0 |
+   | blind, value 30 | 100 (r4) | 91 | 2.7 / 4.6 | 0.78 / 1.01 | 2.13 | 10.2 | 2 |
+   | briefed, value 30 | 94 (r8) | 91 | 3.5 / 7.5 | 0.79 / 1.24 | 1.73 | 22.2 | 3 |
+
+   And the worst rung held on each soldier, briefed at the shipped value:
+
+   | | unaware | suspicious | searching | alerted | engaged |
+   |---|---|---|---|---|---|
+   | Vance | **47** | 5 | 4 | 8 | 36 |
+   | Orsini | 14 | 1 | 5 | 7 | 73 |
+   | Bekker | 3 | 1 | 0 | 1 | **95** |
+
+   **Briefed, the scout goes in unseen.** In forty-seven matches of a hundred nobody registers
+   Vance at all, and the look is still taken in ninety-eight, two rounds later than blind. The
+   term and the briefing together do the thing the brief asked for, for the soldier who goes in.
+   **And the other two start a war.** Bekker is Engaged in ninety-five, the first shot goes at
+   Cobb or at Teague on the roof, the squad fires three times a match where blind it fired a
+   fifth of once, and the alarm is out in eighty-four. So the mission is still achieved nowhere
+   at the shipped value and three times at 30, and the reason has changed shape: it is no longer
+   the one who goes first walking blind, it is the two who stay back finding four markers at full
+   credence in their contact files and doing what a commander does with markers — walking to
+   where a shot on one would open, and throwing at the ground under it. The term prices the
+   throw and the walk; what it cannot do is hold a soldier who counts himself already seen, and
+   after one look from the roof the followers do.
+
+### Two things the transcript showed that are not this entry's to act on
+
+- **A walk split into hops is quieter than the same walk taken in one.** `Hear` prices a move by
+  its own effort, so the radius of three short hops is three short radii and the certainty they
+  hand a listener is less than one long walk's — and the greedy search takes hops. That is the
+  noise model rather than the scorer, and whether a sound should carry by the ground covered
+  since the listener last heard is a question for the awareness model. Entry 037 measured the
+  walk's loudness; nobody has measured it per hop.
+- **`Postures` yields nothing with no known threat**, so a stance change to get out of a merely
+  suspected sentry's eye is never offered, while a move is. The commander still hands `Known` to
+  everything but the term. Small, and it wants doing with the two search faults of entry 039
+  rather than alone.
+
+### What the instrument itself found
+
+**A batch says nothing until a question finishes.** Three questions at a hundred seeds ran for an
+hour and three quarters in parallel, and for the last hour of it the only way to know how far the
+slowest was through was to guess from the twelve-seed timing. A line per arm as it completes — or
+per seed, to the test output — is a few lines in `Batch.Run` and the next person to run one will
+want it. Also: a testhost holding a batch locks the test assemblies, so nothing else in that
+worktree can build until it exits. Finish the suite first, then launch.
+
+**Briefed matches are three times longer.** Fourteen seconds against four at the shipped value,
+because a squad that creeps and then fights plays thirteen rounds where a squad that runs plays
+four. A hundred seeds of the briefed question is most of an hour on its own.
+
+### For Content
+
+1. **The grammar has nowhere to say what the squad is told.** `Battle.Brief` exists and the
+   instrument arm calls it for all four posts at Searching, which is a stand-in for a line the
+   mission file should carry — the presence part of the briefing is already written in prose,
+   and the deployments it describes are already named. What rung, and which posts (*the last two
+   reports disagree about the fourth*), is the file's to say; a `known` option on `deploy`, or a
+   line of its own, is the shape. Until it lands the file plays blind and the batch plays both.
+
+### For Master
+
+2. **The next brief.** The acceptance test is not met and the shape of what is
+   left is clear. Two things, in this order:
+
+   - **A briefed squad's followers fight.** With four posts in the contact file a commander has
+     threats, and with threats it walks to firing positions on markers and throws at them. The
+     quiet term prices each of those and loses, because the fight terms are scored at full
+     credence against markers the briefing set and nothing ever confirmed — a briefed contact
+     has no `LastContactRound`, so `Credence` reads it as fresh for as long as it lasts. Whether
+     the fix is that a briefing is a *place to avoid* and not a *threat to hunt* (a marker the
+     search keeps out of the eye of and never walks toward), or that a briefed marker starts
+     stale, or that the term should hold a soldier back once *any* of the squad is seen after
+     all, is a design question the transcript of a briefed seed answers in an afternoon. The
+     instrument arm exists; `HEXCOM_TRANSCRIPT` on the content harness does not brief, so the
+     first job is a transcript of a briefed match.
+   - **The two search faults of entry 039**, unchanged and still invisible on a disc.
+
+   And the briefing grammar is Content's, above.
+
+---

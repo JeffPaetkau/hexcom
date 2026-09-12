@@ -558,6 +558,21 @@ there, and what the failure looks like when they are not.
   rather than merely killing. The clock running out is abandonment and not failure: a squad still
   in the field at first light has lost the mission and has not lost the squad.
 
+- **Not being seen is priced** — the term the first measured numbers said was missing. For each
+  enemy, what they will hold on a soldier after an action — what they hold now, the look the new
+  pose hands them, whatever the noise hands them — is read as a share of the way to the rung the
+  mission is lost at, and the worst of them is how much of the mission is gone; an action is worth
+  the difference, times what the objective is worth. A slope up to the rung rather than a cliff at
+  it, so a search one step deep can see it coming. Three things fall out of the shape: going loud
+  is free once you are seen, each soldier keeps itself quiet even after a comrade is noticed, and a
+  shot counts the man being shot at only at the chance he survives it — the quiet kill, priced.
+
+- **The hour, as the scorer sees it.** A per-action scorer cannot price time, so the clock goes
+  into the one rate that matters: the objective's slope is stretched by the ratio of the mission's
+  length to the night left, one while the night is the longer and steeper once it is not. Stretched
+  rather than re-sloped, so a soldier further from home than the night allows is still drawn home
+  rather than stopping wanting it.
+
 - **Maps are text** — `content/maps/*.hexmap`, and `MapLibrary.Load("compound")` from anywhere.
   The format is the corner graph written down: a `tile`, a `chord` between two corners of a hex,
   an authored `link`. Everything friendlier — `fill disc`, `wall solid line 2,-3 to 2,2 nw sw`,
@@ -628,17 +643,18 @@ one moment, so it cannot weigh cutting its losses against pressing on — and it
 offered the choice, which the rules allow and which is one of the three endings. A squad being
 cut to pieces stands and takes it.
 
-**Nothing wins the waystation.** A batch of headless matches — `tests/Hexcom.Core.Tests/Measured`,
-off by default, `HEXCOM_BATCH=1` to run it — played the reconnaissance a hundred times an arm and
-achieved it twice in 2,400. The squad reaches the house and gets its look in nearly every match,
-and is seen in every one, because nothing in the scorer prices getting there unseen. It is
-`docs/decisions.md` entry 083 and the head of Core's next brief. The same batch measured four
-numbers for the first time: what an objective is worth is saturated well below the shipped figure,
-its horizon is the same dial as its value on any journey longer than the horizon, the two cost
-archetypes halve what a squad kills, and a bigger bonus for removing a soldier never makes the
-signaller the first target.
+**Still nothing wins the waystation, and the reason has moved.** A batch of headless matches —
+`tests/Hexcom.Core.Tests/Measured`, off by default, `HEXCOM_BATCH=1` to run it — plays the
+reconnaissance a hundred times an arm. Before being seen was priced, the squad was held at Engaged
+in every match and the mission was a footrace (`docs/decisions.md` entry 083). With it priced,
+the followers keep out of the eye and the alarm goes out in two thirds of matches instead of nine
+tenths, but the scout still walks its first turn blind, because looking happens at the end of a
+turn and the rules had nowhere to hold what the briefing says. Handed the four posts before the
+fight, the scout goes in unregistered in nearly half the matches — and the other two, with four
+markers to hunt, start a war (entry 087). That is the head of Core's next brief.
 
 **Most numbers in the game are still arguments.** Four have been measured; the rest have not.
+What an objective is worth has been measured twice and is saturated both times.
 
 **A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from
 several turns away; a marker does not, so hunting still reaches about one move and two survivors

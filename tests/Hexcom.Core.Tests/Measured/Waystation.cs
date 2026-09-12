@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Hexcom.Content;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
@@ -14,13 +15,13 @@ namespace Hexcom.Core.Tests.Measured;
 /// say.
 /// </summary>
 /// <remarks>
-/// The file carries a withdrawal because until now the rules had no other shape, and it carries
-/// the reconnaissance line it wants beside it, commented out, waiting on Content to uncomment.
-/// Measuring an objective dial against the withdrawal would measure the wrong thing: a withdrawal
-/// on this ground is achieved by turning round and going home, which a dozen matches already do.
-/// So the batch builds the reconnaissance the file describes, off the same places the file
-/// declares, and everything else — the map, the squads, their posts and kit, the clock — comes
-/// off the file unchanged. There is still one copy of the waystation.
+/// The file says reconnaissance now — entry 081 uncommented the line — and this still builds
+/// the objective by hand for one reason: the clock. <c>rounds 30</c> is read by nothing in the
+/// format yet (entry 082's half for Content is open), and an objective's <c>Stop</c> is set at
+/// construction, so the only way to fight the file's mission <em>with</em> the file's hour is to
+/// build the same reconnaissance off the same places and hang the deadline on it here. Everything
+/// else — the map, the squads, their posts and kit, the exit — comes off the file unchanged.
+/// Delete this in favour of <c>Mission.Objectives</c> the day the file writes its own deadline.
 /// </remarks>
 public static class Waystation
 {
@@ -79,8 +80,15 @@ public static class Waystation
     /// from — once, at <c>Start</c>. A horizon handed only to a commander is never read: the first
     /// run of this batch did exactly that and measured the shipped slope six times over.
     /// </param>
+    /// <param name="briefed">
+    /// Hand the squad what its own briefing says: the four posts, as markers at
+    /// <see cref="AwarenessState.Searching"/>, the rung a soldier will go and check. The file's
+    /// <c>presence</c> part names every one of them, and the rules had nowhere to hold it; without
+    /// this the scout walks its first turn blind into the view of a man the briefing describes.
+    /// </param>
     public static Battle Begin(
-        int seed, bool listPrice = false, bool swapPosts = false, Deadline? clock = null, UtilityModel? slope = null)
+        int seed, bool listPrice = false, bool swapPosts = false, Deadline? clock = null, UtilityModel? slope = null,
+        bool briefed = false)
     {
         var battle = new Battle(Mission.LoadMap(), Mission.Metres, seed: seed, utility: slope);
 
@@ -91,6 +99,10 @@ public static class Waystation
 
             battle.Deploy(d.Name, d.Side, new NodeId(d.Where, 0), stats, d.Facing, d.Loadout);
         }
+
+        if (briefed)
+            foreach (var hostile in battle.Units.Where(u => u.Side == Side.Hostile).ToList())
+                battle.Brief(Side.Player, hostile, AwarenessState.Searching);
 
         var exit = Mission.NodesOf("cottages", battle.Graph);
 

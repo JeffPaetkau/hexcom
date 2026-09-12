@@ -113,9 +113,35 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
             ? new Appraisal(
                 Worth(plan),
                 -Model.FutureDiscount * GivenAway(plan),
-                0,
+                Blowing(plan),
                 Price(plan.ApCost))
             : Appraisal.Nothing;
+
+    /// <summary>
+    /// What firing this shot costs the mission, in vitality: never more than nothing.
+    /// </summary>
+    /// <remarks>
+    /// The same announcements <see cref="GivenAway(ShotPlan)"/> reads, priced against the rung the
+    /// mission is lost at rather than against what the listeners could do about it — see
+    /// <see cref="Quiet"/>. One thing is different here and it is the whole argument for the
+    /// quiet kill: the man being shot at is counted only at the chance he is still standing
+    /// afterwards. If the round puts him down, whatever he learned goes with him, because the
+    /// battle forgets everything a departed soldier held. Everybody else who heard it is
+    /// counted in full — the noise happened.
+    /// </remarks>
+    public double Blowing(ShotPlan plan)
+    {
+        if (Bar(plan.Shooter) <= 0) return 0;
+
+        var survives = 1.0 - battle.Gunnery.Expect(plan).DownChance;
+        var heard = battle.Awareness.WouldAnnounce(plan.Shooter, plan.From, plan.Weapon, plan.Target)
+            .Select(word => word.Learner == plan.Target
+                ? word with { After = word.Before + survives * word.Gained }
+                : word)
+            .ToList();
+
+        return Model.ObjectiveValue * (Quiet(plan.Shooter, plan.From, [], heard) - Quiet(plan.Shooter, plan.From, []));
+    }
 
     /// <summary>
     /// What firing this shot hands the other side, in vitality.
@@ -234,9 +260,24 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
             ? new Appraisal(
                 Worth(plan),
                 -Model.FutureDiscount * GivenAway(plan),
-                0,
+                Blowing(plan),
                 Price(plan.ApCost) + Model.ChargeValue)
             : Appraisal.Nothing;
+
+    /// <summary>What the bang costs the mission, in vitality: never more than nothing.</summary>
+    /// <remarks>
+    /// The noise is heard at the crater and marks the thrower there, so what it hands the other
+    /// side about <em>where you are</em> is cheap — but what it hands them about <em>that you
+    /// are</em> is the rung, and the rung is what the mission is judged on. A charge is the
+    /// loudest thing on the field and this is where a squad told not to be seen learns that.
+    /// </remarks>
+    public double Blowing(BlastPlan plan)
+    {
+        if (plan.Thrower is not { } thrower || Bar(thrower) <= 0) return 0;
+
+        var pose = UnitPose.Of(thrower);
+        return Model.ObjectiveValue * (Quiet(thrower, pose, [], battle.WouldAnnounce(plan).ToList()) - Quiet(thrower, pose, []));
+    }
 
     /// <summary>What the bang hands the other side, in vitality.</summary>
     public double GivenAway(BlastPlan plan)
@@ -317,10 +358,15 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// the one thing a walk has that a turn does not.
     /// </para>
     /// </remarks>
-    public Appraisal AppraisePosture(Unit unit, UnitPose after, int apCost, IReadOnlyList<Threat> threats)
+    /// <param name="noise">
+    /// What getting into that pose would be heard doing, for a pose reached by walking. Nothing
+    /// for a turn or a change of stance, which are silent.
+    /// </param>
+    public Appraisal AppraisePosture(
+        Unit unit, UnitPose after, int apCost, IReadOnlyList<Threat> threats, IReadOnlyList<Announcement>? noise = null)
     {
         var before = UnitPose.Of(unit);
-        if (after == before) return new Appraisal(0, 0, 0, Price(apCost));
+        if (after == before && (noise is null || noise.Count == 0)) return new Appraisal(0, 0, 0, Price(apCost));
 
         var spared = 0.0;
         var prospect = 0.0;
@@ -336,9 +382,120 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
         return new Appraisal(
             0,
             Model.FutureDiscount * spared,
-            Model.FutureDiscount * prospect,
+            Model.FutureDiscount * prospect + Keeping(unit, before, after, noise),
             Price(apCost));
     }
+
+    // ---- not being seen --------------------------------------------------------
+
+    /// <summary>
+    /// What ending up standing like that, having made that noise, does to the mission, in
+    /// vitality. Positive for a pose that takes you out of somebody's eye, negative for one that
+    /// puts you in it.
+    /// </summary>
+    /// <remarks>
+    /// The term that was missing, and entry 083 in <c>docs/decisions.md</c> measured what its
+    /// absence cost: a hundred paired seeds on the waystation in every arm, the squad seen in
+    /// every one, the mission won twice in two thousand four hundred. The objective paid for
+    /// getting there and getting home, and nothing paid for getting there unseen — so a
+    /// reconnaissance was scored as a race and run as one.
+    /// <para>
+    /// Undiscounted, like the objective it is a share of and unlike a posture's other terms: a
+    /// posture is a bet on next round, and the mission is the reason the squad is on the map.
+    /// And a difference between two poses rather than a reading of one, for the reason
+    /// <see cref="AppraisePosture"/> gives for everything else it scores — a soldier standing in a
+    /// sentry's eye has to be able to see that stepping out of it is worth something, and a
+    /// reading of the pose after alone would have staying put score nothing and moving cost the
+    /// walk.
+    /// </para>
+    /// </remarks>
+    public double Keeping(Unit unit, UnitPose before, UnitPose after, IReadOnlyList<Announcement>? noise = null)
+    {
+        if (Bar(unit) <= 0) return 0;
+
+        var sensed = Sensed(unit);
+        return Model.ObjectiveValue * (Quiet(unit, after, sensed, noise) - Quiet(unit, before, sensed));
+    }
+
+    /// <summary>
+    /// How much of the mission a soldier standing like that, making that noise, keeps: all of it
+    /// while nobody is anywhere near the rung the mission is lost at, none once somebody will be
+    /// over it.
+    /// </summary>
+    /// <remarks>
+    /// <b>A slope up to the rung, not a cliff at it</b>, and the brief asked for that to be
+    /// settled deliberately. The win condition is a cliff: the departure reading is either over
+    /// the bar or it is not. But the reading is reached by accumulation — a look a turn, a noise
+    /// a move — and a search one step deep priced against the cliff alone would walk a soldier
+    /// happily to one point short of it and then find that every remaining move, and the
+    /// sentry's own next look, costs the whole mission. That is entry 044's argument for
+    /// gradients over flags again, from the other side: what is priced here is how far up the
+    /// ladder somebody is, which is as much of a bet on the mission as the certainty figure is a
+    /// bet on the man. It is the same curve <see cref="GivenAway(ShotPlan)"/> uses for how much
+    /// closer to acting a listener gets — a share of the way to a bar — with the mission's bar in
+    /// place of the one a listener acts at, and the mission in place of what the listener could do.
+    /// <para>
+    /// <b>Three things go into what each enemy will hold.</b> What they hold now, read as the
+    /// rung and never the number, for the reason <see cref="Aimed"/> gives: the enemy's certainty
+    /// about you is the one figure this game blurs on purpose. The look the pose hands them on
+    /// their next turn, from where the soldier believes they are — in view, exactly; at a marker,
+    /// averaged over every way they could be facing and discounted for how stale the marker is.
+    /// And whatever the noise hands them, if there is noise. Read against every enemy who has
+    /// registered anything at all, not only the ones this soldier would shoot at: a place you
+    /// half-glimpsed something in is a place to keep out of the eye of, well before it is
+    /// somebody to fire on.
+    /// </para>
+    /// <para>
+    /// <b>The worst of them, not the sum</b>, because one enemy over the bar loses the mission
+    /// and a second one over it loses nothing more. That is also what makes going loud free once
+    /// you are seen: a soldier already held at the rung has nothing left here to keep, and the
+    /// scorer knows it, which is the briefing's own line — if the shift sees you the task is
+    /// over. And it is a soldier's own reading rather than the squad's worst, deliberately. The
+    /// mission is lost by any one of them being seen, but a contact decays and a witness can be
+    /// silenced, and a squad that stopped being careful the moment one of its own was noticed
+    /// would be throwing away the recovery; each soldier keeps itself quiet.
+    /// </para>
+    /// </remarks>
+    /// <param name="threats">Everybody whose next look is to be priced, from <see cref="Sensed"/>.</param>
+    /// <param name="noise">What the listeners would be handed, from a walk or a shot. Null for silence.</param>
+    public double Quiet(Unit unit, UnitPose pose, IReadOnlyList<Threat> threats, IReadOnlyList<Announcement>? noise = null)
+    {
+        var bar = Bar(unit);
+        if (bar <= 0) return 1;
+
+        var awareness = battle.Awareness;
+        var held = new Dictionary<UnitId, double>();
+
+        foreach (var contact in awareness.ContactsOn(unit.Id))
+            held[contact.Observer] = awareness.Model.Threshold(contact.State);
+
+        foreach (var threat in threats)
+            held[threat.Unit.Id] = held.GetValueOrDefault(threat.Unit.Id) + threat.Credence * Coming(threat, pose);
+
+        if (noise is not null)
+            foreach (var word in noise)
+                held[word.Learner.Id] = held.GetValueOrDefault(word.Learner.Id) + Math.Max(0, word.Gained);
+
+        var worst = 0.0;
+        foreach (var figure in held.Values) worst = Math.Max(worst, Math.Clamp(figure / bar, 0, 1));
+
+        return 1 - worst;
+    }
+
+    /// <summary>
+    /// The certainty at which somebody holding it on one of this unit's side has lost them the
+    /// mission, or nought for a soldier whose mission cannot be lost that way.
+    /// </summary>
+    /// <remarks>
+    /// One rung above what the objective tolerates, read off the same four numbers the ladder
+    /// is. A mission that tolerates the top rung has no rung above it, and the threshold of a
+    /// rung that does not exist is nought, which is what makes every term derived from this
+    /// vanish for a side with no objective, or with one that being seen cannot cost.
+    /// </remarks>
+    public double Bar(Unit unit)
+        => battle.ObjectiveOf(unit.Side) is { } objective
+            ? battle.Awareness.Model.Threshold(objective.Unnoticed + 1)
+            : 0;
 
     /// <summary>
     /// What being somewhere is worth toward what this soldier came to do.
@@ -377,10 +534,20 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// <summary>
     /// What putting action points into the job is worth: the rate walking toward it earns.
     /// </summary>
+    /// <remarks>
+    /// The difference of two readings rather than a rate times the points, because the rate is
+    /// only constant while there is all night. Once the hour is closing the slope steepens, and a
+    /// stride spent on the charge has to earn what a stride walked toward it would.
+    /// </remarks>
     public double WorkWorth(Unit unit, int points)
-        => battle.ObjectiveOf(unit.Side) is { } objective
-            ? Model.ObjectiveValue * objective.PerPoint * points
-            : 0;
+    {
+        if (battle.ObjectiveOf(unit.Side) is not { } objective) return 0;
+
+        var owed = objective.Owed(battle, unit.Position);
+        if (owed == int.MaxValue) return 0;
+
+        return Model.ObjectiveValue * (objective.Toward(battle, Math.Max(0, owed - points)) - objective.Toward(battle, owed));
+    }
 
     public double TowardObjective(Unit unit, NodeId at)
         => battle.ObjectiveOf(unit.Side) is { } objective
@@ -403,12 +570,16 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// <param name="loudness">What the route makes, from <see cref="Battle.Loudness"/>.</param>
     public Appraisal AppraiseMove(
         Unit unit, UnitPose arriving, int apCost, double loudness, IReadOnlyList<Threat> threats)
-        => AppraisePosture(unit, arriving, apCost, threats)
-           + new Appraisal(
-               0,
-               -Model.FutureDiscount * GivenAway(unit, arriving, loudness),
-               TowardObjective(unit, arriving.Position) - TowardObjective(unit, unit.Position),
-               0);
+    {
+        var heard = battle.Awareness.WouldHear(unit, arriving.Position, loudness).ToList();
+
+        return AppraisePosture(unit, arriving, apCost, threats, heard)
+               + new Appraisal(
+                   0,
+                   -Model.FutureDiscount * Told(heard, new Threat(unit, arriving)),
+                   TowardObjective(unit, arriving.Position) - TowardObjective(unit, unit.Position),
+                   0);
+    }
 
     /// <summary>
     /// The worst one shot from this threat would do to a soldier standing like that, weighed by
@@ -476,12 +647,22 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
         if (bar <= 0) return 1.0;
 
         var held = awareness.Model.Threshold(awareness.ReadoutFor(threat.Unit.Id, target.Id).State);
-        var coming = threat.EyesOn
+
+        return Math.Clamp((held + Coming(threat, pose)) / bar, 0, 1);
+    }
+
+    /// <summary>
+    /// What one look from this threat, on its next turn, would hand it about a soldier standing
+    /// like that: exactly, for a threat in view; averaged over every facing, for a marker.
+    /// </summary>
+    private double Coming(Threat threat, UnitPose pose)
+    {
+        var awareness = battle.Awareness;
+
+        return threat.EyesOn
             ? awareness.WouldNotice(threat.Unit, threat.Where, pose)
             : HexDirectionExtensions.All.Average(
                 facing => awareness.WouldNotice(threat.Unit, threat.Where with { Facing = facing }, pose));
-
-        return Math.Clamp((held + coming) / bar, 0, 1);
     }
 
     /// <summary>What being able to see this threat from that pose is worth.</summary>
@@ -647,11 +828,26 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// they are still <em>there</em>.
     /// </para>
     /// </remarks>
-    public IEnumerable<Threat> Known(Unit unit)
+    public IEnumerable<Threat> Known(Unit unit) => Known(unit, Model.ActsOn);
+
+    /// <summary>
+    /// Everybody this unit has registered at all: the same contacts as <see cref="Known(Unit)"/>, down
+    /// to a suspicion.
+    /// </summary>
+    /// <remarks>
+    /// Not for shooting at, or for standing well against — a soldier does not aim at something
+    /// it has half-glimpsed, and <see cref="Known(Unit)"/> stops at the rung where it would. For
+    /// keeping out of an eye, a suspicion is plenty: a careful soldier does not walk into the
+    /// view of a place it registered <em>something</em> in, and the term that prices not being
+    /// seen reads this list so that it can say so.
+    /// </remarks>
+    public IReadOnlyList<Threat> Sensed(Unit unit) => Known(unit, AwarenessState.Suspicious).ToList();
+
+    private IEnumerable<Threat> Known(Unit unit, AwarenessState atLeast)
     {
         foreach (var contact in battle.Awareness.ContactsFor(unit.Id))
         {
-            if (contact.State < Model.ActsOn) continue;
+            if (contact.State < atLeast) continue;
             if (battle.GetUnit(contact.Subject) is not { InPlay: true } other) continue;
             if (!other.IsHostileTo(unit)) continue;
 

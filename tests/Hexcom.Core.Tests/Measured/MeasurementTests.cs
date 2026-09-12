@@ -230,6 +230,37 @@ public class WhetherTheQuietOneIsTheMan(ITestOutputHelper output) : Measured(out
 }
 
 /// <summary>
+/// What the squad knows going in.
+/// </summary>
+/// <remarks>
+/// The term that prices being seen is honest about what a soldier knows, and on the waystation a
+/// soldier knows nothing until the end of its first turn — which it walks at full stride into the
+/// view of a sentry its own briefing names. This asks what the term does once the squad is handed
+/// the briefing's <c>presence</c> part as markers, against the same seeds blind.
+/// </remarks>
+public class WhatTheSquadKnowsGoingIn(ITestOutputHelper output) : Measured(output)
+{
+    [BatchFact]
+    public void Measure()
+    {
+        var arms = new[] { false, true }.SelectMany(briefed => new[]
+        {
+            Batch.Run(
+                $"{(briefed ? "briefed" : "blind")} at the shipped value",
+                Measurement.Seeds,
+                seed => Waystation.Begin(seed, briefed: briefed)),
+            Batch.Run(
+                $"{(briefed ? "briefed" : "blind")} at {Fighting:0}",
+                Measurement.Seeds,
+                seed => Waystation.Begin(seed, briefed: briefed),
+                ours: Ours(Fighting)),
+        });
+
+        Report("What the squad knows going in", arms);
+    }
+}
+
+/// <summary>
 /// The mission clock, end to end, on the ground it was written for.
 /// </summary>
 /// <remarks>
