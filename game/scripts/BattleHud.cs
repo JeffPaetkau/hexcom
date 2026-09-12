@@ -302,30 +302,43 @@ public sealed class BattleHud(Font font)
         if (frame.Open is not { } window) return [];
 
         var mover = window.Mover;
-        var answered = window.Placements.Count;
+        var offers = frame.Answerable;
+        var answered = offers.Count(o => window.Placements.Any(p => p.Reactor == o.Reactor));
 
         var what = window.IsAmbush
             ? $"{window.SprungBy!.Name} springs on {mover.Name}, standing at {mover.Position}"
             : $"{mover.Name} has paid for {window.Move.Start} to {window.Move.Destination}, "
               + $"{window.Move.Duration} ticks, and not walked it yet";
 
-        var lines = new List<string>
-        {
-            $"WINDOW OPEN — {what}    {answered} of {window.Offers.Count} answered    "
-            + "tab: whose answer    1-9: pick    space: resolve, recommending the rest",
-        };
+        // Only the offers a player is handed, counted and listed — see SandboxFrame.Answerable. A
+        // count of everybody's would say how many of the other side have a line on the mover.
+        var lines = new List<string> { $"WINDOW OPEN — {what}" };
 
-        for (var i = 0; i < window.Offers.Count; i++)
+        if (offers.Count == 0)
         {
-            var offer = window.Offers[i];
-            var chosen = i == frame.Chooser;
+            lines.Add("nothing here is yours to answer    space: run it");
+            return lines;
+        }
+
+        lines.Add($"space: run it — every answer not changed stands    1-9: change {offers[Chosen(frame, offers)].Reactor.Name}'s    "
+                  + (offers.Count > 1 ? "tab: somebody else's    " : "")
+                  + $"{answered} of {offers.Count} changed");
+
+        for (var i = 0; i < offers.Count; i++)
+        {
+            var offer = offers[i];
+            var chosen = i == Chosen(frame, offers);
             var placed = window.Placements.FirstOrDefault(p => p.Reactor == offer.Reactor);
 
             var who = $"{(chosen ? ">" : " ")} {offer.Reactor.Name} ({offer.Kind.ToString().ToLowerInvariant()})"
                       + $"    reserve {offer.Reserve}, purse {offer.Purse}";
 
-            if (placed is not null) { lines.Add($"{who}    ANSWERED: {placed}"); continue; }
-            if (!chosen) { lines.Add($"{who}    {offer.Options.Count} options"); continue; }
+            // The default is drawn as the answer each soldier is already giving, not as a suggestion
+            // beside a question. That is the brief: the genre's overwatch is a state and not an
+            // interaction, and the window recovers it as a default — a soldier on the arc does what
+            // it was set up to do unless somebody says otherwise, and space is saying nothing.
+            if (placed is not null) { lines.Add($"{who}    CHANGED TO: {placed}"); continue; }
+            if (!chosen) { lines.Add($"{who}    will: {offer.Recommended}"); continue; }
 
             lines.Add(who);
             for (var n = 0; n < offer.Options.Count; n++)
@@ -335,12 +348,16 @@ public sealed class BattleHud(Font font)
 
                 lines.Add(
                     $"      {n + 1}  {option}    {worth.Score:+0.00;-0.00} ({Terms(worth)})"
-                    + (option == offer.Recommended ? "    ← recommended" : ""));
+                    + (option == offer.Recommended ? "    ← will, unless changed" : ""));
             }
         }
 
         return lines;
     }
+
+    /// <summary>The chooser, kept inside the list it indexes — it can outlive a change in that list's length by a frame.</summary>
+    private static int Chosen(SandboxFrame frame, IReadOnlyList<ReactionOffer> offers)
+        => System.Math.Clamp(frame.Chooser, 0, offers.Count - 1);
 
     /// <summary>
     /// The keys, parked along the bottom edge where there is nothing else to read.

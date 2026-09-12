@@ -45,7 +45,8 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// The reaction window waiting to be answered, if there is one.
 /// </param>
 /// <param name="Chooser">
-/// Which of that window's offers the keyboard is pointed at. Meaningless without one.
+/// Which of that window's <see cref="Answerable"/> offers the keyboard is pointed at. Meaningless
+/// without one.
 /// </param>
 /// <param name="AnswerByHand">
 /// Whether a move stops at its window rather than taking every recommendation.
@@ -65,6 +66,10 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// <param name="Knowledge">
 /// What our side holds on each hostile in play: eyes on it, or a marker with a credence. A
 /// hostile with no entry is one nobody of ours has heard a thing about.
+/// </param>
+/// <param name="Instruments">
+/// Whether the instruments window is open, which is also what lets a player answer reactions for
+/// the other side. See <see cref="Answerable"/>.
 /// </param>
 /// <param name="AimedAt">
 /// Who the firing mode was last pointed at, as the node remembers it. Read <see cref="Aim"/>,
@@ -104,8 +109,33 @@ public sealed record SandboxFrame(
     bool OutOfTime,
     bool Omniscient,
     IReadOnlyDictionary<UnitId, Threat> Knowledge,
+    bool Instruments,
     Unit? AimedAt)
 {
+    /// <summary>
+    /// The offers in the open window a player is handed: our own side's, or everybody's while the
+    /// instruments are open. <see cref="Chooser"/> indexes into this.
+    /// </summary>
+    public IReadOnlyList<ReactionOffer> Answerable => Open is { } window ? AnswerableIn(window, Instruments) : [];
+
+    /// <summary>The offers in a window a player is handed. See <see cref="Answerable"/>.</summary>
+    /// <remarks>
+    /// <b>Brief six: your own side only, and the other side's behind the same switch as the AI's
+    /// orders.</b> A window used to offer every reactor in it whichever side they were on, which is
+    /// right for a harness that drives both sides and wrong for a player on two counts. Answering
+    /// the enemy's reaction is playing both sides of the fight; and the list itself was a leak, since
+    /// a hostile offered a reaction is a hostile with a line on the mover and a reserve to spend,
+    /// named, whether or not anybody of ours has found it. The hostile offers still exist and still
+    /// get answered — by their recommendation, the same answer <c>Commander</c> would have given —
+    /// they are just not put in front of a player unless the instruments window is.
+    /// <para>
+    /// Static as well as a property because the sandbox has to ask it of a window before that
+    /// window is the open one, to decide whether to stop at it at all.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<ReactionOffer> AnswerableIn(ReactionWindow window, bool instruments)
+        => instruments ? window.Offers : window.Offers.Where(o => o.Reactor.Side == Side.Player).ToList();
+
     /// <summary>
     /// The hostile the active soldier is aiming at, if the firing mode is on and still makes sense.
     /// </summary>

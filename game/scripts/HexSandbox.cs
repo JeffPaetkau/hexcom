@@ -600,12 +600,13 @@ public partial class HexSandbox : Node3D
             _battle, windows: _byHand ? WindowAnswer.HandedOut : WindowAnswer.Recommended);
 
         commander.TakeTurn();
-        SkipEmptyWindows(commander);
+        SkipUnanswerableWindows(commander);
         Record(unit, commander);
     }
 
     /// <summary>
-    /// Run straight past any window nobody was offered anything in.
+    /// Run straight past any window with nothing in it for a player to answer, taking the
+    /// recommendation for whoever was offered something.
     /// </summary>
     /// <remarks>
     /// A commander handing its windows out stops at every one of them, which is right for Core —
@@ -614,10 +615,27 @@ public partial class HexSandbox : Node3D
     /// stopping, and it is the common case rather than the corner: most moves on a map this size
     /// are watched by nobody, so without this the sandbox stops twice a turn to say <em>0 of 0
     /// answered</em> and a script has to spell out a <c>--resolve</c> for each.
+    /// <para>
+    /// <b>Since brief six "nothing to answer" includes "nothing of ours to answer"</b> — see
+    /// <see cref="SandboxFrame.AnswerableIn"/>. The recommendations have to be placed before
+    /// resuming, and that is not tidiness: <c>Commander.Resume</c> treats a window with nothing
+    /// placed as everybody holding fire, so skipping one the way an empty one is skipped would
+    /// quietly switch the other side's reactions off.
+    /// </para>
     /// </remarks>
-    private static void SkipEmptyWindows(Commander commander)
+    private void SkipUnanswerableWindows(Commander commander)
     {
-        while (commander.Waiting is { Offers.Count: 0 }) commander.Resume();
+        while (commander.Waiting is { } window && SandboxFrame.AnswerableIn(window, _instruments.Visible).Count == 0)
+        {
+            window.PlaceRecommended();
+            commander.Resume();
+
+            // A window somebody was offered something in did something, and what the other side did
+            // about a move of ours is a player's to read — it is what stopping at the window used to
+            // put on screen, and skipping it must not take the reaction line away with the question.
+            // An empty window did nothing and leaves the last one standing, as it always has.
+            if (window.Offers.Count > 0) _lastWindow = BattleHud.Describe(window);
+        }
     }
 
     /// <summary>
@@ -735,6 +753,18 @@ public partial class HexSandbox : Node3D
     private void ShowInstruments(bool open)
     {
         _instruments.Visible = open;
+
+        // The window's list of answerable offers just grew or shrank, so the keyboard is pointed
+        // again from the top rather than at an index that now means somebody else. A window left
+        // with nothing of ours in it stays open: closing a window of instruments is not an answer,
+        // and the readout says space runs it.
+        if (Open is not null)
+        {
+            _chooser = -1;
+            NextChooser();
+            Redraw();
+        }
+
         if (!open) return;
 
         // Placed on opening rather than on building: a hidden window has no position worth
@@ -756,7 +786,7 @@ public partial class HexSandbox : Node3D
             _battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto,
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
-            _omniscient, _knowledge, _aim);
+            _omniscient, _knowledge, _instruments.Visible, _aim);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -804,6 +834,17 @@ public partial class HexSandbox : Node3D
             _lastWindow = BattleHud.Describe(_battle.Resolve(commitment));
             AfterMove(mover, commitment.Path);
             return $"moved to {destination}, {commitment.ApCost} AP, nobody could answer";
+        }
+
+        // Somebody could answer, and none of them is a player's to answer: the other side takes its
+        // recommendations and the move goes through, exactly as if windows were not handed out.
+        // See SandboxFrame.AnswerableIn for why their offers are not put in front of anybody.
+        if (SandboxFrame.AnswerableIn(commitment.Window, _instruments.Visible).Count == 0)
+        {
+            commitment.Window.PlaceRecommended();
+            _lastWindow = BattleHud.Describe(_battle.Resolve(commitment));
+            AfterMove(mover, commitment.Path);
+            return $"moved to {destination}, {commitment.ApCost} AP, nobody of ours could answer";
         }
 
         _committed = commitment;
@@ -1256,8 +1297,9 @@ public partial class HexSandbox : Node3D
 
     // ---- answering a window ----------------------------------------------------
 
-    /// <summary>The offers of the open window, or nothing.</summary>
-    private IReadOnlyList<ReactionOffer> Offers => Open?.Offers ?? [];
+    /// <summary>The offers of the open window a player may answer, or nothing. See <see cref="SandboxFrame.AnswerableIn"/>.</summary>
+    private IReadOnlyList<ReactionOffer> Offers
+        => Open is { } window ? SandboxFrame.AnswerableIn(window, _instruments.Visible) : [];
 
     /// <summary>Point the keyboard at the next reactor that has not answered yet.</summary>
     private void NextChooser()
@@ -1289,8 +1331,11 @@ public partial class HexSandbox : Node3D
     {
         if (Open is not { } window) return "no window is open";
 
-        var offer = window.Offers.FirstOrDefault(o => o.Reactor == reactor);
-        if (offer is null) return $"{reactor.Name} was not offered a reaction";
+        var offer = Offers.FirstOrDefault(o => o.Reactor == reactor);
+        if (offer is null)
+            return window.Offers.Any(o => o.Reactor == reactor)
+                ? $"{reactor.Name} is not ours to answer; the instruments window answers for both sides"
+                : $"{reactor.Name} was not offered a reaction";
         if (Answered(reactor)) return $"{reactor.Name} has already answered";
         if (option < 0 || option >= offer.Options.Count)
             return $"{reactor.Name} has {offer.Options.Count} options, not one numbered {option + 1}";
@@ -1335,7 +1380,7 @@ public partial class HexSandbox : Node3D
         // The route the hostile is about to walk, taken before it walks it. This is the only
         // hostile move the view can draw travelling: the window carries its steps, and the
         // sandbox is holding the resolution rather than watching it go past. A hostile move that
-        // nobody could have reacted to opens no window, is resumed past by SkipEmptyWindows, and
+        // nobody could have reacted to opens no window, is resumed past by SkipUnanswerableWindows, and
         // jumps — see the note for Core in decisions entry 066.
         var hostile = window.Mover;
         var route = window.Move.Steps.Select(step => step.Node).ToList();
@@ -1344,7 +1389,7 @@ public partial class HexSandbox : Node3D
         _chooser = 0;
 
         commander.Resume();
-        SkipEmptyWindows(commander);
+        SkipUnanswerableWindows(commander);
 
         _lastWindow = BattleHud.Describe(window);
         Record(unit, commander);

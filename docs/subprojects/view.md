@@ -35,33 +35,25 @@ reaching into `src/`.
 
 ---
 
-## The job — brief six, the window has a default
+## The job — Master's to set
 
-**Next in the order Master set when it promoted brief three**: three had to land first because it
-settled the number-key collision six inherits, and it has — see *What landed on `view/gestures`*
-below. Brief one stays behind the captures in `../interface/captures.md`; take it when they are in.
-If Master has re-ordered the queue since, its order wins and this section is stale.
+**Briefs three and six have both landed, and nothing in this file names the next one.** Brief one is
+still first in value and still waits on the captures in `../interface/captures.md`; the rest of the
+queue in `../interface/briefs.md` is Master's to order, and a session pointed here should ask for
+the next brief rather than pick one.
 
-Branch `view/window-default`. Take a worktree.
+**Merge order, because the two branches are stacked.** `view/window-default` was branched from
+`view/gestures` rather than from `master`, since six inherits three's key decisions and three was
+not merged when six started. Merge `view/gestures` first; `view/window-default` then carries only
+six.
 
-**Read brief six and its amendment in `../interface/briefs.md`, and nothing else from that file** —
-*Six — the window has a default* and *Amending Six*.
+**What the next View brief inherits from these two, so it is not re-argued.**
 
-**What three settled that six inherits, so it is not re-argued.**
-
-- **The window keeps `1`–`9`, `Tab` and space.** Outside a window the same keys aim, cycle targets
-  and confirm a shot; inside one they pick an answer, pick whose answer, and resolve. Both are
-  live only on their own side of the window's modality, so no key ever has two meanings at once.
-  Moving the window's keys would unsettle that, so it wants a reason from the brief.
-- **Right-click and `Esc` back out and never spend a point.** A move inside a window is paid for,
-  so backing out of a window says so and does nothing. If six gives the window a way to be
-  dismissed, it is a dismissal that places the default, not a cancel that refunds the move.
-- **`Ctrl` and `Alt` are still unbound**, reserved for brief one's held disclosure.
-
-**The seam.** `HexSandbox.AnswerKey` is the window's keys and `ResolveOpenWindow` its one exit;
-`--place` and `--resolve` are the script steps, and both must still run unchanged.
-
-**Out of scope.** Brief one. Any rule.
+- **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
+  turn; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
+  `Esc` back out and never spend a point. `Ctrl` and `Alt` are unbound, reserved for brief one.
+- **Whose knowledge is on screen.** A window offers our own side's reactors; the other side's are
+  behind the instruments window, the same switch as the AI's orders.
 
 ---
 
@@ -79,6 +71,69 @@ so it is not rediscovered; it is not urgent and it is not a brief yet.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/window-default`
+
+Brief six. `../decisions.md` entry 083 is the reasoning; this is the shape.
+
+**A window offers our own side's reactors, and the other side's only while the instruments window
+is open.** That was the brief's *settle first*, and its default. `SandboxFrame.Answerable` is the
+list and `SandboxFrame.AnswerableIn` asks it of a window before it is the open one; the chooser, the
+number keys, `Tab`, `--place` and the readout all go through it, so there is no second place a
+hostile's offer can reach the screen. The count in the readout goes through it too — *1 of 3
+answered* would have said how many of the other side have a line on the mover.
+
+**A window with nothing of ours in it does not stop.** The other side takes its recommendations and
+the move goes through, in both places a window is born: `MoveTo` for a move made here, and
+`SkipUnanswerableWindows` — which was `SkipEmptyWindows` — for a turn a `Commander` is taking. **The
+recommendations are placed before resuming, and that is the one thing in this branch that would
+have been easy to get wrong**: `Commander.Resume` reads a window with nothing placed as everybody
+holding fire, so skipping one the way an empty window is skipped would have switched the other side's
+reactions off without a trace.
+
+**The default is drawn as a state, not a suggestion.** Every one of ours not being chosen for reads
+*will: Vance goes Prone at t15*; the one being chosen for lists its options with *← will, unless
+changed*; one already answered reads *CHANGED TO*. The header says what space does in words —
+*run it, every answer not changed stands* — so the common case is one key, and the brief's own
+framing is what the words say: overwatch is a state the soldier is in, and the window is where you
+may overrule it. Before this the readout said *recommended*, which is advice, and space's clause was
+at the far end of a long line.
+
+**Why a scored window rather than the alternative the amendment names.** Tactical Breach Wizards'
+reactions are named abilities a soldier owns. A scored window is what makes a default answer possible
+at all — `ReactionWindow.Appraise` ranks arbitrary soldiers and options — and a per-ability reaction
+has nothing to default to.
+
+**Closing or opening the instruments mid-window** re-points the chooser from the top, and a window
+left with nothing of ours in it stays open and says *nothing here is yours to answer — space: run
+it*. Closing a window of instruments is not an answer to anything.
+
+**What was measured.**
+
+- **The recorded scripts run unchanged**: `--windows --ai --omniscient --pass 30 --place Vance:1
+  --resolve --pass 2` prints the same steps as on master.
+- **Skipping a hostile-only window is the same battle as windows off.** The reaction script on the
+  compound with `--windows` added — Orsini across Watchman's narrow arc — now moves straight through
+  (*nobody of ours could answer*) and the capture is **byte-identical** to the same script without
+  `--windows`. With `--instruments` it stops, and offers Watchman.
+- **A whole waystation mission, both sides on the AI, one step per window.** Ninety `--ai-turn
+  --resolve` pairs with `--windows --ai`, run on brief three's code and on this. Three's stopped at
+  two windows, both of them asking the player to answer *the enemy's* reaction to one of our moves;
+  this stopped at none. The mission ends *abandoned* in round 3 on both, with the same reaction line,
+  strip and readouts — the pictures differ by 38 pixels along one ghosted wall edge and in nothing a
+  label or a body carries.
+
+**One thing lost, and it is small.** A move that stopped at its window used to be walked along its
+route when the window resolved. A skipped window's move jumps, which is what an empty window's move
+has always done. The moves affected are our own soldiers' turns handed to the AI with `J`, an
+instrument, and the walk for an AI turn is already partial — entry 066.
+
+**The amendment's arc adjust step was not built.** Both shipped precedents give a held arc an adjust
+step before confirming, and `V` takes an arc in one press and charges for each. The amendment itself
+calls it arguably another brief's; it is an open question below, and it belongs with brief two's
+drawing of the arc if it is taken.
 
 ---
 
@@ -501,7 +556,8 @@ Entry 049 is the reasoning; this is the shape.
   it on; a move then becomes `Commit`, a pause, and `Resolve`, and a hostile turn goes to a
   `Commander` built with `WindowAnswer.HandedOut`. `HexSandbox.Open` is the one question the rest
   of the code asks, because from the interface's side the two cases are identical.
-- **Windows with no offers are skipped**, in `SkipEmptyWindows`. Core stops at every window when
+- **Windows with no offers are skipped**, in `SkipEmptyWindows` — `SkipUnanswerableWindows` since
+  brief six, which skips windows with no offers *of ours* too. Core stops at every window when
   it is handing them out and is right to; a screen that stopped to ask a question with no answers
   in it would stop twice a turn on this map.
 - **The committed route is drawn** while a window is open, with the tick each step lands on,
@@ -853,6 +909,15 @@ Entry 053 records the count.
   back-out from an orbit. Before brief three a misread drag was a shot nobody meant; now it is an
   aim dropped. If it ever becomes a shot again — any binding that spends points on a right *click* —
   the slop is back to being the only thing between a camera turn and an irreversible action.
+- **Skipping a window is placing its recommendations and then resuming, never just resuming.**
+  `Commander.Resume` and `Battle.Resolve` both treat what was placed as the whole answer, so a window
+  resumed with nothing in it is everybody in it holding fire. That was harmless while only empty
+  windows were skipped and is not now that windows the other side could answer are. Anything new
+  that runs past a window — a fast-forward, a second skip — places first.
+- **Every list of a window's offers goes through `Answerable`, including counts.** The readout, the
+  chooser, the number keys, `Tab` and `--place` all read the filtered list; `window.Offers` is read
+  directly only to decide whether a window did anything at all. A readout that counted the raw list
+  would say how many hostiles have a line on the mover, named or not.
 - **A window is modal, and the camera keys are the exception.** While one is open the battle is
   held still around a question, so only the answers and the camera do anything. Looking is not
   answering, and the reactor being chosen for is usually somewhere else on the map.
@@ -1024,7 +1089,7 @@ hostile side to the AI.
 | `1` · tab | aim at the hostile under the cursor or else the nearest · aim at the next in sight |
 | space, enter | fire while aiming; end the turn while not |
 | right-click, `Esc` | back out: the aim, or else the briefing |
-| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
+| tab, `1`–`9`, space | while a window is open: whose answer, change it, and run it — every answer not changed stands; only our side's reactors are offered unless the instruments window is open |
 
 | Posture — **player's legend** | |
 |---|---|
@@ -1085,7 +1150,11 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --s
 sentry holding an arc answered it, and the reaction line says what it did.
 
 With `--windows`, a move stops at its reaction window instead and the picture can be taken with
-the question still on screen. `--windows --ai --omniscient --pass 30 --zoom 40` on the waystation
+the question still on screen — **if one of ours is offered an answer in it.** A window only the
+other side could answer runs at once on its recommendations, since brief six; add `--instruments`
+to stop at those too and answer for both sides. So the command above with `--windows` added moves
+Orsini straight through, byte-identical to the command without it, and with `--instruments` as
+well it stops with Watchman offered. `--windows --ai --omniscient --pass 30 --zoom 40` on the waystation
 stops in round 4 with the sentry committed to a 15-tick walk it has not taken, Vance offered three
 answers and their scores, and the route drawn out of the sentry with the tick each step lands on.
 `--ai --pass 16 --zoom 60` without `--omniscient` is the game's own view of the same fight two
@@ -1265,13 +1334,21 @@ Desktop-only is the design and Windows is the machine.
   leaks nothing the window did not. But the two together now draw a moving line out of a soldier
   the picture is not showing, which is a stronger claim than a static one, and nobody has watched
   it happen yet.
-- **Whether a player should be answering the enemy's reactions.** The sandbox drives both sides
-  by hand, so an open window offers every reactor in it whichever side they are on — which is
-  right for a thing built to try both sides and is not what a shipped interface would do. The
-  window readout says whose each offer is; nothing stops you answering for the other lot. Same
-  family as the orders readout, which is the opponent's mind and lives in the instruments window.
-  It has got sharper rather than easier: answering the enemy's reactions is now the *default*,
-  since the keys open with windows handed out.
+- ~~**Whether a player should be answering the enemy's reactions.**~~ Answered by brief six and
+  entry 083: no. A window offers our side's reactors, and the other side's are behind the
+  instruments window, the same switch as the orders readout.
+- **Whether a held arc gets an adjust step.** Brief six's amendment: Phoenix Point adjusts the cone
+  before confirming and Warhounds' guides single out enter, adjust and cancel as what makes
+  overwatch usable. `V` takes the next arc in one press and charges for each, so finding the one you
+  want can cost three declarations. Cheap, and it would be a second mode beside the firing mode — it
+  should take the same keys (space confirms, right-click backs out) if it is built. The amendment
+  calls it arguably brief two's or a job of its own.
+- **Whether the top block should describe a hostile who is up.** When a hostile's turn stops at a
+  window in the game's own view, the situation block is the hostile's: its reserve, what it is
+  *taking seriously* and the exact certainty it holds on each of ours (*you hold 63/100*). That is
+  the enemy's contact file as a number, which contract 3 says stays a rung, and it is the pause that
+  brief five is about. Found while capturing brief six's window and not touched, since it is five's
+  seam rather than six's.
 - **Whether the mission line belongs to a player at all, or only to a tester.** It shows the
   verdict, which is the scoreboard, and the reading each departed soldier left with, which is
   how the mission is judged. Both are ours by contract 3, so there is no leak; the question is

@@ -4152,3 +4152,40 @@ gesture. Whether the one-slot action bar should be drawn. `Ctrl` and `Alt` stay 
 waystation and the reaction script with a shot on the compound print identical steps, and the pinned
 scene differs only in the legend's rows. **Not measured:** the mouse and the keys themselves, since a
 capture is deaf. The play-through is where they are checked.
+
+---
+
+## 083 — A reaction window offers your own side, and a window with nothing of yours in it does not stop
+**2026-09-12** · **Raised by** view · **For** view, interface, master · **Status** resolved
+
+Brief six, built on `view/window-default`, which is stacked on `view/gestures` and merges after it.
+
+**Settled first, as the brief asked: whose windows a player is offered.** Our own side's reactors.
+The other side's are behind the instruments window, the switch the AI's orders already sit behind.
+The brief's argument was the harness one — answering the enemy's reaction is playing both sides. The
+stronger one turned up while building it: **the list was a leak**. A hostile offered a reaction is a
+hostile with a line on the mover and a reserve to spend, and the window named it whether or not
+anybody of ours had found it. So the filter goes everywhere a window's offers reach the screen,
+counts included.
+
+**A window nobody of ours can answer runs at once, on the other side's recommendations.** The
+recommendations must be placed before resuming. `Commander.Resume` reads an empty placement as
+everybody holding fire, so skipping such a window the way an empty one was skipped would have
+switched the other side's reactions off silently. That is the finding in this entry most likely to be
+got wrong again, and it is a gotcha in `view.md`.
+
+**The default is drawn as a state.** Each of ours reads *will: …*, space is *run it, every answer not
+changed stands*, and one key answers the common case. A scored window is kept rather than per-soldier
+reaction abilities (the amendment's Tactical Breach Wizards alternative) because scoring is what makes
+a default possible at all; a per-ability reaction has nothing to default to.
+
+**Measured.** The recorded `--place`/`--resolve` script prints what it printed on master. The
+compound's reaction script with `--windows` added is byte-identical to the same script without it.
+A waystation mission with both sides on the AI and one `--resolve` offered per window stopped twice
+on brief three's code — both times to ask the player for the enemy's reaction — and not at all on
+this; the two runs end the same, the pictures differing by 38 pixels along a ghosted wall edge.
+
+**Not built, and recorded in `view.md`.** The amendment's adjust step for a held arc, which it calls
+arguably another brief's. **Found and left for brief five:** when a hostile's turn stops at a window,
+the situation block describes that hostile, including the exact certainty it holds on each of ours —
+the enemy's contact file as a number, which contract 3 forbids.

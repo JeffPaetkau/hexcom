@@ -160,7 +160,7 @@ asks for it: it is the one camera gesture that happens while your hand is doing 
 | `B` | arm an ambush, or spring it on whoever is under the cursor |
 | `T` | walk off the field, if you are standing somewhere your side may leave from |
 | `L` | call a contact in, so everybody in earshot knows |
-| tab, `1`–`9`, space | while a window is open: whose answer, which answer, and run it |
+| space, `1`–`9`, tab | while a window is open: run it, with every soldier doing what the window says they will unless you changed it; change the chosen soldier's answer; choose somebody else. Only your own side's soldiers are offered, and a window with nothing of yours in it does not stop |
 
 **What the whole run is set to.**
 
@@ -287,7 +287,9 @@ shot went off on and where the target was standing when it landed.
   into the arc. All of them fire in one window, before you get to answer. Or hover a target and
   press `B` again with an armed unit active to spring it deliberately.
 
-Press `K` first and you get to answer any of those by hand rather than watch them happen.
+Those are the other side reacting, so a window only stops for them with the instruments window open
+(`I`, then `K` if windows are not already being answered by hand) — answering the enemy's reactions
+is a tester's job, not a player's.
 
 ### Building something to hand somebody
 
