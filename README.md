@@ -84,12 +84,15 @@ it the picture is the game, and a hostile nobody of yours has found is not in it
 a person is playing; with `--shot` on the line both land on their end state within the call that
 starts them, so `--yaw N` still lands on the frame it names and two runs of one command still
 produce the same file to the byte. `--still` turns the same two off for a person who would rather
-they were, and `--pace N` sets the walking pace in metres a second instead.
+they were, and `--pace N` sets the walking pace in metres a second, ten by default.
 
 **`--aside` opens this run's windows on the leftmost monitor**, which is what keeps an automated
 session from putting a window in front of whoever is working on another one. `--shot` implies it.
 It changes no pixels — the same command on either monitor produces the same file — and the game
-you double-click opens where your window manager puts it, as it should.
+you double-click opens where your window manager puts it, as it should. The window appears where
+your system put it for an instant first, because Godot opens it before any script runs; add
+Godot's own `--screen N` before the `--`, using the index `--aside` prints, to place it at
+creation instead.
 
 **And a capture can act.** Everything on the line but `--shot`, `--shot-after`, `--scenario`,
 `--ai`, `--windows`, `--omniscient`, `--instruments`, `--still`, `--aside`, `--edge-pan` and

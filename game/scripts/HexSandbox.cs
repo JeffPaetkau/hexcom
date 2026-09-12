@@ -245,11 +245,32 @@ public partial class HexSandbox : Node3D
 
     private Vector2 Viewport => GetViewport().GetVisibleRect().Size;
 
+    /// <summary>
+    /// Read the command line and move the window before anything else this run does.
+    /// </summary>
+    /// <remarks>
+    /// <b>The earliest hook there is, and it is still not early enough to be invisible.</b> Godot
+    /// creates and maps the window while it is bringing the display server up, which is before any
+    /// script exists to have an opinion, so a window put aside from inside the process is always a
+    /// window that appeared somewhere else first. What this buys is the difference between moving
+    /// after the scene is built and moving before it: everything below <see cref="_Ready"/> —
+    /// building the world, loading the mission, the opening sight sweep — now happens on the
+    /// monitor it is going to stay on. See <see cref="SandboxAside"/> for the rest of it.
+    /// </remarks>
+    public override void _EnterTree()
+    {
+        var args = OS.GetCmdlineUserArgs();
+
+        _capture = SandboxCapture.Requested();
+
+        // A capture is always a session's, so it is put aside whether it said so or not.
+        _aside = _capture is not null || System.Array.IndexOf(args, AsideFlag) >= 0;
+        if (_aside) SandboxAside.Place(GetWindow());
+    }
+
     public override void _Ready()
     {
         var font = ThemeDB.FallbackFont;
-
-        _capture = SandboxCapture.Requested();
 
         BuildScene();
 
@@ -265,10 +286,6 @@ public partial class HexSandbox : Node3D
         _instrumentPanel.Painter = canvas => _hud.DrawInstruments(canvas, Frame(), _instruments.Size);
 
         var args = OS.GetCmdlineUserArgs();
-
-        // A capture is always a session's, so it is put aside whether it said so or not.
-        _aside = _capture is not null || System.Array.IndexOf(args, AsideFlag) >= 0;
-        if (_aside) SandboxAside.Place(GetWindow());
 
         if (System.Array.IndexOf(args, EdgePanFlag) >= 0) EdgePanning = true;
 
@@ -777,23 +794,25 @@ public partial class HexSandbox : Node3D
 
     /// <summary>Metres a second a soldier covers when it is not being hurried.</summary>
     /// <remarks>
-    /// <b>A jog, and it is a departure from the sheet's figure while keeping the sheet's rule.</b>
-    /// Brief Zero in <c>docs/interface/briefs.md</c> asks for the pace to be priced in metres a
-    /// second rather than seconds a move — which is what stops a two-hex step and an eight-hex
-    /// step looking equally urgent — and puts the figure at 1.4 for a tactical walk and 2.5 for a
-    /// hustle. Both of those are how fast a person moves, which is an argument about the world;
-    /// what this number decides is how long a player watches a transition before it stops being a
-    /// transition, which is an argument about attention. At 1.4 a full turn's walk takes twelve
-    /// seconds and the play-through's own words were <i>not slow, but not instant</i>.
+    /// <b>Ten, and it is the first interface figure in this project that was watched rather than
+    /// argued.</b> Brief Zero in <c>docs/interface/briefs.md</c> asks for the pace to be priced in
+    /// metres a second rather than seconds a move — which is what stops a two-hex step and an
+    /// eight-hex step looking equally urgent — and puts the figure at 1.4 for a tactical walk and
+    /// 2.5 for a hustle. The rule is kept and the figure is not: the user watched it at several
+    /// paces and said ten, which is nearly three times the top of that range and half as fast
+    /// again as the seven it shipped at. See <c>docs/decisions.md</c> entry 080.
     /// <para>
-    /// So the rule is the sheet's and the figure is not: 3.5 is a jog a soldier crossing open
-    /// ground would plausibly be at, one hex takes about half a second, and the longest walk 50
-    /// action points can buy — ten hexes of flat ground, 17 metres — comes to five seconds.
-    /// <c>--pace N</c> is here so the person watching can settle it without a rebuild, which is
-    /// what the review list asks for and what a session cannot do for itself.
+    /// The reason the sheet was wrong is that its figures say how fast a soldier moves, which is a
+    /// claim about the world, where this number says how long a player watches a transition before
+    /// it stops being a transition. At ten a hex goes by in about a sixth of a second and the
+    /// longest walk 50 action points can buy — ten hexes of flat ground, 17 metres — is under two.
+    /// </para>
+    /// <para>
+    /// <c>--pace N</c> stays, because the next person to disagree should be able to show it rather
+    /// than argue it.
     /// </para>
     /// </remarks>
-    [Export] public double WalkPace { get; set; } = 3.5;
+    [Export] public double WalkPace { get; set; } = 10.0;
 
     /// <summary>
     /// Start drawing a move that has already happened in the rules.

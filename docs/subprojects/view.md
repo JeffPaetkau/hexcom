@@ -50,12 +50,10 @@ brief Six gives the reaction window a default and settles whose reactors a playe
 which the six made sharper by opening with windows handed out. Entry 012's second item — the shot
 line saying who a shot would wake — is brief Four and is half a day whenever it fits.
 
-**2. Two measurements a session cannot take, and one of them is now cheap.** A person plays
-`build/Hexcom.exe` to a verdict and says what read wrong; that is the second play-through and it
-is the same measurement as last time. The other rides along with it: **the walking pace is 3.5
-metres a second and that is an argument, not a finding.** `--pace N` settles it without a rebuild,
-so the ask is three runs at 2.5, 3.5 and 5 and a word on which won. Entry 079 has the reasoning
-the figure came from, and the answer belongs in an entry of its own.
+**2. The measurement a session cannot take.** A person plays `build/Hexcom.exe` to a verdict and
+says what read wrong. That is the second play-through and it is the same measurement as last time.
+The walking pace was the other one and it has been taken: **ten metres a second, watched rather
+than argued** — entry 080, and it is the first interface figure in the project settled that way.
 
 **3. One thing the build is owed and nobody has scheduled.** `--edge-pan`, `--pace` and `--still`
 are three player preferences that live on a command line, and a player who double-clicks
@@ -75,10 +73,19 @@ is the shape.
 **`SandboxAside` is one method and the whole of the mechanism.** It takes the smallest X over
 `DisplayServer.ScreenGetPosition`, reads the usable rect of that screen so a centred window does
 not sit under the taskbar, and centres the window in it. Both windows go through it: the main one
-before the first frame, the instruments one when it opens, since a hidden window has no position
-worth setting and `I` can open it long after `_Ready`. It says where it put things, for the same
-reason every script step says what it did — a run that asked to be put aside and silently was not
-is a window in the user's face with nothing in the log about it.
+in `_EnterTree`, the instruments one when it opens, since a hidden window has no position worth
+setting and `I` can open it long after `_Ready`. It says where it put things, for the same reason
+every script step says what it did — a run that asked to be put aside and silently was not is a
+window in the user's face with nothing in the log about it.
+
+**The window appears before it moves, and no script can prevent that.** The user watched it happen:
+Godot creates and maps the window while bringing the display server up, and the C# assembly is not
+loaded until the scene layer initialises, which is after. `_EnterTree` is the earliest hook there
+is and it shortens the flash rather than removing it — the world building, the mission load and the
+opening sight sweep now all happen on the monitor the window is going to stay on. **The placement
+that has nothing to see is Godot's own `--screen N`**, before the `--`, using the index `--aside`
+prints; it is not the default because an index is a fact about one machine and the smallest X is
+true everywhere. Entry 080.
 
 **The check entry 063 asked for came back stronger than it asked.** Moving the window costs no
 pixels at all: the pinned command on the left monitor and the same command where Windows put it
@@ -94,10 +101,12 @@ one.
 
 **The three riders.** Edge-pan is off and `--edge-pan` is the switch. `WalkLongest` is gone,
 because a cap on a walk's duration is seconds-a-move wearing a metres-a-second coat and reinstates
-exactly what pricing the walk in metres exists to prevent. The pace is 3.5 metres a second rather
-than 7, which departs from the sheet's 1.4-to-2.5 with a reason: those figures say how fast a person
-moves and this one says how long a player watches a transition. It is an argument until somebody
-watches it, and `--pace N` is how they settle it without a rebuild.
+exactly what pricing the walk in metres exists to prevent. **The pace is ten metres a second, and
+it is measured** — the sheet says 1.4 to 2.5, this branch reasoned its way to 3.5, and the user
+watched it and said ten. A hex goes by in about a sixth of a second and the longest walk the rules
+can buy is under two. `--pace N` stays so the next person to disagree can show it rather than argue
+it. Entry 080 has what the gap says about taking a figure from the genre: those figures describe
+how fast a soldier moves, and this one describes how long a player watches a transition.
 
 ---
 
@@ -166,7 +175,7 @@ catching up. The route is truncated at wherever the unit actually ended up, so a
 dropped it part way is drawn stopping there rather than walking on. The remaining route is drawn
 ahead of it in the committed colour with its tick labels — the same line the reaction options were
 quoted against, running out from under the soldier's feet. Seven metres a second, capped at 1.6
-seconds — both superseded on `view/aside`, which is 3.5 and no cap.
+seconds — both superseded on `view/aside`, which is ten and no cap.
 
 **Two things the walk needed that were not obvious.** The unit rings moved out of the overlay mesh
 into the bodies mesh, because a ring left in the overlay stays on the tile the soldier set off
@@ -782,9 +791,9 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --aside --shot out.png --o
 - `--still` turns off the camera turn and the walk for a person at the keyboard. A capture does
   not need it — nothing animates while a picture is being taken, by construction — so it is here
   for somebody watching rather than capturing.
-- `--pace N` sets the walking pace in metres a second, 3.5 by default. It is here so that the
-  figure can be judged by somebody watching it without a rebuild, which is the one thing a
-  session cannot do about it — see `../decisions.md` entry 079 and the second item of the job.
+- `--pace N` sets the walking pace in metres a second, ten by default. The default is measured
+  rather than argued — `../decisions.md` entry 080 — and the flag stays so the next person to
+  disagree can show it instead.
 - `--edge-pan` turns on the pointer-at-the-edge push, which is **off**. Brief Zero's rider, and
   the reason is that it is the only camera gesture that runs while the hand is doing nothing.
 
@@ -796,6 +805,14 @@ it** — a capture is always a session's — and the flag is written out anyway 
 without it can be read as one meant for a person. It places the instruments window too, whenever
 that is opened. The exported game with no flags opens where Windows puts it, which is the user's
 own screen and is correct.
+
+**The window appears on the usual monitor for an instant before it moves.** Godot maps it while the
+display server comes up, before any script is loaded, so a placement from inside the process is
+always a correction. It happens in `_EnterTree`, ahead of everything else this run does, which is
+as early as a script can be. **To place it with nothing to see, add Godot's own `--screen N`**
+before the `--`, taking N from the index `--aside` printed — that is applied at creation. It is not
+the default because an index is a fact about one machine, which is the whole reason `--aside`
+measures instead. Entry 080.
 
 **Moving the window changes no pixels, which was worth checking rather than assuming.** The pinned
 command captured on the left monitor and the same command captured where Windows put it produce one

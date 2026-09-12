@@ -3922,3 +3922,50 @@ answer belongs in an entry.
 **For Master.** 063 closes. Brief Zero's review list is done. The queue in
 `docs/interface/briefs.md` is what `view.md`'s job section now points at, unpromoted, and the second
 play-through is still the measurement nobody here can take.
+
+## 080 — The walk is ten metres a second, measured, and a window cannot be put aside before it exists
+**2026-09-12** · **Raised by** view, for the user · **For** view, interface · **Status** resolved
+
+The user ran `--pace` and answered, and reported what `--aside` looks like from a chair. Both
+answers are corrections to entry 079, which was a day old.
+
+**Ten metres a second. The first interface figure in this project that was watched rather than
+argued.** Brief Zero puts a walk at 1.4 and a hustle at 2.5; 079 departed to 3.5 on the grounds
+that the sheet's figures describe how fast a soldier moves where this one describes how long a
+player watches a transition. The direction was right and the size was not: the answer is **ten**,
+which is four times the sheet's top figure, half as fast again as the seven it shipped at, and
+nearly three times what a session reasoned its way to. A hex goes by in about a sixth of a second
+and the longest walk 50 action points can buy is under two.
+
+**What that says about the sheet, and it is worth more than the number.** The genre's figure was
+not merely imprecise here, it was the wrong *kind* of quantity — a walking speed, offered as an
+animation speed. Entry 058 makes convention the default in doubt, and this is not a case against
+that rule; it is a case for asking, before adopting a figure, what question the figure is an answer
+to. A number that describes the world is not automatically a number that describes an interface
+drawing the world.
+
+**And it quietly settles the cap as well.** 079 removed `WalkLongest`, at 1.6 seconds, arguing it
+reinstated seconds-a-move above about eleven metres. At ten metres a second that cap would have
+bitten only above sixteen — past the longest walk the rules can buy — so at the pace the user
+actually wants, the cap and the pace were never both live. The removal still stands, because a cap
+that never fires is a cap waiting for somebody to lower the pace and be surprised.
+
+**`--aside` moves the window after it has already appeared, and that cannot be fixed from inside
+the game.** The user's words: *the windows opened on my main monitor then moved over to the left
+monitor.* Godot creates and maps the window while bringing the display server up, which is before
+any script exists to have an opinion — the C# assembly is not loaded until the scene layer
+initialises, after the window. `--screen N` and `--position X,Y` are the only placements that
+happen at creation and both are engine arguments, which is to say they are decided outside the
+process by somebody who already knows the answer.
+
+**So the flash is shortened rather than removed**, by moving the placement from `_Ready` to
+`_EnterTree`: the window is now put aside before the world is built, the mission loaded or the
+opening sight sweep run, rather than after. **If that is still too long, the fix is outside the
+game**: `--aside` prints the screen index it chose, and passing that index to Godot's own
+`--screen N` before the `--` places the window at creation with nothing to see. The reason that is
+not the default is entry 063's own — an index is a fact about this machine and the smallest X is
+true everywhere — so the index belongs in a command somebody wrote on this machine, not in the
+rule.
+
+**Unchanged by either.** The pinned scene still hashes the same, since nothing animates in a
+capture and moving the window costs no pixels.
