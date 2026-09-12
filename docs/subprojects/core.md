@@ -30,97 +30,79 @@ purpose, balance numbers in their homes — nine of them since `BlastModel`, see
 
 ---
 
-## The job — measure the numbers, and the clock
+## The job — a squad that is not seen
 
-Branch `core/measured`. Read the rest of this file before starting; the turn loop below and the
-gotchas after it are the things that will bite, and the two about objectives are the two most
-likely to.
+Branch `core/unnoticed`. Read the rest of this file before starting; the turn loop below and the
+gotchas after it are the things that will bite, and the ones about objectives, the clock and the
+batch are the three most likely to.
 
-**What exists.** Every system the design doc describes bar suppression, and every mission shape in
-the book bar three. A reaction window a person can answer, a battle that ends because a squad did
-what it came for, and an objective at a place that a squad will actually walk to.
-`docs/decisions.md` entries 061 and 062 are the argument for the last of those.
+**What exists.** Every system the design doc describes bar suppression; three of the six mission
+shapes; a mission that stops at an hour or so many rounds after the garrison's word is out
+(`../decisions.md` entry 082); and a batch of headless matches, checked in, that anybody can run
+again with the same seeds (entry 083).
 
-**The job is the first measurement in this project's history, and then the clock.** In that
-order, because the first one is overdue and the second is small.
+**What the batch said, in one line: nothing wins the waystation, and the reason is not a dial.**
+Across every arm the squad got eyes on the house, usually by round two, and some hostile held it
+at `Engaged` in every match — so every verdict is `Abandoned` on the departure reading. The
+objective is scored as a race because nothing in the scorer prices the mission's own win condition.
+`ObjectiveValue × Progress` pays for getting there and getting home; **nothing pays for getting
+there unseen**. Entry 083 has the tables; read its headline and the section on the clock.
 
-- **Run the matches and write down what they said.** `Commander` drives both sides headless, the
-  waystation mission fights itself in about two seconds for twelve seeds, and *every balance
-  number in this game is still an argument*. Four are load-bearing and none has been measured:
-  `UtilityModel.ObjectiveValue` and `ObjectiveHorizon`, which decide whether a squad walks past a
-  firefight to reach an exit or stands in one ignoring it; the two `CostProfile` archetypes, which
-  entry 062 turned on for the first time in a live behaviour change nothing tested; and
-  `RemovalBonus`, which values a signaller at a rifleman. **Run each of them both ways over a few
-  hundred seeds and record the figures in `../decisions.md`.** It would be the first entry in this
-  project to say a number *was measured* rather than argued, which is worth more than any of the
-  numbers it settles.
+**The job is the missing term, and then the measurement again.**
 
-  Two of the readings entry 048 already offers are worth separating while you are there: the scout
-  is `Unaware` to everybody in twelve matches and the trooper is `Searching` in nine, and nobody
-  has established whether that is the noise of the walk or simply who is nearer the road. Entry
-  037 says a turn's walk on gravel is heard further than a slug rifle, which would mean the thing
-  that loses a stealth mission is already footsteps rather than eyes.
+- **Price being noticed against the mission, not only against the fight.** `Sortie.Unnoticed` is a
+  rung, and a squad member held above it has already cost the mission — so the thing to price is
+  *what this action does to the highest rung any enemy will hold on this soldier*, in the same
+  vitality every other term is in, scaled by what the objective is worth. The raw material exists:
+  `AwarenessTracker.WouldAnnounce` and `WouldHear` already say who learns what from an act, and
+  `Tactician.Aimed` already reads an enemy's detection as a rung. What is missing is the step from
+  *he will be Searching* to *and that is most of the mission gone*. Settle deliberately whether it
+  is a cliff at the rung or a slope up to it: a cliff is what the win condition is, a slope is what
+  a one-step search can climb, and entry 044's argument for gradients over flags applies here too.
+- **The clock, as something the scorer can see.** Entry 083 measured a three-round grace ending
+  most matches before round six with fewer than half the squad home — against a squad that does
+  not know it has three rounds. Once the alarm is out, what is left of the journey against what is
+  left of the night is a number the objective already has (`Remaining`, in points) and one the
+  deadline now has (`LastRound`). A squad with the job done and the hour closing should go.
+- **Run the batch again, and record the difference.** `ObjectiveValue` above 60 is saturated on this
+  ground and 30 to 60 is the live range — but choosing inside it before this term exists is tuning a
+  race. `ObjectiveHorizon` is the same dial on this ground, so the term should not be tuned against
+  either one alone. With the term in, the value question and the clock question are the two to rerun. The test
+  that the term works is simple and has never once been true: **a reconnaissance on the waystation
+  achieved in more than a handful of matches in a hundred.**
 
-- **The mission clock.** Entry 030 named it as the one genuinely new thing the six shapes want and
-  it has been nobody's for four increments. What is missing is a record of the moment a hostile
-  **with a set** has registered somebody and then had a turn in which to use it; everything else
-  in that sentence is a query that exists. A round limit that ends a battle is `Battle.Round` and
-  a comparison. Settle where it lives: a round limit is a property of the mission, but *the alarm
-  went out* is a fact about the awareness model, and putting it in the wrong one makes the other
-  awkward for good.
-
-- **Extraction and capture, if the two above go quickly.** A thing that can be carried, and a way
-  to put a soldier down that is not damage. Both are real new state, neither is needed for a
-  playable greybox, and they are the half of this brief to drop.
-
-**Content is waiting on one line, and it is already written.** Entry 059 says
-`waystation.hexmission` carries its objective statement commented out, and that landing the rule
-is an uncomment and a deletion:
-
-```
-objective reconnaissance player at house out cottages unnoticed suspicious
-```
-
-That is the shape entry 061 built — every sortie carries its own exit and threshold, rather than
-objectives composing and a mission carrying two — so the statement maps straight onto
-`Reconnaissance(side, place, exit, within, unnoticed)`. **What it does not name is `within`**, the
-distance a look has to be taken from, which defaults to twelve metres; entry 059's own measurement
-says the house can only be seen from fourteen places inside the yard, so the default is probably
-right and the parameter exists if it is not. Whoever picks this up should say so in
-`../decisions.md` and let Content uncomment.
-
-**A garrison that does not move is Core's, and it is not this brief's.** Entry 059 measures three
-of the waystation's four hostiles never acting at all, and names the cause: nothing in the game
-patrols, so a standing order in a mission file has nothing in the search to hand it to. That is a
-real hole and it is bigger than a brief — it wants a notion of what a soldier is *doing* rather
-than where it is, which is the same missing thing as *the mission is lost, get out*. Both are
-about a soldier having a standing intent, and neither should be built piecemeal.
-
-**Two findings from real ground that are still open and still Core's.** Both are entry 039, both
-were invisible on a disc, and both nearly vanished when the map changed — which says the geometry
-that produces them is specific rather than that they are fixed.
+**If that goes quickly, the two faults a one-step search shows on real ground** — entry 039, both
+still open, both invisible on a disc:
 
 1. **Every charge in a match lands on one empty hex.** The crater rule marks the thrower at the
-   burst, so the next throw is aimed at the crater, and five charges went into a hex nobody had
-   stood on since round 3. The rule is right — a grenade should be able to make noise somewhere
-   you are not — and its interaction with a one-step search is not.
+   burst, so the next throw is aimed at the crater. The rule is right and its interaction with a
+   one-step search is not.
 2. **A soldier paces between two tiles on a shot it never takes.** `Order.Opens` credits a move
    with a shot, and from the new tile the best option is the move back, credited with the same
-   shot. What is missing is either the move costing the shot it displaces, or the shot being taken
-   when it is the thing the last move was chosen for.
+   shot.
 
-**And one thing this increment made sharper rather than better.** A commander will not walk out
-with the job undone, because weighing *cut our losses* against *press on* needs to know how the
-rest of the battle is going. That is the right call for now and it means a squad being cut to
-pieces stands and takes it. Entry 058 says so; whoever gives the scorer a notion of how a battle
-is going should look here first.
+**Two things the batch settled that are not this brief's to act on.** `RemovalBonus` is a *finish
+him* dial and cannot say *that one first* at any setting — a signaller worth more wants a per-soldier
+term derived from what the soldier does for its side, and on the waystation the alarm is out before
+anybody could act on it anyway. The two cost archetypes are a large live change, halving what the
+squad kills at value 30; keep them. And entry 048's quiet scout was the mission, not the man: with
+something to look at, the scout is the one who goes in and he is seen every time from either post.
 
-**Out of scope.** `game/**` as ever. Which objective a mission carries and where — Content's, and
-entry 061 unblocked it. Suppression, still: nothing depends on it.
+**Content is waiting on nothing from Core.** Entry 082 tells it to uncomment the reconnaissance line
+— `within` is inert on the waystation and can stay unwritten — and that `rounds` and the briefing's
+stop have somewhere to go. When that lands, delete `tests/Hexcom.Core.Tests/Measured/Waystation.cs`'s
+hand-built objective and read the file's.
 
-**The test that it worked:** an entry in `../decisions.md` that says a figure was measured, with
-the seeds and the counts under it — and a mission that ends because the alarm has been out for
-three rounds.
+**A garrison that does not move is still Core's, and still not this brief's.** Three of the
+waystation's four hostiles never act. It wants a notion of what a soldier is *doing* rather than
+where it is, which is also what *the mission is lost, get out* wants; neither should be built
+piecemeal, and milestone 2 on `../map.md` is where they go together.
+
+**Out of scope.** `game/**` as ever. Extraction and capture, dropped from the last brief and still
+unneeded. Suppression.
+
+**The test that it worked:** entry 083's value table rerun with the term in, and a row in it where
+the waystation is achieved.
 
 ---
 
@@ -358,6 +340,25 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   predates objectives is untouched. That is what made this safe to add to every appraisal rather
   than to a special path, and it is worth preserving.
 
+- **The clock is two halves and they live in different files on purpose.** `Deadline` is on the
+  objective, because a round limit is a property of a mission; `Alarm` is on `AwarenessTracker`,
+  because *the word got out* is a fact about what a side knows and would be true of that ground
+  with no mission on it. Anything that wants to know whether a squad is out of time asks
+  `Objective.Stop`; anything that wants to know whether the garrison has been told asks
+  `Awareness.AlarmOf` or `AlarmAgainst`. Do not derive either from the other.
+- **Only a set raises an alarm**, and the gate is in `Relay` — the one place word leaves the
+  person holding it. A shout and a comrade's reaction go through the same method and neither
+  counts, which is load-bearing on real ground rather than pedantic: the waystation's barn and
+  tower are outside earshot of the compound, so who has the radio decides whether a sighting is an
+  incident or a mission.
+- **`Forget` wipes contacts and never the alarm.** Word sent cannot be unsent, so silencing the
+  signaller one round late buys nothing back. That is the asymmetry that makes the set worth
+  killing *first*, and it is the counter-part to the rule that makes the quiet kill work at all —
+  if a test ever shows an alarm disappearing when somebody goes down, this is what broke.
+- **The clock running out is `Abandoned`, not `Failed`.** A squad still in the field at first light
+  has lost the mission and has not lost the squad, which is the whole reason there are three
+  endings. `Failed` stays for there being nobody left who could have brought it home.
+
 - **A mission is one journey, measured in action points, and the task is part of it.**
   `Objective.Remaining` is what is still owed from where you stand: the walking there, the points
   the job itself wants, and the walking home. So a stride toward the charge and a stride spent on
@@ -380,6 +381,28 @@ the thing to suspect when a reaction test starts failing for no reason you can s
 - **`Objective` is a class, not a record.** It holds how far along the mission is. A record that
   changes is a record in name only, and this is the one entity in the rules that is not a unit.
 
+- **The batch is checked in and off by default.** `tests/Hexcom.Core.Tests/Measured/` is an
+  instrument, not a suite: `[BatchFact]` skips unless `HEXCOM_BATCH=1`, and `HEXCOM_SEEDS` says
+  how many matches an arm runs. It asserts nothing on purpose — a batch prints what happened and a
+  person reads it, and an assertion there would pin today's balance in place, which is the
+  opposite of what a measurement is for.
+
+  ```bash
+  HEXCOM_BATCH=1 HEXCOM_SEEDS=100 dotnet test tests/Hexcom.Core.Tests --filter "FullyQualifiedName~Measured" --logger "console;verbosity=detailed"
+  ```
+
+  **One question per class**, because xUnit runs classes in parallel and a batch is over an hour
+  otherwise. Outcomes are decided by the seed and never by the clock, so nothing about running six
+  at once moves a figure.
+- **The batch builds the mission the file describes rather than the objective it can say.**
+  `waystation.hexmission` still carries a withdrawal, and measuring an objective dial against a
+  withdrawal on that ground measures the wrong thing — it is achieved by turning round and going
+  home. `Measured/Waystation.cs` builds the reconnaissance off the same places the file declares
+  and takes everything else from the file unchanged, so there is still one copy of the waystation.
+  Delete that when Content uncomments the line.
+- **A commander per side, never one for both.** A dial turned on both sides at once measures
+  nothing: the two halves move together and the match comes out where it started.
+
 ## Open questions
 
 Owned here. The design doc carries more, marked *Open* in the section they belong to; these are
@@ -391,15 +414,16 @@ the ones that block or shape what Core does next.
   one moment, and *the mission is lost, get out* is a judgement about the whole thing. This is the
   sharpest thing the search cannot do, and it arrived with objectives rather than being fixed by
   them.
-- **An objective is worth more than any fight, and nobody has measured that.**
-  `UtilityModel.ObjectiveValue` is a whole squad's worth of vitality, deliberately larger than
-  anything a shot can score, so a squad told to get out walks out through fire rather than
-  stopping to trade — which is the behaviour the complaint about elimination was asking for, and
-  is also the first number in this game that can make a soldier ignore what is in front of it.
-  `ObjectiveHorizon` decides from how far away it pulls. The failure modes are legible and named
-  in `../decisions.md` entry 044: walking past a firefight to reach an exit means the value is
-  too high, standing in one ignoring the exit means the horizon is too short. Both are exactly
-  what a batch of matches settles.
+- **Nothing prices getting there unseen**, and entry 083 measured what that costs: no
+  reconnaissance on the waystation achieved in any arm, every squad held at `Engaged`. The
+  objective pays for reaching the place and coming home, and the rung `Sortie.Unnoticed` judges on
+  appears nowhere in the arithmetic. It is the job at the head of this file.
+- **`ObjectiveValue` is saturated, measured.** 60, 120 and 240 are indistinguishable on the
+  waystation; 15 stands and fights until the night runs out. Entry 083 says leave it at 120 until
+  the term above exists, because tuning it now is tuning a race.
+- **`ObjectiveHorizon` and `ObjectiveValue` are one dial, measured.** Below the journey the horizon
+  is stretched and inert; above it the scorer answers to value per point of ground, so horizon 16
+  at 120 plays exactly like horizon 4 at 30. Do not tune the two separately.
 - **Being come looking for costs the shooter nothing.** `GivenAway` prices what a listener could
   do from where they stand, and from behind a wall that is nothing — the pinned test
   `SomebodyWhoHearsTheShotAndCannotReachYouCostsYouNothingYet` still holds. A unit now does come
@@ -444,10 +468,11 @@ the ones that block or shape what Core does next.
   to keep one of your own out of the radius, is a search — every node in range crossed with
   everybody in the blast, per candidate, per decision. What is built will decline a grenade that
   catches its own and will not go looking for the one that avoids them. Entry 034, item 4.
-- **Every balance number is set by reasoning, not measurement.** Treat the figures as arguments
-  rather than findings, and check the design doc for why one is what it is before changing it —
-  several are load-bearing in ways their size does not advertise. This is now *testable* rather
-  than merely true, which is the whole reason the AI came before grenades.
+- **Most balance numbers are still set by reasoning.** `ObjectiveValue`, `ObjectiveHorizon`, the two `CostProfile`
+  archetypes and `RemovalBonus` have been measured (entry 083); everything else is an argument, and
+  the design doc says why each one is what it is. The batch in `Measured/` is how to turn another
+  into a finding — and a question about anything a reaction scores has to build the battle with its
+  model, because windows rank with `battle.Tactics` and not with the commander's.
 
 ## Recent work
 

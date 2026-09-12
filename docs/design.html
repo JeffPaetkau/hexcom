@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 21 · 9 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 22 · 12 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 348 of them, run in about ten seconds today, most of it the AI. The maps, the missions and the matches fought on them bring 47 more.</li>
+        <li>The rules are unit-testable headless — 356 of them, run in about ten seconds today, most of it the AI. The maps, the missions and the matches fought on them bring 47 more, and a batch of matches that is off by default and takes an hour.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -2232,6 +2232,49 @@
         being fixed by them.
       </p>
 
+      <h3>What ends the task short</h3>
+      <p>
+        Every briefing in the book has six parts and the sixth is <em>when it stops</em>. Until now
+        that part had nowhere to go: a mission file could say <code>rounds 30</code> and the rules
+        never read it, so whatever happened to be driving the battle applied the limit and two
+        things driving it could apply different ones.
+      </p>
+      <p>
+        It is two halves and the whole of the design is putting them in different places.
+        <strong>A round limit is a property of the mission.</strong> The same ground with the same
+        garrison carries a different clock under a different briefing, and there is nothing about a
+        waystation that says an inspection has to be over before first light &mdash; so it hangs on
+        the objective, where a mission file can set it, and it is a round number and a comparison.
+        <strong>The alarm going out is a fact about the awareness model.</strong> Somebody carrying
+        a set worked out that there is a person here, and passed it on; that is true of this ground
+        with no mission on it at all, and it is produced by the same relay that already carries a
+        contact side-wide. Putting the fact on the mission would have every future mission shape
+        re-deriving it from contacts; putting the limit in the awareness model would have the
+        awareness model holding a number that belongs to a briefing.
+      </p>
+      <p>
+        <strong>A set, not a shout.</strong> Word travels three ways here &mdash; a radio reaches
+        the whole side, a voice reaches fifteen metres, and seeing a comrade react reaches as far as
+        you can see &mdash; and only the first is an alarm. That distinction is load-bearing on real
+        ground rather than decorative: on the waystation the barn and the tower are both outside
+        earshot of the compound, so a sentry who shouts has told one man and a sentry with a set has
+        told the garrison.
+      </p>
+      <p>
+        <strong>And word already sent cannot be unsent.</strong> Everything a departing soldier knew
+        is forgotten the moment they leave, which is what makes silencing a witness work with no
+        rule saying so; an alarm they raised first is not. A squad that kills the signaller one
+        second too late has not bought the second back. That asymmetry is the whole reason the set
+        is worth killing <em>first</em> rather than merely killing, and it is the counter-play to
+        the same forgetting that makes the quiet kill good.
+      </p>
+      <p>
+        The clock running out is <em>abandonment</em>, not failure. A squad still in the field when
+        its hour passes has lost the mission and has not lost the squad, which is exactly the
+        distinction the third ending was added for; failure stays reserved for there being nobody
+        left who could have brought the answer home.
+      </p>
+
       <div class="aside">
         <span class="tag">Open</span>
         <p>
@@ -2249,11 +2292,32 @@
           of matches answers, and the batch can run now.
         </p>
         <p>
+          <strong>Nothing prices getting there unseen, and that is why nothing wins.</strong>
+          <em>Measured.</em> A batch of headless matches on the waystation, a hundred paired seeds
+          an arm, achieved the reconnaissance twice in 2,400 matches. The squad got
+          eyes on the house in nearly every one and was held at Engaged in every one. What an
+          objective is worth prices reaching it and coming home; the rung the win condition is
+          judged on appears nowhere in the arithmetic, so a mission about not being seen is scored
+          as a race and run as one. That is a missing term and not a wrong number, and it is the
+          next thing this scorer needs.
+        </p>
+        <p>
+          <strong>What an objective is worth is saturated.</strong> <em>Measured.</em> Above about
+          sixty the squad runs in, looks, and runs out, and the shipped figure is twice that; below
+          thirty it stands and fights until the night runs out. The live range is between, and
+          choosing inside it before the term above exists would be tuning a race. <em>Also
+          measured:</em> the horizon is the same dial. On a journey longer than it, it is
+          stretched and does nothing; past the journey, the scorer answers to value per point of
+          ground, so a horizon four times longer is a value four times smaller, near enough row for row.
+        </p>
+        <p>
           <strong>Removing a signaller is worth no more than removing the rifleman beside
-          them.</strong> A soldier put down is valued at their own vitality again &mdash;
-          everything they would have gone on to do &mdash; which is measured against how tough
-          they are and not against what they were for. Weighting it by what the soldier does for
-          its side is the obvious next thing and is not yet derived from anything.
+          them</strong>, and turning the bonus up does not change that. <em>Measured.</em> The first
+          shot goes at the sentry on the road four times in five at every setting tried: the bonus
+          turns wounds into kills and cannot say <em>that one first</em>. Weighting removal by what
+          a soldier does for its side is still the obvious next thing and is still not derived
+          from anything &mdash; and on the waystation the word is out in round two, before anybody
+          could act on it.
         </p>
         <p>
           <strong>A shot that kills its target still gives you away to the target.</strong> The
@@ -2269,12 +2333,12 @@
           is the first thing a deeper one would fix.
         </p>
         <p>
-          <strong>Every rate here is an argument.</strong> Like every other number in this game
-          &mdash; but unlike the others, these are the ones the AI-versus-AI runs will actually
-          settle, because a scorer that plays badly loses matches and says so. The one to watch
-          first is what a soaked shield is worth: at the figure set today, a fully soaked beam
-          scores near enough exactly what the shot costs that the ordering between firing
-          pointlessly and doing something else is decided by noise.
+          <strong>Most rates here are still arguments.</strong> Four have been measured and the
+          rest have not; the instrument is checked in beside the tests, off by default, and takes
+          the same seeds every time. The one to point it at next, once the missing term exists, is
+          what a soaked shield is worth: at the figure set today a fully soaked beam scores near
+          enough exactly what the shot costs, so the ordering between firing pointlessly and doing
+          something else is decided by noise.
         </p>
       </div>
     </div>
@@ -2303,7 +2367,9 @@
         <li class="done"><span class="idx">DONE</span><div><b>The open window</b><p>A move committed and not yet resolved, which a person can look at, answer by hand and decline &mdash; and the same seam through the AI, so the enemy&rsquo;s move is the one you get to answer.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>Objectives, and a battle that ends</b><p>Three endings rather than two, off a reading sampled as each soldier leaves. Withdrawal needed no new measurement. It is also the first thing that gives a soldier who can see nobody something to want.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>An objective at a place</b><p>One shape and three tasks, with the walking and the working priced in the same action points, so a mission is one journey with something in the middle of it rather than two stages with a seam.</p></div></li>
-        <li><span class="idx">06</span><div><b>Godot greybox</b><p>3D blockout, no art. Only once the rules are settled.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>Godot greybox</b><p>3D blockout, no art, opening as the game rather than as a sandbox. The mission file is what it fights, and the export is a second capture harness.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>A clock, and the first measured numbers</b><p>What ends the task short, as two halves that stay apart: a round limit on the mission, the alarm on the awareness model. And a batch of headless matches, so that four load-bearing figures are findings rather than arguments &mdash; the first time anything in this game has been.</p></div></li>
+        <li><span class="idx">07</span><div><b>A squad that is not seen</b><p>The measurement's own answer: an objective that can be weighed against being noticed rather than swamping it, and the two faults a one-step search shows on real ground.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
         Deliberately not started: the strategy layer, the setting, saves, audio, and anything that
@@ -2313,8 +2379,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 21</span>
-    <span>395 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 22</span>
+    <span>403 tests green · 0 engine references in core</span>
   </footer>
 
 </div>
