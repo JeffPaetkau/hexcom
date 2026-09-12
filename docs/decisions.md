@@ -3591,3 +3591,45 @@ files exist and their gaps are filled, on Opus or Fable in a clean session. Writ
 would mean guessing the shape of ten documents that do not exist. What is recorded now is that it
 is compulsory, what it must do, and that it is not a transcription job — the three things that
 would be expensive to rediscover.
+
+## 074 — The usage meter is a feed now, and the first thing it says is that the week is over
+**2026-09-11** · **Raised by** master, for the user · **For** master · **Status** resolved
+
+The user stood up an endpoint that republishes their Claude usage every fifteen minutes and gave
+Master the token for it. The command and the environment variables are in
+`subprojects/master.md` under **The budget**; the token itself lives in
+`.claude/settings.local.json`, which is per-machine and gitignored, so no secret is in the
+repository and the command carries no literal.
+
+**This changes the budget from something remembered to something derived**, which is the same
+move `map.md` makes about every other kind of status and for the same reason. Entry 069's 48% was
+a single reading from one Tuesday that every later session would have had to either trust or
+re-ask a person for. A figure a session can fetch cannot go stale, and the stop-at-half rule
+stops depending on the user volunteering the number at the right moment.
+
+**The first reading, 2026-09-11 at 20:30 Vancouver.** Session 23%, resetting the same evening.
+The week 52% on all models and 53% on Fable, both resetting Tuesday 15 September at 3 PM. Four
+hundred and nine requests across four sessions in seven days, and **82% of usage above 150k
+context** against 93% the day before.
+
+**Three things it says that a single number would not have.**
+
+The stop line is behind us. Entry 069 set *stop at half*, both meters now read above it, and
+four days remain before the reset. The rule was written for exactly this moment and the cost of
+having a rule is honouring it when it is inconvenient.
+
+The day cost four points, which is under two increments at 069's rate, for a day that produced
+four Master commits and a territory's worth of briefing. That is the cadence working rather than
+an overrun.
+
+The context share fell from 93% to 82% and is still the dominant term. Master restarting fresh
+on Opus is doing what 069 predicted, and the remaining 82% says the shape of the problem has not
+changed — long contexts are what this project spends, and every structural decision that keeps a
+session short is worth more than any decision about what a session does.
+
+**What it means for the ten reference jobs.** They are briefed and ready and the meter says they
+do not run this week. There is also an engineering reason not to fire all ten at once on an
+untested brief: *read interface.md and do job N* has never been executed, and ten sessions
+sharing one undetected defect is ten files to redo. One job first, read it, then the other nine
+after the reset. The budget rule and the sensible order agree, which is usually a sign that both
+are right.

@@ -57,6 +57,10 @@ git log --oneline -25      # what has landed
 dotnet test                # whether it works
 ```
 
+**The budget is derived too**, and it is the one number that decides whether a round runs at all.
+The feed and the command are under **The budget** below; it refreshes every fifteen minutes, so
+read it rather than carrying a figure forward from an earlier session.
+
 Per territory: `git log --oneline -20 -- <its owned paths>`, from the table in `map.md`.
 
 What each increment was run on — the model from the `Co-Authored-By` trailer the harness adds,
@@ -169,6 +173,20 @@ on 2026-09-10: about twenty increments in two days cost 48% of the week, roughly
 Master's rounds folded in — and 93% of that usage ran above 150k context, which was one Master
 session sixteen jobs long on Fable. So the cost of an increment is mostly the context that closes
 it, and the cadence follows:
+
+**The meter is a feed, not something the user has to read out.** It refreshes every fifteen
+minutes and it is derived, exactly like `git log` and `dotnet test` — so ask it rather than
+remembering a figure from a previous session. The URL and its token are in
+`.claude/settings.local.json`, which is per-machine and gitignored, so the secret is never in the
+repository and the command carries no literal:
+
+```bash
+curl -sS -m 20 -H "Authorization: Bearer $HEXCOM_USAGE_TOKEN" "$HEXCOM_USAGE_URL"
+```
+
+It reports the session, the all-models week, the Fable week, each with its reset time, plus the
+request count and the share of usage above 150k context — which is the number entry 069 showed
+was doing the damage. Entry 074 has what it read on the day it was wired up.
 
 - **Two rounds a week, three or four sessions each**, fresh, one brief per session. Fifteen to
   twenty increments a week fits inside half the budget once Master's overhead is down.
