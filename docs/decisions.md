@@ -3633,3 +3633,50 @@ untested brief: *read interface.md and do job N* has never been executed, and te
 sharing one undetected defect is ten files to redo. One job first, read it, then the other nine
 after the reset. The budget rule and the sensible order agree, which is usually a sign that both
 are right.
+
+## 075 — The 50% was never a cap: the ceiling is the whole meter, and the constraint is a floor at a time
+**2026-09-11** · **Raised by** the user · **For** master · **Status** resolved · **Supersedes the stop-at-half rule in 069 and the conclusion of 074**
+
+Entry 069 recorded that the user runs this project on *half* of a Max 5x weekly limit, and
+`subprojects/master.md` turned that into a rule: stop when the meter reads 50%. Entry 074 then
+read 52% and concluded the week was over. The user corrected it the same evening. **The 50% was
+an estimate of what this project would consume, not a ceiling it had to stay under.** The limit
+is shared with the user's own work, which falls mostly in the workweek, and it may be taken to
+100% before a reset provided the workdays still to come are covered.
+
+**The rule as it actually is.** The constraint is not a ceiling on the total, it is a **floor at
+a moment**: enough must remain at a given time for the work that has to happen before the reset.
+For a Tuesday-afternoon reset that means about 20% left on Monday morning, which covers Monday
+and Tuesday lunchtime. Everything under that floor is the project's.
+
+**The weekend arithmetic that follows, on 2026-09-11.** 52% spent, a 20% floor to protect, a
+reset on Tuesday 15 September at 3 PM: **about 28% for the weekend**, and the checkpoint is that
+the meter reads 80% or less by Monday morning rather than that it stops anywhere in particular
+before then.
+
+**The structural fact underneath it, which is worth more than the arithmetic.** The weekend is
+this project's window and the workweek is the user's, and that follows from a shared limit rather
+than from anybody's preference. It is why the reset day matters: the user draws from Tuesday to
+Friday, the project has the weekend, and the floor protects Monday. Entry 069's *two rounds a
+week of three or four sessions* was written before this was understood. A weekend round is bigger
+and rarer than that, and how much bigger is now a thing to measure rather than to guess.
+
+**A trap in the feed, found while re-reading it against this.** The headline percentages and
+their resets are authoritative and include every device and claude.ai. Everything under *what is
+contributing* — the request count, the session count, the share above 150k context — is, in the
+feed's own words, approximate and from local sessions on this machine only. **So the user's other
+work cannot be derived by subtracting the local figures from the headline.** The headline already
+contains work the breakdown cannot see, and that work is most of what the floor exists to
+protect.
+
+**And a change of method, which matters more than either number.** Budget a round by measuring
+one job rather than estimating ten: read the meter, run a single session, read it again. The
+2.4%-per-increment average in 069 was derived from long Fable sessions and says almost nothing
+about what a short Sonnet documentary job costs. The feed makes measuring cheaper than
+estimating, which is the second time in two days that having the number as a feed rather than a
+memory has changed a decision.
+
+**What it means for the ten reference jobs: they run this weekend.** The order recommended in 074
+survives for its other reason — *read interface.md and do job N* has never been executed, and ten
+sessions sharing one undetected defect is ten files to redo. Run one, read the file, read the
+meter. The first reading calibrates the other nine and the first file proves the prompt.

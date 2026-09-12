@@ -168,10 +168,11 @@ derived rather than remembered.
 
 ### The budget, and the cadence that fits it
 
-The user runs this project on half of a Max 5x weekly limit; entry 069 has the figures. Measured
-on 2026-09-10: about twenty increments in two days cost 48% of the week, roughly 2.4% each with
-Master's rounds folded in — and 93% of that usage ran above 150k context, which was one Master
-session sixteen jobs long on Fable. So the cost of an increment is mostly the context that closes
+This project shares a Max 5x weekly limit with the user's own work; entry 069 has the first
+figures and entry 075 corrects what they were taken to mean. Measured on 2026-09-10: about twenty
+increments in two days cost 48% of the week, roughly 2.4% each with Master's rounds folded in —
+and 93% of that usage ran above 150k context, which was one Master session sixteen jobs long on
+Fable. So the cost of an increment is mostly the context that closes
 it, and the cadence follows:
 
 **The meter is a feed, not something the user has to read out.** It refreshes every fifteen
@@ -188,13 +189,36 @@ It reports the session, the all-models week, the Fable week, each with its reset
 request count and the share of usage above 150k context — which is the number entry 069 showed
 was doing the damage. Entry 074 has what it read on the day it was wired up.
 
-- **Two rounds a week, three or four sessions each**, fresh, one brief per session. Fifteen to
-  twenty increments a week fits inside half the budget once Master's overhead is down.
+**Two of those figures are authoritative and the rest are local.** The percentages and their
+resets are the real limit. Everything under *what is contributing* — the request count, the
+session count, the share above 150k — is the feed's own words approximate and from local sessions
+on this machine only, so it does not see the user's other devices or claude.ai. **Never derive
+what the user has spent elsewhere by subtracting the local figures from the headline**; the
+headline already includes work the breakdown cannot see, which is most of what the floor exists
+to protect.
+
+**So budget a round by measuring one job, not by estimating ten.** Read the meter, run a single
+session, read it again. That is a real per-job cost for the kind of job actually being run, and
+it beats a per-increment average that was derived from a different shape of work. The average in
+069 came from long Fable sessions and says almost nothing about what a short Sonnet one costs.
+
+- **The weekend is the project's window and the workweek is the user's.** That follows from the
+  shared limit rather than from a preference, and it is the reason the reset day matters: with a
+  Tuesday-afternoon reset, the user draws from Tuesday to Friday, the project has the weekend,
+  and Monday to Tuesday lunchtime is the floor being protected. Entry 069's *two rounds a week of
+  three or four sessions* was written before that was understood; a weekend round is bigger and
+  rarer than that, and how much bigger is a thing to measure with the feed rather than guess.
 - **Master runs fresh on Opus for routine rounds** — merge, test, curate, rebuild — and is
   restarted rather than continued past a few rounds. Fable for a round that argues the breakdown,
-  and fresh each time. The Fable meter is the tighter of the two; watch it, not the all-models one.
-- **Stop at half.** When the meter reads 50%, the week is done, whatever is in flight. Sessions
-  push and say they are ready; the merge waits for the reset.
+  and fresh each time. **The two meters bind differently**: the all-models one carries the floor,
+  because that is the limit the user's own work draws on, while the Fable one constrains only
+  what may be run on Fable. Check both and do not read either off the other.
+- **The ceiling is 100%, and the constraint is a floor at a time.** *Stop at half* was this
+  project's original rule and it was a misreading, corrected the day the feed went in: the 50%
+  was an estimate of what this project would consume, never a cap it had to respect. The limit is
+  shared with the user's own work, which falls mostly in the workweek, so the real rule is
+  **leave enough for the workdays between now and the reset** — about 20% for the two that follow
+  a weekend. Everything under that floor is the project's, up to the full meter. See entry 075.
 - **A play-through per round from milestone 1 on.** Findings arrive one play-through at a time,
   and a week of View work without one is a week of guessing.
 
