@@ -850,6 +850,7 @@ public sealed class BattleView
         DrawBeliefLabels(canvas, frame);
         DrawGhostLabels(canvas, frame);
         DrawUnitLabels(canvas, frame);
+        DrawBillLabels(canvas, frame);
     }
 
     private void DrawCostLabels(CanvasItem canvas, SandboxFrame frame)
@@ -990,6 +991,49 @@ public sealed class BattleView
             }
         }
     }
+
+    /// <summary>
+    /// The staged shot's bill on the map: a mark under the target when the shot would tell anybody
+    /// else, and a <c>!</c> over each of those the picture shows.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Brief four's amendment puts the warning on the thing under the cursor, because that is where
+    /// the three stealth games in the reference set put theirs and where the one that did not — XCOM
+    /// 2 — had a community draw it for them. For a shot the thing under the cursor is the target, so
+    /// the mark goes at its feet; the <c>!</c> over each listener is the other half, and answers
+    /// <i>which of them</i> without a player having to read the HUD line.
+    /// </para>
+    /// <para>
+    /// <b>The glyphs are provisional.</b> Which marks read at a glance on a hovered target is what
+    /// capture C8 in <c>docs/interface/captures.md</c> is for — the Gotcha Again mod's vocabulary —
+    /// and it has not been taken. These are text in the label font because that is what the
+    /// greybox can draw today. Nothing is marked for a listener the picture does not show, and
+    /// nothing counts them: the mark under the target says <i>somebody else</i>, never how many.
+    /// </para>
+    /// </remarks>
+    private void DrawBillLabels(CanvasItem canvas, SandboxFrame frame)
+    {
+        if (frame.StagedShot is not { CanFire: true } plan) return;
+
+        var others = frame.Giveaway.Select(word => word.Learner).Where(u => u != plan.Target).ToList();
+        if (others.Count == 0) return;
+
+        // Offset in pixels from the point the name label hangs from, not in metres: the name and
+        // rung are placed that way, and a mark placed in metres lands on top of them at any distance
+        // a rifle shot is taken from. The target's mark goes under its rung; a listener's over its name.
+        if (Crown(frame, plan.Target) is { } target)
+            Text(canvas, target + new Vector2(0, 24), "((( ! )))", 14, SandboxPalette.OverwatchHue, 120f);
+
+        foreach (var listener in others.Where(frame.Sees))
+            if (Crown(frame, listener) is { } over)
+                Text(canvas, over + new Vector2(0, -24), "!", 20, SandboxPalette.OverwatchHue, 40f);
+    }
+
+    /// <summary>Where a standing unit's labels hang from on screen, if it is in front of the camera.</summary>
+    private Vector2? Crown(SandboxFrame frame, Unit unit)
+        => _camera.Project(SandboxGeometry.NodeScene(frame.Battle.Map, unit.Position)
+                           + Vector3.Up * (float)(StanceProfile.For(unit.Stance).BodyHeight + 0.35));
 
     /// <summary>The most alarmed any of ours has made this enemy.</summary>
     private static AwarenessReadout WorstReadout(SandboxFrame frame, Unit hostile)

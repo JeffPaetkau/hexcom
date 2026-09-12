@@ -4435,3 +4435,52 @@ this; the two runs end the same, the pictures differing by 38 pixels along a gho
 arguably another brief's. **Found and left for brief five:** when a hostile's turn stops at a window,
 the situation block describes that hostile, including the exact certainty it holds on each of ours —
 the enemy's contact file as a number, which contract 3 forbids.
+
+---
+
+## 086 — A shot's bill is one call on Core, and Core's preview leaves out the relay that tells the rest
+**2026-09-12** · **Raised by** view · **For** core, view, master · **Status** open for core — the preview's missing relay, below; view's half is built
+
+Brief four, built on `view/shot-bill`. A bill line under the shot names who taking it would tell, and
+the map marks the target and each listener the picture shows. What was settled, and one finding for
+Core.
+
+**The query is `Battle.WouldAnnounce(ShotPlan)`, not `WouldHear` against the weapon's loudness.** The
+job's promotion named the second. But `Battle.Fire` announces a shot three ways — `TakeFireFrom`
+settles the target, `Hear` at `Loudness`, `Reveal` at `Flash` — and `WouldHear` previews one; a beam is
+silent, so a beam shot would have read as telling nobody. `WouldAnnounce(plan)` previews all three and
+is what `Tactician` prices `GivenAway` by, so the player's bill and the AI's charge are one answer.
+
+**Names, and the unfound are *somebody unseen*, once.** `WouldHear`, `WouldAnnounce` and the rest
+iterate every enemy, found or not. The move's noise line had been printing every listener's name since
+entry 021, which on the waystation reads out most of the garrison on the first hover. Both lines now
+go through one helper that names only hostiles we have eyes on and says *somebody unseen* once however
+many are left, because a count of unfound listeners is a count of the other side.
+
+**Finding for Core: the preview omits the target's relay, and measured, the relay tells people.**
+`TakeFireFrom` ends in `Relay(target, …)`, passing the target's settled certainty on at
+`RelayFraction` to every ally it can reach — and raising the side's alarm if the target carries the
+radio. `AwarenessTracker.WouldAnnounce` leaves that out deliberately; its remarks argue a relayed
+contact arrives below the rung anybody acts on. Checked headless on the waystation, round 7, Bekker's
+three possible shots, the bill against the contact files either side of `Battle.Fire`:
+
+| shot at | preview named | shot told |
+|---|---|---|
+| Teague | Hollis, Marek, Teague | Cobb, Hollis, Marek, Teague |
+| Marek | Hollis, Marek, Teague | Cobb, Hollis, Marek, Teague |
+| Hollis | Hollis, Marek, Teague | Hollis, Marek, Teague |
+
+The preview never named anybody the shot did not tell. What it cannot see is Cobb, told by relay. Two
+reasons this is Core's rather than a caveat forever. **Contract 2 has the same hole on both sides**: the
+scorer does not charge a shot for waking the target's friends either, and the case where that is
+largest — a shot that does not drop a radio carrier, which raises the alarm through `Relay` — is the
+one a stealth player most needs priced. And *below the rung* is not *nothing*: certainty banked short
+of a rung is what the next look or noise carries over it. Asked for: the relay in the preview, or a
+second query beside it (*who would the target tell, and would it raise the alarm*), so View can name
+them and the scorer can charge for them from one place.
+
+**Until then the bill line ends *and whoever the target passes it on to*,** which is true and names
+nobody it cannot. View's work when Core lands it is a small job: the clause becomes names.
+
+**Provisional.** The glyphs, until capture C8. The target's mark is hard to read among the labels on the
+house roof, which is the case for a mesh glyph.

@@ -213,6 +213,7 @@ public sealed class BattleHud(Font font)
                 : "cursor —",
             AimLine(frame),
             ShotLine(frame),
+            BillLine(frame),
             WorthLine(frame),
         });
         lines.RemoveAll(line => line.Length == 0);
@@ -713,6 +714,50 @@ public sealed class BattleHud(Font font)
     }
 
     /// <summary>
+    /// Who the shot would give the shooter away to — the bill beside the price. Brief four.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The oldest open gap in the interface audit, entry 012's second item. The worth line has
+    /// always charged a shot for what it announces, inside its spared term, and nothing said to
+    /// whom: the player saw the price and not the bill. XCOM warns before concealment breaks and
+    /// does not say who hears it; this is the game where the <em>who</em> matters most, because
+    /// the fight is decided by who found whom first.
+    /// </para>
+    /// <para>
+    /// <b>Names, not figures</b>, for the reason <see cref="NoiseLine"/> gives: the figures behind
+    /// them are how far each hostile's file on us would move, and that stays a rung. And a hostile
+    /// nobody of ours has eyes on is <i>somebody unseen</i> — see <see cref="SandboxFrame.Names"/>.
+    /// The target is named first and marked, since being shot at tells the target outright whether
+    /// or not a round lands, and a bill that listed only bystanders would read as though the target
+    /// might not notice.
+    /// </para>
+    /// <para>
+    /// It says <i>tells</i> rather than <i>wakes</i> on purpose. Everyone named gains certainty
+    /// about the shooter; whether it carries any of them over a rung is the enemy's arithmetic, and
+    /// the rung under their feet says so on the next look.
+    /// </para>
+    /// </remarks>
+    private static string BillLine(SandboxFrame frame)
+    {
+        if (frame.StagedShot is not { CanFire: true } plan) return "";
+
+        var told = frame.Giveaway.Select(word => word.Learner).ToList();
+        if (told.Count == 0) return "the shot tells nobody anything they do not already know";
+
+        var others = told.Where(u => u != plan.Target).ToList();
+        var target = told.Contains(plan.Target) ? $"{plan.Target.Name} (shot at)" : "";
+
+        // The last clause is the preview's honest limit rather than decoration. Being shot at makes
+        // the target pass word to whoever it can reach, and Core's preview leaves that relay out —
+        // measured on the waystation, a shot at Teague told Cobb as well as the three it named. Until
+        // the preview includes it (decisions.md), the line says there is more rather than guess who.
+        return "the shot tells: " + string.Join(", ",
+                   new[] { target, others.Count > 0 ? frame.Names(others) : "" }.Where(part => part.Length > 0))
+               + $"    — and whoever {plan.Target.Name} passes it on to";
+    }
+
+    /// <summary>
     /// What that shot is expected to <i>achieve</i>, and what the scorer therefore makes of it.
     /// </summary>
     /// <remarks>
@@ -946,11 +991,12 @@ public sealed class BattleHud(Font font)
         var loudness = frame.Battle.Loudness(active, path);
         if (loudness <= 0) return "    silent";
 
-        var listeners = frame.Battle.Awareness.WouldHear(active, node, loudness)
-            .Select(word => word.Learner.Name)
-            .ToList();
+        // Through Names, so a listener nobody of ours has found is somebody unseen. This line used
+        // to name every listener in earshot, found or not, which on the waystation read out most of
+        // the garrison's names from the first move of the mission. Brief four found it copying it.
+        var listeners = frame.Battle.Awareness.WouldHear(active, node, loudness).Select(word => word.Learner);
 
-        return $"    noise {loudness:0}, heard by {(listeners.Count == 0 ? "nobody" : string.Join(", ", listeners))}";
+        return $"    noise {loudness:0}, heard by {frame.Names(listeners)}";
     }
 
     /// <summary>
@@ -1035,19 +1081,8 @@ public sealed class BattleHud(Font font)
         return terms.Count == 0 ? "nothing" : string.Join(", ", terms);
     }
 
-    /// <summary>The shot the active unit would take at the aim, or at the cursor when nothing is aimed at.</summary>
-    /// <remarks>
-    /// The aim wins over the cursor so that a player can move the pointer — to orbit, to read a
-    /// label, to look at the ground they would retreat to — without the terms they are about to
-    /// confirm being replaced by somebody else's.
-    /// </remarks>
-    private static ShotPlan? StagedShot(SandboxFrame frame)
-    {
-        if (frame.Battle.Active is not { } shooter) return null;
-        if ((frame.Aim ?? HoveredUnit(frame)) is not { } quarry || !quarry.IsHostileTo(shooter)) return null;
-
-        return frame.Battle.PlanShot(shooter, quarry);
-    }
+    /// <summary>The staged shot. See <see cref="SandboxFrame.StagedShot"/>, which the map's bill glyph reads as well.</summary>
+    private static ShotPlan? StagedShot(SandboxFrame frame) => frame.StagedShot;
 
     /// <summary>
     /// What the active unit can make out at the cursor, and what is protecting it.

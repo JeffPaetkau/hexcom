@@ -35,49 +35,23 @@ reaching into `src/`.
 
 ---
 
-## The job — brief four, who a shot would wake
+## The job — Master's to set
 
-Branch `view/shot-bill`. Take a worktree.
+**Brief four has landed and nothing in this file names the next brief.** Brief one still waits on
+the captures in `../interface/captures.md`; the order of the rest of `../interface/briefs.md` is
+Master's, and a session pointed here should ask rather than pick. Brief four left one thing for
+Core rather than for View — the shot preview's missing relay, entry 086 — and when Core lands it the
+bill line's last clause becomes names instead of a caveat, which is a small View job of its own.
 
-**Read brief four and its amendment in `../interface/briefs.md`, and nothing else from that
-file.** The brief is *Four — who a shot would wake*; the amendment is *Amending Four*. It is the
-oldest open interface gap, entry 012's second item, and the synthesis calls its case the
-best-evidenced thing in the queue: the XCOM 2 mod that draws this warning has 272,071 subscribers,
-an order of magnitude more than any other community fix in ten games.
-
-**Its first settle-first question is answered, so do not spend the session re-asking it.** The
-brief worried the noise a shot makes might need a new query on Core. It does not.
-`AwarenessTracker.WouldHear(source, place, loudness)` is public and takes any loudness, and every
-`WeaponProfile` and `ThrownProfile` carries its own `Loudness`. The move's half already uses the
-first against `Battle.Loudness`; the shot's half uses it against the weapon's.
-
-**The one thing to check before drawing.** Read what the battle does when it resolves a shot — how
-`FireAt` makes its noise heard — and make the preview ask the same question with the same numbers.
-The test in the brief is *taking the shot wakes exactly those it named*, and a preview computed by
-a parallel route passes that test until the day somebody tunes one route and not the other. If the
-two cannot be made the same call without a change to Core, that is an entry, not a workaround.
-
-**Build the names now; hold the glyphs lightly.** Names without figures on the shot line, the same
-rung discipline `BattleHud.NoiseLine` already uses for a move, needs no picture. What the amendment
-adds from the mod — which icon on which tile reads at a glance — is capture **C8** in
-`../interface/captures.md`, and that is XCOM 2, which is now installed. So draw the warning where
-the amendment says it belongs, on the thing under the cursor, and treat the glyph choice as
-provisional until C8 lands. Say so in the commit.
-
-**How to know it worked.** The brief's own: hovering a shot on the waystation names the sentries
-that would hear it, and taking the shot wakes exactly those. Plus a script step that captures the
-named list, per entry 049, so the equality can be checked headless rather than by eye.
-
-**Out of scope.** What a shot costs. The rules of earshot. Brief one's disclosure gesture, whose
-`Ctrl` and `Alt` stay unbound.
-
-**What the next View brief inherits from these two, so it is not re-argued.**
+**What the next View brief inherits from three, six and four, so it is not re-argued.**
 
 - **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
   turn; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
   `Esc` back out and never spend a point. `Ctrl` and `Alt` are unbound, reserved for brief one.
 - **Whose knowledge is on screen.** A window offers our own side's reactors; the other side's are
-  behind the instruments window, the same switch as the AI's orders.
+  behind the instruments window, the same switch as the AI's orders. A hostile nobody of ours has
+  eyes on is *somebody unseen* in any list of names, said once however many there are —
+  `SandboxFrame.Names`.
 
 ---
 
@@ -95,6 +69,62 @@ so it is not rediscovered; it is not urgent and it is not a brief yet.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/shot-bill`
+
+Brief four. `../decisions.md` entry 086 is the reasoning and the finding for Core; this is the shape.
+
+**Under the shot line, a bill line names who taking the shot would tell.** *The shot tells: Teague
+(shot at), somebody unseen — and whoever Teague passes it on to.* Names and never figures, the move
+line's rung discipline. The target first and marked, because being shot at tells the target outright
+whether or not a round lands. On the map, `((( ! )))` under the target's rung whenever the shot would
+tell anybody else, and a `!` over each of those the picture shows.
+
+**One call on Core, and not the one the brief's promotion named.** The job said the shot's half uses
+`AwarenessTracker.WouldHear` against the weapon's `Loudness`. Reading `Battle.Fire` first, as the job
+also said to, a shot announces itself three ways — the target's certainty settled outright, the bang
+heard at `Loudness`, the flash seen at `Flash` — and `WouldHear` previews one of them. A beam is
+silent and bright, so a beam shot would have read *tells nobody* while telling everybody facing it.
+`Battle.WouldAnnounce(ShotPlan)` previews all three and is the call the AI's scorer prices `GivenAway`
+by, so the player's bill and the AI's charge are one answer. `SandboxFrame.Giveaway` is that call,
+and `SandboxFrame.StagedShot` — moved out of the HUD — is the shot both halves ask it about.
+
+**Measured, headless, and it found the hole.** `--aim` now reports who Core's preview would tell, and
+a shot reports who it actually told, read off the enemy's contact files either side of `Battle.Fire`
+and before anybody else acts. On the waystation from round 7, Bekker's three possible shots:
+
+| shot at | the bill named | the shot told |
+|---|---|---|
+| Teague | Hollis, Marek, Teague | **Cobb**, Hollis, Marek, Teague |
+| Marek | Hollis, Marek, Teague | **Cobb**, Hollis, Marek, Teague |
+| Hollis | Hollis, Marek, Teague | Hollis, Marek, Teague |
+
+In all three every name the preview gave was told, and reading `WouldAnnounce` against `AnnounceFire`
+says it cannot name somebody the shot does not tell: the three channels are applied in sequence and
+previewed side by side, and each only raises. What it misses is the relay:
+`TakeFireFrom` has the target pass what it now knows to whoever it can reach, and Teague and Marek
+reach Cobb while Hollis does not. Core's preview omits the relay on purpose — its remarks say a
+relayed contact arrives below the rung anybody acts on — but *below the rung* is still *told*, and a
+shot at a signaller is exactly where it stops being small: the relay is also where the side's alarm
+is raised. Making the two one call needs Core, so it is entry 086 and not a computation here. Until
+then the line ends *and whoever Teague passes it on to*, which is true and names nobody it cannot.
+
+**The move's noise line was leaking, and brief four found it by copying it.** It printed every
+listener in earshot by name, found or not — on the waystation, most of the garrison's names on the
+first hover. Both lines now go through `SandboxFrame.Names`: a hostile nobody of ours has eyes on is
+*somebody unseen*, said once however many there are, since a count of unfound listeners is a count of
+the other side's soldiers. That is one step stricter than the exposure line, which says *somebody
+unseen* once per watcher; the exposure line was left alone.
+
+**The glyphs are provisional, as the job said to treat them.** Capture C8 — the Gotcha Again mod's
+vocabulary on a hovered tile — has not been taken, and these are text in the label font because that
+is what the greybox draws. They are placed in pixels from the point the name label hangs from, not in
+metres: the first attempt put them in metres and at rifle distance they landed on the names.
+
+**Not done.** The amendment's placement for a *move* — the mark on the destination tile — is not
+drawn; the move has its names on the cursor line and nothing on the map. Brief four is the shot.
 
 ---
 
@@ -628,6 +658,7 @@ reasons and therefore what the interface has to be able to explain. Verdicts:
 | distance, cover, exposure | `SightResult` | cursor line, in metres and per cent | shown |
 | where in the weapon's range that falls | `WeaponProfile.OptimalRange` / `MaxRange` | cursor line names the band and the long-range factor; status line carries the bands | shown |
 | the bonus for having the arc already held | `OverwatchArc.AimBonus` | reserve line | shown |
+| who the shot gives you away to | `Battle.WouldAnnounce(plan)` | bill line, by name; the unfound as *somebody unseen*; marks on the map | shown, less the target's relay — entry 086 |
 
 The four `Expect` rows were the audit's clearest single finding and were closed while it was
 being written. Everything the shot line said was true and none of it was what the AI ranks by:
@@ -694,9 +725,9 @@ Shouting was the odd row and is closed. `Tactician.AppraiseWord` scored it and
 `ReactionAction.Shout` used it in a window, but no `Battle` action let anybody do it on their own
 turn — so the interface could not offer it and `Commander` could not generate it, which is entry
 012's first item. `Battle.Shout` exists now; `L` calls a contact in and the reserve line says who
-would hear it. **Item 2 of entry 012 is still open**: the scorer charges a shot for what it
-announces, and there is no preview of *who* a shot would wake, so the player sees the price and
-not the bill.
+would hear it. **Item 2 of entry 012 is closed by brief four**, with one hole in it: the bill line
+under the shot names who taking it would tell, through `Battle.WouldAnnounce` — the call the scorer
+charges `GivenAway` by — and the target's relay to its own side is not in that preview. Entry 086.
 
 ### Spent — what it costs
 
@@ -740,10 +771,12 @@ in entry 023 so that nobody later mistakes the readout for a precedent.
 The audit named two omissions the turn planner would hit first. Both were also interface gaps,
 and saying so was the point of the exercise:
 
-- **Firing gives you away and nothing prices it for the player.** The scorer charges a shot for
-  what it announces (`GivenAway`, shown inside the worth line's spared term), but there is no
-  preview of *who* a shot would wake and by how much, so the player sees the price and not the
-  bill. Still open — entry 012, item 2.
+- **Firing gives you away and nothing prices it for the player.** No longer, mostly: the bill line
+  names who the shot would tell, from `Battle.WouldAnnounce(plan)`, which is the call the scorer's
+  `GivenAway` is priced by — so what the player reads and what the AI charges are one answer. The
+  hole is the same on both sides of contract 2: neither includes what the target passes on to its
+  own side, and measured on the waystation that relay tells somebody the preview did not name.
+  Brief four, and entry 086 for Core.
 - **A move's noise was computed and thrown away.** No longer: `Battle.Loudness` is public and is
   the figure `Move` then charges, `AwarenessTracker.WouldHear` says who would hear it, and the
   cursor line prints both — the loudness and the names — for any route the active soldier could
@@ -933,6 +966,13 @@ Entry 053 records the count.
   back-out from an orbit. Before brief three a misread drag was a shot nobody meant; now it is an
   aim dropped. If it ever becomes a shot again — any binding that spends points on a right *click* —
   the slop is back to being the only thing between a camera turn and an irreversible action.
+- **A preview of what the enemy learns iterates every enemy, found or not.** `WouldHear`,
+  `WouldAnnounce` and `Earshot` of a hostile are all about the whole other side, which is right for
+  the AI and a leak on a screen. Anything that prints their learners goes through
+  `SandboxFrame.Names`. The move line did not, for as long as it existed.
+- **The shot's bill is checked against the contact files, and that read is an instrument.**
+  `HexSandbox.HeldOn` reads each enemy's exact certainty on the shooter, which contract 3 keeps off
+  the picture. It exists so a script step can report who a shot told; it must never feed a readout.
 - **Skipping a window is placing its recommendations and then resuming, never just resuming.**
   `Commander.Resume` and `Battle.Resolve` both treat what was placed as the whole answer, so a window
   resumed with nothing in it is everybody in it holding fire. That was harmless while only empty
@@ -1153,7 +1193,7 @@ one prints what it did. They are the keys under another name:
 |---|---|
 | `--pass [N]` · `--until NAME` | hand the turn on; or hand it on until a named soldier is up |
 | `--move q,r[,l[,g]]` · `--fire NAME` | the active soldier moves or shoots — at a soldier the picture shows |
-| `--aim [NAME]` · `--next-target` · `--confirm` · `--back-out` | the firing mode: `1` or a click on NAME · `Tab` · space · right-click. `--fire NAME` is `--aim NAME --confirm` for any shot the rules allow |
+| `--aim [NAME]` · `--next-target` · `--confirm` · `--back-out` | the firing mode: `1` or a click on NAME · `Tab` · space · right-click. `--fire NAME` is `--aim NAME --confirm` for any shot the rules allow. `--aim` reports who the shot *would tell*; a shot reports who it *told*, read off the contact files, so the bill can be checked headless |
 | `--stance NAME` · `--face DIR` · `--overwatch NAME\|none` | posture, facing, the arc being held |
 | `--arm` · `--spring NAME` · `--shout NAME` · `--extract` | ambush, call it in, walk off the field |
 | `--ai-turn` · `--hostiles ai\|hand` | give this turn to the search; give the side to it or take it back |
@@ -1361,6 +1401,13 @@ Desktop-only is the design and Windows is the machine.
 - ~~**Whether a player should be answering the enemy's reactions.**~~ Answered by brief six and
   entry 085: no. A window offers our side's reactors, and the other side's are behind the
   instruments window, the same switch as the orders readout.
+- **Which glyphs the shot's bill should use.** `((( ! )))` under the target and `!` over each
+  listener are placeholders in the label font, waiting on capture C8. Among the labels on the
+  waystation house roof — a name, a rung, `LADDER`, `HOUSE` — the target's mark is hard to pick out,
+  which is the case for a mesh glyph rather than more text.
+- **Whether a move's destination tile carries the same mark.** Brief four's amendment finds the
+  warning drawn on the destination tile in every stealth game that draws it. The move has its
+  listeners on the cursor line and nothing on the map.
 - **Whether a held arc gets an adjust step.** Brief six's amendment: Phoenix Point adjusts the cone
   before confirming and Warhounds' guides single out enter, adjust and cancel as what makes
   overwatch usable. `V` takes the next arc in one press and charges for each, so finding the one you

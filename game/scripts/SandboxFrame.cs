@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Hexcom.Content;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
+using Hexcom.Core.Combat;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
@@ -154,6 +156,63 @@ public sealed record SandboxFrame(
            && Sees(quarry)
             ? quarry
             : null;
+
+    /// <summary>The shot the active soldier would take at the aim, or at the cursor when nothing is aimed at.</summary>
+    /// <remarks>
+    /// The aim wins over the cursor so that a player can move the pointer — to orbit, to read a
+    /// label, to look at the ground they would retreat to — without the terms they are about to
+    /// confirm being replaced by somebody else's. In the frame rather than the HUD because the map
+    /// marks the same shot's bill, and two halves planning the staged shot separately is two
+    /// chances to plan different shots.
+    /// </remarks>
+    public ShotPlan? StagedShot
+        => Battle.Active is { } shooter && (Aim ?? HoveredUnit) is { } quarry && quarry.IsHostileTo(shooter)
+            ? Battle.PlanShot(shooter, quarry)
+            : null;
+
+    /// <summary>
+    /// Who taking the staged shot would tell about the shooter, target first and then by name.
+    /// Empty when there is no shot to take.
+    /// </summary>
+    /// <remarks>
+    /// <b>Brief four, and it is one call on Core, not a computation here.</b>
+    /// <see cref="Battle.WouldAnnounce(ShotPlan)"/> is the preview of what <c>Battle.Fire</c> does
+    /// when it announces a shot — the target's certainty settled, the bang heard at the weapon's
+    /// <c>Loudness</c>, the flash seen at its <c>Flash</c> — and it is the same call the AI's scorer
+    /// charges a shot's <c>GivenAway</c> by. A preview built from <c>WouldHear</c> and the weapon's
+    /// loudness would have covered one of the three channels and been a second route to the same
+    /// answer, which is the shape that agrees until somebody tunes one route and not the other.
+    /// <para>
+    /// What it does not cover is what the target then passes on to its own side, which Core
+    /// deliberately leaves out of the preview; see <c>docs/decisions.md</c> for what that costs.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<Announcement> Giveaway
+        => StagedShot is { CanFire: true } plan
+            ? Battle.WouldAnnounce(plan)
+                .OrderBy(word => word.Learner != plan.Target)
+                .ThenBy(word => word.Learner.Name)
+                .ToList()
+            : [];
+
+    /// <summary>
+    /// Some units by name as the picture is allowed to name them: a hostile nobody of ours has eyes
+    /// on is <i>somebody unseen</i>, however many of them there are.
+    /// </summary>
+    /// <remarks>
+    /// The exposure line's rule — that a line exists is geometry and ours, which soldier is at the
+    /// far end of it is theirs until we have eyes on them — with one tightening: the unseen are
+    /// said once rather than once each, because how many hostiles we have not found are within
+    /// earshot is a count of the other side's soldiers. Both the shot's bill and the move's noise
+    /// go through this. The move's used to print every listener's name, found or not.
+    /// </remarks>
+    public string Names(IEnumerable<Unit> units)
+    {
+        var list = units.ToList();
+        var named = list.Where(Sees).Select(u => u.Name).ToList();
+        if (list.Any(u => !Sees(u))) named.Add("somebody unseen");
+        return named.Count == 0 ? "nobody" : string.Join(", ", named);
+    }
 
     /// <summary>
     /// Everybody the active soldier could aim at, nearest first: the hostiles the picture shows.

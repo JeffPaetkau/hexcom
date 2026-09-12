@@ -1019,13 +1019,41 @@ public partial class HexSandbox : Node3D
         if (_battle.Active is null) return "nobody is up";
         if (!Frame().Sees(quarry)) return $"nobody of ours can see {quarry.Name}";
 
+        var shooter = _battle.Active;
+        var before = HeldOn(shooter);
+
         var outcome = _battle.Fire(quarry);
+
+        // Who actually learned something, read straight off the contact files either side of the
+        // shot and before anybody else acts — the other half of the check brief four set, whose
+        // first half is the bill --aim prints. Named the way the picture names them.
+        var told = Frame().Names(TellingSince(shooter, before));
         AfterAction();
 
         return outcome is null
             ? $"no shot at {quarry.Name}"
-            : $"fired at {quarry.Name}: " + (outcome.AnyHit ? $"hit for {outcome.TotalDamage}" : "missed");
+            : $"fired at {quarry.Name}: " + (outcome.AnyHit ? $"hit for {outcome.TotalDamage}" : "missed")
+              + $"; told {told}";
     }
+
+    /// <summary>What each of a soldier's enemies holds on that soldier right now.</summary>
+    /// <remarks>
+    /// <b>An instrument, and it never reaches the screen.</b> This is the enemy's contact file as a
+    /// number, which contract 3 keeps off the picture. It is read only to report, on the command
+    /// line, who a shot actually told — so that the bill on screen can be checked against what the
+    /// rules did rather than against what the preview says the rules would do.
+    /// </remarks>
+    private Dictionary<Unit, double> HeldOn(Unit subject)
+        => _battle.Enemies(subject).ToDictionary(
+            enemy => enemy,
+            enemy => _battle.Awareness.ContactsFor(enemy.Id).FirstOrDefault(c => c.Subject == subject.Id)?.Detection ?? 0);
+
+    /// <summary>The enemies whose file on a soldier has risen since <paramref name="before"/>, target first then by name.</summary>
+    private IEnumerable<Unit> TellingSince(Unit subject, Dictionary<Unit, double> before)
+        => HeldOn(subject)
+            .Where(pair => pair.Value > before.GetValueOrDefault(pair.Key))
+            .Select(pair => pair.Key)
+            .OrderBy(unit => unit.Name);
 
     // ---- the firing mode --------------------------------------------------------
     //
@@ -1072,7 +1100,8 @@ public partial class HexSandbox : Node3D
 
         var plan = _battle.PlanShot(shooter, quarry);
         return plan.CanFire
-            ? $"aiming at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP"
+            ? $"aiming at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP; "
+              + $"would tell {Frame().Names(_battle.WouldAnnounce(plan).Select(word => word.Learner).OrderBy(unit => unit.Name))}"
             : $"aiming at {quarry.Name}: {plan.Refusal}";
     }
 

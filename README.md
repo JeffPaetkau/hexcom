@@ -212,7 +212,9 @@ the exposure figure into who it is exposure *to*. The posture line prices the th
 would, term by term: what it spares you, what it opens, what it costs. The cursor line places
 any hex in the active weapon's range bands, whose figures sit beside the weapon on the status
 line, so you can see the long stretch where a rifle still fires and fires worse before a shot is
-refused — and says how loud the walk there would be and who would hear it.
+refused — and says how loud the walk there would be and who would hear it. Under a shot, a line
+says who taking it would give you away to, and the map marks the target and each of those you can
+see; a hostile nobody of yours has found is *somebody unseen* on both lines, never a name.
 
 **A move opens a window, and you can answer it yourself.** Press `K` and a move is paid for and
 held rather than resolved: the soldier stands at the start of a walk it has not taken, the route
