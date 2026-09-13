@@ -163,6 +163,21 @@ version of this brief did not have: Into the Breach's total disclosure is now do
 detail rather than cited, and it is the argument this job has to answer rather than route
 around.
 
+**First, one question from the second play-through — `../decisions.md` entry 094, item 15 — and
+View's `ground-and-camera` brief waits on the answer.** *It's not obvious what I'm seeing versus what
+is in the fog of war.* Today `BattleView.BuildUnseen` darkens the ground the **active soldier** cannot
+see, and only when zoomed in; the squad's sight is drawn nowhere, and every soldier's attention field
+is washed over the ground in side colour. The convention is a darkened ground outside squad sight at
+any zoom. What it becomes here is the question, because sight in this game is graded and depends on
+height — a tile can be seen by a standing soldier and not a crouched one, and a body can be seen
+where the floor it stands on is not. Say, as a new section of `../interface/conventions.md` in the
+usual shape: what *seen* means on the ground (the squad's or the soldier's, at which height), how it
+looks beside the attention field and the told ghosts of 094 item 5, and whether it survives zooming
+out. Items 7 and 13 of the same entry are next door and worth a paragraph: the cover outlines say what
+cover a tile has *from* the soldier who is up, the genre's shield says what cover *you* would have
+there, and the two must not look alike. This is a section, not the job; the onboarding brief below is
+still the job, and it is better for knowing what the ground says.
+
 **Read entry 089 before starting.** Two of its findings are onboarding's material directly. The
 shot's terms open by default while aiming, so the arithmetic teaches itself on the first shot, and
 *where the arithmetic lives* below is half answered already. And the one persisted enemy marker in

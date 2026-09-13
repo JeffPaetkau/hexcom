@@ -5362,3 +5362,129 @@ in either is kept back by contract 3; both are priced from the named listeners t
   command is.
 
 ---
+
+## 094 — The second play-through: fifteen findings, one action bar, and the ground does not say what it is
+**2026-09-12** · **Raised by** master, for the user · **For** view, interface, core · **Status** open — routed below: View's next brief is the action bar, two more briefs queued behind it and brief two, the ground-and-sight question onto Interface's brief, the shot's price to Core as a question
+
+The user played `build/Hexcom.exe` as built after entry 093 — the default, which is the waystation
+against `Commander` — and said this. Recorded in their words as nearly as a list allows, as entry 057
+did the first. Each is followed by what Master found in the code before writing it down, because
+five of them are not what they look like, and a brief built on the look would be the wrong brief.
+**Everything under *found* is read from the source, not seen in a capture**, unless it says so.
+
+### The findings
+
+1. *Std practice is that the interface should all be configurable. Everything we have hardwired
+   should load from a config file.* — Argued; see below. Settled as keybindings and player
+   preferences, loaded at start, with an options screen over them.
+2. *Camera working much better. Q and E should turn it maybe 30 degrees instead of 60, or maybe
+   press and hold and stop when let up. Mouse rotate works great.* — Found: `SandboxCamera.Turn`
+   lands on the six bearings on purpose, which is what is left of entry 053 after 058. Master
+   recommended **hold to turn, release to stop** over a 30° step: it is 058's ruling (smooth over
+   snapped) applied to the keys, and a 30° step is a second set of resting places to keep arcs
+   legible from. Not argued further; the brief says hold, and keeps a tap landing on a bearing.
+3. *Unable to pan with the mouse, only rotate.* — Found: middle-drag is meant to pan
+   (`HexSandbox._UnhandledInput`, `MouseButton.Middle` sets `_dragging` and the motion case pans), and
+   nothing on screen says so. Master told the user so, and the user tried it: **middle-drag does not
+   pan in the build.** The code reads correctly, so the press is being lost somewhere before it —
+   a `Control` taking it, since this is `_UnhandledInput`, is the first thing to check. A bug, cause
+   unknown. Left-drag does nothing and right-drag orbits.
+4. *Is there any way to tilt?* — Found: no. `SandboxCamera.PitchDegrees` is a constant 55°, and its
+   remarks say nothing has wanted it to move. Something has. `../interface/conventions.md` under
+   *The camera* already recommends pitch within a clamp that keeps a wall a wall, and it was never
+   built.
+5. *I can see all the enemies on my screen as soon as it loads, but not shoot at. That doesn't seem
+   right.* — Found: **the rules are right and the picture is wrong.** The waystation's mission file
+   tells the squad about Cobb, Teague and Marek at `searching` and Hollis at `suspicious` (entry
+   092), so each is drawn as a ghost at its reported place. On turn one nobody has moved, so every
+   report is exactly where its hostile stands, and a ghost at the truth reads as sight. What the
+   squad was *told* and what it *sees* have to look different from the first frame.
+6. *Setting up an overwatch arc seems broken. I press V and nothing seems to happen other than lose
+   AP.* — Found, likely and unconfirmed: `BattleView.BuildHeldArcs` skips a unit whose
+   `Overwatch is not null && Reserve <= 0`, and entry 093 dropped the active soldier's reserve from
+   the readout because it *always read nought* on that soldier's own turn. If both hold, the arc is
+   declared, charged, and not drawn for exactly as long as the player is looking at it. `V` also
+   cycles four states at a point each with no readout of which one it landed on.
+7. *There are 5 hexes next to the wall on the right that are highlighted. I don't know what that is
+   about.* Later, corrected by the user: *highlighted light blue.* — Found, very likely: light cover.
+   `BattleView.BuildCoverOutlines` outlines each tile the active soldier can see that has cover, in
+   `SandboxPalette.CoverHue` — light blue for light — and a row along a wall is what it draws. **The
+   cover is the tile's cover from the active soldier** (`SightResult.Cover`, the view from the one
+   who is up), which is where an enemy would be safe from you and not where you would be safe —
+   the reverse of the genre's shield, see item 13. Nothing labels it. It is not the exit, and that
+   is its own finding: `BattleView.BuildExit` draws only a `Withdrawal`, the waystation's objective
+   is a `Reconnaissance`, and both are `Sortie`s — so on the default mission **neither the house the
+   squad is sent to look at nor the cottages it leaves by is drawn at all.**
+8. *Walk right beside a dude and it says they are SEARCHING.* — Found: the word under a hostile is
+   its rung, and nothing says whose — the enemy's alarm about us, or ours about him. A player
+   adjacent to an enemy expects one of them to be shooting. Whether the man was a body or a ghost
+   and which way he faced was asked and not answered; if a body, facing, adjacent and not
+   `Engaged`, that is Core's to look at, and a capture can say which.
+9. *Have a shot on an enemy but only have 9 AP. How do I take a snap shot?* — Found, two things.
+   A snap is 15 AP at list price, so 9 buys no shot at all. And **no fire mode can be chosen**:
+   `HexSandbox.AimAt` and `ConfirmShot` call `PlanShot` without a mode, so every shot the player
+   takes is `WeaponProfile.DefaultMode`, standard, 25 AP. Snap and aimed exist in the rules and are
+   unreachable from the interface.
+10. *Fire and End turn should be different keys.* — Found: `Space` confirms an aim and, with no aim,
+    ends the turn, by design. One aim dropped a moment early and the turn is gone. XCOM 2 ends a
+    turn on `Backspace` and confirms on `Space`/`Enter`.
+11. *More of the interface needs to be visual. Both keyboard and mouse should work for all actions.*
+    — Found: every action but move and aim is a letter (`C`, `Z`, `X`, `V`, `B`, `T`, `L`), and the
+    number keys are, in the code's own words, *an action bar with one slot in it*. The conventions
+    recommend the bar (`../interface/conventions.md`, *Selecting and ordering*).
+12. *The info popups are hiding the field and units sometimes.* — The readouts hung on things by
+    entry 093. Its test was *nothing unattached over the map*; this is attached things over other
+    things, which it did not test.
+13. *No cover shield indicators.* — Found: cover is outlined on the ground in blue, yellow and
+    orange, as the cover a tile has *against the soldier who is up* (item 7). The genre's convention
+    is a shield on the tile under the cursor, per direction, saying what cover **you** would have
+    there (`conventions.md`, *Readouts*), and it was never built. The two answer opposite questions
+    and both are worth having; they must not share a look.
+14. *The distances seem unintuitive. Can run a stretch of 10 or so hexes but can only shoot a
+    handful.* — Found: weapon reach is not short — the carbine is best to 14 m and reaches 42 m,
+    eight and twenty-four hexes. What is short is the violet edges round the soldier, which are the
+    reserve's steps: how far you may walk and still hold a snap, or better, for their turn. Unlabelled
+    rings round a soldier read as weapon range, and weapon range is drawn nowhere except inside a
+    held arc. **Behind it, one real question for Core**: a standard shot is half a turn and an aimed
+    one 70% of it against a 10-hex walk, and like every number in the game that is argued, not
+    measured. Master's advice to the user was not to move it on feel — it is load-bearing in the
+    reaction window, where points are ticks — but to measure it.
+15. *It's not obvious what I'm seeing versus what is in the fog of war.* — Found: there is a fog,
+    and it is easy to miss for two reasons. `BattleView.BuildUnseen` darkens dead ground **only for
+    the active soldier**, not the squad, and **only when zoomed in** past `SandboxCamera.LegibleAt`
+    — its remarks say that from a distance the wash would cover nine tiles in ten. Over it the
+    ground carries every soldier's attention field in side colour. The genre's convention is a
+    darkened ground outside *squad* sight, at every zoom. This game's sight is graded and
+    height-dependent — a tile can be seen standing and not crouched — so *seen* is not one bit per
+    tile, and what the convention becomes here is Interface's to say before View draws it.
+
+### Argued, so it is not re-argued
+
+**Item 1.** Master put it that the genre's standard is rebindable keys and an options screen —
+camera speeds, the turn step, edge-pan, animation pace, UI scale — and that no reference game exposes
+layout offsets, colours or dwell times as player settings. Loading *everything* from a file costs a
+great deal, helps no player, and would unpin every capture `view.md` checks a drawing change by. The
+user agreed at once and said the narrower scope was what they had meant. **Settled: an input map and
+a preferences file, both loaded at start, an options screen over them; the layout constants stay in
+code.** The three command-line preferences `view.md` already names (`--edge-pan`, `--pace`,
+`--still`) are the first tenants.
+
+**Items 6, 9, 10 and 11 are one missing thing**, and Master routes them as one brief: an action bar,
+mouse and keys both, carrying the fire modes with their prices, the arcs, the stance, the ambush, the
+shout and End turn on its own key.
+
+### Routed
+
+- **View, next:** `view/action-bar` — items 6, 9, 10, 11, and item 14's refusal text.
+- **View, queued behind it in this order:** brief two (`view/enemy-file`), which now also carries
+  items 5 and 8; then `view/ground-and-camera` — items 2, 3 (the broken pan first), 4, 7, 12, 13,
+  14's labels, the waystation's unmarked house and exit, and item 15 once Interface has answered it;
+  then `view/options` — item 1.
+- **Interface:** item 15, the ground and sight, as a question ahead of its onboarding brief.
+- **Core:** item 14's price of a shot against a walk, as a measurement for when a batch is next run
+  on the waystation; and item 8, if a capture shows an adjacent facing body short of `Engaged`.
+
+**Sessions.** View: fresh, on Opus — the brief says what to build. Interface: fresh on Opus, as its
+own doc says. Core: nothing new to start a session for.
+
+---

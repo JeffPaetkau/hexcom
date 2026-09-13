@@ -35,15 +35,99 @@ reaching into `src/`.
 
 ---
 
-## The job — Master's to set
+## The job — the action bar
 
-**Brief one has landed and nothing in this file names the next brief.** The order of the rest of
-`../interface/briefs.md` is Master's, and a session pointed here should ask rather than pick. Brief
-two's *alarm rung on the body* waited on brief one and no longer does (entry 093). Small things owed
-and not briefs: the bill's last clause becomes names when Core lands entry 086's relay; **the map
-still draws whoever is up, whichever side**, which is brief two's ground and entry 090's finding; and
-entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files write their clock onto
-the objective.
+Branch `view/action-bar`. **Read `../decisions.md` entry 094 first**: it is the second play-through,
+and four of its fifteen findings are this brief — 6, 9, 10 and 11. They are one missing thing.
+
+**What is wrong, in the player's words.** *I press V and nothing seems to happen other than lose AP.*
+*Have a shot on an enemy but only have 9 AP. How do I take a snap shot?* *Fire and End turn should be
+different keys.* *Both keyboard and mouse should work for all actions.*
+
+**What it is.** The bar `../interface/conventions.md` recommends under *Selecting and ordering*: a
+row along the bottom, a slot per action, each showing its key and its price, each usable by click
+and by key. Firing becomes a mode entered from a slot and confirmed on the target. End turn gets its
+own slot and its own key.
+
+**Where the seams already are.**
+
+- `HexSandbox.HandleKey` — `Key.Key1` is commented as *an action bar with one slot in it*, and
+  `Key.Space or Key.Enter` fires an aim or, with none, ends the turn. The second half of that case
+  goes.
+- `Battle.PlanShot(shooter, target, mode)` **already takes a mode**; `AimAt` and `ConfirmShot` never
+  pass one, so every shot a player takes is `WeaponProfile.DefaultMode`. The modes are
+  `unit.Weapon.Modes`, and the price is `Stats.Costs.Fire(mode.ApCost)` — the price the reserve
+  ladder already uses, so the bar and the ladder cannot disagree.
+- The staged shot's headline, bill and worth (`BattleHud.DrawShotHeadline`, the docked terms,
+  `Tactician.Appraise`) must price **the mode chosen**, not the default. Check every caller that
+  builds a plan for the staged aim.
+- The other slots already have one method each: `SetStance`, `FaceTo`, `HoldArc` / `NextArc`,
+  `ArmAmbush` / `SpringAmbushOn`, `ShoutAbout`, `LeaveTheField`, `EndTurn`.
+- **The arc that is not drawn.** `BattleView.BuildHeldArcs` skips a unit whose
+  `Overwatch is not null && Reserve <= 0`, and entry 093 found the active soldier's reserve reads
+  nought on its own turn. Confirm with a capture (`--arc` on the active soldier, before and after)
+  before touching it. If the skip is right for a reserve that has been spent, draw a *declared* arc
+  on the active soldier some other way rather than deleting the condition; ask `Battle`, not the HUD,
+  what the reserve will be.
+- `SandboxScript` — a capture must be able to pick a mode (`--aim NAME` with a mode) and press a slot,
+  or the bar is untestable headless.
+
+**Settle before writing much.**
+
+- **Where the bar goes.** Convention is bottom centre, and entry 093 found bottom centre is under the
+  legend. The legend is a tester's thing and the bar is the player's, so the bar has the better
+  claim; say where the legend goes instead.
+- **Mode first, or target first.** The genre is ability first: pick *snap*, then the target, then
+  confirm. Clicking a hostile with no mode chosen currently aims at the default; decide whether it
+  still does (probably yes, as *standard*, the slot lit) so the one-click habit survives.
+- **The arcs as slots.** Three widths plus none. One slot that cycles repeats `V`'s fault — four
+  states at a point each with nothing saying which one landed. Three slots, or one slot that opens
+  three, and the held one lit either way.
+- **A slot that cannot be afforded** is shown, dimmed, with its price — *snap 15 AP* at 9 AP answers
+  item 9 without a word of help text. A slot refused for another reason says the reason.
+- **End turn's key.** XCOM 2 uses `Backspace`; `Space` and `Enter` confirm and do nothing else. Say
+  what happens to `Space` with nothing to confirm (nothing, is the recommendation).
+- **The number keys.** Outside a window `1`–`9` are the bar's; inside one they stay the window's
+  answers, as now. Never both at once.
+- **What hovering a slot shows.** Entry 093 ruled out a hover card per *figure*. A slot's name and
+  what it does is not a figure; one line is allowed, and nothing that repeats the docked terms.
+
+**Out of scope.** Rebinding keys and the options screen — `view/options`, below. The camera, the
+ground's labels, cover shields and fog — `view/ground-and-camera`. How the enemy is drawn — brief two.
+The price of a shot, which is Core's (entry 094, item 14). Every rule.
+
+**How to know it worked.**
+
+- A rifleman with 20 AP and a hostile in sight takes a **snap** shot with the mouse alone, and again
+  with the keyboard alone; the headline and bill show the snap's price and odds before the confirm.
+- The same soldier at 9 AP sees every fire slot dimmed with its price.
+- `Space` with no aim does not end the turn. The End turn slot and its key do.
+- Holding a narrow arc on the active soldier draws it on the ground in the same frame, and the bar
+  says which arc is held — captured before and after.
+- The pinned scene changes by the bar and nothing else; two runs hash the same.
+
+**Queued behind this, in order, so a session finishing it knows the next.** Each is Master's to write
+out in full when it is next; the items are entry 094's.
+
+1. **Brief two, `view/enemy-file`** (`../interface/briefs.md`, as amended by 089 below), now also
+   carrying 094's items 5 and 8 — a ghost from the briefing must not read as sight on turn one, and a
+   rung under a hostile must say whose it is.
+2. **`view/ground-and-camera`** — hold `Q`/`E` to turn and a tap still lands on a bearing (item 2);
+   **middle-drag pan does not work in the build** though the code reads right, then a mouse pan the
+   player can find (item 3); pitch within a clamp (item 4, and `conventions.md` *The camera*);
+   readouts that do not cover bodies (item 12); a cover shield at the cursor saying what cover *you*
+   would have, kept apart from the outlines that say what cover a tile has *from* you (items 7, 13);
+   the reach and reserve edges labelled, and weapon range drawn somewhere (item 14); **the
+   waystation's house and exit drawn at all** — `BuildExit` draws only a `Withdrawal`, and a
+   `Reconnaissance` is not one; and the fog, once Interface has said what it becomes (item 15).
+3. **`view/options`** — an input map and a preferences file loaded at start, and an options screen
+   over them (item 1, settled narrow with the user). `--edge-pan`, `--pace` and `--still` move in
+   first.
+
+Small things owed and not briefs: the bill's last clause becomes names when Core lands entry 086's
+relay; **the map still draws whoever is up, whichever side**, which is brief two's ground and entry
+090's finding; and entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files
+write their clock onto the objective.
 
 **Owed to later briefs, routed from entry 089 so it is not lost.**
 
@@ -61,7 +145,7 @@ the objective.
 **What the next View brief inherits from three, six, four, five and one, so it is not re-argued.**
 
 - **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
-  turn; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
+  turn — **the last half of which the action bar undoes, entry 094**; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
   `Esc` back out and never spend a point. **Held `Ctrl` is every figure's terms at once and `P`
   folds the shot's docked terms**; `Alt` is still unbound.
 - **A figure hangs from the thing it describes.** One headline at the thing; its terms docked while
@@ -86,14 +170,15 @@ the objective.
 **Standing, behind the brief.**
 
 **The measurement a session cannot take.** A person plays `build/Hexcom.exe` to a verdict and
-says what read wrong. That is the second play-through and it is the same measurement as last time.
-The walking pace was the other one and it has been taken: **ten metres a second, watched rather
-than argued** — entry 080, and it is the first interface figure in the project settled that way.
+says what read wrong. The first was entry 057 and the second entry 094; the next is the same
+measurement again, and a session finishing a brief should expect its work to be played rather than
+only captured. The walking pace was the other one and it has been taken: **ten metres a second,
+watched rather than argued** — entry 080, and it is the first interface figure in the project
+settled that way.
 
-**One thing the build is owed and nobody has scheduled.** `--edge-pan`, `--pace` and `--still`
-are three player preferences that live on a command line, and a player who double-clicks
-`build/Hexcom.exe` cannot reach any of them. That is the case for an options screen, stated here
-so it is not rediscovered; it is not urgent and it is not a brief yet.
+**The options screen is scheduled now** — `view/options`, third in the queue above. `--edge-pan`,
+`--pace` and `--still` are three player preferences a double-click cannot reach, and the user
+settled the scope in 094: keybindings and preferences, not every constant.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.

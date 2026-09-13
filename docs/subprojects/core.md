@@ -110,6 +110,14 @@ it is.
 **A garrison that does not move is still Core's, and still not this brief's.** Three of the
 waystation's four hostiles never act; milestone 2 on `../map.md`.
 
+**Two questions from the second play-through, not this brief's, so they are not lost** — entry 094.
+Item 14: *can run a stretch of 10 or so hexes but can only shoot a handful.* Mostly unlabelled rings,
+and View's; but under it a standard shot is half a turn and an aimed one 70% of it against a 10-hex
+walk, and nobody has measured whether that is the game the reaction window wants. Take the figure
+the next time a batch runs on the waystation, rather than moving `FireMode` on a player's feel.
+Item 8: a hostile beside a soldier read `SEARCHING`. If a capture shows a body adjacent, facing and
+short of `Engaged`, that is `AwarenessTracker`'s to explain.
+
 **Out of scope.** `game/**` as ever. Extraction and capture. Suppression.
 
 **The test that it worked:** entry 091's briefed table rerun, and a row in it where the look is
