@@ -15,16 +15,19 @@ namespace Hexcom.Game;
 
 /// <summary>One turn <see cref="Commander"/> took in the sandbox, and what it chose to do with it.</summary>
 /// <param name="Unit">Whose turn it was.</param>
-/// <param name="Orders">What it did, in order, each carrying the appraisal it was picked on.</param>
+/// <param name="Acts">What it did, in order, each carrying the order and what came of it.</param>
 /// <param name="Banked">What it had left when the turn ended, which is what it can react with.</param>
 /// <remarks>
 /// <see cref="Order"/> already carries the reasoning; this only remembers whose it was, because
 /// by the time the frame is drawn the unit has finished and the battle has moved on to somebody
-/// else. What it does <b>not</b> carry is what the orders <em>did</em> — a move's reaction window,
-/// a shot's outcome — because <c>Commander.TakeTurn</c> does not return those. See entry 022 in
-/// <c>docs/decisions.md</c>.
+/// else. The outcomes ride along since brief five: a shot at one of ours is something a player
+/// perceived, and <see cref="Act.Fired"/> is the only place it is recorded.
 /// </remarks>
-public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banked);
+public sealed record TakenTurn(Unit Unit, IReadOnlyList<Act> Acts, int Banked)
+{
+    /// <summary>The orders alone, which is what the instruments print.</summary>
+    public IEnumerable<Order> Orders => Acts.Select(act => act.Order);
+}
 
 /// <summary>Everything the sandbox has worked out about the current moment, ready to be drawn.</summary>
 /// <param name="Battle">The battle itself. Queried, never changed, by anything that takes a frame.</param>
@@ -77,6 +80,18 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Order> Orders, int Banke
 /// Who the firing mode was last pointed at, as the node remembers it. Read <see cref="Aim"/>,
 /// which is the same thing checked against the moment.
 /// </param>
+/// <param name="TheirGo">
+/// How many seconds the <i>their go</i> banner has been up, or null when it is down. Always zero
+/// in a capture, which has no dwell. See <see cref="HexSandbox.TheirGoDwell"/>.
+/// </param>
+/// <param name="Perceived">
+/// What our side perceived of the other side's last go, a line per thing perceived. Empty when
+/// nothing was — which is most of the time, and the honest answer.
+/// </param>
+/// <param name="Found">
+/// Hostiles our side has laid eyes on since the last order of ours, so the strip can say a slot is
+/// a discovery rather than bookkeeping.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
@@ -112,8 +127,26 @@ public sealed record SandboxFrame(
     bool Omniscient,
     IReadOnlyDictionary<UnitId, Threat> Knowledge,
     bool Instruments,
-    Unit? AimedAt)
+    Unit? AimedAt,
+    double? TheirGo,
+    IReadOnlyList<string> Perceived,
+    IReadOnlySet<UnitId> Found)
 {
+    /// <summary>
+    /// Whether a hostile is up and the picture must not describe it: the AI is playing it and the
+    /// instruments window is shut.
+    /// </summary>
+    /// <remarks>
+    /// <b>Brief five's pause, from the other end.</b> A hostile turn stops on screen only at a window
+    /// one of ours can answer, and until this the situation block then described the hostile — its
+    /// reserve, its shot at us, and <i>you hold 63/100</i> on each of ours, which is its contact file
+    /// as a number and exactly what contract 3 keeps a rung. What the hostile knows is its mind, so
+    /// it is behind the same switch as the AI's orders. A side driven by hand is a person playing
+    /// both sides, and that person is owed the block.
+    /// </remarks>
+    public bool Withheld
+        => HostilesAutomatic && !Instruments && Battle.Active is { Side: Side.Hostile };
+
     /// <summary>
     /// The offers in the open window a player is handed: our own side's, or everybody's while the
     /// instruments are open. <see cref="Chooser"/> indexes into this.
@@ -164,9 +197,13 @@ public sealed record SandboxFrame(
     /// confirm being replaced by somebody else's. In the frame rather than the HUD because the map
     /// marks the same shot's bill, and two halves planning the staged shot separately is two
     /// chances to plan different shots.
+    /// <para>
+    /// None while <see cref="Withheld"/>: a hostile's shot at whoever is under the cursor is the
+    /// hostile's to plan, and its terms and its bill would both be drawn.
+    /// </para>
     /// </remarks>
     public ShotPlan? StagedShot
-        => Battle.Active is { } shooter && (Aim ?? HoveredUnit) is { } quarry && quarry.IsHostileTo(shooter)
+        => !Withheld && Battle.Active is { } shooter && (Aim ?? HoveredUnit) is { } quarry && quarry.IsHostileTo(shooter)
             ? Battle.PlanShot(shooter, quarry)
             : null;
 

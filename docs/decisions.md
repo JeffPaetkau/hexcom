@@ -4847,3 +4847,80 @@ about 10.6 s of its 17.4, so whatever the capturer did with Ctrl after that was 
 Three identifications came from the user in conversation rather than from pixels: that C12's
 beacons mark last-seen enemies, that C4b's yellow tiles are the idle overwatch area, and that C9's
 still was taken without Ctrl. Each is attributed to the capturer where it is used.
+
+## 090 — The strip draws only what our side knows, and their go is one banner with an account under it
+**2026-09-12** · **Raised by** view · **For** view, master · **Status** open for view — the map half, under *Found*; the strip and the pause are built
+
+Brief five, built on `view/order-strip`, carrying entries 064 and 065 into the code. What was settled,
+the one figure that is provisional, and what the work found next door.
+
+**A correction first, from the brief's amendment, so it is not repeated.** Five described the strip
+as the genre's answer and the dropped slot as the departure. **None of the ten reference games draws
+a per-unit initiative strip**; the strip's only precedent is Battle Brothers, which is outside the
+evidence set. So the dropped slot is a choice where the genre is silent, argued on contract 3 by the
+user in 064, and not a departure from a standard. The banner is the opposite case: XCOM 2 and Into the
+Breach both draw it, and it is the one turn-order element with positive evidence anywhere.
+
+**The strip.** `BattleHud.DrawOrderStrip` takes the first six bookings `SandboxFrame.Sees` allows and
+no others, so a hostile nobody of ours has eyes on holds no slot, no roll and no reserve, and the
+strip grows no second opinion about who is known. **Measured: the same strip with and without an
+unfound hostile's turn.** On the waystation, hostiles by hand, `--until Cobb` and `--until Cobb
+--pass` — Cobb unfound, passing and doing nothing — capture strips that are identical to the pixel
+above the map; on master the same pair moves a `?` slot from the top to the bottom.
+
+**The round mark** is a rule and *round N* before the first visible booking in a later round than the
+one being played, read off `TurnSlot.ActAt / Battle.TicksPerRound`. It needs no query: Core books
+one turn ahead per soldier and the tick carries the round. On the compound's pinned scene it
+explains what used to look wrong — Vance, init 21, listed below Watchman, init 11, because Vance
+has had this round's go. **A hostile found since our last order is outlined in its slot**, which is
+the brief's *reads as a discovery*.
+
+**The banner, per entry 065.** *THEIR GO* with three dots inside it, as a band across the screen a
+third of the way down. Up when a hostile turn is handed to the AI from `Settle`; one for a whole run of
+their turns whoever takes them; down when control is back and the dwell has run. It holds while a
+hostile is walked, and **it stands aside while a window of ours is open** — the window is control
+coming back for the length of a question, and a band reading *their go* over the question is asking
+and refusing at once — coming back with a fresh dwell when the window is run. No dwell in a capture,
+by `Animated`, so a capture never shows it; it was photographed once during the work, at a hostile's
+window stop before the stand-aside rule, and the drawing is unchanged since but for that early
+return. **Nobody has watched it dwell**, which is the play-through's to do.
+
+**The dwell is 0.9 seconds and provisional.** `HexSandbox.TheirGoDwell`, a named setting, the middle
+of the 0.6 to 1.2 the brief argued. Captures **C7** and **C17** in `interface/captures.md` would
+replace it with a measured figure.
+
+**The pause says only what the player knows, in two places the brief did not name.**
+
+- **The situation block while a hostile is up.** When the AI's turn stops at a window of ours, the
+  top block described the hostile — its reserve, its shots at us, and *you hold 63/100* on each of
+  ours, which is its contact file as a number. `SandboxFrame.Withheld` is the gate: a hostile up, the
+  side on the AI, the instruments window shut. The block then reads the clock and *their go* and
+  nothing else, and the staged shot is null, since a hostile's shot at whoever is hovered would put
+  its terms and its bill on screen. A side driven by hand is somebody playing both sides and keeps
+  the block. This was an open question in `view.md`, found while capturing brief six.
+- **The window's mover** goes through `SandboxFrame.Names`, so an unfound mover is *somebody unseen*.
+
+**What was perceived registers, per event, and nothing else does.** A block over the reaction line,
+*WHILE IT WAS THEIR GO*, a line per thing. `BattleHud.Perceived` compares our side's knowledge — the
+merged `Tactician.Known` the picture is drawn from — as it stood when control left us and as it
+stands when it returns: found, lost sight of, lost track of, and *somebody unseen, marked at* a
+place. The one thing read off the turns rather than the knowledge is a shot or a blast at one of
+ours, because being shot at is perceived whether or not it moves anybody's file; `TakenTurn` now
+carries `Act`s for that. The shooter is named through `Names`. It is frozen when the stretch ends,
+so a stance change of ours afterwards cannot be read as their doing, and cleared by our next order.
+Every script step that changes it prints it, so it can be read across a mission headless. On the
+waystation it reports *Vance shot at by Cobb: missed*, a blast catching Vance, *found Teague*, and —
+once Vance is down and his eyes with him — *Vance shot at by somebody unseen: hit 1 of 1 for 8,
+down*. **A marker line never came up** in the runs taken; the code path is the plainest of the four,
+and it is not measured.
+
+### Found — for View's next brief, and it is brief two's ground
+
+**The map still describes whoever is up, whichever side.** `BattleView` draws the active unit's
+reachable tiles with their costs, the path to the cursor, its attention field at the active peak and
+its ring, from `frame.Reach` and `battle.Active`. When a hostile's turn stops at a window, or after a
+side is gone and the survivors keep taking turns, that is the hostile's reach drawn inside a house
+nobody of ours can see into. It is the map and brief five's out of scope said so, which is why it is
+here and not fixed; `SandboxFrame.Withheld` is the gate it wants. The strip still shows a *found*
+hostile's reserve and held arc, as it always has — a fact about their soldier rather than their
+knowledge, and left alone.

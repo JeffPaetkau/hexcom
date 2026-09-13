@@ -35,41 +35,16 @@ reaching into `src/`.
 
 ---
 
-## The job — brief five, the strip and the pause say only what the player knows
+## The job — Master's to set
 
-Branch `view/order-strip`. Take a worktree.
+**Brief five has landed and nothing in this file names the next brief.** Brief one still waits on
+the captures in `../interface/captures.md`; the order of the rest of `../interface/briefs.md` is
+Master's, and a session pointed here should ask rather than pick. Two small things are owed and
+neither is a brief yet: the bill line's last clause becomes names when Core lands entry 086's
+relay, and **the map still draws whoever is up, whichever side** — reach, costs, path and attention
+peak for a hostile stopped at a window — which is brief two's ground and entry 090's finding.
 
-**Read brief five and its amendment in `../interface/briefs.md`, and nothing else from that
-file** — *Five — the strip, and the pause, say only what the player knows*, and *Amending Five*.
-The amendment corrects what the brief is departing from and promotes the banner; read both.
-
-**Why now, while the captures are still coming in.** The build leaks the thing the game is about.
-`BattleHud.DrawOrderStrip` still gives a hostile nobody has found a slot reading `?`, which tells a
-player that an enemy exists, how many there are, and roughly when each acts. Entry 064 decided in
-the user's words that an unfound hostile holds no slot at all, and entry 065 decided the pause gets
-one banner per stretch of hostile activity. Neither is built — the comment above the `?` still calls
-it an open question. **Both decisions are already made, so no capture blocks this job.**
-
-**The one figure a capture would change: the banner's minimum dwell.** The brief argues 0.6 to 1.2
-seconds. Captures **C7** and **C17** in `../interface/captures.md` would replace that with a measured
-figure. Put the dwell in a named setting rather than inline, pick inside the argued range, and say
-in the commit it is provisional against those two. Nothing else in the brief waits on a picture.
-
-**Carry the amendment's correction into the commit and the entry.** Zero of the ten reference games
-draw a per-unit initiative strip, so the dropped slot is a choice in a place the genre is silent, not
-a departure from a standard. The banner, by contrast, is the one turn-order element with positive
-evidence anywhere — XCOM 2 and Into the Breach both draw it.
-
-**How to know it worked.** The brief's own: a player can say whose go is next and when the round
-turns over, and **cannot count the enemy squad from the strip, the banner, or anywhere else**. A round
-in which an unfound hostile takes a turn shows the banner, leaves something to read if it made a
-sound, and nothing if it did not. Plus a capture of a round with an unfound hostile in it, checked
-against a round without one, showing the strip is identical.
-
-**Out of scope.** What is drawn on the map, which is brief two. Brief one, which waits on the
-captures. The relay line under the shot bill, which waits on Core's entry 086 work.
-
-**What the next View brief inherits from three, six and four, so it is not re-argued.**
+**What the next View brief inherits from three, six, four and five, so it is not re-argued.**
 
 - **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
   turn; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
@@ -78,6 +53,12 @@ captures. The relay line under the shot bill, which waits on Core's entry 086 wo
   behind the instruments window, the same switch as the AI's orders. A hostile nobody of ours has
   eyes on is *somebody unseen* in any list of names, said once however many there are —
   `SandboxFrame.Names`.
+- **A hostile up under the AI is withheld.** `SandboxFrame.Withheld` — a hostile active, the side on
+  the AI, the instruments shut — blanks the situation block to the clock and *their go* and nulls the
+  staged shot. Anything else that describes the active unit asks it first.
+- **Their go is one banner, never one per turn,** and what our side perceived of it is a line per
+  event under *WHILE IT WAS THEIR GO*. The banner is not countable and the lines are, on purpose —
+  entry 065.
 
 ---
 
@@ -95,6 +76,67 @@ so it is not rediscovered; it is not urgent and it is not a brief yet.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/order-strip`
+
+Brief five. `../decisions.md` entry 090 is the reasoning, the measurement and the finding; this is the
+shape.
+
+**The strip is the first six bookings `Sees` allows.** An unfound hostile holds no slot, no roll and
+no reserve — entry 064 — and because the six are counted *after* the filter, the strip is the same
+picture whether an unfound hostile is booked among them or not. The genre is silent here, not
+departed from: none of the ten reference games draws a per-unit strip.
+
+**The round mark** is a rule and *round N* before the first booking in a later round than
+`Battle.Round`, from `ActAt / Battle.TicksPerRound`. **A hostile found since our last order is
+outlined** in its hostile hue — `SandboxFrame.Found`, kept in `Recalculate` by comparing who our side
+had eyes on before the gather with after, cleared by the next order, and cleared after the opening
+gather so a deployment is not a discovery.
+
+**The banner — `DrawTheirGo`.** *THEIR GO* and three dots, a band across the full width a third of the
+way down, because the camera puts our own soldier in the middle. It goes up in `Settle` when a hostile
+turn is handed to the AI — once, however many turns follow — and comes down in `LowerBanner` when
+nothing is holding it (a hostile window of ours to answer, a hostile being walked) and
+`TheirGoDwell` has run. **It is not drawn while a window is open**, and resolving a hostile window
+restarts the dwell. `_theirGo` counts seconds only while `Animated`, so a capture has no dwell and
+never shows the banner.
+
+**`TheirGoDwell` is 0.9 seconds and provisional** against captures C7 and C17. A floor, not a
+length.
+
+**The account — `BattleHud.Perceived`.** When control leaves our side `Settle` takes a snapshot of our
+side's merged knowledge; `Perceive`, after every `AfterAction`, compares it with now and freezes the
+lines, and drops the snapshot when the stretch is over rather than paused. Found, lost sight of, lost
+track of, *somebody unseen, marked at*; and a shot or a blast at one of ours, read off the turn's
+`Act`s, since `TakenTurn` carries those now and `Orders` is derived. Cleared by our next order.
+**The reset is keyed on the snapshot, not on `keepRecord`**, because a turn of ours handed to the AI
+sets `keepRecord` too and would otherwise keep a stale account; the one call that comes through
+`AfterAction` mid-stretch is a hostile window being run, and that is exactly when a snapshot is held.
+
+**Two leaks in the pause the brief did not name, closed.** `SandboxFrame.Withheld` blanks the top block
+to the clock and *their go* while the AI's hostile is up and nulls `StagedShot`; it used to read
+*you hold 63/100* on each of ours during a hostile's window. And the window's mover and springer go
+through `Names`.
+
+**What was measured.**
+
+- **The strip, with and without an unfound hostile's turn**: `--until Cobb` against `--until Cobb
+  --pass` on the waystation, hostiles by hand — identical strips above the ground; master's pair
+  moves a `?`.
+- **The pinned scene changes in the strip only**: the diff is x 1410–1580, y 142–182, which is the
+  round mark pushing Vance down a row.
+- **The window stop in the game's view** — `--windows --ai --pass 30 --zoom 40` — reads *round 4/30
+  their go* where it read Cobb's whole situation.
+- **The account across a mission**, one `--pass` or `--ai-turn` a step: shots at Vance by name, then
+  by *somebody unseen* once Vance was down; a blast catching Vance; *found Cobb*, *found Teague*,
+  *lost sight of Cobb*. Stretches in which nothing was perceived printed nothing. No marker line came
+  up in those runs.
+- **The found outline**: `--ai` and five `--ai-turn` on the waystation stop on Orsini with *found
+  Cobb* in the account and Cobb's slot outlined; Teague, already in sight, is not.
+- **Not measured**: the dwell on a screen. A capture cannot show it by construction and a person at
+  the keyboard is the check.
 
 ---
 
@@ -890,6 +932,8 @@ Entry 053 records the count.
   went back down to two, the mode line left the top block, and every soldier gained two rings.
   **`view/gestures` breaks it along the bottom edge only**: the legend is three lines again, and
   measured against master everything above row 822 of the pinned scene is unchanged by a pixel.
+  **`view/order-strip` breaks it in the strip only**: the round mark pushes Vance down a row, and
+  the whole diff is x 1410–1580, y 142–182.
   **`--aside` breaks none of this and that was measured, not assumed** — a capture on the left
   monitor and the same one where Windows put it are byte-identical. The one break is narrower than
   it looks: a capture taken with `--instruments` before the subwindow fix has the instruments panel
@@ -1011,6 +1055,16 @@ Entry 053 records the count.
 - **A window is modal, and the camera keys are the exception.** While one is open the battle is
   held still around a question, so only the answers and the camera do anything. Looking is not
   answering, and the reactor being chosen for is usually somewhere else on the map.
+- **The strip counts after it filters.** `Take(6)` before `Sees` would give six bookings with the
+  unfound ones blank, and the number of visible slots would say how many were hidden. Anything else
+  that lists bookings filters first.
+- **The account of their go is a snapshot comparison, and the snapshot is the stretch's clock.**
+  `_heldBefore` is taken when control leaves our side and dropped when the stretch ends rather than
+  pauses; while it is held, `AfterAction` is mid-stretch and must not clear the account or the
+  banner. Keying that on `keepRecord` was the first attempt and was wrong — a turn of ours handed to
+  the AI sets it too.
+- **The banner never appears in a capture**, by the dwell rule, and not in a window either. Checking
+  its drawing needs a change to one of those two, made and reverted — do not leave either in.
 - **Counting `--pass` is a guess.** Initiative is rolled per round, so a script that passes four
   times lands on a different soldier the day anybody's roll changes. `--until NAME` is what the
   hand does anyway.
@@ -1248,8 +1302,8 @@ well it stops with Watchman offered. `--windows --ai --omniscient --pass 30 --zo
 stops in round 4 with the sentry committed to a 15-tick walk it has not taken, Vance offered three
 answers and their scores, and the route drawn out of the sentry with the tick each step lands on.
 `--ai --pass 16 --zoom 60` without `--omniscient` is the game's own view of the same fight two
-rounds on: two hostiles as bodies with their rungs, two as `?` in the turn order and nowhere on
-the map.
+rounds on: two hostiles as bodies with their rungs, and two nowhere at all — not on the map and,
+since brief five, not in the turn order either.
 
 ---
 
@@ -1392,9 +1446,18 @@ Desktop-only is the design and Windows is the machine.
 ## Open questions
 
 - ~~**Whether an unfound hostile should hold a slot in the turn order at all.**~~ Answered by
-  `../decisions.md` entry 064, and the answer is no. The strip still draws a `?` slot because the
-  change is brief Five's and the brief has not been promoted; the question is settled and the code
-  has not caught up.
+  `../decisions.md` entry 064, and the answer is no. Built by brief five, entry 090.
+- **Whether the map should stop describing a hostile who is up.** Reach fill and costs, the path
+  preview, the active attention peak and ring are all drawn from `battle.Active` whatever its side, so
+  a hostile stopped at a window has its reach drawn — inside a house nobody of ours can see into, on
+  the waystation. Brief five's out of scope was the map; `SandboxFrame.Withheld` is the gate. Entry
+  090.
+- **Whether the banner should stand aside for a window.** It does: a window of ours is a question to
+  us, and a band reading *their go* over it contradicts it. The other reading is that it is still
+  their go and the band is 46 pixels. The play-through's to say.
+- **Whether the found outline should last longer than until our next order.** It marks a discovery
+  for one decision. A player who crouches first and looks at the strip second still sees it; one who
+  moves first does not.
 - **Whether springing an ambush belongs in the firing mode.** `B` with an armed soldier up springs
   on whoever is under the cursor, at once — the same irreversible, announcing action on the same
   kind of gesture brief three took off the right button, just on a letter. It was left alone as out
@@ -1440,12 +1503,8 @@ Desktop-only is the design and Windows is the machine.
   want can cost three declarations. Cheap, and it would be a second mode beside the firing mode — it
   should take the same keys (space confirms, right-click backs out) if it is built. The amendment
   calls it arguably brief two's or a job of its own.
-- **Whether the top block should describe a hostile who is up.** When a hostile's turn stops at a
-  window in the game's own view, the situation block is the hostile's: its reserve, what it is
-  *taking seriously* and the exact certainty it holds on each of ours (*you hold 63/100*). That is
-  the enemy's contact file as a number, which contract 3 says stays a rung, and it is the pause that
-  brief five is about. Found while capturing brief six's window and not touched, since it is five's
-  seam rather than six's.
+- ~~**Whether the top block should describe a hostile who is up.**~~ No — it read the enemy's
+  contact file as a number. `SandboxFrame.Withheld`, brief five, entry 090.
 - **Whether the mission line belongs to a player at all, or only to a tester.** It shows the
   verdict, which is the scoreboard, and the reading each departed soldier left with, which is
   how the mission is judged. Both are ours by contract 3, so there is no leak; the question is
