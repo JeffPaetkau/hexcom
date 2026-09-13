@@ -163,20 +163,12 @@ version of this brief did not have: Into the Breach's total disclosure is now do
 detail rather than cited, and it is the argument this job has to answer rather than route
 around.
 
-**First, one question from the second play-through — `../decisions.md` entry 094, item 15 — and
-View's `ground-and-camera` brief waits on the answer.** *It's not obvious what I'm seeing versus what
-is in the fog of war.* Today `BattleView.BuildUnseen` darkens the ground the **active soldier** cannot
-see, and only when zoomed in; the squad's sight is drawn nowhere, and every soldier's attention field
-is washed over the ground in side colour. The convention is a darkened ground outside squad sight at
-any zoom. What it becomes here is the question, because sight in this game is graded and depends on
-height — a tile can be seen by a standing soldier and not a crouched one, and a body can be seen
-where the floor it stands on is not. Say, as a new section of `../interface/conventions.md` in the
-usual shape: what *seen* means on the ground (the squad's or the soldier's, at which height), how it
-looks beside the attention field and the told ghosts of 094 item 5, and whether it survives zooming
-out. Items 7 and 13 of the same entry are next door and worth a paragraph: the cover outlines say what
-cover a tile has *from* the soldier who is up, the genre's shield says what cover *you* would have
-there, and the two must not look alike. This is a section, not the job; the onboarding brief below is
-still the job, and it is better for knowing what the ground says.
+**One thing to teach is inherited from the fog section, and it is the first to settle.** *A
+soldier looks when they stop.* Ending a turn is the only moment a unit looks around, so a player
+can see a lit, empty courtyard and walk into a man that stopping would have registered.
+`../interface/conventions.md` under *What the squad can see* chose to leave that cost on the ground
+rather than draw a third state for it, and entry 095 gives the reasons. So the lesson has to come
+from teaching, and the ground will not do it.
 
 **Read entry 089 before starting.** Two of its findings are onboarding's material directly. The
 shot's terms open by default while aiming, so the arithmetic teaches itself on the first shot, and
@@ -242,6 +234,40 @@ The strategy layer's interface, which still has no rules to show.
 **How to know it worked.** A View session can be pointed at one of the new briefs and need
 nothing else; and somebody who has never played this game can be handed the recommendation and
 say what they would understand about the enemy after one turn.
+
+---
+
+## What landed on `interface/fog`
+
+Entry 094's item 15, answered ahead of the onboarding brief because View's ground-and-camera brief
+was waiting on it. Entry 095 has the findings and the one question for Core. What exists:
+
+- **`conventions.md` has a new section, *What the squad can see***, placed before *What of the
+  enemy is drawn*, since the ground is what the enemy is drawn on. It gives the standard with its
+  count, what the rules mean by *seen*, the asymmetry, and the recommendation in the usual shape.
+  It also has a paragraph on the cover outlines against the shield, and four checks a capture can
+  run.
+- **`../decisions.md` entry 095.**
+
+Four things worth not re-deriving:
+
+- **The source settled it, not the reference set.** The set could say only that a fog is two
+  games' answer out of four. What decided every sub-question — squad or soldier, which height,
+  range, zoom — came from reading `SightSolver`, `AwarenessTracker.Observe`, `Tactician.Known` and
+  `BattleView` together. The standing-height test is the rules' own test for having looked at a
+  place, and the invariant *no drawn body on dark ground* follows from how the trace hides a
+  silhouette. Neither was visible from the genre.
+- **The largest finding is that lit ground cannot mean empty here.** Being drawn needs a rung as
+  well as a line, and looks happen only at a turn's end and at a crossing. Every genre fog promises
+  the opposite. The section is written so that the drawing never makes that promise.
+- **Two layers, one reading.** The fill is the sight half and the tint the awareness half of what
+  `LookGain` multiplies, and Core already keeps those in two homes. Clipping the tint to the fill
+  turns two overlays into one reading with a binary edge and a grade inside it. It came from a
+  remark in `AttentionOn` rather than from any game.
+- **One convention was checked against the frames already in hand, and it came out thinner.**
+  Entry 094 called a darkened ground *the convention*. The C12 frame, which was captured for a
+  different question, is exactly where a fog would have to show, and there is none. It is worth
+  going back through the existing shots before asking for new ones.
 
 ---
 
