@@ -185,6 +185,26 @@ public sealed class Battle
     public Objective? ObjectiveOf(Side side) => _objectives.FirstOrDefault(o => o.Side == side);
 
     /// <summary>
+    /// Tell one side, before the fight, that a soldier of the other is standing where it is
+    /// standing — as firmly as the rung says. Only valid before the fight starts.
+    /// </summary>
+    /// <remarks>
+    /// The <em>presence</em> part of a briefing, handed to the rules. Content decides what a
+    /// mission tells its squad and how sure it is; this hands every soldier of the side the same
+    /// marker, through <see cref="AwarenessTracker.Brief"/>, at the post the soldier is actually
+    /// deployed to — because a briefing that named the wrong post would be a different mission,
+    /// and the format can say that by not briefing the post at all.
+    /// </remarks>
+    public void Brief(Side side, Unit about, AwarenessState state)
+    {
+        if (Round != 0) throw new InvalidOperationException("A side is briefed before the fight starts.");
+        if (about.Side == side) throw new ArgumentException("A side is briefed about the other side.", nameof(about));
+
+        foreach (var unit in _units.Values.Where(u => u.Side == side))
+            Awareness.Brief(unit, about, about.Position, state);
+    }
+
+    /// <summary>
     /// Every charge still lying on the field.
     /// </summary>
     /// <remarks>

@@ -183,6 +183,37 @@ public abstract class Objective(Side side)
     protected bool Expired(Battle battle)
         => Stop?.LastRound(battle, Side) is { } last && battle.Round > last;
 
+    /// <summary>
+    /// How much of the night is left, in action points of ordinary ground: the rounds still to
+    /// come, this one included, at the list allowance. Null while nothing limits it.
+    /// </summary>
+    /// <remarks>
+    /// The clock, in the currency the journey is measured in, which is what lets the two be
+    /// compared. It is read live because the alarm half of a deadline is not known until it
+    /// happens: before the word is out a mission has all night, and the moment it is out the
+    /// squad may have three rounds. Priced at the list allowance for the same reason the journey
+    /// is priced off the listed cost of the ground — it describes the mission, and how fast a
+    /// given soldier crosses it is about them.
+    /// </remarks>
+    public int? NightLeft(Battle battle)
+        => Stop?.LastRound(battle, Side) is { } last
+            ? Math.Max(0, last - battle.Round + 1) * battle.Costs.ActionPointsPerTurn
+            : null;
+
+    /// <summary>
+    /// The highest rung any enemy may hold on a soldier of this side and still have the mission
+    /// count. <see cref="AwarenessState.Engaged"/>, the top of the ladder, for a mission that
+    /// being seen cannot cost.
+    /// </summary>
+    /// <remarks>
+    /// Exposed on the base rather than only on <see cref="Sortie"/> because the scorer has to
+    /// price being noticed against <em>whatever</em> the side came to do, and a term that asked
+    /// which shape the objective was would be a scoring model creeping into a win condition. A
+    /// mission with no such rung answers with the top of the ladder, and everything derived from
+    /// it comes out as nothing.
+    /// </remarks>
+    public virtual AwarenessState Unnoticed => AwarenessState.Engaged;
+
     /// <summary>Words fit to show a player, or to put in a test failure.</summary>
     public abstract string Brief { get; }
 
@@ -202,6 +233,18 @@ public abstract class Objective(Side side)
     protected abstract int Remaining(Battle battle, NodeId at);
 
     /// <summary>
+    /// What is still owed from there, in action points, or <see cref="int.MaxValue"/> when the
+    /// rest of the job cannot be got at from there.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Remaining"/> made public, so that a scorer can price shortening the journey by
+    /// some number of points — working at the place, say — through exactly the slope walking
+    /// the same points would earn, rather than through a rate that is only true while the night
+    /// is long.
+    /// </remarks>
+    public int Owed(Battle battle, NodeId at) => Remaining(battle, at);
+
+    /// <summary>
     /// How much of the objective a soldier of this side standing at that place represents, from
     /// nothing to all of it.
     /// </summary>
@@ -212,23 +255,67 @@ public abstract class Objective(Side side)
     /// ever set off. Sloping the value over the approach means every stride toward it scores,
     /// which is the same trick that makes a move to a firing position worth taking.
     /// </remarks>
-    public double Progress(Battle battle, NodeId at)
+    public double Progress(Battle battle, NodeId at) => Toward(battle, Remaining(battle, at));
+
+    /// <summary>
+    /// How much of the objective having that much still to do represents: nothing that far off,
+    /// all of it at the end — and more than all of it, once there is less night left than the
+    /// mission is long.
+    /// </summary>
+    /// <remarks>
+    /// The journey's slope, steepened by <see cref="Urgency"/>. While there is all night that is
+    /// one, and this is the gradient it always was. As the hour closes the same line is stretched
+    /// steeper, so every stride toward home is worth a larger share of the mission than it was
+    /// and a squad with the job done and three rounds on the clock goes — where before the clock
+    /// was a number nothing in the scorer could see, and entry 083 measured what that cost.
+    /// <para>
+    /// Steepened rather than re-sloped over the night, and the difference is the whole of the
+    /// design. A slope that ran from all of it at the end to nothing as far off as there is night
+    /// left would be flat beyond that, and a soldier further from home than the night allows would
+    /// stop wanting home at all — which is the judgement <em>the mission is lost, get out</em>,
+    /// and nothing here has it. Stretching the line instead keeps every stride worth something
+    /// however late it is, and lets the whole read as worth more than the objective, which is
+    /// fine: the two objective terms are only ever compared with what else a soldier could do,
+    /// and a mission it cannot bring home in time is the one nothing on the field is worth
+    /// trading for.
+    /// </para>
+    /// </remarks>
+    public double Toward(Battle battle, int left)
     {
-        var left = Remaining(battle, at);
         if (left >= Unreachable) return 0;
         if (_horizon <= 0) return left == 0 ? 1 : 0;
 
-        return Math.Clamp(1.0 - left / _horizon, 0, 1);
+        return Math.Clamp(1.0 - left / _horizon, 0, 1) * Urgency(battle);
     }
 
     /// <summary>
-    /// How much of the objective one action point of progress is worth, from nought to one.
+    /// How much steeper the objective's pull is than it would be with all night: one while the
+    /// night is at least as long as the mission, and the ratio of the two once it is not.
     /// </summary>
     /// <remarks>
-    /// The slope, exposed so that anything which shortens <see cref="Remaining"/> by some number
-    /// of points can be priced without asking what shortened it. Walking a stride toward the
-    /// place and spending a stride on the charge earn the same, which is the point of measuring
-    /// the whole mission in one currency.
+    /// The mission's length is the horizon the slope was set over at <c>Start</c>, and the night
+    /// is what <see cref="NightLeft"/> says, so this is a property of the mission in time rather
+    /// than of any soldier's position in it. It moves only when the night does — every round,
+    /// once a deadline is live — which is how a per-action scorer gets to see a clock it cannot
+    /// otherwise price: not as a cost of time, which nothing here has, but as the rate the only
+    /// thing worth having pays.
+    /// </remarks>
+    public double Urgency(Battle battle)
+        => NightLeft(battle) is { } night && night > 0 && _horizon > night
+            ? _horizon / night
+            : 1.0;
+
+    /// <summary>
+    /// How much of the objective one action point of progress is worth while there is all night,
+    /// from nought to one.
+    /// </summary>
+    /// <remarks>
+    /// The journey's slope, exposed so that anything which shortens <see cref="Remaining"/> by
+    /// some number of points can be priced without asking what shortened it. Walking a stride
+    /// toward the place and spending a stride on the charge earn the same, which is the point of
+    /// measuring the whole mission in one currency. It is the rate <see cref="Toward"/> pays
+    /// until the night's slope overtakes it; anything pricing a shortening once the hour is
+    /// closing wants the difference of two <see cref="Toward"/> readings rather than this.
     /// </remarks>
     public double PerPoint => _horizon <= 0 ? 0 : 1.0 / _horizon;
 
@@ -322,7 +409,7 @@ public abstract class Sortie(
 
     public IReadOnlyCollection<NodeId> Exit { get; } = exit;
 
-    public AwarenessState Unnoticed { get; } = unnoticed;
+    public override AwarenessState Unnoticed { get; } = unnoticed;
 
     /// <summary>Whether a place is one this side may walk off the field from.</summary>
     public bool IsExit(NodeId node) => Exit.Contains(node);
