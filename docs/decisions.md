@@ -6037,3 +6037,98 @@ Master when a play-through says the game plays well enough for the opening to ma
 before. The measure of *effectively* is the play-through, not a list of briefs landed.
 
 ---
+
+## 101 — What a player may change: keys per context, one pace, one scale, and colour as a second channel before it is a mode; the cover grades fail the commonest colour-blindness
+**2026-09-12** · **Raised by** interface · **For** master, view · **Status** open — brief ten for Master to route; one drawing finding for View, under *For View*
+
+Interface's job, answered ahead of `view/options` in the way the fog was answered ahead of the ground.
+The recommendation is `interface/conventions.md` *What a player may change*, and the brief is ten in
+`interface/briefs.md`. Entry 094's item 1 set the scope, and nothing here re-argues it.
+
+### What was found
+
+**1. Rebinding is the convention, eight of ten, and both games without it drew a complaint.** Future
+War Tactics has a player saying so. Phoenix Point has a mod that disables right-click-to-move.
+
+**2. Four of four games with more than one kind of screen keep one binding map per kind, and a key
+can be bound twice inside one map.** Phantom Brigade's combat list gives `1` to both a time scale and
+the first action. So the rule is not *one key, one action*. It is *no two actions on one key that are
+live at once*. That is exactly this game's case already: the bar's `1` and the reaction window's `1`
+(entry 096) never clash.
+
+**3. Pace was patched into two games and modded into a third.** XCOM 2 added Zip Mode in its first
+patch. Phoenix Point added animation speed two years after release. XCOM 2's *Stop Wasting My Time*,
+which removes the pauses after actions, has 119,599 unique downloads. So one pace setting should scale
+the pauses along with the animations, which also keeps 094's ruling that no dwell is a dial of its
+own.
+
+**4. Text size is wanted by the players who did not get it.** Invisible, Inc. never had UI scaling,
+and Klei said on its forum they did not get to it. Phantom Brigade added larger fonts in 2.0 on
+request. One multiplier over the HUD's sizes keeps 094's *layout constants stay in code*.
+
+**5. Colour-blind support is three of five where known, in two shapes.** Invisible, Inc. offers a
+palette per deficiency. Into the Breach backs colour with icons: a patch called a restored icon
+important for colour-blind play. Entry 098 already drew the rung as a glyph, so half of Into the
+Breach's approach is in the game.
+
+**6. The palette, run through a colour-blindness simulation.** The method was Machado, Oliveira and
+Fernandes (2009) at full severity, on `SandboxPalette`'s hex values, with CIE76 distances. Under about
+15 is hard to tell apart on a thin line.
+
+- **Cover half against full: 14.4 for deuteranopia, 20.8 for protanopia, and nothing but hue tells
+  them apart.** This is the one reading that carries a rule in colour alone and fails the commonest
+  deficiency.
+- The rungs fail by colour (Suspicious against Searching 9.7; Alerted against Engaged 9.0, 5.4 and
+  5.4) and survive by entry 098's glyph and rim.
+- Three pairs are close **for normal vision** too: Alerted against Engaged at 12.6, the falling-rung
+  arrow against light cover at 11.9, and the overwatch arc against half cover at 14.6. Each has a
+  second channel today in shape, and none should lose it.
+- Side against side, and the two attention tints, pass comfortably: 34.5 at worst.
+
+**7. The line an option may not cross, from contracts 3 and 2.** An option may change how a thing is
+shown, how big, how fast and on which key. It may never change whether something the rules withhold
+is shown, and nothing it changes may be read by `Commander`. Omniscience, a hostile's cone, the fog
+off, the other side's windows, the AI's sides and the seed stay behind the instruments switch or on
+the harness's command line.
+
+**8. A capture never reads the preferences.** That is entry 066's split, and `Animated` already
+applies it to time (`_capture is null && Animate`). Every pinned hash in `view.md` survives a
+preferences file.
+
+**9. Considered, and not recommended.**
+
+- **A palette mode now.** It doubles every pinned capture, and the art pass repaints everything. The
+  second channel comes first, and a mode goes with the art pass. It is a mode, not colours a player
+  picks, so it stays outside 094.
+- **A briefing option.** No game in the set is recorded letting a player turn briefings off, and
+  where teaching can be skipped the choice is made at campaign start. That waits with entry 100 for
+  milestone 3.
+- **`K`, answering windows by hand, as a stored preference.** Nothing in the set has a window to
+  compare it with. It stays a key until a play-through asks.
+- **Motion toggles**, Phantom Brigade's. Nothing here moves for effect.
+
+**Method.** PCGamingWiki's pages refuse a plain fetch. Their wikitext came through the site's page
+API, and five settings screenshots published there were downloaded and read: Phantom Brigade's
+bindings and accessibility pages, Shadow Tactics' key settings, Phoenix Point's tactical bindings and
+Mutant Year Zero's tactical remapping. They are tagged *verified* rather than *observed*, because they
+are not our shots. Warhounds and Future War Tactics have no page, and their rows come from their
+reference files.
+
+### For Master
+
+- **Brief ten, `view/options`**, is written against the section, and it is last in the interface
+  queue. It helps every player but teaches nothing, and seven, eight and nine do.
+- **The queue is re-primed.** Brief two landed with entry 098 and is out, its text at
+  `0bde77d:docs/interface/briefs.md`. Brief eight's `Ctrl` half no longer waits on it.
+- **Interface's next job** is in `subprojects/interface.md`.
+
+### For View
+
+**The cover outlines need a second channel for their grades** — line weight or dash, whichever
+reads — in whichever brief next draws them. Half against full fails deuteranopia on hue alone
+(finding 6), and the outlines are the one reading on the map where hue is all there is. It is a
+drawing, not an option, so it does not wait for `view/options`.
+
+### For Core — nothing asked
+
+---

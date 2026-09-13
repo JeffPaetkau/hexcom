@@ -153,59 +153,91 @@ than sampling at a fixed rate.
 
 ---
 
-## The job — what a player may change
+## The job — how a mission ends, and what the player is told
 
-Branch `interface/options`. Answered ahead of View's `view/options`, the way the fog was answered
-ahead of `view/ground-and-camera`: View's queue has an options screen in it, and nothing in this
-territory yet says what the genre puts on one.
+Branch `interface/mission-end`. Missions stop now, and nothing in this territory says what the genre
+shows when one does.
 
-**What is already settled, and is not to be re-argued.** Entry 094's item 1, with the user. The
-scope is keybindings and player preferences, loaded at start, with an options screen over them.
-The layout constants stay in code. `--edge-pan`, `--pace` and `--still` are the first tenants. And
-entry 066's split holds: a person's defaults and the capture harness's defaults are different
-things, and an option changes the first and never the second.
+**What exists.** A battle can end in more ways than everybody down on one side (entry 041). A
+mission stops at its round limit, and it can stop on the alarm (entry 082). A withdrawal is judged
+on the highest rung any enemy held on each soldier at the moment that soldier left, sampled then,
+because asking afterwards reads Unaware for everybody. A reconnaissance is judged on a look taken
+and on getting off the ground (entry 061). All of it reaches the player as one status line —
+`mission: <task> <VERDICT>` — plus an *off the field* line per soldier, in `BattleHud.MissionLines`.
+Its remarks call the sampled rung *the load-bearing part*.
 
-**What it is.** No reference file was asked what its game lets a player change, and heading 10 is
-the nearest any came: every counted community fix in the set is a legibility fix, and two of them
-are complaints that a thing could not be changed — Future War Tactics cannot rebind anything, and
-Phantom Brigade's players asked for font size and dialogue duration. That is the evidence that a
-setting is a legibility feature, not a convenience, and it is thin.
+**What it is.** The moment a player most needs to know which rule decided things is the moment the
+interface says least. And a player replaying the waystation who fails and cannot say why will replay
+it the same way.
 
-**Where to look.** The ten files' headings 8 and 10 first. Then each game's own options screens,
-as published: PCGamingWiki lists video, input, audio and accessibility settings per game, in a
-fixed form, and the Into the Breach file already cites it. A still of an options screen is the
-cheapest capture there is, if one is needed.
+**Where to look.** The ten files' headings 1, 9 and 10 for what each game draws at the end of a
+mission. Then published screenshots of each game's end-of-mission or debrief screen, read the way
+the options job read its settings: PCGamingWiki's page API for the wikitext and its image list, and
+the images themselves opened. Patch notes and forum threads for what players said the screen left
+out.
 
 **The questions.**
 
-- **What every game ships, and what only some do.** Rebinding, and whether per context; camera
-  speeds and edge-pan; animation speed, which is Zip Mode's precedent (*Movement and shooting
-  animation*); UI and text scale; hints or tutorial toggles; colour-blind modes.
-- **Colour, specifically.** This interface encodes in hue alone in several places: side colours,
-  the attention tint, the reserve's band edges, the cover outlines' grades. Say what the set does
-  about it, if anything, and whether a second channel is owed before an art pass rather than as an
-  option.
-- **What an option must never do here.** Contract 3. A setting that draws what the rules withhold,
-  such as every hostile's cone or the fog off, is the instruments window, and not an option. Say
-  where the line falls, using the test `view.md` already applies to readouts.
-- **The first mission's preferences.** *Teaching it* recommends a briefing that opens before turn
-  one and a first mission a person's build opens on (briefs eight and nine). Say whether the genre
-  lets a player turn either off, and how: XCOM 2's tutorial toggle is at campaign start, and Into
-  the Breach offers its tutorial only on a new profile.
-- **How the screen is organised**, only as far as the set agrees, and no further.
+- **What the genre puts on the end-of-mission screen**, and in what order: outcome, objectives,
+  casualties, what was gained, statistics.
+- **Whether a failure says which rule ended it.** Here there are several — out of time, the alarm,
+  a soldier registered and kept, everybody down — and the objective already knows which one.
+  Phoenix Point's missed popup is the failure to avoid.
+- **What may be revealed of the enemy once it is over.** Contract 3 withholds his positions and his
+  knowledge during the battle. Does the genre reveal them after, and does a reveal here make
+  reconnaissance free on a map a player replays? That is the no-undo law's question again, one step
+  later, and it is the heart of this job.
+- **The verdict's words.** Entry 082 separates abandoning a mission from failing it, and the enum is
+  not the words, the same lesson entry 098 learned for the rungs.
+- **What a player can do next** when there are no saves and no mission select (milestone 3): the
+  genre's *retry*, and whether a retry keeps the seed.
 
-**Where the output goes.** A new section in `docs/interface/conventions.md`, *What a player may
-change*, in the usual shape. Plus one brief appended to `docs/interface/briefs.md` that Master can
-write `view/options` from.
+**Where the output goes.** A new section in `docs/interface/conventions.md`, *When it ends*, in the
+usual shape, and one brief appended to `docs/interface/briefs.md`.
 
-**Also re-prime the queue**, as the last job did: read `git log --oneline -- game docs/interface`,
-and take out any brief whose subject has landed, with a pointer to its text in history.
+**Also re-prime the queue**, as the last two jobs did.
 
-**Out of scope.** Building anything. The layout constants. Difficulty, which is balance and Core's.
-Audio settings beyond noting whether the set ships them, since Art & audio has no paths yet.
+**Out of scope.** Building anything. Rules: a verdict a player needs that the objective cannot give
+is a proposal for Core in `../decisions.md`. The campaign's debrief across missions, which is the
+strategy layer's and has no rules yet. Saves.
 
-**How to know it worked.** A View session pointed at the new brief needs nothing else, and every
-setting it asks for names the games that ship it, or says it is a departure and argues it.
+**How to know it worked.** A View session pointed at the brief needs nothing else. A player who has
+just failed the waystation can say, from the screen alone, which rule ended it and what they would
+do differently.
+
+---
+
+## What landed on `interface/options`
+
+Entry 101 has the findings. What exists:
+
+- **`conventions.md` has a new section, *What a player may change***, placed before the debug
+  overlays section, which is its counterpart: what an option may not be. It has a settings table
+  for the ten games with sources, six findings with their denominators, the palette measured under
+  colour-blindness, the line the asymmetry draws, and the recommendation.
+- **`briefs.md` is re-primed and has brief ten, `view/options`.** Two is out, its text at
+  `0bde77d:docs/interface/briefs.md`, and the landed table has a column saying where each brief's
+  text lives.
+- **`../decisions.md` entry 101**, with one drawing finding for View: the cover grades need a second
+  channel.
+
+Four things worth not re-deriving:
+
+- **PCGamingWiki is the source for settings, and it has to be read through its API.** Its pages
+  refuse a plain fetch. `api.php?action=parse&prop=wikitext` returns the input and video tables,
+  `prop=imageinfo` resolves the settings screenshots, and the images can be opened. Five screenshots
+  of binding and accessibility screens were read that way, and they corrected two claims in the
+  first draft.
+- **The screenshots overturned the obvious conflict rule.** *One key, one action per context* was
+  the first draft. Phantom Brigade binds `1` twice in one list, to actions never live together. The
+  rule is *no two live at once*, and it is this game's bar and window exactly.
+- **The palette was measured, not argued.** A colour-blindness simulation over `SandboxPalette`'s
+  own hex values found the one reading that carries a rule in hue alone and fails: the cover grades.
+  It also showed that entry 098's glyph-first rung already survives any palette. The method is named
+  in the section, so it can be re-run whenever a colour changes.
+- **Every recommendation stays inside 094's ruling.** One pace scales every wait, so no dwell becomes
+  a dial. One multiplier scales the HUD, so no layout constant becomes a setting. A palette mode is a
+  mode, not colours a player picks. The narrow scope the user settled survived the evidence intact.
 
 ---
 

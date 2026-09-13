@@ -12,80 +12,36 @@ otherwise. Most are View's; brief nine is Content's, and says so.
 its case.** Each brief says at the top whether it is the genre's answer or a departure from it,
 so a session knows which parts it may reshape while building and which parts are the point.
 
-**The order, in one line each.** Two first, because a stranger cannot read the first mission's marks
-until they are drawn. Then seven, the turn's end, the cheapest of the three and one that helps every
-mission, the waystation included. Then eight, the briefing before turn one. Then nine, the first
-mission, which is written against all three and can be built beside them.
+**The order, in one line each.** Seven first, the turn's end, the cheapest and one that helps every
+mission, the waystation included. Then eight, the briefing before turn one. Nine, the first mission,
+is written against both and can be built beside them. Ten, the options, is last. It helps every
+player without teaching any of them anything, and a player who cannot read the game yet has
+nothing to change.
 
 ---
 
 ## Landed, and out of the queue
 
-Re-primed by the onboarding pass. A brief whose subject has landed comes out, so that the queue
-stays a work order. The six below landed with the entries named, and **their full text, with the
-amendment and settling blocks that went with them, is at `45e9829:docs/interface/briefs.md`.**
-Code comments and entries that cite them by number resolve there. What each built is under *What
-landed on* in `../subprojects/view.md`.
+A brief whose subject has landed comes out, so that the queue stays a work order. Code comments and
+entries that cite a brief by number resolve through the pointer beside it. What each built is under
+*What landed on* in `../subprojects/view.md`.
 
-| | Brief | Branch | Entry |
-|---|---|---|---|
-| Zero | the first play-through's six, as the genre answers them | `view/playable` | 066 |
-| One | the readouts go on the things they describe | `view/readouts-in-place` | 093 |
-| Three | the gesture set | `view/gestures` | 084 |
-| Four | who a shot would wake | `view/shot-bill` | 086 |
-| Five | the strip, and the pause, say only what the player knows | `view/order-strip` | 090 |
-| Six | the window has a default | `view/window-default` | 085 |
+| | Brief | Branch | Entry | Full text |
+|---|---|---|---|---|
+| Zero | the first play-through's six, as the genre answers them | `view/playable` | 066 | `45e9829:docs/interface/briefs.md` |
+| One | the readouts go on the things they describe | `view/readouts-in-place` | 093 | `45e9829:docs/interface/briefs.md` |
+| Two | the enemy's file, drawn | `view/enemy-file` | 098 | `0bde77d:docs/interface/briefs.md` |
+| Three | the gesture set | `view/gestures` | 084 | `45e9829:docs/interface/briefs.md` |
+| Four | who a shot would wake | `view/shot-bill` | 086 | `45e9829:docs/interface/briefs.md` |
+| Five | the strip, and the pause, say only what the player knows | `view/order-strip` | 090 | `45e9829:docs/interface/briefs.md` |
+| Six | the window has a default | `view/window-default` | 085 | `45e9829:docs/interface/briefs.md` |
 
+Each commit holds the brief together with the amendment and settling blocks that went with it.
 Two things from those blocks were never built, and they are carried in `../subprojects/view.md`
 rather than here: the arc's adjust step (*Amending Six*), and the relay missing from the shot's
-bill (entry 086, Core's half).
-
-**Two stays below, word for word with its amendment,** because View's job reads it by name. It
-comes out the same way once it lands.
-
----
-
-## Two — the enemy's file, drawn
-
-**Branch** `view/enemy-file`. **A departure from nothing**: the genre has no convention here, so
-this borrows from the nearest relative and the borrowings are named.
-
-**What it is.** The rules carry a five-rung ladder — `Unaware`, `Suspicious`, `Searching`,
-`Alerted`, `Engaged` — and a marker each hostile holds on each of ours. Both are drawn today as
-words in a text line. They are the subject of the game and no other game in the genre has them,
-so there is no convention to inherit and one close relative to borrow from: Invisible, Inc.
-
-**The seam.** `AwarenessTracker.ReadoutFor(them, us).State` is the rung, already coarse by
-contract 3, and already what the scorer reads since entry 021. `Contact.LastKnownPosition` is the
-marker. `SandboxFrame.Sees` is the one question the view, the HUD and the cursor all ask about a
-hostile, so there is no second place for anything to leak. `BattleHud.AlarmLine` and `Held` are
-what this replaces.
-
-**Settle first.**
-
-- *The ladder shows transitions only.* Invisible, Inc. gives its alarm six rungs with five
-  sub-levels each that have no effect and no display, so a player only ever reads a change. That
-  is contract 3's coarse rung arrived at independently and shipped. The certainty behind the rung
-  is never drawn, and `ReadoutFor` already makes that hard to get wrong.
-- *`Suspicious` needs its own mark.* A player will read it as *seen* and it is not — it is
-  *something registered, coming to look, does not know what for*. The genre has a convention for
-  exactly this state and calls it noticed.
-- *Their marker is a ghost of our own soldier.* They believe one of ours is somewhere they have
-  left. Draw it as a translucent copy of the soldier it is wrong about, with a line to where that
-  soldier actually is. That is the one thing of theirs a player sees, and section 07 says it is
-  the payoff.
-- *A hostile's held arc is drawn whenever the hostile is.* This settles a View open question with
-  a genre reason: the stealth shelf draws what a guard will do because beating it is the game. A
-  player who walks into an arc held by a soldier they could see holding it will say the picture
-  lied.
-
-**Out of scope.** The rules. Anything that would need a query that does not exist — and nothing
-here does. Whether an unfound hostile holds a slot in the turn order, which is brief five.
-
-**How to know it worked.** Walking one soldier along a sentry's flank moves a rung on that
-sentry's body while the player watches, and the ghost of that soldier stays behind at the place
-the sentry still believes in. Neither reads as a number. A player who has never seen the panel
-can say which hostile is about to act on them and why.
+bill (entry 086, Core's half). **Brief eight's `Ctrl` half no longer waits:** entry 098 drew the
+three marks and settled what each is called, under *Told, lost, seen*, and the rung's words are
+`SandboxRung.Words`.
 
 ---
 
@@ -288,55 +244,83 @@ a format change *Teaching it* deferred. Every drawing, which is briefs two, seve
 
 ---
 
-# Amendments from the reference set
+## Ten — what a player may change
 
-*Appended by the synthesis pass, and appended rather than folded in so that a brief a View session
-has already read does not change under it silently. Only the amendment to the brief still in the
-queue is kept here; the rest, with the settling block that followed them, are at
-`45e9829:docs/interface/briefs.md`. The evidence is the ten files under
-[reference/](reference/), and **C1**–**C20** are entries in [captures.md](captures.md).*
+**Branch** `view/options`. **The genre's answer** in every setting that names games. **Two
+departures**: colour is a second channel in the drawing before it is ever a mode, and there is no
+briefing option. Both are argued in `conventions.md` *What a player may change*, and neither is
+built here.
 
-## Amending Two — the enemy's file, drawn
+**What it is.** Entry 094's item 1, settled narrow with the user: an input map and a preferences
+file, loaded at start, with an options screen over them, and the layout constants stay in code.
+Today nothing can be changed except from the command line, and a double-click cannot pass a flag
+(entry 100). The set says what goes on the screen: rebinding in eight games of ten, one map per
+context in four of four, pace patched into two games and modded into a third, and text size wanted
+by the players of both games that were asked.
 
-**Correction to how the held arc is argued, not to the recommendation.** The brief settles a View
-open question by drawing a hostile's held arc whenever the hostile is drawn, and argues it from the
-stealth shelf: *the stealth shelf draws what a guard will do because beating it is the game.* What
-that shelf draws is a **vision cone**, not a held reaction arc, and the two are different objects.
-**No game in ten draws a hostile's reaction zone at all**, and Mutant Year Zero's players asked for
-exactly this indicator and were told it is not implemented. The recommendation stands and is right
-— a player who walks into an arc held by a soldier they could see holding it will say the picture
-lied. But it is a departure from nothing, it carries a departure's burden, and it should stop citing
-a borrowing it does not have.
+**The seam.**
 
-**And the complementary correction, which points the other way.** Drawing *your own* held arc on
-the ground is a **convention** with two shipped precedents, which an earlier reading of the set
-denied. Phoenix Point draws the overwatch arc from the soldier's eye position with its maximum width
-set by weapon class — `OverwatchArc`'s own shape, reached independently — and Warhounds draws a
-firing area in front of the operator. So the arc is not unprecedented; only the hostile's is.
-**C4** and **C14** are the two captures that would settle the drawing.
+- **Keys.** `HexSandbox.HandleKey` is a switch over literal `Key` cases. Every order but a move goes
+  through `HexSandbox.PressSlot`, by slot id. `ActionBar.Of` gives each `BarSlot` its key as a
+  string, from `FireKeys` and `ArcKeys`. `BattleHud.PlayerKeys` is the legend, and
+  `BattleHud.BriefingLines` writes `M` into the briefing's heading. The reaction window's keys are
+  their own branch of the handler (entry 096). Held `Ctrl` is `HoldDetails`.
+- **Preferences.** `--edge-pan` sets `EdgePanning`. `--pace` sets `WalkPace`, which defaults to ten
+  metres a second, the one interface figure measured by watching (entry 080). `--still` clears
+  `Animate`. `TheirGoDwell` holds the banner. `SandboxCamera` owns the turn, and
+  `HexSandbox._UnhandledInput` reads the drags.
+- **The split with the harness, already built.** `Animated` is `_capture is null && Animate`, so a
+  capture already refuses to take time whatever a person has set. The preferences follow the same
+  test.
+- **Text.** `BattleHud` draws with `_canvas.DrawString` at literal sizes, `TagSize`, `LineHeight`
+  and `TagStep` among them, at pixel offsets from `BattleView.Crown`. The bar is 86 pixels, and
+  `SandboxCamera.Fit` was measured against it.
+- **Godot's own mechanism**, if it fits: `InputMap` for the bindings and `ConfigFile` under `user://`
+  for the file. That is View's call.
 
-**Three requirements the set added, all with a shipped failure or a shipped precedent behind them.**
+**Settle first.**
 
-- **Persistent, not announced.** Phoenix Point tracks alert state and surfaces it as a brief orange
-  popup that its own players describe as impossible to recover once missed; a mod exists solely to
-  draw a persistent icon instead. That is the failure mode nearest this game's, and it rules out any
-  design where a rung change is a transient message. **Provisional on C15** only as to whether the
-  popup is a sub-second miss or an attention problem; the requirement holds either way.
-- **What the rungs are called on screen is this brief's decision, not a passthrough of the enum.**
-  Klei renamed Invisible, Inc.'s alarm from `ALARM` to `SECURITY LEVEL` because playtesters read the
-  original naming and numbering as more informative than it was meant to be. `Searching` and
-  `Alerted` are exactly the pair a player will read as a measured scale rather than as two words,
-  and contract 3 says that scale is not theirs to have.
-- **A rung that falls has no analogue anywhere in the set.** Invisible, Inc.'s escalation is one-way
-  at the top: investigating resolves either way, alerted never resolves for the rest of the mission.
-  A contact file here decays, so a rung can come back down. A player borrowing the genre's only
-  ladder will assume it cannot, and the drawing has to make the fall as visible as the rise — or the
-  rules get read wrong in the one direction that costs a soldier.
+- **The map's names.** Bind to actions, not keys: the slot ids `PressSlot` takes, and a name for each
+  of `HandleKey`'s other cases. Then every place a key is written — slot, legend, briefing, hint —
+  reads it from the map. Settle whether the file carries every binding or only the ones a player
+  changed.
+- **The contexts, and what counts as live at once.** Battle, window and camera. A clash is refused
+  only where both actions would be live at the same moment, and the refusal is drawn on the row. The
+  bar is empty inside a window (entry 096), so the two `1`s never clash, and the camera's keys clash
+  with everything. Write the rule down as a table before building the screen.
+- **Two slots, an unbind, and a reset** per context and for all. A held binding says it is held, as
+  Mutant Year Zero labels one.
+- **The pace's steps.** Phoenix Point has four, and XCOM 2 has Zip Mode on or off. Pick steps, with
+  today's default as one of them and *instant* as the top, the same as `--still`. One preference
+  scales the walk, the camera's animated turn and the banner's dwell together, and none of them gets
+  a dial of its own (entry 094).
+- **The scale's range, and what it does not scale.** Text, tags, the bar and the panel scale. The
+  world and the camera do not. At a larger scale `Fit`'s margins grow with the bar, so re-measure
+  them rather than scaling them blind.
+- **How the screen is reached.** `Esc` backs out and never spends a point (entry 084). Phoenix Point's
+  bindings screen gives `Esc` both jobs as *Cancel / Open game menu*: it cancels while there is
+  something to cancel, and opens the menu when there is not. Take that. The screen spends nothing
+  and changes nothing in the battle.
+- **What the screen is organised by.** Controls grouped by context, which is the one thing the set
+  agrees on. Everything else is View's to lay out.
 
-**One refinement on the *noticed* mark.** The convergence the brief rests on is real and the
-denominator is better than it looks: two of ten across the set, but two of *two* among games that
-have a state between unaware and engaged, and both drew it as a glyph on the body rather than as a
-position on a scale. The detail worth copying is one the brief does not have: Invisible, Inc. draws
-a **second** `?` at the interest point the guard is walking toward, separate from the badge on the
-guard. That is the same object as this game's marker — a glyph at a place somebody believes in — and
-it is the only instance of one in ten games. **C3** is the capture.
+**Out of scope.** A colour-blind palette mode, which waits for the art pass. The second channel on
+the cover grades, which is a drawing and not an option: entry 101 routes it.
+Difficulty, which is Core's and balance. Any setting for a layout constant, a single colour or a
+single dwell. Anything behind the instruments switch or on the harness's command line: omniscience,
+the other side's windows, the AI's sides, the seed. Options for the briefing or the first mission.
+Controller support. Audio, beyond leaving the screen room for it.
+
+**How to know it worked.**
+
+- A person rebinds End turn. The bar's slot, the legend and any hint show the new key, the old key
+  does nothing, and a restart keeps it. Binding a key already live in the same context is refused
+  on that row. Binding the window's `1` and the bar's `1` is allowed, as the defaults already are.
+- With a preferences file that moves every setting away from its default, every capture command in
+  `../subprojects/view.md` hashes as it does with no file at all.
+- The pace's default reproduces today's run, and its top step reproduces `--still`.
+- At the largest scale, a capture at `--fit` still passes brief one's test — no text over the map
+  that is not attached to something on it — and the bar's slots are all readable.
+- `Esc` with an aim open backs out of the aim; `Esc` with nothing open opens the screen.
+- A deleted file gives the defaults. A malformed one gives the defaults and a line saying so, never
+  a crash.

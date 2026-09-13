@@ -1290,6 +1290,181 @@ terms, not per-bullet figures. First contact is a banner. The all-or-nothing ban
 exercised on film and stays as its store page states it. What it is used for here is narrow and safe: that a shipped game with a
 comparable bank chose all-or-nothing, which is a design fact its own store page states.
 
+## What a player may change
+
+*Added for View's `view/options`, ahead of it, the way the fog was answered ahead of the ground.
+Entry 094's item 1 settled the scope with the user: keybindings and player preferences, loaded at
+start, with an options screen over them, and the layout constants stay in code. Nothing below
+re-argues that. Entry 101 has the findings in short.*
+
+**Standard — read from each game's published settings rather than from memory.** No reference
+file was asked this question. The evidence is PCGamingWiki's per-game input and video tables,
+fetched through its page API because the pages refuse a plain fetch, and the settings screenshots
+published beside them, which were opened and read. Patch notes and the reference files' heading 10
+fill in the rest. A published screenshot is tagged **verified**, not **observed**, because it is not
+one of our shots.
+
+| | Rebinding | Colour-blind | Pace | Source |
+|---|---|---|---|---|
+| XCOM 2 | yes, as separate tactical and base maps | unknown | Zip Mode, added in the first patch | [PCGW](https://www.pcgamingwiki.com/wiki/XCOM_2), [Shacknews](https://www.shacknews.com/article/93686/xcom-2s-first-major-patch-released-includes-new-option-to-speed-up-gameplay) |
+| Invisible, Inc. | yes | yes, three palettes: protanopia, deuteranopia, tritanopia | — | [PCGW](https://www.pcgamingwiki.com/wiki/Invisible,_Inc.) |
+| Phoenix Point | **no**; the bindings screen lists one key per action | unknown | animation speed in four steps, added two years after release | [PCGW](https://www.pcgamingwiki.com/wiki/Phoenix_Point), [Orryx update](https://phoenixpoint.info/blog/2021/1/31/orryx-update-now-available) |
+| Mutant Year Zero | yes, separate real-time and tactical maps, two slots per action, holds labelled `(hold)` | unknown | — | [PCGW](https://www.pcgamingwiki.com/wiki/Mutant_Year_Zero:_Road_to_Eden), screenshot |
+| Shadow Tactics | yes, tabbed Player / Camera / General, an Unbind per row, Reset All, and five schemes including *Classic RTS* | yes | — | [PCGW](https://www.pcgamingwiki.com/wiki/Shadow_Tactics:_Blades_of_the_Shogun), screenshot. Desperados III the same, with saved presets |
+| Phantom Brigade | yes, grouped Global / Overworld / Combat, two slots per action | no | — | [PCGW](https://www.pcgamingwiki.com/wiki/Phantom_Brigade), screenshot; its file cites the 2.0 update for font size and camera presets |
+| Into the Breach | yes | yes, backed by icons: a patch restored an Alpha Vek icon as important for colour-blind play | — | [PCGW](https://www.pcgamingwiki.com/wiki/Into_the_Breach), [patch notes](https://turnbasedlovers.com/news/new-update-for-into-the-breach-brings-bug-fixes-and-improvements/) |
+| Tactical Breach Wizards | yes | no | — | [PCGW](https://www.pcgamingwiki.com/wiki/Tactical_Breach_Wizards) |
+| Warhounds | yes; its controls guide names remap categories and sends the player to the remapper | unknown | — | its file |
+| Future War Tactics | **no**, and a player complains of it | unknown | — | its file |
+
+Jagged Alliance 3, Tier C, rebinds with two slots per function and has no colour-blind mode.
+
+**Six findings, with their denominators.**
+
+1. **Rebinding is the convention: eight of ten.** Neither game without it went uncomplained-about.
+   Future War Tactics has a player saying so. Phoenix Point's players wrote a mod with an option that
+   disables right-click-to-move (*Selecting and ordering*), a rebinding done by other means.
+2. **A game with more than one kind of screen keeps one map per kind: four of four checked.** They
+   are XCOM 2's tactical and base maps, Mutant Year Zero's real-time and tactical, Phoenix Point's
+   tactical and geoscape, and Phantom Brigade's global, overworld and combat. **And a key can be
+   bound twice inside one map, when the two actions are never live at once.** Phantom Brigade's
+   combat list gives `1` to both *Time Scale: Pause* and *Select Action 1*, and its overworld list
+   gives `1` to a time scale and to an event answer. A **second slot per action** is two of the
+   four binding screens read, Mutant Year Zero's and Phantom Brigade's, and Jagged Alliance 3's
+   too. Shadow Tactics has an Unbind on every row and a Reset All; Mutant Year Zero clears a slot
+   with a cross.
+3. **Pace is wanted badly enough to be patched in and modded in.** XCOM 2 added Zip Mode in its first
+   patch, as a gameplay option that speeds up animations. Phoenix Point added animation speed two
+   years after release, in four steps. XCOM 2's *Stop Wasting My Time*, which removes the pauses
+   after shooting, throwing and taking cover, has 119,599 unique downloads (`reference/xcom2.md`,
+   heading 10). Neither game shipped a pace setting at launch, and both had to add one.
+4. **Text size is wanted most by the players who did not get it.** Invisible, Inc. never had UI
+   scaling, and a Klei developer said on its forum that they never got to it. Phantom Brigade's
+   2.0 update added larger fonts because players asked for them.
+5. **Colour-blind support is three of five games whose status is known**, and it comes in two
+   shapes. Invisible, Inc. offers a palette for each of three deficiencies. Into the Breach backs its
+   colours with icons, so that a patch restoring an icon was described as a colour-blind fix. Shadow
+   Tactics and Desperados III have a mode, of unrecorded shape.
+6. **Motion toggles exist in one game**: Phantom Brigade's accessibility page turns background motion
+   and a glitch effect off. Nothing in this game moves for effect, so this is recorded and not
+   recommended.
+
+**On organisation, the set agrees on one thing and no more.** Bindings are grouped by the context
+they work in. Every other part of the layout differs from game to game.
+
+**Here.** Nothing can be changed except by the command line, and a double-click cannot pass a flag
+(entry 100). `--edge-pan`, `--pace` and `--still` are a person's preferences, and everything else
+on the command line is the harness's. The keys are literal cases in `HexSandbox.HandleKey`, and each
+bar slot carries its key as a string in `ActionBar.Of`. The legend is a string array,
+`BattleHud.PlayerKeys`. Text is drawn at literal pixel sizes. The reaction window already has its own
+keys (entry 096), so this game has two contexts before it has a strategy layer.
+
+**What the palette does under colour-blindness, measured rather than argued.** Each pair of the
+palette's colours that carries a rule was run through the Machado, Oliveira and Fernandes (2009)
+simulation at full severity, applied to linear sRGB, using the hex values in `SandboxPalette`. The
+figure is the CIE76 distance in CIELAB, where about 2 is just noticeable, and
+under 15 or so is hard to tell apart on a thin line or a small mark.
+
+| Pair | Normal | Deutan | Protan | Tritan | Second channel today |
+|---|---|---|---|---|---|
+| cover **half / full** | 32.8 | **14.4** | 20.8 | 33.0 | none: the outlines differ only in hue |
+| rung **Suspicious / Searching** | 22.2 | **9.7** | **9.8** | 23.5 | yes: entry 098's glyph and rim |
+| rung **Alerted / Engaged** | **12.6** | **9.0** | **5.4** | **5.4** | yes: rim weight and fill |
+| overwatch arc / cover **half** | **14.6** | **14.2** | 15.2 | **6.8** | a wedge against an outline, when both are drawn |
+| rung falls / cover **light** | **11.9** | **11.9** | **12.1** | **11.8** | the arrow's shape |
+| our file / player body | 56.8 | 19.8 | 27.4 | 41.4 | brackets and beacon against a body |
+| side, player / hostile body | 126.6 | 50.4 | 39.8 | 135.0 | label and badge |
+| attention, player / hostile | 89.1 | 42.0 | 34.5 | 108.5 | **none**: a tint is only a colour |
+| reserve band **cheapest / better** | 25.5 | 24.0 | 24.1 | 16.6 | brightness, and the labels *What the squad can see* asks for |
+
+**Two things follow.** The rung survives any palette because entry 098 drew it as a glyph first, so
+Into the Breach's approach is already half in the game. The cover grades are the one reading that
+carries a rule in hue alone and fails for the commonest deficiency. The two sides' attention tints
+are in hue alone as well; they pass the numbers today, but nothing but hue would stop them failing.
+
+**The asymmetry.** It draws the one line this section cannot move. **An option may change how
+something is shown, how big, how fast and on which key. It may never change whether something the
+rules withhold is shown.** Omniscience, a hostile's cone where he is not drawn, the fog off,
+answering a window for the other side, driving the hostile side by hand, the seed: each is the
+instruments' switch or a harness flag, and none belongs on an options screen. That is `view.md`'s
+test for readouts, *would a player who never presses `O` want it*, applied to settings. Contract 2
+adds a second test that is just as short. **Nothing an option changes may be read by `Commander`.**
+A preference that altered what the AI knows or scores would make the opponent depend on a player's
+settings.
+
+**Recommendation** — **convention** in every setting below that names games, **departure** in two
+places, each argued.
+
+- **Rebindable keys, one map per context, with a second slot, an unbind and a reset.**
+  **Convention**, eight of ten, and four of four for maps per context. The contexts here are the
+  battle, the reaction window and the camera, which works in both. **A clash is refused only where
+  both actions would be live at the same moment**, which is Phantom Brigade's `1` read the right
+  way round. The bar's `1` and the window's `1` never are, and the camera's keys always are. The
+  refusal is drawn on the row being bound, since a refusal belongs on the thing refused (heading
+  9). Bind to what the action is, not to
+  what the key was. Entry 049 already made every action one method on `HexSandbox` and every order
+  a slot through `PressSlot`, so the map's entries are those names. **Every place a key is written
+  reads it from the map**: the bar's slot keys, the legend, the briefing's `M`, and any hint. A
+  rebound key is then taught where the default was. Label a held binding as held, as Mutant Year
+  Zero does, because `Ctrl` is one.
+- **The mouse buttons are rebindable too, and nothing refuses a committing action on right-click.**
+  **Convention.** Mutant Year Zero binds a mouse button to an action on the same screen as the keys.
+  The finding that nothing in the set fires on right-click was about defaults. A player who wants
+  one is making a choice the default did not make for them.
+- **One pace, from instant up, scaling every wait — the walk, the camera's turn, and their go's
+  banner — with no separate dial for any of them.** **Convention** in the setting: two patches and
+  a mod say it should ship with the game. Scaling the pauses along with the animations is what the
+  mod's downloads were for, since it removed the pauses the base game kept.
+  It also keeps entry 094's ruling that no dwell time is a setting of its own. `--pace` and `--still`
+  are its two ends today. Its top step is *instant*, which is `--still` and what a capture already
+  forces.
+- **Camera: edge-pan on or off, off by default; turn speed on the keys; drag sensitivity; and invert
+  drag.** **Convention** for edge-pan, which *The camera* already recommends as a setting defaulting
+  off. The other three have thinner support: mouse sensitivity in Mutant Year Zero and Phantom
+  Brigade, camera settings in Phantom Brigade's 2.0 update, and inversion in Jagged Alliance 3 and
+  Desperados III. They are cheap, and each is worth keeping only if the play-through reaches for it.
+- **Interface scale: one multiplier over every size and offset the HUD draws at, and never a
+  constant per element.** **Convention**, by the two games' players: Invisible, Inc.'s who did not
+  get it and Phantom Brigade's who did. It keeps 094's ruling, because the layout constants stay in
+  code and the multiplier is a single preference over all of them. The HUD's literal sizes and its
+  offsets from `BattleView.Crown` become that multiplier times the constant.
+- **Colour: a second channel for every reading that carries a rule, in the drawing itself and not
+  as a mode. A palette mode waits for the art pass.** **Departure** in the order, argued.
+  - **Into the Breach's shape is the cheaper and the stronger.** Its colours are backed by icons, and
+    this game already works that way for the rung. A second channel helps everybody, while a palette
+    helps only the player who finds the setting.
+  - **A palette per deficiency doubles what a capture must check.** Every pinned scene in `view.md`
+    would need a run per palette, and the art pass will repaint all of it anyway.
+  - **The table above names where to start**: the cover grades, in line weight or dash. The shield
+    at the cursor, recommended under *What the squad can see*, has a shape to use. The two sides' attention tints
+    pass today, 34.5 at worst, with no second channel. Re-run the table whenever a colour
+    changes. The method is named above it, and it is about forty lines in any language.
+  - **Invisible, Inc.'s per-deficiency palettes are the one recorded shape of a mode.** A mode is
+    therefore still the convention for later, and it belongs to the art pass, not here. It is
+    a palette mode, not individual colours a player can pick, and so it stays outside entry 094's
+    *no colours as settings*.
+- **No option for the briefing, and none yet for the first mission.** The briefing is the mission's
+  orders, dismissed with one key, and no game in the set is recorded letting a player turn briefings
+  off. Where the set lets a player skip teaching, the choice is made at the start of a campaign, as
+  with XCOM 2's toggle or Battle Brothers' first contract, and not on an options screen. This game
+  has no campaign start yet, and entry 100 defers which mission opens. The question returns with
+  milestone 3.
+- **A reaction window stopping for an answer, or taking the recommendation, is not an option.** It is
+  `K` today and `AnswerByHand` in the frame. No game in the set has a window to set it against. Leave
+  it on its key until a play-through says players want it remembered between runs, and then it is
+  a preference about our own side, which the asymmetry allows.
+
+**Two rules for the file, both about the harness.**
+
+- **A capture never reads the preferences.** Entry 066's split: the capture harness opens on its own
+  defaults. So a capture opens the same run whatever the person at that machine has set, and every
+  pinned hash in `view.md` survives a preference. Command-line flags keep applying to the run they
+  are given to, over the preferences, because they are the harness.
+- **The file and the map say what they hold, in words a person can read**, since the one player so
+  far asked for exactly this (entry 094, item 1). A preference nobody can find is as good as none.
+
+**Nothing here needs a query Core does not have**, and nothing touches a rule.
+
 ## Debug and developer overlays
 
 **Standard: shipped games ship none.** What exists is behind a console — XCOM's requires a launch
