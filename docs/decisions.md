@@ -5717,3 +5717,90 @@ could appraise, would make it one answer — and it is the same question `Comman
 already.
 
 ---
+
+## 097 — The fog is the squad's, at standing height, at every zoom; lit ground cannot mean empty here, and the mover takes no look
+**2026-09-12** · **Raised by** interface · **For** view, core, master · **Status** open — View's half is the new section *What the squad can see* in `interface/conventions.md`, for `view/ground-and-camera`; Core's is the question under *For Core*
+
+Entry 094's item 15, answered. The section is the recommendation, and this entry records the
+findings that shaped it, so that the brief built from it does not have to re-derive them.
+
+### What was found
+
+**1. The convention was thinner than 094 stated it.** Of the games in the reference set that hide
+an enemy on the map, two darken the ground outside squad sight: XCOM 2 (verified) and Invisible,
+Inc. (observed, C3). Two draw no fog at all: Future War Tactics, seen in the C12 frame where a fog
+would have to show, and Warhounds, in C4 and C6. Phoenix Point is unknown. So the fog is the older
+half's convention. It is recommended anyway, for two reasons. The play-through is direct evidence
+that the player arrived expecting it. And this game's ground carries ghosts and an attention field
+that cannot be read without a seen/unseen ground under them.
+
+**2. Lit ground here cannot promise an empty tile, and the genre's fog does.** Read from the source:
+
+- **Being drawn takes more than being in view.** A hostile is drawn as a body only with eyes on it
+  *and* a contact at `Searching` or above, and looks accumulate toward that. At list figures a
+  standing man in the open at 30 m, dead ahead, takes two looks. A prone man at 30 m in the corner
+  of the eye, 40% behind a wall, takes about seventeen.
+- **Looks come at set moments.** A unit looks when its turn ends, and a stationary unit gets one
+  look at a mover crossing its front. So ground can light up well before anything on it could be
+  seen.
+
+The section therefore lets the fill claim *a standing man here would be in view of one of ours*,
+and never *nobody is here*.
+
+**3. Standing height is the rules' own test, and it makes one invariant hold.** `Tactician.Known`
+stands a marker upright, and `AwarenessTracker.Checked` tests a briefing against a standing body.
+A fill at the same height puts the fog's edge exactly where a told ghost gets tested. The trace
+hides a silhouette from the waterline up, so any stance that can be seen can also be seen standing.
+That means **no drawn body can stand on dark ground**, which is a check a capture can run. Today's
+fill, from the active soldier alone, breaks that: a teammate's sighting is drawn on the dark.
+
+**4. Testing each tile at the stance of whoever stands on it would leak.** One dark hex among lit
+ones would say a man is lying flat there. The fill has to be a question about the place and never
+about its occupant, which contract 3 requires.
+
+**5. Considered and rejected: a third ground state for ground *not yet looked across*.** The rules
+keep no set of places that have been looked at. A view that kept one would be modelling something
+the AI never reads, against contract 2. It would also get it wrong whenever a reaction changed a
+watchman's stance after the watchman had looked. The cost is kept and written down instead: a lit,
+empty courtyard can hold a man that stopping would have registered. *Teaching it* has to teach
+that.
+
+**6. The cover outlines leave the ground at rest.** They are enemy's-eye cover and belong in the
+firing mode, as the genre shows cover while aiming. The shield goes under the cursor. This way
+items 7 and 13 never share the ground at the same moment.
+
+**7. Not drawn as fog. Settled with the user.** A haze over unseen ground was proposed and rejected.
+Smoke is an existing rule, a walk-through sight-blocker in `WallProfile` that hides everybody from
+everybody, and fog of war hides nothing from the enemy, so the two must not share a look. A haze
+would also soften the hex edge, bury the ghosts standing in it, and move in captures. The art pass
+renders the fill as unlit, dimmed and desaturated as Invisible, Inc. does, and never as obscured.
+
+### For View
+
+The section is the brief's material: the fill, the clip on the attention field, the zoom rule, the
+cover and shield split, and four checks to capture. One cost is View's to measure before promising
+anything: clipping a drawn *hostile's* field is a sweep of traces per hostile. Our side's clip
+reuses the traces the fill already takes.
+
+### For Core — a question, not a request
+
+**A soldier who is walking takes no look, while a soldier standing still gets one at anybody who
+walks across its front.** `Battle.EndTurn` is *the only moment a unit looks around*, and
+`ReactionWindow.OfferFor` gives each stationary reactor one `Notice` of the mover. Nothing gives the
+mover a look at them. So a soldier can walk into full view of a standing sentry, leave it unseen
+until the turn ends, and be seen by it on the way in.
+
+That may be intended. Moving is when you are least watchful, and the watchman's arc is what buys the
+look. But the design doc and `core.md` state the turn-end half of it, and nowhere was the asymmetry
+found argued as such. XCOM 2 reveals what a move walks into, during the move. The interface draws
+the rule honestly either way and does not depend on the answer. The question is only whether it is
+a decision or an accident, and if it is a decision, it is one line of `<remarks>` where the look is
+taken.
+
+### For Master
+
+Entry 094's item 15 has its answer, and the `view/ground-and-camera` brief can now be written with
+it. Interface's own job is the onboarding brief, and *Teaching it* inherits one item from here:
+*a soldier looks when they stop*.
+
+---

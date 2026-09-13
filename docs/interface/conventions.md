@@ -501,6 +501,237 @@ cannot be shown, so the presentation collapses onto the banner. Two details it n
 Mark the round boundary, which is a plain **convention** borrowed from Battle Brothers and is
 missing.
 
+## What the squad can see
+
+*Added for `../decisions.md` entry 094, item 15, from the second play-through: "It's not obvious
+what I'm seeing versus what is in the fog of war." View's ground-and-camera brief waits on it.
+Entry 097 has the reasoning in short and the one question it leaves for Core.*
+
+**Standard — split two and two, and split by year, the way the camera is.** Take only the games
+in the set that hide an enemy on the map, because the others have nothing for a fog to say. Two of
+them darken the ground outside the squad's sight. Two draw no fog at all.
+
+- **XCOM 2 greys out what the squad cannot see**, squad-wide. *Verified*: its players describe
+  soldiers standing in "a completely blacked out area" until the squad's sight updates
+  ([Steam discussion](https://steamcommunity.com/app/268500/discussions/0/412446890546610495/)).
+- **Invisible, Inc. dims and desaturates every room no agent can see now**, and keeps what was
+  seen before dim rather than black. *Observed* at whole-level zoom in the C3 frame, where the
+  agent's room is lit and the rest are not
+  ([`shot-c3-move-range-outline-path-and-cursor-hint.jpg`](reference/shots/invisible-inc/shot-c3-move-range-outline-path-and-cursor-hint.jpg)).
+- **Future War Tactics hides its enemies and draws no fog.** *Observed* in the one frame where a
+  fog would have to show. C12 is the turn after contact was lost, and the two last-seen beacons
+  stand on ground lit exactly like the squad's own
+  ([`shot-c12-turn-after-contact-lost-full-frame.jpg`](reference/shots/future-war-tactics/shot-c12-turn-after-contact-lost-full-frame.jpg)).
+- **Warhounds hides its squads until first contact and draws no fog** in any of its photographed
+  frames (C4, C6).
+
+Phoenix Point hides its enemies too, and its file says nothing about its ground either way.
+Into the Breach, Tactical Breach Wizards and Phantom Brigade hide nothing inside a battle, and
+Shadow Tactics draws every guard. So *a darkened ground outside squad sight*, as entry 094 put
+it, is the older half's convention and not the genre's.
+
+**Two things decide it here, and one of them is the complaint.** A convention is worth following
+because the player arrives expecting it (entry 058). The user arrived looking for a fog and said
+so, which is the evidence that clause asks for, as direct as it gets. The other is that the newer
+two can do without a fog because they draw almost nothing of an unseen enemy: one bare beacon in
+Future War Tactics, nothing in Warhounds. Their ground has nothing on it that needs telling apart.
+This game's ground carries told ghosts, markers and an attention field, and not one of them can be
+read without knowing whether the ground under it is ground anybody of ours can see.
+
+**And the game that draws fog best still never answers the question a move asks.** A 2017
+critique of XCOM 2 says its interface "does nothing to show you what tiles you will be able to
+see", whether at the end of a move or during it
+([Gile, Game Developer](https://www.gamedeveloper.com/design/xcom-2-and-vision-the-cost-of-an-illusion)).
+A fog shows what the squad sees now. What it would see from somewhere else is a separate
+question, and the genre has left it open.
+
+**Here.** `BattleView.BuildUnseen` darkens, in `SandboxPalette.Unseen`, every tile on the storey
+being looked at where the **active soldier**, in their current stance, has no line to a standing
+body. That is `Battle.Sight.Trace(active.Vantage, new Vantage(node))`, and `Vantage` stands the
+target up by default. It draws only when zoomed in past `SandboxCamera.LegibleAt`. Nothing draws
+the squad's sight. Over the ground, every drawn soldier's attention field is tinted in its side's
+colour: `AttentionOn` times the range falloff, **through walls**. `AttentionOn`'s own remark says
+why: *line of sight stays pure geometry in the sight solver; who is paying attention is a question
+about people.* The cover outlines sit on the active soldier's seen tiles, and the ghosts stand at
+their markers.
+
+**It already contradicts itself once.** A hostile that a teammate has eyes on, standing where the
+active soldier cannot see, is drawn as a body on dark ground.
+
+**What *seen* means in the rules — and it is not what the genre's fog promises.** Three facts,
+read from the source:
+
+1. **Seeing is geometry; noticing is a rate.** `SightResult.CanSee` is true if any sliver of the
+   silhouette is in view. A hostile is drawn as a body only when some soldier of ours has eyes on
+   it **and** a contact at `Searching` or above (`UtilityModel.ActsOn`, through `Tactician.Known`),
+   and each look adds `LookGain` toward that. So at list figures:
+   - a man standing in the open, dead ahead at 10 m, is registered in one look (about 52 against
+     `Searching`'s 50);
+   - the same man at 30 m takes two looks, and four if he is in the corner of the eye;
+   - lie him flat at 30 m in the corner of the eye with a wall hiding 40% of him, and one look adds
+     about 3, so seventeen turns of looking.
+2. **A look happens at a moment.** Ending a turn is *the only moment a unit looks around*
+   (`../subprojects/core.md`, *How a turn runs*). The one other look is the one a stationary
+   soldier gets at a mover crossing ground that is not behind it (`ReactionWindow.OfferFor`). **A
+   soldier who is walking takes no look.** Ground that a soldier has just walked into view of has
+   not been looked across yet.
+3. **Whether a place can be seen depends on the height of what stands there.** A place can be in a
+   line to a standing man and not to a crouched one behind a 1.0 m wall, and the body of a man on a
+   roof can show while the roof under him does not.
+
+So **lit ground in XCOM means everything on it is drawn, and lit ground here can hold a man in
+plain view whom nobody has registered.** The fog cannot promise an empty tile, and it must not be
+drawn in a way that looks like that promise.
+
+**The asymmetry.** It permits exactness and forbids one shortcut. The ground is our side's own
+sight, so contract 3 lets it be drawn exactly. The shortcut is to test each tile against whoever
+is actually standing on it, at their stance. Then one dark hex among lit ones would tell the player
+that a man is lying flat there. **The fill must be a question about the place, never about its
+occupant**, and that is the second reason for the standing test below.
+
+**Recommendation** — **convention** in the fill, **departure** in what the fill is allowed to
+claim.
+
+- **Darken the ground that no soldier of ours has a line to. The squad's sight, not the
+  soldier's.** Take the union over our soldiers in play, each at their current vantage, of
+  `CanSee` to a standing body at the node. This is the convention, taken from the half of the genre
+  the player came from. It is squad-wide because everything drawn on the ground is squad
+  knowledge: `HexSandbox.GatherKnowledge` merges every soldier's `Known`. One soldier's fill under
+  the squad's bodies is today's contradiction.
+- **Test at standing height, never at the height of whoever is there.** There is no genre
+  precedent to depart from, since the genre's sight has no height. Three reasons:
+  - **It is the rules' own test for having looked at a place.** `Tactician.Known` stands a marker
+    upright *because the question a marker answers is can I see the place*, and
+    `AwarenessTracker.Checked` tests a briefing against a standing body. So the edge of the fog is
+    exactly where a told ghost gets tested, which is contract 2 drawn on the ground.
+  - **It keeps a promise a capture can check: a drawn body never stands on dark ground.** The
+    trace hides a silhouette from the waterline up, and the hidden share only grows as the body
+    gets shorter. So a man who can be seen crouched or prone can also be seen standing, and a
+    lower test would put bodies on the dark behind every low wall and on every roof.
+  - **It closes the leak named under the asymmetry.**
+
+  What it costs is fact 1 again: lit ground behind a low wall may still hide a crouched man. The
+  ground says *a man standing here would be in view* and never *nobody is here*.
+- **Do not cut the fill at a range. Range belongs to the tint.** A line has no range limit, while
+  `LookGain` is zero past `SightRangeMetres`, 45 m. A body already registered that walks out past
+  45 m keeps its eyes-on and stays drawn, so a fill cut at range would put it on the dark. Keep the
+  fill pure geometry and let the attention field, which fades to nothing at 45 m, carry range.
+  **Lit with no tint** then reads correctly: in a line, with nobody watching that far, so nothing
+  new will be registered there.
+- **Draw our side's attention field only where that soldier has a line to a standing body.** The
+  fill is the sight half and the tint the awareness half of the one product `LookGain` multiplies.
+  Core keeps them in two homes, and the drawing stacks them as two layers in that order. **The
+  convention is that a cone knows what blocks it.** Invisible, Inc.'s stripes run up the face of a
+  glass wall and change to a separate band in the lee of a sofa or a desk (**C2**, observed). Today's tint runs through
+  walls, onto ground where no look can land. For our own soldiers the clip costs nothing, because
+  it reuses the traces the fill already takes.
+
+  **A drawn hostile's field takes the same clip**, from his line to a standing man of ours. That
+  is still our knowledge: we see him, so his lines are geometry anybody could work out. The price
+  is a sweep of traces per drawn hostile, which is View's to measure. If it is too dear, clip ours
+  first and leave theirs unclipped, and say so. Testing at standing errs toward danger for a
+  crouched soldier of ours behind a low wall, which is the safe way to be wrong; the exact figure
+  for a stance is the destination readout's job, not the ground's.
+
+  The result is one reading, not two overlays. **Dark** means no look of ours can land here.
+  **Tinted** says how hard we are looking. **Lit and bare** means in a line but watched by nobody.
+  The edge is binary and the grade sits inside it, which is the fix a published critique of
+  Invisible, Inc.'s partial shading asked for: shade seen fully and unseen not at all, and carry
+  the grade in a tint that was already there, not in a third band.
+- **The look still to come belongs to the active soldier, and it is told on the soldier, not on
+  the ground.** Fact 2 means a soldier who has just walked into view lights up ground that nobody
+  has looked across yet. **A third ground state was considered and rejected**: *will be looked
+  across when you stop*.
+  - The rules keep no set of looked-at places. Looks are taken per subject, at a turn's end and at
+    a crossing, so a view that kept one would be modelling something the AI never reads, against
+    contract 2.
+  - A reaction can change a watchman's stance after it has looked, and a record kept by the view
+    would silently get that wrong.
+  - It is also the three-band problem again.
+
+  **What is left is a known cost, recorded here so it is not discovered.** A player can see a lit,
+  empty courtyard and walk into a man they would have registered by stopping. Two things carry
+  the lesson instead. That a soldier looks when they stop is a teaching question, and it is the
+  first thing *Teaching it* has to settle. And the End turn control on the action bar is the look,
+  so it is worth a word saying so. Whether a mover should take a look at all is Core's question,
+  filed in entry 097, and nothing in this section depends on the answer.
+- **The told ghosts stand on the fill, and the fill never clears one.** A ghost on dark ground is
+  a belief about a place nobody can look at, and it reads correctly with no help. A ghost on lit
+  ground stands on a place about to be tested: the next look from the soldier whose line lights it
+  either confirms it as a body or starts it decaying (`AwarenessTracker.Observe`). **What the fog
+  cannot do is item 5's job.** On turn one a told marker is exactly where its hostile stands, and
+  on lit ground the only difference between *told* and *seen* is a see-through body against a
+  solid one. That difference belongs to the ghost's own drawing, which is brief two, and not to
+  the ground. The fill's part is never to lie about which kind of ground a ghost is on.
+- **Draw it at every zoom.** Convention: Invisible, Inc.'s dim rooms are photographed at
+  whole-level zoom. `BuildUnseen`'s reason for dropping it was one soldier's sight covering one tile
+  in ten, and the squad's sight is wider. The deeper reason is the sandbox's own rule that *the
+  camera changes what is drawn and never what is true*. Labels leaving at a distance is a choice
+  about legibility. A fog that leaves at a distance says the squad sees everything from far away.
+  The fill tints tile tops and not walls, so the shape of the place should survive. If a capture
+  shows it does not, lighten the fill with distance and never remove it.
+
+**Considered and rejected: drawing the fog as fog.** A haze or drifting cloud over unseen ground
+was put forward by the user and argued against, and the user agreed.
+
+- **Smoke is already a rule, and it would look the same.** `WallProfile` carries a sight-blocker you
+  can walk through — smoke, a hedge, a curtain of hanging plastic — which hides everybody from
+  everybody. Fog of war hides nothing from the enemy; it is our side's ignorance. Draw both as
+  haze and a player seeing fog near a hostile will conclude the hostile cannot see through it
+  either. That is contract 3's *whose knowledge it is*, broken by a picture.
+- **The edge has to be crisp** enough to say which hex a ghost stands on, and a haze softens exactly
+  that.
+- **A volume has height, and the ghosts stand inside it.** Kept below prone body height so as not
+  to bury them, it is a tint with a texture.
+- **It moves**, and a capture needs a still frame.
+
+Neither game in the set that draws a fog draws haze: XCOM 2's is blacked out and Invisible, Inc.'s
+is dimmed and desaturated. **So the art pass renders this fill as unlit — dimmed and desaturated,
+Invisible, Inc.'s treatment — and never as obscured.** Desaturation reads as *not seen*, survives
+zooming out, keeps ghosts and tints legible on top, and cannot be mistaken for smoke. The
+greybox's dark tint stands until then.
+
+**Where the stance grade goes, if it is drawn anywhere.** Two games in the set draw a band for
+*seen standing, not crouched*: Shadow Tactics' striped segment of a cone, which a crouching
+character can cross unseen (verified), and Invisible, Inc.'s yellow hidden band. Both put it on
+**the enemy's** cone, because *where can I get past them low* is the question a stealth player
+actually asks. That makes it a later refinement of a drawn hostile's clipped field, at the price of
+a second trace per tile, and not a feature of our fog. Item 15 does not need it. The C2 crop also
+says what it would cost: in a full frame, Invisible, Inc.'s yellow read as the shadow of the
+furniture that cast it.
+
+**The cover outlines and the shield — items 7 and 13 of entry 094.** They answer opposite questions:
+
+- **The outlines** say where a target would be safe from the soldier who is up — `SightResult.Cover`,
+  seen from the active soldier.
+- **The genre's shield** says what cover *you* would have on a tile.
+
+The genre answers the shield's question at the tile under the cursor, and the outlines' question
+only while aiming, as a term of the shot: XCOM 2's `LOW COVER −20%` (*Readouts*). No game in the
+set paints enemy's-eye cover on every tile at rest. **Convention, both ways:**
+
+- **The shield** goes under the cursor, as a glyph standing at the edge of the tile toward whatever
+  gives the cover, in the grade colours, against the threats our side holds. `Sight.Trace` from each
+  of `Known`'s poses already answers it.
+- **The outlines** move into the firing mode, where the shooter's question is asked, and leave the
+  ground at rest.
+
+Then the two are never on the ground at the same time, which is the cheapest way to make sure
+they never look alike. It also puts the one per-soldier view a player needs, the shooter's, in the
+one mode that needs it. The ground at rest shows the squad's sight, and the firing mode shows the
+shooter's.
+
+**What a capture should show before this is called built.** Four checks, each one a picture:
+
+- No body stands on dark ground, at any zoom, in any pinned capture that is not omniscient.
+- None of our soldiers' tint lies on dark ground.
+- On the waystation's turn one, which of the four told ghosts stand on the dark. If any stands on
+  lit ground, item 5 is brief two's to finish and not this section's.
+- A zoomed-out capture in which the buildings still read as buildings.
+
+**Nothing here needs a query Core does not have.** `Sight.Trace`, `Tactician.Known` and
+`AttentionOn` answer all of it.
+
 ## What of the enemy is drawn
 
 **Standard, modern tactics: binary, and generous.** XCOM hides a pod completely until it
