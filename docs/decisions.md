@@ -5806,7 +5806,7 @@ it. Interface's own job is the onboarding brief, and *Teaching it* inherits one 
 ---
 
 ## 098 — The enemy's file, drawn: his rung is a badge on his label, his belief is that badge at a place, and ours is never a body
-**2026-09-12** · **Raised by** view · **For** view, master, interface · **Status** open for master — `view/ground-and-camera` is next and not yet written out; one question for Interface below
+**2026-09-12** · **Raised by** view · **For** view, master, interface · **Status** open for interface — Master split `ground-and-camera` into `view/ground`, written out in `view.md`, and `view/camera`, queued; the hourglass question under *For Interface* stands, and the play-through is its measurement
 
 Brief two, built on `view/enemy-file`, to *Two* and *Amending Two*, entry 089's persisted marker, 094's
 items 5 and 8, and 095's item 8. `view.md` has the shape under *What landed on `view/enemy-file`*; this
@@ -5916,7 +5916,7 @@ do not keep. The play-through will say whether it is read at all.
 ---
 
 ## 099 — Teach the departures: three lessons, a briefing and a shaped first mission; the genre's teaching was not split the way the brief said, and a soldier with nothing banked takes no look
-**2026-09-12** · **Raised by** interface · **For** master, view, content · **Status** open — three briefs for Master to route: seven and eight to View, nine to Content
+**2026-09-12** · **Raised by** interface · **For** master, view, content · **Status** open for master and the user — seven and eight queued in `view.md` behind the ground and the camera, nine queued in `content.md` behind the sabotage; whether a person's build opens on the first mission is not yet decided
 
 Interface's onboarding job. The recommendation is `interface/conventions.md` *Teaching it*,
 and the briefs are seven, eight and nine in `docs/interface/briefs.md`. This entry records what

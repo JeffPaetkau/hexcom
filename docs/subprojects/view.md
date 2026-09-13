@@ -35,12 +35,80 @@ reaching into `src/`.
 
 ---
 
-## The job — `view/ground-and-camera`, when Master has written it out
+## The job — the ground says what it is
 
-Brief two landed — *What landed on `view/enemy-file`* below, and `../decisions.md` entry 098.
-**`view/ground-and-camera` is next and it is Master's to write out in full**; until it is, there is no
-View job to start. Its material is item 1 of the queue below and entry 097. A session pointed at this
-file with no brief under this heading should say so rather than build from the queue's summary.
+Branch `view/ground`. **Master split `ground-and-camera` in two**: the ground is this brief, and the
+camera is second in the queue below. Together they were two increments pretending to be one.
+
+**Read first**: `../interface/conventions.md` *What the squad can see* in full — it is this brief's
+recommendation and it is not repeated here — then `../decisions.md` entry 097 for why, and entry 094
+items 7, 13, 14 and 15 for the player's words.
+
+**What is wrong, in the player's words.** *It's not obvious what I'm seeing versus what is in the fog
+of war.* *There are 5 hexes next to the wall that are highlighted. I don't know what that is about.*
+*No cover shield indicators.* *Can run a stretch of 10 or so hexes but can only shoot a handful.* And
+one the player could not say, because it is not there: the waystation never shows the house the squad
+is sent to look at, or the cottages it leaves by.
+
+**What it is — five things on the ground, in this order.**
+
+1. **The fog, the squad's.** Dark where no soldier of ours has a line to a standing body, at every
+   zoom, unlit and never obscured — the section's recommendation, all of its bullets.
+2. **Our attention tint clipped** to where that soldier has a line, as the section says; a hostile's
+   clip is a sweep of traces per hostile, and 097 asks View to **measure that cost before promising
+   it**. Our side's clip reuses the fill's traces.
+3. **Cover: the outlines leave the ground at rest and go into the firing mode**; **the shield goes
+   under the cursor**, a glyph at the tile's edge toward what gives the cover, in the grade colours,
+   against the threats our side holds.
+4. **The objective drawn.** `BattleView.BuildExit` asks for a `Withdrawal` and returns; a
+   `Reconnaissance` and a `Sabotage` are `Sortie`s too, and neither is drawn. `Sortie.Exit` is the
+   exit and `Objective.Place` the place, for every shape. Draw both for any `Sortie`.
+5. **The edges round the soldier say what they are**, and weapon range is drawn somewhere a player
+   can find it. `BuildReachBands` and `SandboxFrame.Ladder` are the edges; they are the reserve's
+   steps, not a range, and unlabelled they read as one. Where range goes is yours; the firing mode is
+   the obvious place, since the outlines are moving there anyway.
+
+**Where the seams already are.** `BattleView.BuildUnseen` (the active soldier's dead ground, only
+under `frame.TileDetail`) and `SandboxPalette.Unseen`; `BuildCoverOutlines` over `frame.View`;
+`BuildAttention`; `BuildReachBands`; `BuildExit`; `BuildHover` for the shield. `Sight.Trace`,
+`Tactician.Known` and `AttentionOn` answer everything, per the section — **no new query.** Entry 098
+left three constraints: **the fog must not bury the marks** (`SandboxPalette.OurFile` and his rung
+colours go over the fill — check a told bracket on dark ground in the first capture), **a place is a
+hex and a soldier is a ring** (the shield is new on the ground and must be neither), and the fire
+mode's entry is `SandboxFrame.Mode` and the bar's (096).
+
+**Settle before writing much.**
+
+- **The height and the cost.** The fill tests every tile on the storey at standing height against
+  every soldier of ours. Profile a waystation frame before caching anything, and say where the
+  traces are cached if they must be — per soldier per position is the obvious key.
+- **What *the firing mode* is for the outlines.** Aiming, a fire slot lit, or both. One answer, and
+  the cursor tag's *cover* line under `Ctrl` follows it.
+- **The shield's threats.** Every hostile our side holds, as `Known` gives them, told and lost
+  included — or only the ones with eyes on. The section says *the threats our side holds*; a told
+  ghost is one. Say so in the `<remarks>`.
+- **The objective's look.** A place and an exit are hexes, so outlines by 098's rule; they must not
+  look like the reserve's violet edges, the cover grades, or a marker's bracket. Whether the place
+  shows the objective's range (`Reconnaissance`'s `within`, 12 m on the waystation) is worth a line.
+- **What the edges' label is.** Words at the edge, a line on the points bar's caption, or the legend
+  — and the play-through said *a handful*, so the label has to beat that reading at a glance.
+
+**Out of scope.** The camera, readouts over bodies and stacked labels — `view/camera`, next. Brief
+seven's head-down mark. The rules, and entry 097's question to Core about the mover's look. How the
+enemy is drawn, which landed in 098.
+
+**How to know it worked** — the section's four checks, plus three:
+
+- No body stands on dark ground, at any zoom, in any pinned capture that is not omniscient.
+- None of our soldiers' tint lies on dark ground.
+- The waystation's turn one: which told marks stand on the dark, and every one is still readable.
+- A zoomed-out capture in which the buildings still read as buildings.
+- **The waystation's house and cottages are on screen and distinguishable at `--fit`.**
+- At rest, no cover outline on the ground; aiming, the outlines are there; the cursor on a tile beside
+  a low wall shows a shield on that wall's side.
+- A stranger shown a frame with the reach edges says what they are — or, headless, the label is in
+  the capture and names the reserve, not a range.
+- The pinned scenes change by the ground and nothing else; two runs hash the same.
 
 **What brief two left for the queue, so it is not re-derived.**
 
@@ -69,22 +137,24 @@ file with no brief under this heading should say so rather than build from the q
   at* — a click on a body then `B` — because a click on the slot has taken the pointer off the body.
   The open question below is narrower for it.
 
-**The queue, in order.** Each is Master's to write
-out in full when it is next; the items are entry 094's.
+**The queue behind the brief, in order.** Master writes out the camera and options when each is
+next; seven and eight are written in full in `../interface/briefs.md` and are sufficient as they
+stand once promoted — entry 099.
 
-1. **`view/ground-and-camera`** — **its fog is answered**: entry 097 and `../interface/conventions.md`
-   *What the squad can see*, which also moves the cover outlines into the firing mode. Then: hold
-   `Q`/`E` to turn and a tap still lands on a bearing (item 2);
-   **middle-drag pan does not work in the build** though the code reads right, then a mouse pan the
-   player can find (item 3); pitch within a clamp (item 4, and `conventions.md` *The camera*);
-   readouts that do not cover bodies (item 12); a cover shield at the cursor saying what cover *you*
-   would have, kept apart from the outlines that say what cover a tile has *from* you (items 7, 13);
-   the reach and reserve edges labelled, and weapon range drawn somewhere (item 14); **the
-   waystation's house and exit drawn at all** — `BuildExit` draws only a `Withdrawal`, and a
-   `Reconnaissance` is not one; and the fog, once Interface has said what it becomes (item 15).
-2. **`view/options`** — an input map and a preferences file loaded at start, and an options screen
+1. **`view/camera`** — entry 094's camera and clutter items: **middle-drag pan does not work in the
+   build** though the code reads right, then a mouse pan the player can find (item 3); hold `Q`/`E`
+   to turn and a tap still lands on a bearing (item 2); pitch within a clamp (item 4, and
+   `conventions.md` *The camera*); readouts that do not cover bodies (item 12), with what 096 and 098
+   left under it above — the taller bottom edge, `FollowActive`'s margin, the wider soldier line, and
+   two labels stacked on one column.
+2. **Brief seven, `view/turn-end`** — `../interface/briefs.md` *Seven*. Small; it says on the End turn
+   slot and on the soldier what ending a go does.
+3. **Brief eight, `view/briefing-first`** — `../interface/briefs.md` *Eight*. Its `Ctrl` half waited
+   on brief two's words, and 098 has them.
+4. **`view/options`** — an input map and a preferences file loaded at start, and an options screen
    over them (item 1, settled narrow with the user). `--edge-pan`, `--pace` and `--still` move in
-   first.
+   first. Interface is answering *what the genre lets a player change* ahead of it, as it answered
+   the fog ahead of the ground.
 
 Small things owed and not briefs: the bill's last clause becomes names when Core lands entry 086's
 relay; and entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files

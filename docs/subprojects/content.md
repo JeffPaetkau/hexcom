@@ -150,6 +150,14 @@ is View's.
 harness of the same shape as the other two, the ground measured against the mission book's test
 for the shape, and an effort figure in the file with a batch behind it.
 
+**Queued behind this: brief nine, `content/first-mission`** — `../interface/briefs.md` *Nine*,
+written in full and sufficient as it stands; `../decisions.md` entry 099 has what shaped it. A short
+mission on the real rules whose ground and posts make the three lessons of *Teaching it* happen on
+their own. It is behind the sabotage and not ahead of it because its test is a stranger playing once
+View's briefs seven and eight have landed, and those are behind two View briefs. **One decision in
+it is not Content's**: whether a person's build opens on it. That is the user's, with Master, and
+whatever they decide is recorded in the log and is one line of View's.
+
 ---
 
 ## Open questions
