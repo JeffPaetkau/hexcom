@@ -90,6 +90,15 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
 
 ## The job — a second battlefield, of a different shape
 
+**First, and it is small: give the mission file a way to say what the squad is told.** Entry
+087, item 1 under *For Content*. The waystation's briefing already says in prose where the garrison
+is and that *the last two reports disagree about the fourth*, and the deployments it describes are
+already named — but nothing in the grammar hands that to the squad, so the file plays blind and
+Core's batch stands in for it with a hard-coded arm. Core's `Battle.Brief` is the call and it
+exists. What rung, and which posts, is the file's to say; a `known` option on `deploy` or a line of
+its own are the two shapes 087 names, and the choice between them is yours. When it lands, Core's
+instrument arm can read the file instead of pretending to be it. Then the battlefield below.
+
 Branch `content/second-battlefield`. The waystation's mission is finished: entry 061 built the
 objective and entry 081 ran it, so the mission the user's build fights is the reconnaissance the
 briefing describes rather than the walk-out that stood in for it. This is the other thing entry
