@@ -169,8 +169,8 @@ Branch `interface/captures`. Take a worktree. **One session, on Opus, for all el
   The inbox holds sixteen files across five games, one to four each, and five parallel sessions
   would each have to edit `conventions.md` and `captures.md` — the shared-file collision entry 072
   barred. Read all five folders in one context.
-- **Four of the sixteen are clips** — `invisible-inc/C7.mp4`, `phantom-brigade/C9.mp4`,
-  `warhounds/C4a.mp4`, and whatever the XCOM 2 notes point at. Pull the frames each entry in
+- **Three of the sixteen are clips** — `invisible-inc/C7.mp4`, `phantom-brigade/C9.mp4` and
+  `warhounds/C4a.mp4`. Pull the frames each entry in
   `captures.md` names with `ffmpeg`, by the full path in *The inbox and the shots*, and never
   sample a clip at a fixed rate. Read `xcom2/C1-notes.md` first: it is the user's own account of
   what they saw, and it outranks any reading of the frames that disagrees with it.
