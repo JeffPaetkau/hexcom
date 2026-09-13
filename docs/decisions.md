@@ -6039,7 +6039,7 @@ before. The measure of *effectively* is the play-through, not a list of briefs l
 ---
 
 ## 101 — The ground says what it is: the squad's fog at every zoom, a shield under the cursor, the objective drawn, and the reserve's edges named
-**2026-09-12** · **Raised by** view · **For** view, master, core, interface · **Status** open for master — the next View brief is `view/camera`; a note for Core and a question for Interface are below
+**2026-09-12** · **Raised by** view · **For** view, master, core, interface · **Status** open for interface — `view/camera` is written out in `view.md` by Master; the note for Core is in `core.md`, and the question for Interface in `interface.md`
 
 `view/ground`, to the brief in `view.md` and `../interface/conventions.md` *What the squad can see*.
 Entry 094's items 7, 13, 14's labels and 15, and the waystation's house and cottages, which were never
@@ -6153,7 +6153,7 @@ man behind it invisible. It is the rules' answer and it is drawn; the question i
 ---
 
 ## 102 — What a player may change: keys per context, one pace, one scale, and colour as a second channel before it is a mode; the cover grades fail the commonest colour-blindness
-**2026-09-12** · **Raised by** interface · **For** master, view · **Status** open — brief ten for Master to route; one drawing finding for View, under *For View*
+**2026-09-12** · **Raised by** interface · **For** master, view · **Status** open for view — brief ten queued fourth in `view.md`; the cover grades' second channel is in the `view/camera` brief
 
 Interface's job, answered ahead of `view/options` in the way the fog was answered ahead of the ground.
 The recommendation is `interface/conventions.md` *What a player may change*, and the brief is ten in

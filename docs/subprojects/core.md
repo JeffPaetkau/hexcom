@@ -128,6 +128,11 @@ brief's, both are small.**
   (`Costs.Posturing(...)`, `Reactions.OverwatchCost`, `AmbushCost`). A re-price inside a method would
   leave the bar quoting the old figure and nothing would fail. A `PriceOf` per order is contract 2's
   shape for it, and `Commander` already answers the question somewhere.
+- **A note, not a question** — entry 101, *For Core*. The view's fog sweeps are ~1,800 traces each at
+  about 80 µs a trace on the waystation. The cache makes repeats free, but when the solver's memory
+  empties at its 250,000-trace bound — which a long AI search can reach — every drawn soldier's sweep is
+  paid at once. The first measurement of `SightSolver.Intersections` from outside the AI; its remarks
+  already name a spatial index as the answer if it gets hot.
 
 **Out of scope.** `game/**` as ever. Extraction and capture. Suppression.
 
