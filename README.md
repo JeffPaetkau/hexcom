@@ -116,8 +116,8 @@ The sandbox is a greybox: the battle as boxes on the ground the rules describe, 
 its floor height, every wall at the height its profile gives it, every soldier a body at its
 stance height with its facing marked, and no art. **It opens as the game a person plays**: you
 against the AI on the waystation mission, answering your own reaction windows, seeing what your
-side knows — a hostile is on the map only while one of yours has eyes on it, or as a ghost at the
-place they were last seen. `O` shows everything and `H` takes the hostile side back off the AI,
+side knows — a hostile is on the map as a body only while one of yours has eyes on it, and
+otherwise as a mark at the place your side believes in, which is never a body. `O` shows everything and `H` takes the hostile side back off the AI,
 so every other way of running it is a keystroke away; a capture opens on the older defaults
 instead, with nothing on, which is why the commands above say `--ai` when they want it.
 It fights `content/missions/waystation.hexmission` — three of yours on the
@@ -228,7 +228,7 @@ Point at the ground and beside the tile is what getting there costs, what stoppi
 bank, and who would hear the walk. **Hold `Ctrl` for every figure's terms at once**: at each enemy
 your soldier is taking seriously, how far, how much it has worked out about them, the worst shot
 they could put into it, and whether they can see it — a contact merely *remembered* is quoted at
-the ghost where it is believed to be; at the soldier, the bar they act from, the arc it holds, who a
+the mark where it is believed to be; at the soldier, the bar they act from, the arc it holds, who a
 shout would reach, who has a line to it, and what each posture key would buy, scored the way the AI
 would; and at the cursor, cover, exposure, distance and range band, attention and noise. A hostile
 nobody of yours has found is *somebody unseen* everywhere, never a name.
@@ -251,14 +251,30 @@ eighty-five metres across and the reason the view can be pulled back — a soldi
 half the width of this map, and on a compound you can cross in a turn and a half it reached off
 the edge in every direction and told you nothing.
 
-Under each enemy is how alarmed they are — coarse on purpose, though holding `Ctrl` names the
-rung at which they will act on it, because a rung nobody can place means nothing. Your own
+**The enemy's file is three things, and they look like three things.**
+
+- **What he believes about you** is a badge beside his name, on his body and nowhere else: nothing
+  while he has not noticed you, `?` once he has noticed something, `?` with a second ring while he
+  is looking for you, `!` with a second ring once he knows you are there, and a filled `!` when he
+  is on you. An arrow beside it says the badge moved since your last order — up, or **down**, because
+  here a man who loses you calms down, and a badge that only ever climbed would teach the opposite.
+  An hourglass says his own go comes before your soldier's next one: he has not looked since you
+  started moving, and he will. Holding `Ctrl` says it in words.
+- **Where he believes one of yours to be** is his badge again, hanging over the tile he believes in,
+  with the name of the soldier he is wrong about under it and the tile outlined in his colour. It
+  stays there while he holds it, into the next turn, and stops moving when you do.
+- **What your side knows of a man it cannot see** is a mark on the ground in pale: brackets on a
+  tile you were *told* about in the briefing and nothing has checked, or a beacon where you saw or
+  heard one and lost him, as tall and as bright as your side still credits it — so a contact going
+  cold is seen going down. A man you saw is named; one you only heard or were told of is not.
+
+Coarse on purpose, all of it: the badge is a rung and never the certainty behind it. Your own
 soldier's exposure is reported exactly, because that is information about yourself; so is how
 much of their attention the place under the cursor has, which is the figure the field draws in
-colour. Faint red circles are where an enemy *believes* one of yours to be; they stop moving when
-you do. An outlined wedge is an arc being held — yellow for an overwatch, pink for an armed
-ambush — drawn out to the weapon's maximum range, with the optimal band marked inside it, and the
-figure beside it in the turn order is what that unit has banked to answer with.
+colour. An outlined wedge is an arc being held — yellow for an overwatch, pink for an armed
+ambush, yours or a hostile's you can see — drawn out to the weapon's maximum range, with the
+optimal band marked inside it, and the figure beside it in the turn order is what that unit has
+banked to answer with.
 
 Press `H` and the other side plays itself. Every turn it takes is written up in the block at the
 bottom of the screen, one line per order with the score broken into the terms it was ranked on —

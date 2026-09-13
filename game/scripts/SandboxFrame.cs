@@ -185,6 +185,10 @@ public sealed record ReserveLadder(Unit Unit, IReadOnlyList<ReserveRung> Rungs)
 /// <see cref="Mode"/>, which checks it belongs to the weapon of whoever is up.
 /// </param>
 /// <param name="Pointing">The action bar slot under the pointer, by its id, or null. See <see cref="ActionBar"/>.</param>
+/// <param name="RungMoved">
+/// Which way each hostile's rung on us went since our last order — up or down — for the ones that moved.
+/// See <see cref="SandboxRung"/>.
+/// </param>
 /// <param name="TermsFolded">
 /// Whether the player has folded the shot's terms away. Remembered across targets and soldiers,
 /// the way the photographed game remembers its fold. Brief one's <i>Settling One</i>.
@@ -231,8 +235,80 @@ public sealed record SandboxFrame(
     bool Details,
     bool TermsFolded,
     FireMode? AimMode,
-    string? Pointing)
+    string? Pointing,
+    IReadOnlyDictionary<UnitId, int> RungMoved)
 {
+    /// <summary>
+    /// The highest rung a hostile holds on any of ours: what <b>he</b> believes about our side.
+    /// </summary>
+    /// <remarks>
+    /// His certainty about us and never ours about him, which is what a player adjacent to a sentry
+    /// reading <c>SEARCHING</c> could not tell (entry 094, item 8). Coarse by contract 3 — a rung, through
+    /// <c>ReadoutFor</c>, never the certainty. It was <c>BattleView.WorstReadout</c>; it is here because
+    /// the HUD's terms name it too, and two halves working it out separately is two chances to disagree.
+    /// </remarks>
+    public AwarenessReadout Rung(Unit hostile)
+    {
+        var worst = AwarenessReadout.Nothing;
+        foreach (var mine in Battle.InPlay.Where(u => u.Side == Side.Player))
+        {
+            var readout = Battle.Awareness.ReadoutFor(hostile.Id, mine.Id);
+            if (readout.State > worst.State) worst = readout;
+        }
+        return worst;
+    }
+
+    /// <summary>
+    /// Whether a hostile's own go comes before the next go of the soldier of ours who is up.
+    /// </summary>
+    /// <remarks>
+    /// <b>Entry 095's item 8, as a mark.</b> A sentry looks properly only as his own turn ends, so a move
+    /// cannot take one who held nothing past <i>looking for you</i> — and <c>SEARCHING</c> at arm's length
+    /// means <i>he saw you walk up and has not looked yet</i>. The fact a player can act on is whether that
+    /// look comes before their soldier can do anything else about it, and that is exactly whether his
+    /// booking in the turn order is ahead of this soldier's next one: everybody booked in between has not
+    /// had a go since this one began moving. It reads the order the strip already shows, and nothing
+    /// about a hostile the picture does not.
+    /// </remarks>
+    public bool LooksFirst(Unit hostile)
+    {
+        if (Battle.Active is not { Side: Side.Player } active || !Sees(hostile)) return false;
+
+        var his = -1;
+        var ours = -1;
+        var order = Battle.TurnOrder;
+        for (var i = 0; i < order.Count; i++)
+        {
+            if (his < 0 && order[i].Unit == hostile.Id) his = i;
+            if (ours < 0 && order[i].Unit == active.Id) ours = i;
+        }
+
+        return his >= 0 && (ours < 0 || his < ours);
+    }
+
+    /// <summary>
+    /// Whether our side knows where a hostile is only because the briefing said so: a marker nobody of
+    /// ours has seen, heard or been told anything since, at the place the briefing named.
+    /// </summary>
+    /// <remarks>
+    /// <b>Told, against lost.</b> <c>Contact.Briefed</c> is true for exactly as long as a contact is still
+    /// the briefing's and the ground has not contradicted it (entry 091), and it is our own side's contact
+    /// file, so contract 3 has nothing to say about reading it. The marker is the merged one the map draws;
+    /// it counts as told when one of ours holds a briefed contact naming that same place, so a teammate's
+    /// fresher sighting somewhere else makes it a lost contact whatever the briefing said.
+    /// <para>
+    /// Read through <c>ContactsFor</c> rather than <c>Awareness.Of</c>, which makes the record it is asked
+    /// for when there is none — a frame that changed the contact file by looking at it would be a picture
+    /// that is not read-only.
+    /// </para>
+    /// </remarks>
+    public bool Told(Unit hostile)
+        => Knowledge.TryGetValue(hostile.Id, out var threat)
+           && !threat.EyesOn
+           && Battle.InPlay.Where(u => u.Side == Side.Player).Any(mine =>
+               Battle.Awareness.ContactsFor(mine.Id).Any(contact =>
+                   contact.Subject == hostile.Id && contact.Briefed && contact.LastKnownPosition == threat.Where.Position));
+
     /// <summary>
     /// The fire mode the staged aim is in: the one picked from the bar, or the weapon's default when
     /// none was, or when the one picked is not a mode of the weapon of whoever is up.

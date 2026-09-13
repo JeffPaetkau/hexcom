@@ -559,8 +559,8 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
         DrawRuns(new Vector2(crown.X, y + 8 + TagStep * 2),
         [
             ($"exposed {frame.Battle.ExposureOf(active):P0}", SandboxPalette.TextBright),
-            ("  ·  they are ", SandboxPalette.TextDim),
-            (noticed.ToString().ToUpperInvariant(), SandboxPalette.AlarmHue(noticed)),
+            ($"  ·  of {active.Name}, the worst of them: ", SandboxPalette.TextDim),
+            (SandboxRung.Words(noticed), SandboxPalette.AlarmHue(noticed)),
         ]);
 
         if (frame.Details)
@@ -583,7 +583,7 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
     /// </summary>
     private static IEnumerable<string> SoldierTerms(SandboxFrame frame, Unit active)
     {
-        yield return $"they act from {frame.Battle.Tactics.Model.ActsOn.ToString().ToUpperInvariant()}";
+        yield return $"they shoot once they are {SandboxRung.Words(frame.Battle.Tactics.Model.ActsOn)}";
         yield return HoldingLine(active);
         yield return EarshotOf(frame, active);
         yield return ViewedLine(frame, active);
@@ -611,20 +611,29 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
         {
             var lines = SeenLines(frame, active, threat).ToList();
 
-            if (threat.EyesOn && frame.Sees(threat.Unit))
+            // A body the picture shows hangs its terms from the body, whether this soldier or a teammate has the eyes on it.
+            if (frame.Sees(threat.Unit))
             {
                 if (_crown(frame, threat.Unit) is not { } crown) continue;
 
-                // Under the rung, and under the bill's mark when this is the one a shot would tell.
+                // The badge in words, said as his: what the glyph on his body is, and whether his look
+                // is still to come before this soldier can act again. Entry 095's item 8.
+                var rung = frame.Rung(threat.Unit).State;
+                lines.Insert(0, $"his: {SandboxRung.Words(rung)}"
+                                + (frame.LooksFirst(threat.Unit) ? $" — he looks before {active.Name} goes again" : ""));
+
+                // Under his name, and under the bill's mark when this is the one a shot would tell.
                 var marked = frame.StagedShot is { CanFire: true } plan && plan.Target == threat.Unit
                              && frame.Giveaway.Any(word => word.Learner != plan.Target);
                 DrawTag(crown + new Vector2(0, marked ? 50 : 26), lines);
             }
             else if (_camera.Project(SandboxGeometry.NodeScene(battle.Map, threat.Where.Position)
-                                     + Vector3.Up * (float)(StanceProfile.Standing.BodyHeight + 0.4)) is { } ghost)
+                                     + Vector3.Up * (float)(StanceProfile.Standing.BodyHeight + 0.4)) is { } marker)
             {
-                // The view's ghost label hangs from this point; the terms go under it.
-                DrawTag(ghost + new Vector2(0, 16), lines);
+                // The view's marker label hangs from this point; the terms go under it, saying which of
+                // the two marks it is in words.
+                lines.Insert(0, frame.Told(threat.Unit) ? "ours: told at the briefing, not yet checked" : "ours: seen, and lost sight of");
+                DrawTag(marker + new Vector2(0, 16), lines);
             }
         }
     }

@@ -5804,3 +5804,113 @@ it. Interface's own job is the onboarding brief, and *Teaching it* inherits one 
 *a soldier looks when they stop*.
 
 ---
+
+## 098 — The enemy's file, drawn: his rung is a badge on his label, his belief is that badge at a place, and ours is never a body
+**2026-09-12** · **Raised by** view · **For** view, master, interface · **Status** open for master — `view/ground-and-camera` is next and not yet written out; one question for Interface below
+
+Brief two, built on `view/enemy-file`, to *Two* and *Amending Two*, entry 089's persisted marker, 094's
+items 5 and 8, and 095's item 8. `view.md` has the shape under *What landed on `view/enemy-file`*; this
+is why each *settle first* came out as it did, what the captures said, and two things found.
+
+### Settled
+
+**What the rungs are called.** On the map, nothing: a glyph. In words, where the held key or the
+soldier's own line wants them — `SandboxRung.Words` — *has not noticed you*, *noticed something*, *looking
+for you*, *knows you are here*, *on you*. Each says what the man is doing about us, and no two sit beside
+each other as steps on a scale the way `SEARCHING` and `ALERTED` did. The mission's departure line still
+prints the enum, because it quotes the rule the objective is judged by.
+
+**The glyph.** A question mark while he is working it out and an exclamation mark once he knows; a single
+rim while it is new, a double rim once he is acting on it, filled when he has a live fix. Two glyphs and
+two weights rather than five points on a line, so the badge says the one distinction a player acts on —
+question or answer — and the rest is the weight of the rim. Unaware carries nothing. *Two of two* games
+with the middle state draw a glyph on the body, and the badge is persistent: it is there for as long as
+the rung is.
+
+**Whose it is, on sight.** His badge hangs beside his own name, in his rung's colour; nothing of ours
+about him is ever drawn on his label or floats. **Under the name was tried first** and the capture put the
+badge squarely over the body at every distance a rifle fires from — 094's item 12 made worse by the fix
+for item 8 — and over the name belongs to the shot's headline and the bill's `!`. So beside it.
+
+**A rung that falls.** An arrow beside the badge when the rung moved since our last order: up in the
+rung's colour, down in a cold blue nothing else on the badge uses. A fall all the way to unaware keeps an
+empty rim with the arrow until the order after. Captured on the compound: a sentry at *looking for you*
+went to *on you* at a walk across his front, arrow up, and to *knows you are here* when his own go ended
+with the runner behind a wall, arrow down.
+
+**His turn still to come — yes, as an hourglass.** 095 says a man who has not had his own go since you
+arrived cannot be past *looking for you*. In the data that is exactly *his booking is ahead of the next
+booking of the soldier who is up* — everybody between has not had a go since that soldier began moving —
+so the hourglass is drawn when that holds, reading the order the strip already shows. A digit for his
+place in the order was considered and rejected: a number on an alarm badge reads as a level.
+
+**Told, lost, seen: three looks, and none of them is a body.** Seen is the body. **Told** is pale brackets
+on the tile — Invisible, Inc.'s interest point, a place somebody pointed at — and **lost** is the tile
+outlined with a pole whose height and strength are our side's credence, Future War Tactics' beacon, so a
+contact going cold is seen going down. `SandboxFrame.Told` reads `Contact.Briefed` through
+`ContactsFor`, since `Awareness.Of` creates the record it is asked about. No new query. On the waystation
+at load, the told posts are brackets; after one move and a pass, Teague on the roof is a body and Cobb at the gate is
+brackets beside it, which is the brief's first test. Captured before and after: a lost sentry's pole at
+100% and, a round later, at 50%.
+
+**His belief about us — his badge at a place.** One answer for both beliefs, as the brief hoped, turned
+round rather than copied: the mark is in the colour of whose belief it is and the name under it in the
+colour of whom it is about. So his is his badge over the tile in his colours with our soldier's name in
+ours, and ours is pale on the ground with his name in his. The brief's ghost of our soldier went for the
+same reason ours did. The line to the truth is kept for the soldier who is up only. Shown from *noticed
+something* up, where it was from *looking for you*: a man coming to see where a noise was holds a place,
+and it is the most useful thing on the map about him. It persists into the next turn while he holds it —
+captured.
+
+**A place is a hex, a soldier is a ring.** Both markers were first drawn on round rings, and a ring with
+a pole in it is a soldier with no body from any distance. Every marker now outlines its tile.
+
+**Ours in pale, not teal.** Tried in our side's teal first; the capture read the lost pole as one of ours
+standing there. `SandboxPalette.OurFile` is pale, and lit, so entry 097's unlit ground will not bury it.
+
+**A hostile's held arc is drawn whenever his body is**, argued in `BuildHeldArcs` as a departure from
+nothing: a held arc here is a declared, banked order that shoots before the mover acts, anybody who can
+see him can see how his weapon is laid, and a player cannot decide against what is not drawn.
+
+**Entry 090, settled.** A hostile the AI plays, up with the instruments shut, gets nothing on the map —
+reach, bands, dead ground, cover outlines, route, cost labels — and the camera neither follows him nor
+takes his storey unless he is in view. Captured on the compound: *somebody unseen has paid for (4,2) to
+(2,3)* with the window open and no reach drawn round him.
+
+### Found, and fixed here because it was View's
+
+- **The ghost label named every marker.** A sound says where and never who — the account of their go
+  already says *somebody unseen, marked at* — and the waystation's mission file says the Commission does
+  not know the gate man is called Cobb. So a mark is named only when our file holds his facing without
+  eyes on, which is a man we saw; one we heard reads *heard*, one we were told of *told*. Found reading
+  the label beside a window line saying *somebody unseen* about the same man.
+- **The held key's contact terms** hung a teammate's sighting at the marker point, with a line that would
+  have said *lost sight of* over a body in plain view. Terms for a hostile the picture shows hang from the
+  body, whoever of ours has the eyes.
+
+### Measured
+
+- The pinned scene against master: 5,070 pixels in x 399–1035, y 239–493, which is the three hostiles'
+  rung words going and the soldier's line under its bar being reworded; two runs hash the same.
+- The captures named above, on the waystation (load, and `--move -13,2 --pass`, with and without
+  `--details`) and the compound (the sentry sequence with `--omniscient --pass 5 --until Orsini`, then
+  `--move 1,0`, then `--until Watchman --pass`; the lost contact at `--pass` and `--pass 7` after the
+  reaction script's move; `--windows --ai --pass 20` for the withheld hostile).
+- **The sentry sequence used `--omniscient`**, because on the compound the walked-past sentry is behind a
+  wall from ours; the brief's exclusion of omniscient captures was for the told-against-seen test, which
+  was taken without it. **Not measured**: a hand on it, and a stranger shown the frame.
+
+### For Master
+
+- **`view/ground-and-camera` is next** and there is no brief under *The job* in `view.md` until it is
+  written; what brief two leaves for it is there.
+
+### For Interface — a question
+
+**Whether the hourglass is the right mark for 095's point.** It is true and it is what the data gives,
+but early in a round nearly every hostile carries it and late in one nearly none do, so it may read as
+noise. The alternative the brief's wording invites — *has not looked since you arrived*, tracked from
+the moment each hostile last ended a go — was not built and not compared, and costs a record the rules
+do not keep. The play-through will say whether it is read at all.
+
+---

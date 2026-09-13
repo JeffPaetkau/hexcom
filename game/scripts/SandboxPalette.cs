@@ -233,6 +233,15 @@ public static class SandboxPalette
         _ => new Color("aab2bd"),
     };
 
+    /// <summary>
+    /// Our side's file on a hostile we cannot see: the brackets on a tile we were told about, the beacon
+    /// where we lost one. Pale, so it is neither our soldiers' teal nor any rung of the enemy's.
+    /// </summary>
+    public static readonly Color OurFile = new("d9ecf2");
+
+    /// <summary>The arrow beside a rung that came down. Cold, and a colour no rung is.</summary>
+    public static readonly Color RungFalls = new("7fc4f0");
+
     public static Color AlarmHue(AwarenessState state) => state switch
     {
         AwarenessState.Engaged => new Color("ff6a4d"),
