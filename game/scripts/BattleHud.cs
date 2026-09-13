@@ -69,11 +69,156 @@ public sealed class BattleHud(Font font)
     {
         _canvas = canvas;
 
-        // The strip last, so that a long readout runs under it rather than over it.
+        // The strip last, so that a long readout runs under it rather than over it; the banner
+        // before it, since it is up for a second and the strip is the thing it is standing in for.
         DrawLines(frame);
         DrawHappenings(frame, viewport);
         DrawLegend(viewport, PlayerKeys);
+        DrawTheirGo(frame, viewport);
         DrawOrderStrip(frame, viewport);
+    }
+
+    /// <summary>How many dots the banner's activity indicator has, and how fast one goes round, in seconds.</summary>
+    private const int BannerDots = 3;
+    private const double BannerDotPeriod = 0.9;
+
+    /// <summary>
+    /// <i>Their go</i>, across the screen, for as long as control is off our side and at least
+    /// <see cref="HexSandbox.TheirGoDwell"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Entry 065 and brief five. Dropping the unfound hostile's slot leaves its turn passing with
+    /// nothing on screen while time moves, which reads as a bug, so the pause gets an account. <b>One
+    /// banner for a whole run of the other side's turns, never one per turn</b>: a player who counts
+    /// banners over a round would otherwise have the enemy's count and their places in the order
+    /// back, and a banner shown only for unfound hostiles would make its presence the tell. So it is
+    /// the same for every hostile turn, found actor or not, and it names nobody.
+    /// </para>
+    /// <para>
+    /// <b>The genre's answer rather than a consolation.</b> The amendment to brief five found this is
+    /// the one turn-order element with positive evidence anywhere: XCOM 2 says <i>enemy turn</i>
+    /// over the whole phase, and Into the Breach draws a full-width bar across the middle of the
+    /// screen with the roster still visible beside it. This is that bar, with the strip beside it.
+    /// </para>
+    /// <para>
+    /// <b>A message with an activity indicator inside it.</b> A spinner alone says the software is
+    /// busy, which is a bug report; the words say somebody else is playing. In a capture the dots
+    /// stand still at their first frame, because nothing animates while a picture is taken.
+    /// </para>
+    /// <para>
+    /// <b>It stands aside while a window of ours is open</b>, and comes back when the window is run:
+    /// the window is a question to us in the middle of their go, and it has its own block.
+    /// </para>
+    /// <para>
+    /// A band across the width at a third of the way down, rather than dead centre: the camera
+    /// follows whoever is up, so the middle of the screen is where our own soldier stands, and
+    /// during a paused window the reactor is what a player is looking at.
+    /// </para>
+    /// </remarks>
+    private void DrawTheirGo(SandboxFrame frame, Vector2 viewport)
+    {
+        // A window of ours is control coming back for the length of a question, and the window
+        // block is the account of that moment; a band saying THEIR GO over the question would be
+        // asking and refusing at once. The top block still says it is their go.
+        if (frame.TheirGo is not { } shown || frame.Open is not null) return;
+
+        const string words = "THEIR GO";
+        const int size = 26;
+
+        var band = new Rect2(Origin + new Vector2(0, viewport.Y * 0.34f), new Vector2(viewport.X, 46));
+        _canvas.DrawRect(band, SandboxPalette.Panel);
+        _canvas.DrawRect(new Rect2(band.Position, new Vector2(band.Size.X, 2)), SandboxPalette.SideHue(Side.Hostile));
+        _canvas.DrawRect(new Rect2(band.Position + new Vector2(0, band.Size.Y - 2), new Vector2(band.Size.X, 2)),
+            SandboxPalette.SideHue(Side.Hostile));
+
+        var width = _font.GetStringSize(words, HorizontalAlignment.Left, -1, size).X;
+        var dots = BannerDots * 14f;
+        var left = band.Position.X + (band.Size.X - width - 18 - dots) / 2;
+        var baseline = band.Position.Y + 33;
+
+        _canvas.DrawString(_font, new Vector2(left, baseline), words, HorizontalAlignment.Left, -1, size,
+            SandboxPalette.TextBright);
+
+        var lit = (int)(shown / BannerDotPeriod * BannerDots) % BannerDots;
+        for (var i = 0; i < BannerDots; i++)
+            _canvas.DrawCircle(new Vector2(left + width + 18 + 7 + i * 14, baseline - 9), 4,
+                i == lit ? SandboxPalette.TextBright : SandboxPalette.TextDim);
+    }
+
+    /// <summary>
+    /// What our side perceived of the other side's go, as lines: who we found and lost sight of,
+    /// where our side now has a contact marked, and every shot or burst that came our way.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Brief five's <i>settle first</i>: anything a hostile turn does that a player can perceive has
+    /// to register, or the banner is a pause with no account. <b>These are countable on purpose.</b>
+    /// A player genuinely perceived each of them, so a line per event is the game working; the banner
+    /// is what is not counted. A stretch nobody of ours perceived anything of leaves nothing to read.
+    /// </para>
+    /// <para>
+    /// <b>Read off our side's own knowledge, not off what the other side did.</b> The comparison is
+    /// <see cref="SandboxFrame.Knowledge"/> — <c>Tactician.Known</c> merged across our soldiers, the
+    /// list the picture is drawn from and the scorer weighs — as it stood when control left our
+    /// side and as it stands now. A noise heard, a shot taken at one of ours, a comrade's call: each
+    /// of them lands in that list or it was not perceived, so this cannot report something the rules
+    /// say our side does not know. A marker is a place and never a name — the map draws it as an
+    /// unnamed ghost — so a hostile we hold only a marker on is <i>somebody unseen</i>.
+    /// </para>
+    /// <para>
+    /// The one thing read off the turns themselves is a shot or a burst at our own soldiers, because
+    /// being shot at is perceived by being shot at whether or not it moves anybody's knowledge. The
+    /// shooter goes through <see cref="SandboxFrame.Names"/>.
+    /// </para>
+    /// </remarks>
+    public static IEnumerable<string> Perceived(SandboxFrame frame, IReadOnlyDictionary<UnitId, Threat> before)
+    {
+        foreach (var (id, now) in frame.Knowledge.OrderBy(pair => pair.Value.EyesOn ? 0 : 1)
+                     .ThenBy(pair => pair.Value.EyesOn ? pair.Value.Unit.Name : pair.Value.Where.Position.ToString()))
+        {
+            before.TryGetValue(id, out var was);
+            var held = before.ContainsKey(id);
+
+            if (now.EyesOn)
+            {
+                if (!held || !was.EyesOn) yield return $"  found {now.Unit.Name} at {now.Unit.Position}";
+                continue;
+            }
+
+            if (held && was.EyesOn)
+            {
+                yield return $"  lost sight of {now.Unit.Name}, last seen at {now.Where.Position}";
+                continue;
+            }
+
+            if (!held || was.Where.Position != now.Where.Position || now.Credence > was.Credence)
+                yield return $"  somebody unseen, marked at {now.Where.Position}";
+        }
+
+        // Somebody we could see before and hold nothing on at all now is gone from our side's file.
+        foreach (var (id, was) in before.Where(pair => pair.Value.EyesOn && !frame.Knowledge.ContainsKey(pair.Key)))
+            if (was.Unit.InPlay) yield return $"  lost track of {was.Unit.Name}";
+
+        foreach (var turn in frame.Turns.Where(turn => turn.Unit.Side == Side.Hostile))
+        foreach (var act in turn.Acts)
+        {
+            if (act.Fired is { Fired: true } shot && act.Order.Shot?.Target is { Side: Side.Player } target)
+            {
+                var hits = shot.Shots.Count(round => round.Hit);
+                var result = hits == 0 ? "missed" : $"hit {hits} of {shot.Shots.Count} for {shot.TotalDamage}";
+                yield return $"  {target.Name} shot at by {frame.Names([turn.Unit])}: {result}{(shot.TargetDown ? ", down" : "")}";
+            }
+
+            // A burst is perceived by whoever of ours it catches. One that catches nobody of ours is
+            // a noise like any other, and lands in the knowledge above if anybody heard it; and who
+            // else it caught is the other side's business.
+            if (act.Threw is { Went: true } blast
+                && blast.Hits.Where(hit => hit.Caught.Side == Side.Player).ToList() is { Count: > 0 } ours)
+                yield return $"  a blast at {blast.Landing} caught "
+                             + string.Join(", ", ours.Select(hit => $"{hit.Caught.Name} for {hit.Damage.ToVitality}{(hit.Down ? ", down" : "")}"))
+                             + $", thrown by {frame.Names([turn.Unit])}";
+        }
     }
 
     /// <summary>
@@ -135,36 +280,83 @@ public sealed class BattleHud(Font font)
            + (frame.AnswerByHand ? "    reactions: by hand" : "    reactions: recommended")
            + (frame.TileDetail ? "" : "    zoomed out: tile detail off");
 
-    /// <summary>The next few bookings, so the player can see the interleaving coming.</summary>
+    /// <summary>How many bookings the strip shows.</summary>
+    private const int StripSlots = 6;
+
+    /// <summary>
+    /// The next few bookings of soldiers the player knows about, with the round boundary marked, so
+    /// the player can see the interleaving coming and how long it holds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A hostile nobody of ours has eyes on holds no slot at all</b> — entry 064, the user's
+    /// decision, and brief five. It used to hold one reading <c>?</c>, which told a player that an
+    /// enemy existed, how many there were, and roughly when each acted. The strip asks
+    /// <see cref="SandboxFrame.Sees"/> and nothing else, so it has no opinion of its own about who
+    /// is known. The genre is no help either way: none of the ten reference games draws a per-unit
+    /// initiative strip at all, so this is a choice where the genre is silent rather than a
+    /// departure from a standard.
+    /// </para>
+    /// <para>
+    /// The slots are the first <see cref="StripSlots"/> <em>visible</em> bookings, so the strip is
+    /// the same picture whether an unfound hostile is booked among them or not. Its reserve and its
+    /// roll went with its name.
+    /// </para>
+    /// <para>
+    /// <b>The round mark.</b> Initiative is rolled again every round, so an order read past the
+    /// boundary is a guess the dice will revise; without the mark the whole strip reads as durable.
+    /// Core books one turn ahead per soldier and the round is the booking's tick over
+    /// <see cref="Battle.TicksPerRound"/>, so the mark is drawn before the first booking in a later
+    /// round than the one being played. Where it falls among the visible slots says how many of the
+    /// soldiers we know of are still to go this round, which is ours; an unfound hostile moves
+    /// nothing.
+    /// </para>
+    /// <para>
+    /// <b>A hostile found since our last order is outlined</b>, so a slot appearing mid-round reads
+    /// as a discovery rather than as the strip rearranging itself.
+    /// </para>
+    /// </remarks>
     private void DrawOrderStrip(SandboxFrame frame, Vector2 viewport)
     {
         var origin = Origin + new Vector2(viewport.X - 190, 26);
         _canvas.DrawString(_font, origin, "TURN ORDER", HorizontalAlignment.Left, -1, 11, SandboxPalette.TextDim);
 
-        var slots = frame.Battle.TurnOrder.Take(6).ToList();
-        for (var i = 0; i < slots.Count; i++)
+        var slots = frame.Battle.TurnOrder
+            .Select(slot => (slot, unit: frame.Battle.GetUnit(slot.Unit)))
+            .Where(pair => pair.unit is { InPlay: true } && frame.Sees(pair.unit))
+            .Take(StripSlots)
+            .ToList();
+
+        var y = 12f;
+        var marked = false;
+        foreach (var (slot, unit) in slots)
         {
-            var unit = frame.Battle.GetUnit(slots[i].Unit);
-            if (unit is null) continue;
-
-            var box = new Rect2(origin + new Vector2(0, 12 + i * 26), new Vector2(170, 22));
-            _canvas.DrawRect(box, SandboxPalette.Panel);
-            _canvas.DrawRect(new Rect2(box.Position, new Vector2(4, box.Size.Y)), SandboxPalette.SideHue(unit.Side));
-
-            // A hostile nobody of ours has found keeps its place in the order and loses its
-            // name, its roll and its reserve: that somebody acts here is known, because turns
-            // are taken in the open; who, and with what in hand, is theirs. Whether even the
-            // slot is too much is an open question in view.md.
-            if (!frame.Sees(unit))
+            var round = (int)(slot.ActAt / Battle.TicksPerRound);
+            if (!marked && round > frame.Battle.Round)
             {
-                _canvas.DrawString(_font, box.Position + new Vector2(12, 16), "?",
-                    HorizontalAlignment.Left, -1, 13, SandboxPalette.TextDim);
-                continue;
+                marked = true;
+                var rule = origin + new Vector2(0, y + 8);
+                _canvas.DrawLine(rule, rule + new Vector2(170, 0), SandboxPalette.TextDim, 1);
+                var label = $"round {round}";
+                var width = _font.GetStringSize(label, HorizontalAlignment.Left, -1, 11).X;
+                _canvas.DrawRect(new Rect2(rule + new Vector2(85 - width / 2 - 6, -7), new Vector2(width + 12, 14)),
+                    SandboxPalette.Background);
+                _canvas.DrawString(_font, rule + new Vector2(85 - width / 2, 4), label,
+                    HorizontalAlignment.Left, -1, 11, SandboxPalette.TextBright);
+                y += 18;
             }
+
+            var box = new Rect2(origin + new Vector2(0, y), new Vector2(170, 22));
+            y += 26;
+
+            _canvas.DrawRect(box, SandboxPalette.Panel);
+            _canvas.DrawRect(new Rect2(box.Position, new Vector2(4, box.Size.Y)), SandboxPalette.SideHue(unit!.Side));
+            if (frame.Found.Contains(unit.Id))
+                _canvas.DrawRect(box, SandboxPalette.SideHue(unit.Side), filled: false, width: 2);
 
             _canvas.DrawString(_font, box.Position + new Vector2(12, 16), unit.Name,
                 HorizontalAlignment.Left, -1, 13, SandboxPalette.TextBright);
-            _canvas.DrawString(_font, box.Position + new Vector2(120, 16), $"init {slots[i].Roll}",
+            _canvas.DrawString(_font, box.Position + new Vector2(120, 16), $"init {slot.Roll}",
                 HorizontalAlignment.Left, -1, 11, SandboxPalette.TextDim);
 
             // What this one could still answer a move with, and whether it is holding an arc.
@@ -189,6 +381,18 @@ public sealed class BattleHud(Font font)
         // is the battle: the mission, whose go it is, and what that soldier is carrying.
         var lines = new List<string>();
         lines.AddRange(MissionLines(frame));
+
+        // A hostile up under the AI is the other side's situation, not ours: its reserve, its
+        // shots, what it holds on each of ours, and everything the cursor line would measure from
+        // its eyes. The clock and the fact that it is their go are all of it a player gets, found
+        // hostile or not, so that what is left out cannot itself say which. SandboxFrame.Withheld.
+        if (frame.Withheld)
+        {
+            lines.Add($"{Clock(frame)}    their go");
+            DrawBlock(lines);
+            return;
+        }
+
         lines.Add(
             active is null || frame.OutOfTime
                 ? $"{Clock(frame)}    {(frame.OutOfTime ? "out of time" : "nobody left to act")}"
@@ -216,6 +420,12 @@ public sealed class BattleHud(Font font)
             BillLine(frame),
             WorthLine(frame),
         });
+        DrawBlock(lines);
+    }
+
+    /// <summary>The top block: whatever lines are not empty, on a panel, from the top-left.</summary>
+    private void DrawBlock(List<string> lines)
+    {
         lines.RemoveAll(line => line.Length == 0);
 
         var top = Origin + new Vector2(18, 30);
@@ -248,6 +458,12 @@ public sealed class BattleHud(Font font)
         // *did to you* is a player's, and why it decided to is not.
         var lines = new List<string> { frame.LastWindow };
         lines.RemoveAll(line => line.Length == 0);
+
+        // What our side perceived while it was their go goes nearest the legend, under the reaction
+        // line, because it is the account of the pause the banner covered. A line per thing
+        // perceived, and no block at all when nothing was — see Perceived.
+        if (frame.Perceived.Count > 0)
+            lines.InsertRange(0, frame.Perceived.Prepend("WHILE IT WAS THEIR GO"));
 
         var next = DrawBlockAbove(viewport.Y - 22 - LegendLines * LineHeight - 14, lines);
         next = DrawBlockAbove(next, WindowLines(frame), SandboxPalette.OverwatchHue);
@@ -306,9 +522,11 @@ public sealed class BattleHud(Font font)
         var offers = frame.Answerable;
         var answered = offers.Count(o => window.Placements.Any(p => p.Reactor == o.Reactor));
 
+        // Named as the picture names them: a hostile mover nobody of ours has eyes on is somebody
+        // unseen here as everywhere else, since the window is part of the pause brief five is about.
         var what = window.IsAmbush
-            ? $"{window.SprungBy!.Name} springs on {mover.Name}, standing at {mover.Position}"
-            : $"{mover.Name} has paid for {window.Move.Start} to {window.Move.Destination}, "
+            ? $"{frame.Names([window.SprungBy!])} springs on {frame.Names([mover])}, standing at {mover.Position}"
+            : $"{frame.Names([mover])} has paid for {window.Move.Start} to {window.Move.Destination}, "
               + $"{window.Move.Duration} ticks, and not walked it yet";
 
         // Only the offers a player is handed, counted and listed — see SandboxFrame.Answerable. A
@@ -1034,7 +1252,7 @@ public sealed class BattleHud(Font font)
         // and separating those two is most of the point of the second window.
         foreach (var turn in frame.Turns)
         {
-            if (turn.Orders.Count == 0)
+            if (turn.Acts.Count == 0)
             {
                 yield return $"{turn.Unit.Name} (AI): nothing worth doing, banked {turn.Banked}";
                 continue;

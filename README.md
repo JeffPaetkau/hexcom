@@ -191,8 +191,11 @@ Walls are drawn from what they do rather than from what they are called, so a ma
 its own kit draws correctly on the day it is written: the hue is green if you can push through
 it, white if it is a building wall nothing gets over, and otherwise the colour of the cover it
 gives; the thickness is how much of a body it stops, from a hairline you can see through to the
-heaviest thing on the map; and the height is the height the sight trace uses. The strip on the right is the turn order with each unit's initiative
-roll.
+heaviest thing on the map; and the height is the height the sight trace uses. The strip on the right is the turn order with each unit's initiative roll —
+only the soldiers your side knows about, with the next round marked. A hostile nobody has found
+holds no slot, so the strip cannot be used to count them; when it is their go a banner says so,
+once for the whole run of their turns, and anything your soldiers perceived of it — a shot at one
+of them, somebody found or lost — is listed above the keys afterwards.
 
 Point at an enemy and the HUD gives you the shot twice over: once as a physical event — the
 chance, the price, which plates it can reach and what each still carries — and once as a

@@ -249,6 +249,35 @@ public partial class HexSandbox : Node3D
     private readonly List<TakenTurn> _turns = [];
 
     /// <summary>
+    /// The least time the <i>their go</i> banner stays up, in seconds. <b>Provisional.</b>
+    /// </summary>
+    /// <remarks>
+    /// Brief five and entry 065 argue 0.6 to 1.2 seconds from the games that do this, and say it is
+    /// an argument rather than a measurement. This is the middle of that range and nothing more;
+    /// captures C7 and C17 in <c>docs/interface/captures.md</c> are what would replace it with a
+    /// figure. Without a floor a stretch that resolves in one frame — which is every stretch the AI
+    /// plays without stopping — would flash the banner, and that is worse than drawing nothing.
+    /// <para>
+    /// A floor and not a length: the banner stays up for as long as the stretch actually lasts,
+    /// which is longer whenever it stops at a window or a hostile is walked. A capture has no dwell
+    /// at all, by the rule every other animation here keeps — see <see cref="Animated"/>.
+    /// </para>
+    /// </remarks>
+    [Export] public double TheirGoDwell { get; set; } = 0.9;
+
+    /// <summary>Seconds the banner has been up, or null when it is down.</summary>
+    private double? _theirGo;
+
+    /// <summary>What our side held when the current stretch of their go began, or null outside one.</summary>
+    private Dictionary<UnitId, Threat>? _heldBefore;
+
+    /// <summary>What our side perceived of the other side's last go. See <see cref="Perceive"/>.</summary>
+    private readonly List<string> _perceived = [];
+
+    /// <summary>Hostiles laid eyes on since the last order of ours. See <see cref="SandboxFrame.Found"/>.</summary>
+    private readonly HashSet<UnitId> _found = [];
+
+    /// <summary>
     /// Whether the mission's own clock has run out.
     /// </summary>
     /// <remarks>
@@ -457,7 +486,17 @@ public partial class HexSandbox : Node3D
             if (moved) CameraMoved();
 
             EdgePan(delta);
+
+            // The banner's dots move, so it redraws while it is up; and it comes down here once
+            // the stretch is over and the dwell has run.
+            if (_theirGo is { } shown)
+            {
+                _theirGo = shown + delta;
+                _readouts.QueueRedraw();
+            }
         }
+
+        LowerBanner();
 
         _capture?.Tick(this, _instruments);
     }
@@ -540,6 +579,10 @@ public partial class HexSandbox : Node3D
         _aim = null;
         _lastWindow = "";
         _hover = null;
+        _theirGo = null;
+        _heldBefore = null;
+        _perceived.Clear();
+        _knowledge.Clear();
 
         Settle();
 
@@ -551,6 +594,11 @@ public partial class HexSandbox : Node3D
         if (_battle.Active is { } up) _camera.LookAt(_battle.Map, up.Position.Tile.Hex, up.Position.Layer);
 
         Recalculate();
+        Perceive();
+        LowerBanner();
+
+        // Whoever is in sight at the opening was deployed there, not discovered.
+        _found.Clear();
 
         // A capture is deaf, so everything a person would have done has to arrive as an argument
         // list. It runs here, after the deployment and against the same methods the keys call.
@@ -580,9 +628,61 @@ public partial class HexSandbox : Node3D
         if (!_auto || _battle.Active is not { Side: Side.Hostile }) return;
 
         if (!keepRecord) _turns.Clear();
+        if (_battle.IsDecided) return;
+
+        // Control is leaving our side, so the banner goes up — once for the whole run of their
+        // turns, however many there are and whoever takes them. A window part way through does not
+        // end the stretch; it pauses it, and resolving that window comes back through here with the
+        // banner still up and the snapshot still the one taken when control first left.
+        if (_theirGo is null)
+        {
+            _theirGo = 0;
+            _heldBefore = GatherKnowledge();
+        }
+
         while (_auto && Open is null && !OutOfTime && !_battle.IsDecided
                && _battle.Active is { Side: Side.Hostile } unit)
             TakeTurnWithAi(unit);
+    }
+
+    /// <summary>
+    /// Whether the other side's go is still going on: paused at a window of ours to answer, or a
+    /// hostile's move still being walked.
+    /// </summary>
+    private bool TheirGoHolding
+        => _handed?.Waiting?.Mover.Side == Side.Hostile
+           || _walking is { } walker && _battle.GetUnit(walker)?.Side == Side.Hostile;
+
+    /// <summary>
+    /// Take the banner down if the stretch is over and it has been up long enough to have been read.
+    /// </summary>
+    private void LowerBanner()
+    {
+        if (_theirGo is not { } shown || TheirGoHolding) return;
+        if (Animated && shown < TheirGoDwell) return;
+
+        _theirGo = null;
+        _readouts.QueueRedraw();
+    }
+
+    /// <summary>
+    /// Write down what our side perceived of the stretch so far, and close the stretch's books if it
+    /// is over.
+    /// </summary>
+    /// <remarks>
+    /// Called after the frame's knowledge is gathered, so the comparison is between what our side
+    /// held when control left it and what it holds now. <see cref="BattleHud.Perceived"/> decides
+    /// what counts; this only keeps the result, frozen, so that a stance change of ours afterwards
+    /// cannot be misread as something that happened while it was their go.
+    /// </remarks>
+    private void Perceive()
+    {
+        if (_heldBefore is null) return;
+
+        _perceived.Clear();
+        _perceived.AddRange(BattleHud.Perceived(Frame(), _heldBefore));
+
+        if (_handed?.Waiting is null) _heldBefore = null;
     }
 
     /// <summary>
@@ -648,9 +748,9 @@ public partial class HexSandbox : Node3D
     /// </remarks>
     private void Record(Unit unit, Commander commander)
     {
-        // Core hands back an Act per order now, with the outcome beside it. The readout still
-        // wants only the orders; see decisions.md entry 022, where View asked for the outcomes.
-        var turn = new TakenTurn(unit, [.. commander.Taken.Select(a => a.Order)], unit.Reserve);
+        // Core hands back an Act per order, with the outcome beside it. The instruments want only
+        // the orders; what a player perceived of the turn wants the outcomes — a shot at one of ours.
+        var turn = new TakenTurn(unit, [.. commander.Taken], unit.Reserve);
 
         if (_turns.Count > 0 && _turns[^1].Unit == unit) _turns[^1] = turn;
         else _turns.Add(turn);
@@ -671,10 +771,24 @@ public partial class HexSandbox : Node3D
         // re-plans from the new stance.
         _aim = null;
 
+        // An order of ours ends whatever was being said about their last go: the banner, if it was
+        // still dwelling, and the account of what we perceived, which is *since you last acted*.
+        // The one thing that comes through here in the middle of their go is a window of theirs
+        // being run, and the snapshot being held is how that is told apart — not keepRecord, which
+        // a turn of ours handed to the AI sets too.
+        if (_heldBefore is null)
+        {
+            if (!TheirGoHolding) _theirGo = null;
+            _perceived.Clear();
+            _found.Clear();
+        }
+
         var before = _battle.Active;
         Settle(keepRecord);
         if (_battle.Active is { } next && next != before) _layer = next.Position.Layer;
         Recalculate();
+        Perceive();
+        LowerBanner();
         FollowActive();
     }
 
@@ -715,13 +829,19 @@ public partial class HexSandbox : Node3D
             }
         }
 
+        // A hostile our side has eyes on now and did not the last time the knowledge was gathered is
+        // a discovery, and stays one until our next order — see SandboxFrame.Found.
+        var seenBefore = _knowledge.Values.Where(t => t.EyesOn).Select(t => t.Unit.Id).ToHashSet();
+
         _knowledge.Clear();
-        foreach (var mine in _battle.InPlay.Where(u => u.Side == Side.Player))
-        foreach (var threat in _battle.Tactics.Known(mine))
+        foreach (var (id, threat) in GatherKnowledge()) _knowledge[id] = threat;
+
+        foreach (var threat in _knowledge.Values)
         {
-            if (!_knowledge.TryGetValue(threat.Unit.Id, out var held) || Better(threat, held))
-                _knowledge[threat.Unit.Id] = threat;
+            if (!threat.EyesOn) _found.Remove(threat.Unit.Id);
+            else if (!seenBefore.Contains(threat.Unit.Id)) _found.Add(threat.Unit.Id);
         }
+        _found.RemoveWhere(id => !_knowledge.ContainsKey(id));
 
         _view.Rebuild(Frame());
         _readouts.QueueRedraw();
@@ -729,6 +849,19 @@ public partial class HexSandbox : Node3D
         // The instruments follow the rules changing and not the cursor moving, which is why
         // HoverChanged leaves them alone: nothing in that window is a question about a tile.
         if (_instruments.Visible) _instrumentPanel.QueueRedraw();
+    }
+
+    /// <summary>What our side holds on each hostile, merged by keeping the best any of ours holds.</summary>
+    private Dictionary<UnitId, Threat> GatherKnowledge()
+    {
+        var knowledge = new Dictionary<UnitId, Threat>();
+        foreach (var mine in _battle.InPlay.Where(u => u.Side == Side.Player))
+        foreach (var threat in _battle.Tactics.Known(mine))
+        {
+            if (!knowledge.TryGetValue(threat.Unit.Id, out var held) || Better(threat, held))
+                knowledge[threat.Unit.Id] = threat;
+        }
+        return knowledge;
     }
 
     private static bool Better(Threat candidate, Threat held)
@@ -786,7 +919,8 @@ public partial class HexSandbox : Node3D
             _battle, _layer, _hover, _reach, _sight, _lastWindow, _turns, _auto,
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
-            _omniscient, _knowledge, _instruments.Visible, _aim);
+            _omniscient, _knowledge, _instruments.Visible, _aim,
+            _theirGo, _perceived, _found);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -1417,6 +1551,10 @@ public partial class HexSandbox : Node3D
         _handed = null;
         _chooser = 0;
 
+        // Their go resumes, and the banner the window stood aside for comes back with a fresh
+        // dwell, or a stretch finishing in this frame would flash it.
+        if (_theirGo is not null) _theirGo = 0;
+
         commander.Resume();
         SkipUnanswerableWindows(commander);
 
@@ -1442,7 +1580,17 @@ public partial class HexSandbox : Node3D
     /// </remarks>
     private void Run(SandboxScript script)
     {
-        foreach (var step in script.Steps) GD.Print($"{step}  ->  {Perform(step)}");
+        foreach (var step in script.Steps)
+        {
+            var perceived = _perceived.ToList();
+            GD.Print($"{step}  ->  {Perform(step)}");
+
+            // What a player would read about their go, whenever a step changed it — so the account
+            // of a pause can be checked across a whole mission without a picture per turn. It is
+            // the player's own readout, so printing it is no instrument. Brief five.
+            if (!perceived.SequenceEqual(_perceived) && _perceived.Count > 0)
+                foreach (var line in _perceived) GD.Print($"    perceived:{line}");
+        }
     }
 
     private string Perform(SandboxStep step)
