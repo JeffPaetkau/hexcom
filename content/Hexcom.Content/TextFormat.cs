@@ -175,15 +175,16 @@ internal sealed class Cursor(string[] tokens, Func<string, ContentFormatExceptio
     /// <summary>A set of hexes, in the order the shape produces them, without repeats.</summary>
     public List<Hex> Shape()
     {
-        var keyword = Next("a shape: hex, hexes, line, disc or ring");
+        var keyword = Next("a shape: hex, hexes, line, block, disc or ring");
         IEnumerable<Hex> hexes = keyword switch
         {
             "hex" => [Coordinate()],
             "hexes" => Coordinates(),
             "line" => Line(),
+            "block" => Block(),
             "disc" => Coordinate().WithinRange(Radius()),
             "ring" => Coordinate().Ring(Radius()),
-            _ => throw error($"Expected a shape (hex, hexes, line, disc or ring), got '{keyword}'."),
+            _ => throw error($"Expected a shape (hex, hexes, line, block, disc or ring), got '{keyword}'."),
         };
         return hexes.Distinct().ToList();
     }
@@ -226,6 +227,37 @@ internal sealed class Cursor(string[] tokens, Func<string, ContentFormatExceptio
         var to = Next("'to'");
         if (to != "to") throw error($"Expected 'to' between the ends of a line, got '{to}'.");
         return from.LineTo(Coordinate());
+    }
+
+    /// <summary>
+    /// Every hex whose centre lies inside the upright rectangle between two hex centres.
+    /// </summary>
+    /// <remarks>
+    /// The shape a town is made of. On a flat-topped grid a column is straight and a row is not,
+    /// so a building drawn as lines is a union no single statement can enclose, and a
+    /// parallelogram in axial coordinates leans thirty degrees. This is the rectangle on the page
+    /// instead, worked in whole numbers: a hex's centre is <c>1.5 q</c> across and proportional to
+    /// <c>2r + q</c> up, so the test is two integer ranges and needs no layout. Neighbouring
+    /// columns sit half a hex apart, so corners an odd number of half-rows apart give every column
+    /// the same count, and level corners give alternate columns nothing.
+    /// </remarks>
+    private List<Hex> Block()
+    {
+        var from = Coordinate();
+        var to = Next("'to'");
+        if (to != "to") throw error($"Expected 'to' between the corners of a block, got '{to}'.");
+        var corner = Coordinate();
+
+        var (qLow, qHigh) = (Math.Min(from.Q, corner.Q), Math.Max(from.Q, corner.Q));
+        int Row(Hex h) => 2 * h.R + h.Q;
+        var (rowLow, rowHigh) = (Math.Min(Row(from), Row(corner)), Math.Max(Row(from), Row(corner)));
+
+        var hexes = new List<Hex>();
+        for (var q = qLow; q <= qHigh; q++)
+        for (var row = rowLow; row <= rowHigh; row++)
+            if ((row - q) % 2 == 0)
+                hexes.Add(new Hex(q, (row - q) / 2));
+        return hexes;
     }
 
     private int Radius()

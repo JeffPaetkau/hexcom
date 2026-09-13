@@ -4103,7 +4103,7 @@ approach is two decisions long, and a tight map of radius 12 to 16 would make it
 having in hand before the second battlefield is drawn rather than after.
 
 ## 082 — A mission stops: the limit is on the mission, the alarm is on the awareness model, and the waystation's look is close enough
-**2026-09-12** · **Raised by** core · **For** content, view · **Status** open for content and view — Core's half is built
+**2026-09-12** · **Raised by** core · **For** content, view · **Status** open for view — Core's half is built, and Content's landed in 092
 
 Entry 030 named the mission clock as the one genuinely new thing the six shapes wanted, and it has
 been nobody's for four increments. It exists now, and the decision worth recording is where its
@@ -4486,7 +4486,7 @@ nobody it cannot. View's work when Core lands it is a small job: the clause beco
 house roof, which is the case for a mesh glyph.
 
 ## 087 — Being seen is priced, the clock is a rate, and the squad walked its first turn blind
-**2026-09-12** · **Raised by** core · **For** core, content, master · **Status** open — item 1 under *For Content* is the grammar the instrument arm stands in for; item 2 under *For Master* is the next brief
+**2026-09-12** · **Raised by** core · **For** core, content, master · **Status** open — item 2 under *For Master* is the next brief; item 1, the grammar, landed in 092
 
 Entry 083's headline was that nothing wins the waystation because nothing prices getting there
 unseen. The term exists now, the clock is something the scorer can see, and the batch was run
@@ -5118,5 +5118,157 @@ follows it. That is Core's next brief, and build order 08.
   the other half.
 - Entry 087's status can read: the followers' half is resolved by 091; the grammar half is still
   Content's.
+
+## 092 — The file says what the squad is told, a second map is fought, and a town has no ceilings
+**2026-09-12** · **Raised by** content · **For** core, view, master · **Status** open for core and view — the two sight findings under *For Core*, and the one line under *For View*
+
+Content's brief had two halves: the grammar entry 087 stood in for, then a second battlefield of
+the other shape. Both are on `content/second-battlefield`. What was decided, what the ground said,
+and three things that are not Content's.
+
+### What the squad is told, and the clock, as statements
+
+**`told <side> <rung> <names...>`** is a line of its own, not a `known` option on `deploy`. A
+deployment is a fact about the garrison and this is a belief the squad holds, so one statement for
+both would carry two sides' knowledge; which side is told has to be said once there is a third on
+the ground; and a briefing states certainty in groups — *three posts we are sure of, and the reports
+disagree about the fourth* — which a line per rung reads as and an option per soldier does not.
+`Mission.Begin` deploys, then briefs through `Battle.Brief`, then sets objectives. A post not told
+is not known, and that is how a file says the reports missed somebody; it cannot say somebody is
+where he is not, because the marker goes where the soldier stands.
+
+**The waystation now plays briefed, and it says less than Core's arm did.** Gate, roof and tower
+at Searching, as the arm had it. **The barn at Suspicious** — the prose calls it *one more*, after
+*the last two reports disagree about the fourth*. So a batch that reads the file is not exactly
+entry 087's briefed arm, and the difference is the file's to say.
+
+**`rounds 30 after-alarm 3`** is the clock, both halves on one line because they are one clock, and
+it is written onto every objective the file builds as `Objective.Stop`. That was entry 082's half
+for Content, which no brief had routed. The waystation says `rounds 30` and leaves the alarm half
+unwritten: 083 and 087 called three rounds harsh and the playtest's to set.
+
+### The second map: Kestrel Yard
+
+`content/maps/kestrel.hexmap` and `content/missions/kestrel.hexmission`. Radius 14, a freight yard
+in a works town: a walled compound with a gate on the main street, a shed whose east end is the
+loading floor, a two-storey office with a roof across the lane, a boiler house behind the shed with
+a duct under its back wall, a fire escape to the office roof, a canal down the west side and a
+footbridge over it that is the way off. A reconnaissance again, deliberately — the mission book's
+own example, *Kestrel Yard, ahead of the arbitration* — so the two files differ in ground and not
+in objective. Squads from the roster, none of the waystation's: Tolliver, Idris and Naismith
+against Duvall at the gate, Sivet at the office window, Ganz with the set downstairs, and Rask
+asleep beside the loading floor. The squad is told the gate and the window at Searching, the shed
+at Suspicious, and not told about the set at all.
+
+**One addition to the map format: `block q,r to q,r`**, every hex whose centre is inside the
+upright rectangle between two hex centres. A town is rectangles, a building drawn as lines is a
+union no single `enclose` can wall, and a parallelogram in axial coordinates leans thirty degrees.
+Everything the brief asked to watch for — a place that is a building interior, a place inside
+another place, an exit upstairs, a deployment on a storey — needed no change to the format at all.
+
+### The ground against its own briefing, measured before it was called drawn
+
+`KestrelGroundTests`. Within the rule's twelve metres the middle of the loading floor is seen from
+78 places: 68 inside the shed, 7 in the yard through the roller door, and 3 in the office — the
+upstairs window at 12.0 m and the roof's west edge at 11.4 and 11.8. **Every one of them is in some
+post's line.** The only line to the floor no post has is through the shed's side door, at 13.5 m,
+a stride and a half too far to count. And the duct lands behind the racking, with no line, one
+stride from places that have one — the waystation's drain, again, and not drawn to be.
+
+### Fought: the look every time, the gate every time
+
+A dozen seeds, then a redraw, then a dozen more.
+
+| | look taken | by round | achieved | abandoned / failed | ours down | ours off | rounds |
+|---|---|---|---|---|---|---|---|
+| first drawing | 12 | 3 to 5 | 0 | 11 / 1 | 1.17 | 1.83 | 7.8 |
+| with the gap | 12 | 3 to 5 | 0 | 12 / 0 | 1.25 | 1.75 | 9.1 |
+
+No hostile went down in twenty-four matches. The scout took the look in twenty of them.
+
+- **Every squad went in through the gate.** From the east lane the loading floor is 115 action
+  points by the gate and about 150 by the back lane and the duct, and the search takes the gate
+  every time, past a man it was told about at Searching. Duvall throws at the street outside the
+  gate in most seeds. That is entries 083 and 087 on a second map — the quiet way is priced and
+  still loses by 35 points — and **the map was not redrawn around it**: a shorter duct would be the
+  mistake the brief named.
+- **The redraw was for something that was the map's.** The first drawing put the shed's side door
+  onto an alley *inside* the compound wall, a door you could only reach by walking through the gate
+  first. The second breaches the west wall onto the towpath. In the second dozen that way was used
+  on the way **out** in five seeds and on the way in by nobody. In the first dozen the duct was on a
+  route in seven seeds, and two soldiers went down in it; with the gap, in none.
+- **Nobody used the fire escape or the roof in twenty-four matches.** It is the only look from
+  outside the compound, and it is overlooked by the post downstairs through two floors — see below.
+
+### What the size did to the ranges, and the size question
+
+From each garrison post, the share of standable ground it has any line to and the longest of those
+lines (`ATownShortensEveryLineThePostsHave`):
+
+| | post | sees | longest | lines beyond the 45 m sight range |
+|---|---|---|---|---|
+| Kestrel | Duvall, the gate | 36% | 27.6 m | none |
+| | Sivet, the window | 45% | 31.3 m | none |
+| | Ganz, downstairs | 17% | 9.2 m | none |
+| | Rask, the shed | 22% | 33.1 m | none |
+| waystation | Cobb, the gate | 45% | 42.5 m | none |
+| | Teague, the roof | 88% | 43.5 m | none |
+| | Marek, the tower | 87% | 67.8 m | 484 |
+| | Hollis, the barn | 8% | 58.2 m | 44 |
+
+**In a town the walls bind before the ranges do.** Nothing on Kestrel can see as far as the rules
+let it, so entry 007's reasoning — the radius follows from the ranges — does not apply to a
+built-up map at all. The size question in `content.md` is answered as *a range*, and sharpened into
+the question that does bite: how many routes there are and how much dearer the quiet one may be
+before nobody takes it.
+
+### Settled: the compound is a fixture
+
+Radius 6, everything in earshot of everything (entry 030), and now the third map and the only one
+too small to fight on. It stays and does not change, because Core's sight and demo-map tests are
+built on its exact walls and View's captures diff against it. No mission will be written for it.
+Its header says so.
+
+### For Core
+
+1. **Two storeys of wall are not one wall.** `SightSolver.TraceFrom` takes the largest share any
+   single opaque wall hides, `hiddenShare = max`, rather than the union of their bands. A
+   two-storey face is two walls on one edge — layer 0 from 0 to 3 m, layer 1 from 3 to 6 — and a
+   line that crosses it near the seam is hidden partly by each and wholly by neither. Measured at
+   Kestrel's start: Sivet at the upstairs window has a line to Naismith in the east lane through
+   the office's south face, hidden 0.49 by the ground storey and 0.51 by the upper, and is left
+   visible at exposure 0.05 because the largest other obstruction hides 0.95. Every two-storey
+   building has this seam and the waystation has none, which is why nobody met it. A union of the
+   bands along the line is the obvious fix; whether the cover grade should follow the union too is
+   yours.
+2. **A floor is not a ceiling.** Sight is stopped by walls and nothing else, so a tile at a storey
+   above hides nothing below it. Ganz, downstairs in the office, has an unobstructed 5.3 m line to
+   the roof two floors above him, with nothing in the trace at all. On Kestrel the shed's roof — which the map describes as glazing nobody
+   can stand on, and therefore draws as no tiles at all — hides the loading floor from anybody higher
+   than its walls: the footbridge 17 to 20 m away has lines to it, and so does the office window
+   over two walls. Design doc section *Storeys* says a band is projected so that a raised walkway
+   can be seen underneath, which is right; nothing says what a roof is. The format cannot fix this
+   and did not try. Whether an occupied tile above occludes, or a roof is a kind of ground, or a
+   ceiling is a wall laid flat, is a rules question, and on a map made of buildings it is most of
+   what the ground tests measure.
+3. **The measured arm can read the file.** `tests/Hexcom.Core.Tests/Measured/Waystation.cs` builds
+   the objective by hand for the deadline and briefs by hand for 087's arm. `Mission.Begin` does
+   both now. The one difference is the barn, told at Suspicious rather than Searching, above.
+
+### For View
+
+- **The sandbox can offer Kestrel.** `SandboxScenario` names missions and this is a second one. The
+  map brings no wall profile of its own and only the `deep` ground the waystation already declares,
+  so entry 035's colour question does not arise. It is the first map with anything on storey 2 —
+  the office roof — which is worth a capture when it is offered.
+- **Entry 082's half for View is unblocked.** Both mission files now write their clock onto the
+  objective, so `HexSandbox.OutOfTime` agrees with `Battle.VerdictFor` and can go.
+
+### For Master
+
+The next Content brief is in `content.md`: a sabotage — the one shape the rules build and no file
+says — and the effort figure argued with a batch. Entry 087's *followers fight* and 039's search
+faults show on this map exactly as they do on the waystation, so neither map is where they are
+fixed.
 
 ---

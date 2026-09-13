@@ -10,7 +10,7 @@ using Hexcom.Core.Movement;
 using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 
-namespace Hexcom.Content.Tests.Waystation;
+namespace Hexcom.Content.Tests;
 
 /// <summary>One soldier's turn, as the recorder saw it.</summary>
 public sealed record TurnRecord(int Round, string Unit, Side Side, NodeId From, NodeId To, IReadOnlyList<Order> Orders);
@@ -171,29 +171,23 @@ public static class MatchRecorder
         return new TaskRecord(sortie.Brief, sortie.Place, sortie.Done, by);
     }
 
-    /// <summary>A named place on the waystation, so a route can be read as a story.</summary>
+    /// <summary>A named piece of ground, so a route can be read as a story.</summary>
     public sealed record Landmark(string Name, Func<NodeId, bool> Holds);
 
-    /// <summary>The places the brief asked about, and a few more the map has.</summary>
-    public static IReadOnlyList<Landmark> WaystationLandmarks(BattleMap map) =>
-    [
-        new("the drain", n => n.Layer == 0 && (n.Hex == new Hex(-1, -3) || n.Hex == new Hex(-1, -4))),
-        new("the bridge", n => n.Layer == 0 && n.Hex == new Hex(-8, 0)),
-        new("the ridge", n => n.Layer == 0 && map.GetTile(n.Tile)?.FloorHeight > 1.0),
-        new("the west wood", n => n.Layer == 0 && n.Hex.DistanceTo(new Hex(-6, -14)) <= 1),
-        new("the east wood", n => n.Layer == 0 && n.Hex.DistanceTo(new Hex(14, 6)) <= 2),
-        new("inside the compound", n => n.Layer == 0 && n.Hex.DistanceTo(Hex.Zero) <= 4),
-        new("the house roof", n => n.Layer == 1 && n.Hex.DistanceTo(new Hex(0, 1)) <= 1),
-        new("the barn", n => n.Layer == 0 && n.Hex.DistanceTo(new Hex(14, -6)) <= 2),
-        new("the cottages", n => n.Layer == 0 && (n.Hex == new Hex(-14, 6) || n.Hex == new Hex(-14, 7) || n.Hex == new Hex(-13, 6))),
-        new("the tower", n => n.Layer == 1 && n.Hex == new Hex(16, -14)),
-        new("the ford", n => n.Layer == 0 && n.Hex == new Hex(-6, -4)),
-        new("the pond", n => n.Layer == 0 && n.Hex.DistanceTo(new Hex(6, -16)) <= 2 && map.GetTile(n.Tile)?.Ground == GroundType.ShallowWater),
-        new("the tree line", n => n.Layer == 0 && n.Hex.Q == -12 && n.Hex.R is >= -2 and <= 5),
-    ];
+    /// <summary>
+    /// Every place a mission names, as a landmark.
+    /// </summary>
+    /// <remarks>
+    /// A <c>place</c> is most of what a landmark is: a name a briefing can say and a set of tiles
+    /// on a storey. The recorder used to carry the waystation's as a hand-written list of hexes,
+    /// which was the one thing in it that would not fight a second map. What a mission does not
+    /// name — a drain, a ford — a harness adds beside these.
+    /// </remarks>
+    public static IReadOnlyList<Landmark> PlacesOf(Mission mission)
+        => [.. mission.Places.Select(p => new Landmark(p.Key, n => p.Value.Contains(n.Tile)))];
 
     /// <summary>One match, as a few lines a person can read.</summary>
-    public static string Describe(MatchReport r, BattleMap map)
+    public static string Describe(MatchReport r, IReadOnlyList<Landmark> landmarks)
     {
         var sb = new StringBuilder();
         var outcome = r.Settled ? r.Verdict.ToString().ToLowerInvariant() : r.Decided ? $"decided for {r.Winner}" : "UNDECIDED";
@@ -230,7 +224,6 @@ public static class MatchRecorder
             .Select(kv => $"{kv.Key} {kv.Value}");
         sb.AppendLine($"  alarm peaks: {string.Join(", ", peaks)}");
 
-        var landmarks = WaystationLandmarks(map);
         foreach (var unit in r.TurnLog.Select(t => t.Unit).Distinct())
         {
             var route = r.RouteOf(unit).ToList();

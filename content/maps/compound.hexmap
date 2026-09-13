@@ -2,8 +2,12 @@
 #
 # A walled compound with a breach, sandbags, a smoke screen, broken ground, a barricade running
 # across one tile, and a rooftop reachable only by ladder. Exercises every traversal kind the
-# graph builder knows how to generate. Must stay identical to DemoMaps.Compound() until that
-# method is retired — a test holds the two side by side.
+# graph builder knows how to generate.
+#
+# A fixture, not a battlefield. Radius 6 puts everything in earshot of everything (entry 030), so
+# no mission will be written for it; Core's sight and demo-map tests are built on its exact
+# walls and the view's captures diff against it, which is why it stays and why it does not
+# change. The two maps that carry missions are the waystation and Kestrel Yard.
 
 map Compound
 

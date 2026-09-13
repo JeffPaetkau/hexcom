@@ -51,7 +51,7 @@ public class WaystationFightTests(ITestOutputHelper output)
         {
             var battle = WaystationFight.Start(seed);
             var report = MatchRecorder.Play(battle, seed, Rounds);
-            output.WriteLine(MatchRecorder.Describe(report, map));
+            output.WriteLine(MatchRecorder.Describe(report, WaystationFight.Landmarks(map)));
             if (Environment.GetEnvironmentVariable("HEXCOM_TRANSCRIPT") == seed.ToString())
                 output.WriteLine(MatchRecorder.Transcript(report));
 

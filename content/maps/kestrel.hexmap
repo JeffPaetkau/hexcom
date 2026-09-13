@@ -1,0 +1,113 @@
+# Kestrel Yard: a freight yard in the built-up end of a works town.
+#
+# Radius 14 — 29 hexes and 50 m across — against the waystation's 24, asked for on purpose: entry
+# 007 reasoned the size from the ranges, and a town blocks the ranges. Every wall here is a
+# building face, the streets are two and three hexes wide, and the longest clear line on the map
+# is the main street.
+#
+# A block is the rectangle between two hex centres (content/README.md). On a flat-topped grid a
+# column is straight and a row is a zigzag, so a building's north and south faces step, and two
+# blocks that are meant to meet have to share the row of their top or bottom corner.
+
+map Kestrel
+
+# The canal, which is the waystation's stream by another name: no bottom to stand on.
+ground deep noise 2 impassable
+
+# ---- ground ------------------------------------------------------------------------------
+
+fill disc 0,0 r 14 floor
+
+# The cut: a canal channel down the west side, too deep and too steep-sided to get out of, with a
+# towpath along the east bank and a strip of scrub on the far side that belongs to nobody.
+fill line -11,-3 to -11,14 deep
+fill line -10,-4 to -10,14 deep
+fill hexes -14,0 -14,1 -14,2 -14,3 -14,4 -14,5 -14,6 -14,7 -14,8 -14,9 -14,10 -14,11 -14,12 -14,13 -14,14 grass
+fill line -13,-1 to -13,14 grass
+fill line -12,-2 to -12,14 grass
+fill line -9,-5 to -9,14 mud
+
+# ---- the compound -------------------------------------------------------------------------
+
+# The yard and the shed behind one perimeter wall, with the gate on the main street. The yard is
+# hardcore — gravel — because lorries turn on it, which makes it the loudest ground on the map.
+fill block -8,0 to 5,7 floor
+fill block -8,-4 to 5,-1 gravel
+enclose solid block -8,0 to 5,7
+breach 0,-4 s sw se
+breach 1,-4 s
+
+# A gap in the west wall onto the towpath, where a lorry backed into it and nobody has paid to
+# put it right. The first dozen matches fought here had the shed's side door opening into an
+# alley inside the wall — a door you could only reach by walking through the gate first, which is
+# no way in at all — and every squad in all twelve used the gate.
+breach -8,9 sw
+
+# The freight shed. Its roof is glazed sheeting that will not take a man's weight, so there is no
+# storey above it to stand on. The loading floor is the east end, where the roller door opens onto
+# the yard; the west end is racking. One small door on the west, into the alley inside the wall.
+enclose solid block -7,13 to 4,0
+breach 2,1 s sw se
+breach 3,1 s
+breach -7,9 sw
+
+# Racking down the west half of the shed, head-high and full: somewhere to be inside and not be
+# seen from the door.
+wall high line -5,6 to -5,11 ne
+wall high line -3,5 to -3,10 ne
+# Pallets on the loading floor itself, knee-high.
+wall low hexes 0,7 1,6 2,6 n
+wall low hexes 3,3 3,4 sw
+
+# The boiler house behind the shed, outside the wall, and the duct from it that runs under the
+# shed's back wall. Nobody on the shift has thought about the duct in years.
+enclose solid block -5,13 to -2,13
+breach -5,14 sw
+link crawl -5,13 -5,12
+
+# ---- the office ---------------------------------------------------------------------------
+
+# Two storeys across the east lane from the compound wall, and a flat roof. The upper floor's
+# west windows look over the wall into the yard and, past the shed's front, into the shed. Stairs
+# inside; a fire escape on the east face goes up past the upper floor to the roof, and does not
+# stop at a window on the way.
+fill hex 12,-4 layer 1 h 3
+enclose railing hex 12,-4 layer 1
+ladder 12,-4@0 12,-4@1
+ladder 12,-4@1 11,-4@2
+
+enclose solid block 7,-6 to 11,-1
+breach 7,-3 nw
+breach 11,-5 ne
+fill block 7,-6 to 11,-1 layer 1 h 3
+enclose solid block 7,-6 to 11,-1 layer 1
+breach 7,-5@1 nw sw
+breach 7,-4@1 nw sw
+breach 7,-3@1 nw sw
+breach 7,-2@1 nw sw
+wall low hexes 7,-5 7,-4 7,-3 7,-2 nw sw layer 1
+stairs 10,-3@0 10,-2@1
+fill block 7,-6 to 11,-1 layer 2 h 6
+enclose railing block 7,-6 to 11,-1 layer 2
+
+# ---- the rest of the street ---------------------------------------------------------------
+
+# The weighbridge hut at the east end of the main street, which is what stops the gate seeing
+# round the corner into the east lane.
+enclose solid block 7,-9 to 10,-8
+
+# A warehouse north of the office, locked and dark.
+enclose solid block 7,3 to 10,3
+
+# The terrace across the main street from the gate: where the shift lives, doors shut.
+enclose solid block -6,-8 to -1,-8
+enclose solid block 2,-12 to 7,-12
+
+# ---- the way off --------------------------------------------------------------------------
+
+# A footbridge over the cut at the north-west, three metres up, with steps from the towpath. It
+# carries on over the embankment beyond the edge of the map, which is where the squad leaves.
+fill line -10,13 to -12,14 layer 1 h 3
+enclose railing line -10,13 to -12,14 layer 1
+breach -10,13@1 se
+stairs -9,12@0 -10,13@1

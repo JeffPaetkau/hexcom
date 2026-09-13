@@ -95,12 +95,47 @@ public sealed record Deployment(
     public Loadout? Loadout => Kit is null ? null : MissionFile.Kits[Kit];
 }
 
+/// <summary>
+/// What one side is told, before it sets out, about one soldier of the other: that somebody is
+/// standing at his post, and how firmly.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The <em>presence</em> part of a briefing, handed to the rules. The prose already says
+/// <em>one stands on the road outside the west gate</em>; this is the same sentence as a marker
+/// in every contact file on the side, through <see cref="Battle.Brief"/>, at the post the soldier
+/// is actually deployed to. Entry 087 measured what a squad does without it — the scout walks its
+/// first turn into the view of a man its own briefing names — and stood in for it with a hard
+/// arm in Core's batch. This is the line that arm was pretending to be.
+/// </para>
+/// <para>
+/// A line of its own rather than a <c>known</c> option on <c>deploy</c>, which was the other
+/// shape 087 offered, for three reasons. A deployment is a fact about the garrison and this is a
+/// fact about what the <em>squad</em> believes, so putting it on the garrison's line would put
+/// two sides' knowledge in one statement. Which side is told has to be said once there is a
+/// third side on the ground, and a <c>deploy</c> option would have to guess it. And a briefing
+/// states its certainty in groups — <em>three posts we are sure of, and the last two reports
+/// disagree about the fourth</em> — which one line per rung reads as and one option per soldier
+/// does not.
+/// </para>
+/// <para>
+/// A post that is not told is not known, which is how a file says a report missed somebody: the
+/// rules place a briefed marker where the soldier really is, so the format can be silent about a
+/// post and cannot be wrong about one. Being wrong would be a different mission.
+/// </para>
+/// </remarks>
+/// <param name="Told">The side that is told.</param>
+/// <param name="About">The deployed name of the soldier the marker is about.</param>
+/// <param name="Rung">How firmly: the rung the marker is handed over at.</param>
+/// <param name="Line">The line of the file this was written on.</param>
+public sealed record Intelligence(Side Told, string About, AwarenessState Rung, int Line = 0);
+
 /// <summary>The six mission shapes of <c>docs/setting/missions.md</c>, as a file may name them.</summary>
 /// <remarks>
-/// All six are in the grammar and only <see cref="Withdrawal"/> can be built, because it is the
-/// only one the rules have — entry 041. Naming the other five here rather than leaving them out
-/// is deliberate: a file that says <c>objective sabotage</c> gets told the rules have no sabotage
-/// yet, which is a true and useful thing to be told, where "unknown statement" is neither.
+/// All six are in the grammar and three can be built, because three are what the rules have —
+/// entries 041 and 061. Naming the other three here rather than leaving them out is deliberate: a
+/// file that says <c>objective capture</c> gets told the rules have no capture yet, which is a
+/// true and useful thing to be told, where "unknown statement" is neither.
 /// </remarks>
 public enum ObjectiveKind
 {
@@ -158,7 +193,7 @@ public sealed record WithdrawalOrder(
     : SortieOrder(ObjectiveKind.Withdrawal, Side, Exit, Unnoticed, Line)
 {
     public override Objective Build(Mission mission, Battle battle)
-        => new Withdrawal(Side, mission.NodesOf(Exit, battle.Graph, Line), Unnoticed);
+        => new Withdrawal(Side, mission.NodesOf(Exit, battle.Graph, Line), Unnoticed) { Stop = mission.Stop };
 }
 
 /// <summary>Get eyes on a named place from close enough to count, then leave by another.</summary>
@@ -186,8 +221,8 @@ public sealed record ReconnaissanceOrder(
         var exit = mission.NodesOf(Exit, battle.Graph, Line);
 
         return Within is { } within
-            ? new Reconnaissance(Side, place, exit, within, Unnoticed)
-            : new Reconnaissance(Side, place, exit, unnoticed: Unnoticed);
+            ? new Reconnaissance(Side, place, exit, within, Unnoticed) { Stop = mission.Stop }
+            : new Reconnaissance(Side, place, exit, unnoticed: Unnoticed) { Stop = mission.Stop };
     }
 }
 
@@ -213,8 +248,8 @@ public sealed record SabotageOrder(
         var exit = mission.NodesOf(Exit, battle.Graph, Line);
 
         return Effort is { } effort
-            ? new Sabotage(Side, place, exit, effort, Unnoticed)
-            : new Sabotage(Side, place, exit, unnoticed: Unnoticed);
+            ? new Sabotage(Side, place, exit, effort, Unnoticed) { Stop = mission.Stop }
+            : new Sabotage(Side, place, exit, unnoticed: Unnoticed) { Stop = mission.Stop };
     }
 }
 
@@ -244,10 +279,15 @@ public sealed record SabotageOrder(
 /// <param name="Places">Named ground, by name: an exit, an objective, somewhere to say in a report.</param>
 /// <param name="Objectives">What each side came to do. At most one per side, as <c>Battle</c> holds them.</param>
 /// <param name="Rounds">
-/// When it stops, in rounds, or null for no limit. The mission clock of the mission book's sixth
-/// row, and the rules have no clock of their own yet — so whatever runs the battle applies this.
-/// See <c>docs/decisions.md</c> entry 047.
+/// The last round the mission runs to, or null for no limit. The mission book's sixth row, and
+/// since entry 082 a rule reads it: it is the <see cref="Deadline.Round"/> of every objective the
+/// file builds.
 /// </param>
+/// <param name="AfterAlarm">
+/// How many rounds the mission survives the alarm going out, or null if the alarm sets no clock.
+/// The other half of <see cref="Deadline"/>.
+/// </param>
+/// <param name="Told">What each side is told about the other before it sets out.</param>
 public sealed record Mission(
     string? Name,
     string MapName,
@@ -255,8 +295,20 @@ public sealed record Mission(
     IReadOnlyList<Deployment> Deployments,
     IReadOnlyDictionary<string, IReadOnlyList<TileAddress>> Places,
     IReadOnlyList<ObjectiveOrder> Objectives,
-    int? Rounds)
+    int? Rounds,
+    int? AfterAlarm,
+    IReadOnlyList<Intelligence> Told)
 {
+    /// <summary>When the mission stops, as the rules read it, or null if nothing stops it.</summary>
+    /// <remarks>
+    /// Hung on every objective the file builds, because entry 082 put the clock on the objective
+    /// rather than on the battle: the same ground and garrison carry a different hour under a
+    /// different briefing. Until this existed the file wrote <c>rounds 30</c> and the sandbox and
+    /// both harnesses each applied it themselves, and Core's batch built the objective by hand to
+    /// get the deadline onto it.
+    /// </remarks>
+    public Deadline? Stop => Rounds is null && AfterAlarm is null ? null : new Deadline(Rounds, AfterAlarm);
+
     /// <summary>
     /// One horizontal world unit is one metre, so a hex of size 1.0 is 1.73 m between centres.
     /// </summary>
@@ -274,17 +326,30 @@ public sealed record Mission(
     /// Build the battle this mission describes, deployed, objectives set, and started.
     /// </summary>
     /// <remarks>
-    /// The order is the one <see cref="Battle"/> insists on: everybody deployed and every
-    /// objective set before <see cref="Battle.Start"/>, since both throw once the first round
-    /// has begun.
+    /// The order is the one <see cref="Battle"/> insists on: everybody deployed, briefed, and
+    /// every objective set before <see cref="Battle.Start"/>, since all three throw once the first
+    /// round has begun. Briefing comes after deploying because a marker is placed at the post the
+    /// soldier is standing on.
     /// </remarks>
     public Battle Begin(int seed = 0, HexLayout? layout = null, BattleMap? map = null)
     {
         var battle = new Battle(map ?? LoadMap(), layout ?? Metres, seed: seed);
         Deploy(battle);
+        Inform(battle);
         foreach (var order in Objectives) battle.SetObjective(order.Build(this, battle));
         battle.Start();
         return battle;
+    }
+
+    /// <summary>Hand each side what the file says it is told, on a battle deployed but not started.</summary>
+    public void Inform(Battle battle)
+    {
+        foreach (var told in Told)
+        {
+            var about = battle.Units.SingleOrDefault(u => u.Name == told.About)
+                        ?? throw new MissionFormatException($"Nobody called {told.About} is on the ground.", Name, told.Line);
+            battle.Brief(told.Told, about, told.Rung);
+        }
     }
 
     /// <summary>Put everybody on a battle that has not started yet.</summary>

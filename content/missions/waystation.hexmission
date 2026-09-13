@@ -1,7 +1,7 @@
 # Instrument 4-11 — the waystation on the north road.
 #
 # The four things entry 030 says a mission needs that a map deliberately cannot hold, plus the
-# squads. This file replaced three copies of the same facts — a prose header in
+# squads and what ours are told about theirs. This file replaced three copies of the same facts — a prose header in
 # content/maps/waystation.hexmap, a scenario in game/scripts/SandboxScenario.cs, and a harness in
 # content/Hexcom.Content.Tests/Waystation. Entry 038 said what was wrong with three; entry 047
 # says what this is instead, and entry 052 removed the last of them. Anything that wants to fight
@@ -81,6 +81,21 @@ deploy Teague hostile 0,1@1    facing nw role signaller  kit beamer
 deploy Marek  hostile 16,-14@1 facing nw                 kit rifleman
 deploy Hollis hostile 14,-6    facing sw                 kit beamer
 
+# ---- what the squad is told -----------------------------------------------------------------
+#
+# The presence part of the briefing, as the rules hold it: a marker on each post in every contact
+# file on our side before the first turn. Without these the squad walks its first turn blind down
+# the road the gate watches, because at the start of Vance's turn nobody has looked yet and there
+# is nothing registered to keep out of the eye of. Entry 087 measured that, and fought the same
+# seeds with all four posts told at Searching to see what a squad that had read its briefing does.
+#
+# The file says less than that arm did, because the briefing does. Three posts are stated flat —
+# the gate, the roof, the tower — and Searching is the rung a soldier will go and check. The barn
+# is "one more", after "the last two reports disagree about the fourth", so it is told at
+# Suspicious: somebody there, probably, and nobody would stake a route on it.
+told player searching  Cobb Teague Marek
+told player suspicious Hollis
+
 # ---- what we came to do ---------------------------------------------------------------------
 
 # In to look at the house, out by the cottages, and nobody the wiser. Reconnaissance is won by
@@ -103,6 +118,12 @@ deploy Hollis hostile 14,-6    facing sw                 kit beamer
 objective reconnaissance player at house exit cottages unnoticed suspicious
 
 # Before first light. Thirty rounds covers every fight seen on this ground with room to spare —
-# entry 038 measured the fighting over by round 21 — and nothing in the rules reads this, so
-# whatever runs the battle applies it: the harness in content/ and the sandbox both do.
+# entry 038 measured the fighting over by round 21. Since entry 082 a rule reads it: it is the
+# deadline on the objective above, and a squad still on the field after round 30 has abandoned
+# the mission rather than failed it.
+#
+# The briefing's stop — "or has already passed it to the roof" — is the alarm, and the format can
+# now say how long the mission outlives it with 'rounds 30 after-alarm N'. It says nothing yet on
+# purpose. Entry 083 and 087 measured three rounds and called it harsh for this ground and the
+# playtest's to set, and a figure written here would be the first thing anybody took for settled.
 rounds 30
