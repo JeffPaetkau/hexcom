@@ -100,7 +100,8 @@ creation instead.
 was typed: `--move`, `--fire`, `--aim`, `--next-target`, `--confirm`, `--back-out`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
 `--ai-turn`, `--hostiles`, `--place`, `--resolve`, `--details` (`Ctrl` held for the rest of the
-run) and `--fold`, plus the camera. Each step calls the same
+run) and `--fold`, plus the camera, and `--fog`, which changes nothing and reports whether every
+body on the storey stands on lit ground and which ground each mark is on. Each step calls the same
 method its key calls, so a picture can only ever show a state somebody at the keyboard could
 have reached, and each one prints what it did — a misspelt name would otherwise make a perfectly
 good picture of the wrong moment.
@@ -154,7 +155,7 @@ held, an ambush armed — is lit. Resting the pointer on a slot says what it doe
 | | |
 |---|---|
 | left-click | move whoever is up — or, on a hostile, aim at it; on the one already aimed at, fire |
-| hover | show the route, the cost of each awkward step, and what cover the cursor has |
+| hover | show the route, the cost of each awkward step, and a shield at each wall that would cover a soldier of yours there |
 | `1` `2` `3` | the weapon's fire modes, cheapest first: aim in that mode at the hostile under the cursor or the nearest, or switch the aim already up to it; the lit one again backs out. A click on a hostile aims in the default mode |
 | tab | aim at the next hostile in sight, keeping the mode — including one on a storey the cursor cannot reach |
 | space, enter | fire, while aiming — and nothing else |
@@ -189,11 +190,23 @@ test the main view is built to — *would a player who never presses `O` want it
 being shut is what a shipped interface would look like.
 
 Tiles in reach show their cost, inside the edges described above. Dull red tiles can be crossed but not stood in,
-dark blue ones cannot be entered at all, and the blue-outlined ones are where your side may walk
-off the field. Darkened tiles are dead ground the active unit has no eyes on, and outlined
-tiles have cover from where it is standing — blue light, yellow half, orange full. The tint in a
-side's colour is how much attention each soldier has on each piece of ground, at the reach the
-rules judge by; the yellow tint is an arc being held, out to the weapon's range.
+and dark blue ones cannot be entered at all.
+
+**The ground says what it is.** Darkened ground is the fog: no soldier of yours has a line to a
+man standing there, at any zoom. Lit ground is not a promise that nobody is on it — a man can
+stand in plain view whom nobody has registered yet, because a soldier looks when it stops. On lit
+ground, the tint in a side's colour is how much attention each soldier has on each piece of
+ground it has a line to, at the reach the rules judge by; lit and bare is in a line and watched by
+nobody. The yellow tint is an arc being held, out to the weapon's range. The objective is lime:
+a filled hex where the job is done, a dashed edge for how close a reconnaissance has to look from,
+and a pale wash with its edge where your side may walk off the field, each named on the map.
+
+Point at a tile and a shield stands at its edge on the side of each wall that would give a soldier
+of yours there cover against the enemies your side knows about — at that soldier's stance, an
+outline for light cover, half filled for half, filled for full, in blue, yellow and orange. Aim,
+and the ground changes to the shooter's question: the violet edges leave, the tiles where a target
+would have cover from the soldier aiming are outlined in the same three colours, and two dashed
+white edges say how far the weapon is best to and how far it reaches.
 
 Walls are drawn from what they do rather than from what they are called, so a map that invents
 its own kit draws correctly on the day it is written: the hue is green if you can push through
@@ -213,7 +226,8 @@ Over the soldier whose go it is, a bar of its points cut where the reserve steps
 each step as a move: *aimed ≤0 · standard ≤14 · snap ≤28 · banks ≤35* is a fresh rifleman who may
 spend fourteen and still bank a standard shot, and past thirty-five holds nothing at all. The same
 steps are drawn on the ground as violet edges round the move range, in the same colours, with a
-pale edge at the limit of reach — so the ground says what the soldier will hold *there*. Under the
+pale edge at the limit of reach — so the ground says what the soldier will hold *there*, and each
+edge says so in words: *stop inside: banks a snap*. They are the reserve and not a range. Under the
 bar, its own exposure exactly and the highest rung the other side has reached on it.
 
 Point at an enemy and its hit chance is over its head, with what the shot costs and what it is
@@ -230,7 +244,8 @@ your soldier is taking seriously, how far, how much it has worked out about them
 they could put into it, and whether they can see it — a contact merely *remembered* is quoted at
 the mark where it is believed to be; at the soldier, the bar they act from, the arc it holds, who a
 shout would reach, who has a line to it, and what each posture key would buy, scored the way the AI
-would; and at the cursor, cover, exposure, distance and range band, attention and noise. A hostile
+would; and at the cursor, the cover you would have there against each enemy you know of, whether
+the soldier up has a line to it, distance and range band, attention and noise. A hostile
 nobody of yours has found is *somebody unseen* everywhere, never a name.
 
 **A move opens a window, and you can answer it yourself.** Press `K` and a move is paid for and

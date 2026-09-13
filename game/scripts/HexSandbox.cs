@@ -112,6 +112,8 @@ public partial class HexSandbox : Node3D
 
     private readonly Dictionary<NodeId, SightResult> _sight = [];
     private readonly Dictionary<UnitId, Threat> _knowledge = [];
+    private readonly Dictionary<UnitId, IReadOnlyDictionary<NodeId, SightResult>> _lines = [];
+    private readonly HashSet<NodeId> _lit = [];
 
     private Battle _battle = null!;
     private SandboxScenario _scenario = null!;
@@ -845,7 +847,9 @@ public partial class HexSandbox : Node3D
     /// <remarks>
     /// The sight sweep is the expensive part and it is proportional to the storey, not to what
     /// is on screen: eighteen hundred traces on the waystation's ground floor, measured at 25 ms
-    /// once the code is warm. That is well inside a frame for something that runs on an action
+    /// once the code is warm when the map was smaller, and about 145 ms from a fresh vantage now —
+    /// see <see cref="SweepLines"/>, which also has why a repeated one is nearly free. That is
+    /// affordable for something that runs on an action
     /// rather than on a redraw, which is why moving the camera does not trigger it — the camera
     /// changes what is drawn and never what is true, so panning and zooming only re-project the
     /// labels.
@@ -899,12 +903,95 @@ public partial class HexSandbox : Node3D
             _rungs[hostile.Id] = now;
         }
 
+        SweepLines(frame);
+
         _view.Rebuild(Frame());
         _readouts.QueueRedraw();
 
         // The instruments follow the rules changing and not the cursor moving, which is why
         // HoverChanged leaves them alone: nothing in that window is a question about a tile.
         if (_instruments.Visible) _instrumentPanel.QueueRedraw();
+    }
+
+    /// <summary>
+    /// Every drawn soldier's line to a standing man on each place on the storey being looked at, and
+    /// the places at least one of ours has such a line to.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The fog and the attention fields' clip, and what they cost</b> — entry 097 asked for the price before
+    /// anything was promised. Measured on the waystation's ground storey, 1,804 places: a sweep from a vantage
+    /// the sight solver has not traced from before is <b>about 145 ms</b>, some 80 µs a trace, and one it has
+    /// is about a millisecond, because <c>SightSolver.Trace</c> remembers every pair of vantages until the map
+    /// changes. So nothing is cached here; Core already does, keyed on exactly what a sweep depends on — where
+    /// a soldier stands and how, not which way it faces. The first frame pays for everybody at once, about a
+    /// second for seven soldiers with the code still cold. After that a sweep is paid only by a soldier whose
+    /// place or stance changed, and the soldier up's is already paid by the active sweep above, which asks the
+    /// same pairs. The remarks on <see cref="Recalculate"/> said 25 ms for that sweep, from before the map grew;
+    /// it is 145 now, and the wall scan in <c>SightSolver.Intersections</c> is linear, which its own remarks
+    /// say is the thing to index if it ever gets hot.
+    /// </para>
+    /// <para>
+    /// <b>A drawn hostile's lines stop at the sight range</b>, where his attention field fades to nothing: they
+    /// are only ever read to clip that field. Ours do not, because the fog has no range — a line has none.
+    /// </para>
+    /// </remarks>
+    private void SweepLines(SandboxFrame frame)
+    {
+        _lines.Clear();
+        _lit.Clear();
+
+        var places = _battle.Map.Tiles
+            .Where(t => t.Address.Layer == _layer)
+            .SelectMany(t => _battle.Map.RegionsOf(t.Address).Select(r => new NodeId(t.Address, r.Index)))
+            .ToList();
+
+        var range = _battle.Awareness.Model.SightRangeMetres;
+
+        foreach (var unit in _battle.InPlay)
+        {
+            if (!frame.Sees(unit)) continue;
+
+            var ours = unit.Side == Side.Player;
+            var from = SandboxGeometry.NodePlane(_battle.Map, unit.Position);
+            var lines = new Dictionary<NodeId, SightResult>(places.Count);
+            foreach (var place in places)
+            {
+                if (!ours && Hexcom.Core.Geometry.Vec2.Distance(from, SandboxGeometry.NodePlane(_battle.Map, place)) >= range) continue;
+                lines[place] = _battle.Sight.Trace(unit.Vantage, new Vantage(place));
+            }
+            _lines[unit.Id] = lines;
+
+            if (!ours) continue;
+            foreach (var (place, line) in lines)
+                if (line.CanSee) _lit.Add(place);
+        }
+    }
+
+    /// <summary>
+    /// The fog's promises, checked against this moment: every body the picture shows on the storey being looked at
+    /// and whether it stands on lit ground, and every mark of ours and whether its ground is lit or dark.
+    /// </summary>
+    /// <remarks>
+    /// A script step and nothing else, the way <c>--aim</c> reports who a shot would tell: a capture is the check
+    /// the brief names, and a body on a dark hex is a few pixels a person reading the picture can miss. It reads
+    /// the frame and changes nothing. <i>No body on dark ground</i> is a promise the standing test makes, so a
+    /// line here saying otherwise is a finding, and it names the body.
+    /// </remarks>
+    private string FogReport()
+    {
+        var frame = Frame();
+        var bodies = _battle.InPlay.Where(u => frame.Sees(u) && u.Position.Layer == _layer).ToList();
+        var dark = bodies.Where(u => !_lit.Contains(u.Position)).Select(u => u.Name).ToList();
+        var marks = _knowledge.Values
+            .Where(t => !t.EyesOn && t.Where.Position.Layer == _layer)
+            .OrderBy(t => t.Unit.Name)
+            .Select(t => $"{(frame.Told(t.Unit) ? "told" : "lost")} at {t.Where.Position} on {(_lit.Contains(t.Where.Position) ? "lit" : "dark")}");
+
+        var said = dark.Count == 0
+            ? $"{bodies.Count} bodies on storey {_layer}, every one on lit ground"
+            : $"ON DARK GROUND: {string.Join(", ", dark)} (of {bodies.Count} bodies)";
+        return $"{said}; {_lit.Count} places lit; marks: {string.Join("; ", marks.DefaultIfEmpty("none"))}";
     }
 
     /// <summary>What our side holds on each hostile, merged by keeping the best any of ours holds.</summary>
@@ -976,7 +1063,7 @@ public partial class HexSandbox : Node3D
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
             _omniscient, _knowledge, _instruments.Visible, _aim,
-            _theirGo, _perceived, _found, _details, _termsFolded, _mode, _pointing, _rungMoved);
+            _theirGo, _perceived, _found, _details, _termsFolded, _mode, _pointing, _rungMoved, _lines, _lit);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -1959,6 +2046,9 @@ public partial class HexSandbox : Node3D
 
             case "--fold":
                 return FoldTerms();
+
+            case "--fog":
+                return FogReport();
 
             case "--hover":
                 if (ParseNode(step.Argument) is not { } at) return "wanted q,r[,layer[,region]]";

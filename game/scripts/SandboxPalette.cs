@@ -32,8 +32,22 @@ public static class SandboxPalette
     /// <summary>Ground nobody can be on: deep water, a hole. Read off <c>GroundType.Passable</c>.</summary>
     public static readonly Color ImpassableFill = new("18222e");
 
-    /// <summary>Where our side may walk off the field, if the mission gives us one.</summary>
-    public static readonly Color ExitFill = new("2a4a6a", 0.75f);
+    /// <summary>
+    /// Our side's objective on the ground: the place, the exit, the range a reconnaissance looks from.
+    /// </summary>
+    /// <remarks>
+    /// Lime, because every other hue that outlines a tile is taken — violet for the reserve, blue, yellow and
+    /// orange for cover, pale for our file, the rung colours for his beliefs, white for the aim, teal for the
+    /// route and ours. The exit used to be edged in the light-cover blue, and a row of blue-edged tiles was one
+    /// of the things a player could not name. Bright, since it stands on the fog as often as not.
+    /// </remarks>
+    public static readonly Color ObjectiveHue = new("b8e04e");
+
+    /// <summary>The exit's wash: the objective's hue, faint enough that the attention tint still reads through it.</summary>
+    public static readonly Color ObjectiveFill = new(ObjectiveHue, 0.16f);
+
+    /// <summary>The weapon's outer reach in the firing mode — the aim's white, fainter than its best range.</summary>
+    public static readonly Color WeaponReach = new("ffffff", 0.5f);
 
     /// <summary>A route paid for and not yet walked, while its reaction window is open.</summary>
     public static readonly Color CommittedColor = new("f2c14e");
@@ -74,7 +88,17 @@ public static class SandboxPalette
     public static readonly Color PathColor = new("6fd3b0");
     public static readonly Color TextDim = new("8d96a5");
     public static readonly Color TextBright = new("dfe5ee");
-    public static readonly Color Unseen = new("0b0d10", 0.55f);
+    /// <summary>
+    /// The fog: ground no soldier of ours has a line to a standing man on. The greybox's dark tint, standing
+    /// in for the art pass's unlit and desaturated treatment — entry 097, and never a haze.
+    /// </summary>
+    /// <remarks>
+    /// Darker than it was when it was one soldier's dead ground close in, because it now has to be told apart
+    /// from lit ground nobody is watching, which carries no tint of its own: at the old weight the two were a
+    /// step of grey apart and the first capture could not say which a told mark stood on. Every ground
+    /// readout and mark is added after it in the overlay, so it darkens the floor and nothing on it.
+    /// </remarks>
+    public static readonly Color Unseen = new("07090c", 0.68f);
     public static readonly Color CoverLightHue = new("6fa8c8");
     public static readonly Color CoverHalfHue = new("d8b25a");
     public static readonly Color CoverFullHue = new("d1743c");
