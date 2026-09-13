@@ -153,87 +153,99 @@ than sampling at a fixed rate.
 
 ---
 
-## The job — the first five minutes, and what has to be taught
+## The job — what a player may change
 
-Last of the queue, and deliberately: onboarding decides what a player must be told before turn
-one, and half of that answer is what the genre's interface already teaches without telling
-anybody — which the synthesis wrote down and pass two photographed. Branch
-`interface/onboarding`. The ten reference files give it something the earlier
-version of this brief did not have: Into the Breach's total disclosure is now documented in
-detail rather than cited, and it is the argument this job has to answer rather than route
-around.
+Branch `interface/options`. Answered ahead of View's `view/options`, the way the fog was answered
+ahead of `view/ground-and-camera`: View's queue has an options screen in it, and nothing in this
+territory yet says what the genre puts on one.
 
-**One thing to teach is inherited from the fog section, and it is the first to settle.** *A
-soldier looks when they stop.* Ending a turn is the only moment a unit looks around, so a player
-can see a lit, empty courtyard and walk into a man that stopping would have registered.
-`../interface/conventions.md` under *What the squad can see* chose to leave that cost on the ground
-rather than draw a third state for it, and entry 097 gives the reasons. So the lesson has to come
-from teaching, and the ground will not do it.
+**What is already settled, and is not to be re-argued.** Entry 094's item 1, with the user. The
+scope is keybindings and player preferences, loaded at start, with an options screen over them.
+The layout constants stay in code. `--edge-pan`, `--pace` and `--still` are the first tenants. And
+entry 066's split holds: a person's defaults and the capture harness's defaults are different
+things, and an option changes the first and never the second.
 
-**Read entry 089 before starting.** Two of its findings are onboarding's material directly. The
-shot's terms open by default while aiming, so the arithmetic teaches itself on the first shot, and
-*where the arithmetic lives* below is half answered already. And the one persisted enemy marker in
-the set is a bare beacon with no explanation on screen, which is what a player here would meet
-first and would have to be taught to read as *somebody's belief*.
+**What it is.** No reference file was asked what its game lets a player change, and heading 10 is
+the nearest any came: every counted community fix in the set is a legibility fix, and two of them
+are complaints that a thing could not be changed — Future War Tactics cannot rebind anything, and
+Phantom Brigade's players asked for font size and dialogue duration. That is the evidence that a
+setting is a legibility feature, not a convenience, and it is thin.
 
-**What it is.** The conventions are written and the queue is written (entry 060), and both assume
-a player who already knows what a hit chance and an action point are. Neither says how anybody
-learns *this* game. That is the next interface question and it is the one the second play-through
-will run into hardest, because the model a player has to hold here is not the genre's: a soldier
-has two pockets of points rather than one, spending everything means answering nothing, a contact
-is a file that decays rather than a unit that is spotted, and the marker on the map is somebody
-else's belief and not a fact.
-
-**Where to look.** The genre teaches in four ways and this game can afford at most two of them.
-XCOM 2 ships a scripted tutorial mission that takes control away. Into the Breach teaches by
-showing every enemy's next action, so the rules are legible from the first turn and there is no
-tutorial at all. Invisible, Inc. teaches by making the first level's single guard unmissable, and
-by drawing the cone that everything else in the game is about. Jagged Alliance 3 and Battle
-Brothers teach by tooltip and let the player lose. Say which of those this game is, and why —
-Into the Breach's answer is the one that costs no content, and this game already draws a graded
-attention field per tile, which is the same move.
+**Where to look.** The ten files' headings 8 and 10 first. Then each game's own options screens,
+as published: PCGamingWiki lists video, input, audio and accessibility settings per game, in a
+fixed form, and the Into the Breach file already cites it. A still of an options screen is the
+cheapest capture there is, if one is needed.
 
 **The questions.**
 
-- **What a player must know before turn one, and what can wait.** The reserve is the candidate
-  for *before*: a player who spends all their points is holding no reaction and will not find out
-  why until it costs them.
-- **How a rung is taught.** A five-step ladder means nothing until a player has watched one move.
-  What action makes it move visibly and cheaply, in the first minute?
-- **What the game should refuse to let a player do silently.** Not a confirmation dialogue, which
-  the genre has decided against for moves. A warning drawn on the thing — the genre's concealment
-  ring is exactly this and it is brief four in the queue already.
-- **Tooltips, and where the arithmetic lives.** Brief one moves the figures onto the things they
-  describe and picks one gesture for *show me the terms*. Onboarding is the other half of that
-  decision, and it should not be settled twice.
-- **What the mission briefing is for.** `Objective.Brief` exists, the mission file carries a
-  briefing, and the only way to read it is a key a tester presses. The genre puts it on a screen
-  before the battle.
+- **What every game ships, and what only some do.** Rebinding, and whether per context; camera
+  speeds and edge-pan; animation speed, which is Zip Mode's precedent (*Movement and shooting
+  animation*); UI and text scale; hints or tutorial toggles; colour-blind modes.
+- **Colour, specifically.** This interface encodes in hue alone in several places: side colours,
+  the attention tint, the reserve's band edges, the cover outlines' grades. Say what the set does
+  about it, if anything, and whether a second channel is owed before an art pass rather than as an
+  option.
+- **What an option must never do here.** Contract 3. A setting that draws what the rules withhold,
+  such as every hostile's cone or the fog off, is the instruments window, and not an option. Say
+  where the line falls, using the test `view.md` already applies to readouts.
+- **The first mission's preferences.** *Teaching it* recommends a briefing that opens before turn
+  one and a first mission a person's build opens on (briefs eight and nine). Say whether the genre
+  lets a player turn either off, and how: XCOM 2's tutorial toggle is at campaign start, and Into
+  the Breach offers its tutorial only on a new profile.
+- **How the screen is organised**, only as far as the set agrees, and no further.
 
-**Where the output goes.** A new section in `docs/interface/conventions.md` — *Teaching it* — in
-the same shape as the others: standard with its games, what this game does, what the asymmetry
-changes, a recommendation tagged **convention** or **departure**. Plus briefs appended to
-`docs/interface/briefs.md`, after the six that are there.
+**Where the output goes.** A new section in `docs/interface/conventions.md`, *What a player may
+change*, in the usual shape. Plus one brief appended to `docs/interface/briefs.md` that Master can
+write `view/options` from.
 
-**Also re-prime the queue.** Read `git log --oneline -- game docs/interface` and
-`../decisions.md` for entries appended since 060. A brief whose subject has landed comes out of
-the queue; a brief the play-through contradicted gets rewritten. Do not record what is in flight
-and do not name a branch that is not merged — the queue is a work order, never a status board.
+**Also re-prime the queue**, as the last job did: read `git log --oneline -- game docs/interface`,
+and take out any brief whose subject has landed, with a pointer to its text in history.
 
-**Settle before writing much.** Entry 058's rule still holds and applies here twice over: the
-convention is the starting point and a departure argues its case. The temptation in onboarding is
-to invent, because the model is unusual. It is also the place where inventing costs most, since a
-player who does not recognise the *teaching* cannot tell whether they are confused by the lesson
-or by the game.
+**Out of scope.** Building anything. The layout constants. Difficulty, which is balance and Core's.
+Audio settings beyond noting whether the set ships them, since Art & audio has no paths yet.
 
-**Out of scope.** Building anything. Writing the tutorial's words, which is `docs/setting.md`'s
-register and Setting's job once there is a shape to fill. Rules, which go to Core through
-`../decisions.md` — and a tutorial that needs a rule is a strong signal the lesson is wrong.
-The strategy layer's interface, which still has no rules to show.
+**How to know it worked.** A View session pointed at the new brief needs nothing else, and every
+setting it asks for names the games that ship it, or says it is a departure and argues it.
 
-**How to know it worked.** A View session can be pointed at one of the new briefs and need
-nothing else; and somebody who has never played this game can be handed the recommendation and
-say what they would understand about the enemy after one turn.
+---
+
+## What landed on `interface/onboarding`
+
+The queue's last job. Entry 098 has the findings. What exists:
+
+- **`conventions.md` has a new section, *Teaching it***, placed first among the sections because
+  it is the first thing a player meets. It has the standard, with a table of eight games' first
+  missions and their tags, what is built here, the three lessons, the asymmetry, and the
+  recommendation.
+- **The fog section's fact 2 is corrected in place**: the crossing look goes only to a soldier
+  holding a reserve.
+- **`briefs.md` is re-primed.** The six landed briefs are out, with a table naming each one's
+  branch and entry and a pointer to their full text at `45e9829:docs/interface/briefs.md`. Two stays
+  word for word with its amendment, and three new briefs follow it: seven `view/turn-end`, eight
+  `view/briefing-first`, nine `content/first-mission`.
+- **`../decisions.md` entry 098.**
+
+Five things worth not re-deriving:
+
+- **The brief's taxonomy was wrong, and checking it was worth more than answering it.** Into the
+  Breach has a tutorial, and Invisible, Inc.'s is the most scripted in the set. The real split is not
+  *tutorial or none*: eight of eight games with a source teach in a first mission, and they differ
+  on how scripted it is. A genre claim in a brief is a thing to check against a source, the same
+  lesson the synthesis learned about four of the queue's briefs.
+- **Teach the departures; the conventions teach themselves.** Klei's finding about expectations
+  carried in from other stealth games is the reason. It turns *what must a player be taught* into a
+  list this document already had, the **departure** tags, and three lessons cover all of them.
+- **The reserve is alertness, and the interface docs had missed it.** `ReactionWindow.BuildOffers`
+  gives no look to a soldier with nothing banked. The design doc says so, and entry 097 did not. It
+  makes the End turn slot the one place where a costly silence was left.
+- **Nothing a player reads before turn one is about mechanics.** An explanation read before the
+  thing it explains does not stick, which is Into the Breach's playtesters. The briefing is the
+  only thing before turn one, and it carries lesson 2 for free, because the told marks are its
+  *presence* paragraph said as rules.
+- **Shaped, not scripted, is forced by contract 2 rather than chosen for taste.** A scripted guard
+  is not `Commander`, and a script that holds one needs a rule. The rules already make the lessons
+  happen if the ground and the posts are placed for it. That is also why the one hard rule in brief
+  nine is about the file: the stop sits above every rung the mission teaches.
 
 ---
 

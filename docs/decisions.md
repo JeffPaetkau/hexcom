@@ -5804,3 +5804,108 @@ it. Interface's own job is the onboarding brief, and *Teaching it* inherits one 
 *a soldier looks when they stop*.
 
 ---
+
+## 098 — Teach the departures: three lessons, a briefing and a shaped first mission; the genre's teaching was not split the way the brief said, and a soldier with nothing banked takes no look
+**2026-09-12** · **Raised by** interface · **For** master, view, content · **Status** open — three briefs for Master to route: seven and eight to View, nine to Content
+
+Interface's onboarding job. The recommendation is `interface/conventions.md` *Teaching it*,
+and the briefs are seven, eight and nine in `docs/interface/briefs.md`. This entry records what
+shaped them.
+
+### What was found
+
+**1. The genre's teaching was not split four ways, and two of the brief's four were wrong.** The
+brief set a scripted tutorial (XCOM 2) against total disclosure with no tutorial (Into the Breach),
+one unmissable guard (Invisible, Inc.), and tooltips and losing (Jagged Alliance 3, Battle
+Brothers). But Into the Breach does have a tutorial: a guided *Combat Simulation*, offered on a new
+profile. And Invisible, Inc.'s first mission is the most tightly scripted in the set, an instruction
+every turn and no other way through. **Every game in the set with a source, eight of eight, puts a
+first mission in front of the player and teaches in it.** They split on how scripted that mission
+is: XCOM 2 and Invisible, Inc. script it, while Shadow Tactics, Mutant Year Zero, Tactical Breach
+Wizards and Phantom Brigade shape it with ground and objectives. Tooltips-and-losing is Tier C's
+answer, and Jagged Alliance 3's players complain that nothing gets explained. Sources and tags are
+in the section.
+
+**2. What the two best-documented designers learned is that the interface teaches, and the
+tutorial is short because of it.** Into the Breach cut mechanics that playtesters could not follow
+even after reading long explanations, and replaced written weapon descriptions with animated ones.
+Invisible, Inc.'s alarm felt unfair because players brought expectations from other stealth games.
+Klei's fix was a rename, tooltips that warn of the next rise, and more tutorial, and they still say
+they lost players. **So the expectations break where a game departs from its genre, not where its
+rules are hard.**
+
+**3. That turns the job into a list this project already has.** A **convention** is something the
+player arrives knowing (entry 058), so it needs no lesson. A **departure** is something they arrive
+knowing wrongly. The tags in `conventions.md` are the curriculum. Read against the model a player
+has to hold, they come down to three lessons: *the turn's end looks and banks, and neither shows*;
+*a mark is somebody's belief, not a unit*; *the word on a hostile is his, and it moves both ways*.
+What the interface briefs have already built teaches most of the rest without a word: the terms
+open while aiming, the ground cut at the reserve's steps, who would hear a move, the shot's bill,
+the bar's prices, the banner.
+
+**4. A soldier with nothing banked takes no look at a mover — read from the source, and it corrects
+entry 097.** `ReactionWindow.BuildOffers` skips a reactor with `Reserve <= 0` before `OfferFor`
+runs, and its remarks give the reason: the reserve stands in for alertness, so a soldier who spent
+the lot is head down. Entry 097 and *What the squad can see* fact 2 said a stationary soldier gets
+the crossing look, and did not say it takes a reserve. Fact 2 is corrected in place. **This makes
+the reserve's lesson sharper than the brief had it.** Spending everything means answering nothing,
+and also seeing nothing while it is not your go. It is also the lesson a player cannot learn from
+play, because what it costs is a window that never opens.
+
+**5. The reserve was the brief's candidate for teaching before turn one, and it is not one.**
+Nothing explains a reserve to somebody who has not yet ended a turn, and Into the Breach's
+playtesters are the evidence that an explanation read before its referent does not stick. It goes
+on the End turn slot instead, every turn, as *look · bank 17*, where the cursor is when it happens.
+A *head down* mark goes on our soldier's body during the other side's go. **The only thing a player
+needs before turn one is the briefing.** Drawing the told marks while its *presence* part is read is
+item 5 of entry 094, answered from the moment the player is told.
+
+**6. Shaped, not scripted — a departure from half the set, argued.** A scripted hostile is not
+`Commander`, so what it teaches is the script (contract 2). A script needs a hook to override the
+AI, which is a rule added for a tutorial. Invisible, Inc.'s players stalled in its tutorial when one
+instruction was missing. And the rules here are generous enough to shape: a heard move raises a
+rung at the move, a Searching sentry goes to look at his marker, and a turn's end takes a look.
+
+**7. A first mission's stop must sit above every rung it teaches.** The waystation ends the task
+above Suspicious, so on its ground lesson 3 ends the mission. A lesson that ends the mission is
+teaching by losing.
+
+**8. Considered, and not recommended.** A prompt that speaks at a named moment in a mission,
+Shadow Tactics' short introduction: deferred until a play-through of the first mission shows a
+lesson not landing, and a format change for Content if it comes, never a rule. A confirmation before
+leaving hiding, Mutant Year Zero's, the one modal in ten games: rejected, because the move's
+listeners and the shot's bill already say it on the action. A reduced interface for the first
+mission, Invisible, Inc.'s locked rotation: rejected, because the camera is convention.
+
+### For Master
+
+- **Brief seven, `view/turn-end`**, and **brief eight, `view/briefing-first`**, are View's when
+  promoted. Seven is small and helps the waystation play-through too. Eight's `Ctrl` half waits on
+  brief two's words for the three marks, and its briefing half does not.
+- **Brief nine, `content/first-mission`**, is Content's. One decision in it is the user's and yours:
+  **whether a person's build opens on the first mission**. The recommendation is yes, with the
+  waystation one flag away, because a stranger is the audience for teaching. Every play-through so
+  far has measured the waystation, and that is the cost.
+- **The queue is re-primed.** Zero, one, three, four, five and six have landed and are out of
+  `briefs.md`. Their text is at `45e9829:docs/interface/briefs.md`. Two stays word for word, because
+  View's job reads it by name.
+- **Interface's next job** is written into `subprojects/interface.md`: what the genre lets a player
+  change, ahead of `view/options`, the way the fog was answered ahead of `view/ground-and-camera`.
+
+### For View
+
+Nothing to build until Master routes. One line worth knowing now: *head down* is our own soldier's
+fact and exact by contract 3, and `Unit.CanReact` is already the test.
+
+### For Content
+
+Nothing until Master routes. The brief asks nothing of the format, and every moment in it is a
+ground or fight test in the shape the waystation's harness already has.
+
+### For Core — nothing asked
+
+No query and no rule is wanted. The rule in finding 4 was never Core's gap: the design doc says in
+as many words that the reserve is alertness and a soldier who spent the lot is head down, and
+`core.md`'s gotchas name the gate. It was Interface's own section that left it out.
+
+---
