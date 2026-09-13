@@ -23,6 +23,16 @@ repository root, and curated crops land in `reference/shots/<game>/` named for w
 **The cut line is after C12.** Everything above it would change something. Everything below it
 would confirm something, and confirmation is worth having but not worth a sitting.
 
+**Pass two has run against the twelve above the line. Eight are answered, two half answered, one
+not answered, and C8 was not capturable.** Four answers contradicted something the set had
+written: C1, C5, C10 and C12. Three of them move a recommendation (C1, C5, C12), which is the
+outcome this list was ranked to find. C10 contradicted its reference file and confirmed the
+recommendation that cited it. Entry 089 has them. Each entry below says in its first line what came back. A struck heading
+was answered or ruled out; an unstruck one is still open, in whole or in part. **For a clip,** the
+moments were found on a low-resolution contact sheet and then read from full-resolution frames
+pulled at those times. That breaks the letter of *never sample at a fixed rate* only to find where
+to look, and every claim cites a full-resolution frame.
+
 **Two ways to answer.** Most entries want a still. Where the finding is a transition — a state
 becoming another state, a dwell, a moment of firing — a still cannot settle it and the entry says
 **clip**. A clip is read by pulling named frames out of it, never by watching it; the `ffmpeg`
@@ -32,7 +42,10 @@ invocation is in `interface.md`.
 
 ## Above the line — these change a recommendation
 
-### C1 · XCOM 2 · heading 3 · is the shot breakdown open by default, or behind a click?
+### ~~C1 · XCOM 2 · heading 3 · is the shot breakdown open by default, or behind a click?~~
+**Answered: open by default.** Entering the aim shows the breakdown open. Each column has its own
+chevron that folds it, and the fold is sticky across targets. `reference/xcom2.md` heading 3.
+
 **Playable.** The frame: a soldier the instant after entering targeting mode on a visible target,
 before any further click, full HUD in shot. A second frame after clicking the chevron beside
 `HIT`, if it does anything.
@@ -44,7 +57,11 @@ and one that hides it. `conventions.md` currently recommends held-key disclosure
 recommendation **provisional** against this entry. It is first on the list because it is the only
 question here that decides how something gets built next week.
 
-### C2 · Invisible, Inc. · heading 4 · all three vision bands, plus the fog memory, in one frame
+### ~~C2 · Invisible, Inc. · heading 4 · all three vision bands, plus the fog memory, in one frame~~
+**Answered.** All three bands in one cone, and the fog memory in the same capture. They read apart
+in a native-resolution crop; in the full frame the two reds merge. `reference/invisible-inc.md`
+heading 4.
+
 **Playable.** One frame around a single guard with watched (dark red), noticed (light red) and
 hidden (yellow) all present, and ideally a seen-but-not-currently-visible area in the same shot.
 
@@ -56,7 +73,10 @@ is genuinely hard to read — and another designer's published critique says it 
 game's graded attention tint inherits the problem and brief one has to answer it rather than
 discover it.
 
-### C3 · Invisible, Inc. · heading 5 · the investigating and alerted badges, close enough to read
+### ~~C3 · Invisible, Inc. · heading 5 · the investigating and alerted badges, close enough to read~~
+**Answered.** A yellow `?` triangle and a red `!` triangle over the body. At the interest point, a
+yellow shield-shaped `?` stands on a corner-bracketed tile. `reference/invisible-inc.md` heading 5.
+
 **Playable.** Two frames: a guard investigating (the yellow `?` triangle, and the separate
 floating `?` at the point it is walking to) and a guard alerted (the red `!` triangle). Crop
 close.
@@ -67,7 +87,11 @@ at either drawing. The second `?` at the interest point is the detail most worth
 it is the same object as this game's marker — a glyph at a place somebody believes in — and no
 other game in the set draws one.
 
-### C4 · Warhounds · heading 7 · the overwatch cone, idle and firing
+### ~~C4 · Warhounds · heading 7 · the overwatch cone, idle and firing~~
+**Answered.** Entered from the action bar; `Brings out of cover` drawn at the cursor while placing;
+the idle sector drawn as tinted grid tiles; on firing, no camera cut and no trigger point on the
+ground. `reference/warhounds.md` heading 7.
+
 **Playable.** A clip from cone placement through to the shot landing, plus one still of the cone
 sitting idle on the ground.
 
@@ -77,7 +101,11 @@ newly corrected Reactions finding: two games draw the player's own held arc, and
 whose bank works most like ours. Whether the cone marks its trigger point on the ground, and
 whether the camera cuts to the shooter, are both unanswered anywhere in ten games.
 
-### C5 · Warhounds · heading 3 · the attack preview, itemised
+### ~~C5 · Warhounds · heading 3 · the attack preview, itemised~~
+**Answered, and it contradicts the file.** Open by default in attack mode: one figure,
+`PRECISION 17%`, with its terms itemised in a panel docked at the right edge, and no per-bullet
+percentage anywhere. `reference/warhounds.md` heading 3.
+
 **Playable.** A soldier aiming at a covered target at range, the full breakdown panel in frame:
 every named term in the order it is listed, alongside the per-bullet percentages.
 
@@ -88,6 +116,11 @@ the terms are shown by default or behind a gesture is the same question as C1 wi
 answer available.
 
 ### C6 · Warhounds · heading 5 · the instant an unseen enemy is first spotted
+**Half answered.** Only the after frame was captured: an `ATTENTION!` banner reading `Enemy squad
+detected`, and the enemies drawn as bodies with health bars. The before frame and any heard-but-
+unseen state are still open. It does confirm the law's tenth case on the fog side.
+`reference/warhounds.md` heading 5.
+
 **Playable.** The frame before and the frame after first contact, full screen. And separately,
 anything at all drawn for a hostile heard but not seen, if that state exists.
 
@@ -97,7 +130,11 @@ genuine unknown rather than a confirmed absence, and it is the newest game in th
 completes the no-undo law in `conventions.md`, whose tenth case is unconfirmed only on the fog
 side.
 
-### C7 · Invisible, Inc. · heading 6 · one full corporate turn, end to end
+### ~~C7 · Invisible, Inc. · heading 6 · one full corporate turn, end to end~~
+**Answered.** An `ENEMY ACTIVITY` banner up for at least 1.43 s with the HUD hidden, a red backdrop
+tint for the rest of the phase, a camera that never moves, an `AGENT ACTIVITY` banner, and input
+back at 5.0 s. One indicator for the phase. `reference/invisible-inc.md` heading 6.
+
 **Playable. Clip.** From the frame the player's input stops to the frame it returns.
 
 **Changes:** entry 065's banner, which was decided with no shipped precedent to check against.
@@ -107,7 +144,11 @@ happens — is undocumented, and this game's own decision is *one indicator per 
 Also the only chance in the set to see what a turn-based stealth game shows when a guard the
 player has not found takes its turn.
 
-### C8 · XCOM 2 · heading 4 and 9 · Gotcha Again's tile icons, on the tile
+### ~~C8 · XCOM 2 · heading 4 and 9 · Gotcha Again's tile icons, on the tile~~
+**Not capturable from the user's copy, and struck as that rather than as answered.** The GOG build
+cannot load Workshop mods (entry 088). Brief four's glyph vocabulary stays provisional. Published
+screenshots could settle it at the grade *verified*, never *observed*.
+
 **Playable, with the mod installed.** A destination tile hovered in each of the mod's situations
 it can reach: the red reticle for a shootable enemy, the yellow for a flanked one, the reticle
 added to an enemy's own overwatch icon with the marker on the tile that would spring it.
@@ -118,6 +159,10 @@ on the destination tile, and the shapes it chose are free evidence about what re
 and what does not.
 
 ### C9 · Phantom Brigade · heading 3 · the `Ctrl`-held breakdown, in full
+**Half answered.** Without Ctrl, the target already carries `100%`, `Optimal` over `2X Crit - 15%`,
+and a `Predicted damage` line. The one Ctrl effect on film reveals every unit's badge at once. The
+split and the scatter cone are in no frame. `reference/phantom-brigade.md` heading 3.
+
 **Playable.** The targeting widget with `Ctrl` held, both split numbers and the scatter cone
 visible at once.
 
@@ -127,7 +172,10 @@ and the breakdown that should settle it exists. If players still misread the hea
 breakdown one key away, then *headline at the thing, breakdown on demand* has a failure mode that
 brief one has to design against rather than rely on.
 
-### C10 · Future War Tactics · heading 4 · the colour-coded zones, mid-planning
+### ~~C10 · Future War Tactics · heading 4 · the colour-coded zones, mid-planning~~
+**Answered, and it contradicts the file.** Two nested outlines on square tiles and no tint. It is
+banded, not graded. `reference/future-war-tactics.md` heading 4.
+
 **Playable.** A soldier selected mid-move-planning with the whole walkable area and its outer
 edge in frame.
 
@@ -138,6 +186,9 @@ the reserve's cliffs belong on the move range, cut at thresholds rather than at 
 points — because a graded field cannot show a cliff and this is the set's only candidate for one.
 
 ### C11 · Phantom Brigade · heading 4 · the optimal-range ring and the falloff graph, composed
+**Not answered.** The frame caught the destination mode and enemy fire drawn as red wedges on the
+ground, not the ring and the graph together. `reference/phantom-brigade.md` heading 4.
+
 **Playable.** One frame with both on screen at once, against a partly destroyed piece of cover.
 
 **Changes:** brief one's whole premise at the point where it is most likely to break. Every figure
@@ -146,7 +197,11 @@ world-space ring in the same frame — is exactly where a spatial readout either
 turns into clutter. This is the only game in the set that draws a range band and a falloff graph
 simultaneously, and nobody has seen them together.
 
-### C12 · Future War Tactics · heading 5 · a contact that has just broken line of sight
+### ~~C12 · Future War Tactics · heading 5 · a contact that has just broken line of sight~~
+**Answered, and it contradicts the set's emptiest heading.** A red beacon stands where each lost
+enemy was last seen, and it is still up on the next turn. `reference/future-war-tactics.md`
+heading 5; entry 089.
+
 **Playable.** The turn after a previously seen enemy leaves sight, HUD exactly as the player sees
 it, nothing cleared or re-framed.
 

@@ -29,6 +29,7 @@ that `conventions.md` names independently.
 | **verified** | Confirmed this session against a named source, linked. |
 | **remembered** | Model knowledge of the shipped game, not checked this session. |
 | **inferred** | Reasoned from something else in this file, not observed directly. |
+| **observed** | Read off a named shot in `shots/xcom2/`, captured from the user's own copy in pass two. |
 
 *No source found* is written where it is true. This file was built from search results, browser
 visits to Nexus Mods, Steam Workshop and StrategyWiki, and two images opened at full resolution —
@@ -168,6 +169,28 @@ than picking the version that matches what was expected. **This is worth flaggin
 session building against Brief One before it picks a gesture**, since Brief One's own text cites
 "XCOM's hover" as the model to copy, and this screenshot's evidence is a *docked list*, not a
 hover card on the target — see *What transfers* and gap-list item 1, below.
+
+**Settled in pass two, and it went against the forum excerpts.** **observed** —
+[`shot-c1-breakdown-open-on-entering-aim.png`](shots/xcom2/shot-c1-breakdown-open-on-entering-aim.png):
+the instant after choosing Fire Weapon on a visible target, before any further click, **the
+breakdown is open**. The hit column reads `HIT 68%`, `AIM +65%`, `WEAPON RANGE +3%`, and the damage
+column `DAMAGE 3-5`, `CRIT 40%`, `FLANKING TARGET +40%`. **observed** —
+[`shot-c1-hit-column-folded-damage-column-still-open.png`](shots/xcom2/shot-c1-hit-column-folded-damage-column-still-open.png):
+the chevron at the hit column's edge folds that column away. The damage column stays open, because
+each column has its own chevron (the capturer's account, which the frame agrees with). `HIT 68%`,
+`DAMAGE 3-5` and `40%` stay in the central ability panel whichever column is folded. Per the
+capturer's notes, **the fold is sticky**: a new target selected after folding stays folded rather
+than reopening. So it is not a gated reveal. It is full disclosure on entering the mode, with a
+fold the player chooses and the game remembers.
+
+**Correction, in place.** In this capture, at 1280×720 in a window, the two columns do not dock at
+the bottom left. They sit at the bottom centre, one each side of the ability panel. The guide
+screenshot above may have been taken at another resolution or UI scale; *docked in the HUD beside
+the ability, not on the target* is what both pictures agree on. **observed** —
+[`shot-c1-hit-chance-beside-target.png`](shots/xcom2/shot-c1-hit-chance-beside-target.png): the
+target carries a reticle, `68%` in red beside it, and a health bar. The same figure appears three
+times, at the target, in the ability panel and at the head of the hit column, and the terms only in
+the column.
 
 **verified** ([Steam Community discussion on hit/graze/dodge](https://steamcommunity.com/app/268500/discussions/0/1471967615856106473/); [UFOpaedia LWOTC mechanics](https://www.ufopaedia.org/index.php/Mechanics_(LWOTC))) — the line items beyond what one screenshot happened to
 show: base **Aim** (the weapon/soldier stat, and see the class-and-rank table on the same
@@ -413,13 +436,14 @@ this file did not surface a reason it should.
 
 ## The gap list
 
-1. **Heading 3 — is the shot breakdown shown by default, or behind a click past a collapsed
+1. ~~**Heading 3 — is the shot breakdown shown by default, or behind a click past a collapsed
    headline?** The screenshot shows the list open; small chevron glyphs beside "HIT" and the
    ability name suggest it may be collapsible, and no source this session is itself a picture of
    the collapsed state. **The picture:** a soldier just entered targeting mode on a visible
    target, the instant after the ability is chosen and before any further click, full HUD in
    frame. **Changes:** which gesture Brief One recovers for "headline and breakdown" — a genre
-   that defaults to showing the terms is a different reference than one that gates them.
+   that defaults to showing the terms is a different reference than one that gates them.~~
+   **Answered by C1: open by default, a fold per column, and the fold is sticky.** See heading 3.
 2. **Heading 3 — is the Squadsight penalty a fixed number or does it scale with range?** The
    captured example shows −8% once, and no second capture exists to compare against.
    **The picture:** two shots at visibly different ranges through a squadmate's sight rather than

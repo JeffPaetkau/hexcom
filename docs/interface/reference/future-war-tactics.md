@@ -5,7 +5,10 @@
 territory picked for one specific thing: "the interface does a solid job in highlighting movement
 options and the impact of cover, with clear color coded zones for movement and attack radius" —
 one reviewer's own words, and graded tints rather than discrete bands, which is the shape
-`conventions.md`'s existing row on this game already names. It is an authority on that one thing
+`conventions.md`'s existing row on this game already names. **Contradicted by pass two:** C10 shows
+the movement zone as two nested outlines, a discrete band system with no tint at all. See heading 4.
+And C12 found the one thing this file most wanted and least expected, a marker left where a lost
+enemy was last seen. See heading 5. It is an authority on that one thing
 and, by its own reviewers' account, on very little else: shot readouts, ability range, line of
 sight, reaction rules and the camera are all reported as thin, missing, or actively frustrating by
 the same people praising the colour coding. Treat every claim below accordingly — this file is
@@ -15,7 +18,7 @@ thin because the game's own published record is thin, not because the search was
 
 | | |
 |---|---|
-| **observed** | read off a named shot in `shots/`. Pass two only — none in this file. |
+| **observed** | read off a named shot in `shots/future-war-tactics/`. Pass two only: C10 and C12. |
 | **verified** | a published source, with the link. |
 | **remembered** | model knowledge, unchecked. Never load-bearing alone. |
 | **inferred** | from something else in this file, which it names. |
@@ -98,7 +101,15 @@ timed missions — see gap 8.
 
 - Unit health is shown as a name-tagged bar over each figure in the field — ally and enemy alike —
   with a numeric level beside the name and a numeric current value beside the bar (e.g.
-  "Ryabo 18 [bar] 12"). **verified**, screenshots 5862b7e6, 4b93b75d.
+  "Ryabo 18 [bar] 12"). **verified**, screenshots 5862b7e6, 4b93b75d. **Corrected by pass two:**
+  the plate reads `18 [class glyph] 100 [green bar] 2`, and the first figure is not a level. It is
+  18 on every soldier in C10, then `1` and `0` on two of the same soldiers in C12 after they have
+  moved, and the portrait column's corner numbers fall the same way. So it is the soldier's action
+  points. `100` is health and the bar draws it. The small orange trailing figure (`2`, `4`, `6`)
+  is not explained by either frame. The action-bar icons carry `7`, `13`, `7` and `7` above them
+  against that pool of 18, consistent with a per-ability cost. **observed** —
+  [`shot-c10-unit-labels.jpg`](shots/future-war-tactics/shot-c10-unit-labels.jpg),
+  [`shot-c12-turn-after-contact-lost-full-frame.jpg`](shots/future-war-tactics/shot-c12-turn-after-contact-lost-full-frame.jpg).
 - A hit-chance-or-damage range appears on the equipped-item panel (e.g. "45-50", "50-110",
   "30-90"). Whether this is the same figure a shot readout shows at the moment of firing, or a
   separate weapon-level statistic shown regardless of the current target, could not be settled
@@ -129,6 +140,14 @@ timed missions — see gap 8.
   not be determined — no screenshot gathered for this file caught a unit mid-move-planning with
   the zone visible; every combat screenshot found shows either an idle frame or a resolved action.
   **Gap**, below, and the most consequential one in this file.
+  **Settled in pass two, and against this file's own framing.** **observed** —
+  [`shot-c10-move-range-two-nested-outlines.jpg`](shots/future-war-tactics/shot-c10-move-range-two-nested-outlines.jpg):
+  the movement zone is **two nested outlines on a square grid, and nothing else**. An inner line in
+  amber and an outer line in green each follow the tile edges in steps. The ground between them
+  and inside them is not tinted. It is a banded system like the rest of the genre, drawn as edges
+  rather than as fills, and not a graded field. The frame does not say which band means what. The
+  obvious reading, by the genre's habit, is the inner edge as the reach that still leaves an
+  action, and that reading is **inferred**, not read off the picture.
 - One screenshot shows a thin ring on the ground around a named unit ("Grantle") alongside its
   nametag; no source explains what it is. **remembered/inferred**; **gap**, below.
 
@@ -142,6 +161,17 @@ timed missions — see gap 8.
   Whether this game has anything at all for a decaying or coarse contact — the single question
   this whole reference set exists to answer per-game — is unsettled. **Gap**, below, and the one
   this file would most regret leaving unresolved.
+- **Settled in pass two, and it is the largest single finding of the pass.** **observed** —
+  [`shot-c12-last-seen-enemy-beacons.jpg`](shots/future-war-tactics/shot-c12-last-seen-enemy-beacons.jpg),
+  in the frame [`shot-c12-turn-after-contact-lost-full-frame.jpg`](shots/future-war-tactics/shot-c12-turn-after-contact-lost-full-frame.jpg).
+  On the turn after previously seen enemies broke line of sight, **two red glowing beacons stand on
+  open ground where they were last seen**. Each is a thin vertical spike with a spiral of light
+  around its foot and a red glow on the ground. No body, silhouette, name or health bar is drawn
+  with them. What they mark is the capturer's identification: *last-seen enemy spots*, left on the
+  map. So a contact does not simply vanish here. A marker at the enemy's last known place survives
+  at least into the next turn, drawn as an abstract glyph rather than a ghost of the body.
+  **Not in one still:** how long a beacon lasts, whether it fades, moves or updates on a noise,
+  whether it is cleared when the enemy is seen again, and whether one beacon is one enemy.
 - Reinforcements can appear with no forewarning: one detailed review reports enemies spawning on
   the far side of the map mid-mission with no on-screen indication beforehand. **verified**, Video
   Games Made Me.
@@ -235,17 +265,20 @@ timed missions — see gap 8.
 
 ## The gap list
 
-1. **Heading 5.** Is a remembered-but-not-currently-visible enemy drawn any differently from one
+1. ~~**Heading 5.** Is a remembered-but-not-currently-visible enemy drawn any differently from one
    in sight right now, or does a contact simply vanish the moment it breaks line of sight? Picture:
    a turn where a previously seen enemy has just broken line of sight, HUD left exactly as the
    player sees it, nothing cleared or re-framed for the shot. Changes: whether this game has
    *anything* for the coarse-contact problem contract 3 exists to solve — the most consequential
-   unresolved question in this file.
-2. **Heading 4.** Are the "clear color coded zones for movement and attack radius" hexes, squares,
+   unresolved question in this file.~~ **Answered by C12:** a red beacon at the last-seen place,
+   still standing the next turn. How long it lasts is a new gap: a clip or a few stills across
+   turns with no fresh sighting.
+2. ~~**Heading 4.** Are the "clear color coded zones for movement and attack radius" hexes, squares,
    or a continuous graded tint, and where exactly does a zone's edge sit relative to a tile
    boundary? Picture: a soldier selected, mid-move-planning, with the full walkable area and its
    outer edge in frame. Changes: whether this is a banded system like most of the genre or a
-   graded field like ours, which is the one thing this game is supposed to be the reference for.
+   graded field like ours, which is the one thing this game is supposed to be the reference for.~~
+   **Answered by C10:** squares, two bands, drawn as stepped outlines on the tile edges, no tint.
 3. **Heading 3/4.** Does the 360° "sector" ability ever get a range indicator under any
    circumstance, or is unindicated range the norm for every ability but the rifle? Picture: that
    ability selected and armed, cursor and any radius indicator (or its confirmed absence) both in

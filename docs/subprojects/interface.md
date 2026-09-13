@@ -44,14 +44,14 @@ decisions to settle first, what is out of scope, and how to know it worked.
 shows its terms, what a hover does, what cancel undoes. Ten files, about 3,700 lines, built in
 one parallel round.
 
-**Two passes. The first has run, the synthesis between them has run, and the second is the job
-below.**
+**Two passes and a synthesis between them, and all three have run.** Pass two's findings are entry
+089 and *What landed on `interface/captures`* below.
 
 | | |
 |---|---|
 | **Pass one — documentary** | Published material only. **No file carries a single `observed` tag**, which is correct rather than a shortfall. Each ends with a numbered list of what a picture would settle, and those 89 questions are the pass's second deliverable. |
 | **The synthesis** | Reads all ten at once and draws the conclusions each file was forbidden to draw. Its output is the *What ten games said* section of `conventions.md`, an amendment block per brief in `briefs.md`, and the ranked list in `captures.md` that replaces the 89. Entry 077 has what it found. |
-| **Pass two — observed** | The user captures against the ranked list, drops the results in the inbox, and the gaps are filled in place. |
+| **Pass two — observed** | The user captures against the ranked list, drops the results in the inbox, and the gaps are filled in place. Five of the ten files now carry `observed` tags, each naming a crop in `shots/<game>/`. |
 
 **The ranking had to wait for the synthesis and could not have been done earlier.** A question's
 importance is only visible once all ten files are read together: what outranks what is *would a
@@ -153,95 +153,21 @@ than sampling at a fixed rate.
 
 ---
 
-## The job — pass two: the pictures, against a list that is already ranked
-
-Branch `interface/captures`. Take a worktree. **One session, on Opus, for all eleven.**
-
-**The captures are in, and three things about them override what follows.** Entry 088 has why.
-
-- **Eleven of the twelve above the line, and C8 is not coming.** The user's XCOM 2 is the GOG
-  build, which cannot load Workshop mods, so Gotcha Again's tile icons cannot be photographed.
-  Strike C8 as *not capturable from the user's copy* rather than answered. What it would have
-  settled is the glyph vocabulary for brief four's tile warning, which is built and marked
-  provisional, and stays that way. Do not substitute published screenshots for it and tag them
-  observed.
-- **One session, not one per game.** The rule below was written for twenty to forty shots a game.
-  The inbox holds sixteen files across five games, one to four each, and five parallel sessions
-  would each have to edit `conventions.md` and `captures.md` — the shared-file collision entry 072
-  barred. Read all five folders in one context.
-- **Three of the sixteen are clips** — `invisible-inc/C7.mp4`, `phantom-brigade/C9.mp4` and
-  `warhounds/C4a.mp4`. Pull the frames each entry in
-  `captures.md` names with `ffmpeg`, by the full path in *The inbox and the shots*, and never
-  sample a clip at a fixed rate. Read `xcom2/C1-notes.md` first: it is the user's own account of
-  what they saw, and it outranks any reading of the frames that disagrees with it.
-
-**Why Opus and not Sonnet, which the documentary pass ran on.** That pass was forbidden to
-recommend. This one is permitted to change a recommendation, and the first it changes is the
-gesture brief one is built around — the next thing View builds. A weak call here costs more in the
-View session that follows than the model saved.
-
-**What it is.** The ten reference files were written from published material and carry no
-`observed` tag. [../interface/captures.md](../interface/captures.md) ranks the 89 gap questions
-into one list of twenty, twelve above a cut line, ranked by what a picture would *change* rather
-than confirm. This job turns the answers into evidence in place: `remembered` and `inferred`
-claims become **observed** where a shot settles them, gap entries are struck as they are
-answered, and the recommendations in `conventions.md` that are marked **provisional** against a
-capture entry either lose the mark or get corrected.
-
-**Eleven of the twelve above the line are about a game the user can play** — XCOM 2, Invisible,
-Inc., Warhounds, Phantom Brigade, Future War Tactics. The other five games probably cannot be
-photographed at all, which is why their questions sit below the line and are phrased as *what
-would settle this*.
-
-**The seam.** `docs/interface/reference/<game>.md` for the claims and the gap lists,
-`docs/interface/reference/shots/<game>/` for the crops, `docs/interface/captures.md` for the
-list, and `conventions.md` for the recommendations that cited a capture entry by number. The
-inbox and the crop mechanism are in *The inbox and the shots* above, and they are set up already.
-
-**Settle before writing much.**
-
-- **A reference file's evidence is immutable the way the log is, with exactly one exception: a
-  claim's tag.** Upgrading `remembered` to **observed** and naming the shot is the whole job.
-  Rewriting a heading's prose because a picture suggested a better sentence is not, and neither is
-  adding a finding a shot did not produce.
-- **One session for this round, overriding the old one-game rule** — see the head of this job.
-- **A shot that contradicts a claim is the best outcome and needs saying loudly.** Correct the
-  claim in place, tag it **observed**, and append an entry to `../decisions.md` if the correction
-  reaches a brief or a recommendation. Two such corrections came out of the documentary pass and
-  both were worth more than the pass's agreements.
-- **Roughly twenty crops per game, named for what they show**, and prefer a labelled crop to a
-  full screen: it is smaller and it is better evidence, because it records which part of the
-  picture was being read.
-
-**Settling brief one is in scope, narrowly.** Two provisional marks stand between brief one and
-View: C1, on the gesture for *show me the terms*, in both `conventions.md` and *Amending One*; and
-C10, on whether the reserve's cliff belongs on the move range. Where a capture settles one, drop
-or correct the mark in `conventions.md` and **append** a short *Settling One* block after *Amending
-One* in `briefs.md` saying what the picture showed and what the brief now builds. Appended, never
-rewritten, on the same reasoning as the amendments. The mark on C15 is below the line and stays.
-
-**Out of scope.** Recommending anything a capture did not settle. Rewriting a brief's text, which
-is the amendment block's shape.
-Capturing a game nobody owns. Researching a question a browser settles — the mod changelogs,
-subscriber counts and patch notes that captures.md deliberately excluded stay in their own files'
-gap lists.
-
-**How to know it worked.** Brief one can be promoted to View with no provisional mark left on its
-gesture or its move range. A recommendation in `conventions.md` that said **provisional** now
-either says nothing or says something different, and names the shot. A gap entry that was answered
-is struck rather than deleted. And somebody reading one reference file can tell, per claim,
-whether it came from a page or from a picture.
-
----
-## Then — the first five minutes, and what has to be taught
+## The job — the first five minutes, and what has to be taught
 
 Last of the queue, and deliberately: onboarding decides what a player must be told before turn
 one, and half of that answer is what the genre's interface already teaches without telling
-anybody — which is exactly what the synthesis is about to write down. Branch
-`interface/onboarding` when it comes up. The ten reference files give it something the earlier
+anybody — which the synthesis wrote down and pass two photographed. Branch
+`interface/onboarding`. The ten reference files give it something the earlier
 version of this brief did not have: Into the Breach's total disclosure is now documented in
 detail rather than cited, and it is the argument this job has to answer rather than route
 around.
+
+**Read entry 089 before starting.** Two of its findings are onboarding's material directly. The
+shot's terms open by default while aiming, so the arithmetic teaches itself on the first shot, and
+*where the arithmetic lives* below is half answered already. And the one persisted enemy marker in
+the set is a bare beacon with no explanation on screen, which is what a player here would meet
+first and would have to be taught to read as *somebody's belief*.
 
 **What it is.** The conventions are written and the queue is written (entry 060), and both assume
 a player who already knows what a hit chance and an action point are. Neither says how anybody
@@ -303,6 +229,45 @@ nothing else; and somebody who has never played this game can be handed the reco
 say what they would understand about the enemy after one turn.
 
 ---
+
+## What landed on `interface/captures`
+
+Entry 089 has the findings and what each reaches. What exists:
+
+- **Thirty-one crops in `docs/interface/reference/shots/<game>/`** across five games, named for
+  what they show. Small interface crops are PNG, and whole scenes are JPG at 1,400 to 1,600 pixels,
+  which kept the set near 7 MB.
+- **`observed` tags in five reference files**, each naming its crop. Where a shot contradicted a
+  claim, the claim is corrected in place and says so; answered gap entries are struck, not
+  deleted.
+- **`captures.md`** — each of the twelve entries above the line opens with what came back, and a
+  struck heading means answered or ruled out.
+- **`conventions.md`** — the held-key recommendation is struck and replaced, the C10 mark is gone,
+  and heading 5, the banner and the reaction-firing rows are corrected in place.
+- **`briefs.md`** — *Settling One*, after *Amending One*. No brief text rewritten.
+
+Five things worth not re-deriving:
+
+- **The held-key recommendation failed on its denominator, not its count.** Four games used a held
+  key, and all four used it for *everything at once*, never for one shot's terms. 077 warned that
+  reading the denominator is most of the method, and the synthesis still missed this one. A
+  convention borrowed for a job has to be counted among games doing that job.
+- **Guides describe mechanics; only a picture describes a readout.** Warhounds' per-bullet
+  percentages were real sentences in real guides about how the burst resolves, and the shipped
+  preview shows one figure. The same gap produced FWT's "graded tints": a reviewer's adjective read
+  as a drawing.
+- **The most important finding came from a game the set nearly dismissed.** Future War Tactics'
+  file said it was an authority on one thing "and on very little else". Its last-seen beacon is the
+  only persisted enemy marker in ten games, and no review mentions it. That is the case for
+  photographing a thin file's emptiest heading rather than skipping it.
+- **The user's notes outrank the frames only on what the frames cannot show.** C1's notes said the
+  fold hid `FLANKING TARGET`. The frame showed the damage column still open, and asking settled it:
+  a chevron per column. Where an account and a picture disagree on something visible, ask; do not
+  pick.
+- **A clip was found on a contact sheet and read at full resolution.** Thumbnails at a fixed rate
+  located the moments, and every claim cites a full-resolution frame pulled at a named time. Banner
+  dwell was measured on the banner's own pixels, frame by frame, which a person watching could not
+  have done.
 
 ## What landed on `interface/synthesis`
 

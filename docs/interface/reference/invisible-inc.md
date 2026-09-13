@@ -14,9 +14,10 @@ harder than any other game in the set; this file is the evidence underneath that
 | **verified** | a published source, linked at the point of use. |
 | **remembered** | model knowledge, unchecked against a source. Flagged for the gap list below. |
 | **inferred** | derived from another claim in this file, which it names. |
+| **observed** | read off a named shot in `shots/invisible-inc/`, captured from the user's own copy in pass two. |
 
-Pass one. No **observed** tag appears in this file, and that is not a shortfall — see
-`../../subprojects/interface.md`.
+Pass one wrote this file with no **observed** tag, which was by design. Pass two captured C2, C3 and C7
+and upgraded the claims those shots settle in place; everything else is as pass one left it.
 
 ## Sources
 
@@ -83,7 +84,11 @@ years of patches and none gives one authoritative screenshot of the whole frame 
   *(verified — [Steam Community Discussions, "Undo last move?"](https://steamcommunity.com/app/243970/discussions/0/616187203942781866/))*
 - **Cancel exists at the level of a declared action, not a spent point.** Right-click, or `Esc`,
   backs out of a context-button prompt before it is taken; it cannot back out of a move already
-  clicked. *(remembered — see gap list)*
+  clicked. *(remembered — see gap list)* **But right-click is also the move.** The cursor hint
+  beside a planned path reads `MOVE: [ RIGHT CLICK ]`. *(observed —
+  [`shot-c3-move-range-outline-path-and-cursor-hint.jpg`](shots/invisible-inc/shot-c3-move-range-outline-path-and-cursor-hint.jpg))*
+  So a committing action with no undo sits on right-click here too. No complaint about it was found
+  in pass one's sources, which were not looking for one.
 - **Disabled-state icons.** An ability whose cost or condition cannot currently be met — the
   critique's example is a taser with no charge — is shown greyed out on its context button rather
   than hidden, so the player learns the constraint by seeing the refusal. *(verified — [What Works
@@ -128,16 +133,29 @@ game blocks the click rather than allowing it and rolling a miss.
 - **Reachable tiles are shown on hover** as the agent moves the mouse; the AP-remaining figure
   above the agent's head updates live rather than the tile itself carrying a number.
   *(verified — [Any Key To Start](https://anykeytostart.wordpress.com/2015/05/27/invisible-inc/))*
+  The reachable area is drawn as **a glowing cyan outline along its edge, with no fill**, and the
+  path to the cursor as a dotted cyan line; the AP badge above the agent reads `0 AP` in that
+  frame. *(observed — [`shot-c3-move-range-outline-path-and-cursor-hint.jpg`](shots/invisible-inc/shot-c3-move-range-outline-path-and-cursor-hint.jpg))*
 - **Vision is drawn as striped shading on the tile itself**, in three bands: dark red for
   **watched** (primary vision — stepping in is seen at once), light red for **noticed**
   (peripheral vision — the tile *looks* watched but is not, the game's answer to `conventions.md`'s
   cited *peripheral* distinction), and yellow for **hidden**, meaning the tile is behind cover from
   every observer who could otherwise see it. No shading at all means no corporate entity has vision
   on the tile. *(verified — [vision](https://iiwiki.werp.site/vision), corroborated by [Beginners
-  Guide](https://steamcommunity.com/sharedfiles/filedetails/?id=455743741))*
+  Guide](https://steamcommunity.com/sharedfiles/filedetails/?id=455743741))* *(observed, all three
+  in one cone — [`shot-c2-cone-watched-noticed-hidden-bands.png`](shots/invisible-inc/shot-c2-cone-watched-noticed-hidden-bands.png):
+  a saturated red stripe over the body of the cone, a duller red stripe over its outer wing, and a
+  pale yellow stripe in the lee of the sofa and the low table. And [`shot-c2-cone-red-stripes-and-hidden-behind-desk.png`](shots/invisible-inc/shot-c2-cone-red-stripes-and-hidden-behind-desk.png):
+  the same yellow stripe behind a desk, and the stripes carried up the faces of a glass wall.)*
+  **How legible the three are, as a picture rather than a description:** separable in a crop at
+  the capture's native resolution; in the full 5759-pixel frame the two reds are hard to tell apart
+  and the yellow reads as the shadow of the furniture that casts it. The critique below is borne
+  out on the two reds and not on the yellow.
 - **Tiles once seen and now out of sight are shaded darker and less saturated** rather than reset
   to unknown — a fog-of-war memory layer distinct from the live vision layer above it.
-  *(verified — [vision](https://iiwiki.werp.site/vision))*
+  *(verified — [vision](https://iiwiki.werp.site/vision))* *(observed — in the same C3 frame the
+  rooms away from the agent are drawn dim and desaturated while the agent's room is lit:
+  [`shot-c3-move-range-outline-path-and-cursor-hint.jpg`](shots/invisible-inc/shot-c3-move-range-outline-path-and-cursor-hint.jpg))*
 - **The striping itself was criticised as ambiguous** by another interface designer: "it's not
   very clear what happens on squares with partial shading," with a suggested fix of full shading
   for seen tiles and none for unseen rather than a stripe pattern in between. The game also ships
@@ -174,7 +192,13 @@ descriptions.
   next corporate turn. A sixth, **tracking**, rides along with overwatch: the guard turns to keep
   facing a moving target within its vision, including peripheral vision, but will not turn for a
   target that merely *ends* a move in peripheral — one safe tile of drift is built in.
-  *(verified — [guard_behaviour](https://iiwiki.werp.site/guard_behaviour))*
+  *(verified — [guard_behaviour](https://iiwiki.werp.site/guard_behaviour))* *(observed, the two
+  badges and the interest point: [`shot-c3-investigating-badge-and-interest-point.png`](shots/invisible-inc/shot-c3-investigating-badge-and-interest-point.png)
+  shows a yellow downward triangle with a `?` over the investigating guard's head, and, at the
+  place the guard is walking to, **a separate yellow shield-shaped outline with a `?` in it,
+  standing on a tile marked by yellow corner brackets**. It is a glyph at a place, drawn in the same
+  colour as the badge on the body. [`shot-c3-alerted-badge.png`](shots/invisible-inc/shot-c3-alerted-badge.png)
+  shows a red downward triangle with a `!` over an alerted guard, whose body is drawn flat red.)*
 - **Escalation is automatic and irreversible in one direction**: seeing an agent, a knocked-out or
   dead body, a rescued NPC, or a destroyed drone moves a guard straight to alerted with no
   intermediate step, and alerted has no way back down for that guard for the rest of the mission.
@@ -211,6 +235,29 @@ to an interleaving strip, and are not shown as being in one.
 in enough detail to describe precisely — whether the camera follows guards as they act, whether
 there is a banner naming the phase, or whether it is silent until something the player would
 notice happens. This is a genuine gap rather than a considered absence; see the gap list.
+
+**Settled in pass two, from one corporate turn end to end (C7, a 7-second clip).** *(observed.)*
+Times are from the clip's first frame, measured frame by frame on the banner's own pixels, and are
+good to about a thirtieth of a second:
+
+- **0.00 to 1.43 s** — a full-width red bar across the top third of the screen reading
+  `ENEMY ACTIVITY` with `TURN 13` beneath it
+  ([`shot-c7-enemy-activity-banner-hud-hidden.jpg`](shots/invisible-inc/shot-c7-enemy-activity-banner-hud-hidden.jpg)).
+  It is already up on the clip's first frame, so 1.43 s is a floor on its dwell, not a measure of it.
+  **The agent HUD is gone** — portrait, action row and End Turn are not drawn for the whole phase.
+- **1.43 to 3.48 s** — no banner and no input. The camera does not move at any point. The map's
+  dark backdrop tiles are tinted red rather than their usual blue-grey, so the phase is still
+  marked after the words have gone. The one perceptible event is a cone: a guard's striped vision
+  cone changes shape and then clears, with no guard body drawn moving on screen
+  ([`shot-c7-cone-changes-then-clears-no-guard-drawn.jpg`](shots/invisible-inc/shot-c7-cone-changes-then-clears-no-guard-drawn.jpg)).
+- **3.48 to about 4.9 s** — a cyan bar in the same place reading `AGENT ACTIVITY` with `TURN 14`
+  ([`shot-c7-agent-activity-banner.jpg`](shots/invisible-inc/shot-c7-agent-activity-banner.jpg)).
+- **5.0 s** — the HUD is back and input returns
+  ([`shot-c7-control-returned-hud-back.jpg`](shots/invisible-inc/shot-c7-control-returned-hud-back.jpg)).
+
+So there is **one indicator for the whole corporate phase, never one per guard**. It is a banner
+with words in it, and an ambient tint that carries the phase between the banner in and the banner
+out. The camera follows nothing, and nothing is shown for a guard the player cannot perceive.
 
 **What a picture would settle.** A clip spanning one full corporate turn end to end, to see what,
 if anything, marks the hand-off and what the camera does while the player has no input.
@@ -342,12 +389,14 @@ screenshot of a mod adds nothing a description of its changelog does not already
 
 ## The gap list
 
-1. **Heading 6 — what the corporate turn shows on screen.** No source read describes camera
+1. ~~**Heading 6 — what the corporate turn shows on screen.** No source read describes camera
    behaviour, phase framing, or pacing during the enemy's turn in Invisible, Inc. with any
    precision. *Picture:* a clip spanning one full corporate turn end to end. *Changes:* whether
    this project's own "one indicator per contiguous stretch of hostile activity" (entry 065) has
    any shipped precedent to check against, or is genuinely unprecedented in the genre as
-   `conventions.md` already suspects for the strip question generally.
+   `conventions.md` already suspects for the strip question generally.~~ **Answered by C7:** it
+   has one. One banner for the phase, a tint between, no camera, and a dwell of at least 1.4 s. See
+   heading 6.
 2. **Heading 7 — the moment overwatch fires.** Every source describes the trigger and the
    consequence; none describes the presentation of the shot itself — camera cut, sound, delay.
    *Picture:* a clip from a guard entering overwatch through to firing. *Changes:* whether this

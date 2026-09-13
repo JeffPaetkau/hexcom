@@ -373,6 +373,57 @@ graded field cannot show a cliff. That is the same smoothing mistake entry 067 f
 line, in the one place it costs most. **Provisional on C10**, which is the set's only candidate for
 a game that bands a graded field and the one thing Future War Tactics is in the set for.
 
+## Settling One — what the pictures showed, and what the brief now builds
+
+*Appended by pass two, after the captures came in, on the same reasoning as the amendments: the
+brief and its amendment are not rewritten, and this block is the last word on the two marks it
+names. Both **provisional** marks on brief one are gone. Entry 089 has the reasoning; the shots are
+under [reference/shots/](reference/shots/).*
+
+**C1 and C5 settle *show me the terms*, and they overturn the amendment's answer.** The amendment
+said to build **held-key disclosure**. Build this instead:
+
+- **The shot's terms are open for as long as the player is aiming.** Firing is already a mode here
+  (entry 084). Entering it shows the breakdown with no further input, the way both photographed
+  games do. XCOM 2 opens `HIT 68%`, `AIM +65%`, `WEAPON RANGE +3%` beside `DAMAGE 3-5`, `CRIT 40%`,
+  `FLANKING TARGET +40%` the instant Fire Weapon is chosen. Warhounds' attack mode opens
+  `PRECISION 17%` over `Precision +85`, `Range -18`, `Cover -50` and `DAMAGE 4-8`.
+- **One figure at the target; the terms in the HUD, not on the target.** Both games keep a single
+  figure at the body, beside the reticle and over the health bar, and dock the terms away from it:
+  XCOM 2 at the bottom centre either side of the ability panel, Warhounds at the right edge. The
+  amendment's distance rule still holds for the headline, which is where the cursor is. The terms
+  are what the player reads once the target is chosen, and neither game puts them at the cursor.
+- **A fold the player can close, which the game remembers.** XCOM 2 folds each column on its own
+  chevron and keeps it folded for the next target. That is the whole of the player's control over
+  it: a preference, not a gesture per shot.
+- **No held key for the shot.** In the set, the held key does another job, *everything at once for
+  a moment*. Phantom Brigade's `Left Ctrl` is labelled `Show details` and on film reveals every
+  unit's badge together (C9). Shadow Tactics' and Desperados III's `Alt` shows every cone. Whether
+  brief one wants such a key for its tile or soldier figures is the brief's own call and no picture
+  settles it. It is not how the shot's terms are shown.
+- **Name the headline for what it is.** Warhounds calls its headline `PRECISION` and one of the terms
+  under it `Precision`. That is the Phantom Brigade warning again, in the game that was supposed to be
+  the counter-case to it. The amendment's naming rule stands, now with two games behind it.
+
+**The Readouts section's counter-case is gone.** Warhounds was cited as showing per-bullet
+percentages by design. Its shipped preview shows one figure for a burst. So *one figure at the
+target, the terms open while aiming* is two of two among the games that show a hit chance and were
+photographed. That is as strong as a convention in this set gets on this heading.
+
+**C10 settles the reserve's cliff on the move range, and confirms the amendment.** Future War
+Tactics, the set's only candidate for a game that bands a graded field, turned out to draw two
+nested outlines, amber inside green, stepped along the tile edges with no tint on the ground. No
+game in the set grades its reach, so **cut the move range into bands at the reserve's own
+thresholds, as the amendment says**. One detail the picture adds, and Invisible, Inc.'s cyan
+reach outline (C3) agrees with it: **draw each band as an edge on the ground, not as a fill.** The
+amendment's worry was a second overlay fighting the attention tint. An edge laid over a tint does
+not fight it, and both photographed games draw reach that way.
+
+**What is not settled, so a View session does not go looking.** How long either game holds a fold
+or a band on screen is not in a still. Whether XCOM 2 remembers a fold across soldiers or only
+across targets is the capturer's account for targets alone. Phantom Brigade's split of its folded
+number was not caught on film.
+
 ## Amending Two — the enemy's file, drawn
 
 **Correction to how the held arc is argued, not to the recommendation.** The brief settles a View

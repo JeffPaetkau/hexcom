@@ -11,7 +11,9 @@ action points on it. It is authority on that comparison, and on nothing else in 
 version is all-or-nothing where `ReactionModel.Banked` is graded, which is most of what makes it
 worth a section of `conventions.md` rather than a footnote. It is also the clearest shipped example
 found of a *transparent* hit-chance readout: percentages per bullet in a burst, not one number for
-the whole attack. Everywhere else — classes, loadout, base management, cover-and-flank arithmetic —
+the whole attack. **Contradicted by pass two, loudly:** the attack preview captured in C5 draws
+one figure, `PRECISION 17%`, with its terms itemised beneath it, and no per-bullet percentage
+anywhere on screen. See heading 3. Everywhere else — classes, loadout, base management, cover-and-flank arithmetic —
 it is an ordinary instance of the XCOM/Jagged Alliance shelf the canon list already covers, and nine
 of these ten headings say so plainly by coming back thin.
 
@@ -21,6 +23,10 @@ developer-quoted design explainer. This is the thinnest file in the set by the b
 prediction, and the reason is not effort — it is that a game three weeks old at time of writing has
 no accumulated screenshot corpus, no wiki with images, and no mod scene to mine for what the
 shipped UI failed to do.
+
+**Played, in part, since.** Pass two captured C4, C5 and C6 from the user's own copy: two stills,
+one 24-second clip and one full frame, in `shots/warhounds/`. The claims those settle are tagged
+**observed** in place, and the one they contradict is corrected where it stands.
 
 **A note on source quality, because it shapes every tag below.** Several of the sites cited —
 `warhounds.org`, `warhoundswiki.wiki`, `warhounds-game.wiki`, `warhounds.online`, `warhounds.net` —
@@ -35,7 +41,7 @@ tag key below is honest about which of those this file can offer.
 
 | | |
 |---|---|
-| **observed** | read off a named shot in `shots/`. Not used in this file — pass one, and this game has no shots yet. |
+| **observed** | read off a named shot in `shots/warhounds/`. Pass two only. |
 | **verified** | a published source, with the link. Everything tagged this way below is community-wiki or press text, not a developer-authored manual or a screenshot; see the note above. |
 | **remembered** | model knowledge, unchecked. Used sparingly and flagged for the gap list. |
 | **inferred** | drawn from something else in this file, which it names. |
@@ -81,6 +87,15 @@ access to smoke, scanners, drones, grenades" — *inferred*), and a mission runs
 the store page, which implies *something* tracks progress toward that, unnamed. Difficulty and save
 mode are chosen outside a mission, not drawn during one (*inferred*, from the FAQ's save-mode list
 being a setup-time choice).
+
+**Pass two, from frames taken for other questions** (*observed* —
+[`shot-c6-first-contact-full-frame.jpg`](shots/warhounds/shot-c6-first-contact-full-frame.jpg),
+[`shot-c4-enemy-turn-banner.jpg`](shots/warhounds/shot-c4-enemy-turn-banner.jpg)): an
+`OBJECTIVES` checklist top left; squad portraits down the left edge under a `[TAB]` label, each with
+a segmented health bar; the selected soldier's name and a row of five small ability glyphs bottom
+left under `[F1]`; the action bar bottom centre, slots bound `[1]`–`[9]` with a use count above some;
+the weapon's name and silhouette bottom right; and top right a counter, then `[END]`, `[X]` and
+`[ESCAPE]` controls. Nothing is drawn in the middle of the screen at rest.
 
 **What a picture would settle:** everything. A single frame of a mid-mission moment with no menu
 open — what sits at the edges of the screen, and whether the store page's five-class roster shows
@@ -128,6 +143,30 @@ itemises which named terms appear in it (flank? elevation? suppression?) or whet
 is shown by default or behind a gesture. No source mentions a target-cycling key or the order
 targets are offered in.
 
+**Settled in pass two, and it contradicts the per-projectile reading of the preview.**
+*(observed — C5, a soldier aiming a short assault-rifle burst at a covered target at range.)*
+
+- **The breakdown is open by default in attack mode**, docked on the right edge of the screen
+  under the target's name (`Seasoned Assault Trooper`). It reads: a `DETAILS [F1]` button;
+  **`PRECISION 17%`** as the headline; then `Precision +85` in green, `Range -18` and `Cover -50` in
+  red; then `DAMAGE 4-8` above a small bar; and a `▾` at the foot.
+  [`shot-c5-precision-breakdown-panel-open-in-attack-mode.png`](shots/warhounds/shot-c5-precision-breakdown-panel-open-in-attack-mode.png)
+- **The headline is at the target three times**: beside the aiming reticle, beside the health bar
+  over the target's head, and on a small target card under the body labelled `<> [TAB]`.
+  [`shot-c5-one-precision-figure-at-target-and-tab-card.png`](shots/warhounds/shot-c5-one-precision-figure-at-target-and-tab-card.png)
+- **The attack itself is a mode with a bar**: `ATTACK [SPACE]` as the confirm, a close box, three
+  small figures (`1-2`, `> 1`, `1`), the line *A short assault rifle burst.*, and the action slots
+  `[1]`–`[9]` beneath with the active one framed.
+  [`shot-c5-attack-mode-bar.jpg`](shots/warhounds/shot-c5-attack-mode-bar.jpg)
+- **No per-bullet percentage is drawn anywhere in the frame.** The claim above that "the hit chances
+  on a three-round attack are 100%, 90%, and 80%" may still describe the *mechanic*, and this frame
+  cannot rule on that. What it rules on is the *readout*: for a burst, the shipped preview folds to
+  one figure, and the term it names the figure after (`Precision`) is also the name of one of its
+  own terms. Whether a longer burst or a clear line of fire changes the panel is not in the
+  picture.
+- **Target cycling exists and is on `Tab`** — the card's own label says so. How it orders targets
+  is not in the picture.
+
 **What a picture would settle:** the attack preview itself, mid-aim, on a target with cover and at
 range — every labelled term in the breakdown, in the order they are listed, and whether the
 per-bullet percentages (100/90/80-style) sit on the same panel as the modifier breakdown or
@@ -146,6 +185,11 @@ mentions a detection or concealment ring of any kind; optical camouflage is name
 equipment (*verified*, Steam page) but nothing describes it as drawing a radius on the ground the
 way Mutant Year Zero's torch-off circles do.
 
+*Observed in pass two:* the ground is a **square** grid, not hexes — tiles are drawn as translucent
+rounded squares where anything is drawn on them at all
+([`shot-c4-idle-overwatch-sector-as-yellow-tiles.jpg`](shots/warhounds/shot-c4-idle-overwatch-sector-as-yellow-tiles.jpg)).
+In the same frame a toast above the action bar reads `Not enough AP`.
+
 **What a picture would settle:** one frame with a tile in each of full cover, half cover, and open
 ground selected or hovered in turn — whatever mark (if any) distinguishes them. And, separately, a
 frame during optical-camouflage use showing whether anything is drawn on the ground for it.
@@ -163,6 +207,17 @@ then drawn fully and permanently — but nothing published confirms or denies it
 the kind of confident-sounding guess the brief warns a documentary pass will make without noticing.
 It is listed here instead.
 
+**Half settled in pass two** (*observed* — C6, the frame after first contact; the frame before was
+not captured). The admission is **a banner, not a mark on a body**: a red striped bar top centre
+reading `ATTENTION!` over the line `Enemy squad detected`
+([`shot-c6-enemy-squad-detected-banner.png`](shots/warhounds/shot-c6-enemy-squad-detected-banner.png)).
+It names a *squad*, not a unit. In the same frame the enemies are drawn as bodies with segmented red
+health bars over them, full
+([`shot-c6-first-contact-full-frame.jpg`](shots/warhounds/shot-c6-first-contact-full-frame.jpg)).
+So the game does hide its enemies until contact, which is the fog half of the no-undo law
+`conventions.md` could not confirm. Whether the banner stays up or passes, and whether anything is
+drawn for a hostile heard but not seen, are not in one still.
+
 **What a picture would settle:** the single most valuable capture in this file — the frame at the
 instant a previously unseen enemy is first spotted. What appears (a body, a marker, an alert icon,
 nothing until the enemy's own turn), and whether anything at all is drawn for a hostile that has
@@ -178,6 +233,12 @@ indicator, or anything shown to the player while the enemy side is acting. This 
 if the game shows nothing during the opposing turn, that is a data point the onboarding brief's
 alternating-banner precedent (XCOM's "Enemy Turn" card) would want confirmed or denied, not assumed.
 
+**Settled in pass two** (*observed* — C4's clip, from 17 s):
+**a banner.** A red box top centre reading `ENEMY TURN`, with a row of small square pips beneath it
+that the frame does not explain, stays up while the enemy side acts
+([`shot-c4-enemy-turn-banner.jpg`](shots/warhounds/shot-c4-enemy-turn-banner.jpg)). The squad
+portraits and the top-right controls stay on screen; the soldier card and action bar do not.
+
 **What a picture would settle:** a frame from the moment control passes to the enemy side — banner,
 dimmed input, or nothing at all.
 
@@ -192,6 +253,28 @@ stop a moving enemy, so layer your coverage" (*verified*, same source) — imply
 soldiers' cones stack independently rather than one shared reaction economy. No source describes
 what happens on screen at the moment a cone fires: no camera-cut, no tick clock, no visible
 countdown analogous to Hexcom's reaction window.
+
+**Settled in pass two** (*observed* — C4: a 24-second clip from placement through the enemy turn, and
+a still of the sector at rest). In order:
+
+- **Entered from the action bar.** Slot `[2]` is Overwatch, and selecting it opens the same mode bar
+  as an attack, reading `OVERWATCH [SPACE]` with the line *The soldier monitors the sector and
+  attacks an enemy if they move or take action.*
+- **While placing, a warning is drawn on the thing.** A red chip reading `Brings out of cover`
+  appears under the cursor. The hovered enemy is drawn as a pink-and-white striped silhouette
+  ([`shot-c4-overwatch-placement-brings-out-of-cover.jpg`](shots/warhounds/shot-c4-overwatch-placement-brings-out-of-cover.jpg)).
+- **Once declared,** a small `OVERWATCH` label sits over the soldier's name plate, and an enemy in
+  the sector carries a percentage with a burst icon beside its health bar — `49%` in the frame
+  ([`shot-c4-overwatch-declared-label-and-shot-chance.jpg`](shots/warhounds/shot-c4-overwatch-declared-label-and-shot-chance.jpg)).
+- **At rest, the sector is drawn as a patch of translucent yellow squares on the ground**, down and
+  away from the soldier. It is the grid's own tiles tinted, not a smooth wedge. The capturer
+  identified this patch as the idle overwatch cone
+  ([`shot-c4-idle-overwatch-sector-as-yellow-tiles.jpg`](shots/warhounds/shot-c4-idle-overwatch-sector-as-yellow-tiles.jpg)).
+- **When it fires, during `ENEMY TURN`, the camera does not cut to the shooter.** It holds the
+  overhead view with shooter and target both in frame. The result is floating text at the target
+  (`-1`, `Crit`, `Scratch`), and a bark (`Keep it up!`) appears beside a squad portrait
+  ([`shot-c4-overwatch-fires-no-camera-cut.jpg`](shots/warhounds/shot-c4-overwatch-fires-no-camera-cut.jpg)).
+- **Nothing marks a trigger point on the ground** in any frame of the clip.
 
 **What a picture would settle:** a clip of an overwatch cone actually firing — camera behaviour (cut
 to the shooter, or none), what if anything marks the trigger point on the ground, and how the cone
@@ -256,44 +339,53 @@ of the size.
 - **The reserve is all-or-nothing here, confirmed independently of `conventions.md`'s own citation**
   — bears on that file's *Points, and the reserve* section, which already uses this game as the one
   shipped comparison for a graded bank; nothing found here weakens that reading.
-- **Per-projectile transparent hit chance (100/90/80-style) is a second shape for "the arithmetic
+- ~~**Per-projectile transparent hit chance (100/90/80-style) is a second shape for "the arithmetic
   behind the number," distinct from XCOM's single hover-to-expand figure** — bears on *Readouts*:
   a genre example that shows several numbers at once by design, worth weighing against "headline at
-  the thing, breakdown on demand" as brief one is written.
+  the thing, breakdown on demand" as brief one is written.~~ **Corrected by C5:** the shipped
+  preview is one figure at the target with its terms open in a docked panel. It is a second example
+  of XCOM's shape, not a counter-case to it. That bears on *Readouts* and on brief one's gesture.
 - **A free 360° camera with modelled floors, shipped in 2026** — bears on *The camera* section,
   which cites Jagged Alliance 3 and Silent Storm for the same case; this is a third and more recent
   one.
-- **Alternating whole-side turns with no reported on-screen indicator for the opposing turn** —
+- ~~**Alternating whole-side turns with no reported on-screen indicator for the opposing turn** —
   bears on *Turn order and whose go it is* and on the onboarding brief's banner precedent; if
-  confirmed empty, it is a data point against assuming every alternating game marks the handover.
+  confirmed empty, it is a data point against assuming every alternating game marks the handover.~~
+  **Corrected by C4:** an `ENEMY TURN` banner. A third game with the phase banner, not an
+  exception to it.
+- **The moment a reaction fires, with no camera cut** (C4) — bears on *Reactions* and on
+  *Movement and shooting animation*, where the one thing ten files had never documented now has a
+  picture.
 - **Movement range coded by which action point pays for a tile, not by a single reachable/
   unreachable boundary** — bears on *The tile*, as an example of a second axis (which resource, not
   just how far) drawn directly on the ground.
 
 ## The gap list
 
-1. **The moment an unseen enemy is first spotted** (heading 5) — a frame at first contact, whatever
+1. **Half answered by C6** — the after frame is a named banner; the before frame and any heard-but-
+   unseen state are still open. **The moment an unseen enemy is first spotted** (heading 5) — a frame at first contact, whatever
    is on screen the instant before and after. Nothing published says whether this game has any
    state between *undetected* and *fully drawn*, and that is the single largest unknown in the file:
    it decides whether Warhounds belongs on the XCOM shelf or has something contact-file-shaped that
    the canon does not.
-2. **The attack preview, itemised** (heading 3) — a soldier aiming at a covered target at range, the
+2. ~~**The attack preview, itemised** (heading 3) — a soldier aiming at a covered target at range, the
    full breakdown panel visible: every named modifier, in order, alongside the per-bullet
    percentages. Settles whether the terms are shown by default or behind a hover, and whether
-   Warhounds is a second example for or a counter-example against "one number, expandable."
+   Warhounds is a second example for or a counter-example against "one number, expandable."~~
+   **Answered by C5:** shown by default, one figure, no per-bullet percentages — a second example.
 2b. **Target-cycling** (heading 3) — a clip of switching aim between two visible targets without
     releasing the aim mode, to confirm the mechanism exists at all before asking how it orders
-    targets.
+    targets. *Half answered by C5: the target card is labelled `[TAB]`; the order is still open.*
 3. **A tile in each cover state, selected or hovered** (heading 4) — full cover, half cover, open —
    whatever mark (if any) each carries. The Cover and Overwatch Guide says this is undocumented even
    by the community, so a single capture would out-do every published source at once.
-4. **The handover to the enemy turn** (heading 6) — one frame at the instant control passes. Settles
+4. ~~**The handover to the enemy turn** (heading 6) — one frame at the instant control passes. Settles
    whether a banner, a dimmed screen, or nothing marks it, which the onboarding brief's XCOM
-   precedent assumes without this game confirming or denying it.
-5. **An overwatch cone firing** (heading 7) — a clip from cone placement through to the shot landing.
+   precedent assumes without this game confirming or denying it.~~ **Answered by C4:** a banner.
+5. ~~**An overwatch cone firing** (heading 7) — a clip from cone placement through to the shot landing.
    Settles camera behaviour (cut or none) and whether the trigger point is marked on the ground,
    which the Hexcom reaction window's own camera-cut behaviour has no shipped company for yet
-   without it.
+   without it.~~ **Answered by C4:** no cut, and no trigger point drawn.
 6. **The ability bar, mid-hover** (heading 2) — a soldier selected, the bar on screen, cursor over
    one entry. Settles where it sits, what a hover reveals, and whether it resembles the canon's
    bottom-row shape.
@@ -303,7 +395,8 @@ of the size.
    between a *shown-before-committing* figure and a *told-you-so* one.
 8. **The Options → Controls screen** (heading 8) — settles every real keybind at once, in place of
    the category names the controls guide gives instead.
-9. **A full mid-mission frame with nothing open** (heading 1) — settles the whole of screen
-   furniture, which no source addresses directly at all.
+9. ~~**A full mid-mission frame with nothing open** (heading 1) — settles the whole of screen
+   furniture, which no source addresses directly at all.~~ **Answered in passing by C6's full
+   frame.** See heading 1.
 10. **The patch notes for the "UI fixes" patch, in full** (heading 10) — a still cannot do this; the
     text itself would do it, and it is the nearest thing this game has to job 1's modding record.

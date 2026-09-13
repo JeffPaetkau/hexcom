@@ -22,7 +22,10 @@ not for anything about hiding.
 | **remembered** | model knowledge, unchecked against a primary source. Every one is a gap-list candidate. |
 | **inferred** | derived from another claim in this file, which it names. |
 
-No **observed** tags — pass one has none by design.
+| **observed** | read off a named shot in `shots/phantom-brigade/`, captured from the user's own copy in pass two. |
+
+Pass one had no **observed** tags, by design. Pass two captured C9 (a still and a clip) and C11 (a
+still). Neither shows what it was asked for in full, and the file says so where each lands.
 
 ## Sources
 
@@ -150,6 +153,31 @@ player has to remember against.
   **remembered**, from search synthesis rather than a single fetched primary source; a genuine gap.
 - Targets are switched with Ctrl+click rather than a cycle key. **remembered**.
 
+**Pass two, and it did not catch the split.** *(observed.)*
+
+- **Without Ctrl, the target already carries more than one number.** Taken with Ctrl not held (the
+  capturer could not hold it and screenshot at once), the targeted unit shows a large **`100%`**
+  headline under its reticle. To its left is `Optimal` in green over `2X Crit - 15%`. To its right
+  is `Predicted damage` over `Unit damage ×1.5 2927/11358`, which is the damage-prediction line
+  above in its shipped form. Under it is the unit's badge (`⊥10`, three bars, two weapon glyphs).
+  [`shot-c9-headline-and-damage-prediction-without-ctrl.png`](shots/phantom-brigade/shot-c9-headline-and-damage-prediction-without-ctrl.png)
+- **The key is labelled `Show details`**, bound to `Left Ctrl`, in the controls legend at the
+  bottom right. [`shot-c9-show-details-bound-to-left-ctrl.png`](shots/phantom-brigade/shot-c9-show-details-bound-to-left-ctrl.png)
+- **In the clip the capturer toggled Ctrl.** The only change in its frames that fits a toggle is at
+  about 9.8 s. Every unit on the map, blue and red, gains its badge at once, where before only the
+  targeted unit had one
+  ([`shot-c9-ctrl-toggle-reveals-every-unit-badge.jpg`](shots/phantom-brigade/shot-c9-ctrl-toggle-reveals-every-unit-badge.jpg),
+  before and after). That is *show me everything for a moment*, the job the held `Alt` does in
+  Shadow Tactics. The headline splitting into accuracy and damage effectiveness **is not in any
+  frame**, and neither is a scatter cone. The clip's picture stops at about 10.6 s of its 17.4, so
+  whatever followed was not recorded.
+- **Also in the clip**: while choosing a target, the cursor carries a distance in metres (`25 m`),
+  and the weapon card on the right gives `Optimal range 4 – 37 m` and `Beam width 4 m` as numbers.
+
+The claim that holding Ctrl splits the folded number stays **verified**, neither observed nor
+contradicted. What pass two adds is that the headline is not alone at the target without Ctrl,
+and that the one Ctrl effect on film is a map-wide reveal.
+
 **What a picture would settle.** The Ctrl-held breakdown screen, in full, with a labelled
 scatter cone and the two split numbers both visible — this file has the claim that the headline
 number is damage-effectiveness rather than hit chance from a good source, but not a look at the
@@ -190,6 +218,15 @@ once seen.
   reasoned about a moment ago may not be there when it fires. **remembered**, from search
   synthesis; corroborated by multiple independent threads on building destructibility but not
   independently fetched.
+
+**Pass two did not settle this.** *(observed — C11.)* The frame is the `SET DESTINATION` mode for a
+unit: a hex badge over the planned destination reads `-6%` and `-2%` beside two unlabelled glyphs,
+over the unit's own badge (`⊥6`, bars, weapon glyphs). **Incoming fire is drawn as red striped
+wedges on the ground from each enemy toward its target.** A large faint ring surrounds the area, and
+nothing in the frame labels it. Neither the optimal-range ring as described above nor a falloff bar
+graph is in it.
+[`shot-c11-set-destination-readout-and-enemy-fire-cones.jpg`](shots/phantom-brigade/shot-c11-set-destination-readout-and-enemy-fire-cones.jpg),
+[`shot-c11-destination-badge-percentages.png`](shots/phantom-brigade/shot-c11-destination-badge-percentages.png)
 
 **What a picture would settle.** The optimal-range ring and the falloff bar graph, both on screen
 at once against a partially-destroyed piece of cover — this file has each piece from a different
@@ -411,6 +448,8 @@ page, which is a research task rather than a photography one.
    settle whether the breakdown actually resolves the hit-chance/damage-effectiveness confusion
    this file documents, or whether it exists but players don't reach it either — which changes how
    much weight the "the number needs a name that can't be misread" finding above can bear.
+   *Still open after C9.* The capture shows what sits at the target without Ctrl and a map-wide
+   badge reveal with it, but not the split. See heading 3.
 4. **Heading 1, a full HUD screenshot to enumerate screen furniture exhaustively.** This file
    assembled its list from four separate threads each describing a different fragment of the same
    screen. A single annotated shot of a battle in progress, panel by panel, would very likely add
@@ -423,7 +462,8 @@ page, which is a research task rather than a photography one.
 6. **Heading 4, the optimal-range ring and the damage-falloff graph composed together.** A frame
    showing both at once against a tile with cover, since this file has each from a different
    source and has not seen how they read together, which is exactly where a spatial readout either
-   holds up or turns to clutter.
+   holds up or turns to clutter. *Still open after C11*, which caught the destination mode and the
+   enemy fire wedges instead. See heading 4.
 7. **Heading 6, whether the resolve phase distinguishes whose action is whose.** The blue/red path
    colouring described here is for the planning view; a frame from mid-playback would show whether
    that colour language survives into the phase the player is actually watching rather than

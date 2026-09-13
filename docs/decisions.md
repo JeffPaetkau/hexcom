@@ -4750,3 +4750,100 @@ the terms*, C10 on whether the reserve's cliff goes on the move range — and bo
 session appends a *Settling One* block after *Amending One* saying what the pictures showed. That is
 the amendment shape, so nothing in a brief is rewritten, and it is what lets Master promote brief one
 without a provisional mark on its central decision.
+
+---
+
+## 089 — The pictures overturned brief one's gesture, found the set's only persisted enemy marker, and filmed a reaction firing
+**2026-09-12** · **Raised by** interface · **For** master, view · **Status** open for master — brief
+one is promotable with no provisional mark; the corrections to briefs two, five and six below are
+Master's to route, because this session may append only to *Settling One*
+
+Pass two read sixteen captures across five games. Eight of the twelve entries above the line are
+answered, two half answered, C11 not answered, and C8 struck as not capturable. Thirty-one crops,
+named for what they show, are in `docs/interface/reference/shots/`. Four answers contradicted
+something the set had written, and three of them reach a brief.
+
+**1. Brief one's gesture was wrong, and the pictures say what to build instead (C1, C5).** The
+amendment recommended **held-key disclosure** for *show me the terms*, provisional on C1. Both games
+photographed aiming do something else. XCOM 2 opens its breakdown the instant Fire Weapon is
+chosen, docks it at the bottom centre either side of the ability panel, and lets each column fold
+on its own chevron, a fold that is **sticky** across targets (the capturer's account). Warhounds'
+attack mode opens `PRECISION 17%` with `Precision +85`, `Range -18`, `Cover -50` in a panel at the
+right edge. Both keep one figure at the target. So: **the shot's terms open while aiming, docked in
+the HUD, one figure at the target, and a fold the game remembers.** Firing is already a mode (084),
+so there is something for it to hang on. The held key keeps the job the set uses it for, *everything
+at once*: Phantom Brigade's `Left Ctrl` is labelled `Show details` and, filmed, reveals every unit's
+badge together (C9). Written into `conventions.md` Readouts in place and into `briefs.md` as
+*Settling One*.
+
+**Worth saying because it is how the recommendation went wrong.** The held-key case was four games
+strong, and every one of the four was using the key for a different job from the one brief one had.
+The count was right and the denominator was wrong — the exact mistake 077 named as most of the
+method.
+
+**2. Warhounds is not the counter-case (C5).** It was cited as showing per-bullet percentages by
+design, from guides describing the mechanic. The shipped preview for a burst is one figure with its
+terms, and nothing per bullet on screen. It is a second instance of XCOM's shape. It also names its
+headline `PRECISION` and one of its own terms `Precision`, which is the Phantom Brigade naming warning
+again.
+
+**3. Heading 5 is not empty (C12) — for brief two, Master to route.** The synthesis's strongest
+finding was *zero of ten carry a belief about an enemy that persists and can be wrong*. Future War
+Tactics leaves a **red beacon standing where each lost enemy was last seen**, still up on the next
+turn. It is an abstract spike of light, not a body, and the capturer identified what it marks. Its
+file's reviewers never mention it, which is why pass one found nothing. What one still does not
+show: how long it lasts, whether it decays or moves, whether a fresh sighting clears it.
+
+What it changes for brief two, and what it does not. The brief's *building the thing ten games did
+without* is now nine, and one game drew a bare version: a mark at a place that outlives the
+sighting. Nothing in the set decays a contact or says how sure anybody is, so the brief's substance
+stands. What moves is its framing and one live choice: the one shipped persisted marker is **a glyph
+at a place, not a ghost of a body**. So is Invisible, Inc.'s interest-point `?` (C3), a yellow shield
+glyph on a bracketed tile matching the badge on the guard. Brief two's *Amending Two* says the
+second `?` is "the only instance of one in ten games"; it is now one of two. `briefs.md` is not
+edited here. `conventions.md`'s heading 5 and enemy section are corrected in place.
+
+**4. The move range is banded everywhere, and drawn as an edge (C10).** Future War Tactics was the
+set's one candidate for a graded field. It draws two nested outlines on square tiles and no tint.
+The provisional mark on the reserve's cliff is dropped, the recommendation stands, and one detail is
+added: both games photographed draw reach as an **outline, not a fill** (Invisible, Inc.'s cyan
+reach line agrees, C3). That answers the section's own worry about a second overlay fighting the
+attention tint. The file had described FWT's zones as graded tints, and that is corrected in place.
+
+**5. A reaction firing is on film for the first time (C4) — for brief six and brief two's
+resolution half, Master to route.** Warhounds does not cut to the shooter. The shot plays out in the
+overhead view it was already in, the result is floating text at the target (`-1`, `Crit`,
+`Scratch`), and nothing marks a trigger point on the ground. Its idle overwatch area is the grid's
+own tiles tinted yellow, not a wedge. While placing, a `Brings out of cover` warning sits at the
+cursor. *Amending Six* says nobody documents the moment of firing; now one game does, and it is the
+one whose bank is most like ours.
+
+**6. The pause has a shipped precedent and a measured dwell (C7) — for brief five, which is View's
+job now, Master to route.** Invisible, Inc.'s corporate turn is one `ENEMY ACTIVITY` / `TURN 13`
+banner, measured frame by frame at **at least 1.43 s** (it was already up on the clip's first
+frame). The player's HUD is hidden for the whole phase. The world's backdrop is tinted red once the
+words go. The camera never moves. A guard's cone changes and clears with no body drawn. Then
+`AGENT ACTIVITY` for about 1.4 s, and input back at 5.0 s. That is entry 065's *one indicator per
+contiguous stretch* shipped by the closest relative, and a dwell figure above the 0.6 to 1.2 s that
+065 argued. Warhounds adds a fourth banner, `ENEMY TURN` (C4).
+
+**7. A count behind brief three was one short (C3), and the build is unaffected.** Invisible, Inc.
+moves on right-click (`MOVE: [ RIGHT CLICK ]`), and no complaint was found. So *every game that
+commits on right-click drew a complaint* is two of three. *Nothing in the set fires on right-click*
+is untouched, and that was what 084 built on.
+
+**Also filed, smaller.** Invisible, Inc.'s three vision bands are separable at native resolution,
+and at full-frame scale the two reds merge — the published critique is borne out on those two and
+not on the yellow. Warhounds' first contact is a squad-level banner, `ATTENTION! Enemy squad
+detected`, which confirms the no-undo law's tenth case on the fog side. Future War Tactics' unit
+plate carries action points, not a level: `18` falls to `1` and `0` as soldiers move. XCOM 2's
+user notes said the fold hid `FLANKING TARGET`; the frame shows the damage column still open, and
+the capturer confirmed each column has its own chevron.
+
+**Method, where it departed from the brief.** A clip was located on a low-resolution contact sheet
+before full-resolution frames were pulled at the moments found. That is sampling at a fixed rate to
+find where to look, and every claim still cites a full-resolution frame. C9's video stream ends at
+about 10.6 s of its 17.4, so whatever the capturer did with Ctrl after that was not recorded.
+Three identifications came from the user in conversation rather than from pixels: that C12's
+beacons mark last-seen enemies, that C4b's yellow tiles are the idle overwatch area, and that C9's
+still was taken without Ctrl. Each is attributed to the capturer where it is used.
