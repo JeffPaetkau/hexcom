@@ -5916,7 +5916,7 @@ do not keep. The play-through will say whether it is read at all.
 ---
 
 ## 099 — Teach the departures: three lessons, a briefing and a shaped first mission; the genre's teaching was not split the way the brief said, and a soldier with nothing banked takes no look
-**2026-09-12** · **Raised by** interface · **For** master, view, content · **Status** open for master and the user — seven and eight queued in `view.md` behind the ground and the camera, nine queued in `content.md` behind the sabotage; whether a person's build opens on the first mission is not yet decided
+**2026-09-12** · **Raised by** interface · **For** master, view, content · **Status** open for view and content — seven and eight queued in `view.md` behind the ground and the camera, nine queued in `content.md` behind the sabotage; the default mission is deferred by entry 100
 
 Interface's onboarding job. The recommendation is `interface/conventions.md` *Teaching it*,
 and the briefs are seven, eight and nine in `docs/interface/briefs.md`. This entry records what
@@ -6017,5 +6017,23 @@ ground or fight test in the shape the waystation's harness already has.
 No query and no rule is wanted. The rule in finding 4 was never Core's gap: the design doc says in
 as many words that the reserve is alertness and a soldier who spent the lot is head down, and
 `core.md`'s gotchas name the gate. It was Interface's own section that left it out.
+
+---
+
+## 100 — The default mission does not matter yet
+**2026-09-12** · **Raised by** master, for the user · **For** content, view, master · **Status** resolved — deferred, and the deferral is the decision
+
+Brief nine (entry 099) asked the user and Master whether a person's build should open on the first
+mission, with the waystation one flag away. Master argued for waiting: a double-click cannot pass a
+flag, so until `view/options` exists the waystation would be unreachable from the build, and every
+play-through so far has been on it.
+
+The user's answer, in their words: *I don't care what mission is the default ... doesn't really
+matter until I can play it effectively.*
+
+**So: the waystation stays the default, and nobody changes it as part of another job.** Content
+builds the first mission without touching `SandboxScenario`'s order. The question comes back to
+Master when a play-through says the game plays well enough for the opening to matter, and not
+before. The measure of *effectively* is the play-through, not a list of briefs landed.
 
 ---
