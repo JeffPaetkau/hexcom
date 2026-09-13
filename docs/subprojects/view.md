@@ -35,12 +35,79 @@ reaching into `src/`.
 
 ---
 
-## The job — brief two, `view/enemy-file`, when Master has written it out
+## The job — brief two, the enemy's file, drawn
 
-The action bar landed — *What landed on `view/action-bar`* below, and `../decisions.md` entry 096.
-**Brief two is next and it is Master's to write out in full**; until it is, there is no View job to
-start. What it carries is item 1 of the queue below. A session pointed at this file with no brief
-under this heading should say so rather than build from the queue's one-line summaries.
+Branch `view/enemy-file`. Read, in this order: `../interface/briefs.md` *Two* and *Amending Two*;
+`../decisions.md` entry 089's finding on the persisted marker (summarised under *Owed to later
+briefs* below); entry 094 items 5 and 8, which are the play-through saying the same thing in a
+player's words; and entry 095's *Item 8*, which is Core saying what the rung under a body means.
+
+**What is wrong, in the player's words.** *I can see all the enemies on my screen as soon as it
+loads, but not shoot at.* *Walk right beside a dude and it says they are SEARCHING.* Both are the
+enemy's file drawn as if it were the enemy.
+
+**What it is.** Three different things of the enemy's are on the map and they look alike or say
+nothing about whose they are. Make each unmistakable:
+
+1. **What he believes about us** — his rung, today the upper-cased enum under his body.
+2. **What we were told about him** — a briefed contact, today a ghost at the reported place, which
+   on turn one is exactly where he stands.
+3. **What we saw and have lost** — a sighted contact decaying, today the same ghost.
+
+**Where the seams already are.**
+
+- The rung's words: `BattleView` draws `WorstReadout(frame, unit).State.ToString().ToUpperInvariant()`
+  under a hostile's name. `WorstReadout` is the highest rung **he** holds on any of ours (095).
+- The ghosts: `BattleView.BuildGhosts` over `Ghosts(frame)` — known about, not in view — alpha from
+  `Threat.Credence`. **`Contact.Briefed` is public** and is true exactly while a contact is still the
+  briefing's and the ground has not contradicted it (entry 091); that is *told* against *lost*, and no
+  new query is needed if the frame can reach our side's contact. If it cannot without a back door,
+  that is a question for Core in `../decisions.md` under contract 2, not a reach into `Awareness`.
+- His belief about us: `BattleView.BuildBeliefs`, drawn in both modes.
+- A hostile's held arc: `BattleView.BuildHeldArcs` skips `Side.Hostile && !frame.Omniscient`.
+- One question for everything: `SandboxFrame.Sees`. Nothing added here asks anything else.
+
+**Settle before writing much.**
+
+- **What the rungs are called.** *Amending Two*: the words are this brief's decision, not the enum's,
+  and `Searching` beside `Alerted` reads as a measured scale contract 3 withholds. And 095 gives the
+  word a meaning a player can use: **a hostile who has not had his own turn since you arrived cannot
+  be past Searching**, so at arm's length it means *he saw you and has not looked yet*. Decide
+  whether the mark says his turn is still to come; the play-through says a player needs it.
+- **Whose it is, on sight.** A mark on his body is his. Anything of ours about him must not sit in
+  the same place in the same form.
+- **A glyph, not a word, and persistent.** Two of two games with a state between unaware and engaged
+  draw it as a glyph on the body; Phoenix Point's transient popup is the shipped failure. And a rung
+  that **falls** must be as visible as one that rises — no game in the set has that, and a player
+  borrowing the genre will assume it cannot.
+- **Told, lost, seen: three looks.** 089 found the one shipped persisted marker is *a glyph at a
+  place, not a ghost of a body*. That choice answers item 5 by itself — a glyph at a place cannot read
+  as a man standing there — and it should be weighed for *told* before a ghost is kept for anything.
+  Whatever is chosen, turn one on the waystation must not look like sight.
+- **His belief about us** — the ghost of our soldier the brief proposes, or a glyph at the place
+  after 089. One answer for both his marker and ours would be simplest; say if they must differ.
+- **A hostile's held arc when the hostile is drawn**: *Amending Two* keeps it and says it is a
+  departure from nothing, so the `<remarks>` argue it rather than cite a borrowing.
+- **Entry 090: the map still draws whoever is up, whichever side.** This brief's ground; settle it
+  here.
+
+**Out of scope.** The fog, the ground's labels, cover and the camera — `view/ground-and-camera`, and
+entry 097 is that brief's material; do not draw a seen/unseen ground here, but do not choose a ghost
+look that entry 097's unlit ground would bury. Rules. Entry 097's question to Core about the mover
+taking no look — the drawing does not depend on its answer.
+
+**How to know it worked.**
+
+- **The waystation at load**: the four told hostiles and one sighted hostile side by side (an
+  `--omniscient` capture for the sighted one is not it — find a turn where one is in view and the rest
+  are not) — a stranger shown the frame says which one we can see.
+- **Walking up a sentry's front** — the scene of `ReactionTests.WalkingStraightUpToASentrySFaceLeavesHimSearchingUntilHisOwnTurnComesRound`,
+  as a capture: the mark on his body moves at the walk, says it is his, and moves again when his turn
+  ends.
+- **A lost contact decaying**: a capture two turns apart shows the rung, or the marker, lower, and
+  the change is visible without reading a word.
+- **His marker persists** at the place into the next turn.
+- The pinned scene changes by the marks and nothing else; two runs hash the same.
 
 **What the action bar left for the queue, so it is not re-derived.**
 
@@ -58,10 +125,10 @@ under this heading should say so rather than build from the queue's one-line sum
 **The queue, in order.** Each is Master's to write
 out in full when it is next; the items are entry 094's.
 
-1. **Brief two, `view/enemy-file`** (`../interface/briefs.md`, as amended by 089 below), now also
-   carrying 094's items 5 and 8 — a ghost from the briefing must not read as sight on turn one, and a
-   rung under a hostile must say whose it is.
-2. **`view/ground-and-camera`** — hold `Q`/`E` to turn and a tap still lands on a bearing (item 2);
+1. **Brief two, `view/enemy-file`** — written out above.
+2. **`view/ground-and-camera`** — **its fog is answered**: entry 097 and `../interface/conventions.md`
+   *What the squad can see*, which also moves the cover outlines into the firing mode. Then: hold
+   `Q`/`E` to turn and a tap still lands on a bearing (item 2);
    **middle-drag pan does not work in the build** though the code reads right, then a mouse pan the
    player can find (item 3); pitch within a clamp (item 4, and `conventions.md` *The camera*);
    readouts that do not cover bodies (item 12); a cover shield at the cursor saying what cover *you*

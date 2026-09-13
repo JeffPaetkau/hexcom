@@ -115,6 +115,20 @@ rule. The shot's price stays. 25% dearer takes the surprise snap out of every pu
 waystation goes from fifteen achieved to one. Cheaper changes the mode the garrison fires and not
 the mission. `SEARCHING` beside a hostile is the rules: one move cannot take a fresh sentry past it.
 
+**Two questions to Core from the round that answered them, routed by Master; neither is this
+brief's, both are small.**
+
+- **The mover takes no look** — entry 097, *For Core*. `Battle.EndTurn` is the only moment a unit
+  looks, and `ReactionWindow.OfferFor` gives each stationary reactor a `Notice` of the mover and the
+  mover nothing back, so a soldier can walk into full view of a sentry, not see him, and be seen.
+  Decision or accident? If a decision, one line of `<remarks>` where the look is taken says so and
+  why; if an accident, an entry before any change, since it moves every stealth number measured.
+- **No `Battle` query says what an order costs** — entry 096, *For Core*. View's action bar prices a
+  shot through `Stats.Costs.Fire`, which is `PlanShot`'s, and everything else by mirroring the method
+  (`Costs.Posturing(...)`, `Reactions.OverwatchCost`, `AmbushCost`). A re-price inside a method would
+  leave the bar quoting the old figure and nothing would fail. A `PriceOf` per order is contract 2's
+  shape for it, and `Commander` already answers the question somewhere.
+
 **Out of scope.** `game/**` as ever. Extraction and capture. Suppression.
 
 **The test that it worked:** entry 091's briefed table rerun, and a row in it where the look is

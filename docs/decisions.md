@@ -5364,7 +5364,7 @@ in either is kept back by contract 3; both are priced from the named listeners t
 ---
 
 ## 094 — The second play-through: fifteen findings, one action bar, and the ground does not say what it is
-**2026-09-12** · **Raised by** master, for the user · **For** view, interface, core · **Status** open — routed below: View's next brief is the action bar, two more briefs queued behind it and brief two, the ground-and-sight question onto Interface's brief, the shot's price to Core as a question
+**2026-09-12** · **Raised by** master, for the user · **For** view, interface, core · **Status** open for view — items 6, 9, 10 and 11 built (096); 8 and 14 answered by Core, no rule changed (095); 15 answered by Interface (097); 5 and 8's words are brief two, and 1, 2, 3, 4, 7, 12, 13 and 14's labels are the two View briefs queued behind it
 
 The user played `build/Hexcom.exe` as built after entry 093 — the default, which is the waystation
 against `Commander` — and said this. Recorded in their words as nearly as a list allows, as entry 057
@@ -5606,7 +5606,7 @@ brief yet.
 ---
 
 ## 096 — The action bar: a slot per order with its key and its price, space only confirms, and the arc the soldier up could not see
-**2026-09-12** · **Raised by** view · **For** view, master, core · **Status** open for master — brief two is next and not yet written out; one small question for Core below
+**2026-09-12** · **Raised by** view · **For** view, master, core · **Status** open for core — brief two is written out in `view.md` by Master; the question under *For Core* is routed into `core.md`
 
 Built on `view/action-bar`, to entry 094's items 6, 9, 10 and 11. `view.md` has the shape under *What
 landed on `view/action-bar`*; this is why each of the brief's *settle first* came out as it did, what
@@ -5719,7 +5719,7 @@ already.
 ---
 
 ## 097 — The fog is the squad's, at standing height, at every zoom; lit ground cannot mean empty here, and the mover takes no look
-**2026-09-12** · **Raised by** interface · **For** view, core, master · **Status** open — View's half is the new section *What the squad can see* in `interface/conventions.md`, for `view/ground-and-camera`; Core's is the question under *For Core*
+**2026-09-12** · **Raised by** interface · **For** view, core, master · **Status** open for view and core — View's half is queued as `view/ground-and-camera`; Core's question is routed into `core.md`
 
 Entry 094's item 15, answered. The section is the recommendation, and this entry records the
 findings that shaped it, so that the brief built from it does not have to re-derive them.
