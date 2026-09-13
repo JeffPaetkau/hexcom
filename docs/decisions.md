@@ -5604,3 +5604,116 @@ approach, and it wants milestone 2's garrison that sets arcs, before it can be a
 brief yet.
 
 ---
+
+## 096 — The action bar: a slot per order with its key and its price, space only confirms, and the arc the soldier up could not see
+**2026-09-12** · **Raised by** view · **For** view, master, core · **Status** open for master — brief two is next and not yet written out; one small question for Core below
+
+Built on `view/action-bar`, to entry 094's items 6, 9, 10 and 11. `view.md` has the shape under *What
+landed on `view/action-bar`*; this is why each of the brief's *settle first* came out as it did, what
+was measured, and what was not.
+
+### Settled
+
+**Where the bar goes.** Bottom centre, as the brief said, with its row reserved whether or not there
+are slots on it so nothing above jumps when a window opens. The legend did not go to the instruments
+window, though the brief called it a tester's thing: its first line is how to look round, and item 3
+of 094 is a player who could not find a pan. What it lost is everything the bar now carries — the
+posture line whole and the keys-for-actions half of the orders line — so it is two lines, sits on
+the bar bottom-left, and every block that stacked above it stacks above it still.
+
+**Mode first and target first, both.** A fire slot enters the mode in that mode, aiming at the hostile
+under the cursor or the nearest; a click on a body with no slot picked aims in the weapon's default,
+and the default's slot is lit, so the one-click habit brief three settled survives and the bar says
+what it did. `Tab` and a click on somebody else keep the mode — pointing a snap at the next man is still
+a snap. **The lit slot pressed again backs out rather than fires**: a double tap on a number is a
+fumble or a change of mind, and the gesture that cancels never spends a point. The confirm stays
+where brief three put it.
+
+**The arcs are three slots**, lit in the overwatch yellow, the lit one again stopping the watch (which
+refunds nothing, as `Battle.ClearOverwatch` says). `V` is unbound: it was item 6's fault, and keeping it
+beside the slots would be a binding the bar does not show. **Stance stays one slot**, `C`, named for
+the stance it goes to rather than the one it is in — the body shows which stance landed, which is
+exactly what `V`'s arcs lacked, and three stance slots would have spent three keys and two slots of
+width to save a second press on the rare standing-to-prone.
+
+**Unaffordable is dimmed with its price; refused otherwise says why.** Fill and text both dim, and the
+price stays. A reason — *nobody in sight*, *not an exit*, Core's own refusal for the aim when it is not
+about points — sits where the price would, in yellow, cut to fit; pointing at the slot shows it whole.
+At 8 AP a slug rifleman's three fire slots read *snap 15 AP*, *standard 25 AP*, *aimed 35 AP*, dimmed,
+and `1` says *snap needs 15 points, Bekker has 8*: item 9, answered without help text.
+
+**End turn is `Backspace`, and space and enter confirm and do nothing else** — XCOM 2's binding, the
+brief's recommendation. With nothing to confirm space is silent. **The number keys** are the bar's
+outside a window and the window's inside one, and the bar is not drawn while a window is open, so a
+keycap reading `1` never sits beside a window line reading `1`. **Pointing at a slot** shows one line in
+the bar's own caption row, over the run names — what it does, or why not — and no figure the docked
+terms carry.
+
+**One way in for every order.** The key, the click and `--slot` all go through `HexSandbox.PressSlot`,
+which reads `SandboxFrame.Bar` and refuses what the bar draws refused before calling the action's own
+method. Otherwise a key bound straight to its method would take an order the slot beside it was drawn
+refusing.
+
+### The mode reaches everything that prices the shot
+
+`SandboxFrame.Mode` is the picked mode if the weapon of whoever is up has it, else the default, and
+`StagedShot` plans the aim in it — so the headline, the dock, the bill (`Giveaway` → `WouldAnnounce(plan)`)
+and the worth (`Tactics.Appraise(plan)`) all price the shot the confirm takes, and `ConfirmShot` passes
+it to `Battle.Fire`. Every caller that builds a plan for the staged aim was checked: those three read
+`StagedShot`; `AimAt`'s report and `ConfirmShot` were the two that planned their own, and both take the
+mode now. The cursor over a body with nothing aimed still plans the default, because that is what a
+click there aims.
+
+### Item 6, confirmed before it was touched
+
+`BattleView.BuildHeldArcs` skipped a unit holding an arc with `Reserve <= 0`, and `Battle` zeroes a
+soldier's reserve when its go comes round and banks it when the go ends. Captured on master:
+`--scenario compound --until Orsini --overwatch narrow --zoom 30` prints *holding a narrow arc*, and the
+ground has no arc on it. **The skip is right for everybody else and stays** — a watchman with nothing
+banked is holding an arc it cannot shoot down. The soldier up is asked, of `Battle`, what it *will*
+bank: `Reactions.Banked(ActionPoints)` against its own price for its quickest mode. Enough, and the arc
+is drawn as held; not enough, and faint. The same command with `--slot 4` in place of `--overwatch
+narrow` draws the arc and lights `narrow`.
+
+### Measured, from captures
+
+- **A snap with the mouse alone and with the keyboard alone.** Waystation, `--ai --pass 16 --until
+  Bekker`, then `--slot snap --aim Teague --confirm` (the slot clicked, the body clicked, the body
+  clicked again) and `--slot 1 --next-target --confirm` (`1`, `Tab`, space). Both print *aiming snap at
+  Teague: 37% for 15 AP* before the confirm and *fired snap at Teague for 15 AP* after it, and the two
+  captures hash the same. Staged, the headline reads *HIT 37%* over *15 AP*, the dock *AIMING SNAP* and
+  *for 15 AP*, and the snap slot is lit. The standard shot at the same target reads 54% for 25.
+- **The same soldier at 8 AP** — a snap, a standard and a turn later — every fire slot dimmed with its
+  price, the arcs and posture slots ready, and the pointer on *snap* reading *needs 15 points, Bekker
+  has 8*.
+- **A window open**: the compound's reaction script with `--windows --instruments` stops with Watchman
+  offered, the bar is not drawn, and `--slot 1` answers *a reaction window is open*.
+- **The pinned scene** against master: x 8–1338, y 756–893 differ, which is the legend and the bar,
+  and nothing above row 756. Two runs on the branch hash the same.
+- **`--fit`** on both maps: at the old `FitLead` the waystation's near rim ran under the lifted legend.
+  0.28 and 1.0 put it about fifteen pixels short of the legend on both, with the far edge still clear
+  of the top block.
+
+**Not measured**: a hand on any of it. `Space` doing nothing with no aim, `Backspace`, a click landing on
+a slot rather than the ground under it, and the pointer's line are all read from the code and reached
+headless only through their script twins, which call the same method. The play-through is the check.
+
+### For Master
+
+- **Brief two is next and there is no brief under *The job* in `view.md` until it is written.** The
+  queue and what the bar leaves for it are there.
+- **The bottom edge is 86 pixels taller.** On the waystation from round 7 at the default zoom Bekker's
+  points bar is under the legend. That is item 12 of 094 with less room, and `view/ground-and-camera`'s.
+
+### For Core — a question, not a request
+
+**No `Battle` query says what an order will cost.** The bar prices a fire mode with
+`Stats.Costs.Fire(mode.ApCost)`, which is what `PlanShot` charges; everything else it prices by mirroring
+the method — `Costs.Posturing(ChangeStance)`, `Posturing(TurnInPlace)`, `Posturing(Shout)`, and the flat
+`Reactions.OverwatchCost` and `AmbushCost` for an arc and an ambush declared along the facing. It agrees
+today because it was read off `Battle.cs` today. If Core ever re-prices one of those inside its method,
+the bar keeps quoting the old figure and nothing fails. A `PriceOf` per order, or an `Order` the bar
+could appraise, would make it one answer — and it is the same question `Commander` answers somewhere
+already.
+
+---

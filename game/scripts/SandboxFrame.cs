@@ -180,6 +180,11 @@ public sealed record ReserveLadder(Unit Unit, IReadOnlyList<ReserveRung> Rungs)
 /// Whether the held key for <i>everything at once</i> is down, so every figure on the map shows its
 /// terms together rather than only its headline. See <see cref="BattleHud"/>.
 /// </param>
+/// <param name="AimMode">
+/// The fire mode the player picked for the aim, or null for the weapon's default. Read
+/// <see cref="Mode"/>, which checks it belongs to the weapon of whoever is up.
+/// </param>
+/// <param name="Pointing">The action bar slot under the pointer, by its id, or null. See <see cref="ActionBar"/>.</param>
 /// <param name="TermsFolded">
 /// Whether the player has folded the shot's terms away. Remembered across targets and soldiers,
 /// the way the photographed game remembers its fold. Brief one's <i>Settling One</i>.
@@ -224,8 +229,28 @@ public sealed record SandboxFrame(
     IReadOnlyList<string> Perceived,
     IReadOnlySet<UnitId> Found,
     bool Details,
-    bool TermsFolded)
+    bool TermsFolded,
+    FireMode? AimMode,
+    string? Pointing)
 {
+    /// <summary>
+    /// The fire mode the staged aim is in: the one picked from the bar, or the weapon's default when
+    /// none was, or when the one picked is not a mode of the weapon of whoever is up.
+    /// </summary>
+    /// <remarks>
+    /// <b>Entry 094, item 9.</b> Every shot a player took used to be <c>WeaponProfile.DefaultMode</c>,
+    /// because nothing on the way to <c>PlanShot</c> passed a mode, and snap and aimed existed in the
+    /// rules and nowhere else. Checked here rather than trusted, as <see cref="Aim"/> is, because the
+    /// soldier the mode was picked for may not be the one up.
+    /// </remarks>
+    public FireMode? Mode
+        => Battle.Active is not { } active ? null
+            : AimMode is { } picked && active.Weapon.Modes.Contains(picked) ? picked
+            : active.Weapon.DefaultMode;
+
+    /// <summary>The action bar's slots for this moment. See <see cref="ActionBar.Of"/>.</summary>
+    public IReadOnlyList<BarSlot> Bar => ActionBar.Of(this);
+
     /// <summary>
     /// The active soldier's reserve ladder, or null when nobody is up or the picture must not
     /// describe whoever is. See <see cref="ReserveLadder"/>.
@@ -307,10 +332,15 @@ public sealed record SandboxFrame(
     /// None while <see cref="Withheld"/>: a hostile's shot at whoever is under the cursor is the
     /// hostile's to plan, and its terms and its bill would both be drawn.
     /// </para>
+    /// <para>
+    /// <b>The aim is priced in <see cref="Mode"/></b>, the one picked from the bar, so the headline,
+    /// the docked terms, the bill and the worth are all of the shot the confirm will take. The cursor
+    /// with nothing aimed prices the default, because that is what a click on the body aims.
+    /// </para>
     /// </remarks>
     public ShotPlan? StagedShot
         => !Withheld && Battle.Active is { } shooter && (Aim ?? HoveredUnit) is { } quarry && quarry.IsHostileTo(shooter)
-            ? Battle.PlanShot(shooter, quarry)
+            ? Battle.PlanShot(shooter, quarry, Aim is not null ? Mode : null)
             : null;
 
     /// <summary>

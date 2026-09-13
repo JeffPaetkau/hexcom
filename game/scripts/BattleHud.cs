@@ -109,8 +109,9 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
         // before it, since it is up for a second and the strip is the thing it is standing in for.
         DrawLines(frame);
         DrawHappenings(frame, viewport);
-        DrawTerms(frame, viewport, viewport.Y - 22 - LegendLines * LineHeight - 14);
+        DrawTerms(frame, viewport, StackBottom(viewport));
         DrawLegend(viewport, PlayerKeys);
+        DrawBar(frame, viewport);
         DrawTheirGo(frame, viewport);
         DrawOrderStrip(frame, viewport);
     }
@@ -912,7 +913,7 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
         if (frame.Perceived.Count > 0)
             lines.InsertRange(0, frame.Perceived.Prepend("WHILE IT WAS THEIR GO"));
 
-        var next = DrawBlockAbove(viewport.Y - 22 - LegendLines * LineHeight - 14, lines);
+        var next = DrawBlockAbove(StackBottom(viewport), lines);
         next = DrawBlockAbove(next, WindowLines(frame), SandboxPalette.OverwatchHue);
         DrawBlockAbove(next, BriefingLines(frame), SandboxPalette.TextDim);
     }
@@ -1060,14 +1061,173 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
     /// splitting by purpose is the fix this legend has taken twice already.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// <b>Two lines since the action bar, and above it.</b> Brief <c>view/action-bar</c>: the bar has the
+    /// better claim to the bottom edge, since it is where a player of the genre looks for what the
+    /// soldier can do, and every slot on it carries its own key — so the posture line went into the
+    /// bar whole, and so did the half of the orders line that named keys for actions. What is left is
+    /// what has no slot: looking round, and the gestures on the map itself. It stays bottom-left rather
+    /// than moving to the instruments, because the camera is a player's and item 3 of entry 094 is a
+    /// player who could not find a pan.
+    /// </remarks>
     private static readonly string[] PlayerKeys =
     [
         "WASD or drag: pan    Q/E or right-drag: turn    wheel/+-: zoom    F: whole map    G: whoever is up    PgUp/PgDn: storey",
-        "left-click: move, or aim at a hostile    1 or tab: aim, tab again for the next    "
-            + "space: fire when aiming, else end turn    right-click or esc: back out    P: fold the shot's terms",
-        "C: stance    Z/X: turn on the spot    V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in"
-            + "    hold Ctrl: every figure's terms",
+        "left-click: move, or aim at a hostile    tab: next target    space or enter: fire    "
+            + "right-click or esc: back out    P: fold the shot's terms    hold Ctrl: every figure's terms",
     ];
+
+    // ---- the action bar ------------------------------------------------------------------
+
+    /// <summary>A slot's size, the gap between two slots, the wider gap between two runs of them, and the caption row over them.</summary>
+    private static readonly Vector2 SlotSize = new(88, 50);
+    private const float SlotGap = 5;
+    private const float GroupGap = 16;
+    private const float CaptionHeight = 18;
+
+    /// <summary>The height of the bar's plate, caption and slots together.</summary>
+    private static float BarHeight => CaptionHeight + SlotSize.Y + 12;
+
+    /// <summary>Where the bar's plate starts, from the top. Kept whether or not there are slots on it, so nothing above jumps when a window opens.</summary>
+    private static float BarTop(Vector2 viewport) => viewport.Y - 6 - BarHeight;
+
+    /// <summary>The baseline of the legend's last line, which sits on the bar.</summary>
+    private static float LegendBaseline(Vector2 viewport) => BarTop(viewport) - 22;
+
+    /// <summary>Where the last line of whatever stacks above the legend may sit.</summary>
+    private static float StackBottom(Vector2 viewport) => LegendBaseline(viewport) - LegendLines * LineHeight - 14;
+
+    /// <summary>Where each slot was last drawn, so a click or a pointer can be told from one on the map.</summary>
+    private readonly List<(Rect2 Rect, string Id)> _slots = [];
+
+    /// <summary>The slot drawn under a screen point, by id, or null.</summary>
+    public string? SlotAt(Vector2 point)
+    {
+        foreach (var (rect, id) in _slots)
+            if (rect.HasPoint(point)) return id;
+        return null;
+    }
+
+    /// <summary>
+    /// The action bar, along the bottom edge: a slot per thing the soldier up can do, each with its key
+    /// and its price, in runs named over them — or, while the pointer rests on one, that slot's one line.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The bar <c>conventions.md</c> recommends under <i>Selecting and ordering</i></b>, and entry 094's
+    /// items 6, 9, 10 and 11 as one thing. What goes on each slot is <see cref="ActionBar"/>'s; this is
+    /// only how it looks.
+    /// </para>
+    /// <para>
+    /// <b>Three looks, and nothing else.</b> Ready is the name and the price in bright; not ready is both
+    /// dimmed, with the price when it is points and the reason when it is not; lit is an edge in the
+    /// colour the ground uses for the same thing — white for the aim, the overwatch yellow for an arc
+    /// held, the ambush pink for an ambush armed — so the bar says which state landed without a word.
+    /// </para>
+    /// <para>
+    /// <b>Pointing at a slot shows one line and it is not a figure.</b> Entry 093 ruled out a hover card
+    /// per figure; a slot's name and what it does is not one, and the line repeats nothing the docked
+    /// terms say. It takes the caption row rather than a plate of its own, so it covers nothing.
+    /// </para>
+    /// </remarks>
+    private void DrawBar(SandboxFrame frame, Vector2 viewport)
+    {
+        _slots.Clear();
+
+        var slots = frame.Bar;
+        if (slots.Count == 0) return;
+
+        var width = slots.Count * SlotSize.X + (slots.Count - 1) * SlotGap;
+        for (var i = 1; i < slots.Count; i++)
+            if (slots[i].Group != slots[i - 1].Group) width += GroupGap - SlotGap;
+
+        var top = Origin.Y + BarTop(viewport);
+        var left = Origin.X + (viewport.X - width) / 2;
+
+        _canvas.DrawRect(new Rect2(left - 8, top, width + 16, BarHeight), SandboxPalette.Panel);
+
+        var pointed = slots.FirstOrDefault(slot => slot.Id == frame.Pointing);
+        var slotTop = top + CaptionHeight + 4;
+        var x = left;
+
+        for (var i = 0; i < slots.Count; i++)
+        {
+            var slot = slots[i];
+            var opensGroup = i == 0 || slot.Group != slots[i - 1].Group;
+            if (opensGroup && i > 0) x += GroupGap - SlotGap;
+
+            if (opensGroup && pointed is null)
+                _canvas.DrawString(_font, new Vector2(x, top + 14), slot.Group, HorizontalAlignment.Left, -1, 10,
+                    SandboxPalette.TextDim);
+
+            var rect = new Rect2(x, slotTop, SlotSize);
+            _slots.Add((rect, slot.Id));
+            DrawSlot(rect, slot, slot == pointed);
+
+            x += SlotSize.X + SlotGap;
+        }
+
+        if (pointed is not null)
+        {
+            var hint = Fit(pointed.Hint, width, TagSize);
+            var hintWidth = _font.GetStringSize(hint, HorizontalAlignment.Left, -1, TagSize).X;
+            _canvas.DrawString(_font, new Vector2(left + (width - hintWidth) / 2, top + 14), hint,
+                HorizontalAlignment.Left, -1, TagSize, SandboxPalette.TextBright);
+        }
+    }
+
+    /// <summary>One slot: its key in the corner, its name, and its price or why not.</summary>
+    private void DrawSlot(Rect2 rect, BarSlot slot, bool pointed)
+    {
+        _canvas.DrawRect(rect, slot.Ready ? SandboxPalette.SlotReady : SandboxPalette.SlotDim);
+
+        if (slot.Lit)
+        {
+            var edge = slot.Id.StartsWith("arc:") ? SandboxPalette.OverwatchHue
+                : slot.Id == "ambush" ? SandboxPalette.AmbushHue
+                : SandboxPalette.AimColor;
+            _canvas.DrawRect(rect, edge, filled: false, width: 2);
+        }
+        else if (pointed)
+        {
+            _canvas.DrawRect(rect, SandboxPalette.HoverEdge, filled: false, width: 1);
+        }
+
+        var inner = rect.Size.X - 10;
+        _canvas.DrawString(_font, rect.Position + new Vector2(5, 12), slot.Key, HorizontalAlignment.Left, -1, 10,
+            SandboxPalette.TextDim);
+
+        var name = Fit(slot.Name, inner, 13);
+        var nameWidth = _font.GetStringSize(name, HorizontalAlignment.Left, -1, 13).X;
+        _canvas.DrawString(_font, rect.Position + new Vector2((rect.Size.X - nameWidth) / 2, 30), name,
+            HorizontalAlignment.Left, -1, 13, slot.Ready ? SandboxPalette.TextBright : SandboxPalette.TextDim);
+
+        var under = slot.Reason
+                    ?? (slot.Price is { } price ? $"{price} AP"
+                        : slot.Lit ? slot.Id == "ambush" ? "armed" : "held"
+                        : "free");
+        under = Fit(under, inner, 10);
+        var underWidth = _font.GetStringSize(under, HorizontalAlignment.Left, -1, 10).X;
+        _canvas.DrawString(_font, rect.Position + new Vector2((rect.Size.X - underWidth) / 2, 44), under,
+            HorizontalAlignment.Left, -1, 10,
+            slot.Reason is not null ? SandboxPalette.CoverHalfHue
+            : slot.Ready ? SandboxPalette.TextBright
+            : SandboxPalette.TextDim);
+    }
+
+    /// <summary>A line cut short with an ellipsis to fit a width, since a slot is narrow and a refusal is Core's words.</summary>
+    private string Fit(string text, float width, int size)
+    {
+        if (_font.GetStringSize(text, HorizontalAlignment.Left, -1, size).X <= width) return text;
+
+        for (var length = text.Length - 1; length > 0; length--)
+        {
+            var cut = text[..length].TrimEnd() + "…";
+            if (_font.GetStringSize(cut, HorizontalAlignment.Left, -1, size).X <= width) return cut;
+        }
+
+        return "…";
+    }
 
     /// <summary>The keys that change what kind of run this is. Instruments, by the same test.</summary>
     private static readonly string[] InstrumentKeys =
@@ -1078,7 +1238,7 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
 
     private void DrawLegend(Vector2 viewport, IReadOnlyList<string> keys)
     {
-        var top = Origin + new Vector2(18, viewport.Y - 22 - (keys.Count - 1) * LineHeight);
+        var top = Origin + new Vector2(18, LegendBaseline(viewport) - (keys.Count - 1) * LineHeight);
         Panel(top, keys);
 
         for (var i = 0; i < keys.Count; i++)
@@ -1321,7 +1481,7 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
         var targets = frame.Targets;
         var which = targets.Count > 1 ? $", {IndexOf(targets, quarry) + 1} of {targets.Count} in sight    tab: next" : "";
 
-        yield return $"AIMING at {quarry.Name}{which}";
+        yield return $"AIMING {frame.Mode?.Name.ToUpperInvariant()} at {quarry.Name}{which}";
         yield return "space, enter or click them again: fire    right-click or esc: back out";
     }
 

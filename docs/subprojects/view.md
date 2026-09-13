@@ -35,78 +35,27 @@ reaching into `src/`.
 
 ---
 
-## The job — the action bar
+## The job — brief two, `view/enemy-file`, when Master has written it out
 
-Branch `view/action-bar`. **Read `../decisions.md` entry 094 first**: it is the second play-through,
-and four of its fifteen findings are this brief — 6, 9, 10 and 11. They are one missing thing.
+The action bar landed — *What landed on `view/action-bar`* below, and `../decisions.md` entry 096.
+**Brief two is next and it is Master's to write out in full**; until it is, there is no View job to
+start. What it carries is item 1 of the queue below. A session pointed at this file with no brief
+under this heading should say so rather than build from the queue's one-line summaries.
 
-**What is wrong, in the player's words.** *I press V and nothing seems to happen other than lose AP.*
-*Have a shot on an enemy but only have 9 AP. How do I take a snap shot?* *Fire and End turn should be
-different keys.* *Both keyboard and mouse should work for all actions.*
+**What the action bar left for the queue, so it is not re-derived.**
 
-**What it is.** The bar `../interface/conventions.md` recommends under *Selecting and ordering*: a
-row along the bottom, a slot per action, each showing its key and its price, each usable by click
-and by key. Firing becomes a mode entered from a slot and confirmed on the target. End turn gets its
-own slot and its own key.
+- **`view/ground-and-camera`** inherits a taller bottom edge. The bar took the bottom 86 pixels and
+  lifted the legend onto it, so the active soldier's bar and anything hung low on the map is covered
+  sooner than it was — the waystation from round 7 has Bekker's points bar under the legend at the
+  default zoom. That is item 12 (readouts over things) with less room, and `SandboxCamera.Fit` was
+  re-measured for it; `FollowActive`'s margin was not.
+- **The arc adjust step** (open question below) now has a place to live: the three arc slots. Held
+  and pointed at, a slot could take the facing the way `Z`/`X` do. Not built.
+- **Springing belongs half in the firing mode now.** The spring slot springs on whoever is *aimed
+  at* — a click on a body then `B` — because a click on the slot has taken the pointer off the body.
+  The open question below is narrower for it.
 
-**Where the seams already are.**
-
-- `HexSandbox.HandleKey` — `Key.Key1` is commented as *an action bar with one slot in it*, and
-  `Key.Space or Key.Enter` fires an aim or, with none, ends the turn. The second half of that case
-  goes.
-- `Battle.PlanShot(shooter, target, mode)` **already takes a mode**; `AimAt` and `ConfirmShot` never
-  pass one, so every shot a player takes is `WeaponProfile.DefaultMode`. The modes are
-  `unit.Weapon.Modes`, and the price is `Stats.Costs.Fire(mode.ApCost)` — the price the reserve
-  ladder already uses, so the bar and the ladder cannot disagree.
-- The staged shot's headline, bill and worth (`BattleHud.DrawShotHeadline`, the docked terms,
-  `Tactician.Appraise`) must price **the mode chosen**, not the default. Check every caller that
-  builds a plan for the staged aim.
-- The other slots already have one method each: `SetStance`, `FaceTo`, `HoldArc` / `NextArc`,
-  `ArmAmbush` / `SpringAmbushOn`, `ShoutAbout`, `LeaveTheField`, `EndTurn`.
-- **The arc that is not drawn.** `BattleView.BuildHeldArcs` skips a unit whose
-  `Overwatch is not null && Reserve <= 0`, and entry 093 found the active soldier's reserve reads
-  nought on its own turn. Confirm with a capture (`--arc` on the active soldier, before and after)
-  before touching it. If the skip is right for a reserve that has been spent, draw a *declared* arc
-  on the active soldier some other way rather than deleting the condition; ask `Battle`, not the HUD,
-  what the reserve will be.
-- `SandboxScript` — a capture must be able to pick a mode (`--aim NAME` with a mode) and press a slot,
-  or the bar is untestable headless.
-
-**Settle before writing much.**
-
-- **Where the bar goes.** Convention is bottom centre, and entry 093 found bottom centre is under the
-  legend. The legend is a tester's thing and the bar is the player's, so the bar has the better
-  claim; say where the legend goes instead.
-- **Mode first, or target first.** The genre is ability first: pick *snap*, then the target, then
-  confirm. Clicking a hostile with no mode chosen currently aims at the default; decide whether it
-  still does (probably yes, as *standard*, the slot lit) so the one-click habit survives.
-- **The arcs as slots.** Three widths plus none. One slot that cycles repeats `V`'s fault — four
-  states at a point each with nothing saying which one landed. Three slots, or one slot that opens
-  three, and the held one lit either way.
-- **A slot that cannot be afforded** is shown, dimmed, with its price — *snap 15 AP* at 9 AP answers
-  item 9 without a word of help text. A slot refused for another reason says the reason.
-- **End turn's key.** XCOM 2 uses `Backspace`; `Space` and `Enter` confirm and do nothing else. Say
-  what happens to `Space` with nothing to confirm (nothing, is the recommendation).
-- **The number keys.** Outside a window `1`–`9` are the bar's; inside one they stay the window's
-  answers, as now. Never both at once.
-- **What hovering a slot shows.** Entry 093 ruled out a hover card per *figure*. A slot's name and
-  what it does is not a figure; one line is allowed, and nothing that repeats the docked terms.
-
-**Out of scope.** Rebinding keys and the options screen — `view/options`, below. The camera, the
-ground's labels, cover shields and fog — `view/ground-and-camera`. How the enemy is drawn — brief two.
-The price of a shot, which is Core's (entry 094, item 14). Every rule.
-
-**How to know it worked.**
-
-- A rifleman with 20 AP and a hostile in sight takes a **snap** shot with the mouse alone, and again
-  with the keyboard alone; the headline and bill show the snap's price and odds before the confirm.
-- The same soldier at 9 AP sees every fire slot dimmed with its price.
-- `Space` with no aim does not end the turn. The End turn slot and its key do.
-- Holding a narrow arc on the active soldier draws it on the ground in the same frame, and the bar
-  says which arc is held — captured before and after.
-- The pinned scene changes by the bar and nothing else; two runs hash the same.
-
-**Queued behind this, in order, so a session finishing it knows the next.** Each is Master's to write
+**The queue, in order.** Each is Master's to write
 out in full when it is next; the items are entry 094's.
 
 1. **Brief two, `view/enemy-file`** (`../interface/briefs.md`, as amended by 089 below), now also
@@ -144,10 +93,16 @@ write their clock onto the objective.
 
 **What the next View brief inherits from three, six, four, five and one, so it is not re-argued.**
 
-- **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
-  turn — **the last half of which the action bar undoes, entry 094**; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
-  `Esc` back out and never spend a point. **Held `Ctrl` is every figure's terms at once and `P`
-  folds the shot's docked terms**; `Alt` is still unbound.
+- **Keys.** Outside a window the number keys are the bar's — `1`–`3` the fire modes cheapest first,
+  `4`–`6` the arcs — `Tab` cycles targets keeping the mode, space and enter confirm a shot **and do
+  nothing else**, and `Backspace` ends the turn (entry 096); inside one `1`–`9` change an answer,
+  `Tab` picks whose, and space runs it, and the bar is empty. Right-click and `Esc` back out and never
+  spend a point, and so does pressing a lit slot. **Held `Ctrl` is every figure's terms at once and
+  `P` folds the shot's docked terms**; `Alt` is still unbound, and `V` is unbound since the bar.
+- **Every order but a move goes through `HexSandbox.PressSlot`**, key, click and `--slot` alike, and
+  it refuses what `SandboxFrame.Bar` draws refused. A new action is a slot in `ActionBar.Of`, a case
+  in `PressSlot`, and a method — the three places the gotcha names, with the bar standing in for the
+  key.
 - **A figure hangs from the thing it describes.** One headline at the thing; its terms docked while
   aiming, or under held `Ctrl`, and no third way — no hover card per figure. Offsets are pixels from
   `BattleView.Crown`, which reads the walk; a tag whose thing is off screen is not drawn. The panel
@@ -182,6 +137,60 @@ settled the scope in 094: keybindings and preferences, not every constant.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/action-bar`
+
+Entry 094's items 6, 9, 10 and 11, as one thing. `../decisions.md` entry 096 is the reasoning and the
+measurements; this is the shape.
+
+**Three files and one new one.** `SandboxBar.cs` is the data: `ActionBar.Of(frame)` hands back a
+`BarSlot` per action — id, run, key, name, price, affordable, reason, lit, and the one line pointing
+shows — and `SandboxFrame.Bar` is that call, so the HUD draws and the node presses from the same
+answers. `BattleHud.DrawBar` draws it and records each slot's rectangle for `SlotAt`, the way
+`FoldSwitch` is recorded. `HexSandbox.PressSlot` is the one way in for a key, a click and `--slot`, and
+it refuses what the bar draws refused before calling the action's own method.
+
+**The slots, left to right.** FIRE: the weapon's modes cheapest first on `1`–`3`. OVERWATCH: narrow,
+standard, wide on `4`–`6`. POSTURE: `C` named for the stance it goes to, `Z` and `X`. SQUAD: `B` arm or
+spring, `L` call it in. TURN: `T` leave, `Backspace` end turn. Empty while a window is open, while
+`Withheld`, and once the battle or the clock is over; the plate's space is kept so nothing above jumps.
+
+**What was settled before writing much** — the brief's seven, and entry 096 has the argument for each:
+
+| | |
+|---|---|
+| where the bar goes | bottom centre, full width reserved; the legend lost the two rows the bar now carries and sits on the bar, bottom-left, as looking and the gestures on the map |
+| mode first or target first | both: a fire slot enters the mode in that mode and a click on a body aims in the default with its slot lit; `Tab` and a click on somebody else keep the mode; the lit slot again backs out rather than fires |
+| the arcs | three slots, the held one lit in the overwatch yellow; the lit one again stops watching; `V` is gone |
+| a slot that cannot be afforded | dimmed, fill and text, with its price; refused for another reason, the reason in yellow where the price would be, Core's words cut to fit and whole on pointing |
+| end turn's key | `Backspace`; space and enter confirm a shot or a window and otherwise do nothing |
+| the number keys | the bar's outside a window, the window's inside one, and the bar is not drawn while one is open |
+| pointing at a slot | one line in the bar's caption row, saying what it does or why not — no figure the docked terms carry |
+
+**The mode reaches every caller that plans the staged shot.** `SandboxFrame.Mode` is the picked mode if
+the weapon has it, else the default; `StagedShot` plans the aim in it, so the headline, the dock, the
+bill (`Giveaway`) and the worth (`Tactics.Appraise(plan)`) all price the shot the confirm takes;
+`ConfirmShot` and `FireAt` pass it to `Battle.Fire`. The cursor over a body with nothing aimed still
+prices the default, which is what a click there aims. `_mode` is cleared everywhere `_aim` is.
+
+**The arc that was not drawn, confirmed and fixed.** `BuildHeldArcs` skipped a unit holding an arc with
+`Reserve <= 0`, and a soldier's reserve is zeroed when its go comes round. Captured on master first:
+`--scenario compound --until Orsini --overwatch narrow --zoom 30` reports *holding a narrow arc* and
+there is nothing on the ground. The skip stays for everybody else; the soldier up is asked what it
+*will* bank — `Reactions.Banked(ActionPoints)` against its own price for its quickest mode — and is
+drawn as held if that covers a shot and faint if it does not. The same command with `--slot 4` draws
+the arc and lights `narrow`.
+
+**Two things moved that were not the brief's.** `SandboxCamera.Fit` again — the bar lifted the legend
+and the waystation's rim ran under it, so `FitLead` is 0.28 and `FitDistance` 1.0, measured on both
+maps. And `--fire` now reports the mode and what it spent.
+
+**Script steps.** `--slot NAME` presses a slot by id (`fire:snap`, `arc:standard`, `end`), key (`4`,
+`Bksp`, `C`) or name, first match in that order, so `standard` is the fire mode and `arc:standard` the
+arc. `--point NAME` rests the pointer on one. `--aim NAME:MODE` is a fire slot and then a click on NAME;
+`--aim :MODE` is the slot alone.
 
 ---
 
@@ -1107,6 +1116,10 @@ Entry 053 records the count.
   moved. Nothing captured before it diffs against anything after it; two runs of the pinned command
   after it hash the same. **And `--fit` frames differently**: `SandboxCamera.Fit` looks past the map's
   middle and stands further back.
+  **`view/action-bar` breaks it along the bottom edge only**: measured against master, the pinned
+  scene differs in x 8–1338, y 756–893 — the legend down to two lines and lifted, and the bar under
+  it — and not a pixel above row 756. Two runs after it hash the same. `--fit` moves again, for the
+  same reason as last time.
   **`--aside` breaks none of this and that was measured, not assumed** — a capture on the left
   monitor and the same one where Windows put it are byte-identical. The one break is narrower than
   it looks: a capture taken with `--instruments` before the subwindow fix has the instruments panel
@@ -1166,7 +1179,9 @@ Entry 053 records the count.
   there is. The top block is only what has no place on the map — the mission, the clock, the weapon,
   the storey — and **nothing goes back into it**: a figure about a thing hangs from the thing (brief
   one, entry 093). The bottom-left block is what happened while it was not your go, and the
-  right-edge dock is the shot's terms while aiming.
+  right-edge dock is the shot's terms while aiming. **Both stack from `BattleHud.StackBottom`**, above
+  the legend, which sits on the action bar along the bottom edge; anything new along the bottom asks
+  the same function rather than measuring up from the viewport's edge.
 - **The bottom block is *since you last acted*, not a log.** It is replaced whenever the enemy
   gets a go after something you did, so if two of yours are adjacent in the initiative order, the
   second one's pass leaves the block untouched — nothing hostile happened in between. Read it as
@@ -1207,12 +1222,24 @@ Entry 053 records the count.
   `HandleKey`, a case in `Perform`. The script is an argument list rather than a second input
   system, so nothing but those methods may touch `Battle` — otherwise a capture can show a state
   the keyboard cannot reach, which is the opposite of what a harness is for.
-- **Space means two things, and the `AIMING` line is the only thing telling a player which.** It
-  fires while an aim is up and ends the turn while one is not. That is the window's convention —
-  space commits whatever is open — and it is fair only because the mode cannot be missed. Anything
-  that hides or moves the `AIMING` line, or keeps an aim alive where the line is not drawn, puts a
-  shot on the key a player presses to pass. It heads the docked terms now, and **the fold does not
-  fold it** — `DrawTerms` keeps it and the headline whatever the fold says.
+- **Space confirms and does nothing else, and it took a play-through to get there.** It used to fire
+  while aiming and end the turn while not, which was fair only while the `AIMING` line could not be
+  missed — and one aim dropped a moment early lost the user a go (entry 094, item 10). Ending the go is
+  `Backspace` and its own slot now. Do not give space a second meaning back, however idle it looks
+  with nothing to confirm. The `AIMING` line still heads the docked terms and **the fold does not fold
+  it**, because it is what says which mode space will fire.
+- **An order goes through `PressSlot`, not straight to its method.** The bar is drawn from
+  `SandboxFrame.Bar` and the press refuses what that refuses; a key bound straight to `SetStance` or
+  `HoldArc` would take an order the slot beside it is drawn refusing. Moving and aiming by clicking a
+  body are the two gestures that are not slots.
+- **A pointer on the bar is not on the map.** Mouse motion asks `BattleHud.SlotAt` first and nulls the
+  hover when it hits, and a left-click on a slot presses it before the aim's *click anywhere else backs
+  out* rule is reached. The rectangles are the last frame's, which is the same one-frame lag
+  `FoldSwitch` has.
+- **The soldier up has no reserve.** `Battle` zeroes it when the go comes round and banks it when the go
+  ends, so anything asking `Unit.Reserve` of the active soldier reads nought. Ask
+  `Reactions.Banked(ActionPoints)` for what it will be — `BuildHeldArcs` does, and not doing so was item
+  6 of entry 094.
 - **An aim is checked in the frame, not tidied up wherever the moment changes.** `_aim` is only a
   unit; `SandboxFrame.Aim` is that unit if the mode still makes sense — a window shut, somebody up,
   the target hostile, in play and in sight. Read `Aim`, never `AimedAt`, or an aim can outlive the
@@ -1382,7 +1409,8 @@ re-asks the rules anything, so none of it can change what is true — only what 
 | right-click | back out — **on release**, and only if the pointer moved under `ClickSlop` pixels since the press; never spends a point |
 | pointer near an edge | push the view that way, faster the further into the margin it goes — **off unless `--edge-pan`** |
 | wheel | zoom |
-| left-click | move whoever is up; on a hostile, aim; on the hostile already aimed at, fire; while aiming, the fold switch in the docked terms folds them, and anywhere else backs out and moves nobody |
+| left-click | on a bar slot, press it; otherwise move whoever is up; on a hostile, aim; on the hostile already aimed at, fire; while aiming, the fold switch in the docked terms folds them, and anywhere else backs out and moves nobody |
+| pointer on a slot | its one line in the bar's caption row; the map under the bar is not hovered |
 
 A right press starts a candidate orbit either way; which of the two it turns out to have been is
 not knowable until the button comes back up, which is why the back-out waits for the release —
@@ -1399,10 +1427,11 @@ nobody was looking at it would be the worst kind of bug to find.
 and the instruments window's is `InstrumentKeys`; this table is the same content, and they are
 two copies of one list — changing one without the other is how a legend starts lying.
 
-The first three are on screen in the main view; the last is in the instruments window, which is
-where the split falls and why. The test is *would a player who never presses `O` want it* — a
-player wants to know how to move and how to look, and does not want to know how to hand the
-hostile side to the AI.
+The first two are the player's legend in the main view, the third is the action bar — every slot
+carries its own key, so it is its own legend (`ActionBar.Of`) — and the last is in the instruments
+window, which is where the split falls and why. The test is *would a player who never presses `O`
+want it* — a player wants to know how to move and how to look, and does not want to know how to
+hand the hostile side to the AI.
 
 | Where you are looking — **player's legend** | |
 |---|---|
@@ -1413,22 +1442,25 @@ hostile side to the AI.
 | `F` / `G` | the whole map / whoever is up |
 | PgUp / PgDn | change storey |
 
-| Orders — **player's legend** | |
+| Gestures on the map — **player's legend** | |
 |---|---|
-| left-click | move, or aim at a hostile; on the one aimed at, fire |
-| `1` · tab | aim at the hostile under the cursor or else the nearest · aim at the next in sight |
-| space, enter | fire while aiming; end the turn while not |
+| left-click | move, or aim at a hostile in the default mode; on the one aimed at, fire |
+| tab | aim at the next in sight, keeping the mode |
+| space, enter | fire while aiming, and nothing else |
 | right-click, `Esc` | back out: the aim, or else the briefing |
 | `P` | fold the shot's docked terms, or open them; it stays as it is left |
+| hold `Ctrl` | every figure's terms on the map at once, for as long as it is held |
 | tab, `1`–`9`, space | while a window is open: whose answer, change it, and run it — every answer not changed stands; only our side's reactors are offered unless the instruments window is open |
 
-| Posture — **player's legend** | |
+| Orders — **the action bar** | |
 |---|---|
-| `C` · `Z`/`X` · `V` · `B` · `T` | stance · turn on the spot · overwatch arc · arm or spring an ambush · leave the field |
-| `L` | call a contact in |
-| hold `Ctrl` | every figure's terms on the map at once, for as long as it is held |
+| `1` `2` `3` | FIRE — the weapon's modes, cheapest first: aim in it at the hovered hostile or the nearest, or switch the aim up to it; lit, back out |
+| `4` `5` `6` | OVERWATCH — hold a narrow, standard or wide arc; lit, stop watching |
+| `C` · `Z` · `X` | POSTURE — the next stance · turn left · turn right |
+| `B` · `L` | SQUAD — arm, or spring on the aim · call in the aim, else the hovered hostile, else the top contact |
+| `T` · `Backspace` | TURN — leave the field · end the turn |
 
-`Alt` is unbound. `Ctrl` went to *everything at once*, which is the job the reference set uses a held
+`Alt` is unbound, and so is `V`. `Ctrl` went to *everything at once*, which is the job the reference set uses a held
 key for; the shot's terms needed no key, because they open while aiming (entry 089).
 
 | What the run is set to — **instruments window** | |
@@ -1461,7 +1493,8 @@ one prints what it did. They are the keys under another name:
 |---|---|
 | `--pass [N]` · `--until NAME` | hand the turn on; or hand it on until a named soldier is up |
 | `--move q,r[,l[,g]]` · `--fire NAME` | the active soldier moves or shoots — at a soldier the picture shows |
-| `--aim [NAME]` · `--next-target` · `--confirm` · `--back-out` | the firing mode: `1` or a click on NAME · `Tab` · space · right-click. `--fire NAME` is `--aim NAME --confirm` for any shot the rules allow. `--aim` reports who the shot *would tell*; a shot reports who it *told*, read off the contact files, so the bill can be checked headless |
+| `--aim [NAME][:MODE]` · `--next-target` · `--confirm` · `--back-out` | the firing mode: a click on NAME, or on the nearest · `Tab` · space · right-click. `:MODE` presses that fire slot first. `--fire NAME` is `--aim NAME --confirm` in the default mode for any shot the rules allow. `--aim` reports the mode and who the shot *would tell*; a shot reports the mode, what it spent and who it *told*, read off the contact files, so the bill can be checked headless |
+| `--slot NAME` · `--point NAME` | press an action bar slot · rest the pointer on one. By id (`fire:snap`, `arc:standard`, `end`), then key (`4`, `Bksp`, `C`), then name — so `standard` is the fire mode |
 | `--stance NAME` · `--face DIR` · `--overwatch NAME\|none` | posture, facing, the arc being held |
 | `--arm` · `--spring NAME` · `--shout NAME` · `--extract` | ambush, call it in, walk off the field |
 | `--ai-turn` · `--hostiles ai\|hand` | give this turn to the search; give the side to it or take it back |
@@ -1650,16 +1683,18 @@ Desktop-only is the design and Windows is the machine.
 - **Whether the found outline should last longer than until our next order.** It marks a discovery
   for one decision. A player who crouches first and looks at the strip second still sees it; one who
   moves first does not.
-- **Whether springing an ambush belongs in the firing mode.** `B` with an armed soldier up springs
-  on whoever is under the cursor, at once — the same irreversible, announcing action on the same
-  kind of gesture brief three took off the right button, just on a letter. It was left alone as out
-  of scope. The argument for folding it in is that the confirm is meant to live on everything that
-  announces you; the argument against is that arming is already a deliberate first step, which is
-  the half of a mode that `B` has had all along.
-- **Whether the action bar should be drawn.** `1` aims, and nothing on screen is a bar with a slot
-  in it; the legend names the key and a click on a body does the same. A player of the genre looks
-  for icons along the bottom, and whether that is worth the pixels over the map is the play-through's
-  to say.
+- **Whether springing an ambush belongs in the firing mode.** Half there since the action bar: `B`
+  or the spring slot springs on whoever is *aimed at*, falling back to the hostile under the cursor
+  for the key, so the mouse route is a click on the body and then the slot. What is not there is the
+  confirm — the slot springs at once. The argument for a confirm is that it is meant to live on
+  everything that announces you; the argument against is that arming is already a deliberate first
+  step, which is the half of a mode that `B` has had all along.
+- ~~**Whether the action bar should be drawn.**~~ Yes — the second play-through asked for it in as
+  many words (entry 094, item 11) and `view/action-bar` built it, entry 096. Whether it is worth the
+  pixels it takes off the bottom of the map is the next play-through's to say.
+- **Whether a slot wants an icon.** The bar's slots are words, because the greybox has no art and a
+  word is the one glyph that cannot be misread. The genre's bar is icons with the key in the corner;
+  that is Art's when it opens, against slots that already say what they do.
 - **Whether a hostile's held arc should be drawn when the hostile is.** It is not, now: a body
   shows where a soldier is and which way it faces, and the attention field shows where it is
   looking, but what it would shoot at is its intent. Omniscient draws every arc. A player who
@@ -1691,9 +1726,10 @@ Desktop-only is the design and Windows is the machine.
   listeners on the cursor line and nothing on the map.
 - **Whether a held arc gets an adjust step.** Brief six's amendment: Phoenix Point adjusts the cone
   before confirming and Warhounds' guides single out enter, adjust and cancel as what makes
-  overwatch usable. `V` takes the next arc in one press and charges for each, so finding the one you
-  want can cost three declarations. Cheap, and it would be a second mode beside the firing mode — it
-  should take the same keys (space confirms, right-click backs out) if it is built. The amendment
+  overwatch usable. Since the action bar each width is its own slot, so finding the one you want no
+  longer costs three declarations — but the arc is still taken along the facing in one press, and
+  pointing it elsewhere is a turn first. Cheap, and it would be a second mode beside the firing mode —
+  it should take the same keys (space confirms, right-click backs out) if it is built. The amendment
   calls it arguably brief two's or a job of its own.
 - **Whether `Ctrl`'s soldier terms are too big to be a moment.** Held, the posture keys' three
   appraisals and the rest make a block several hundred pixels wide over the soldier. A held key is

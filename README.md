@@ -145,25 +145,30 @@ spends a point; it is told apart from a drag by whether the pointer moved. The p
 resting near an edge of the window can push the view that way, and does not unless `--edge-pan`
 asks for it: it is the one camera gesture that happens while your hand is doing nothing.
 
-**What the soldier does.**
+**What the soldier does.** Everything but moving and looking is on the **action bar** along the
+bottom edge: a slot per action, each showing its key and what it costs this soldier, pressed by
+the key or by a click. A slot the soldier cannot afford is dimmed with its price; one refused for
+another reason says the reason; the state the soldier is in — the fire mode being aimed, the arc
+held, an ambush armed — is lit. Resting the pointer on a slot says what it does in one line.
 
 | | |
 |---|---|
 | left-click | move whoever is up — or, on a hostile, aim at it; on the one already aimed at, fire |
 | hover | show the route, the cost of each awkward step, and what cover the cursor has |
-| `1` | aim: at the hostile under the cursor, or the nearest one in sight |
-| tab | aim at the next hostile in sight — including one on a storey the cursor cannot reach |
-| space | fire, while aiming; end the turn, while not |
+| `1` `2` `3` | the weapon's fire modes, cheapest first: aim in that mode at the hostile under the cursor or the nearest, or switch the aim already up to it; the lit one again backs out. A click on a hostile aims in the default mode |
+| tab | aim at the next hostile in sight, keeping the mode — including one on a storey the cursor cannot reach |
+| space, enter | fire, while aiming — and nothing else |
+| `Backspace` | end the turn |
 | right-click, `Esc` | back out: stop aiming, or put the briefing away |
 | `P` | fold the shot's terms away, or open them again — it stays as you leave it |
 | hold `Ctrl` | every figure's terms on the map at once, for as long as it is held |
-| `C` | cycle stance: standing, crouching, prone |
+| `4` `5` `6` | hold a narrow, standard or wide arc; the lit one again stops watching |
+| `C` | the next stance: standing, crouching, prone |
 | `Z` / `X` | turn on the spot |
-| `V` | cycle the overwatch arc: none, narrow, standard, wide |
-| `B` | arm an ambush, or spring it on whoever is under the cursor |
+| `B` | arm an ambush, or spring it on whoever is aimed at |
+| `L` | call a contact in — whoever is aimed at, else under the cursor, else the one taken most seriously |
 | `T` | walk off the field, if you are standing somewhere your side may leave from |
-| `L` | call a contact in, so everybody in earshot knows |
-| space, `1`–`9`, tab | while a window is open: run it, with every soldier doing what the window says they will unless you changed it; change the chosen soldier's answer; choose somebody else. Only your own side's soldiers are offered, and a window with nothing of yours in it does not stop |
+| space, `1`–`9`, tab | while a window is open: run it, with every soldier doing what the window says they will unless you changed it; change the chosen soldier's answer; choose somebody else. The bar is empty while a window is open, so a number never means two things. Only your own side's soldiers are offered, and a window with nothing of yours in it does not stop |
 
 **What the whole run is set to.**
 
@@ -212,7 +217,7 @@ pale edge at the limit of reach — so the ground says what the soldier will hol
 bar, its own exposure exactly and the highest rung the other side has reached on it.
 
 Point at an enemy and its hit chance is over its head, with what the shot costs and what it is
-worth. Aim — `1`, tab, or a click — and the shot's terms open at the right edge and stay open while
+worth. Aim — a fire slot, tab, or a click — and the shot's terms open at the right edge and stay open while
 you aim: the chance and the price, which plates it can reach and what each still carries, who
 taking it would give you away to, and what it is expected to take off and what the scorer makes of
 it, term by term. A beam landing squarely on a full shield reads well on the plates and achieves
@@ -292,7 +297,7 @@ the position worth reaching first, and the scout's blade the only thing that tak
 You drive both sides, so the three reactions are all easy to try. The HUD reports which tick each
 shot went off on and where the target was standing when it landed.
 
-- **Overwatch** — give a sentry a narrow arc with `V`, end its turn, then run one of yours across
+- **Overwatch** — give a sentry a narrow arc with `4`, end its turn, then run one of yours across
   it. Run the same route again with the arc set wide and watch the same weapon shoot worse.
 - **Surprise** — walk one of yours across the front of a sentry that declared nothing. It answers
   anyway, out of half a bank and a beat late. Do it again with the same sentry and nothing

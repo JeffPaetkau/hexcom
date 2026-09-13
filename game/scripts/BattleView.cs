@@ -534,6 +534,18 @@ public sealed class BattleView
     /// attention field already says where it is looking. Omniscient, every arc is drawn, because
     /// a capture checking a sentry answered a move needs to see what it was holding.
     /// </para>
+    /// <para>
+    /// <b>An arc with nothing banked behind it is not drawn — except on the soldier whose go it is.</b>
+    /// A watchman whose reserve is spent is holding an arc it cannot shoot down, and a wedge on the
+    /// ground would be a threat that is not there. But a soldier's reserve is set to nought when its
+    /// own go comes round and banked when the go ends, so on the soldier declaring the arc that test
+    /// read nought always, and <c>V</c> charged for an arc the player then never saw — entry 094, item
+    /// 6, confirmed by capture on the compound before this was changed. So the soldier up is asked
+    /// what it <i>will</i> bank, of <c>Battle</c>: <c>Reactions.Banked</c> of its points now, against
+    /// its own price for its quickest shot. Enough, and the arc is drawn as held; not enough, and it is
+    /// drawn faint — declared, and holding nothing yet, which is true and is what the player is
+    /// deciding against.
+    /// </para>
     /// </remarks>
     private static void BuildHeldArcs(SandboxFrame frame, MeshBuilder overlay)
     {
@@ -548,9 +560,17 @@ public sealed class BattleView
         foreach (var unit in battle.InPlay)
         {
             if (unit.Held is not { } order) continue;
-            if (unit.Overwatch is not null && unit.Reserve <= 0) continue;
             if (unit.Side == Side.Hostile && !frame.Omniscient) continue;
 
+            // The reserve a soldier holds is the one it banked; the one up has not banked yet, so it
+            // is asked what it would. See the remarks.
+            var declaring = unit == battle.Active;
+            var backed = declaring
+                ? battle.Reactions.Banked(unit.ActionPoints) >= unit.Stats.Costs.Fire(unit.Weapon.QuickestMode.ApCost)
+                : unit.Reserve > 0;
+            if (unit.Overwatch is not null && !backed && !declaring) continue;
+
+            var strength = unit.Overwatch is not null && !backed ? 0.45f : 1f;
             var tint = unit.Ambush is not null ? SandboxPalette.AmbushHue : SandboxPalette.OverwatchHue;
             var half = order.Arc.Degrees / 2;
             var from = SandboxGeometry.NodePlane(battle.Map, unit.Position);
@@ -563,7 +583,7 @@ public sealed class BattleView
                 if (distance > unit.Weapon.MaxRange) continue;
                 if (battle.AngleOffDegrees(unit.Position, order.Centre, node) > half) continue;
 
-                Tint(overlay, battle.Map, node, new Color(tint, distance <= unit.Weapon.OptimalRange ? 0.26f : 0.13f));
+                Tint(overlay, battle.Map, node, new Color(tint, (distance <= unit.Weapon.OptimalRange ? 0.26f : 0.13f) * strength));
             }
         }
     }
