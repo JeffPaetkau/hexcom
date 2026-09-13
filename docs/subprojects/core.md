@@ -110,13 +110,10 @@ it is.
 **A garrison that does not move is still Core's, and still not this brief's.** Three of the
 waystation's four hostiles never act; milestone 2 on `../map.md`.
 
-**Two questions from the second play-through, not this brief's, so they are not lost** — entry 094.
-Item 14: *can run a stretch of 10 or so hexes but can only shoot a handful.* Mostly unlabelled rings,
-and View's; but under it a standard shot is half a turn and an aimed one 70% of it against a 10-hex
-walk, and nobody has measured whether that is the game the reaction window wants. Take the figure
-the next time a batch runs on the waystation, rather than moving `FireMode` on a player's feel.
-Item 8: a hostile beside a soldier read `SEARCHING`. If a capture shows a body adjacent, facing and
-short of `Engaged`, that is `AwarenessTracker`'s to explain.
+**The two questions from the second play-through are answered** (entry 095), and neither changes a
+rule. The shot's price stays. 25% dearer takes the surprise snap out of every purse and the
+waystation goes from fifteen achieved to one. Cheaper changes the mode the garrison fires and not
+the mission. `SEARCHING` beside a hostile is the rules: one move cannot take a fresh sentry past it.
 
 **Out of scope.** `game/**` as ever. Extraction and capture. Suppression.
 
@@ -209,6 +206,13 @@ the thing to suspect when a reaction test starts failing for no reason you can s
   `Func` handed to `Pathfinder.Reachable`, never baked into the graph, which is built once per
   map. `CommittedMove` must be given the same profile the route was costed with or the reaction
   clock stops matching the points actually spent.
+- **One move cannot take a sentry who held nothing past Searching, however close it ends.** A
+  window gives a reactor with reserve one look, at the first step it can see, and hearing the walk
+  stops at one short of `AlertedAt`. The best look in the game is `LookGain` times perception
+  over ten, 71 for a scout's eyes, which are the sharpest there are, so a man walked right up to reads Searching until his own turn
+  ends and then Engaged. Searching beside a body is therefore the sign he *did* see the walk: from
+  behind he gets no look and the footsteps alone leave him Suspicious. Entry 095, and
+  `WalkingStraightUpToASentrySFaceLeavesHimSearchingUntilHisOwnTurnComesRound` pins it.
 - **Surprise fires on a crossing, not a rise.** `seen.Before < bar && seen.After >= bar`. "Rose"
   would re-trigger all the way up the awareness ladder; "is above" would trigger every move.
   Reactors also get their mid-window look *only if they have reserve banked* — the reserve is
@@ -575,8 +579,19 @@ the ones that block or shape what Core does next.
   to keep one of your own out of the radius, is a search — every node in range crossed with
   everybody in the blast, per candidate, per decision. What is built will decline a grenade that
   catches its own and will not go looking for the one that avoids them. Entry 034, item 4.
+- **The surprise snap fits its purse by two points.** `⌊50 × ReserveFraction × SurpriseFraction⌋`
+  is 17 and a snap is 15. Measured on the waystation (entry 095), 25% dearer firing puts it out
+  of reach, and the mission collapses in the same arm. The collapse is not yet traced to it; a
+  transcript at that price would settle it. Check the sum before moving the turn size, the bank,
+  the purse or the snap.
+- **The reaction window's price has never been measured where the window matters.** On the
+  waystation, across eight hundred matches at four firing prices, overwatch fires a tenth of a shot
+  a match and a surprise shot never kills. Every kill is a turn shot. Asking whether half a turn is
+  the right shot for the window needs an overwatched approach and a Commander that sets arcs
+  (entry 095, *For Master*).
 - **Most balance numbers are still set by reasoning.** `ObjectiveValue`, `ObjectiveHorizon`, the two `CostProfile`
-  archetypes and `RemovalBonus` have been measured (entry 083); everything else is an argument, and
+  archetypes and `RemovalBonus` have been measured (entry 083), and the firing prices as a whole on
+  the waystation (095); everything else is an argument, and
   the design doc says why each one is what it is. The batch in `Measured/` is how to turn another
   into a finding — and a question about anything a reaction scores has to build the battle with its
   model, because windows rank with `battle.Tactics` and not with the commander's.

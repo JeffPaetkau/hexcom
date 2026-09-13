@@ -696,7 +696,10 @@ until it is forgotten and walks out under Suspicious — fifteen matches of a hu
 where there were none. The route that goes round rather than past is the head of Core's next
 brief; whether being forgotten should be that cheap is Master's.
 
-**Most numbers in the game are still arguments.** Four have been measured; the rest have not.
+**Most numbers in the game are still arguments.** Four have been measured, and so have the firing
+prices as a whole: they stay, because a quarter dearer takes the surprise snap out of a startled
+sentry's purse and wins the waystation once in a hundred (`docs/decisions.md` entry 095). The rest
+have not.
 What an objective is worth has been measured twice and is saturated both times.
 
 **A soldier still only looks one step ahead.** An objective slopes, so it draws a unit from

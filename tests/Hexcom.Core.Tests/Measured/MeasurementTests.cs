@@ -261,6 +261,49 @@ public class WhatTheSquadKnowsGoingIn(ITestOutputHelper output) : Measured(outpu
 }
 
 /// <summary>
+/// What a shot costs against a walk.
+/// </summary>
+/// <remarks>
+/// Entry 094, item 14: a player ran ten hexes and could shoot a handful, and underneath the
+/// unlabelled rings that produced it is a real price — a standard shot is half a turn and an
+/// aimed one seventy per cent of it. That price is load-bearing in the reaction window, where
+/// points are ticks, so it is measured rather than moved on a feel. Every soldier on both sides
+/// pays the multiplier, over their archetype.
+/// <para>
+/// Blind, because briefed nobody fires and a price nobody pays measures nothing (entry 091).
+/// Read the volley lines: which modes get chosen at each price, out of which pocket, and how
+/// often a reaction is the shot that lands — and then the verdicts and the losses for what that
+/// did to the mission.
+/// </para>
+/// </remarks>
+public abstract class ShotPrices(ITestOutputHelper output) : Measured(output)
+{
+    protected static readonly double[] Multipliers = [0.6, 0.8, 1.0, 1.25];
+
+    protected void Arms(double? value) => Report(
+        $"What a shot costs against a walk, blind, at {(value is { } v ? $"{v:0}" : "the shipped value")}",
+        Multipliers.Select(firing => Batch.Run(
+            $"firing x{firing:0.00}{(firing == 1.0 ? " (shipped)" : "")}",
+            Measurement.Seeds,
+            seed => Waystation.Begin(seed, firing: firing),
+            ours: value is { } worth ? Ours(worth) : null)));
+}
+
+/// <inheritdoc cref="ShotPrices"/>
+public class WhatAShotCosts(ITestOutputHelper output) : ShotPrices(output)
+{
+    [BatchFact]
+    public void Measure() => Arms(null);
+}
+
+/// <summary>The same question at a value the squad still fights at, split so the arms run at once.</summary>
+public class WhatAShotCostsInAFight(ITestOutputHelper output) : ShotPrices(output)
+{
+    [BatchFact]
+    public void Measure() => Arms(Fighting);
+}
+
+/// <summary>
 /// The mission clock, end to end, on the ground it was written for.
 /// </summary>
 /// <remarks>

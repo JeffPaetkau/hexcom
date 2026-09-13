@@ -123,6 +123,15 @@ public sealed record ReactionModel
     /// still a snap shot, which is the point: catching a competent soldier with <em>nothing</em>
     /// in hand ought to take more than walking up to them. Walking round the back deserves the
     /// reward; proximity on its own does not.
+    /// <para>
+    /// <b>That is true by two points, and it is load-bearing.</b> A full turn banked is 35, half
+    /// of it is 17, and a snap shot is 15. Measured on the waystation (entry 095), every firing
+    /// price 25% dearer puts the snap out of the purse, the startled sentry dives or shouts
+    /// instead, and the same arm takes the mission from fifteen achieved in a hundred to one —
+    /// how much of that is the missing snap is not established. Anything that
+    /// moves this fraction, <see cref="ReserveFraction"/>, the turn size or the snap's price has
+    /// to be checked against that sum.
+    /// </para>
     /// </remarks>
     public double SurpriseFraction { get; init; } = 0.5;
 
