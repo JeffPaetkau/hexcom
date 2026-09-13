@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 24 · 12 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 25 · 12 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 381 of them, run in about ten seconds today, most of it the AI. The maps, the missions and the matches fought on them bring 42 more, and a batch of matches that is off by default and takes an hour.</li>
+        <li>The rules are unit-testable headless — 372 of them, run in about ten seconds today, most of it the AI. The maps, the missions and the matches fought on them bring 72 more, and a batch of matches that is off by default and takes an hour.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -838,6 +838,17 @@
         Firing costs: snap shot 15, standard 25, aimed 35. Change stance 2, turn on the spot 2,
         declare an overwatch arc 5. Reloading is specified but not built. Seven tenths of whatever
         is left over becomes reaction potential — see section 09 for why that fraction.
+      </p>
+      <p>
+        <strong>The prices have been measured once, and they stay.</strong> A player found half a
+        turn for a shot dear. Every firing price on both sides was moved together over eight hundred
+        waystation matches (<code>docs/decisions.md</code> entry 095). A quarter dearer and the
+        mission is won once in a hundred instead of fifteen times: the surprise snap stops fitting
+        the purse, because a full bank is 35, a startled soldier may spend half, and 15 fits under
+        17 by two points. Cheaper changes which shot the garrison takes, aimed instead of snap, and
+        nothing measurable about the mission. What has <em>not</em> been measured is the reaction
+        window this section argues the prices for. On that ground, overwatch barely fires and a
+        surprise shot never killed anybody.
       </p>
     </div>
   </section>
@@ -2468,8 +2479,8 @@
           is the first thing a deeper one would fix.
         </p>
         <p>
-          <strong>Most rates here are still arguments.</strong> Four have been measured and the
-          rest have not; the instrument is checked in beside the tests, off by default, and takes
+          <strong>Most rates here are still arguments.</strong> Four have been measured, and the
+          firing prices as a whole (section 04), and the rest have not; the instrument is checked in beside the tests, off by default, and takes
           the same seeds every time. The one to point it at next, once the missing term exists, is
           what a soaked shield is worth: at the figure set today a fully soaked beam scores near
           enough exactly what the shot costs, so the ordering between firing pointlessly and doing
@@ -2516,8 +2527,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 24</span>
-    <span>423 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 25</span>
+    <span>444 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

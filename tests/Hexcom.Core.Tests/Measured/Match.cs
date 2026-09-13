@@ -3,8 +3,10 @@ using System.Diagnostics;
 using System.Linq;
 using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
+using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
+using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
 using Hexcom.Core.Units;
 
@@ -41,6 +43,12 @@ namespace Hexcom.Core.Tests.Measured;
 /// the trooper as the one everybody does, and nobody established whether that is the man or the
 /// post he was given — which is a question only a per-soldier reading can answer.
 /// </param>
+/// <param name="Volleys">
+/// Every round that left a barrel, by side, by whether it was fired on the shooter's own turn or
+/// into a window, and by mode. Entry 094 asked whether a shot at half a turn is the game the
+/// reaction window wants, and a count of shots cannot say: the price decides <em>which</em> shot
+/// gets taken and <em>when</em>, so the reading has to keep the mode and the pocket apart.
+/// </param>
 public sealed record MatchOutcome(
     int Seed,
     Verdict Verdict,
@@ -60,13 +68,30 @@ public sealed record MatchOutcome(
     string? FirstAimedAt,
     string? FirstDown,
     AwarenessState Noticed,
-    IReadOnlyDictionary<string, AwarenessState> Peaks)
+    IReadOnlyDictionary<string, AwarenessState> Peaks,
+    IReadOnlyDictionary<Volley, ShotCount> Volleys)
 {
     /// <summary>Whether it settled on the objective rather than running out of rounds.</summary>
     public bool Settled => Verdict != Verdict.Undecided;
 
     /// <summary>Whether anybody at all fired or threw anything.</summary>
     public bool Quiet => OurShots + TheirShots + OurThrows + TheirThrows == 0;
+}
+
+/// <summary>One kind of shot: whose, out of which pocket, and in which mode.</summary>
+/// <param name="How">"turn" for a shot on the shooter's own turn, otherwise the reaction's kind.</param>
+public sealed record Volley(Side Side, string How, string Mode);
+
+/// <summary>How many shots of one kind were fired, and how many of the rounds found somebody.</summary>
+public sealed record ShotCount(int Fired, int Rounds, int Hits, int Down)
+{
+    public static readonly ShotCount None = new(0, 0, 0, 0);
+
+    public ShotCount Add(ShotOutcome shot) => new(
+        Fired + 1,
+        Rounds + shot.Shots.Count,
+        Hits + shot.Shots.Count(s => s.Hit),
+        Down + (shot.TargetDown ? 1 : 0));
 }
 
 /// <summary>
@@ -113,6 +138,7 @@ public static class Match
         var yours = everyone.Where(u => u.Side == Side.Hostile).ToList();
 
         var counts = new Dictionary<(Side, OrderKind), int>();
+        var volleys = new Dictionary<Volley, ShotCount>();
         var peaks = mine.ToDictionary(u => u.Name, _ => AwarenessState.Unaware);
         var noticed = AwarenessState.Unaware;
         var closest = int.MaxValue;
@@ -131,6 +157,26 @@ public static class Match
             {
                 var key = (mover.Side, act.Kind);
                 counts[key] = counts.GetValueOrDefault(key) + 1;
+
+                if (act is { Fired: { Fired: true } shot, Order.Shot: { } aimed })
+                    Count(volleys, new Volley(mover.Side, "turn", aimed.Mode.Name), shot);
+
+                foreach (var reaction in act.Reactions?.Resolutions ?? [])
+                {
+                    var answered = new Volley(
+                        reaction.Placement.Reactor.Side,
+                        reaction.Placement.Kind.ToString().ToLowerInvariant(),
+                        reaction.Placement.Mode?.Name ?? reaction.Placement.Action.ToString().ToLowerInvariant());
+
+                    // A reaction that was not a shot is counted too, with no rounds, because a
+                    // price that puts the shot out of a purse turns it into a dive or a call.
+                    if (reaction is { Outcome: { Fired: true } answer }) Count(volleys, answered, answer);
+                    else if (reaction.Placement.Action != ReactionAction.Fire)
+                        volleys[answered] = volleys.GetValueOrDefault(answered, ShotCount.None) with
+                        {
+                            Fired = volleys.GetValueOrDefault(answered, ShotCount.None).Fired + 1,
+                        };
+                }
 
                 if (mover.Side != Side.Player || firstAimedAt is not null) continue;
 
@@ -181,8 +227,12 @@ public static class Match
             firstAimedAt,
             firstDown,
             noticed,
-            peaks);
+            peaks,
+            volleys);
     }
+
+    private static void Count(Dictionary<Volley, ShotCount> volleys, Volley volley, ShotOutcome shot)
+        => volleys[volley] = volleys.GetValueOrDefault(volley, ShotCount.None).Add(shot);
 
     /// <summary>
     /// Who a charge was meant for: the nearest of them to the ground it was aimed at.

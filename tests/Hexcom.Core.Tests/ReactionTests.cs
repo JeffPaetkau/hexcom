@@ -29,6 +29,8 @@ public class ReactionTests
 
     private static readonly ReactionModel Rules = ReactionModel.Default;
 
+    private static readonly AwarenessModel Detection = AwarenessModel.Default;
+
     /// <summary>A full turn's allowance for an ordinary soldier.</summary>
     private static int Turn => UnitStats.Default.ActionPoints;
 
@@ -853,6 +855,43 @@ public class ReactionTests
         // throwing one of these for every move anybody makes.
         Assert.Empty(battle.Move(Node(3, 3)).Reactions!.Offers);
         Assert.True(runner.InPlay);
+    }
+
+    [Fact]
+    public void WalkingStraightUpToASentrySFaceLeavesHimSearchingUntilHisOwnTurnComesRound()
+    {
+        // Entry 094, item 8: a player walked up beside a hostile and read SEARCHING under him.
+        // A solid wall hides the runner nine hexes out, square in front of a sentry who banked
+        // his whole turn; the runner steps round it and walks a turn's worth to stand beside him.
+        var map = new BattleMap().FillDisc(Hex.Zero, 14);
+        map.AddSideWall(new Hex(9, 0), HexDirection.SouthWest, 0, WallProfile.Solid);
+
+        var battle = Field(map);
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Watchful, HexDirection.NorthEast);
+        var runner = battle.Deploy("Vance", Side.Player, Node(9, 0), Tardy, HexDirection.North);
+
+        battle.Start();
+        battle.EndTurn();
+        Assert.Equal(AwarenessState.Unaware, battle.Awareness.Of(sentry.Id, runner.Id).State);
+        Assert.Same(runner, battle.Active);
+
+        Assert.True(battle.Move(Node(1, 0)).Moved);
+        Assert.True(runner.InPlay);
+        Assert.True(battle.Awareness.IsWatching(sentry, runner.Position));
+
+        // A window gives a watchman one look, at the first step it can see, and hearing the walk
+        // stops one short of Alerted because a sound says where and never who. So whichever way
+        // he faces, the most one move can leave a sentry who held nothing is Searching: a look
+        // worth Alerted from a standing start wants perception nobody in the game has.
+        Assert.True(Detection.LookGain * Watchful.Perception / 10.0 < Detection.AlertedAt);
+        Assert.Equal(AwarenessState.Searching, battle.Awareness.ReadoutFor(sentry.Id, runner.Id).State);
+
+        // He looks properly when his own turn ends, and a man standing at his elbow is the whole
+        // of a look.
+        battle.EndTurn();
+        Assert.Same(sentry, battle.Active);
+        battle.EndTurn();
+        Assert.Equal(AwarenessState.Engaged, battle.Awareness.ReadoutFor(sentry.Id, runner.Id).State);
     }
 
     [Fact]

@@ -86,9 +86,15 @@ public static class Waystation
     /// <c>presence</c> part names every one of them, and the rules had nowhere to hold it; without
     /// this the scout walks its first turn blind into the view of a man the briefing describes.
     /// </param>
+    /// <param name="firing">
+    /// A multiplier on what every soldier on both sides pays to fire, on top of whatever their
+    /// archetype already pays, so a scout stays slower on the trigger than a gunner at every
+    /// setting. Both sides, because the question it serves is what shape of fight a price makes
+    /// and not which side a cheaper shot favours — entry 094's item 14.
+    /// </param>
     public static Battle Begin(
         int seed, bool listPrice = false, bool swapPosts = false, Deadline? clock = null, UtilityModel? slope = null,
-        bool briefed = false)
+        bool briefed = false, double firing = 1.0)
     {
         var battle = new Battle(Mission.LoadMap(), Mission.Metres, seed: seed, utility: slope);
 
@@ -96,6 +102,7 @@ public static class Waystation
         {
             var stats = d.Stats ?? UnitStats.Default;
             if (listPrice) stats = stats with { Costs = CostProfile.Default };
+            if (firing != 1.0) stats = stats with { Costs = stats.Costs with { Firing = stats.Costs.Firing * firing } };
 
             battle.Deploy(d.Name, d.Side, new NodeId(d.Where, 0), stats, d.Facing, d.Loadout);
         }

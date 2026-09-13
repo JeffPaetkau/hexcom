@@ -5488,3 +5488,119 @@ shout and End turn on its own key.
 own doc says. Core: nothing new to start a session for.
 
 ---
+
+## 095 — A shot's price is measured: dearer breaks the waystation, cheaper changes the mode and not the mission; and SEARCHING at arm's length is the rules
+
+**2026-09-12** · **Raised by** core · **For** core, view, master · **Status** open — the surprise purse under *Found* is Core's to keep in mind; nothing is changed in the rules; View's line is under *For View*
+
+Entry 094 left Core two questions from the second play-through. Both are answered here: one by a
+batch, one by a test.
+
+### Item 14 — what a shot costs against a walk
+
+**The question.** A stride is 5 and a turn 50, so a standard shot is half a turn and an aimed one
+70% of it. The player felt that was dear. The price is load-bearing in the reaction window, where
+points are ticks, so it was measured and not moved.
+
+**The instrument.** `Measured/MeasurementTests.cs`, `WhatAShotCosts` and `WhatAShotCostsInAFight`.
+Every soldier on **both** sides pays a multiplier on firing, on top of their archetype. Both sides
+because the question is what shape of fight a price makes, not which side a cheaper shot favours.
+The waystation, **blind**, because briefed nobody fires (091) and a price nobody pays measures
+nothing. A hundred paired seeds an arm, at the shipped objective value and at 30. `MatchOutcome`
+now keeps every shot by side, by pocket (turn, overwatch, surprise, ambush) and by mode, and every
+reaction that was not a shot. About six minutes a class, the two in parallel.
+
+| firing, value 120 | achieved | alarm | ours down / theirs | their turn shots: snap · standard · aimed | surprise snaps |
+|---|---|---|---|---|---|
+| ×0.60 | 10 | 68 | 1.08 / 0.57 | 0.68 · 2.62 · 2.83 | 0.12, and 0.57 standard |
+| ×0.80 | 7 | 86 | 0.89 / 0.39 | 0.63 · 3.38 · 1.40 | 0.58 |
+| **×1.00 shipped** | **15** | 78 | 0.75 / 0.37 | 1.36 · 2.75 · 0.80 | 0.50 |
+| ×1.25 | **1** | 94 | 0.87 / 0.20 | 1.66 · 2.05 · 0.46 | **none** |
+
+| firing, value 30 | achieved | alarm | ours down / theirs | their turn shots: snap · standard · aimed | surprise snaps |
+|---|---|---|---|---|---|
+| ×0.60 | 13 | 75 | 0.95 / 0.75 | 0.75 · 1.89 · 2.69 | 0.08, and 0.61 standard |
+| ×0.80 | 9 | 74 | 0.89 / 0.63 | 0.37 · 3.40 · 1.46 | 0.62 |
+| **×1.00 shipped** | **13** | 80 | 0.72 / 0.58 | 1.58 · 2.21 · 1.08 | 0.51 |
+| ×1.25 | **1** | 88 | 0.79 / 0.44 | 1.65 · 1.74 · 0.44 | **none** |
+
+**What it says.**
+
+1. **Dearer is a cliff, and the shipped price sits two points from its edge.** At ×1.25 the mission
+   is achieved once in a hundred at either value, the alarm gets out in nine matches of ten and a
+   round earlier, and every soldier is held at Engaged in nearly every match. The surprise shot is
+   the reading that vanishes. A full turn banked is 35 (`ReserveFraction` 0.7), a surprise may
+   spend half of that, which is 17, and a snap is 15. At ×1.25 a snap is 19 and does not fit. A
+   25-seed rerun counting reactions that were not shots shows what replaced it: at the shipped
+   price a startled sentry snaps 0.56 a match, dives 1.88 and shouts 1.04; at ×1.25 he never snaps,
+   dives 2.92 and shouts 1.32. **Whether the missing snap is the cause of the collapse, or only its
+   most visible reading, is not established.** A shout passes the contact on and a shot that lands
+   does not, which is a candidate; a transcript at ×1.25 would settle it.
+2. **Cheaper changes which shot is taken, not whether the mission is won.** Achieved goes 15 → 7 →
+   10 at 120 and 13 → 9 → 13 at 30. Paired seeds or not, that is within what a hundred matches
+   can tell apart. What moves is the mode. At ×0.6 an aimed shot is 21, it fits after a walk, and
+   the garrison takes 2.7 aimed shots a match where it took 0.8; its snaps halve. A standard shot
+   also fits the surprise purse, so a startled sentry fires a better round. More of ours go down
+   (0.75 → 1.08 at 120), and more of theirs at 30, because the squad fights more when it fights at
+   all. The squad's own shooting stays under a shot and a half a match in every arm: a Commander
+   under this mission does not shoot, so **this batch measures the garrison's trigger, not the
+   player's.**
+3. **Reaction fire does not kill anybody on this ground, at any price.** Across eight hundred
+   matches, overwatch fires a tenth of a shot a match or less and a surprise shot never once puts a
+   man down. Every kill is a turn shot. The waystation does not exercise the window the price was
+   argued for, since nobody holds an arc across a route somebody else is running. So the question
+   *is half a turn the game the reaction window wants* is not answerable here. It wants ground
+   where a fight is expected and an approach is overwatched, which is Kestrel Yard or a skirmish,
+   and a Commander that sets arcs.
+
+**The answer to item 14, then: do not move `FireMode`.** Not raised, because 25% dearer takes the
+surprise snap out of every purse and the one mission that exists with it. Not lowered, because
+nothing measured says it helps the mission, and it makes the fight bloodier by turning snaps into
+aimed shots. The player's feel was the unlabelled rings (094, View's). What is worth keeping is the
+sum under finding 1. The surprise snap exists because **15 ≤ ⌊50 × 0.7 × 0.5⌋ = 17**, and that
+sum now sits in `ReactionModel.SurpriseFraction`'s remarks. Any change to the turn size, the bank,
+the purse or the snap has to be checked against it.
+
+### Item 8 — SEARCHING beside a hostile who was facing you
+
+**No capture is needed, because the rung is itself the evidence.** Read from the source and pinned
+by `ReactionTests.WalkingStraightUpToASentrySFaceLeavesHimSearchingUntilHisOwnTurnComesRound`:
+
+- The label under a hostile body is `BattleView.WorstReadout`: the highest rung **he** holds on
+  any of ours. It is his certainty about us, not ours about him.
+- A sentry looks properly only as his own turn ends (`Observe`). During somebody else's move, a
+  reaction window gives a reactor **with reserve** exactly one look, at the first step of the route
+  he can see that is not behind him (`ReactionWindow.TriggerTick`).
+- Hearing the walk raises a contact to at most `AlertedAt - 1`, 74. A sound says where and never
+  who.
+- The best look in the game is `LookGain` × perception / 10: 55 for an ordinary soldier, 66 for
+  the signaller, 71 for a scout. Never 75.
+
+So **a move cannot take a sentry who held nothing past Searching, however close it ends and
+whichever way he faces.** In the test the runner walks nine hexes into a sentry's front arc and
+stops beside him. He reads Searching. When his own turn ends he reads Engaged. Facing does decide
+the rung, just the other way from what the question assumed. From behind he gets no look at all,
+and the footsteps alone leave him at Suspicious. **Searching beside a body means he saw you walk
+up.**
+
+One thing noticed and not a finding. The window's look is taken at the first visible step, which
+is the farthest point of a walk toward the watcher. On a single turn's walk that makes no
+difference to the rung, because the noise cap reaches 74 either way. It does matter to the quiet
+term, which prices the same tick deliberately (`Tactician.Crossing`). Recorded so nobody has to
+work it out again, not proposed.
+
+### For View
+
+Item 8's fix is words, and it is already routed to brief two (094). The rung under a hostile is
+his certainty about your squad. A hostile who has not had his own turn since you arrived cannot be
+past Searching, so a player reading SEARCHING at arm's length is being told *he saw you and has not
+looked yet*. The label has to say whose rung it is, and ideally that his turn is still to come.
+
+### For Master
+
+Finding 3 is the real residue of item 14. A price argued in section 04 for the reaction window
+has never been measured anywhere the window matters. That wants ground with an overwatched
+approach, and it wants milestone 2's garrison that sets arcs, before it can be asked. It is not a
+brief yet.
+
+---

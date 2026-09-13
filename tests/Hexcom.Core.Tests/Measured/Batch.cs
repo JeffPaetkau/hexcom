@@ -4,6 +4,7 @@ using System.Text;
 using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Tactics;
+using Hexcom.Core.Units;
 
 namespace Hexcom.Core.Tests.Measured;
 
@@ -58,6 +59,17 @@ public sealed record Reading(string Arm, IReadOnlyList<MatchOutcome> Matches)
 
     public double Seconds => Matches.Sum(m => m.Seconds);
 
+    /// <summary>Every kind of shot anybody fired across the run, ours first, turn shots first.</summary>
+    public IEnumerable<(Volley Volley, ShotCount Count)> Volleys => Matches
+        .SelectMany(m => m.Volleys)
+        .GroupBy(p => p.Key)
+        .Select(g => (g.Key, g.Select(p => p.Value).Aggregate(ShotCount.None, (a, b) =>
+            new ShotCount(a.Fired + b.Fired, a.Rounds + b.Rounds, a.Hits + b.Hits, a.Down + b.Down))))
+        .OrderBy(p => p.Key.Side != Side.Player)
+        .ThenBy(p => p.Key.How != "turn")
+        .ThenBy(p => p.Key.How)
+        .ThenBy(p => p.Key.Mode);
+
     /// <summary>Two lines a person can read, and the same two for every arm so they line up.</summary>
     public string Lines()
     {
@@ -94,6 +106,13 @@ public sealed record Reading(string Arm, IReadOnlyList<MatchOutcome> Matches)
 
             sb.AppendLine($"{"",-28}   {soldier,-8} {string.Join(", ", rungs)}");
         }
+
+        foreach (var (volley, tally) in Volleys.Select(v => (v.Volley, v.Count)))
+            sb.AppendLine(
+                $"{"",-28}   {(volley.Side == Side.Player ? "ours" : "theirs"),-6} {volley.How,-9} {volley.Mode,-9} " +
+                $"{(double)tally.Fired / Count,5:0.00} a match" +
+                (tally.Rounds == 0 ? "" :
+                    $", {(double)tally.Hits / tally.Rounds,4:P0} of rounds hit, {tally.Down} put somebody down"));
 
         return sb.ToString();
     }
