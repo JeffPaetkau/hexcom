@@ -517,7 +517,7 @@
 <div class="wrap">
 
   <header class="masthead">
-    <p class="eyebrow">Hexcom · Tactics layer · Revision 23 · 12 September 2026</p>
+    <p class="eyebrow">Hexcom · Tactics layer · Revision 24 · 12 September 2026</p>
     <h1>Hexcom Field Manual</h1>
     <p class="standfirst">
       A turn-based squad tactics game where the fight is decided by who saw whom first. Beam
@@ -571,7 +571,7 @@
         <code>Hexcom.Core</code>. Godot reads that state and draws it.
       </p>
       <ul>
-        <li>The rules are unit-testable headless — 356 of them, run in about ten seconds today, most of it the AI. The maps, the missions and the matches fought on them bring 47 more, and a batch of matches that is off by default and takes an hour.</li>
+        <li>The rules are unit-testable headless — 381 of them, run in about ten seconds today, most of it the AI. The maps, the missions and the matches fought on them bring 42 more, and a batch of matches that is off by default and takes an hour.</li>
         <li>Balance can be tuned by running thousands of AI-vs-AI matches with no window open.</li>
         <li>If the art pipeline ever forces a move, only the view layer is lost.</li>
       </ul>
@@ -1006,6 +1006,12 @@
         separate rules in either. Both answers are symmetric and side-agnostic, because detection
         runs the same query in the enemy's direction — and the AI must be restricted to exactly
         what the interface can show you.
+      </p>
+      <p>
+        A trace is pure geometry over the map and the layout, so the solver remembers every pair
+        of vantages it has answered until the map changes. That is what pays for the scorer
+        asking about every step of every route: the routes share their hexes, and a briefed
+        waystation match that took two hundred seconds tracing the same lines takes about ten.
       </p>
     </div>
   </section>
@@ -2120,10 +2126,13 @@
         sends a soldier round a man in cover sends it round a corner it heard something behind,
         with the shot it opens counted at the credence. Two things had to change in the scorer
         before that walk was ever worth taking, and both were measured rather than argued: the
-        look a marker would get at the arrival is averaged over every way the man could be facing
-        &mdash; assuming he is looking straight at you priced the walk above the shot on every
-        geometry tried &mdash; and a look that finds a marker is worth the whole shot, because
-        what is missing about a man you cannot see is where he is, not whether he exists.
+        look a marker made by ear would get at the arrival is averaged over every way the man
+        could be facing &mdash; assuming he is looking straight at you priced the walk above the
+        shot on every geometry tried &mdash; and a look that finds a marker is worth the whole
+        shot, because what is missing about a man you cannot see is where he is, not whether he
+        exists. A marker with a facing &mdash; a briefed post, or a man seen and then lost &mdash;
+        is priced with it, because half a look is the wrong price for both the road he watches
+        and the ground behind him.
       </p>
       <p>
         <strong>The commander never fires at a marker.</strong> A shot is offered only at a
@@ -2285,14 +2294,29 @@
       </p>
       <p>
         The term is one more share of the objective. For each enemy, what they will hold on this
-        soldier after the action &mdash; what they hold now, plus the look the new pose hands them
-        on their next turn, plus whatever the noise hands them &mdash; is read as a share of the way
-        to the rung the mission is lost at, and the <strong>worst of them</strong> is how much of the
-        mission is gone. What the action is worth is the difference between that reading for the
-        pose after and the pose before, times what the objective is worth. It goes with the
-        objective's own term, undiscounted, because it is the mission and not a bet on next round.
-        Nothing about which mission it is reaches the arithmetic: the objective says which rung it
-        tolerates, and a mission that tolerates the top of the ladder prices being seen at nothing.
+        soldier after the action is read as a share of the way to the rung the mission is lost at,
+        and the <strong>worst of them</strong> is how much of the mission is gone. What the action
+        is worth is the difference between that reading for the pose after and the pose before,
+        times what the objective is worth. It goes with the objective's own term, undiscounted,
+        because it is the mission and not a bet on next round. Nothing about which mission it is
+        reaches the arithmetic: the objective says which rung it tolerates, and a mission that
+        tolerates the top of the ladder prices being seen at nothing.
+      </p>
+      <p>
+        Four things go into what each enemy will hold, and the transcript of one briefed match put
+        two of them there. What they hold now, read as the rung and never the number. The look a
+        walk hands them <em>now</em>: a reaction window gives anybody with reserve one look at the
+        first step of a route it can see that is not behind it, and the term prices that look
+        exactly as the window takes it, so a walk across a sentry's front to a hiding place is
+        scored on the crossing and not on the hiding place &mdash; before it was, the followers on
+        the waystation were tagged in transit by the gate sentry on the way to ground the term had
+        priced as hidden. Then the look the arrival hands them on their next turn, or a round of
+        forgetting if it finds nothing, as the awareness model does &mdash; a look a round for as
+        long as the pose is held, or forgetting for as long as it is not, counted over the rounds
+        until the job is done or the night is out and discounted geometrically at the scorer's one
+        look-ahead dial, because being in view is a rate, and a look under the bar that a round of
+        hiding takes back is not a quarter of the mission. And whatever the noise hands them, if
+        there is noise.
       </p>
       <p>
         <strong>A slope up to the rung, not a cliff at it</strong>, and that was the choice to make
@@ -2305,15 +2329,27 @@
         third time.
       </p>
       <p>
-        Three consequences fall out of the shape rather than being written down. The worst enemy
-        rather than the sum means <strong>going loud is free once you are seen</strong>: a soldier
-        already held at the rung has nothing left here to keep, which is the briefing's own line.
-        A soldier's own reading rather than the squad's worst means each keeps itself quiet even
-        after a comrade is noticed &mdash; a contact decays and a witness can be silenced, and a
-        squad that stopped being careful the moment one of its own was seen would throw the recovery
-        away. And a shot is priced with the man being shot at counted only at the chance he
-        survives it, because the battle forgets everything a departed soldier held: that is the
-        whole argument for the quiet kill, and the model now makes it.
+        <strong>And the slope carries on past the rung</strong>, up to the ceiling. The first
+        version clamped it at the rung, on the briefing's own line &mdash; <em>if the shift sees
+        you the task is over</em> &mdash; so that going loud was free once you were seen. The
+        transcript said what that did. The mission is judged at departure and a contact decays, so
+        a soldier held at Searching who is out of sight for a round is held at Suspicious and the
+        mission is whole again; clamped, the term read every pose as the same nought the moment
+        anybody held a soldier at the rung, so staying in the eye, stepping out of it and firing all
+        cost nothing more, and the followers walked to the gate the turn they were noticed. Past
+        the rung the share is how many rounds of hiding the recovery would take, stepping out of
+        the eye is worth one of them, and a shot at the man who already has you costs what it hands
+        everybody else and no more.
+      </p>
+      <p>
+        Two consequences fall out of the shape rather than being written down. A soldier's own
+        reading rather than the squad's worst means each keeps itself quiet even after a comrade
+        is noticed &mdash; a contact decays and a witness can be silenced, and a squad that stopped
+        being careful the moment one of its own was seen would throw the recovery away. Entry 087
+        asked whether that choice was what set the followers fighting; the transcript said it was
+        the clamp and the crossing, and the choice stands. And a shot is priced with the man being
+        shot at counted only at the chance he survives it, because the battle forgets everything a
+        departed soldier held: that is the whole argument for the quiet kill, and the model makes it.
       </p>
       <p>
         What an enemy holds is read as the rung and never the number, for the same reason the rest
@@ -2321,6 +2357,28 @@
         soldier has registered at all, down to a suspicion &mdash; a place you half-glimpsed
         something in is a place to keep out of the eye of, well before it is somebody to fire on
         &mdash; and that list is wider than the one a soldier would shoot at, on purpose.
+      </p>
+
+      <h3>What a briefing is</h3>
+      <p>
+        A side can be briefed before the fight: every soldier of it is handed a marker on an enemy
+        at the post he is deployed to, at the rung the mission says, facing the way it says he
+        watches. Entry 087 asked whether a briefing should be a place to keep out of the eye of, a
+        threat to hunt, or a marker that starts stale. It is the first two at once, and that needed
+        no rule: the fight terms hunt a briefed marker at full credence, and the quiet term outweighs
+        them for as long as it is alive &mdash; the transcript's whole finding was the two ways it
+        had been going dead. What did need a rule is that <strong>a post is not a sighting</strong>.
+        A sighting decays because the man may have moved; a post is where he was put, and a soldier
+        who has had no line to it has learned nothing by looking. So a briefed contact holds until
+        the soldier has had a line to the place it names and found nobody there, or has learned of
+        the man by another channel, and only then fades like any other. The first version decayed
+        it like a sighting, and by round three the scout had forgotten the gate was manned.
+      </p>
+      <p>
+        A marker carries the facing it was given or seen with. Averaged over six facings, the road
+        past the gate sentry reads as half a look; read with the facing the briefing states, it is
+        a full look from the front and next to nothing from behind, which is the whole of an
+        approach. A marker made by ear has no facing and keeps the average.
       </p>
 
       <h3>The hour, as the scorer sees it</h3>
@@ -2363,16 +2421,19 @@
           of matches answers, and the batch can run now.
         </p>
         <p>
-          <strong>Briefed, the scout goes in unseen and the other two start a war.</strong>
-          <em>Measured.</em> With being seen priced, and the squad handed what its briefing says
-          about the four posts, nobody registers the scout at all in forty-seven matches of a
-          hundred and the look is taken in ninety-eight &mdash; and the two who stay back are
-          Engaged in nearly every one, because four markers in a contact file are four things a
-          commander hunts, and once a soldier counts himself seen the fight is free. Nothing is
-          achieved at the shipped value. Blind, without the briefing, the scout walks its first
-          turn into the sentry's view before it has registered anybody, and the term has nothing
-          to price. The next thing this scorer needs is a briefing that is a place to keep out of
-          the eye of rather than a threat to walk toward.
+          <strong>Briefed, nobody is seen and nobody goes in; blind, the squad wins one in seven
+          by waiting to be forgotten.</strong> <em>Measured.</em> With the crossing priced as the
+          window takes it, the slope carried past the rung and the briefing holding, a briefed
+          squad finds the hidden ground at the bridge in round one and stays there all night:
+          not a shot, not an alarm, not a look in a hundred matches, because every way forward
+          crosses the gate sentry's front or is heard by four men, and the way round leaves the
+          direct line before it comes back, which a search one step deep cannot see. Blind, the
+          same squad walks in and is seen as before, then hides until the contacts decay and
+          walks out under Suspicious &mdash; fifteen matches of a hundred achieved where there
+          were none, in thirteen rounds where there were four. Two things follow. The
+          objective's pull has to run the quiet way round, which is the next step. And being
+          forgotten is now the second best move in the game after the quiet kill, on a decay
+          dial nobody has measured.
         </p>
         <p>
           <strong>What an objective is worth is saturated, twice over.</strong> <em>Measured.</em>
@@ -2444,7 +2505,8 @@
         <li class="done"><span class="idx">DONE</span><div><b>Godot greybox</b><p>3D blockout, no art, opening as the game rather than as a sandbox. The mission file is what it fights, and the export is a second capture harness.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>A clock, and the first measured numbers</b><p>What ends the task short, as two halves that stay apart: a round limit on the mission, the alarm on the awareness model. And a batch of headless matches, so that four load-bearing figures are findings rather than arguments &mdash; the first time anything in this game has been.</p></div></li>
         <li class="done"><span class="idx">DONE</span><div><b>A squad that is not seen</b><p>Being seen priced as a share of the objective, sloped up to the rung the mission is lost at; the clock as the rate the objective pays; a side that can be briefed before the fight. Measured again: the term works from contact on, and the squad was walking its first turn blind.</p></div></li>
-        <li><span class="idx">07</span><div><b>A squad that knows what it was told</b><p>The briefing's presence part as something the mission file can hand the rules, and a squad that stays quiet after it counts itself seen. Then the two faults a one-step search shows on real ground.</p></div></li>
+        <li class="done"><span class="idx">DONE</span><div><b>A squad that knows what it was told</b><p>A briefing that holds until the soldier has had a line to the post, and carries the way it watches; the term priced on the crossing as the window takes it, and on the recovery past the rung, with the rounds ahead counted. Measured: the followers stay quiet, and the squad stops at the edge of the watched ground.</p></div></li>
+        <li><span class="idx">08</span><div><b>The quiet way round</b><p>The objective's pull routed through what the soldier believes is watched, so a search one step deep follows a route that leaves the direct line before it comes back. Then the two faults a one-step search shows on real ground.</p></div></li>
       </ol>
       <p style="margin-top:1.4rem">
         Deliberately not started: the strategy layer, the setting, saves, audio, and anything that
@@ -2454,8 +2516,8 @@
   </section>
 
   <footer>
-    <span>Hexcom · tactics layer · revision 23</span>
-    <span>420 tests green · 0 engine references in core</span>
+    <span>Hexcom · tactics layer · revision 24</span>
+    <span>423 tests green · 0 engine references in core</span>
   </footer>
 
 </div>

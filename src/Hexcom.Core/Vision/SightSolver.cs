@@ -112,9 +112,40 @@ public sealed class SightSolver
     public IEnumerable<Vantage> Visible(Vantage observer, IEnumerable<Vantage> candidates)
         => candidates.Where(c => CanSee(observer, c));
 
+    private readonly Dictionary<(Vantage Observer, Vantage Target), SightResult> _traces = [];
+    private int _tracedAt = -1;
+
+    /// <summary>
+    /// How many traces are remembered before the memory is emptied and started again. A bound on
+    /// memory, not a balance number: nothing about a trace changes with it.
+    /// </summary>
+    private const int TraceMemory = 250_000;
+
     /// <summary>Trace between two vantages, returning both visibility and cover.</summary>
+    /// <remarks>
+    /// Remembered per pair of vantages until the map changes, because a trace is pure geometry
+    /// over the map and the layout and the scorer asks the same pair over and over: one decision
+    /// weighs several hundred destinations against every enemy the soldier has registered, and
+    /// since the crossing was priced, every step of every route as well — and the routes share
+    /// their hexes. Before this a briefed waystation match took two hundred seconds, most of it
+    /// tracing the same lines. Keyed on the map's revision, so a wall added or knocked down empties
+    /// it; nothing else a trace depends on can change.
+    /// </remarks>
     public SightResult Trace(Vantage observer, Vantage target)
-        => TraceFrom(Eye(observer), Ground(observer.Node).Z, target);
+    {
+        if (_tracedAt != _map.Revision || _traces.Count >= TraceMemory)
+        {
+            _traces.Clear();
+            _tracedAt = _map.Revision;
+        }
+
+        var key = (observer, target);
+        if (_traces.TryGetValue(key, out var remembered)) return remembered;
+
+        var result = TraceFrom(Eye(observer), Ground(observer.Node).Z, target);
+        _traces[key] = result;
+        return result;
+    }
 
     /// <summary>
     /// The same trace, from a point that is not anybody eye.

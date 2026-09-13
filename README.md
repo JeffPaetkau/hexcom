@@ -561,13 +561,22 @@ there, and what the failure looks like when they are not.
   in the field at first light has lost the mission and has not lost the squad.
 
 - **Not being seen is priced** — the term the first measured numbers said was missing. For each
-  enemy, what they will hold on a soldier after an action — what they hold now, the look the new
-  pose hands them, whatever the noise hands them — is read as a share of the way to the rung the
-  mission is lost at, and the worst of them is how much of the mission is gone; an action is worth
-  the difference, times what the objective is worth. A slope up to the rung rather than a cliff at
-  it, so a search one step deep can see it coming. Three things fall out of the shape: going loud
-  is free once you are seen, each soldier keeps itself quiet even after a comrade is noticed, and a
-  shot counts the man being shot at only at the chance he survives it — the quiet kill, priced.
+  enemy, what they will hold on a soldier after an action — what they hold now; the one look a
+  walk across their front hands them on the way, priced as the reaction window takes it; the look
+  the new pose hands them a round for as long as it is held, or the forgetting if it finds nothing;
+  and whatever the noise hands them — is read as a share of the way to the rung the mission is
+  lost at, and the worst of them is how much of the mission is gone; an action is worth the
+  difference, times what the objective is worth. A slope up to the rung rather than a cliff at it,
+  and on past it up to the ceiling, so a search one step deep can see it coming and can see the
+  way back. Two things fall out of the shape: each soldier keeps itself quiet even after a comrade
+  is noticed, and a shot counts the man being shot at only at the chance he survives it — the
+  quiet kill, priced.
+
+- **A squad can be briefed, and a briefing holds.** Every soldier of a side is handed a marker on
+  each post the mission names, at the rung it says and facing the way it says he watches. The
+  marker keeps until the soldier has had a line to the place and found nobody there, because a
+  post is not a sighting and does not fade like one. A marker made by a look keeps the facing it
+  saw; one made by ear has none, and is priced as if he could be looking any way at all.
 
 - **The hour, as the scorer sees it.** A per-action scorer cannot price time, so the clock goes
   into the one rate that matters: the objective's slope is stretched by the ratio of the mission's
@@ -645,15 +654,20 @@ one moment, so it cannot weigh cutting its losses against pressing on — and it
 offered the choice, which the rules allow and which is one of the three endings. A squad being
 cut to pieces stands and takes it.
 
-**Still nothing wins the waystation, and the reason has moved.** A batch of headless matches —
-`tests/Hexcom.Core.Tests/Measured`, off by default, `HEXCOM_BATCH=1` to run it — plays the
-reconnaissance a hundred times an arm. Before being seen was priced, the squad was held at Engaged
-in every match and the mission was a footrace (`docs/decisions.md` entry 083). With it priced,
-the followers keep out of the eye and the alarm goes out in two thirds of matches instead of nine
-tenths, but the scout still walks its first turn blind, because looking happens at the end of a
-turn and the rules had nowhere to hold what the briefing says. Handed the four posts before the
-fight, the scout goes in unregistered in nearly half the matches — and the other two, with four
-markers to hunt, start a war (entry 087). That is the head of Core's next brief.
+**Briefed, nothing wins the waystation; blind, it is won one match in seven.** A batch of
+headless matches — `tests/Hexcom.Core.Tests/Measured`, off by default, `HEXCOM_BATCH=1` to run
+it, `HEXCOM_PROGRESS=<file>` to watch it — plays the reconnaissance a hundred times an arm.
+Before being seen was priced, the mission was a footrace (`docs/decisions.md` entry 083). With
+it priced, the followers were tagged crossing the gate sentry's front on the way to hidden ground
+and the term went dead once anybody held them, so they walked to the gate and started a war
+(087). With the crossing priced as the window takes it, the recovery priced past the rung and
+the briefing holding, a briefed squad is never seen, never fires and never goes in: it finds the
+hidden ground at the bridge in round one, and every way forward from there crosses the sentry's
+front or is heard by four men, while the way round leaves the direct line before it comes back,
+which a search one step deep cannot see (088). Blind, the same squad walks in, is seen, hides
+until it is forgotten and walks out under Suspicious — fifteen matches of a hundred achieved,
+where there were none. The route that goes round rather than past is the head of Core's next
+brief; whether being forgotten should be that cheap is Master's.
 
 **Most numbers in the game are still arguments.** Four have been measured; the rest have not.
 What an objective is worth has been measured twice and is saturated both times.

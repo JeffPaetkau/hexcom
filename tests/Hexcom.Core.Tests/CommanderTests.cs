@@ -57,6 +57,36 @@ public class CommanderTests
         Assert.Equal(battle.Reactions.Banked(alone.Stats.ActionPoints), alone.Reserve);
     }
 
+    /// <summary>
+    /// A turn taken one decision at a time is the same turn, and it ends when the caller says
+    /// so rather than when the commander runs out of things to do — which is what lets an
+    /// instrument stand between two decisions and ask what the second was chosen over.
+    /// </summary>
+    [Fact]
+    public void ATurnCanBeTakenOneDecisionAtATimeAndEndsWhenTheCallerSaysSo()
+    {
+        var (battle, gunner, target) = Contact(Node(4, 0));
+
+        var commander = new Commander(battle);
+        var expected = commander.Next();
+        Assert.NotNull(expected);
+
+        var first = commander.Step();
+        Assert.NotNull(first);
+        Assert.Equal(expected!.Kind, first!.Kind);
+        Assert.Same(gunner, battle.Active);
+
+        var taken = new List<Act> { first };
+        while (commander.Step() is { } more) taken.Add(more);
+
+        Assert.Same(gunner, battle.Active);
+        Assert.Equal(taken, commander.Taken);
+        Assert.Null(commander.Next());
+
+        battle.EndTurn();
+        Assert.Same(target, battle.Active);
+    }
+
     // ---- knowing something -------------------------------------------------------
 
     [Fact]

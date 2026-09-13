@@ -33,13 +33,21 @@ namespace Hexcom.Core.Tactics;
 /// <param name="EyesOn">
 /// Whether <paramref name="Where"/> is where they are, rather than where they were.
 /// </param>
-public readonly record struct Threat(Unit Unit, UnitPose Where, double Credence = 1.0, bool EyesOn = true)
+/// <param name="FacingKnown">
+/// Whether the facing in <paramref name="Where"/> is one they were seen or said to hold, rather
+/// than a placeholder. A marker made by ear has none, and what a man there would notice is
+/// averaged over every way he could be facing; a briefed post and a marker left by a sighting
+/// carry the one they had, and are priced with it.
+/// </param>
+public readonly record struct Threat(
+    Unit Unit, UnitPose Where, double Credence = 1.0, bool EyesOn = true, bool FacingKnown = true)
 {
     /// <summary>A threat in plain view, standing exactly where it is.</summary>
     public static Threat At(Unit unit) => new(unit, UnitPose.Of(unit));
 
     /// <summary>A threat remembered at a marker, standing however the believer imagines it.</summary>
-    public static Threat Believed(Unit unit, UnitPose where, double credence) => new(unit, where, credence, EyesOn: false);
+    public static Threat Believed(Unit unit, UnitPose where, double credence, bool facingKnown = false)
+        => new(unit, where, credence, EyesOn: false, FacingKnown: facingKnown);
 
     public override string ToString()
         => EyesOn ? $"{Unit.Name} at {Where.Position}" : $"{Unit.Name} believed at {Where.Position} ({Credence:0.00})";
@@ -362,8 +370,13 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// What getting into that pose would be heard doing, for a pose reached by walking. Nothing
     /// for a turn or a change of stance, which are silent.
     /// </param>
+    /// <param name="route">
+    /// Every pose a walk passes through, start first, for the look a watcher takes at somebody
+    /// crossing its front. Null for a turn or a change of stance.
+    /// </param>
     public Appraisal AppraisePosture(
-        Unit unit, UnitPose after, int apCost, IReadOnlyList<Threat> threats, IReadOnlyList<Announcement>? noise = null)
+        Unit unit, UnitPose after, int apCost, IReadOnlyList<Threat> threats,
+        IReadOnlyList<Announcement>? noise = null, IReadOnlyList<UnitPose>? route = null)
     {
         var before = UnitPose.Of(unit);
         if (after == before && (noise is null || noise.Count == 0)) return new Appraisal(0, 0, 0, Price(apCost));
@@ -382,7 +395,7 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
         return new Appraisal(
             0,
             Model.FutureDiscount * spared,
-            Model.FutureDiscount * prospect + Keeping(unit, before, after, noise),
+            Model.FutureDiscount * prospect + Keeping(unit, before, after, noise, route),
             Price(apCost));
     }
 
@@ -409,18 +422,20 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// walk.
     /// </para>
     /// </remarks>
-    public double Keeping(Unit unit, UnitPose before, UnitPose after, IReadOnlyList<Announcement>? noise = null)
+    public double Keeping(
+        Unit unit, UnitPose before, UnitPose after, IReadOnlyList<Announcement>? noise = null, IReadOnlyList<UnitPose>? route = null)
     {
         if (Bar(unit) <= 0) return 0;
 
         var sensed = Sensed(unit);
-        return Model.ObjectiveValue * (Quiet(unit, after, sensed, noise) - Quiet(unit, before, sensed));
+        return Model.ObjectiveValue * (Quiet(unit, after, sensed, noise, route) - Quiet(unit, before, sensed));
     }
 
     /// <summary>
-    /// How much of the mission a soldier standing like that, making that noise, keeps: all of it
-    /// while nobody is anywhere near the rung the mission is lost at, none once somebody will be
-    /// over it.
+    /// How much of the mission a soldier standing like that, having walked that way and made that
+    /// noise, keeps: all of it while nobody is anywhere near the rung the mission is lost at,
+    /// none once somebody will be at it, and less than none for every turn of hiding it would
+    /// take to get back under it.
     /// </summary>
     /// <remarks>
     /// <b>A slope up to the rung, not a cliff at it</b>, and the brief asked for that to be
@@ -435,51 +450,174 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// closer to acting a listener gets — a share of the way to a bar — with the mission's bar in
     /// place of the one a listener acts at, and the mission in place of what the listener could do.
     /// <para>
-    /// <b>Three things go into what each enemy will hold.</b> What they hold now, read as the
+    /// <b>And the slope carries on past the rung</b>, up to the ceiling, which the first version
+    /// did not do and entry 088 measured the cost of. The mission is judged at departure, and a
+    /// contact decays: a soldier held at Searching who is out of sight for a turn is held at
+    /// Suspicious and the mission is whole again. Clamped at the rung, the term read nought for
+    /// every pose the moment anybody held a soldier there — staying in the eye, stepping out of
+    /// it and firing all cost the same nothing — so the followers on the waystation walked to the
+    /// gate the turn they were noticed and the fight was free. Past the rung the share is how many
+    /// turns of hiding the recovery would take, and stepping out of the eye is worth exactly one
+    /// of them.
+    /// </para>
+    /// <para>
+    /// <b>Four things go into what each enemy will hold.</b> What they hold now, read as the
     /// rung and never the number, for the reason <see cref="Aimed"/> gives: the enemy's certainty
-    /// about you is the one figure this game blurs on purpose. The look the pose hands them on
-    /// their next turn, from where the soldier believes they are — in view, exactly; at a marker,
-    /// averaged over every way they could be facing and discounted for how stale the marker is.
-    /// And whatever the noise hands them, if there is noise. Read against every enemy who has
-    /// registered anything at all, not only the ones this soldier would shoot at: a place you
-    /// half-glimpsed something in is a place to keep out of the eye of, well before it is
-    /// somebody to fire on.
+    /// about you is the one figure this game blurs on purpose. The look a walk hands them
+    /// <em>now</em> — the one a reaction window gives anybody with reserve at the first step of
+    /// the route it can see that is not behind it, priced exactly as the window takes it, so that
+    /// a walk across a sentry's front to a hiding place is scored on the crossing and not on the
+    /// hiding place. The look the pose hands them on their next turn, from where the soldier
+    /// believes they are — in view, exactly; at a marker, averaged over every way they could be
+    /// facing and discounted for how stale the marker is — or, if neither look finds anything, a
+    /// turn of forgetting, which is the same rule <see cref="AwarenessTracker.Observe"/> applies
+    /// and is what makes hiding worth something. And whatever the noise hands them, if there is
+    /// noise. Read against every enemy who has registered anything at all, not only the ones
+    /// this soldier would shoot at: a place you half-glimpsed something in is a place to keep out
+    /// of the eye of, well before it is somebody to fire on.
     /// </para>
     /// <para>
     /// <b>The worst of them, not the sum</b>, because one enemy over the bar loses the mission
-    /// and a second one over it loses nothing more. That is also what makes going loud free once
-    /// you are seen: a soldier already held at the rung has nothing left here to keep, and the
-    /// scorer knows it, which is the briefing's own line — if the shift sees you the task is
-    /// over. And it is a soldier's own reading rather than the squad's worst, deliberately. The
-    /// mission is lost by any one of them being seen, but a contact decays and a witness can be
-    /// silenced, and a squad that stopped being careful the moment one of its own was noticed
-    /// would be throwing away the recovery; each soldier keeps itself quiet.
+    /// and a second one over it loses nothing more. And it is a soldier's own reading rather than
+    /// the squad's worst, deliberately. The mission is lost by any one of them being seen, but a
+    /// contact decays and a witness can be silenced, and a squad that stopped being careful the
+    /// moment one of its own was noticed would be throwing away the recovery; each soldier keeps
+    /// itself quiet. Entry 087 asked whether that choice was what set the followers fighting; the
+    /// transcript said it was the clamp and the crossing, and the choice stands.
     /// </para>
     /// </remarks>
     /// <param name="threats">Everybody whose next look is to be priced, from <see cref="Sensed"/>.</param>
     /// <param name="noise">What the listeners would be handed, from a walk or a shot. Null for silence.</param>
-    public double Quiet(Unit unit, UnitPose pose, IReadOnlyList<Threat> threats, IReadOnlyList<Announcement>? noise = null)
+    /// <param name="route">Every pose the walk passes through, start first. Null for a pose reached without walking.</param>
+    public double Quiet(
+        Unit unit, UnitPose pose, IReadOnlyList<Threat> threats,
+        IReadOnlyList<Announcement>? noise = null, IReadOnlyList<UnitPose>? route = null)
     {
         var bar = Bar(unit);
         if (bar <= 0) return 1;
 
+        var worst = 0.0;
+        foreach (var figure in Foreseen(unit, pose, threats, noise, route).Values)
+            worst = Math.Max(worst, figure / bar);
+
+        return 1 - worst;
+    }
+
+    /// <summary>
+    /// What each enemy will hold on this soldier once it has stood like that, walked that way and
+    /// made that noise, and the rounds ahead have been looked or forgotten through: the figures
+    /// <see cref="Quiet"/> takes the worst of, by enemy, so that an interface can say
+    /// <em>whose</em> eye a move walks into.
+    /// </summary>
+    /// <remarks>
+    /// Certainty figures rather than rungs, about this soldier, which contract 3 allows: what the
+    /// enemy holds <em>now</em> goes in as the rung and never the number, and everything added to
+    /// it is a forecast of the soldier's own exposure. Clamped to the ceiling, as the tracker
+    /// clamps a look.
+    /// </remarks>
+    public IReadOnlyDictionary<UnitId, double> Foreseen(
+        Unit unit, UnitPose pose, IReadOnlyList<Threat> threats,
+        IReadOnlyList<Announcement>? noise = null, IReadOnlyList<UnitPose>? route = null)
+    {
         var awareness = battle.Awareness;
         var held = new Dictionary<UnitId, double>();
 
         foreach (var contact in awareness.ContactsOn(unit.Id))
             held[contact.Observer] = awareness.Model.Threshold(contact.State);
 
+        var ahead = Ahead(unit, pose.Position);
+
         foreach (var threat in threats)
-            held[threat.Unit.Id] = held.GetValueOrDefault(threat.Unit.Id) + threat.Credence * Coming(threat, pose);
+        {
+            var crossing = route is null ? 0 : threat.Credence * Crossing(threat, route);
+            var look = threat.Credence * Coming(threat, pose);
+
+            // One look now for the crossing; then a look a round for as long as the pose is held,
+            // or a round of forgetting for each round it is not — the rule Observe applies.
+            var change = crossing + (look > 0 ? look : -awareness.Model.DecayPerTurn) * ahead;
+            held[threat.Unit.Id] = held.GetValueOrDefault(threat.Unit.Id) + change;
+        }
 
         if (noise is not null)
             foreach (var word in noise)
                 held[word.Learner.Id] = held.GetValueOrDefault(word.Learner.Id) + Math.Max(0, word.Gained);
 
-        var worst = 0.0;
-        foreach (var figure in held.Values) worst = Math.Max(worst, Math.Clamp(figure / bar, 0, 1));
+        foreach (var id in held.Keys.ToList())
+            held[id] = Math.Clamp(held[id], 0, awareness.Model.Ceiling);
 
-        return 1 - worst;
+        return held;
+    }
+
+    /// <summary>
+    /// How many rounds of looking, or of forgetting, a pose taken up there is priced for: one for
+    /// the round to come, and a discounted one for each round after it until the job is done or
+    /// the night is out.
+    /// </summary>
+    /// <remarks>
+    /// The mission is judged at departure, and until this existed the term priced a reading
+    /// one round out. That made a single look under the bar — a sentry carried to Suspicious by
+    /// somebody crossing his front, which a round of hiding takes back — cost as much as a
+    /// quarter of the mission, so a squad that had found the edge of the watched ground stopped
+    /// there and never went in; entry 088 has the transcript. Being in view is a rate and being
+    /// out of it is a rate, and what a one-off look costs is what is left of it once the rest of
+    /// the journey has been walked out of sight. So the rounds ahead are counted, geometrically
+    /// at <see cref="UtilityModel.FutureDiscount"/>, because a soldier will not hold the pose
+    /// for the whole journey and the discount is already the dial for how far ahead a posture is
+    /// a bet on. Read off the list allowance, like the journey and the night, and never off a
+    /// particular soldier.
+    /// </remarks>
+    private double Ahead(Unit unit, NodeId at)
+    {
+        var rounds = 1;
+
+        if (battle.ObjectiveOf(unit.Side) is { } objective)
+        {
+            var left = objective.Owed(battle, at);
+            if (objective.NightLeft(battle) is { } night) left = Math.Min(left, night);
+
+            var allowance = Math.Max(1, battle.Costs.ActionPointsPerTurn);
+            if (left != int.MaxValue) rounds = Math.Max(1, (left + allowance - 1) / allowance);
+            else rounds = int.MaxValue;
+        }
+
+        var discount = Model.FutureDiscount;
+        if (rounds == int.MaxValue || discount >= 1) return discount >= 1 ? rounds : 1 / (1 - discount);
+
+        return (1 - Math.Pow(discount, rounds)) / (1 - discount);
+    }
+
+    /// <summary>
+    /// What a watcher would get from the one look a reaction window hands it at somebody walking
+    /// that route: taken at the first step it can see that is not behind it, exactly as the
+    /// window takes it, and nought for a route that never crosses its eye.
+    /// </summary>
+    /// <remarks>
+    /// Whether the watcher has the reserve the look needs is not something the walker can know,
+    /// so every enemy it has registered is assumed to — a sentry who did nothing all turn banked
+    /// the lot, and on the waystation every sentry does nothing all turn. Against a marker the
+    /// look is averaged over every way the man could be facing, because which step first crosses
+    /// his front depends on it.
+    /// </remarks>
+    private double Crossing(Threat threat, IReadOnlyList<UnitPose> route)
+        => threat.EyesOn || threat.FacingKnown
+            ? Startled(threat.Unit, threat.Where, route)
+            : HexDirectionExtensions.All.Average(facing => Startled(threat.Unit, threat.Where with { Facing = facing }, route));
+
+    private double Startled(Unit watcher, UnitPose from, IReadOnlyList<UnitPose> route)
+    {
+        var awareness = battle.Awareness;
+
+        foreach (var step in route)
+        {
+            if (awareness.AttentionOn(from, step.Position) <= awareness.Model.RearAcuity) continue;
+
+            var sight = battle.Sight.Trace(from.Vantage, step.Vantage);
+            if (!sight.CanSee) continue;
+
+            return awareness.WouldNotice(watcher, from, step, sight);
+        }
+
+        return 0;
     }
 
     /// <summary>
@@ -568,12 +706,18 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// thrown away, so nothing could make that argument.
     /// </remarks>
     /// <param name="loudness">What the route makes, from <see cref="Battle.Loudness"/>.</param>
+    /// <param name="route">
+    /// Every pose the walk passes through, start first, for the look a watcher takes at somebody
+    /// crossing its front. Null prices the arrival alone, which is what a test of the arrival wants
+    /// and what a commander must never pass.
+    /// </param>
     public Appraisal AppraiseMove(
-        Unit unit, UnitPose arriving, int apCost, double loudness, IReadOnlyList<Threat> threats)
+        Unit unit, UnitPose arriving, int apCost, double loudness, IReadOnlyList<Threat> threats,
+        IReadOnlyList<UnitPose>? route = null)
     {
         var heard = battle.Awareness.WouldHear(unit, arriving.Position, loudness).ToList();
 
-        return AppraisePosture(unit, arriving, apCost, threats, heard)
+        return AppraisePosture(unit, arriving, apCost, threats, heard, route)
                + new Appraisal(
                    0,
                    -Model.FutureDiscount * Told(heard, new Threat(unit, arriving)),
@@ -632,12 +776,14 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// <see cref="Appraisal.Spared"/> can go on screen at last.
     /// </para>
     /// <para>
-    /// Against a <b>marker</b> the look is averaged over every way the man could be facing,
-    /// because nobody knows which way he is. The alternative — assuming he is looking straight
-    /// at you — was measured and it prices going round a corner at more than the shot it opens
-    /// on every geometry tried, so nobody ever goes. An expected look is also how the rest of the
-    /// scorer treats what it cannot know: a round is rolled against a distribution of plates,
-    /// not against the worst one.
+    /// Against a <b>marker made by ear</b> the look is averaged over every way the man could be
+    /// facing, because nobody knows which way he is. The alternative — assuming he is looking
+    /// straight at you — was measured and it prices going round a corner at more than the shot
+    /// it opens on every geometry tried, so nobody ever goes. An expected look is also how the
+    /// rest of the scorer treats what it cannot know: a round is rolled against a distribution
+    /// of plates, not against the worst one. A marker with a facing — a briefed post, or a man
+    /// seen and then lost — is priced with it, because half a look is the wrong price for both
+    /// the road he watches and the ground behind him.
     /// </para>
     /// </remarks>
     private double Aimed(Threat threat, Unit target, UnitPose pose)
@@ -659,10 +805,9 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     {
         var awareness = battle.Awareness;
 
-        return threat.EyesOn
+        return threat.EyesOn || threat.FacingKnown
             ? awareness.WouldNotice(threat.Unit, threat.Where, pose)
-            : HexDirectionExtensions.All.Average(
-                facing => awareness.WouldNotice(threat.Unit, threat.Where with { Facing = facing }, pose));
+            : awareness.WouldNoticeFacingAnyWay(threat.Unit, threat.Where, pose);
     }
 
     /// <summary>What being able to see this threat from that pose is worth.</summary>
@@ -812,14 +957,16 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
     /// </para>
     /// <para>
     /// Otherwise the threat stands at the <b>marker</b>: where contact was last made, upright,
-    /// and nominally facing this way. Upright because the question a marker answers is <em>can I
-    /// see the place</em>, and a standing man is the most visible thing that could be there. The
-    /// facing is a placeholder — a pose has to have one — and nothing that matters reads it:
-    /// <see cref="Aimed"/> averages the look he would get over every way he could be facing,
-    /// and the plates a shot at him would find are even on a fresh soldier whichever way he
-    /// stands. Recording the stance and facing they were last seen in was considered and left
-    /// out: a marker made by ear has neither, and a look that found them will replace the
-    /// marker with the man.
+    /// and facing the way they were last seen or said to be facing. Upright because the question
+    /// a marker answers is <em>can I see the place</em>, and a standing man is the most visible
+    /// thing that could be there. The facing is kept because a briefing says which way a post
+    /// watches and a look that found a man saw which way he faced, and the look he would get at
+    /// you from a known facing is the whole difference between the road past a gate and the
+    /// ground behind it — entry 088. A marker made by ear has no facing, so it carries a
+    /// placeholder and <see cref="Threat.FacingKnown"/> says so; <see cref="Aimed"/> then averages the
+    /// look he would get over every way he could be facing. The stance is not kept: the plates a
+    /// shot at him would find are even on a fresh soldier whichever way he stands, and a marker
+    /// is a place to see, not a man to shoot.
     /// </para>
     /// <para>
     /// A marker is discounted by <see cref="Credence"/> for how long it has gone unconfirmed.
@@ -860,9 +1007,10 @@ public sealed class Tactician(Battle battle, UtilityModel? model = null)
             if (contact.LastKnownPosition is not { } marker) continue;
 
             var since = battle.Awareness.ReadoutFor(unit.Id, other.Id).RoundsSinceContact;
-            var facing = battle.HeadingTo(marker, unit.Position);
+            var facing = contact.LastKnownFacing ?? battle.HeadingTo(marker, unit.Position);
 
-            yield return Threat.Believed(other, new UnitPose(marker, Stance.Standing, facing), Credence(since));
+            yield return Threat.Believed(
+                other, new UnitPose(marker, Stance.Standing, facing), Credence(since), contact.LastKnownFacing is not null);
         }
     }
 
