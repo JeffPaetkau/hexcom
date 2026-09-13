@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using Hexcom.Content;
+using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
@@ -299,6 +300,17 @@ public partial class HexSandbox : Node3D
 
     /// <summary>Hostiles laid eyes on since the last order of ours. See <see cref="SandboxFrame.Found"/>.</summary>
     private readonly HashSet<UnitId> _found = [];
+
+    /// <summary>The rung each hostile held on us when the knowledge was last gathered.</summary>
+    private readonly Dictionary<UnitId, AwarenessState> _rungs = [];
+
+    /// <summary>Which way each hostile's rung moved since our last order, for those that did. See <see cref="SandboxRung"/>.</summary>
+    /// <remarks>
+    /// Kept the way <see cref="_found"/> is and cleared at the same moment, for the same reason: a change
+    /// is news for one decision. Unlike a discovery it is kept in both directions, because a rung that
+    /// comes down is the half no game in the reference set draws and a player will not assume can happen.
+    /// </remarks>
+    private readonly Dictionary<UnitId, int> _rungMoved = [];
 
     /// <summary>
     /// Whether the mission's own clock has run out.
@@ -608,22 +620,28 @@ public partial class HexSandbox : Node3D
         _heldBefore = null;
         _perceived.Clear();
         _knowledge.Clear();
+        _rungs.Clear();
+        _rungMoved.Clear();
 
         Settle();
 
-        _layer = _battle.Active?.Position.Layer ?? 0;
+        _layer = 0;
+        if (_battle.Active is { } first) FollowStorey(first);
 
         // The waystation is 85 metres across and does not fit on a screen at a distance anybody
         // can read a tile at, so a battle opens looking at whoever is up rather than at the
         // origin, which is only where the compound happened to be centred.
-        if (_battle.Active is { } up) _camera.LookAt(_battle.Map, up.Position.Tile.Hex, up.Position.Layer);
+        if ((_battle.Active is { } up && Describes(up) ? up : _battle.InPlay.FirstOrDefault(u => u.Side == Side.Player)) is { } look)
+            _camera.LookAt(_battle.Map, look.Position.Tile.Hex, look.Position.Layer);
 
         Recalculate();
         Perceive();
         LowerBanner();
 
-        // Whoever is in sight at the opening was deployed there, not discovered.
+        // Whoever is in sight at the opening was deployed there, not discovered, and whatever the
+        // other side holds at the opening it was deployed holding.
         _found.Clear();
+        _rungMoved.Clear();
 
         // A capture is deaf, so everything a person would have done has to arrive as an argument
         // list. It runs here, after the deployment and against the same methods the keys call.
@@ -807,11 +825,12 @@ public partial class HexSandbox : Node3D
             if (!TheirGoHolding) _theirGo = null;
             _perceived.Clear();
             _found.Clear();
+            _rungMoved.Clear();
         }
 
         var before = _battle.Active;
         Settle(keepRecord);
-        if (_battle.Active is { } next && next != before) _layer = next.Position.Layer;
+        if (_battle.Active is { } next && next != before) FollowStorey(next);
         Recalculate();
         Perceive();
         LowerBanner();
@@ -868,6 +887,17 @@ public partial class HexSandbox : Node3D
             else if (!seenBefore.Contains(threat.Unit.Id)) _found.Add(threat.Unit.Id);
         }
         _found.RemoveWhere(id => !_knowledge.ContainsKey(id));
+
+        // Which way each hostile's rung on us went since it was last read. Kept for every hostile in
+        // play, drawn only for the ones the picture shows; the net change survives until our next
+        // order clears it, so a rise at the walk and a fall at his turn read as the last of the two.
+        var frame = Frame();
+        foreach (var hostile in _battle.InPlay.Where(u => u.Side == Side.Hostile))
+        {
+            var now = frame.Rung(hostile).State;
+            if (_rungs.TryGetValue(hostile.Id, out var was) && was != now) _rungMoved[hostile.Id] = now > was ? 1 : -1;
+            _rungs[hostile.Id] = now;
+        }
 
         _view.Rebuild(Frame());
         _readouts.QueueRedraw();
@@ -946,7 +976,7 @@ public partial class HexSandbox : Node3D
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
             _omniscient, _knowledge, _instruments.Visible, _aim,
-            _theirGo, _perceived, _found, _details, _termsFolded, _mode, _pointing);
+            _theirGo, _perceived, _found, _details, _termsFolded, _mode, _pointing, _rungMoved);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -1018,7 +1048,7 @@ public partial class HexSandbox : Node3D
     /// <remarks>A reaction can drop the mover part way, which hands the turn straight on.</remarks>
     private void AfterMove(Unit mover, IReadOnlyList<TraversalLink> path)
     {
-        if (_battle.Active is { } next && next != mover) _layer = next.Position.Layer;
+        if (_battle.Active is { } next && next != mover) FollowStorey(next);
         AfterAction();
         BeginWalk(mover, path);
     }
@@ -1598,7 +1628,7 @@ public partial class HexSandbox : Node3D
         if (OutOfTime) return $"the mission's {_mission!.Rounds} rounds are up";
 
         _battle.EndTurn();
-        if (_battle.Active is { } next) _layer = next.Position.Layer;
+        if (_battle.Active is { } next) FollowStorey(next);
         AfterAction();
         return _battle.Active is { } up ? $"passed to {up.Name}" : "passed, nobody left to act";
     }
@@ -1617,7 +1647,7 @@ public partial class HexSandbox : Node3D
 
         _turns.Clear();
         TakeTurnWithAi(soldier);
-        if (_battle.Active is { } next) _layer = next.Position.Layer;
+        if (_battle.Active is { } next) FollowStorey(next);
         AfterAction(keepRecord: true);
         return Open is null ? $"{soldier.Name} took its own turn" : $"{soldier.Name} stopped at a window";
     }
@@ -1725,7 +1755,7 @@ public partial class HexSandbox : Node3D
         _lastWindow = BattleHud.Describe(window);
         Record(unit, commander);
 
-        if (Open is null && _battle.Active is { } next) _layer = next.Position.Layer;
+        if (Open is null && _battle.Active is { } next) FollowStorey(next);
         AfterAction(keepRecord: true);
         BeginWalk(hostile, route);
         return "resolved";
@@ -2289,6 +2319,27 @@ public partial class HexSandbox : Node3D
         _view.RebuildBodies(Frame());
     }
 
+    /// <summary>
+    /// Whether the picture may describe this soldier when it is up: anybody but a hostile the AI is playing
+    /// while the instruments are shut and nobody of ours can see him.
+    /// </summary>
+    /// <remarks>
+    /// <b>Entry 090, settled by brief two.</b> The map drew whoever was up whichever side, so a hostile the
+    /// AI stopped at a window of ours had his reach, his route preview and his sight drawn — inside a house
+    /// nobody of ours could see into, on the waystation — and the camera followed him there and the storey
+    /// switched to his. <see cref="SandboxFrame.Withheld"/> already blanked the readouts for such a turn;
+    /// the camera and the storey ask this, and <see cref="BattleView"/> asks the frame. One who is in view is
+    /// being described by his body already, so following him says nothing new.
+    /// </remarks>
+    private bool Describes(Unit unit)
+        => !(unit.Side == Side.Hostile && _auto && !_instruments.Visible) || Frame().Sees(unit);
+
+    /// <summary>Look at the storey a soldier is on, if the picture may describe that soldier.</summary>
+    private void FollowStorey(Unit next)
+    {
+        if (Describes(next)) _layer = next.Position.Layer;
+    }
+
     /// <summary>Whether the camera was close enough for tile detail last time it moved. See <see cref="CameraMoved"/>.</summary>
     private bool _tileDetail = true;
 
@@ -2303,7 +2354,7 @@ public partial class HexSandbox : Node3D
     /// </remarks>
     private void FollowActive()
     {
-        if (_battle.Active is not { } up) return;
+        if (_battle.Active is not { } up || !Describes(up)) return;
         if (_camera.Frames(SandboxGeometry.NodeScene(_battle.Map, up.Position), Viewport)) return;
 
         _camera.LookAt(_battle.Map, up.Position.Tile.Hex, up.Position.Layer);

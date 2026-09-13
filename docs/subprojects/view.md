@@ -35,79 +35,26 @@ reaching into `src/`.
 
 ---
 
-## The job — brief two, the enemy's file, drawn
+## The job — `view/ground-and-camera`, when Master has written it out
 
-Branch `view/enemy-file`. Read, in this order: `../interface/briefs.md` *Two* and *Amending Two*;
-`../decisions.md` entry 089's finding on the persisted marker (summarised under *Owed to later
-briefs* below); entry 094 items 5 and 8, which are the play-through saying the same thing in a
-player's words; and entry 095's *Item 8*, which is Core saying what the rung under a body means.
+Brief two landed — *What landed on `view/enemy-file`* below, and `../decisions.md` entry 098.
+**`view/ground-and-camera` is next and it is Master's to write out in full**; until it is, there is no
+View job to start. Its material is item 1 of the queue below and entry 097. A session pointed at this
+file with no brief under this heading should say so rather than build from the queue's summary.
 
-**What is wrong, in the player's words.** *I can see all the enemies on my screen as soon as it
-loads, but not shoot at.* *Walk right beside a dude and it says they are SEARCHING.* Both are the
-enemy's file drawn as if it were the enemy.
+**What brief two left for the queue, so it is not re-derived.**
 
-**What it is.** Three different things of the enemy's are on the map and they look alike or say
-nothing about whose they are. Make each unmistakable:
-
-1. **What he believes about us** — his rung, today the upper-cased enum under his body.
-2. **What we were told about him** — a briefed contact, today a ghost at the reported place, which
-   on turn one is exactly where he stands.
-3. **What we saw and have lost** — a sighted contact decaying, today the same ghost.
-
-**Where the seams already are.**
-
-- The rung's words: `BattleView` draws `WorstReadout(frame, unit).State.ToString().ToUpperInvariant()`
-  under a hostile's name. `WorstReadout` is the highest rung **he** holds on any of ours (095).
-- The ghosts: `BattleView.BuildGhosts` over `Ghosts(frame)` — known about, not in view — alpha from
-  `Threat.Credence`. **`Contact.Briefed` is public** and is true exactly while a contact is still the
-  briefing's and the ground has not contradicted it (entry 091); that is *told* against *lost*, and no
-  new query is needed if the frame can reach our side's contact. If it cannot without a back door,
-  that is a question for Core in `../decisions.md` under contract 2, not a reach into `Awareness`.
-- His belief about us: `BattleView.BuildBeliefs`, drawn in both modes.
-- A hostile's held arc: `BattleView.BuildHeldArcs` skips `Side.Hostile && !frame.Omniscient`.
-- One question for everything: `SandboxFrame.Sees`. Nothing added here asks anything else.
-
-**Settle before writing much.**
-
-- **What the rungs are called.** *Amending Two*: the words are this brief's decision, not the enum's,
-  and `Searching` beside `Alerted` reads as a measured scale contract 3 withholds. And 095 gives the
-  word a meaning a player can use: **a hostile who has not had his own turn since you arrived cannot
-  be past Searching**, so at arm's length it means *he saw you and has not looked yet*. Decide
-  whether the mark says his turn is still to come; the play-through says a player needs it.
-- **Whose it is, on sight.** A mark on his body is his. Anything of ours about him must not sit in
-  the same place in the same form.
-- **A glyph, not a word, and persistent.** Two of two games with a state between unaware and engaged
-  draw it as a glyph on the body; Phoenix Point's transient popup is the shipped failure. And a rung
-  that **falls** must be as visible as one that rises — no game in the set has that, and a player
-  borrowing the genre will assume it cannot.
-- **Told, lost, seen: three looks.** 089 found the one shipped persisted marker is *a glyph at a
-  place, not a ghost of a body*. That choice answers item 5 by itself — a glyph at a place cannot read
-  as a man standing there — and it should be weighed for *told* before a ghost is kept for anything.
-  Whatever is chosen, turn one on the waystation must not look like sight.
-- **His belief about us** — the ghost of our soldier the brief proposes, or a glyph at the place
-  after 089. One answer for both his marker and ours would be simplest; say if they must differ.
-- **A hostile's held arc when the hostile is drawn**: *Amending Two* keeps it and says it is a
-  departure from nothing, so the `<remarks>` argue it rather than cite a borrowing.
-- **Entry 090: the map still draws whoever is up, whichever side.** This brief's ground; settle it
-  here.
-
-**Out of scope.** The fog, the ground's labels, cover and the camera — `view/ground-and-camera`, and
-entry 097 is that brief's material; do not draw a seen/unseen ground here, but do not choose a ghost
-look that entry 097's unlit ground would bury. Rules. Entry 097's question to Core about the mover
-taking no look — the drawing does not depend on its answer.
-
-**How to know it worked.**
-
-- **The waystation at load**: the four told hostiles and one sighted hostile side by side (an
-  `--omniscient` capture for the sighted one is not it — find a turn where one is in view and the rest
-  are not) — a stranger shown the frame says which one we can see.
-- **Walking up a sentry's front** — the scene of `ReactionTests.WalkingStraightUpToASentrySFaceLeavesHimSearchingUntilHisOwnTurnComesRound`,
-  as a capture: the mark on his body moves at the walk, says it is his, and moves again when his turn
-  ends.
-- **A lost contact decaying**: a capture two turns apart shows the rung, or the marker, lower, and
-  the change is visible without reading a word.
-- **His marker persists** at the place into the next turn.
-- The pinned scene changes by the marks and nothing else; two runs hash the same.
+- **The fog must not bury the marks.** Our side's marks are pale and lit (`SandboxPalette.OurFile`),
+  his are in his rung's colours, and both are drawn in the overlay over the ground; entry 097's unlit
+  fill goes under them. Check a told bracket on dark ground in the first capture of the fog.
+- **A place is a hex and a soldier is a ring.** Every marker outlines its tile, and nothing round on the
+  ground is a place. The cover shield at the cursor is a new thing on the ground; keep it off both
+  shapes.
+- **The soldier's line under its points bar got wider** — *of Bekker, the worst of them: has not noticed
+  you* — which is item 12's problem again with more words in it.
+- **Two labels still stack** where two hostiles stand on one tile's column (the compound's ladder top
+  has Sentry and Spotter one above the other, and their names and badges overlap). Pre-existing for the
+  names; item 12's.
 
 **What the action bar left for the queue, so it is not re-derived.**
 
@@ -125,8 +72,7 @@ taking no look — the drawing does not depend on its answer.
 **The queue, in order.** Each is Master's to write
 out in full when it is next; the items are entry 094's.
 
-1. **Brief two, `view/enemy-file`** — written out above.
-2. **`view/ground-and-camera`** — **its fog is answered**: entry 097 and `../interface/conventions.md`
+1. **`view/ground-and-camera`** — **its fog is answered**: entry 097 and `../interface/conventions.md`
    *What the squad can see*, which also moves the cover outlines into the firing mode. Then: hold
    `Q`/`E` to turn and a tap still lands on a bearing (item 2);
    **middle-drag pan does not work in the build** though the code reads right, then a mouse pan the
@@ -136,22 +82,16 @@ out in full when it is next; the items are entry 094's.
    the reach and reserve edges labelled, and weapon range drawn somewhere (item 14); **the
    waystation's house and exit drawn at all** — `BuildExit` draws only a `Withdrawal`, and a
    `Reconnaissance` is not one; and the fog, once Interface has said what it becomes (item 15).
-3. **`view/options`** — an input map and a preferences file loaded at start, and an options screen
+2. **`view/options`** — an input map and a preferences file loaded at start, and an options screen
    over them (item 1, settled narrow with the user). `--edge-pan`, `--pace` and `--still` move in
    first.
 
 Small things owed and not briefs: the bill's last clause becomes names when Core lands entry 086's
-relay; **the map still draws whoever is up, whichever side**, which is brief two's ground and entry
-090's finding; and entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files
+relay; and entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files
 write their clock onto the objective.
 
 **Owed to later briefs, routed from entry 089 so it is not lost.**
 
-- **Brief two.** Heading 5 is no longer empty: Future War Tactics leaves a red beacon where each lost
-  enemy was last seen, still up next turn (C12), and Invisible, Inc.'s interest-point `?` is a glyph
-  on a bracketed tile (C3). So *building the thing ten games did without* is nine, and the one shipped
-  persisted marker is **a glyph at a place, not a ghost of a body**. The brief's substance stands;
-  its framing and that choice move. Also entry 090: the map still draws whoever is up, whichever side.
 - **Brief six, already built.** A reaction firing is on film for the first time (C4). Warhounds plays
   the shot in the overhead view it was already in, puts the result as floating text at the target,
   marks no trigger point on the ground, and tints its idle overwatch area on the grid's own tiles
@@ -204,6 +144,45 @@ settled the scope in 094: keybindings and preferences, not every constant.
 
 **Out of scope, and unchanged.** Art, audio. Every rule. A second map or mission. The strategy
 layer.
+
+---
+
+## What landed on `view/enemy-file`
+
+Brief two, with *Amending Two*, entry 089's persisted marker, 094's items 5 and 8, and 095's item 8.
+`../decisions.md` entry 098 is the reasoning and the measurements; this is the shape.
+
+**Three things of the enemy's, three looks.**
+
+| | how it is drawn | where |
+|---|---|---|
+| his rung on us | a badge beside his name: nothing unaware, `?` single rim noticed, `?` double rim looking, `!` double rim knows, `!` filled on you; an arrow up or down if it moved since our last order; an hourglass if his go comes before our soldier's next | `SandboxRung.Draw`, from `BattleView.DrawUnitLabels`; `SandboxFrame.Rung`, `LooksFirst`, `RungMoved` |
+| his belief about one of ours | his badge over the tile, the tile outlined in his rung's colour, the name of ours under it, a pole to the ground; a line to the soldier up if it is about that soldier; from *noticed something* up, one per place | `BattleView.BuildBeliefs` / `DrawBeliefLabels` over `Beliefs(frame)` |
+| our file on him, out of sight | pale brackets on the tile for **told**; for **lost**, the tile outlined and a pole whose height and strength are our credence; *told*, the name and credence if he was seen, *heard* and credence if not | `BattleView.BuildMarkers` / `DrawMarkerLabels`; `SandboxFrame.Told` |
+
+**The rules for telling them apart**, which the `<remarks>` argue: the mark is in the colour of whose
+belief it is and the name in the colour of whom it is about; a place is drawn as a hex and a soldier as
+a ring; his things float, ours lie on the ground.
+
+**The words, where words are wanted** — `SandboxRung.Words`: *has not noticed you*, *noticed something*,
+*looking for you*, *knows you are here*, *on you*. On the soldier's own line under its points bar, and on
+the held key's terms, where a seen hostile's first line is *his: …* and says when he looks before our
+soldier goes again, and a mark's is *ours: told at the briefing, not yet checked* or *seen, and lost
+sight of*.
+
+**A hostile's held arc is drawn whenever his body is** — `BuildHeldArcs` asks `Sees`. Argued in its
+remarks as a departure from nothing, per *Amending Two*.
+
+**Entry 090, settled.** A hostile the AI is playing, up with the instruments shut, is described by
+nothing on the map: no reach edge, bands, dead-ground wash, cover outlines, route preview or cost
+labels (`Withheld` in `BattleView`), and the camera does not follow him or change to his storey unless
+the picture shows him (`HexSandbox.Describes`, `FollowStorey`).
+
+**Two things found on the way.** The ghost label named every marker, and a sound says where and never
+who — marks now name only a man our side saw. And the held key's contact terms hung a teammate's sighting
+at the marker point with the wrong line; a hostile the picture shows hangs its terms from its body.
+
+**Script steps** — none new; `--details` shows the words.
 
 ---
 
@@ -1122,9 +1101,11 @@ They shared this doc because they once shared a single 705-line file. They no lo
 | `SandboxFrame.cs` | one moment's answers, assembled once and read by both halves — including what our side knows of the other |
 | `MeshBuilder.cs` | coloured triangles into one mesh: prisms, slabs, cylinders, ribbons |
 | `SandboxCanvas.cs` | a flat surface that draws what it is handed; there are three — the map's labels, the player's readouts, and the instruments window's |
-| `BattleView.cs` | **presentation** — ground, walls, links, the route, the fields and arcs, ghosts, bodies, and the map's labels |
+| `BattleView.cs` | **presentation** — ground, walls, links, the route, the fields and arcs, the enemy's file and ours as marks, bodies, and the map's labels |
 | `BattleHud.cs` | **interface** — two surfaces from one frame: the player's readouts over the map, and the instruments in their own window |
 | `SandboxPalette.cs` | colours and the two materials, shared because a side is one colour in both halves |
+| `SandboxBar.cs` | the action bar's slots for a moment — key, price, whether it is ready and why not — read by the HUD to draw and the node to press |
+| `SandboxRung.cs` | a rung of the enemy's ladder as a badge and as words, drawn by the view on his body and at his belief, and named by the HUD |
 | `SandboxCapture.cs` | render some frames, write a PNG, quit |
 
 `BattleView` and `BattleHud` are separate classes rather than partials of the node deliberately:
@@ -1187,6 +1168,10 @@ Entry 053 records the count.
   scene differs in x 8–1338, y 756–893 — the legend down to two lines and lifted, and the bar under
   it — and not a pixel above row 756. Two runs after it hash the same. `--fit` moves again, for the
   same reason as last time.
+  **`view/enemy-file` breaks it in the labels only**: 5,070 pixels in x 399–1035, y 239–493 against
+  master — the three hostiles' rung words gone (all unaware at round 1, so no badge) and the soldier's
+  line under its points bar reworded. Two runs after it hash the same. A capture with a marker in it
+  differs everywhere a marker is, since a ghost body became a mark on the ground.
   **`--aside` breaks none of this and that was measured, not assumed** — a capture on the left
   monitor and the same one where Windows put it are byte-identical. The one break is narrower than
   it looks: a capture taken with `--instruments` before the subwindow fix has the instruments panel
@@ -1307,6 +1292,20 @@ Entry 053 records the count.
   ends, so anything asking `Unit.Reserve` of the active soldier reads nought. Ask
   `Reactions.Banked(ActionPoints)` for what it will be — `BuildHeldArcs` does, and not doing so was item
   6 of entry 094.
+- **`Awareness.Of` writes.** It makes the contact it is asked for when there is none, so a frame or a
+  drawing that calls it changes the contact file by looking at it. Read `ContactsFor` or `ReadoutFor`.
+  `BattleHud.Held` has always called `Of` on contacts `Tactician.Known` already holds, which is harmless
+  and is the only place.
+- **Three things on the map belong to the enemy's file, and each has one shape.** His rung is a badge on
+  his label; his belief is that badge over a hex; our file on him is pale on the ground. Nothing round on
+  the ground is a place, and nothing of ours floats. A new mark about the other side takes one of those
+  shapes or argues for a fourth — do not let it borrow a ring, which reads as a soldier.
+- **A mark names only a man we saw.** Told and heard marks are nameless — a sound says where and never
+  who, and the Commission does not know the gate man is called Cobb. `Threat.FacingKnown` without eyes
+  on is the test the label uses; anything else that prints a marker's name asks the same.
+- **The camera does not follow a withheld hostile.** `HexSandbox.Describes` gates `FollowActive` and every
+  storey change on a hostile coming up; a new *look at whoever is up* goes through it or it walks the
+  view into the house nobody can see into.
 - **An aim is checked in the frame, not tidied up wherever the moment changes.** `_aim` is only a
   unit; `SandboxFrame.Aim` is that unit if the mode still makes sense — a window shut, somebody up,
   the target hostile, in play and in sight. Read `Aim`, never `AimedAt`, or an aim can outlive the
@@ -1739,11 +1738,15 @@ Desktop-only is the design and Windows is the machine.
 
 - ~~**Whether an unfound hostile should hold a slot in the turn order at all.**~~ Answered by
   `../decisions.md` entry 064, and the answer is no. Built by brief five, entry 090.
-- **Whether the map should stop describing a hostile who is up.** Reach fill and costs, the path
-  preview, the active attention peak and ring are all drawn from `battle.Active` whatever its side, so
-  a hostile stopped at a window has its reach drawn — inside a house nobody of ours can see into, on
-  the waystation. Brief five's out of scope was the map; `SandboxFrame.Withheld` is the gate. Entry
-  090.
+- ~~**Whether the map should stop describing a hostile who is up.**~~ Yes, while `Withheld`: brief two
+  took the reach, the bands, the dead ground, the cover outlines, the route and the cost labels off the
+  map for him, and the camera and the storey no longer follow him unless he is in view. Entry 098.
+- **Whether an unaware hostile should carry any mark.** He carries none, as in every game with the
+  state, so a hostile who has not noticed us and one the badge has not been drawn for look alike. A
+  fall to unaware keeps an empty rim until our next order, and that is the only trace.
+- **Whether the hourglass earns its place.** It says his look comes before our soldier's next go, which
+  early in a round is true of nearly every hostile and late in one of nearly none. It is the honest form
+  of entry 095's *his turn is still to come*; whether a player reads it is the play-through's to say.
 - **Whether the banner should stand aside for a window.** It does: a window of ours is a question to
   us, and a band reading *their go* over it contradicts it. The other reading is that it is still
   their go and the band is 46 pixels. The play-through's to say.
@@ -1762,10 +1765,8 @@ Desktop-only is the design and Windows is the machine.
 - **Whether a slot wants an icon.** The bar's slots are words, because the greybox has no art and a
   word is the one glyph that cannot be misread. The genre's bar is icons with the key in the corner;
   that is Art's when it opens, against slots that already say what they do.
-- **Whether a hostile's held arc should be drawn when the hostile is.** It is not, now: a body
-  shows where a soldier is and which way it faces, and the attention field shows where it is
-  looking, but what it would shoot at is its intent. Omniscient draws every arc. A player who
-  walks into an arc they could see the soldier holding may reasonably say the picture lied.
+- ~~**Whether a hostile's held arc should be drawn when the hostile is.**~~ Yes — brief two, argued as a
+  departure from nothing in `BuildHeldArcs`' remarks. Entry 098.
 - **Whether a fixed 55-degree pitch is enough.** It keeps a hex a hex and a wall a wall from every
   bearing, and it cannot look along a wall. Nothing so far has wanted to. The free yaw makes this
   more pressing rather than less: a person who can now turn the camera to anywhere will try to

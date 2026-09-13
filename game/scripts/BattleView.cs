@@ -69,11 +69,11 @@ public sealed record UnitWalk(UnitId Mover, CoreVec2 At, double Floor, double Be
 /// <para>
 /// <b>What the picture shows of the other side is decided by the frame, not here.</b>
 /// <see cref="SandboxFrame.Sees"/> says whether a hostile is a body, and
-/// <see cref="SandboxFrame.Knowledge"/> says where a ghost stands and how much it is worth. This
-/// class asks and draws. The one thing it adds is what a ghost looks like — a translucent
-/// standing body at the marker, because a marker is a soldier who was there — and that a hostile
-/// nobody has heard of is not drawn at all, which is the whole of what makes this a game rather
-/// than a tool.
+/// <see cref="SandboxFrame.Knowledge"/> says where a marker stands and how much it is worth. This
+/// class asks and draws. What it adds is what the enemy's file looks like — brief two: his rung as a
+/// badge on his body, his belief about us as that badge at a place, and ours about him as a mark at a
+/// place that is never a body — and that a hostile nobody has heard of is not drawn at all, which is the
+/// whole of what makes this a game rather than a tool.
 /// </para>
 /// </remarks>
 public sealed class BattleView
@@ -183,7 +183,7 @@ public sealed class BattleView
         BuildReachBands(frame, overlay);
         BuildCommitted(frame, overlay);
         BuildBeliefs(frame, overlay);
-        BuildGhosts(frame, overlay);
+        BuildMarkers(frame, overlay);
 
         _ground.Mesh = ground.Build();
         _structure.Mesh = structure.Build();
@@ -436,7 +436,7 @@ public sealed class BattleView
     /// </remarks>
     private static void BuildUnseen(SandboxFrame frame, MeshBuilder overlay)
     {
-        if (!frame.TileDetail || frame.Battle.Active is null) return;
+        if (!frame.TileDetail || frame.Battle.Active is null || frame.Withheld) return;
 
         foreach (var (node, seen) in frame.View)
             if (!seen.CanSee) Tint(overlay, frame.Battle.Map, node, SandboxPalette.Unseen);
@@ -449,6 +449,9 @@ public sealed class BattleView
     /// </remarks>
     private static void BuildCoverOutlines(SandboxFrame frame, MeshBuilder overlay)
     {
+        // The view from whoever is up; a hostile the picture may not describe has none of it drawn. Entry 090.
+        if (frame.Withheld) return;
+
         foreach (var (node, seen) in frame.View)
             if (seen.CanSee && seen.Cover != CoverGrade.None)
                 Outline(overlay, frame.Battle.Map, node, SandboxPalette.CoverHue(seen.Cover), 0.12f);
@@ -529,10 +532,18 @@ public sealed class BattleView
     /// same figure the cursor line names. Whether a tile is inside the arc is
     /// <c>AngleOffDegrees</c>'s answer, which is what the reaction model asks.
     /// <para>
-    /// Only the arcs of soldiers the picture shows as bodies, so in the game a hostile's held
-    /// arc is not drawn even when the hostile is: what it is covering is its intent, and the
-    /// attention field already says where it is looking. Omniscient, every arc is drawn, because
-    /// a capture checking a sentry answered a move needs to see what it was holding.
+    /// <b>The arc of every soldier the picture shows as a body, a hostile's included — since brief two,
+    /// and a departure from nothing.</b> It used to stop at our side, on the argument that what a hostile
+    /// covers is his intent and the attention field already says where he looks. <i>Amending Two</i>
+    /// corrects the reason brief two gave for reversing that and keeps the reversal: no game in ten draws
+    /// a hostile's reaction zone, and the stealth shelf's cones are vision, not a held shot, so there is
+    /// no borrowing to cite. The argument is this game's own. A held arc here is not a posture he might
+    /// be in; it is a declared order, banked and priced, that shoots whatever moves inside it before the
+    /// mover can act. A body is drawn only while one of ours has eyes on him, and anybody standing where
+    /// they can see him could see which way his weapon is laid. A player who walks into an arc held by a
+    /// soldier they could see holding it will say, rightly, that the picture lied — and there is no
+    /// deciding against it when it is not drawn, which is the only reason to draw anything. A hostile
+    /// the picture does not show holds no drawn arc, so it says nothing about anybody unfound.
     /// </para>
     /// <para>
     /// <b>An arc with nothing banked behind it is not drawn — except on the soldier whose go it is.</b>
@@ -560,7 +571,7 @@ public sealed class BattleView
         foreach (var unit in battle.InPlay)
         {
             if (unit.Held is not { } order) continue;
-            if (unit.Side == Side.Hostile && !frame.Omniscient) continue;
+            if (!frame.Sees(unit)) continue;
 
             // The reserve a soldier holds is the one it banked; the one up has not banked yet, so it
             // is asked what it would. See the remarks.
@@ -617,14 +628,16 @@ public sealed class BattleView
     /// tile the soldier is standing on: both would be a line saying nothing a line beside it does not.
     /// </para>
     /// <para>
-    /// A hostile up and withheld from the picture still has its reach edged, as it had its reach
-    /// filled — whether the map should describe a hostile at all is brief two's and entry 090's — but
-    /// not its bands, since its ladder is its reserve and <see cref="SandboxFrame.Withheld"/> keeps that.
+    /// <b>A hostile up and withheld from the picture has nothing drawn — not its reach, not its bands.</b>
+    /// Entry 090 found the map drawing whoever was up whichever side, so the AI's hostile stopped at a
+    /// window of ours had its reach edged round a house nobody of ours could see into; brief two settled it
+    /// with <see cref="SandboxFrame.Withheld"/>, the gate the readouts already used. The same gate takes
+    /// its sight — the dead-ground wash and the cover outlines — its route preview and its cost labels.
     /// </para>
     /// </remarks>
     private static void BuildReachBands(SandboxFrame frame, MeshBuilder overlay)
     {
-        if (frame.Battle.Active is not { } active) return;
+        if (frame.Battle.Active is not { } active || frame.Withheld) return;
 
         var map = frame.Battle.Map;
 
@@ -735,28 +748,90 @@ public sealed class BattleView
     }
 
     /// <summary>
-    /// Where each enemy believes one of ours to be.
+    /// Where the other side believes one of ours to be: a place, the rung they hold it at, and who of
+    /// ours it is about.
     /// </summary>
     /// <remarks>
-    /// The marker is what they last saw, so it goes stale the moment that soldier moves, and the
-    /// gap between marker and truth is the thing the approach is played in. Section 07 of the
-    /// design doc names this as the one thing of the enemy's a player sees at all, so it is
-    /// drawn in both modes — it is coarse, a place and not a number, and it is the payoff.
+    /// <para>
+    /// The marker is what they last had, so it goes stale the moment that soldier moves, and the gap
+    /// between marker and truth is the thing the approach is played in. Section 07 of the design doc
+    /// names this as the one thing of the enemy's a player sees at all, so it is drawn in both modes —
+    /// it is coarse, a place and not a number, and it is the payoff.
+    /// </para>
+    /// <para>
+    /// <b>A glyph at a place, not a ghost of our soldier.</b> Brief two proposed a translucent copy of the
+    /// soldier they are wrong about, with a line to the truth; entry 089 then found the one persisted
+    /// marker in ten games is a glyph at a place — Invisible, Inc.'s second <c>?</c> at the point a guard
+    /// walks toward, which is this object exactly. A copy of a body is what this brief exists to stop the
+    /// map drawing for things that are not bodies. So it is his rung's badge, standing over the tile he
+    /// believes in, with that tile outlined, and the line to the truth is kept for the soldier who is up —
+    /// the one a player is deciding for — rather than drawn from every marker at once.
+    /// </para>
+    /// <para>
+    /// <b>A place is drawn in the shape of a tile and a soldier in the shape of a ring.</b> Every body
+    /// stands on round rings; the first captures drew both kinds of marker on round rings too, and a ring
+    /// with a thin pole in it is a soldier with no body, from any distance. So a marker of either side's
+    /// outlines the hex, and nothing round on the ground is ever a place.
+    /// </para>
+    /// <para>
+    /// From <i>noticed something</i> up, where it was from <i>looking for you</i>: a man who heard a noise
+    /// and is coming to see holds a place too, and where he is coming to is the most useful thing on the
+    /// map about him. One mark per place, at the highest rung any of them holds it at.
+    /// </para>
     /// </remarks>
     private static void BuildBeliefs(SandboxFrame frame, MeshBuilder overlay)
     {
         var battle = frame.Battle;
 
+        foreach (var belief in Beliefs(frame))
+        {
+            var at = SandboxGeometry.NodePlane(battle.Map, belief.Place);
+            var floor = SandboxGeometry.FloorOf(battle.Map, belief.Place);
+            var hue = SandboxPalette.AlarmHue(belief.State);
+
+            Outline(overlay, battle.Map, belief.Place, hue, 0.12f, inset: 0.3);
+            overlay.Box(at, 0, 0.05, 0.05, floor, floor + BeliefHeight - 0.25, new Color(hue, 0.6f));
+
+            if (battle.Active is not { Side: Side.Player } up || !belief.About.Contains(up)) continue;
+
+            overlay.Ribbon(
+                [
+                    SandboxScale.ToScene(at, floor + Lift * 3),
+                    SandboxGeometry.NodeScene(battle.Map, up.Position) + Vector3.Up * (Lift * 3),
+                ],
+                0.05f, new Color(hue, 0.55f));
+        }
+    }
+
+    /// <summary>How high over the ground a belief's badge hangs, in metres: a little above a standing head, so it is not read as one.</summary>
+    private const double BeliefHeight = 2.4;
+
+    /// <summary>One place the other side believes some of ours to be, and the highest rung it is held at.</summary>
+    private sealed record Belief(NodeId Place, AwarenessState State, List<Unit> About);
+
+    /// <summary>Every place the other side holds one of ours at and is wrong about, grouped by place.</summary>
+    private static List<Belief> Beliefs(SandboxFrame frame)
+    {
+        var battle = frame.Battle;
+        var beliefs = new Dictionary<NodeId, Belief>();
+
         foreach (var hostile in battle.InPlay.Where(u => u.Side == Side.Hostile))
         foreach (var mine in battle.InPlay.Where(u => u.Side == Side.Player))
         {
             var readout = battle.Awareness.ReadoutFor(hostile.Id, mine.Id);
-            if (readout.State < AwarenessState.Searching) continue;
+            if (readout.State < AwarenessState.Suspicious) continue;
             if (readout.LastKnownPosition is not { } believed) continue;
             if (believed == mine.Position) continue;      // they are simply right
 
-            Outline(overlay, battle.Map, believed, SandboxPalette.GhostHue, 0.14f, inset: 0.3);
+            if (!beliefs.TryGetValue(believed, out var belief))
+                beliefs[believed] = belief = new Belief(believed, readout.State, []);
+            else if (readout.State > belief.State)
+                beliefs[believed] = belief = belief with { State = readout.State };
+
+            if (!belief.About.Contains(mine)) belief.About.Add(mine);
         }
+
+        return [.. beliefs.Values];
     }
 
     // ---- soldiers ----------------------------------------------------------------------
@@ -864,34 +939,95 @@ public sealed class BattleView
     }
 
     /// <summary>
-    /// A hostile our side knows about and cannot see: a see-through body at the marker.
+    /// A hostile our side knows about and cannot see, as a mark at the place our file puts him: brackets
+    /// on the tile for what we were told, a beacon for what we saw and lost.
     /// </summary>
     /// <remarks>
-    /// Standing, whatever it was doing when last seen, because a marker is a place and not a
-    /// posture — <c>Tactician.Known</c> builds the believed pose standing for the same reason.
-    /// Its credence is a label; it is the figure the scorer discounts the threat by, and entry
-    /// 042 says our own side's certainty is shown exactly.
+    /// <para>
+    /// <b>This was a see-through standing body at the marker, and on turn one it was sight.</b> The
+    /// waystation's mission file tells the squad where four of the garrison stand, nobody has moved on turn
+    /// one, so every report is exactly where its man is, and a body at the truth reads as a man seen — entry
+    /// 094, item 5: <i>I can see all the enemies as soon as it loads, but not shoot at.</i> A mark that is
+    /// not a body cannot be read as one, and entry 089 found that the one persisted marker in ten games is
+    /// exactly that: Future War Tactics' beacon where a lost enemy was last seen, and Invisible, Inc.'s
+    /// interest point, a glyph on a bracketed tile.
+    /// </para>
+    /// <para>
+    /// <b>Told and lost are different claims and get different shapes.</b> A briefed contact is where a man
+    /// was put and holds until the ground contradicts it (entry 091); a lost one is where he was and decays.
+    /// So <i>told</i> is the bracketed tile — a place somebody pointed at — and <i>lost</i> is the beacon,
+    /// whose height and strength are our side's credence, so that a contact going cold is seen going down
+    /// between two turns without a word read. <see cref="SandboxFrame.Told"/> says which.
+    /// </para>
+    /// <para>
+    /// <b>In our file's colour</b>, because it is our belief: the mark is in the colour of whose belief it
+    /// is and the name over it in the colour of whom it is about, the rule <see cref="BuildBeliefs"/> keeps
+    /// the other way round. Not our side's teal, which was tried first: a teal ring on the ground under a
+    /// pole is what one of our soldiers standing there looks like from a distance, and the capture said
+    /// so. <see cref="SandboxPalette.OurFile"/> is pale, which nothing of the enemy's uses. And lit rather
+    /// than dim, since entry 097's unlit ground is coming and a dim mark on it would be buried.
+    /// </para>
     /// </remarks>
-    private static void BuildGhosts(SandboxFrame frame, MeshBuilder overlay)
+    private static void BuildMarkers(SandboxFrame frame, MeshBuilder overlay)
     {
-        foreach (var (hostile, threat) in Ghosts(frame))
-        {
-            var at = SandboxGeometry.NodePlane(frame.Battle.Map, threat.Where.Position);
-            var floor = SandboxGeometry.FloorOf(frame.Battle.Map, threat.Where.Position);
+        var map = frame.Battle.Map;
 
-            overlay.Cylinder(at, 0.28, floor, floor + StanceProfile.Standing.BodyHeight,
-                new Color(SandboxPalette.HostileHue, 0.22f + 0.28f * (float)threat.Credence));
+        foreach (var (_, threat, told) in Markers(frame))
+        {
+            var place = threat.Where.Position;
+            var at = SandboxGeometry.NodePlane(map, place);
+            var floor = SandboxGeometry.FloorOf(map, place);
+
+            if (told)
+            {
+                Brackets(overlay, map, place, SandboxPalette.OurFile);
+                continue;
+            }
+
+            var credence = (float)System.Math.Clamp(threat.Credence, 0, 1);
+            var hue = new Color(SandboxPalette.OurFile, 0.35f + 0.65f * credence);
+            Outline(overlay, map, place, hue, 0.11f, inset: 0.2);
+            overlay.Box(at, 0, 0.12, 0.12, floor, floor + 0.2 + (StanceProfile.Standing.BodyHeight + 0.2) * credence, hue);
         }
     }
 
-    /// <summary>The hostiles drawn as ghosts: known about, not in view, and not otherwise drawn.</summary>
-    private static IEnumerable<(Unit Hostile, Threat Threat)> Ghosts(SandboxFrame frame)
+    /// <summary>Six short ribbons, one at each corner of a tile, along both edges that meet there.</summary>
+    private static void Brackets(MeshBuilder overlay, BattleMap map, NodeId node, Color color)
+    {
+        var hex = node.Tile.Hex;
+        var height = SandboxGeometry.FloorOf(map, node) + Lift * 2;
+        var inset = 0.12;
+        var centre = SandboxScale.World.Center(hex);
+
+        var corners = Enumerable.Range(0, 6)
+            .Select(i => SandboxScale.World.Corner(hex, i))
+            .Select(c => c + (centre - c) * inset)
+            .ToList();
+
+        for (var i = 0; i < 6; i++)
+        {
+            var corner = corners[i];
+            var before = corners[(i + 5) % 6];
+            var after = corners[(i + 1) % 6];
+
+            overlay.Ribbon(
+                [
+                    SandboxScale.ToScene(corner + (before - corner) * 0.32, height),
+                    SandboxScale.ToScene(corner, height),
+                    SandboxScale.ToScene(corner + (after - corner) * 0.32, height),
+                ],
+                0.17f, color);
+        }
+    }
+
+    /// <summary>The hostiles drawn as marks: known about, not in view, with whether our file on him is the briefing's.</summary>
+    private static IEnumerable<(Unit Hostile, Threat Threat, bool Told)> Markers(SandboxFrame frame)
     {
         foreach (var hostile in frame.Battle.InPlay.Where(u => u.Side == Side.Hostile))
         {
             if (frame.Sees(hostile)) continue;
             if (!frame.Knowledge.TryGetValue(hostile.Id, out var threat)) continue;
-            yield return (hostile, threat);
+            yield return (hostile, threat, frame.Told(hostile));
         }
     }
 
@@ -945,7 +1081,7 @@ public sealed class BattleView
 
     private static void BuildPath(SandboxFrame frame, MeshBuilder cursor)
     {
-        if (frame.Battle.Active is not { } active) return;
+        if (frame.Battle.Active is not { } active || frame.Withheld) return;
 
         // While aiming a click on the ground drops the aim and moves nobody, so a route drawn out
         // to it would be promising a move the click will not make.
@@ -978,14 +1114,14 @@ public sealed class BattleView
         DrawPlaceLabels(canvas, frame);
         DrawRouteLabels(canvas, frame);
         DrawBeliefLabels(canvas, frame);
-        DrawGhostLabels(canvas, frame);
+        DrawMarkerLabels(canvas, frame);
         DrawUnitLabels(canvas, frame);
         DrawBillLabels(canvas, frame);
     }
 
     private void DrawCostLabels(CanvasItem canvas, SandboxFrame frame)
     {
-        if (!frame.TileDetail) return;
+        if (!frame.TileDetail || frame.Withheld) return;
 
         var map = frame.Battle.Map;
         foreach (var (node, reached) in frame.Reach.Reached)
@@ -1048,33 +1184,57 @@ public sealed class BattleView
             foreach (var step in window.Move.Steps.Skip(1))
                 Label(canvas, SandboxGeometry.NodeScene(map, step.Node) + Vector3.Up * 0.5f, $"t{step.Tick}", 11, SandboxPalette.CommittedColor);
 
-        if (frame.Aim is null && frame.Hover is { } goal && frame.Reach.TryGetPath(goal, out var path))
+        if (frame.Aim is null && !frame.Withheld && frame.Hover is { } goal && frame.Reach.TryGetPath(goal, out var path))
             foreach (var link in path.Where(l => l.Kind != TraversalKind.Walk))
                 Label(canvas, SandboxGeometry.NodeScene(map, link.To) + Vector3.Up * 0.5f, link.Kind.ToString().ToUpperInvariant(), 11, SandboxPalette.PathColor);
     }
 
+    /// <remarks>
+    /// <b>The mark is in the colour of whose belief it is, and the name under it in the colour of whom it
+    /// is about.</b> His badge, in his rung's colour, over the name of ours he is wrong about in ours. Our
+    /// markers on him are the same rule turned round — see <see cref="DrawMarkerLabels"/> — so a player who
+    /// has learned one has learned both.
+    /// </remarks>
     private void DrawBeliefLabels(CanvasItem canvas, SandboxFrame frame)
     {
-        var battle = frame.Battle;
+        var map = frame.Battle.Map;
 
-        foreach (var hostile in battle.InPlay.Where(u => u.Side == Side.Hostile))
-        foreach (var mine in battle.InPlay.Where(u => u.Side == Side.Player))
+        foreach (var belief in Beliefs(frame))
         {
-            var readout = battle.Awareness.ReadoutFor(hostile.Id, mine.Id);
-            if (readout.State < AwarenessState.Searching) continue;
-            if (readout.LastKnownPosition is not { } believed) continue;
-            if (believed == mine.Position) continue;
+            if (_camera.Project(SandboxGeometry.NodeScene(map, belief.Place) + Vector3.Up * (float)BeliefHeight) is not { } at) continue;
 
-            Label(canvas, SandboxGeometry.NodeScene(battle.Map, believed) + Vector3.Up * 0.3f, "?", 16, SandboxPalette.GhostHue);
+            SandboxRung.Draw(canvas, _font, at, belief.State, 0, false);
+            Text(canvas, at + new Vector2(0, SandboxRung.Radius + 11), string.Join(", ", belief.About.Select(u => u.Name)), 10,
+                SandboxPalette.PlayerHue, 160f);
         }
     }
 
-    private void DrawGhostLabels(CanvasItem canvas, SandboxFrame frame)
+    /// <remarks>
+    /// <para>
+    /// What our file says of him, in his side's colour: <i>told</i> for a briefed contact nothing has
+    /// checked, or how much of him our side still credits for a lost one — our own side's figure, which
+    /// entry 042 says is shown exactly. The marker's own shape already says which of the two it is; the
+    /// word is for the reader who has not learned the shapes.
+    /// </para>
+    /// <para>
+    /// <b>A name only for a man we saw.</b> The ghost label printed every marker's name, and two kinds of
+    /// marker have none to give. A sound says where and never who, which the account of their go already
+    /// keeps (<see cref="BattleHud.Perceived"/>, <i>somebody unseen, marked at</i>); and the waystation's own
+    /// mission file says the Commission does not know that the man outside the west gate is called Cobb.
+    /// So a lost contact whose facing our side holds was seen, and is named; one without was heard, and is
+    /// <i>heard</i>; and a briefed one is <i>told</i> and nameless. Brief two found it, reading the label
+    /// beside a window line that said <i>somebody unseen</i> about the same man.
+    /// </para>
+    /// </remarks>
+    private void DrawMarkerLabels(CanvasItem canvas, SandboxFrame frame)
     {
-        foreach (var (hostile, threat) in Ghosts(frame))
+        foreach (var (hostile, threat, told) in Markers(frame))
         {
             var top = SandboxGeometry.NodeScene(frame.Battle.Map, threat.Where.Position) + Vector3.Up * (float)(StanceProfile.Standing.BodyHeight + 0.4);
-            Label(canvas, top, $"{hostile.Name}? x{threat.Credence:P0}", 11, SandboxPalette.GhostHue, width: 132f);
+            var said = told ? "told"
+                : threat.FacingKnown ? $"{hostile.Name} · {threat.Credence:P0}"
+                : $"heard · {threat.Credence:P0}";
+            Label(canvas, top, said, 11, SandboxPalette.HostileHue, width: 132f);
         }
     }
 
@@ -1105,12 +1265,16 @@ public sealed class BattleView
             var storey = unit.Position.Layer == frame.Layer ? ""
                 : unit.Position.Layer > frame.Layer ? " (above)" : " (below)";
 
-            Text(canvas, at + new Vector2(0, -6), $"{unit.Name} {unit.Vitality}/{unit.Stats.Vitality}{storey}", 11, hue, 160f);
+            var name = $"{unit.Name} {unit.Vitality}/{unit.Stats.Vitality}{storey}";
+            Text(canvas, at + new Vector2(0, -6), name, 11, hue, 160f);
 
+            // His rung on us, as a badge hung on his own label, where nothing of ours about him is ever
+            // drawn. See SandboxRung for the glyphs and BadgeGap for where it sits.
             if (unit.Side == Side.Hostile)
             {
-                var readout = WorstReadout(frame, unit);
-                Text(canvas, at + new Vector2(0, 8), readout.State.ToString().ToUpperInvariant(), 10, SandboxPalette.AlarmHue(readout.State), 88f);
+                var half = Mathf.Min(_font.GetStringSize(name, HorizontalAlignment.Left, -1, 11).X, 160f) / 2;
+                SandboxRung.Draw(canvas, _font, at + new Vector2(-half - BadgeGap, -6), frame.Rung(unit).State,
+                    frame.RungMoved.GetValueOrDefault(unit.Id), frame.LooksFirst(unit));
             }
         }
     }
@@ -1171,17 +1335,15 @@ public sealed class BattleView
         return _camera.Project(foot + Vector3.Up * (float)(StanceProfile.For(walking ? Stance.Standing : unit.Stance).BodyHeight + 0.35));
     }
 
-    /// <summary>The most alarmed any of ours has made this enemy.</summary>
-    private static AwarenessReadout WorstReadout(SandboxFrame frame, Unit hostile)
-    {
-        var worst = AwarenessReadout.Nothing;
-        foreach (var mine in frame.Battle.InPlay.Where(u => u.Side == Side.Player))
-        {
-            var readout = frame.Battle.Awareness.ReadoutFor(hostile.Id, mine.Id);
-            if (readout.State > worst.State) worst = readout;
-        }
-        return worst;
-    }
+    /// <summary>How far left of a hostile's name his rung badge is centred, in pixels from the name's edge.</summary>
+    /// <remarks>
+    /// <b>Beside the name, in the name's line.</b> The first place tried was under the name, where the
+    /// rung's word had been, and in the capture the badge sat squarely over the body at any distance a
+    /// rifle is fired from — which is entry 094's item 12 made worse by the fix for item 8. Over the name
+    /// is the HUD's: the shot's headline and the bill's <c>!</c> stack upwards from there. Beside it is
+    /// free, still unmistakably his, and the adornments go further out on the same side.
+    /// </remarks>
+    public const float BadgeGap = 13f;
 
     /// <summary>A label at a scene point, if that point is in front of the camera.</summary>
     private void Label(CanvasItem canvas, Vector3 scene, string text, int size, Color color, float width = 88f)
