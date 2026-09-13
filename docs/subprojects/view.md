@@ -35,14 +35,50 @@ reaching into `src/`.
 
 ---
 
-## The job — Master's to set
+## The job — brief one, the readouts go on the things they describe
 
-**Brief five has landed and nothing in this file names the next brief.** Brief one still waits on
-the captures in `../interface/captures.md`; the order of the rest of `../interface/briefs.md` is
-Master's, and a session pointed here should ask rather than pick. Two small things are owed and
-neither is a brief yet: the bill line's last clause becomes names when Core lands entry 086's
-relay, and **the map still draws whoever is up, whichever side** — reach, costs, path and attention
-peak for a hostile stopped at a window — which is brief two's ground and entry 090's finding.
+Branch `view/readouts-in-place`. Take a worktree.
+
+**Read three blocks in `../interface/briefs.md`, in order, and nothing else from that file:** *One —
+the readouts go on the things they describe*, *Amending One*, and *Settling One*. The last one wins
+where they disagree, because it is the only one written from pictures (entry 089).
+
+**What the pictures changed, so the session does not build the amendment's version.** The amendment
+recommended a held key for *show me the terms*. Both games photographed while aiming do something
+else: the shot's terms **open by default while aiming, docked in the HUD, with one figure at the
+target and a fold the game remembers** across targets. Firing is already a mode (entry 084), so the
+docked terms have something to hang on. The held key keeps the job the set actually uses it for,
+*everything at once*, and `Ctrl` and `Alt` are still unbound for it. And the move range is drawn
+as an **outline, not a fill**, in every game photographed — which is what lets the reserve's cliff
+sit on the ground without fighting the attention tint.
+
+**This is the largest View job in the queue and the one the whole reference exercise was for.**
+Every figure in the interface is a line of text in a panel at the top left; the brief moves them onto
+the things they describe. Settle the order of work before writing much, because it will not fit in
+one sitting if it is done panel line by panel line. *Settling One* and the brief's own *how to know it
+worked* are the test.
+
+**One rider from brief five, and it is one number.** `HexSandbox.TheirGoDwell` shipped at 0.9 s,
+provisional against capture C7. Invisible, Inc.'s corporate-turn banner measured frame by frame at
+**at least 1.43 s** (entry 089, item 6). Move the default to 1.4 and say in the commit it is
+measured. Nothing else in brief five changes.
+
+**Out of scope.** Brief two's enemy file, including the map drawing whoever is up whichever side,
+which is entry 090's finding and brief two's ground. The shot bill's relay clause, which waits on
+Core. Any rule.
+
+**Owed to later briefs, routed from entry 089 so it is not lost.**
+
+- **Brief two.** Heading 5 is no longer empty: Future War Tactics leaves a red beacon where each lost
+  enemy was last seen, still up next turn (C12), and Invisible, Inc.'s interest-point `?` is a glyph
+  on a bracketed tile (C3). So *building the thing ten games did without* is nine, and the one shipped
+  persisted marker is **a glyph at a place, not a ghost of a body**. The brief's substance stands;
+  its framing and that choice move. Also entry 090: the map still draws whoever is up, whichever side.
+- **Brief six, already built.** A reaction firing is on film for the first time (C4). Warhounds plays
+  the shot in the overhead view it was already in, puts the result as floating text at the target,
+  marks no trigger point on the ground, and tints its idle overwatch area on the grid's own tiles
+  rather than drawing a wedge. Worth reading against what six built the next time anybody touches
+  the moment a reaction fires; not a job on its own.
 
 **What the next View brief inherits from three, six, four and five, so it is not re-argued.**
 

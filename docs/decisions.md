@@ -4754,9 +4754,9 @@ without a provisional mark on its central decision.
 ---
 
 ## 089 — The pictures overturned brief one's gesture, found the set's only persisted enemy marker, and filmed a reaction firing
-**2026-09-12** · **Raised by** interface · **For** master, view · **Status** open for master — brief
-one is promotable with no provisional mark; the corrections to briefs two, five and six below are
-Master's to route, because this session may append only to *Settling One*
+**2026-09-12** · **Raised by** interface · **For** master, view · **Status** resolved — brief
+one promoted into `subprojects/view.md` with brief five's dwell as a rider; the corrections to briefs
+two and six routed into the same file under *Owed to later briefs*
 
 Pass two read sixteen captures across five games. Eight of the twelve entries above the line are
 answered, two half answered, C11 not answered, and C8 struck as not capturable. Thirty-one crops,
