@@ -229,6 +229,18 @@ public class MissionFileTests
         Assert.DoesNotContain(" within ", lowered);
     }
 
+    [Theory]
+    [MemberData(nameof(ShippedMissions))]
+    public void EveryShippedMissionLowersAndReadsBackTheSame(string name)
+    {
+        var lowered = MissionWriter.Write(MissionLibrary.Load(name));
+        var reread = MissionFile.Parse(lowered, "lowered");
+
+        Assert.Equal(lowered, MissionWriter.Write(reread));
+        Assert.DoesNotContain(" block ", lowered);
+        Assert.DoesNotContain(" line ", lowered);
+    }
+
     [Fact]
     public void APlaceCanBeDrawnWithAnyShapeTheMapFormatKnows()
     {

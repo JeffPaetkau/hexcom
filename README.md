@@ -581,7 +581,8 @@ there, and what the failure looks like when they are not.
   `enclose`, `breach` — expands to those three, and a writer lowers any map back to them so the
   shorthand can be shown to add nothing. The demo compound is thirteen statements; the first map
   at the size the ranges need, 85 m across and eighteen hundred tiles, is forty-five. A map brings
-  its own wall profiles and ground types if it wants them. `content/README.md` is the reference.
+  its own wall profiles and ground types if it wants them, and `block` draws the rectangles a town
+  is made of. `content/README.md` is the reference.
   The sandbox reads its maps this way and no other, so what the game draws and what a headless
   test loads are the same file.
 
@@ -589,8 +590,11 @@ there, and what the failure looks like when they are not.
   `MissionLibrary.Load("waystation")`. A map holds ground and nothing else on purpose, so the
   four things a mission needs that ground cannot carry go here: where each side starts and which
   way it is looking, a named place to leave by, what the side came to do, and when it stops. Plus
-  the squads and the briefing, in the six parts the mission book gives one. `Mission.Begin(seed)`
-  hands back a battle deployed, ordered and started. It is a separate file rather than a block in
+  the squads, the briefing in the six parts the mission book gives one, and what the squad is told
+  about the posts it will meet — `told player searching Cobb Teague Marek` — so a squad driven by
+  the AI no longer walks its first turn blind into the view of a sentry its own briefing names.
+  The round limit is the objective's own deadline, read by the rules. `Mission.Begin(seed)` hands
+  back a battle deployed, briefed, ordered and started. It is a separate file rather than a block in
   the map because ground outlives missions and one battlefield can carry several of them, and the
   reasoning is in `content/README.md`. The sandbox fights from it too, so what you play and what
   a headless match measures are the same seven soldiers standing in the same places. Both sides
@@ -621,6 +625,17 @@ there, and what the failure looks like when they are not.
   stride short of the nearest of them. So the ground states the mission: in by the drain, a stride
   to the only place the room can be read from, and the roof is the whole problem. Entries 059 and
   081, and four tests hold it.
+
+- **There is a second battlefield, of the other shape** — Kestrel Yard, a freight yard in a works
+  town, radius 14 against the waystation's 24, with its own reconnaissance: get eyes on the
+  loading floor inside the shed and leave over the footbridge. Every wall is a building face, and
+  it was measured against its briefing before it was called drawn: the floor is seen from the
+  shed, from the yard through the roller door and from the office across the lane, all of it
+  watched, and the duct under the shed lands a stride from a look. Fought over two dozen times, the
+  look is taken every match and the squad goes in by the gate every match. What it found that is
+  not the map's — that a roof does not stop anybody seeing into the room beneath it, and that a
+  line past the seam of a two-storey wall sees through — is in `docs/decisions.md` entry 088. In a
+  town the walls bind before the weapon ranges do: no post on it sees as far as the rules allow.
 
 ## What is not built yet
 

@@ -67,8 +67,21 @@ that is the entire cover vocabulary.
 | `hex q,r` | one hex |
 | `hexes q,r q,r ...` | a list |
 | `line q,r to q,r` | every hex on the straight line between two, inclusive |
+| `block q,r to q,r` | every hex whose centre is inside the upright rectangle between two hex centres |
 | `disc q,r r N` | every hex within N steps of a centre |
 | `ring q,r r N` | every hex exactly N steps from a centre |
+
+`block` is what a town is drawn with. On this grid a column is straight and a row is a zigzag, so
+a building as a union of lines is something no single `enclose` can wall, and a parallelogram in
+axial coordinates leans thirty degrees. A block is the rectangle on the page instead. Neighbouring
+columns sit half a hex apart, which has two consequences worth knowing before drawing a street:
+
+- **Pick corners whose `2r + q` differ by an odd number** and every column gets the same count.
+  Level corners give alternate columns nothing.
+- **Two blocks meant to share a face have to share the `2r + q` of the corner on that face**,
+  and the corner's column parity decides which columns reach it. `kestrel.hexmap` puts the shed
+  inside the compound wall this way; its header says how, and the character sketch in
+  `MapSketch` is how to check.
 
 ## Statements
 

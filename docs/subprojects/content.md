@@ -19,13 +19,23 @@ Both formats are in [`content/README.md`](../../content/README.md); the reasonin
 `docs/decisions.md` entries 024 and 047 and the `<remarks>` on `MapFile` and `MissionFile`. In one
 sentence each: a map is the corner graph written down — `tile`, `chord`, `link` — plus shorthand
 that expands to it; a mission names a map and adds the four things ground cannot carry — a
-deployment with a facing, a named place, an objective, and a clock — plus the squads and a
-six-part briefing. Both have a writer that lowers a file to primitives to prove the shorthand
-adds nothing.
+deployment with a facing, a named place, an objective, and a clock — plus the squads, what each
+side is told about the other, and a six-part briefing. Both have a writer that lowers a file to
+primitives to prove the shorthand adds nothing.
 
-`MapLibrary.Load("compound")` and `MissionLibrary.Load("waystation")` are how anybody gets
+`MapLibrary.Load("kestrel")` and `MissionLibrary.Load("waystation")` are how anybody gets
 either, from any working directory, because both are embedded in the assembly.
-`Mission.Begin(seed)` hands back a battle deployed, ordered and started.
+`Mission.Begin(seed)` hands back a battle deployed, briefed, ordered and started.
+
+Three maps. **The waystation** (radius 24, open country at a crossroads) and **Kestrel Yard**
+(radius 14, a freight yard in a works town) each carry a reconnaissance. **The compound** is a
+fixture: too small to fight on, and the ground Core's sight tests and View's captures are built on.
+
+Two harnesses, one shape: `content/Hexcom.Content.Tests/Waystation` and `.../Kestrel`, each a
+`*Fight` class that names the mission and the ground its places do not, `*FightTests` driven by
+`HEXCOM_SEEDS`, `HEXCOM_SEED_FROM`, `HEXCOM_ROUNDS` and `HEXCOM_TRANSCRIPT`, and `*GroundTests`
+measuring the map against its own briefing. `MatchRecorder` is shared and reads a mission's
+places as landmarks; `MapSketch` draws any map in characters, a storey at a time.
 
 ## Must not touch
 
@@ -82,140 +92,107 @@ wall except that nobody has yet written the mission-file equivalent of `profile`
   exits, effort, unnoticed)`. Entry 061. The exit is a collection of nodes and the place is one
   node, which is why the grammar's `exit` keeps a whole place and its `at` takes the middle of
   one — entry 081.
+- **`Battle.Brief(side, unit, rung)`** — a marker on an enemy at his post, before `Start`. What a
+  `told` line lowers to. Entry 087.
+- **`Objective.Stop`, a `Deadline(Round, AfterAlarm)`** — the clock, on the objective rather than
+  the battle. What a `rounds` line lowers to. Entry 082.
 - **`Unit.Left`** — a `Departure` saying whether a soldier walked off or was put down, and what
   the other side held on them as they went. It is what lets the harness tell a mission achieved
   from a squad wiped out, which before objectives were the same state.
 
 ---
 
-## The job — a second battlefield, of a different shape
+## The job — a sabotage, and the one number in the mission book worth arguing
 
-**First, and it is small: give the mission file a way to say what the squad is told.** Entry
-087, item 1 under *For Content*. The waystation's briefing already says in prose where the garrison
-is and that *the last two reports disagree about the fourth*, and the deployments it describes are
-already named — but nothing in the grammar hands that to the squad, so the file plays blind and
-Core's batch stands in for it with a hard-coded arm. Core's `Battle.Brief` is the call and it
-exists. What rung, and which posts, is the file's to say; a `known` option on `deploy` or a line of
-its own are the two shapes 087 names, and the choice between them is yours. When it lands, Core's
-instrument arm can read the file instead of pretending to be it. Then the battlefield below.
+Branch `content/sabotage`. Both missions in the library are reconnaissances, on purpose: the second
+map was argued against the first with the objective held still. The rules have three shapes and
+the library uses one. `Sabotage(side, place, exits, effort, unnoticed)` is built (entry 061), the
+grammar reads it (`objective sabotage ... effort N`), and no file says it.
 
-Branch `content/second-battlefield`. The waystation's mission is finished: entry 061 built the
-objective and entry 081 ran it, so the mission the user's build fights is the reconnaissance the
-briefing describes rather than the walk-out that stood in for it. This is the other thing entry
-057's *make what we have playable* wants from Content, and it is the last map job before the
-campaign: one battlefield is one data point, and every claim the format makes rests on it.
+**Read the mission book's section 5 first** (`docs/setting/missions.md`). Two sentences in it are
+the brief. *The price is paid in turns and not in an action*, and *the figure itself is Content's,
+and it is the one number in this book worth arguing about, because a sabotage that can be done in
+a single turn is a door and not a mission.* The effort is the only balance-shaped number a mission
+file writes, and nobody has measured one.
 
-**Read entry 081 before drawing.** Three of its findings bear on this map: aiming at a place
-means aiming at its middle, which narrows a standoff more than a drawing suggests; a turn is
-thirteen hexes on a road, so a radius-24 approach is two decisions long; and nothing yet prices
-being seen on the way in, which is Core's and is why a route that *should* be creeping will be
-walked in the open when you fight this one.
+**Then entry 088**, which is what fighting the second map found. Three things from it bear on
+this: the look is taken every match on both maps and nothing is achieved on either, and the reason
+is the search rather than the ground; a briefed squad's followers fight markers (entry 087's item
+for Master, which is not yours); and a floor is not a ceiling, so *cover at the place* — which the
+mission book says a sabotage needs more than an approach — is walls and only walls.
 
-A second map, of the other kind, so that the mission format is argued from two shapes rather than
-one and the *one size or a range* question below gets a second data point.
+**What to do.**
 
-**Where the seam is.** `content/README.md` is both formats. `waystation.hexmap` is the worked
-example, forty-five statements of ground; `waystation.hexmission` is the mission on it, and
-`content/Hexcom.Content.Tests/Waystation` is the harness — `WaystationFight` is now a name and one
-call, `MatchRecorder` runs `Commander` against itself and writes down routes, throws, casualties,
-alarm peaks, departures, verdict, pacing and — since entry 081 — whether the job in the middle of
-the mission was actually done and by whom, and `HEXCOM_SEEDS`, `HEXCOM_SEED_FROM`,
-`HEXCOM_ROUNDS` and `HEXCOM_TRANSCRIPT` steer it. Copy the shape for the new map; the recorder is
-not waystation-specific except for its landmarks, which want generalising now that a second map
-needs them — and a `place` in a mission file is most of what a landmark is.
+- **Put a sabotage on ground that exists before drawing any.** The mission book's test for this
+  shape is *a thing at a place, and cover at that place rather than on the way to it* — four or
+  five turns of standing still. Measure the three maps against that, the way `*GroundTests` measure
+  a look: where on each can a soldier stand for five turns with nothing of theirs in view? If one
+  of them carries it, the mission is a file and not a map. If none does, say why in a line and
+  draw the smallest thing that does — and a relay mast in a field is the mission book's own
+  example.
+- **Give the briefing its restraint and its stop.** Section 5's are *leave the housing shut* and
+  *if it turns into a fight, break it and go*. The second is a real stop, and whether the format
+  can say it — an objective that changes shape when it goes loud — is a finding about the format
+  or about the rules, and yours to tell apart.
+- **Argue the effort with the harness, not the prose.** Fight a dozen seeds at three or four
+  values bracketing *four or five turns of one soldier* — the mission book's arithmetic is 50
+  points a turn — and read, per value, whether the job gets finished, by how many hands, and how
+  many rounds the squad stood at the place. `MatchRecorder`'s task line already says whether the
+  job was done and by whom; how long it took is the line to add. Write the value into the file and
+  the measurement into `../decisions.md`.
 
-**What to draw.** The waystation is open ground with things on it, and the mission book's six
-shapes want the other kind too: somewhere built-up and tight, where sight lines are short, every
-wall is a building face, and the way in that is not the way everybody uses is a roof or a duct
-rather than a ford. Radius 12 to 16 rather than 24 — that is the size question being asked on
-purpose, since entry 007's figure was reasoned from the ranges and a town blocks the ranges.
-Reuse the built-in profiles; if it needs a new one, remember entry 035 — a map that brings its
-own kit brings no colour with it, and the view wants a line in `../decisions.md`.
+**Out of scope.** Anything that makes the garrison move (entry 059) or changes how the search
+weighs being seen (entries 083 and 087) is Core's, and the effort will look wrong while those
+stand — say so rather than setting the figure to suit them. The sandbox offering a third mission
+is View's.
 
-**Take the squads out of the roster.** `docs/setting/roster.md` sections 4 and 5 are twenty-four
-soldiers in exactly the form `deploy` takes, and the waystation already fields eleven of them by
-name. Do the same here from the start, and keep the split entry 059 settled: the **briefing** says
-posts, because the briefing is what a squad is told and nobody briefs you on a stranger's name;
-the **deployments** say names, because a readout has to call him something. Section 7 is how a
-mission of six is chosen out of twelve, and it is worth reading before picking.
-
-**Give it a mission file of its own**, not a header, and name the ground the briefing names.
-The waystation now has three places — `compound`, `house`, `cottages` — and entry 059 is what
-measuring the ground against the briefing found. Do that measurement here too, and before the
-map is finished rather than after: the mission book's test for a reconnaissance is whether there
-is somewhere to look at the place *from*, and it is a question a drawing can answer wrongly for a
-long time without anybody noticing.
-
-Watch for what the waystation could not test: a `place` that is a building interior rather than
-three hexes of floor, an exit that is upstairs, a deployment that has to name a layer, and a place
-that contains another place. If any of those is awkward, that is a finding about the format and
-it is yours to fix.
-
-**Fight it before calling it done.** A dozen seeds through the harness, and read the routes the
-way entry 038 did. Expect two things and draw around neither. The squad will walk to the job in
-the open and be seen doing it, because nothing prices being noticed on the way in (entry 081) —
-so a route drawn to be crept along will be marched along, and drawing a shorter one to suit is
-exactly the mistake. And the garrison does not move, because nothing in the game patrols (entry
-059) — a fifth soldier would be a fifth soldier standing still. Both are Core's and a map cannot
-fix a search. Do redraw around anything that is the map's: a firing lane where a street was
-meant, a crossing nobody uses because there is an easier one.
-
-**Settle before drawing much.** Whether the compound goes. It is the demo map, radius 6,
-everything in earshot of everything (entry 030), and `DemoMaps.cs` is gone (entry 043). A second
-map at the right size that carries a mission would make the compound the third map and the only
-one too small to fight on. Do not delete it — the view's captures diff against it — but say in
-`../decisions.md` whether it is a map or a fixture.
-
-**Out of scope.** New objective kinds, the task term (entry 048) and anything that would make a
-garrison patrol (entry 059) are Core's. Anything in `game/`: the sandbox reads whatever mission
-`SandboxScenario` names, and offering it the new one is View's.
-
-**How to know it worked.** A second `.hexmap` and a second `.hexmission`, a harness that fights
-it to a verdict, the ground measured against its own briefing the way entry 059 measured the
-waystation's, a note in `../decisions.md` on what its size did to the ranges that the waystation's
-did not, and the *one size or a range* question below either answered or sharpened.
+**How to know it worked.** A `.hexmission` with `objective sabotage` in it, fought to a verdict by a
+harness of the same shape as the other two, the ground measured against the mission book's test
+for the shape, and an effort figure in the file with a batch behind it.
 
 ---
 
 ## Open questions
 
-**How big is a map?** Entry 007 settled the *scale*: radius 20 to 30, 70 to 105 m, one to three
-thousand tiles, if the ranges are right. The waystation is radius 24 and the format takes it in
-under fifty statements, so size is no longer a cost, and it has now been fought on (entry 038):
-at that size a rifle engages at 35 to 38 m before anybody on the other side is past `Unaware`,
-a firefight at the gate is silent in the barn 24 m away (entry 037), and the far half of the map
-is never visited because nothing sends anybody there. What is still open is whether that is one
-map size or a range of them — the brief above asks for a tight one on purpose. What a mission
-needs beyond ground is no longer open: entry 030 answered it in prose and
-`waystation.hexmission` holds it.
+**~~How big is a map?~~ A range, and the ranges do not set it.** Entry 007 reasoned radius 20 to
+30 from the weapons and the sight range. The waystation is 24 and a rifle engages at 35 to 38 m
+there. Kestrel Yard is 14 and entry 088 measured what that does: no post has a line longer than
+33 m, every line any post has is inside the 45 m sight range, and the posts see between a sixth and
+a half of the standable ground where on the waystation two of them see almost nine tenths. **In a
+town the walls bind before the ranges do**, so the radius is not set by how far anybody can see.
+What it does set is how many decisions the approach is: on Kestrel the loading floor is 115 action
+points from where the squad starts and the footbridge about 200 — two turns in and two more out,
+where the waystation's approach alone was two turns of road. So the sharpened question is not how
+big but how many routes, and how much dearer the quiet one may be before nobody takes it — on
+Kestrel the duct is 35 points dearer than the gate, and nobody took it in.
 
 **~~What is a scenario file?~~** Answered: a file of its own that names a map, `.hexmission`,
-entry 047. What is still open is the two things it deliberately does not do. It **names** roles
-and kits and cannot declare them, which is the balance-numbers question below wearing a different
-hat. And it carries a round limit that no rule reads, because the clock of entry 030 is still
-nobody's — so the file states the mission's own answer to *when it stops* and whatever runs the
-battle applies it.
+entry 047. The clock it carried is read by a rule now — `rounds` is the `Deadline` on every
+objective, entry 082 — and what a side is told is a statement, `told`, entry 087. What is still
+open is that it **names** roles and kits and cannot declare them, which is the balance-numbers
+question below wearing a different hat.
 
-There is now a third thing it cannot say, found by making it say the second one. **A place that
-nobody can stand in cannot be the thing a mission points at** — `at <place>` picks the middle of
-the standable ground in it, so a sealed vault, a locked room or a crate is not nameable as a
-target. Entry 081. It has cost nothing yet because the waystation's house has a door and a floor,
-and the second map is where it will either bite or turn out not to matter.
+**A place nobody can stand in cannot be the thing a mission points at.** `at <place>` picks the
+middle of the standable ground in it, so a sealed vault is not nameable as a target (entry 081).
+The second map was where it would bite, and it did not: the loading floor is a building interior
+with a door, and every other thing the waystation could not test — a place inside another place,
+an exit upstairs, a deployment on a storey — needed no change to the format. A sabotage at a mast
+or a housing may be where it bites next.
 
 **Can a mission say anything about behaviour?** Everything the format holds is a fact about the
-opening frame — who is where, facing which way, with what. Nothing in it, and nothing in the
-rules, can say what a soldier is *doing*: the roster gives the Cadre one honest patrol and neither
-a mission file nor `Commander` can express her, so a fifth deployment is a fifth soldier standing
-still (entry 059). A standing order in the file and a behaviour in the search are different
-answers with the same effect, and only one of them is Content's. It is the largest single thing
-between the waystation and a site that reads as inhabited.
+opening frame — who is where, facing which way, with what, and what the other side is told.
+Nothing in it, and nothing in the rules, can say what a soldier is *doing*: the roster gives the
+Cadre one honest patrol and neither a mission file nor `Commander` can express her, so a fifth
+deployment is a fifth soldier standing still (entry 059). A standing order in the file and a
+behaviour in the search are different answers with the same effect, and only one of them is
+Content's. It is the largest single thing between either map and a site that reads as inhabited.
 
-**A map editor.** Text is enough to author with and it is not enough to *see* with: the
-waystation was checked by rendering it as characters. The gate on this one has opened — the
-greybox is built (entry 053), it draws tiles, walls, links and named places, and it runs headless
-from one command. So the cheap answer is now *the game is the map view*, and what is still missing
-is only the other half: editing. Whether that is worth a tool of its own, or whether text plus a
-rendered look is enough forever, is the live question.
+**A map editor.** Text is enough to author with and not enough to see with. `MapSketch` draws any
+map in characters a storey at a time and is kept now, because the second map needed the thing the
+first one threw away; the greybox draws them properly but only the missions `SandboxScenario`
+names. So the cheap answer — *the game is the map view* — is true for a map the sandbox offers, and
+a sketch is the view for one it does not yet. Whether editing wants a tool of its own is still the
+live question.
 
 **Where do balance numbers live?** They are in Core config records, which was right when there
 was one territory and is awkward now — see above. Moving values (not shapes) out to data would
@@ -223,33 +200,36 @@ give Content real ownership and make AI-vs-AI balance runs configurable without 
 would also weaken the nine-homes rule (entry 032) that currently keeps magic numbers out of
 method bodies, so it is not obviously correct. Both formats show the shape the answer would take:
 `profile` and `ground` are content declaring kit against a shape Core owns, and `role` and `kit`
-in a mission are content *naming* one where declaring it would be the balance change.
+in a mission are content *naming* one where declaring it would be the balance change. The effort
+on a sabotage is the first number a mission file writes that is balance-shaped, and the job above
+is where that line gets tested.
 
 **Almost nothing has been measured, and here is what has.** Every number in the game was set by
-reasoning; the waystation harness is the first thing to check any of them against a match, and
-what it found is in entries 037 to 039, 048 and 081: a rifle is heard at 18 m against a design
-that says a hundred, a turn's walk on gravel is heard further than a shot, the AI throws every
-charge at the first crater and paces between two tiles on a shot it never takes, and a turn is
-thirteen hexes of road, which makes a radius-24 approach two decisions long.
+reasoning; the harnesses are the first thing to check any of them against a match, and what they
+found is in entries 037 to 039, 048, 081 and 088: a rifle is heard at 18 m against a design that
+says a hundred, a turn's walk on gravel is heard further than a shot, the AI throws every charge at
+the first crater and paces between two tiles on a shot it never takes, and a turn is thirteen
+hexes of road, which makes a radius-24 approach two decisions long and a radius-14 one a single
+decision.
 
-Two things have been measured *right*. An objective ends a battle — twelve matches out of twelve,
-where twelve out of twelve used to run out of rounds. And an objective with a job in the middle
-of it is gone after: the squad that used to turn round in round 2 and go home now crosses the map
-and takes the look in round 2, every seed. What replaced the old fault is the new one, and it is
-Core's: nothing prices being seen on the way in, so every one of those twelve is abandoned rather
-than achieved, and the mission is played as a footrace. A dozen seeds is four seconds rather than
-nine minutes, which makes the harness cheap enough to be the first thing anybody with a number to
-test reaches for.
+Two things have been measured *right*. An objective ends a battle, every match on both maps. And
+an objective with a job in the middle of it is gone after: the look is taken in twenty-four matches
+of twenty-four on Kestrel, in rounds three to five. What stands between that and a mission achieved
+is Core's on both maps — the squad marches the way everybody uses and fights the markers it was
+told about — and a dozen seeds of Kestrel is four minutes.
 
-**And one thing measured about the ground rather than the numbers.** Entry 059 asked the mission
+**And what was measured about the ground rather than the numbers.** Entry 059 asked the mission
 book's question of the waystation — is there anywhere to look at the house *from* — and got an
-answer the drawing never advertised: nowhere outside the wall at any range, fourteen places
-inside, every one of them overlooked by the roof. Entry 081 asked it again of the node the
-objective actually aims at, the middle of the room, and the fourteen became four in a line
-straight out from the door, with the drain opening one stride short of the nearest rather than
-onto it. That is a whole mission stated by the ground, and neither measurement was arrived at on
-purpose. **Measure a map against its own briefing before calling it drawn**, because a map can be
-wrong about what it offers for a long time without anybody noticing.
+answer the drawing never advertised, which entry 081 narrowed to four places on the door axis, all
+under the roof. Entry 088 asked it of Kestrel before the map was called drawn: within twelve metres
+the loading floor is seen from inside the shed, from the yard through the roller door, and from
+the office's window and roof edge, every one of them in some post's view; the one line no post can
+see is through the side door, a stride and a half too far to count; and the duct lands behind the
+racking one stride from a look, which is the waystation's drain again and was not drawn to be.
+**Measure a map against its own briefing before calling it drawn**, because a map can be wrong
+about what it offers for a long time without anybody noticing — and fight it, because Kestrel's
+first drawing had a side door you could only reach through the gate, and nothing but twelve routes
+said so.
 
 ## Recent work
 

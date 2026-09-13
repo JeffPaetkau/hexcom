@@ -1,0 +1,90 @@
+# Kestrel Yard — an assessment, in the built-up end of a works town.
+#
+# The second mission, on the second map, and a reconnaissance again on purpose: the format is
+# argued from two shapes of ground carrying one shape of mission, so what differs between the two
+# files is the ground and not the objective. The briefing is the mission book's own example for a
+# reconnaissance (docs/setting/missions.md section 4), fitted to what got drawn.
+
+mission Kestrel Yard: an assessment
+map kestrel
+
+# ---- the briefing, in the mission book's six parts ------------------------------------------
+
+brief instrument  An assessment of the Cadre holding at Kestrel Yard, ahead of the arbitration.
+
+brief presence    We believe plate is coming through the yard in quantity. We do not know how much.
+brief presence    The gate on the main street has a man on it all night, and the office across the
+brief presence    east lane has somebody at the upstairs window who can see over the wall into the
+brief presence    yard. One of them sleeps in the shed with whatever is in it, or the last report
+brief presence    thinks so. There is a set on the site and nobody has seen who carries it.
+
+brief task        Get eyes on the loading floor at the east end of the shed. Properly on it —
+brief task        traced, not glimpsed through the door from the street.
+
+brief restraint   There is a night shift in the terrace across the street. They are not ours and
+brief restraint   they are not theirs and you will leave them entirely alone.
+
+brief way-off     Off over the footbridge across the cut, north-west of the yard, before the shift
+brief way-off     changes.
+
+brief stop        If they know you were there, they will move it, and the assessment is worth
+brief stop        nothing before you are home. Being shot at is survivable. Being identified is the
+brief stop        failure.
+
+# ---- named ground ---------------------------------------------------------------------------
+#
+# Four places, and two of them are what the waystation could not test. The loading floor is a
+# building interior rather than a patch of open ground, and it is inside another place, the shed.
+# The footbridge is upstairs: the exit is three metres up, over water, and the only way onto it is
+# the steps from the towpath.
+
+place shed          block -7,13 to 4,0
+place loading-floor block -1,5 to 4,5
+place yard          block -8,-4 to 5,-1
+place footbridge    line -10,13 to -12,14 layer 1
+
+# ---- who is standing where ------------------------------------------------------------------
+
+# Ours, in the east lane at the end of the main street, round the corner from the gate behind the
+# weighbridge hut. Out of docs/setting/roster.md section 4, and none of them the three who went
+# to the waystation: Tolliver is the scout who goes and looks at things that might look back,
+# Idris the silent carbine, and Naismith the set, because section 7 says one is compulsory.
+deploy Tolliver player 13,-12 facing nw role scout     kit beamer
+deploy Idris    player 12,-12 facing nw                kit beamer
+deploy Naismith player 13,-13 facing nw role signaller kit beamer
+
+# Theirs, out of section 5 — four of the Cadre's twelve, none of the four the waystation fields,
+# which fits a detail that rotates through the sites on its stretch of road. Duvall is the answer
+# to a door and has the gate. Sivet, who is the one who will notice if anybody does, has the
+# office window, which is a deployment that has to name a storey. Ganz has the second set and is
+# kept out of the obvious place, which here is downstairs in the office. Rask holds the detail and
+# sleeps beside what the detail is guarding.
+deploy Duvall hostile 0,-4   facing s  role trooper   kit heavy
+deploy Sivet  hostile 7,-3@1 facing sw role scout     kit rifleman
+deploy Ganz   hostile 9,-3   facing sw role signaller kit sidearm
+deploy Rask   hostile 2,4    facing s                 kit rifleman
+
+# The night shift in the terrace is not deployed. Side.Neutral exists and nothing makes a neutral
+# behave like a person (docs/setting.md section 5), so a worker here would be a figure standing
+# in a house with the door shut, which is what the terrace already is.
+
+# ---- what the squad is told -----------------------------------------------------------------
+#
+# The gate and the window are stated flat. The shed is "or the last report thinks so". The set is
+# on the site and nobody has placed it, so Ganz is told about not at all — a post the reports
+# missed is the one thing a 'told' line says by being absent.
+told player searching  Duvall Sivet
+told player suspicious Rask
+
+# ---- what we came to do ---------------------------------------------------------------------
+
+# Being shot at is survivable and being identified is the failure, so a departing soldier may be
+# held as high as Searching and no higher: Alerted is the rung at which a contact is passed on,
+# and a contact passed on is an identification. The waystation's briefing is stricter — Suspicious
+# — because its stop is "properly registers you", and the difference is the briefing's to say.
+objective reconnaissance player at loading-floor exit footbridge unnoticed searching
+
+# Before the shift changes. Twenty rounds against the waystation's thirty, on a map a little over
+# half as far across; the approach here is one decision long, not two. The alarm half is left
+# unwritten for the same reason as the waystation's — it is the playtest's to set.
+rounds 20
