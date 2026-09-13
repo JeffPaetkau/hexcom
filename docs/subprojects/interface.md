@@ -197,6 +197,11 @@ usual shape, and one brief appended to `docs/interface/briefs.md`.
 
 **Also re-prime the queue**, as the last two jobs did.
 
+**One question routed by Master from entry 101, not this job's but small — answer it in passing.**
+*Whether a screen's light cover should read as cover at all on the shield*, when the rules also make
+the man behind it invisible: a player who sees *light* may conclude *seen*. The shield draws the rules'
+answer; the question is what the word and the glyph should promise.
+
 **Out of scope.** Building anything. Rules: a verdict a player needs that the objective cannot give
 is a proposal for Core in `../decisions.md`. The campaign's debrief across missions, which is the
 strategy layer's and has no rules yet. Saves.

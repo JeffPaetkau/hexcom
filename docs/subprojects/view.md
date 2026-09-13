@@ -35,12 +35,75 @@ reaching into `src/`.
 
 ---
 
-## The job — `view/camera`, not yet written
+## The job — the camera, and nothing on top of anything
 
-`view/ground` has landed — *What landed on `view/ground`* below, and `../decisions.md` entry 101. **The
-next brief is `view/camera`, first in the queue, and Master writes it out**; until then there is no brief
-here. What the ground and the two briefs before it leave for the camera is listed under it, so it is not
-re-derived.
+Branch `view/camera`. Read `../decisions.md` entry 094 items 2, 3, 4 and 12 for the player's words,
+`../interface/conventions.md` *The camera*, and the three *left for the queue* lists below this brief —
+they are this brief's material, written by the three briefs that made the clutter, and not repeated.
+
+**What is wrong, in the player's words.** *Q and E should turn it maybe 30 degrees instead of 60, or
+maybe press and hold and stop when let up.* *Unable to pan with the mouse, only rotate* — and then,
+told middle-drag pans: *middle mouse button pan doesn't work.* *Is there any way to tilt?* *The info
+popups are hiding the field and units sometimes.*
+
+**What it is — four things, the bug first.**
+
+1. **Middle-drag pan does nothing in the build.** `HexSandbox._UnhandledInput` sets `_dragging` on
+   `MouseButton.Middle` and the motion case pans through `SandboxCamera.Pan`; the code reads right and
+   no `Control` is in the scene to take the event. So the fault is not visible from the source, and a
+   capture cannot press a mouse button. **Find out before fixing**: a switch (`--input-log`, say) that
+   prints each mouse button event the node receives, and one line to the user asking them to press
+   middle, left and right over the map in the build. Suspects in order: the event never arrives (the
+   instruments `Window`, focus, a mouse driver remapping the wheel click), it arrives and `_dragging`
+   is cleared, or it pans by nothing. Then **a pan the player can find without being told**: whether
+   left-drag on the ground pans, told from a click by the same slop the right button already uses
+   (`_orbitTravel`, `ClickSlop`), is the decision — a click on the ground moves a soldier, so the slop
+   must be generous enough that no move is ever a pan and no pan is ever a move.
+2. **Hold `Q`/`E` to turn, and a tap still lands on a bearing.** `SandboxCamera.Turn` lands on the six
+   bearings; entry 058 put smooth over snapped, and entry 094 recorded hold-to-turn as the answer over a
+   30° step. Held, turn at a rate; released, stop where it is, or settle to the nearest bearing — settle
+   that, and keep a tap exactly today's step. `HandleKey` sees presses only; a hold wants the release,
+   or `Input.IsKeyPressed` in `_Process`. With animation off (`Animated` false) a capture must still
+   land deterministically: a script twin that turns by a stated angle.
+3. **Pitch within a clamp.** `SandboxCamera.PitchDegrees` is a `const` 55° and `Pan` divides by its
+   sine. The convention is a clamp that keeps a wall a wall. Settle **the ends** (captured, on the
+   waystation's cottages and the compound's ladder top), **the input** (a key pair — `R` and `F` are
+   taken — and a mouse gesture; the conventions name Jagged Alliance 3's middle mouse, which this brief
+   is also making the pan button, so say which gets it), whether `Fit` re-frames at the new pitch
+   (entry 101: re-check that the house and the cottages are still told apart at `--fit`), and whether a
+   pitch is kept across a new battle.
+4. **Nothing on top of anything** — item 12. The lists below have five cases already: the taller bottom
+   edge and `FollowActive`'s margin, the wider soldier line, two labels stacked on one column, the
+   ground's edge labels landing on markers and place names, and the shield's fixed size. Settle **a
+   precedence** once — bodies over every readout; the active soldier's readouts over anybody else's; a
+   figure attached to something over the ground's words — and **one mechanism** that enforces it (nudge,
+   fade or drop; the genre fades), rather than a pixel offset per case. `BattleView.Crown` is where every
+   label hangs from, and `DrawEdgeLabels` already keeps 90 px clear of names, which is the per-case
+   offset this should replace.
+
+**Owed in the same brief because it is small and it draws the same ground** — entry 102, *For View*:
+**the cover grades need a second channel** — line weight or dash — because half against full on hue
+alone fails deuteranopia, and the outlines are the one reading on the map where hue is all there is.
+`SandboxPalette.CoverHue` and `BuildCoverOutlines`. It is a drawing, not an option.
+
+**Out of scope.** Rebinding and every preference — brief ten, `view/options`; edge-pan stays a flag
+until then. The ground's content (101). Briefs seven and eight. Rules.
+
+**How to know it worked.**
+
+- **The user presses middle and drags in the build, and the map pans**; the input log's line for that
+  press is in the entry. And a pan with no middle button, which a capture can reach through its script
+  twin.
+- A capture turned by a stated angle hashes the same twice; a tap of `Q` lands on the same bearing as
+  on master.
+- Captures at both ends of the pitch clamp on the cottages and the ladder top: walls read as walls, and
+  `--fit` still frames the whole map with the house and cottages apart.
+- The compound's ladder top: Sentry's and Spotter's labels do not overlap. The waystation from round 7
+  at default zoom: Bekker's points bar is clear of the legend. An edge label near a marker does not sit
+  on its label.
+- The cover outlines, captured and converted to a deuteranope simulation (or greyscale), still say
+  half from full.
+- The pinned scenes change by what this brief changed and nothing else; two runs hash the same.
 
 **What the ground left for the queue, so it is not re-derived.**
 
@@ -83,20 +146,15 @@ bury the marks, and the shield is neither a hex nor a ring — were the ground's
 next; seven and eight are written in full in `../interface/briefs.md` and are sufficient as they
 stand once promoted — entry 099.
 
-1. **`view/camera`** — entry 094's camera and clutter items: **middle-drag pan does not work in the
-   build** though the code reads right, then a mouse pan the player can find (item 3); hold `Q`/`E`
-   to turn and a tap still lands on a bearing (item 2); pitch within a clamp (item 4, and
-   `conventions.md` *The camera*); readouts that do not cover bodies (item 12), with what 096 and 098
-   left under it above — the taller bottom edge, `FollowActive`'s margin, the wider soldier line, and
-   two labels stacked on one column.
+1. **`view/camera`** — written out above.
 2. **Brief seven, `view/turn-end`** — `../interface/briefs.md` *Seven*. Small; it says on the End turn
    slot and on the soldier what ending a go does.
 3. **Brief eight, `view/briefing-first`** — `../interface/briefs.md` *Eight*. Its `Ctrl` half waited
    on brief two's words, and 098 has them.
-4. **`view/options`** — an input map and a preferences file loaded at start, and an options screen
-   over them (item 1, settled narrow with the user). `--edge-pan`, `--pace` and `--still` move in
-   first. Interface is answering *what the genre lets a player change* ahead of it, as it answered
-   the fog ahead of the ground.
+4. **Brief ten, `view/options`** — `../interface/briefs.md` *Ten*, written in full against
+   `conventions.md`'s section and sufficient as it stands; entry 102 has what shaped it. Keys per
+   context, one pace, one scale, colour as a second channel before it is a mode — the scope the user
+   settled narrow in 094.
 
 Small things owed and not briefs: the bill's last clause becomes names when Core lands entry 086's
 relay; and entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files
