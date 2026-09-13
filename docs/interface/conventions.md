@@ -283,6 +283,191 @@ a figure belongs where the cursor already is.
 
 ---
 
+## Teaching it
+
+*Added by the onboarding pass, the last job of the interface queue. It comes first among the
+sections because it is the first thing a player meets, and it leans on nearly all the others
+because what the rest of this document already teaches is half its answer. Entry 099 has the
+findings in short.*
+
+**Standard — nearly the whole set teaches with a first mission built for it, inside the real
+game.** The brief this section answers split the genre four ways: a scripted tutorial (XCOM 2),
+total disclosure and no tutorial (Into the Breach), one unmissable guard (Invisible, Inc.), and
+tooltips and losing (Jagged Alliance 3, Battle Brothers). **The split was wrong in two of its four
+places.** Into the Breach has a tutorial, and Invisible, Inc.'s is the most tightly scripted in the
+set. Every game in the set for which a source turned up puts a first mission in front of the
+player and teaches in it. What they differ on is how much of that mission is scripted.
+
+| | Game | The first mission | Tag |
+|---|---|---|---|
+| **scripted** | Invisible, Inc. | *Interrogation Room*: an instruction for every turn, laid out room by room, and no other way through it. Camera rotation is locked until it ends | verified, found by search and not re-fetched ([wiki](https://invisibleinc.fandom.com/wiki/Interrogation_Room)); the stuck player is verified ([Steam](https://steamcommunity.com/app/243970/discussions/0/620712999976662171/)) |
+| **scripted** | XCOM 2 | a scripted tutorial that an option at campaign start turns off; Gatecrasher, the first real mission, runs either way | verified ([Steam](https://steamcommunity.com/app/268500/discussions/0/3008934419471467694/)) |
+| **guided** | Into the Breach | *Combat Simulation*: moving, attacking and pushing with the three starting mechs. Offered only on a new profile, and it cannot be replayed | verified, found by search and not re-fetched ([GameFAQs](https://gamefaqs.gamespot.com/pc/205477-into-the-breach/faqs/76363/combat-simulation-tutorial)); how scripted it is, unknown |
+| **guided** | Phoenix Point | a tutorial mission, recommended before the campaign for learning the interface | verified, found by search and not re-fetched ([Game Rant](https://gamerant.com/beginner-tips-phoenix-point/)); its degree of scripting unknown |
+| **shaped** | Shadow Tactics | the first mission brings in each mechanic as the objective needs it, a character at a time, with a short introduction to Shadow Mode where it is first wanted | verified ([gamepressure](https://www.gamepressure.com/shadowtactics/mission-1-osaka-castle/z09421)) |
+| **shaped** | Mutant Year Zero | a tutorial area puts enemies dozens of levels above the squad in its path and tells the player to sneak past | verified ([Steam](https://steamcommunity.com/app/760060/discussions/0/1744479064008628851/)) |
+| **shaped** | Tactical Breach Wizards | the first missions are the tutorial: simple rooms, two or three enemies, obvious windows | verified, found by search and not re-fetched ([PC Gamer](https://www.pcgamer.com/games/strategy/tactical-breach-wizards-review/)) |
+| **shaped** | Phantom Brigade | the first mission covers running, waiting and shooting one tank, and players say it is not enough | verified, found by search and not re-fetched ([Steam](https://steamcommunity.com/app/553540/discussions/0/3787002282767939834/)) |
+
+Warhounds and Future War Tactics: no source found. **Tier C, for contrast:** Jagged Alliance 3 has
+hint balloons and a help page. Players who turned its tutorial on report that nothing got
+explained, and a developer replied asking whether the balloons had failed to appear
+([Steam](https://steamcommunity.com/app/1084160/discussions/0/4034724778657247002/)). Battle
+Brothers' first contract, Hoggart the Weasel, is a tutorial the player can turn down. So *teach by
+tooltip and let them lose* is Tier C's answer, and in the one of the two with a thread it drew the
+complaint.
+
+**Read the denominator.** Eight of eight games with a source ship a teaching first mission, so the
+convention holds wherever the evidence reaches. On *how scripted*, the set is split. The two games
+whose players arrive knowing the most, XCOM 2 and Invisible, Inc., script it. The stealth relatives
+that hide the least of their rules, Shadow Tactics and Mutant Year Zero, shape it.
+
+**What the two best-documented designers learned about teaching, and neither lesson is about the
+tutorial.**
+
+- **Into the Breach teaches through its interface, and the tutorial is short because of that.** Its
+  developers cut weapons and firing patterns that playtesters could not follow, even when they had
+  read long explanations, and replaced written weapon descriptions with animated demonstrations
+  they found "a thousand times more effective"
+  ([Game Developer](https://www.gamedeveloper.com/design/-i-into-the-breach-i-dev-on-ui-design-sacrifice-cool-ideas-for-the-sake-of-clarity-every-time-)).
+  The brief called this the answer that costs no content. It costs a short tutorial and a very
+  disciplined interface.
+- **Invisible, Inc.'s alarm felt unfair because players brought expectations from other stealth
+  games.** Klei's fixes were the rename to `SECURITY LEVEL`, tooltips that warn of the next rise,
+  and more interface and tutorial around it. They still say they lost players to it
+  ([Game Developer](https://www.gamedeveloper.com/design/game-design-deep-dive-alarm-systems-in-klei-s-i-invisible-inc-i-)).
+  The rules had been clear from the start. The expectations broke, and they broke exactly where
+  Invisible, Inc. departed from its genre.
+
+**Here.** Nothing is taught. The executable opens on the waystation turn one. The six-part briefing
+is behind `M`, which no legend names. The bar's End turn slot has a hint saying leftover points
+bank for reacting. What the interface briefs have built already teaches a good deal without saying
+so, and it is worth counting, because it is this game's share of Into the Breach's answer:
+
+- the shot's terms open while aiming (entry 093, from **C1** and **C5**), so the arithmetic teaches
+  itself on the first shot;
+- the move range is cut at the reserve's steps (entry 093), so *what will I still hold there* is on
+  the ground where the move is chosen;
+- the cursor names who would hear a move, and the dock names who a shot would give you away to;
+- every slot on the bar carries its key and its price, and refuses the way it is drawn;
+- the banner says their go happened, and the lines under it say what our side perceived of it.
+
+**What that leaves is exactly the list of departures.** Every **convention** in this document is
+something the player arrives already knowing, which is what makes it a convention (entry 058), so
+it needs no lesson. Every **departure** is a place where they arrive knowing something wrong, which
+is Klei's finding. So the work is not to teach this game. It is to teach the places where it breaks
+the genre, and the tags in this document are already that list. Read against the model a player
+has to hold, the departures reduce to **three lessons**:
+
+1. **The turn's end does two things, and neither shows.** It is the only moment a soldier looks
+   around (*What the squad can see*, fact 2), and it banks what is left as a reserve
+   (`ReactionModel.Banked`). A soldier who spent everything is holding no answer, and **no look
+   either**: a soldier with nothing banked is skipped when the other side's move offers a look
+   (`ReactionWindow.BuildOffers`, and the correction to fact 2). The genre's lit ground means
+   empty; here, lit ground means nobody has looked yet. The genre's last action is the last action;
+   here, it decides what the soldier can see and do during the other side's go.
+2. **A mark on the map is somebody's belief, not a unit.** What we were told, what we saw and lost,
+   and what he believes about us. Every one of them can be wrong, and every one of them fades. The
+   genre has one mark of this kind in ten games (**C12**), and it is a bare beacon.
+3. **The word on a hostile is his, it moves while you watch, and it comes back down.** The rung is
+   his alarm about us, coarse by contract 3. It rises at the moment something is heard or seen, and
+   his next look is at his own turn's end. So *Searching* at arm's length means he saw you and has
+   not yet had a turn (entry 095). The genre's only ladder, Invisible, Inc.'s, never comes down at
+   the top.
+
+Everything else the player needs comes from the conventions, or from the mission.
+
+**The asymmetry.** It decides which half of each lesson may be drawn exactly. Lesson 1 is about our
+own soldiers, so contract 3 allows the exact figure: *banks 17*. Lesson 3 is about his knowledge,
+so it is taught with the rung and never with a number. That is Klei's discipline of reading only
+transitions, and here it is required rather than chosen. Lesson 2 is about both sides, and the mark
+has to say whose belief it is before it says anything else. That is brief two's *whose it is, on
+sight*, and teaching gets it for free if brief two gets it right.
+
+**Recommendation** — **convention** in the vehicle, **departure** in how it is run, and nothing
+that needs a rule.
+
+- **A first mission made to teach, in the real game, with the real interface, and short.**
+  **Convention**, eight of eight. It is a mission file on a map. The format already holds a
+  deployment, a briefing, what the squad is told, an objective and a clock, so the first mission
+  asks nothing of Core. That matters, because a tutorial that needs a rule means the lesson is
+  wrong.
+- **Shaped, not scripted.** **Departure** from half the set, and it argues its case four ways:
+  - **A scripted hostile teaches the script, not the rules.** Contract 2 means the enemy on screen
+    is `Commander` reading the same surface the player reads. A guard held in place by a tutorial
+    would be a guard obeying some other rule, and whatever the player learned from him would be
+    false the next mission.
+  - **A script needs a hook to override the AI**, which is a rule added for a tutorial.
+  - **Scripting fails the moment one instruction is missing.** Invisible, Inc.'s players stalled in
+    the third room because the tutorial never told them the one step it needed, and there was no
+    other way through.
+  - **The rules here are generous enough to shape.** A heard move raises a rung at the move itself
+    (`AwarenessTracker.Hear`), a sentry at Searching goes to look at his marker rather than at the
+    man whenever the walk scores (`Commander`'s remarks), and a turn's end takes a look. Put the ground and the posts in the right places and the three
+    lessons happen on their own, as Mutant Year Zero's too-strong enemies make sneaking happen.
+- **Before turn one, the player needs the briefing and nothing else.** **Convention**: every game
+  in the set that has missions briefs them before the first move (*remembered*; none of the files
+  documents a briefing screen, and none was asked to). The six parts go on a screen over the
+  opening frame, and dismissing it starts the mission. `M` brings it back, and the legend says so.
+  The briefing's *presence* part is what put the told marks on the map, so the screen draws those
+  marks as the words about them are read. That teaches lesson 2's first case before anything has
+  moved, and it answers entry 094's item 5 from the other end: a mark that arrives with the
+  sentence *we think* is not read as sight.
+  **The reserve was the brief's candidate for before turn one, and it is not one.** The reason is
+  Into the Breach's playtesters: an explanation read before the thing it explains does not stick. A
+  reserve means nothing to a player who has not yet ended a turn. It belongs **at the end of turn
+  one**, at the control that ends it, and that is where lesson 1 goes.
+- **Lesson 1 is taught on the End turn slot, where the cursor is when it happens.** **Convention**
+  in its placement, from the set's distance rule: a figure belongs where the cursor already is. The
+  slot says both things the turn's end does, every turn: that the soldier will look, and what they
+  will bank — *look · bank 17*, or *look · bank nothing*. During the other side's go, a soldier of
+  ours holding no reserve carries a *head down* mark on the body, so the missing look and the
+  missing answer are shown while they are missing. Both are persistent and neither is a message, by
+  the requirement Phoenix Point's popup set. Both are our own soldier's facts, exact by contract 3.
+  Neither needs a query: `SandboxFrame.Ladder` already asks `Banked`, and `Unit.CanReact` is the
+  head-down test.
+- **Lesson 2 is taught by the mark's own drawing and by the one gesture there is.** Brief two draws
+  told, lost and his-belief-about-us as three unmistakable marks. What teaching adds is a **name**:
+  held `Ctrl` already shows every figure's terms (entry 093), and under it every mark also says
+  what it is — *told*, *last seen*, *his belief*. That is not a tooltip layer. It is the gesture
+  brief one already chose, applied to marks as well as figures, so the question of a gesture is not
+  settled twice.
+- **Lesson 3 is taught in the first minute by a move that is heard.** Before the move, the cursor
+  names the sentry who would hear it. After it, his rung moves on his body. Nothing is spent but a
+  move, nobody is shot, and the mission survives. Over the next quiet rounds the rung comes down
+  again, and the first mission has to be measured so that it does.
+- **No confirmations, and no new refusals.** **Convention**, unanimous (*What ten games said*,
+  heading 9). The one modal in the set, Mutant Year Zero asking before a character leaves hiding,
+  guards exactly this game's commonest mistake, and it is still one game in ten. Here the thing it
+  would guard is already written on the action before the click: who would hear the move, and who
+  the shot would give you away to. The End turn slot is the one place a costly silence was left,
+  and the previous item fills it.
+- **Considered and deferred: a prompt that speaks during the mission.** Shadow Tactics' short
+  introduction where a mechanic is first wanted, or Invisible, Inc.'s instruction each turn, would
+  need a mission-file line that fires at a named moment. That is a format change for Content and a
+  drawing for View, with no rule in it. It is not recommended yet, because the three lessons above
+  are all taught by things that persist. If a play-through of the first mission shows a lesson not
+  landing, that is the next step. A rule never is.
+- **Considered and rejected: teaching on a reduced interface.** Invisible, Inc. locks rotation for
+  its tutorial. This game's camera is convention (*The camera*) and teaches nothing that would need
+  hiding.
+
+**One thing a first mission must never do, and it is a rule for the file rather than for the
+interface.** **The mission's stop has to sit above every rung it teaches.** The waystation ends the
+task at anything above Suspicious, so on that ground a Searching sentry walking to the noise is the
+end of the mission rather than a lesson. A lesson that ends the mission is teaching by losing, which
+is Tier C's answer and the one that drew the complaint.
+
+**What a stranger should be able to say after one turn of the first mission.** This is the brief's
+test, made concrete. *The man by the wall is really there, and he does not know about us. The mark
+at the gate is where we were told somebody is, and it could be wrong. If I end here, this soldier looks
+round and keeps seventeen to answer with. If I walk that way, he hears me.* A reading that gets
+any of those four wrong is a failure of the first mission or of the drawing, and the four checks in
+brief nine are how to find out which.
+
+**Nothing here needs a query Core does not have.** `Banked`, `CanReact`, `WouldHear`,
+`Contact.Briefed`, `ReadoutFor` and the mission file answer all of it.
+
 ## The camera
 
 **Standard.** Split, and the split is historical rather than considered. XCOM 2 turns the camera
@@ -575,6 +760,11 @@ read from the source:
    soldier gets at a mover crossing ground that is not behind it (`ReactionWindow.OfferFor`). **A
    soldier who is walking takes no look.** Ground that a soldier has just walked into view of has
    not been looked across yet.
+   *Corrected by the onboarding pass:* that crossing look goes only to a soldier **holding a
+   reserve**. `ReactionWindow.BuildOffers` skips a reactor whose `Reserve` is nought before it
+   asks anything else, and its remarks say why: the reserve stands in for alertness, so a soldier
+   who spent the lot is head down and does not get the look. *Teaching it* turns that into its
+   first lesson.
 3. **Whether a place can be seen depends on the height of what stands there.** A place can be in a
    line to a standing man and not to a crouched one behind a 1.0 m wall, and the body of a man on a
    roof can show while the roof under him does not.
