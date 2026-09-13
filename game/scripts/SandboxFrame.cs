@@ -29,6 +29,90 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Act> Acts, int Banked)
     public IEnumerable<Order> Orders => Acts.Select(act => act.Order);
 }
 
+/// <summary>
+/// One rung of a soldier's reserve: the fewest points it may end a turn holding and still bank
+/// enough for something.
+/// </summary>
+/// <param name="Name">What the rung buys — <c>banks</c> for the floor, or a fire mode's name.</param>
+/// <param name="Leftover">The fewest points left unspent that reach it.</param>
+/// <param name="Banks">What ending the turn on exactly that many points carries into the reserve.</param>
+/// <param name="Price">What the rung costs to use out of the reserve — this soldier's price for the mode, or nothing for the floor.</param>
+public sealed record ReserveRung(string Name, int Leftover, int Banks, int Price);
+
+/// <summary>
+/// The rungs of one soldier's reserve, cheapest first: where stopping first banks anything, and
+/// where the bank first affords each of the weapon's fire modes.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Entry 067, and brief one's one new figure.</b> The reserve is a ladder in the rules —
+/// <see cref="Hexcom.Core.Reactions.ReactionModel.Banked"/> rounds a leftover below the floor to
+/// nothing, and a bank only buys a reaction shot once it covers the soldier's own price for the
+/// mode — and the panel used to print it as one number, which smoothed the two cliffs a player is
+/// deciding against. Every rung here is found by asking <c>Banked</c>, never by multiplying by the
+/// fraction: the panel did that inline for months, one rule with two implementations.
+/// </para>
+/// <para>
+/// The price is <c>Stats.Costs.Fire(mode.ApCost)</c>, because that is what
+/// <see cref="Tactician.AppraiseHolding"/> checks a bank against and what an overwatch option in a
+/// window is filtered by. So what the ground and the soldier say a leftover buys is what the AI
+/// believes it buys, which is contract 2.
+/// </para>
+/// </remarks>
+public sealed record ReserveLadder(Unit Unit, IReadOnlyList<ReserveRung> Rungs)
+{
+    /// <summary>The floor: the fewest points left that bank anything at all. Null if no turn reaches it.</summary>
+    public ReserveRung? Floor => Rungs.FirstOrDefault(rung => rung.Price == 0);
+
+    /// <summary>The cheapest shot the bank can buy, which is the first rung worth shooting with.</summary>
+    public ReserveRung? Cheapest => Rungs.Where(rung => rung.Price > 0).MinBy(rung => rung.Price);
+
+    /// <summary>
+    /// The first shot better than the cheapest — the rung from which the bank buys <i>the better
+    /// one</i>. Every dearer mode is a better shot too, and shares its colour.
+    /// </summary>
+    /// <remarks>
+    /// The brief's second cliff is <i>a shot and then the better one</i>, and a rifle has three modes.
+    /// Which of the better ones a move can keep depends on where the soldier is going, so the ground
+    /// draws the dearest it can keep and the bar names them all; what both agree on is that from this
+    /// rung up, the shot banked is better than a snap.
+    /// </remarks>
+    public ReserveRung? Better
+        => Cheapest is { } cheap
+            ? Rungs.Where(rung => rung.Price > cheap.Price).MinBy(rung => rung.Price)
+            : null;
+
+    /// <summary>What ending a turn on this many points would bank.</summary>
+    public int Banked(Battle battle, int leftover) => battle.Reactions.Banked(System.Math.Max(0, leftover));
+
+    /// <summary>The ladder for a soldier, out to the most points it could hold.</summary>
+    public static ReserveLadder Of(Battle battle, Unit unit)
+    {
+        var top = System.Math.Max(unit.Stats.ActionPoints, unit.ActionPoints);
+        var rules = battle.Reactions;
+
+        // The fewest leftover points whose bank reaches a figure. Banked only ever rises with the
+        // leftover, so the first one found is the cliff.
+        int? Reaching(int least)
+        {
+            for (var left = 0; left <= top; left++)
+                if (rules.Banked(left) is var banks && banks > 0 && banks >= least) return left;
+            return null;
+        }
+
+        var rungs = new List<ReserveRung>();
+        if (Reaching(1) is { } floor) rungs.Add(new ReserveRung("banks", floor, rules.Banked(floor), 0));
+
+        foreach (var mode in unit.Weapon.Modes.OrderBy(mode => mode.ApCost))
+        {
+            var price = unit.Stats.Costs.Fire(mode.ApCost);
+            if (Reaching(price) is { } left) rungs.Add(new ReserveRung(mode.Name, left, rules.Banked(left), price));
+        }
+
+        return new ReserveLadder(unit, rungs);
+    }
+}
+
 /// <summary>Everything the sandbox has worked out about the current moment, ready to be drawn.</summary>
 /// <param name="Battle">The battle itself. Queried, never changed, by anything that takes a frame.</param>
 /// <param name="Layer">Which storey is being looked at. Storeys above it are ghosted.</param>
@@ -92,6 +176,14 @@ public sealed record TakenTurn(Unit Unit, IReadOnlyList<Act> Acts, int Banked)
 /// Hostiles our side has laid eyes on since the last order of ours, so the strip can say a slot is
 /// a discovery rather than bookkeeping.
 /// </param>
+/// <param name="Details">
+/// Whether the held key for <i>everything at once</i> is down, so every figure on the map shows its
+/// terms together rather than only its headline. See <see cref="BattleHud"/>.
+/// </param>
+/// <param name="TermsFolded">
+/// Whether the player has folded the shot's terms away. Remembered across targets and soldiers,
+/// the way the photographed game remembers its fold. Brief one's <i>Settling One</i>.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
@@ -130,8 +222,22 @@ public sealed record SandboxFrame(
     Unit? AimedAt,
     double? TheirGo,
     IReadOnlyList<string> Perceived,
-    IReadOnlySet<UnitId> Found)
+    IReadOnlySet<UnitId> Found,
+    bool Details,
+    bool TermsFolded)
 {
+    /// <summary>
+    /// The active soldier's reserve ladder, or null when nobody is up or the picture must not
+    /// describe whoever is. See <see cref="ReserveLadder"/>.
+    /// </summary>
+    /// <remarks>
+    /// Read by both halves: the view cuts the move range into bands at these rungs and the HUD marks
+    /// them on the soldier's points. One ladder for both is the same argument as
+    /// <see cref="StagedShot"/> — two halves working it out separately is two chances to disagree.
+    /// </remarks>
+    public ReserveLadder? Ladder
+        => !Withheld && Battle.Active is { } active ? ReserveLadder.Of(Battle, active) : null;
+
     /// <summary>
     /// Whether a hostile is up and the picture must not describe it: the AI is playing it and the
     /// instruments window is shut.

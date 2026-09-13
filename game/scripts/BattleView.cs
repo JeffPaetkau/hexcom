@@ -180,6 +180,7 @@ public sealed class BattleView
         BuildAttention(frame, overlay);
         BuildHeldArcs(frame, overlay);
         BuildCoverOutlines(frame, overlay);
+        BuildReachBands(frame, overlay);
         BuildCommitted(frame, overlay);
         BuildBeliefs(frame, overlay);
         BuildGhosts(frame, overlay);
@@ -295,11 +296,14 @@ public sealed class BattleView
     /// that is wrong about every map written after it, and silently. Impassable ground reads as
     /// impassable, ground that costs extra reads as rough, and everything else is floor. Three
     /// figures, all of them declarable, none of them a name.
+    /// <para>
+    /// Reach used to be a fill here and is an edge now — see <see cref="BuildReachBands"/>. A fill
+    /// is a graded field's way of drawing and cannot carry a cliff, and every photographed game in
+    /// the reference set draws its move range as an outline.
+    /// </para>
     /// </remarks>
     private static Color FillFor(SandboxFrame frame, Tile tile, HexRegion region, NodeId id)
     {
-        if (frame.Battle.Active is { } active && frame.Reach.CanReach(id) && frame.Battle.CanStopAt(active, id))
-            return SandboxPalette.ReachFill;
         if (!tile.Ground.Passable) return SandboxPalette.ImpassableFill;
         if (!region.Occupiable) return SandboxPalette.TransitFill;   // crossable, but nowhere to stand
         if (tile.Ground.ExtraApCost > 0) return SandboxPalette.RoughFill;
@@ -560,6 +564,112 @@ public sealed class BattleView
                 if (battle.AngleOffDegrees(unit.Position, order.Centre, node) > half) continue;
 
                 Tint(overlay, battle.Map, node, new Color(tint, distance <= unit.Weapon.OptimalRange ? 0.26f : 0.13f));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Where the active soldier can get to, cut into bands at the reserve's own rungs and drawn as
+    /// edges along the tiles: how far it may go and still bank the dearest shot, the cheapest shot,
+    /// anything at all, and how far it may go.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Brief one's reserve cliffs, on the ground, where the decision is being taken.</b> The
+    /// amendment's finding: four of the six grid games in the reference set band the move range, and
+    /// three of them put the band exactly at <i>can I still act when I arrive</i>. The soldier's own
+    /// points say what it holds now; these say what it will hold <i>there</i>. The rungs are
+    /// <see cref="SandboxFrame.Ladder"/>'s, so a band edge falls where
+    /// <c>ReactionModel.Banked</c> steps and nowhere the fraction merely suggests.
+    /// </para>
+    /// <para>
+    /// <b>Edges, not fills.</b> <i>Settling One</i>: Future War Tactics draws nested outlines stepped
+    /// along its tile edges and no tint, and Invisible, Inc.'s reach is an outline too. An edge laid
+    /// over the attention tint does not fight it, where a second fill would have.
+    /// </para>
+    /// <para>
+    /// <b>Three rungs on the ground and every rung on the soldier.</b> A rifle has three fire modes,
+    /// and five nested lines — reach, floor and a band per mode — stop reading as bands. The brief
+    /// names the floor and <i>a shot and then the better one</i>, so the ground carries the cheapest
+    /// mode and the dearest one a move can keep, and the points bar on the soldier carries every rung.
+    /// A band that would enclose
+    /// the same tiles as the one outside it is not drawn, and neither is one that encloses only the
+    /// tile the soldier is standing on: both would be a line saying nothing a line beside it does not.
+    /// </para>
+    /// <para>
+    /// A hostile up and withheld from the picture still has its reach edged, as it had its reach
+    /// filled — whether the map should describe a hostile at all is brief two's and entry 090's — but
+    /// not its bands, since its ladder is its reserve and <see cref="SandboxFrame.Withheld"/> keeps that.
+    /// </para>
+    /// </remarks>
+    private static void BuildReachBands(SandboxFrame frame, MeshBuilder overlay)
+    {
+        if (frame.Battle.Active is not { } active) return;
+
+        var map = frame.Battle.Map;
+
+        // The cheapest a stoppable place on each tile is reached for. A tile split by a barricade
+        // is in a band if any side of it is, which is what an edge along the tile can say.
+        var costs = new Dictionary<TileAddress, int> { [active.Position.Tile] = 0 };
+        foreach (var (node, reached) in frame.Reach.Reached)
+        {
+            if (node.Tile.Layer > frame.Layer || !frame.Battle.CanStopAt(active, node)) continue;
+            if (!costs.TryGetValue(node.Tile, out var best) || reached.Cost < best) costs[node.Tile] = reached.Cost;
+        }
+
+        HashSet<TileAddress> Within(int spend) => costs.Where(pair => pair.Value <= spend).Select(pair => pair.Key).ToHashSet();
+
+        var bands = new List<(HashSet<TileAddress> Inside, Color Hue, float Width, double Inset)>
+        {
+            (Within(int.MaxValue), SandboxPalette.ReachEdge, 0.08f, 0.03),
+        };
+
+        if (frame.Ladder is { } ladder)
+        {
+            if (ladder.Floor is { } floor)
+                bands.Add((Within(active.ActionPoints - floor.Leftover), SandboxPalette.BandHue(SandboxPalette.Band.Floor), 0.09f, 0.10));
+            if (ladder.Cheapest is { } cheap)
+                bands.Add((Within(active.ActionPoints - cheap.Leftover), SandboxPalette.BandHue(SandboxPalette.Band.Cheapest), 0.11f, 0.17));
+
+            // The better shot is the dearest one a move can still keep. A fresh rifleman keeps an
+            // aimed shot only by not moving at all, and a band round the tile it stands on says
+            // nothing; the rung below it is the one a player is actually choosing a move against.
+            var better = ladder.Rungs
+                .Where(rung => ladder.Better is { } first && rung.Price >= first.Price)
+                .OrderByDescending(rung => rung.Price)
+                .Select(rung => Within(active.ActionPoints - rung.Leftover))
+                .FirstOrDefault(inside => inside.Count > 1);
+            if (better is not null)
+                bands.Add((better, SandboxPalette.BandHue(SandboxPalette.Band.Better), 0.13f, 0.24));
+        }
+
+        HashSet<TileAddress>? outside = null;
+        foreach (var (inside, hue, width, inset) in bands)
+        {
+            if (inside.Count <= 1) break;                          // nothing left but where it stands
+            if (outside is not null && inside.SetEquals(outside)) continue;
+            outside = inside;
+
+            foreach (var address in inside)
+            {
+                if (map.GetTile(address) is not { } tile) continue;
+                var centre = SandboxScale.World.Center(address.Hex);
+                var height = tile.FloorHeight + Lift * 2;
+
+                foreach (var side in HexDirectionExtensions.All)
+                {
+                    if (inside.Contains(new TileAddress(address.Hex.Neighbor(side), address.Layer))) continue;
+
+                    var (a, b) = side.Corners();
+                    var from = SandboxScale.World.Corner(address.Hex, a);
+                    var to = SandboxScale.World.Corner(address.Hex, b);
+                    overlay.Ribbon(
+                        [
+                            SandboxScale.ToScene(from + (centre - from) * inset, height),
+                            SandboxScale.ToScene(to + (centre - to) * inset, height),
+                        ],
+                        width, hue);
+                }
             }
         }
     }
@@ -969,15 +1079,8 @@ public sealed class BattleView
             // different places: the rules have the mover at the far end already and the picture
             // has not caught up. A name hanging over the destination while the soldier is still
             // half way there is the map disagreeing with itself, which is the one thing the
-            // frame exists to prevent — so the walk is read here as well as in BuildBodies.
-            var walking = Walk is not null && Walk.Mover == unit.Id;
-
-            var crown = (walking
-                            ? SandboxScale.ToScene(Walk!.At, Walk.Floor)
-                            : SandboxGeometry.NodeScene(battle.Map, unit.Position))
-                        + Vector3.Up * (float)(StanceProfile.For(walking ? Stance.Standing : unit.Stance).BodyHeight + 0.35);
-
-            if (_camera.Project(crown) is not { } at) continue;
+            // frame exists to prevent — so Crown reads the walk as well as BuildBodies does.
+            if (Crown(frame, unit) is not { } at) continue;
 
             var storey = unit.Position.Layer == frame.Layer ? ""
                 : unit.Position.Layer > frame.Layer ? " (above)" : " (below)";
@@ -1030,10 +1133,23 @@ public sealed class BattleView
                 Text(canvas, over + new Vector2(0, -24), "!", 20, SandboxPalette.OverwatchHue, 40f);
     }
 
-    /// <summary>Where a standing unit's labels hang from on screen, if it is in front of the camera.</summary>
-    private Vector2? Crown(SandboxFrame frame, Unit unit)
-        => _camera.Project(SandboxGeometry.NodeScene(frame.Battle.Map, unit.Position)
-                           + Vector3.Up * (float)(StanceProfile.For(unit.Stance).BodyHeight + 0.35));
+    /// <summary>Where a unit's labels hang from on screen, if it is in front of the camera.</summary>
+    /// <remarks>
+    /// Over the body rather than over the position, which during a walk are different places — see
+    /// <see cref="DrawUnitLabels"/>. Public because the HUD hangs its readouts from the same point:
+    /// brief one put the figures on the things they describe, and a figure hung from the position
+    /// while the name hangs from the body would be the map disagreeing with itself again. The HUD is
+    /// handed this as a function and learns nothing else about the walk.
+    /// </remarks>
+    public Vector2? Crown(SandboxFrame frame, Unit unit)
+    {
+        var walking = Walk is not null && Walk.Mover == unit.Id;
+        var foot = walking
+            ? SandboxScale.ToScene(Walk!.At, Walk.Floor)
+            : SandboxGeometry.NodeScene(frame.Battle.Map, unit.Position);
+
+        return _camera.Project(foot + Vector3.Up * (float)(StanceProfile.For(walking ? Stance.Standing : unit.Stance).BodyHeight + 0.35));
+    }
 
     /// <summary>The most alarmed any of ours has made this enemy.</summary>
     private static AwarenessReadout WorstReadout(SandboxFrame frame, Unit hostile)

@@ -294,6 +294,25 @@ public sealed class SandboxCamera
         => (radians % System.Math.Tau + System.Math.Tau) % System.Math.Tau;
 
     /// <summary>
+    /// How far <see cref="Fit"/> looks past the middle of the map, as a share of its radius, so the
+    /// near rim clears the legend.
+    /// </summary>
+    /// <remarks>
+    /// Brief one's test for a capture at <c>--fit</c> is that no text lies over the map unless it is
+    /// attached to something on it, and the legend along the bottom edge is attached to nothing. A
+    /// pitched camera puts the near rim of a centred map lower on screen than the far rim is high,
+    /// and on the waystation at 1600 by 900 the near rim ran under the legend. Pulling back alone did
+    /// not clear it — a quarter further out and the rim was still under — because most of the fault
+    /// is where the map sits rather than how big it is. So the view looks this far past the middle,
+    /// which lifts the whole map, and stands a little further back than it did (<see cref="FitDistance"/>).
+    /// Measured on the waystation and the compound, where the near rim now stops at the legend's edge.
+    /// </remarks>
+    private const float FitLead = 0.16f;
+
+    /// <summary>How much of the over-estimated distance <see cref="Fit"/> keeps. It was 0.8; see <see cref="FitLead"/>.</summary>
+    private const float FitDistance = 0.9f;
+
+    /// <summary>
     /// Pull back until the whole map is on screen at once.
     /// </summary>
     /// <remarks>
@@ -323,9 +342,9 @@ public sealed class SandboxCamera
         var vertical = radius / Mathf.Sin(half);
         var horizontal = radius / Mathf.Sin(Mathf.Atan(Mathf.Tan(half) * aspect));
 
-        Focus = middle;
+        Focus = middle - new CoreVec2(System.Math.Cos(YawRadians), System.Math.Sin(YawRadians)) * (radius * FitLead);
         FocusHeight = 0;
-        ZoomTo(Mathf.Max(vertical, horizontal) * 0.8f);
+        ZoomTo(Mathf.Max(vertical, horizontal) * FitDistance);
     }
 
     /// <summary>Where a scene point lands on the screen, or null if it is behind the camera.</summary>

@@ -88,7 +88,7 @@ public sealed class SandboxScript
     private static readonly HashSet<string> Bare =
     [
         "--fit", "--arm", "--extract", "--resolve", "--ai-turn", "--brief",
-        "--next-target", "--confirm", "--back-out",
+        "--next-target", "--confirm", "--back-out", "--details", "--fold",
     ];
 
     private SandboxScript(IReadOnlyList<SandboxStep> steps) => Steps = steps;

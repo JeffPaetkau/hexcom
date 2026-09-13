@@ -99,7 +99,8 @@ creation instead.
 `--pace` is a step, run in the order it
 was typed: `--move`, `--fire`, `--aim`, `--next-target`, `--confirm`, `--back-out`, `--stance`,
 `--face`, `--overwatch`, `--arm`, `--spring`, `--shout`, `--extract`, `--pass`, `--until NAME`,
-`--ai-turn`, `--hostiles`, `--place` and `--resolve`, plus the camera. Each step calls the same
+`--ai-turn`, `--hostiles`, `--place`, `--resolve`, `--details` (`Ctrl` held for the rest of the
+run) and `--fold`, plus the camera. Each step calls the same
 method its key calls, so a picture can only ever show a state somebody at the keyboard could
 have reached, and each one prints what it did — a misspelt name would otherwise make a perfectly
 good picture of the wrong moment.
@@ -154,6 +155,8 @@ asks for it: it is the one camera gesture that happens while your hand is doing 
 | tab | aim at the next hostile in sight — including one on a storey the cursor cannot reach |
 | space | fire, while aiming; end the turn, while not |
 | right-click, `Esc` | back out: stop aiming, or put the briefing away |
+| `P` | fold the shot's terms away, or open them again — it stays as you leave it |
+| hold `Ctrl` | every figure's terms on the map at once, for as long as it is held |
 | `C` | cycle stance: standing, crouching, prone |
 | `Z` / `X` | turn on the spot |
 | `V` | cycle the overwatch arc: none, narrow, standard, wide |
@@ -180,7 +183,7 @@ turn the AI has taken since you last acted with the reasoning behind each. All o
 test the main view is built to — *would a player who never presses `O` want it* — and the window
 being shut is what a shipped interface would look like.
 
-Green tiles are in reach and show their cost. Dull red tiles can be crossed but not stood in,
+Tiles in reach show their cost, inside the edges described above. Dull red tiles can be crossed but not stood in,
 dark blue ones cannot be entered at all, and the blue-outlined ones are where your side may walk
 off the field. Darkened tiles are dead ground the active unit has no eyes on, and outlined
 tiles have cover from where it is standing — blue light, yellow half, orange full. The tint in a
@@ -197,27 +200,33 @@ holds no slot, so the strip cannot be used to count them; when it is their go a 
 once for the whole run of their turns, and anything your soldiers perceived of it — a shot at one
 of them, somebody found or lost — is listed above the keys afterwards.
 
-Point at an enemy and the HUD gives you the shot twice over: once as a physical event — the
-chance, the price, which plates it can reach and what each still carries — and once as a
-decision, which is the vitality, plate and shield it is actually expected to take off, the chance
-it puts them down, and what the scorer therefore makes of it. The two are further apart than they
-look. A beam landing squarely on a full shield reads beautifully on the first line and achieves
-nothing on the second, and the second is the one the AI ranks by.
+**The readouts are on the things they describe.** The panel at the top left says only what has
+nowhere on the map to go — the mission, the round, whose weapon and the storey. Everything else
+hangs from something, and each thing carries one figure with its terms a gesture away.
 
-The HUD also says who your soldier is taking seriously — every enemy it has eyes on and is past
-the bar of ignoring — with the worst single shot each could put into it from where they stand,
-and, the other way round, which enemies have a line to it and how much of it each can make out.
-The first list is the one the AI weighs every posture against, and it includes what your
-soldier merely *remembers* — a contact at a marker, quoted where it is believed to be and with
-the credence it is discounted by — and, for each, how much your soldier has worked out about
-them, exactly, because your side's knowledge is yours in both directions; the second decomposes
-the exposure figure into who it is exposure *to*. The posture line prices the three posture keys and scores each the way the AI
-would, term by term: what it spares you, what it opens, what it costs. The cursor line places
-any hex in the active weapon's range bands, whose figures sit beside the weapon on the status
-line, so you can see the long stretch where a rifle still fires and fires worse before a shot is
-refused — and says how loud the walk there would be and who would hear it. Under a shot, a line
-says who taking it would give you away to, and the map marks the target and each of those you can
-see; a hostile nobody of yours has found is *somebody unseen* on both lines, never a name.
+Over the soldier whose go it is, a bar of its points cut where the reserve steps, and a line saying
+each step as a move: *aimed ≤0 · standard ≤14 · snap ≤28 · banks ≤35* is a fresh rifleman who may
+spend fourteen and still bank a standard shot, and past thirty-five holds nothing at all. The same
+steps are drawn on the ground as violet edges round the move range, in the same colours, with a
+pale edge at the limit of reach — so the ground says what the soldier will hold *there*. Under the
+bar, its own exposure exactly and the highest rung the other side has reached on it.
+
+Point at an enemy and its hit chance is over its head, with what the shot costs and what it is
+worth. Aim — `1`, tab, or a click — and the shot's terms open at the right edge and stay open while
+you aim: the chance and the price, which plates it can reach and what each still carries, who
+taking it would give you away to, and what it is expected to take off and what the scorer makes of
+it, term by term. A beam landing squarely on a full shield reads well on the plates and achieves
+nothing on the last line, and the last line is the one the AI ranks by. `P` folds the terms away,
+and they stay folded until you open them again.
+
+Point at the ground and beside the tile is what getting there costs, what stopping there would
+bank, and who would hear the walk. **Hold `Ctrl` for every figure's terms at once**: at each enemy
+your soldier is taking seriously, how far, how much it has worked out about them, the worst shot
+they could put into it, and whether they can see it — a contact merely *remembered* is quoted at
+the ghost where it is believed to be; at the soldier, the bar they act from, the arc it holds, who a
+shout would reach, who has a line to it, and what each posture key would buy, scored the way the AI
+would; and at the cursor, cover, exposure, distance and range band, attention and noise. A hostile
+nobody of yours has found is *somebody unseen* everywhere, never a name.
 
 **A move opens a window, and you can answer it yourself.** Press `K` and a move is paid for and
 held rather than resolved: the soldier stands at the start of a walk it has not taken, the route
@@ -237,9 +246,9 @@ eighty-five metres across and the reason the view can be pulled back — a soldi
 half the width of this map, and on a compound you can cross in a turn and a half it reached off
 the edge in every direction and told you nothing.
 
-Under each enemy is how alarmed they are — coarse on purpose, though the HUD names the rung at
-which they will act on it, because a rung nobody can place means nothing. Your own soldier's
-exposure is reported exactly, in the HUD, because that is information about yourself; so is how
+Under each enemy is how alarmed they are — coarse on purpose, though holding `Ctrl` names the
+rung at which they will act on it, because a rung nobody can place means nothing. Your own
+soldier's exposure is reported exactly, because that is information about yourself; so is how
 much of their attention the place under the cursor has, which is the figure the field draws in
 colour. Faint red circles are where an enemy *believes* one of yours to be; they stop moving when
 you do. An outlined wedge is an arc being held — yellow for an overwatch, pink for an armed

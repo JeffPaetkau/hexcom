@@ -35,37 +35,15 @@ reaching into `src/`.
 
 ---
 
-## The job — brief one, the readouts go on the things they describe
+## The job — Master's to set
 
-Branch `view/readouts-in-place`. Take a worktree.
-
-**Read three blocks in `../interface/briefs.md`, in order, and nothing else from that file:** *One —
-the readouts go on the things they describe*, *Amending One*, and *Settling One*. The last one wins
-where they disagree, because it is the only one written from pictures (entry 089).
-
-**What the pictures changed, so the session does not build the amendment's version.** The amendment
-recommended a held key for *show me the terms*. Both games photographed while aiming do something
-else: the shot's terms **open by default while aiming, docked in the HUD, with one figure at the
-target and a fold the game remembers** across targets. Firing is already a mode (entry 084), so the
-docked terms have something to hang on. The held key keeps the job the set actually uses it for,
-*everything at once*, and `Ctrl` and `Alt` are still unbound for it. And the move range is drawn
-as an **outline, not a fill**, in every game photographed — which is what lets the reserve's cliff
-sit on the ground without fighting the attention tint.
-
-**This is the largest View job in the queue and the one the whole reference exercise was for.**
-Every figure in the interface is a line of text in a panel at the top left; the brief moves them onto
-the things they describe. Settle the order of work before writing much, because it will not fit in
-one sitting if it is done panel line by panel line. *Settling One* and the brief's own *how to know it
-worked* are the test.
-
-**One rider from brief five, and it is one number.** `HexSandbox.TheirGoDwell` shipped at 0.9 s,
-provisional against capture C7. Invisible, Inc.'s corporate-turn banner measured frame by frame at
-**at least 1.43 s** (entry 089, item 6). Move the default to 1.4 and say in the commit it is
-measured. Nothing else in brief five changes.
-
-**Out of scope.** Brief two's enemy file, including the map drawing whoever is up whichever side,
-which is entry 090's finding and brief two's ground. The shot bill's relay clause, which waits on
-Core. Any rule.
+**Brief one has landed and nothing in this file names the next brief.** The order of the rest of
+`../interface/briefs.md` is Master's, and a session pointed here should ask rather than pick. Brief
+two's *alarm rung on the body* waited on brief one and no longer does (entry 093). Small things owed
+and not briefs: the bill's last clause becomes names when Core lands entry 086's relay; **the map
+still draws whoever is up, whichever side**, which is brief two's ground and entry 090's finding; and
+entry 092's *For View* — `HexSandbox.OutOfTime` can go now both mission files write their clock onto
+the objective.
 
 **Owed to later briefs, routed from entry 089 so it is not lost.**
 
@@ -80,11 +58,18 @@ Core. Any rule.
   rather than drawing a wedge. Worth reading against what six built the next time anybody touches
   the moment a reaction fires; not a job on its own.
 
-**What the next View brief inherits from three, six, four and five, so it is not re-argued.**
+**What the next View brief inherits from three, six, four, five and one, so it is not re-argued.**
 
 - **Keys.** Outside a window `1` aims, `Tab` cycles targets and space confirms a shot or ends the
   turn; inside one `1`–`9` change an answer, `Tab` picks whose, and space runs it. Right-click and
-  `Esc` back out and never spend a point. `Ctrl` and `Alt` are unbound, reserved for brief one.
+  `Esc` back out and never spend a point. **Held `Ctrl` is every figure's terms at once and `P`
+  folds the shot's docked terms**; `Alt` is still unbound.
+- **A figure hangs from the thing it describes.** One headline at the thing; its terms docked while
+  aiming, or under held `Ctrl`, and no third way — no hover card per figure. Offsets are pixels from
+  `BattleView.Crown`, which reads the walk; a tag whose thing is off screen is not drawn. The panel
+  keeps the mission, the clock, the weapon and the storey, and nothing else goes back into it.
+- **The reserve is a ladder.** `SandboxFrame.Ladder` asks `Banked`; the ground and the bar use its
+  steps and its colours, and nothing multiplies by the fraction.
 - **Whose knowledge is on screen.** A window offers our own side's reactors; the other side's are
   behind the instruments window, the same switch as the AI's orders. A hostile nobody of ours has
   eyes on is *somebody unseen* in any list of names, said once however many there are —
@@ -115,6 +100,60 @@ layer.
 
 ---
 
+## What landed on `view/readouts-in-place`
+
+Brief one, to *Settling One*. `../decisions.md` entry 093 is the reasoning, the tests and the two
+findings; this is the shape.
+
+**Two ways to the terms, and only two.** Each thing on the map carries one figure. The shot's terms
+open for as long as the player is aiming, docked at the right edge above the legend — `DrawTerms` —
+with a fold that is a preference, not a gesture per shot: `P` or a click on the switch, kept for the
+run in `_termsFolded`. Folded, the `AIMING` lines and the headline stay, because the `AIMING` line is
+what tells a player space fires. Holding `Ctrl` sets `SandboxFrame.Details` and every thing shows its
+terms together. Both are `--details` and `--fold` to a capture.
+
+**What hangs where** — `BattleHud.DrawInPlace`, nothing of it while `Withheld`:
+
+| | headline | terms, under `Ctrl` |
+|---|---|---|
+| the soldier up — `DrawSoldier` | above the name: the points bar cut at the reserve's steps, each step as a spend, exposure and the highest rung on it | the bar they act from, the arc held, who a shout reaches, who has a line on it, the posture keys scored |
+| a contact — `DrawContacts` | its name and rung, as the view draws them | under the rung, or under the ghost at a marker: distance, *you hold*, worst shot on us, *sees you* |
+| the staged shot — `DrawShotHeadline` | over the target's name: `HIT`, and cost and worth under it; or *no shot* and why | docked while aiming |
+| the cursor's tile — `DrawCursorTag` | beside the tile: cost, what stopping there banks in the band's colour, who hears the walk | cover, exposure, distance and band, attention, loudness |
+
+The cursor's tag is drawn last so it is on top; it is not drawn while aiming, since a click on the
+ground then backs out and moves nobody, nor over a soldier the picture shows.
+
+**The HUD is handed a camera and a function.** `BattleHud(font, camera, crown)`: the camera to
+project tiles, and `BattleView.Crown` — public now, and walk-aware — so a readout hangs from the body
+the name hangs from. The HUD learns nothing else about the walk. That makes **three** things that read
+the walk, and the gotcha below says so.
+
+**The ladder** is `ReserveLadder` in `SandboxFrame.cs`: a rung per step, found by asking `Banked` for
+the fewest leftover points that reach it, priced at `Costs.Fire` — what `AppraiseHolding` checks. Its
+`Floor`, `Cheapest` and `Better` are the three the ground draws; `Better` is the first mode dearer than
+the cheapest, and one colour covers it and everything above. **`BuildReachBands`** replaces the reach
+fill: a pale edge at reach, and violet edges at the floor, the cheapest shot and the dearest shot a
+move can keep, each inset a little further so nested edges do not sit on each other, and a band that
+encloses what the band outside it does, or only the soldier's own tile, is skipped.
+`SandboxPalette.BandHue` and `ReachEdge` are the colours; `ReachFill` is gone.
+
+**Two things changed that were not the brief's and were in its way.** `SandboxCamera.Fit` looks past
+the map's middle and stands further back, because at `--fit` the near rim was under the legend and the
+brief's test is that nothing unattached lies over the map. And the worth line's terms: it printed
+*harm less spent*, and the score has had two more terms since Core priced a shot's give-away — `Terms`
+now, as everywhere else.
+
+**`TheirGoDwell` is 1.4 seconds, and measured** — capture C7, entry 089.
+
+**What was measured, from captures.** The target's headline at default zoom on the compound (`--until
+Orsini --aim Spotter`) and the waystation (`--ai --pass 16 --until Bekker --aim Teague`); `--details` on
+both, and on `--until Bekker --hover -16,-3 --zoom 26`; `--fit` on the waystation and the compound; a
+refused shot's headline and dock (`--aim Cobb` from Orsini). The pinned scene, twice, one hash.
+**Not measured**: a hand on `Ctrl`, the fold switch clicked, the focus-out release, the dwell.
+
+---
+
 ## What landed on `view/order-strip`
 
 Brief five. `../decisions.md` entry 090 is the reasoning, the measurement and the finding; this is the
@@ -139,8 +178,8 @@ nothing is holding it (a hostile window of ours to answer, a hostile being walke
 restarts the dwell. `_theirGo` counts seconds only while `Animated`, so a capture has no dwell and
 never shows the banner.
 
-**`TheirGoDwell` is 0.9 seconds and provisional** against captures C7 and C17. A floor, not a
-length.
+**`TheirGoDwell` shipped at 0.9 seconds and provisional** against captures C7 and C17. A floor, not a
+length. **It is 1.4 and measured since brief one** — C7, entry 089.
 
 **The account — `BattleHud.Perceived`.** When control leaves our side `Settle` takes a snapshot of our
 side's merged knowledge; `Perceive`, after every `AfterAction`, compares it with now and freezes the
@@ -735,6 +774,14 @@ the view and the AI read one query surface, and the build order's rule is sharpe
 needs information the interface cannot show, the interface is wrong**. This is that check, run
 against `Tactician` — the scorer the AI ranks every action by.*
 
+**Since brief one the lines the tables name are places, not lines.** Nothing was dropped and every
+verdict stands; read the third column through this: the **shot line** and **worth line** are the
+target's `HIT` headline and the terms docked while aiming, the **bill line** is in that dock too; the
+**seen line** is each contact's tag under held `Ctrl`; the **alarm line** is under the soldier's
+points bar, with the bar they act from under `Ctrl`; the **reserve line** is the bar itself and the
+ground's band edges, with the arc and the shout under `Ctrl`; the **posture line** is under `Ctrl` at
+the soldier; and the **cursor line** is the tag beside the tile. Entry 093.
+
 The tables below are organised by the four terms of an `Appraisal`, because that is how the AI
 reasons and therefore what the interface has to be able to explain. Verdicts:
 
@@ -970,6 +1017,11 @@ Entry 053 records the count.
   measured against master everything above row 822 of the pinned scene is unchanged by a pixel.
   **`view/order-strip` breaks it in the strip only**: the round mark pushes Vance down a row, and
   the whole diff is x 1410–1580, y 142–182.
+  **`view/readouts-in-place` breaks it everywhere**: the reach is an edge rather than a fill, so
+  the ground changes under the whole move range, and the panel, the soldier's bar and the legend all
+  moved. Nothing captured before it diffs against anything after it; two runs of the pinned command
+  after it hash the same. **And `--fit` frames differently**: `SandboxCamera.Fit` looks past the map's
+  middle and stands further back.
   **`--aside` breaks none of this and that was measured, not assumed** — a capture on the left
   monitor and the same one where Windows put it are byte-identical. The one break is narrower than
   it looks: a capture taken with `--instruments` before the subwindow fix has the instruments panel
@@ -993,10 +1045,21 @@ Entry 053 records the count.
   sweep behind it, so `BattleView.RebuildBodies` exists. The rings had to move for it: a ring left
   in the overlay stays on the tile the soldier set off from while the soldier walks away. Anything
   else that belongs to a body rather than to a place belongs in that mesh for the same reason.
-- **Two things read the walk and both have to.** `BuildBodies` draws the body at it and
-  `DrawUnitLabels` puts the name over it. Only the first is obvious, and with only the first done
-  the name hangs over the destination while the soldier is half way there — the map disagreeing
-  with itself, which is exactly what a single frame is supposed to prevent.
+- **Three things read the walk and all three have to.** `BuildBodies` draws the body at it,
+  `DrawUnitLabels` puts the name over it, and the HUD hangs the soldier's readouts from the same
+  point. Only the first is obvious, and with only the first done the name hangs over the destination
+  while the soldier is half way there — the map disagreeing with itself, which is exactly what a
+  single frame is supposed to prevent. The last two go through `BattleView.Crown`, which is the one
+  place that reads it; anything else that hangs from a soldier asks it too.
+- **A readout on the map is placed in pixels from `Crown`, never in metres.** The name sits just
+  above that point and a hostile's rung just below it; the soldier's bar stacks upwards over the name,
+  a contact's terms downwards under the rung — further when the bill's mark is there — and the shot's
+  headline over the target's name. Placed in metres, a tag lands on the name at any distance a rifle
+  shot is taken from, which is what the bill's glyphs found first. A tag whose point is off the
+  screen is not drawn rather than pulled in to an edge, where it would be attached to nothing.
+- **Nothing multiplies by `ReserveFraction`.** The ladder asks `ReactionModel.Banked`, once per
+  leftover, because the floor makes the reserve a step and a product smooths it. The panel did the
+  multiplication inline for months (entry 067).
 - **A `Window` node is not an operating-system window until the project says so.** Godot 4 defaults
   `display/window/subwindows/embed_subwindows` to true, which draws a `Window` *inside* the parent
   viewport. The instruments window shipped like that and nobody noticed for a whole increment: it
@@ -1013,11 +1076,12 @@ Entry 053 records the count.
   ran off its right edge on the first attempt, which is the legend's failure of the key remap in a
   narrower box. Anything added to that window has to be checked against `InstrumentsSize`, and the
   fix when it does not fit is to split the line by purpose rather than to widen the window again.
-- **The readouts are drawn over the map, not beside it.** All three HUD blocks sit on a panel for
-  that reason, and anything added to them has to assume there is a tile-cost label underneath —
-  because there is. The top block is the active soldier's situation and the bottom block is what
-  happened while it was not your go; they are separate so that a busy enemy round does not push
-  the situation down onto the roof.
+- **The readouts are drawn over the map, not beside it.** Every HUD block and tag sits on a plate
+  for that reason, and anything added has to assume there is a tile-cost label underneath — because
+  there is. The top block is only what has no place on the map — the mission, the clock, the weapon,
+  the storey — and **nothing goes back into it**: a figure about a thing hangs from the thing (brief
+  one, entry 093). The bottom-left block is what happened while it was not your go, and the
+  right-edge dock is the shot's terms while aiming.
 - **The bottom block is *since you last acted*, not a log.** It is replaced whenever the enemy
   gets a go after something you did, so if two of yours are adjacent in the initiative order, the
   second one's pass leaves the block untouched — nothing hostile happened in between. Read it as
@@ -1062,7 +1126,8 @@ Entry 053 records the count.
   fires while an aim is up and ends the turn while one is not. That is the window's convention —
   space commits whatever is open — and it is fair only because the mode cannot be missed. Anything
   that hides or moves the `AIMING` line, or keeps an aim alive where the line is not drawn, puts a
-  shot on the key a player presses to pass.
+  shot on the key a player presses to pass. It heads the docked terms now, and **the fold does not
+  fold it** — `DrawTerms` keeps it and the headline whatever the fold says.
 - **An aim is checked in the frame, not tidied up wherever the moment changes.** `_aim` is only a
   unit; `SandboxFrame.Aim` is that unit if the mode still makes sense — a window shut, somebody up,
   the target hostile, in play and in sight. Read `Aim`, never `AimedAt`, or an aim can outlive the
@@ -1232,7 +1297,7 @@ re-asks the rules anything, so none of it can change what is true — only what 
 | right-click | back out — **on release**, and only if the pointer moved under `ClickSlop` pixels since the press; never spends a point |
 | pointer near an edge | push the view that way, faster the further into the margin it goes — **off unless `--edge-pan`** |
 | wheel | zoom |
-| left-click | move whoever is up; on a hostile, aim; on the hostile already aimed at, fire; while aiming, anywhere else backs out and moves nobody |
+| left-click | move whoever is up; on a hostile, aim; on the hostile already aimed at, fire; while aiming, the fold switch in the docked terms folds them, and anywhere else backs out and moves nobody |
 
 A right press starts a candidate orbit either way; which of the two it turns out to have been is
 not knowable until the button comes back up, which is why the back-out waits for the release —
@@ -1269,15 +1334,17 @@ hostile side to the AI.
 | `1` · tab | aim at the hostile under the cursor or else the nearest · aim at the next in sight |
 | space, enter | fire while aiming; end the turn while not |
 | right-click, `Esc` | back out: the aim, or else the briefing |
+| `P` | fold the shot's docked terms, or open them; it stays as it is left |
 | tab, `1`–`9`, space | while a window is open: whose answer, change it, and run it — every answer not changed stands; only our side's reactors are offered unless the instruments window is open |
 
 | Posture — **player's legend** | |
 |---|---|
 | `C` · `Z`/`X` · `V` · `B` · `T` | stance · turn on the spot · overwatch arc · arm or spring an ambush · leave the field |
 | `L` | call a contact in |
+| hold `Ctrl` | every figure's terms on the map at once, for as long as it is held |
 
-`Ctrl` and `Alt` are unbound on purpose: brief one's amendment reserves a held modifier for *show
-me the terms*, and it has to be free when that lands.
+`Alt` is unbound. `Ctrl` went to *everything at once*, which is the job the reference set uses a held
+key for; the shot's terms needed no key, because they open while aiming (entry 089).
 
 | What the run is set to — **instruments window** | |
 |---|---|
@@ -1315,6 +1382,7 @@ one prints what it did. They are the keys under another name:
 | `--ai-turn` · `--hostiles ai\|hand` | give this turn to the search; give the side to it or take it back |
 | `--place NAME:N` · `--resolve` | answer an open reaction window, and run it |
 | `--brief` | the whole briefing on screen |
+| `--details` · `--fold` | `Ctrl` held down for the rest of the run · `P` |
 | `--hover node` · `--look q,r` · `--zoom N` · `--yaw N` · `--fit` · `--layer N` | the cursor, the camera, the storey |
 
 `--until` rather than a count of passes, because initiative is rolled per round. Camera steps go
@@ -1335,8 +1403,11 @@ other side could answer runs at once on its recommendations, since brief six; ad
 to stop at those too and answer for both sides. So the command above with `--windows` added moves
 Orsini straight through, byte-identical to the command without it, and with `--instruments` as
 well it stops with Watchman offered. `--windows --ai --omniscient --pass 30 --zoom 40` on the waystation
-stops in round 4 with the sentry committed to a 15-tick walk it has not taken, Vance offered three
+stopped in round 4 with the sentry committed to a 15-tick walk it has not taken, Vance offered three
 answers and their scores, and the route drawn out of the sentry with the tick each step lands on.
+**It no longer stops**: on brief one's base it passes all thirty with Vance down in round 8, most
+likely because the mission's *told* lines (entry 092) changed what the AI does — nothing brief one
+touched moves the battle. A command that stops at a window of ours wants finding again; entry 093.
 `--ai --pass 16 --zoom 60` without `--omniscient` is the game's own view of the same fight two
 rounds on: two hostiles as bodies with their rungs, and two nowhere at all — not on the map and,
 since brief five, not in the turn order either.
@@ -1539,6 +1610,22 @@ Desktop-only is the design and Windows is the machine.
   want can cost three declarations. Cheap, and it would be a second mode beside the firing mode — it
   should take the same keys (space confirms, right-click backs out) if it is built. The amendment
   calls it arguably brief two's or a job of its own.
+- **Whether `Ctrl`'s soldier terms are too big to be a moment.** Held, the posture keys' three
+  appraisals and the rest make a block several hundred pixels wide over the soldier. A held key is
+  *for a moment*, which is the argument it can be large; a player who holds it to read one contact
+  and gets a wall of text at their own soldier is the argument against. Splitting it — contacts on
+  `Ctrl`, the soldier's own terms on hovering the soldier — would be the second gesture the brief
+  warned against.
+- **Whether the ground should carry every fire mode, or two.** It carries the cheapest shot and the
+  dearest one a move can keep, and a rifle has a third mode between them that only the bar names.
+  Five nested edges stop reading as bands; three may be one too many as well, and the play-through
+  is where that is found.
+- **Whether a hovered target should name who the shot tells.** Pointing at a hostile gives the
+  headline and the bill's marks on the map; the names are in the dock, once aiming. Before brief one
+  the names were on the panel on hover too.
+- **Whether the violet edges read at all against busy ground.** They are legible in every capture
+  taken at 26 to 50 metres; at `--fit` the bands are a few pixels and the pale reach edge is what
+  survives, which may be right — a player at that distance is not choosing a move.
 - ~~**Whether the top block should describe a hostile who is up.**~~ No — it read the enemy's
   contact file as a number. `SandboxFrame.Withheld`, brief five, entry 090.
 - **Whether the mission line belongs to a player at all, or only to a tester.** It shows the

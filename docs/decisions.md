@@ -5272,3 +5272,93 @@ faults show on this map exactly as they do on the waystation, so neither map is 
 fixed.
 
 ---
+
+## 093 — The readouts are on the things they describe: the shot's terms open while aiming, `Ctrl` shows everything, and the ground is cut at the reserve's steps
+**2026-09-12** · **Raised by** view · **For** view, master · **Status** open for master — brief two's dependency on this has landed, and two small things are routed below
+
+Brief one, built on `view/readouts-in-place`, to *Settling One* where it disagrees with the brief and
+its amendment (entry 089). What was settled, what the pictures said, and two things found on the way.
+
+**Headline and terms, and the gesture for *on demand* was picked once.** Each thing on the map carries
+one figure. Its terms come two ways, both from the photographed games: **the shot's terms open for as
+long as the player is aiming**, docked at the right edge above the legend — Warhounds' place, and the
+one this screen has free, since the bottom centre is under the legend — with a fold (`P`, or a click on
+the switch) that stays as it is left across targets and soldiers; and **holding `Ctrl` shows every
+thing's terms at once**, the job the set uses a held key for. No hover card per figure. `Alt` stays
+unbound. A capture reaches both as `--details` (held for the rest of the run, since a capture cannot
+let go) and `--fold`. A window that loses focus with `Ctrl` down lets go.
+
+**What the panel keeps**: the mission and who is off the field, the round against the clock, the
+active soldier's name beside its weapon, and the storey — the camera's, and hung from nothing. Two
+lines on the waystation, one on the compound.
+
+**Where everything else went.**
+
+| was | now |
+|---|---|
+| AP, stance, facing | the body already shows stance and facing; points are a bar over the soldier |
+| reserve line | the bar, cut at the reserve's steps, and the ground's band edges |
+| alarm line | exposure and the highest rung on us, under the bar; the bar they act from, under `Ctrl` |
+| seen and viewed lines | each contact's tag under `Ctrl` — distance, *you hold*, worst shot on us, *sees you* — hung from the body, or from the ghost at a marker; unseen watchers on the soldier's terms |
+| posture lines, the held arc, the shout | the soldier's terms under `Ctrl` |
+| cursor line | beside the tile: the cost, what stopping there banks, who hears the walk; cover, exposure, distance and band, attention and loudness under `Ctrl` |
+| aim, shot, bill, worth | `HIT` and the cost and worth over the target's name; the rest docked while aiming |
+
+**The reserve changed shape rather than place — entry 067.** `SandboxFrame.Ladder` finds each step
+by asking `ReactionModel.Banked` for the fewest leftover points that bank anything, and that bank each
+fire mode at the soldier's own price, `Costs.Fire` — the check `Tactician.AppraiseHolding` makes. The
+panel's inline `(int)(AP * ReserveFraction)` is gone. Pips were not the answer here: a turn is fifty
+points and the steps fall between any pip size that reads, so it is a bar in segments with a tick
+per step and a line saying each step as a spend — *aimed ≤0 · standard ≤14 · snap ≤28 · banks ≤35* on
+a fresh rifleman. The brief's third test reads straight off it. **The reserve the active soldier
+holds was dropped from the readout**, because it expires when that soldier's turn comes round and so
+always read nought.
+
+**The ground carries three steps and the bar carries every one.** Edges, not fills, per *Settling
+One*: a pale edge at the limit of reach, and violet edges, brighter as the step gets dearer, at the
+floor, the cheapest shot, and the dearest shot a move can still keep. That last is not the dearest
+mode: a fresh rifleman keeps an aimed shot only by standing still, and a band round its own tile says
+nothing. So *better than a snap* is one colour on both the ground and the bar, and the bar's line says
+which. A band enclosing what the one outside it encloses is not drawn. Violet because the ground
+already spends blue, yellow and orange on cover outlines. A hostile withheld from the picture keeps its
+reach edge, as it kept its reach fill — entry 090's finding is still brief two's — but not its bands.
+
+**The dwell is measured.** `HexSandbox.TheirGoDwell` 0.9 → **1.4 s**, the rider: Invisible, Inc.'s
+corporate-turn banner at at least 1.43 s, capture C7, entry 089 item 6.
+
+**What the brief's tests said, from captures.**
+
+- *The cursor on a hostile at default zoom*: `HIT 45%` and *12 AP · worth +0.37* over Spotter's name on
+  the compound; `HIT 54%` and *25 AP · worth −57.98* over Teague's on the waystation from round 7.
+- *The panel in one glance*: two lines.
+- *At `--fit`, no text over the map not attached to something*: **it failed on master, and not because
+  of the panel** — the camera put the waystation's near rim under the legend. `SandboxCamera.Fit` now
+  looks a sixth of the map's radius past its middle and stands an eighth further back; the rim stops at
+  the legend's edge on the waystation and the compound. Nothing else in `--fit` is unattached.
+- *From the soldier alone, how far it may move and still hold an aimed shot*: the bar's line.
+- **Not measured**: `Ctrl` held and released by a hand, the click on the fold switch, the focus-out
+  release, and the dwell on a screen. A capture is deaf; these are the play-through's.
+
+**The pinned scene breaks, across the ground and the whole HUD**: reach is an edge, the panel is one
+line, and the soldier has a bar. Two runs of it hash the same.
+
+### Found, and fixed here because it was View's
+
+**The worth line printed a sum its terms could not make.** It said *harm less spent* in so many words.
+Since Core priced what a shot gives away, `Tactician.Appraise` also carries **Spared** (what it gives
+away) and **Prospect** (what it costs the mission), and the line left both out: *worth −57.98 (harm
+3.67 less spent 1.25)*. It prints every non-zero term now — *spared −0.25, prospect −60.16*. Nothing
+in either is kept back by contract 3; both are priced from the named listeners the bill already shows.
+
+### For Master
+
+- **Brief two's *alarm rung on the body* depended on this landing first**, and it has. The body has a
+  name and rung under it, and readouts above it; a rung that moves onto the body has room.
+- **A line in `view.md` no longer holds on this branch's base**: `--windows --ai --omniscient --pass 30
+  --zoom 40` on the waystation used to stop at a window in round 4, and now passes thirty turns without
+  stopping, Vance down in round 8. Nothing on this branch touches the battle — it reads the ladder and
+  the appraisals and changes nothing — so it is most likely the mission's *told* lines (entry 092)
+  changing what the AI does. Not measured against master's own build. `view.md` says so where the
+  command is.
+
+---

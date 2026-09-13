@@ -37,7 +37,39 @@ public static class SandboxPalette
 
     /// <summary>A route paid for and not yet walked, while its reaction window is open.</summary>
     public static readonly Color CommittedColor = new("f2c14e");
-    public static readonly Color ReachFill = new("1f4438");
+
+    /// <summary>The outer edge of where the active soldier can get to at all.</summary>
+    /// <remarks>
+    /// Neutral, because it is the one edge that says nothing about the reserve, and a pale line on
+    /// the ground is the one colour no cover outline, route, side or arc already uses.
+    /// </remarks>
+    public static readonly Color ReachEdge = new("c7ced8", 0.45f);
+
+    /// <summary>The three reserve rungs drawn on the ground and on the soldier's points. See <see cref="BandHue"/>.</summary>
+    public enum Band { Floor, Cheapest, Better }
+
+    /// <summary>
+    /// A reserve rung's colour, on the ground and on the soldier's points bar alike.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// One violet family, getting brighter as the rung gets dearer. The move range's edges share the
+    /// ground with the cover outlines, which already own blue, yellow and orange, and with the route,
+    /// the sides, the arcs and the aim — so the genre's own blue-and-yellow would have read as cover.
+    /// Violet is the hue nothing on the map was using.
+    /// </para>
+    /// <para>
+    /// The same three colours mark the rungs on the points bar under the soldier, which makes the
+    /// bar the legend for the ground: a player who reads <i>snap</i> in this colour on the soldier
+    /// has been told what the line of that colour on the ground means.
+    /// </para>
+    /// </remarks>
+    public static Color BandHue(Band band) => band switch
+    {
+        Band.Better => new Color("d2abff"),
+        Band.Cheapest => new Color("a67cf2"),
+        _ => new Color("7f73c2"),
+    };
     public static readonly Color RegionEdge = new("434a55");
     public static readonly Color PathColor = new("6fd3b0");
     public static readonly Color TextDim = new("8d96a5");

@@ -249,21 +249,29 @@ public partial class HexSandbox : Node3D
     private readonly List<TakenTurn> _turns = [];
 
     /// <summary>
-    /// The least time the <i>their go</i> banner stays up, in seconds. <b>Provisional.</b>
+    /// The least time the <i>their go</i> banner stays up, in seconds. <b>Measured.</b>
     /// </summary>
     /// <remarks>
-    /// Brief five and entry 065 argue 0.6 to 1.2 seconds from the games that do this, and say it is
-    /// an argument rather than a measurement. This is the middle of that range and nothing more;
-    /// captures C7 and C17 in <c>docs/interface/captures.md</c> are what would replace it with a
-    /// figure. Without a floor a stretch that resolves in one frame — which is every stretch the AI
-    /// plays without stopping — would flash the banner, and that is worse than drawing nothing.
+    /// Brief five and entry 065 argued 0.6 to 1.2 seconds from the games that do this, and this
+    /// shipped at 0.9, the middle of that range, as a provisional figure. Capture C7 replaced it:
+    /// Invisible, Inc.'s corporate-turn banner, the closest shipped relative, measured frame by frame
+    /// at <b>at least 1.43 seconds</b> — it was already up on the clip's first frame — so the floor
+    /// is 1.4. Entry 089, item 6. Without a floor a stretch that resolves in one frame — which is
+    /// every stretch the AI plays without stopping — would flash the banner, and that is worse than
+    /// drawing nothing.
     /// <para>
     /// A floor and not a length: the banner stays up for as long as the stretch actually lasts,
     /// which is longer whenever it stops at a window or a hostile is walked. A capture has no dwell
     /// at all, by the rule every other animation here keeps — see <see cref="Animated"/>.
     /// </para>
     /// </remarks>
-    [Export] public double TheirGoDwell { get; set; } = 0.9;
+    [Export] public double TheirGoDwell { get; set; } = 1.4;
+
+    /// <summary>Whether the held key for every figure's terms is down. See <see cref="SandboxFrame.Details"/>.</summary>
+    private bool _details;
+
+    /// <summary>Whether the player has folded the shot's terms away. Kept for the run, across targets and soldiers.</summary>
+    private bool _termsFolded;
 
     /// <summary>Seconds the banner has been up, or null when it is down.</summary>
     private double? _theirGo;
@@ -329,7 +337,7 @@ public partial class HexSandbox : Node3D
 
         _camera = new SandboxCamera(GetNode<Camera3D>("Camera"), Distance);
         _view = new BattleView(GetNode<Node3D>("World"), _labels, _camera, font);
-        _hud = new BattleHud(font);
+        _hud = new BattleHud(font, _camera, _view.Crown);
 
         // One frame, two surfaces. Both painters build it from the same call, in the same tick,
         // so the instruments window can never be showing a moment the map is not — which is the
@@ -920,7 +928,7 @@ public partial class HexSandbox : Node3D
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
             _omniscient, _knowledge, _instruments.Visible, _aim,
-            _theirGo, _perceived, _found);
+            _theirGo, _perceived, _found, _details, _termsFolded);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -1321,6 +1329,14 @@ public partial class HexSandbox : Node3D
     /// </remarks>
     private void LeftClick()
     {
+        // The fold switch in the docked terms is the one thing on the HUD a click is for, and it is
+        // only up while aiming — when a click anywhere else backs out. Folding is not backing out.
+        if (Frame().Aim is not null && _hud.FoldSwitch.HasPoint(GetViewport().GetMousePosition()))
+        {
+            FoldTerms();
+            return;
+        }
+
         var frame = Frame();
         var hostile = frame.HoveredUnit is { } unit && _battle.Active is { } shooter && unit.IsHostileTo(shooter)
             ? unit
@@ -1724,6 +1740,13 @@ public partial class HexSandbox : Node3D
                 Redraw();
                 return _mission is null ? "this scenario has no mission to brief" : "briefing on screen";
 
+            case "--details":
+                // Ctrl held down for the rest of the run, since a capture is deaf and cannot let go.
+                return HoldDetails(true);
+
+            case "--fold":
+                return FoldTerms();
+
             case "--hover":
                 if (ParseNode(step.Argument) is not { } at) return "wanted q,r[,layer[,region]]";
                 _hover = at;
@@ -1863,10 +1886,43 @@ public partial class HexSandbox : Node3D
                 if (wasClick) BackOut();
                 break;
 
+            // Held, not pressed: the terms are up for exactly as long as the key is down. Echoes
+            // arrive while it is held and change nothing.
+            case InputEventKey { Keycode: Key.Ctrl } ctrl:
+                if (ctrl.Pressed != _details) HoldDetails(ctrl.Pressed);
+                break;
+
             case InputEventKey { Pressed: true, Echo: false } key:
                 HandleKey(key.Keycode);
                 break;
         }
+    }
+
+    /// <summary>
+    /// A window that loses focus with <c>Ctrl</c> down never hears it come up, so it lets go here
+    /// rather than leaving every figure's terms stuck on the map.
+    /// </summary>
+    public override void _Notification(int what)
+    {
+        if (what == NotificationWMWindowFocusOut && _details) HoldDetails(false);
+    }
+
+    /// <summary>Hold or release the key for every figure's terms at once. See <see cref="BattleHud"/>.</summary>
+    private string HoldDetails(bool held)
+    {
+        _details = held;
+        Redraw();
+        return held ? "every figure's terms on the map" : "headlines only";
+    }
+
+    /// <summary>Fold or unfold the shot's docked terms, which stays as it is left.</summary>
+    private string FoldTerms()
+    {
+        // Folded or not is a preference kept for the run, so it can be set before there is a shot to
+        // see it on; the readout only draws the switch when there is.
+        _termsFolded = !_termsFolded;
+        Redraw();
+        return _termsFolded ? "the shot's terms folded" : "the shot's terms open";
     }
 
     private void HandleKey(Key key)
@@ -1962,6 +2018,10 @@ public partial class HexSandbox : Node3D
 
             case Key.I:
                 ShowInstruments(!_instruments.Visible);
+                break;
+
+            case Key.P:
+                FoldTerms();
                 break;
 
             case Key.L:

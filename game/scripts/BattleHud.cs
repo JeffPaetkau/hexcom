@@ -34,10 +34,42 @@ namespace Hexcom.Game;
 /// out is reported as a rung on a ladder and never as a number. Both appear below, and the
 /// asymmetry between them is deliberate. Do not "improve" the coarse one.
 /// </para>
+/// <para>
+/// <b>Brief one: the readouts go on the things they describe.</b> Every figure used to be a line in
+/// a panel at the top left, and a game whose subject is information cannot teach a player to read a
+/// battlefield with a readout that makes them look away from it. So the panel keeps what has no
+/// place on the map — the mission, the clock, the weapon — and everything else hangs from a soldier,
+/// a target or the tile under the cursor, projected like the map's own labels.
+/// </para>
+/// <para>
+/// <b>Headline and terms, with the gesture for <i>on demand</i> picked once.</b> Each thing carries
+/// one figure. Its terms come two ways and only two, both from the reference set's pictures (entry
+/// 089): the shot's terms <b>open for as long as the player is aiming</b>, docked at the right edge
+/// with a fold the game remembers — which is what both photographed games do — and <b>holding
+/// <c>Ctrl</c> shows every thing's terms at once</b>, which is the job the set uses a held key for.
+/// There is no hover card per figure, because a second modal readout per figure is how this ends up
+/// worse than the panel it replaces.
+/// </para>
 /// </remarks>
-public sealed class BattleHud(Font font)
+public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<SandboxFrame, Unit, Vector2?> crown)
 {
     private readonly Font _font = font;
+
+    /// <summary>Where a scene point lands on screen. The HUD asks it of tiles.</summary>
+    private readonly SandboxCamera _camera = camera;
+
+    /// <summary>
+    /// Where a unit's labels hang from on screen — <see cref="BattleView.Crown"/>, handed in so that a
+    /// readout hangs from the body the name hangs from, walk and all, without this class knowing a
+    /// walk exists.
+    /// </summary>
+    private readonly System.Func<SandboxFrame, Unit, Vector2?> _crown = crown;
+
+    /// <summary>
+    /// Where the fold switch in the docked shot terms was last drawn, so a click on it can be told
+    /// from a click on the map. Empty when the terms are not up.
+    /// </summary>
+    public Rect2 FoldSwitch { get; private set; }
 
     /// <summary>The surface currently being drawn on. Set by whichever of the two entry points is running.</summary>
     private CanvasItem _canvas = null!;
@@ -69,10 +101,15 @@ public sealed class BattleHud(Font font)
     {
         _canvas = canvas;
 
+        // What hangs on the map first, so every panel sits over it rather than under it: a tag
+        // projected under the top block is the tag that has to give way.
+        DrawInPlace(frame);
+
         // The strip last, so that a long readout runs under it rather than over it; the banner
         // before it, since it is up for a second and the strip is the thing it is standing in for.
         DrawLines(frame);
         DrawHappenings(frame, viewport);
+        DrawTerms(frame, viewport, viewport.Y - 22 - LegendLines * LineHeight - 14);
         DrawLegend(viewport, PlayerKeys);
         DrawTheirGo(frame, viewport);
         DrawOrderStrip(frame, viewport);
@@ -393,34 +430,444 @@ public sealed class BattleHud(Font font)
             return;
         }
 
+        // Brief one: the mission, the clock and the weapon have no place on the map, and that is
+        // the whole of what stays. The soldier's points, stance, facing and exposure are on the
+        // soldier; the contacts are on the contacts; the cursor's figures are at the cursor; the
+        // shot's terms are docked while aiming. The name stays beside the weapon because the weapon
+        // is somebody's, and the storey because it is the camera's and hangs from nothing.
         lines.Add(
             active is null || frame.OutOfTime
                 ? $"{Clock(frame)}    {(frame.OutOfTime ? "out of time" : "nobody left to act")}"
-                : $"{Clock(frame)}    {active.Name} ({active.Side})    "
-                  + $"{active.ActionPoints}/{active.Stats.ActionPoints} AP    "
-                  + $"{active.Stance.ToString().ToLowerInvariant()}    facing {active.Facing}    layer {frame.Layer}    "
-                  + $"{WeaponLine(active)}");
-        lines.Add(active is null ? "" : AlarmLine(frame, active));
-
-        if (active is not null)
-        {
-            lines.AddRange(SeenLines(frame, active));
-            lines.Add(ViewedLine(frame, active));
-            lines.Add(ReserveLine(frame, active));
-            lines.AddRange(PostureLines(frame, active));
-        }
-        lines.AddRange(new[]
-        {
-            frame.Hover is { } h
-                ? $"cursor {h}    {(frame.Reach.CostTo(h) is { } c ? $"{c} AP" : "out of reach")}    "
-                  + $"{SightLine(frame, h)}{AttentionLine(frame, h)}{NoiseLine(frame, h)}"
-                : "cursor —",
-            AimLine(frame),
-            ShotLine(frame),
-            BillLine(frame),
-            WorthLine(frame),
-        });
+                : $"{Clock(frame)}    {active.Name}    {WeaponLine(active)}    storey {frame.Layer}");
         DrawBlock(lines);
+    }
+
+    // ---- on the things they describe ---------------------------------------------------
+
+    /// <summary>Point sizes for what hangs on the map: a headline, and the terms under it.</summary>
+    private const int HeadlineSize = 16;
+    private const int TagSize = 11;
+    private const int TagStep = 14;
+
+    /// <summary>How wide the points bar under a soldier is, in pixels, for a full turn's allowance.</summary>
+    private const float BarWidth = 150f;
+
+    /// <summary>
+    /// Everything that hangs from something on the map: the active soldier's points and exposure,
+    /// what each contact is to that soldier, the shot's headline at its target, and the tile under the
+    /// cursor.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Nothing is drawn while <see cref="SandboxFrame.Withheld"/>: a hostile up under the AI is the
+    /// other side's situation, and every figure here would be it described from its own eyes.
+    /// </para>
+    /// <para>
+    /// <b>Offsets are in pixels from the point the name label hangs from</b>, as the bill's glyphs
+    /// are, and for the reason view.md gives for those: placed in metres, a tag lands on the name at
+    /// any distance a rifle shot is taken from. The name sits just above that point and a hostile's
+    /// rung just below it, so what describes a soldier stacks downwards from under the rung and a
+    /// shot's headline sits above the name.
+    /// </para>
+    /// </remarks>
+    private void DrawInPlace(SandboxFrame frame)
+    {
+        if (frame.Withheld || frame.Battle.Active is not { } active) return;
+
+        // The cursor's tag last, so it is on top: it is where the eye already is, and with the held
+        // key down the soldier's terms are a large block that would otherwise sit over it.
+        DrawContacts(frame, active);
+        DrawShotHeadline(frame);
+        DrawSoldier(frame, active);
+        DrawCursorTag(frame, active);
+    }
+
+    /// <summary>A plate's left edge and top pulled back inside the screen, so a tag near an edge is cut by nothing.</summary>
+    private Vector2 Inside(Vector2 topLeft, Vector2 size)
+    {
+        var screen = _canvas.GetViewportRect().Size;
+        return new Vector2(
+            Mathf.Clamp(topLeft.X, 4, Mathf.Max(4, screen.X - size.X - 4)),
+            Mathf.Clamp(topLeft.Y, 4, Mathf.Max(4, screen.Y - size.Y - 4)));
+    }
+
+    /// <summary>
+    /// Under the soldier whose go it is: the points it has as a bar cut at the reserve's rungs, what
+    /// each rung lets it spend, and how exposed it stands. Its terms under that while <c>Ctrl</c> is held.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The one figure that changes shape rather than only place — entry 067.</b> The panel printed
+    /// <c>reserve 24, 17 if you stop here</c>, a slope, and the rules made the reserve a ladder with
+    /// two cliffs in it: the point below which stopping banks nothing, and the point at which the bank
+    /// first affords a shot and then the better one. Pips are the genre's answer for a handful of
+    /// points; a turn here is fifty of them and the cliffs fall between pips, so this is a bar with a
+    /// segment per rung in the rung's own colour, and the line under it says each cliff as <i>spend up
+    /// to this much</i>. The ground's band edges are the same rungs in the same colours
+    /// (<see cref="BattleView"/>), so the bar is the legend for them.
+    /// </para>
+    /// <para>
+    /// A player who has spent nothing reads <i>aimed ≤5</i> and knows a five-point move is the most
+    /// they may take and still hold an aimed shot, which is the brief's third test. The reserve the
+    /// soldier already holds is not shown: it expires the moment its own turn comes round, so on
+    /// the soldier whose go it is it reads nought, always, and the panel printing <c>reserve 0</c> for
+    /// months was a figure with nothing in it.
+    /// </para>
+    /// </remarks>
+    private void DrawSoldier(SandboxFrame frame, Unit active)
+    {
+        if (_crown(frame, active) is not { } crown || !_canvas.GetViewportRect().HasPoint(crown)) return;
+
+        // Above the name, stacked upwards: the crown is just over the head, so anything hung below
+        // it is drawn across the soldier it describes. The bar on top, the exposure nearest the name.
+        var y = crown.Y - 22 - TagStep * 2 - 8;
+        var left = crown.X - BarWidth / 2;
+
+        var ladder = frame.Ladder;
+        var top = System.Math.Max(active.Stats.ActionPoints, active.ActionPoints);
+        float At(int points) => left + BarWidth * points / System.Math.Max(1, top);
+
+        // The plate, the unspent points coloured by what stopping on them would bank, and a tick at
+        // every rung — including the modes between the cheapest and the dearest, which the ground
+        // does not carry.
+        _canvas.DrawRect(new Rect2(left - 6, y - 4, BarWidth + 12, 16 + TagStep * 2), SandboxPalette.Panel);
+        _canvas.DrawRect(new Rect2(left, y, BarWidth, 8), SandboxPalette.UnitShadow);
+
+        for (var point = 0; point < active.ActionPoints; point++)
+            _canvas.DrawRect(new Rect2(At(point), y, At(point + 1) - At(point) + 0.5f, 8), RungHue(ladder, point));
+
+        foreach (var rung in ladder?.Rungs ?? [])
+            _canvas.DrawLine(new Vector2(At(rung.Leftover), y - 3), new Vector2(At(rung.Leftover), y + 11),
+                RungHue(ladder, rung.Leftover), 2);
+
+        // The cliffs as moves: how much may be spent and still leave each rung. Dearest first, since
+        // it is the one a player is most likely to be deciding against.
+        var runs = new List<(string, Color)> { ($"{active.ActionPoints} AP", SandboxPalette.TextBright) };
+        foreach (var rung in (ladder?.Rungs ?? []).OrderByDescending(rung => rung.Leftover))
+        {
+            var spend = active.ActionPoints - rung.Leftover;
+            if (spend < 0) continue;
+            runs.Add(("  ·  ", SandboxPalette.TextDim));
+            runs.Add(($"{rung.Name} ≤{spend}", RungHue(ladder, rung.Leftover)));
+        }
+        DrawRuns(new Vector2(crown.X, y + 8 + TagStep), runs);
+
+        // Our own exposure is exact and the rung the other side has reached is a rung: contract 3's
+        // two halves on one line, which is where they always sat.
+        var noticed = frame.Battle.HighestAwarenessOf(active);
+        DrawRuns(new Vector2(crown.X, y + 8 + TagStep * 2),
+        [
+            ($"exposed {frame.Battle.ExposureOf(active):P0}", SandboxPalette.TextBright),
+            ("  ·  they are ", SandboxPalette.TextDim),
+            (noticed.ToString().ToUpperInvariant(), SandboxPalette.AlarmHue(noticed)),
+        ]);
+
+        if (frame.Details)
+            DrawTag(new Vector2(crown.X, y - 12), SoldierTerms(frame, active).ToList(), lift: true);
+    }
+
+    /// <summary>A rung's colour, for a point on the bar: which band stopping with that many left falls in.</summary>
+    private static Color RungHue(ReserveLadder? ladder, int leftover)
+    {
+        if (ladder is null) return SandboxPalette.TextDim;
+        if (ladder.Better is { } better && leftover >= better.Leftover) return SandboxPalette.BandHue(SandboxPalette.Band.Better);
+        if (ladder.Cheapest is { } cheap && leftover >= cheap.Leftover) return SandboxPalette.BandHue(SandboxPalette.Band.Cheapest);
+        if (ladder.Floor is { } floor && leftover >= floor.Leftover) return SandboxPalette.BandHue(SandboxPalette.Band.Floor);
+        return SandboxPalette.TextDim;
+    }
+
+    /// <summary>
+    /// The active soldier's terms, for the held key: the bar they act from, what it holds, who a shout
+    /// reaches, who has a line on it, and what the three posture keys would buy.
+    /// </summary>
+    private static IEnumerable<string> SoldierTerms(SandboxFrame frame, Unit active)
+    {
+        yield return $"they act from {frame.Battle.Tactics.Model.ActsOn.ToString().ToUpperInvariant()}";
+        yield return HoldingLine(active);
+        yield return EarshotOf(frame, active);
+        yield return ViewedLine(frame, active);
+        if (!frame.Battle.Tactics.Known(active).Any()) yield return "taking nobody seriously";
+        foreach (var line in PostureLines(frame, active)) yield return line;
+    }
+
+    /// <summary>
+    /// What each hostile the active soldier is taking seriously is to it — only while <c>Ctrl</c> is
+    /// held, and hung from the hostile or from the ghost at its marker.
+    /// </summary>
+    /// <remarks>
+    /// The headline on a contact is already there and is the map's: its name, its vitality and, under
+    /// them, how far the other side has got — a rung. What was a line per contact in the panel is its
+    /// terms: how far, how much of it this soldier has worked out, the worst it could do from there,
+    /// and how much of this soldier it can make out. See <see cref="SeenLines"/> for why each is ours
+    /// to show.
+    /// </remarks>
+    private void DrawContacts(SandboxFrame frame, Unit active)
+    {
+        if (!frame.Details) return;
+
+        var battle = frame.Battle;
+        foreach (var threat in battle.Tactics.Known(active))
+        {
+            var lines = SeenLines(frame, active, threat).ToList();
+
+            if (threat.EyesOn && frame.Sees(threat.Unit))
+            {
+                if (_crown(frame, threat.Unit) is not { } crown) continue;
+
+                // Under the rung, and under the bill's mark when this is the one a shot would tell.
+                var marked = frame.StagedShot is { CanFire: true } plan && plan.Target == threat.Unit
+                             && frame.Giveaway.Any(word => word.Learner != plan.Target);
+                DrawTag(crown + new Vector2(0, marked ? 50 : 26), lines);
+            }
+            else if (_camera.Project(SandboxGeometry.NodeScene(battle.Map, threat.Where.Position)
+                                     + Vector3.Up * (float)(StanceProfile.Standing.BodyHeight + 0.4)) is { } ghost)
+            {
+                // The view's ghost label hangs from this point; the terms go under it.
+                DrawTag(ghost + new Vector2(0, 16), lines);
+            }
+        }
+    }
+
+    /// <summary>
+    /// At the target, over its name: the shot's hit chance, and under it what the shot costs and what
+    /// it is worth — or why there is no shot.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The brief's first test: with the cursor on a hostile the hit chance, the worth and the cost are
+    /// readable without the eye leaving the target. Both photographed games keep exactly one figure at
+    /// the body and dock the rest (<i>Settling One</i>), and the amendment's distance rule is why the
+    /// figure is here: this is where the cursor already is.
+    /// </para>
+    /// <para>
+    /// <b>Named <c>HIT</c>, and nothing under it is called hit.</b> Warhounds calls its headline
+    /// <c>PRECISION</c> and one of its terms <c>Precision</c>, which is the naming warning the reference
+    /// set has now found twice.
+    /// </para>
+    /// </remarks>
+    private void DrawShotHeadline(SandboxFrame frame)
+    {
+        if (frame.StagedShot is not { } plan || _crown(frame, plan.Target) is not { } crown) return;
+        if (!_canvas.GetViewportRect().HasPoint(crown)) return;
+
+        if (!plan.CanFire)
+        {
+            DrawTag(crown + new Vector2(0, -30), [$"no shot: {plan.Refusal}"], centreOn: true, lift: true);
+            return;
+        }
+
+        var worth = frame.Battle.Tactics.Appraise(plan);
+        var sub = $"{plan.ApCost} AP  ·  worth {worth.Score:+0.00;-0.00}";
+        var subWidth = _font.GetStringSize(sub, HorizontalAlignment.Left, -1, TagSize).X;
+        var head = $"HIT {plan.HitChance:P0}";
+        var headWidth = _font.GetStringSize(head, HorizontalAlignment.Left, -1, HeadlineSize).X;
+        var width = Mathf.Max(subWidth, headWidth);
+
+        var bottom = crown.Y - 24;
+        _canvas.DrawRect(new Rect2(crown.X - width / 2 - 6, bottom - HeadlineSize - TagStep - 4, width + 12, HeadlineSize + TagStep + 8),
+            SandboxPalette.Panel);
+        _canvas.DrawString(_font, new Vector2(crown.X - headWidth / 2, bottom - TagStep), head,
+            HorizontalAlignment.Left, -1, HeadlineSize, SandboxPalette.AimColor);
+        _canvas.DrawString(_font, new Vector2(crown.X - subWidth / 2, bottom), sub,
+            HorizontalAlignment.Left, -1, TagSize, SandboxPalette.TextBright);
+    }
+
+    /// <summary>
+    /// Beside the tile under the cursor: what getting there costs, what stopping there would bank,
+    /// and who would hear the walk. Its sight terms while <c>Ctrl</c> is held.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This was the cursor line, and it was the clearest case of the amendment's distance complaint:
+    /// a figure about the tile the player is pointing at, printed in the corner of the screen. Beside
+    /// the tile rather than on it, since the tile carries its cost label already and the tag would sit
+    /// on top of it.
+    /// </para>
+    /// <para>
+    /// <b>The bank is the decision, and it is said in the band's colour.</b> The cost is how far; what
+    /// the soldier will hold on arriving is whether to go — the same question the ground's band edges
+    /// answer for every tile at once, asked of this one. Who would hear the walk stays on the default
+    /// face of the tag because it is the warning a stealth game draws at the destination, and brief
+    /// four's amendment found it drawn there in every one that draws it.
+    /// </para>
+    /// <para>
+    /// Not drawn while aiming: a click on the ground then backs out and moves nobody, so a tag pricing
+    /// the move would be promising one — the path preview is withheld for the same reason. Nor over a
+    /// soldier the picture shows, since a hostile there has the shot's headline and one of ours has
+    /// its own figures.
+    /// </para>
+    /// </remarks>
+    private void DrawCursorTag(SandboxFrame frame, Unit active)
+    {
+        if (frame.Aim is not null || frame.Hover is not { } node || frame.HoveredUnit is not null) return;
+        if (_camera.Project(SandboxGeometry.NodeScene(frame.Battle.Map, node)) is not { } at) return;
+
+        var lines = new List<(string Text, Color Hue)>();
+
+        if (node != active.Position)
+        {
+            if (frame.Reach.CostTo(node) is { } cost)
+            {
+                var left = active.ActionPoints - cost;
+                var banks = frame.Battle.Reactions.Banked(left);
+                var affords = frame.Ladder?.Rungs.Where(rung => rung.Price > 0 && left >= rung.Leftover).MaxBy(rung => rung.Price);
+                lines.Add(($"{cost} AP", SandboxPalette.TextBright));
+                lines.Add((banks == 0 ? "then banks nothing" : $"then banks {banks}{(affords is null ? "" : $": {affords.Name}")}",
+                    RungHue(frame.Ladder, left)));
+
+                if (NoiseLine(frame, node) is { Length: > 0 } heard) lines.Add((heard, SandboxPalette.OverwatchHue));
+            }
+            else lines.Add(("out of reach", SandboxPalette.TextDim));
+        }
+
+        if (frame.Details)
+        {
+            lines.Add((SightLine(frame, node), SandboxPalette.TextDim));
+            if (AttentionLine(frame, node) is { Length: > 0 } attention) lines.Add((attention, SandboxPalette.TextDim));
+            if (LoudnessLine(frame, node) is { Length: > 0 } loud) lines.Add((loud, SandboxPalette.TextDim));
+        }
+
+        if (lines.Count == 0) return;
+        DrawTagLeft(at + new Vector2(22, -TagStep), lines);
+    }
+
+    /// <summary>A block of small lines centred under a point, on a plate.</summary>
+    /// <param name="centreOn">Centre every line, rather than centre the block and set its lines flush left.</param>
+    /// <param name="lift">Hang the block upwards from the point rather than down from it.</param>
+    private void DrawTag(Vector2 at, IReadOnlyList<string> lines, bool centreOn = false, bool lift = false)
+    {
+        // A tag whose thing is off the screen is not drawn at all, rather than pulled in to an edge:
+        // pinned there it would describe something the picture is not showing, attached to nothing.
+        if (lines.Count == 0 || !_canvas.GetViewportRect().HasPoint(at)) return;
+
+        var width = lines.Max(line => _font.GetStringSize(line, HorizontalAlignment.Left, -1, TagSize).X);
+        var top = lift ? at.Y - (lines.Count - 1) * TagStep : at.Y;
+
+        var size = new Vector2(width + 12, lines.Count * TagStep + 5);
+        var wanted = new Vector2(at.X - width / 2 - 6, top - TagSize - 1);
+        var plate = Inside(wanted, size);
+        var shift = plate - wanted;
+
+        _canvas.DrawRect(new Rect2(plate, size), SandboxPalette.Panel);
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var x = centreOn
+                ? at.X - _font.GetStringSize(lines[i], HorizontalAlignment.Left, -1, TagSize).X / 2
+                : at.X - width / 2;
+            _canvas.DrawString(_font, new Vector2(x, top + i * TagStep) + shift, lines[i],
+                HorizontalAlignment.Left, -1, TagSize, SandboxPalette.TextBright);
+        }
+    }
+
+    /// <summary>A block of small coloured lines, flush left from a point, on a plate.</summary>
+    private void DrawTagLeft(Vector2 at, IReadOnlyList<(string Text, Color Hue)> lines)
+    {
+        if (!_canvas.GetViewportRect().HasPoint(at)) return;
+
+        var width = lines.Max(line => _font.GetStringSize(line.Text, HorizontalAlignment.Left, -1, TagSize).X);
+        var size = new Vector2(width + 12, lines.Count * TagStep + 5);
+        var wanted = new Vector2(at.X - 6, at.Y - TagSize - 1);
+        var plate = Inside(wanted, size);
+        var shift = plate - wanted;
+
+        _canvas.DrawRect(new Rect2(plate, size), SandboxPalette.Panel);
+
+        for (var i = 0; i < lines.Count; i++)
+            _canvas.DrawString(_font, at + shift + new Vector2(0, i * TagStep), lines[i].Text,
+                HorizontalAlignment.Left, -1, TagSize, lines[i].Hue);
+    }
+
+    /// <summary>One line of differently coloured pieces, centred on a point, on a plate of its own.</summary>
+    private void DrawRuns(Vector2 centre, IReadOnlyList<(string Text, Color Hue)> runs)
+    {
+        var widths = runs.Select(run => _font.GetStringSize(run.Text, HorizontalAlignment.Left, -1, TagSize).X).ToList();
+        var size = new Vector2(widths.Sum() + 12, TagStep + 5);
+        var wanted = new Vector2(centre.X - widths.Sum() / 2 - 6, centre.Y - TagSize - 1);
+        var plate = Inside(wanted, size);
+        var x = plate.X + 6;
+        centre.Y += plate.Y - wanted.Y;
+
+        _canvas.DrawRect(new Rect2(plate, size), SandboxPalette.Panel);
+
+        for (var i = 0; i < runs.Count; i++)
+        {
+            _canvas.DrawString(_font, new Vector2(x, centre.Y), runs[i].Text, HorizontalAlignment.Left, -1, TagSize, runs[i].Hue);
+            x += widths[i];
+        }
+    }
+
+    // ---- the shot's terms, docked ------------------------------------------------------
+
+    /// <summary>How many characters a line of the docked terms runs to before it wraps.</summary>
+    private const int TermsWrap = 72;
+
+    /// <summary>
+    /// The shot's terms, docked at the right edge above the legend, for as long as the player is
+    /// aiming: the mode and the ways out of it, the headline, and — unless folded — the price, the
+    /// plates, who it tells and what it achieves.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b><i>Settling One</i>, and it overturned the amendment.</b> The amendment said a held key for
+    /// <i>show me the terms</i>. Both games photographed while aiming open the breakdown the moment the
+    /// firing mode is entered, with no further input, and dock it away from the target: XCOM 2 at the
+    /// bottom centre, Warhounds at the right edge. Firing is a mode here already (entry 084), so this
+    /// hangs on it. The right edge is Warhounds' place and the one this screen has free — the bottom
+    /// centre is under the legend.
+    /// </para>
+    /// <para>
+    /// <b>The fold is a preference, not a gesture per shot</b>, which is the whole of what XCOM 2 gives
+    /// a player over its breakdown: fold it once and it stays folded for the next target, and here for
+    /// the next soldier too. <c>P</c> or a click on the switch. Folded, the mode line and the headline
+    /// stay: the <c>AIMING</c> line is what tells a player space fires, and a fold that hid it would
+    /// put a shot on the key a player presses to pass.
+    /// </para>
+    /// </remarks>
+    private void DrawTerms(SandboxFrame frame, Vector2 viewport, float bottom)
+    {
+        FoldSwitch = new Rect2();
+        if (frame.Aim is null || frame.StagedShot is not { } plan) return;
+
+        var lines = new List<(string Text, Color Hue)>();
+        foreach (var line in AimLines(frame)) lines.Add((line, SandboxPalette.AimColor));
+
+        if (!plan.CanFire)
+        {
+            lines.Add(($"NO SHOT — {plan.Refusal}", SandboxPalette.TextBright));
+        }
+        else
+        {
+            var listed = plan.ApCost == plan.Mode.ApCost ? "" : $" (list {plan.Mode.ApCost})";
+            lines.Add(($"HIT {plan.HitChance:P0}    for {plan.ApCost} AP{listed}", SandboxPalette.TextBright));
+
+            if (!frame.TermsFolded)
+            {
+                foreach (var line in ShotLines(plan)) lines.Add((line, SandboxPalette.TextDim));
+                foreach (var line in BillLines(frame)) lines.Add((line, SandboxPalette.OverwatchHue));
+                foreach (var line in WorthLines(frame)) lines.Add((line, SandboxPalette.TextDim));
+            }
+        }
+
+        // A refused shot has no terms to fold, and a switch that did nothing would be a lie.
+        var fold = !plan.CanFire ? "" : frame.TermsFolded ? "P: show the terms" : "P: fold the terms";
+        if (fold.Length > 0) lines.Add((fold, SandboxPalette.TextDim));
+
+        var widest = lines.Max(line => _font.GetStringSize(line.Text, HorizontalAlignment.Left, -1, LineSize).X);
+        var left = Origin.X + viewport.X - 28 - widest;
+        var top = Origin.Y + bottom - (lines.Count - 1) * LineHeight;
+
+        _canvas.DrawRect(new Rect2(left - 10, top - LineSize - 2, widest + 20, lines.Count * LineHeight + 10), SandboxPalette.Panel);
+        _canvas.DrawRect(new Rect2(left - 10, top - LineSize - 2, widest + 20, 2), SandboxPalette.AimColor);
+
+        for (var i = 0; i < lines.Count; i++)
+            _canvas.DrawString(_font, new Vector2(left, top + i * LineHeight), lines[i].Text,
+                HorizontalAlignment.Left, -1, LineSize, lines[i].Hue);
+
+        if (fold.Length == 0) return;
+        var last = top + (lines.Count - 1) * LineHeight;
+        var foldWidth = _font.GetStringSize(fold, HorizontalAlignment.Left, -1, LineSize).X;
+        FoldSwitch = new Rect2(left - 4, last - LineSize - 2, foldWidth + 8, LineHeight);
     }
 
     /// <summary>The top block: whatever lines are not empty, on a panel, from the top-left.</summary>
@@ -617,8 +1064,9 @@ public sealed class BattleHud(Font font)
     [
         "WASD or drag: pan    Q/E or right-drag: turn    wheel/+-: zoom    F: whole map    G: whoever is up    PgUp/PgDn: storey",
         "left-click: move, or aim at a hostile    1 or tab: aim, tab again for the next    "
-            + "space: fire when aiming, else end turn    right-click or esc: back out",
-        "C: stance    Z/X: turn on the spot    V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in",
+            + "space: fire when aiming, else end turn    right-click or esc: back out    P: fold the shot's terms",
+        "C: stance    Z/X: turn on the spot    V: overwatch arc    B: arm/spring ambush    T: leave the field    L: call it in"
+            + "    hold Ctrl: every figure's terms",
     ];
 
     /// <summary>The keys that change what kind of run this is. Instruments, by the same test.</summary>
@@ -790,47 +1238,23 @@ public sealed class BattleHud(Font font)
         if (line.Length > 0) yield return line.ToString();
     }
 
-    /// <summary>
-    /// How exposed this soldier is, and how alarmed the other side has become about them.
-    /// </summary>
+    /// <summary>What the soldier is holding, and what having it already pointed is worth.</summary>
     /// <remarks>
-    /// The two halves of contract 3 in <c>docs/map.md</c>, side by side, which is the clearest
-    /// place to see what the asymmetry actually is. Exposure is our own soldier's silhouette and
-    /// is quoted to the percent; the alarm is what the enemy has worked out and is quoted as a
-    /// rung, never as the certainty behind it.
+    /// <b>How exposed this soldier is and how alarmed the other side has become</b> sit on one line
+    /// under the soldier — see <see cref="DrawSoldier"/> — because they are the two halves of contract 3
+    /// side by side, which is the clearest place to see what the asymmetry actually is: exposure is our
+    /// own silhouette to the percent, the alarm is a rung and never the certainty behind it.
     /// <para>
-    /// The bar is named because a rung on its own does not say what it means. <c>SEARCHING</c>
-    /// is not a mood: it is the point at which <see cref="Hexcom.Core.Tactics.UtilityModel.ActsOn"/>
-    /// says a soldier who could shoot at you will. A player who cannot see where that line falls
-    /// is reading the one number this screen shows about the enemy without being told what it
-    /// is for.
+    /// The bar the rung is read against is one of the soldier's terms rather than its headline, and it
+    /// is named because a rung on its own does not say what it means. <c>SEARCHING</c> is not a mood: it
+    /// is the point at which <see cref="Hexcom.Core.Tactics.UtilityModel.ActsOn"/> says a soldier who
+    /// could shoot at you will.
     /// </para>
     /// </remarks>
-    private static string AlarmLine(SandboxFrame frame, Unit active)
-    {
-        var bar = frame.Battle.Tactics.Model.ActsOn;
-
-        return $"exposed {frame.Battle.ExposureOf(active):P0}    "
-               + $"they are: {frame.Battle.HighestAwarenessOf(active).ToString().ToUpperInvariant()}    "
-               + $"(they act from {bar.ToString().ToUpperInvariant()})";
-    }
-
-    /// <summary>
-    /// What ending the turn now would leave this unit to answer other people's moves with, and
-    /// what it is holding. The reserve is the whole reason to stop moving early.
-    /// </summary>
-    private static string ReserveLine(SandboxFrame frame, Unit active)
-    {
-        var model = frame.Battle.Reactions;
-        var would = (int)(active.ActionPoints * model.ReserveFraction);
-        if (would < model.ReserveFloor) would = 0;
-
-        var holding = active.Overwatch is { } order
+    private static string HoldingLine(Unit active)
+        => active.Overwatch is { } order
             ? $"holding a {order.Arc.Name} arc {order.Centre} (x{order.Arc.AimBonus:0.00} to hit)"
             : "watching nothing in particular";
-
-        return $"reserve {active.Reserve}, {would} if you stop here    {holding}    {EarshotOf(frame, active)}";
-    }
 
     /// <summary>
     /// Who would hear this soldier call a contact in, and how much of it would survive the trip.
@@ -875,25 +1299,30 @@ public sealed class BattleHud(Font font)
         if (frame.Battle.Active is not { } active) return "";
         if (node == active.Position) return "";
 
-        return $"    your attention {frame.Battle.Awareness.AttentionOn(active, node):P0}";
+        return $"your attention {frame.Battle.Awareness.AttentionOn(active, node):P0}";
     }
 
-    /// <summary>That the firing mode is up, at whom, and the three ways out of it.</summary>
+    /// <summary>That the firing mode is up, at whom, and the three ways out of it — the head of the docked terms.</summary>
     /// <remarks>
     /// A line of its own and in capitals, because a mode nobody can see they are in is the whole
     /// failure the genre's cancel convention exists to prevent: the space bar ends the turn when
     /// this line is absent and fires when it is present, and that is only fair if it is impossible
     /// to miss which. It says what confirms and what backs out in so many words, which is the brief's
     /// test — a player backs out of a half-entered order without having been told a key.
+    /// <para>
+    /// Two lines since it was docked: the dock is narrower than the panel was, and splitting who from
+    /// how-to is splitting by purpose, which is the fix every legend in this file has taken.
+    /// </para>
     /// </remarks>
-    private static string AimLine(SandboxFrame frame)
+    private static IEnumerable<string> AimLines(SandboxFrame frame)
     {
-        if (frame.Aim is not { } quarry) return "";
+        if (frame.Aim is not { } quarry) yield break;
 
         var targets = frame.Targets;
         var which = targets.Count > 1 ? $", {IndexOf(targets, quarry) + 1} of {targets.Count} in sight    tab: next" : "";
 
-        return $"AIMING at {quarry.Name}{which}    space, enter or click them again: fire    right-click or esc: back out";
+        yield return $"AIMING at {quarry.Name}{which}";
+        yield return "space, enter or click them again: fire    right-click or esc: back out";
     }
 
     private static int IndexOf(IReadOnlyList<Unit> units, Unit unit)
@@ -903,32 +1332,21 @@ public sealed class BattleHud(Font font)
         return -1;
     }
 
-    /// <summary>The shot the active unit would take at whoever is aimed at, or else under the cursor.</summary>
-    private static string ShotLine(SandboxFrame frame)
+    /// <summary>The shot as a physical event, under the headline: the weapon, how much of it lands, and the plates it can reach.</summary>
+    private static IEnumerable<string> ShotLines(ShotPlan plan)
     {
-        if (StagedShot(frame) is not { } plan) return "";
-
-        var quarry = plan.Target;
-        if (!plan.CanFire) return $"shot at {quarry.Name}: {plan.Refusal}";
-
         var armour = plan.Target.Protection;
-
-        // A body is a hexagon, so a shot is never at one plate. Show the spread and what each is
-        // still carrying, because which side is worn is what turning is for.
-        var faces = string.Join(", ", plan.Aspects.Select(a =>
-            $"{a.Face} {a.Share:P0} (s{armour.ShieldOn(a.Face)}/p{armour.ArmourOn(a.Face)})"));
 
         var glancing = plan.GlancingFactor < 0.995
             ? $"    {plan.GlancingFactor:P0} of it lands"
             : "";
+        yield return $"{plan.Mode.Name} with the {plan.Weapon.Name} ({plan.Weapon.Kind}){glancing}";
 
-        // What this soldier pays, which is not always what the mode lists.
-        var listed = plan.ApCost == plan.Mode.ApCost ? "" : $" (list {plan.Mode.ApCost})";
-
-        return $"shot at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP{listed}    "
-               + $"{plan.Weapon.Name} ({plan.Weapon.Kind}){glancing}    "
-               + faces
-               + (frame.Aim is null ? "    click or 1: aim" : "");
+        // A body is a hexagon, so a shot is never at one plate. Show the spread and what each is
+        // still carrying, because which side is worn is what turning is for.
+        var faces = string.Join("  ·  ", plan.Aspects.Select(a =>
+            $"{a.Face} {a.Share:P0} s{armour.ShieldOn(a.Face)}/p{armour.ArmourOn(a.Face)}"));
+        foreach (var line in Wrap(faces, TermsWrap)) yield return "  " + line;
     }
 
     /// <summary>
@@ -956,12 +1374,12 @@ public sealed class BattleHud(Font font)
     /// the rung under their feet says so on the next look.
     /// </para>
     /// </remarks>
-    private static string BillLine(SandboxFrame frame)
+    private static IEnumerable<string> BillLines(SandboxFrame frame)
     {
-        if (frame.StagedShot is not { CanFire: true } plan) return "";
+        if (frame.StagedShot is not { CanFire: true } plan) yield break;
 
         var told = frame.Giveaway.Select(word => word.Learner).ToList();
-        if (told.Count == 0) return "the shot tells nobody anything they do not already know";
+        if (told.Count == 0) { yield return "it tells nobody anything they do not already know"; yield break; }
 
         var others = told.Where(u => u != plan.Target).ToList();
         var target = told.Contains(plan.Target) ? $"{plan.Target.Name} (shot at)" : "";
@@ -970,9 +1388,12 @@ public sealed class BattleHud(Font font)
         // the target pass word to whoever it can reach, and Core's preview leaves that relay out —
         // measured on the waystation, a shot at Teague told Cobb as well as the three it named. Until
         // the preview includes it (decisions.md), the line says there is more rather than guess who.
-        return "the shot tells: " + string.Join(", ",
-                   new[] { target, others.Count > 0 ? frame.Names(others) : "" }.Where(part => part.Length > 0))
-               + $"    — and whoever {plan.Target.Name} passes it on to";
+        var bill = "it tells " + string.Join(", ",
+                       new[] { target, others.Count > 0 ? frame.Names(others) : "" }.Where(part => part.Length > 0))
+                   + $" — and whoever {plan.Target.Name} passes it on to";
+
+        foreach (var (line, i) in Wrap(bill, TermsWrap).Select((line, i) => (line, i)))
+            yield return i == 0 ? line : "  " + line;
     }
 
     /// <summary>
@@ -995,23 +1416,26 @@ public sealed class BattleHud(Font font)
     /// direction it was written to catch.
     /// </para>
     /// <para>
-    /// A shot's appraisal is <b>Harm</b> against <b>Spent</b> and nothing else, and both are
-    /// facts about our own soldier and their target's armour, which this screen already quotes
-    /// plate by plate. The other two terms are not shown here and one of them cannot be — see
-    /// the audit in <c>docs/subprojects/view.md</c>.
+    /// <b>Every term, as the scorer kept them.</b> This line used to say <i>harm less spent</i> in so
+    /// many words, which was true when a shot's appraisal was those two and stopped being true when
+    /// Core priced what a shot gives away — <c>Tactician.Appraise</c> now carries it in
+    /// <b>Spared</b>, and what it costs the mission in <b>Prospect</b>. Brief one found it by moving
+    /// the line: on the waystation a shot read <i>worth −57.98 (harm 3.67 less spent 1.25)</i>, a sum
+    /// its own terms could not make. Both new terms are priced from announcements to named listeners
+    /// and the rung the mission is lost at, which the bill line already shows, so there is nothing in
+    /// them contract 3 keeps back.
     /// </para>
     /// </remarks>
-    private static string WorthLine(SandboxFrame frame)
+    private static IEnumerable<string> WorthLines(SandboxFrame frame)
     {
-        if (StagedShot(frame) is not { CanFire: true } plan) return "";
+        if (frame.StagedShot is not { CanFire: true } plan) yield break;
 
         var expect = frame.Battle.Gunnery.Expect(plan);
         var worth = frame.Battle.Tactics.Appraise(plan);
 
-        return $"it achieves: {expect.Vitality:0.0} vitality    {expect.PlateStripped:0.0} plate    "
-               + $"{expect.ShieldStripped:0.0} shield    {expect.DownChance:P0} down    "
-               + $"— worth {worth.Score:+0.00;-0.00} "
-               + $"(harm {worth.Harm:0.00} less spent {worth.Spent:0.00})";
+        yield return $"it achieves {expect.Vitality:0.0} vitality  ·  {expect.PlateStripped:0.0} plate  ·  "
+                     + $"{expect.ShieldStripped:0.0} shield  ·  {expect.DownChance:P0} down";
+        yield return $"  worth {worth.Score:+0.00;-0.00} ({Terms(worth)})";
     }
 
     /// <summary>
@@ -1040,37 +1464,31 @@ public sealed class BattleHud(Font font)
     /// </para>
     /// </remarks>
     /// <remarks>
-    /// One line each once there is more than one, rather than all of them joined. The joined
-    /// version was already the longest line on the screen with two contacts on it and ran clean
-    /// under the turn-order strip with three — which is the strip's own gotcha in
-    /// <c>docs/subprojects/view.md</c>, and the reason the exposure half of this was split out
-    /// into a line of its own once already. Splitting by contact rather than by field is the
-    /// version that keeps working as contacts accumulate, which is the direction a battle only
-    /// ever goes.
+    /// A tag on the contact now, which was always the argument's conclusion: one line per contact in
+    /// the panel was the fix for the joined version running under the strip, and splitting by contact
+    /// was the version that kept working as contacts accumulated. Hung from the contact, the split is
+    /// the map's and there is no list to overflow. A contact believed at a marker hangs from the ghost
+    /// at the marker, where the credence already is; its distance is traced to the marker for the
+    /// reason above.
+    /// <para>
+    /// Whether it can see this soldier goes on the same tag, since <see cref="ViewedLine"/> is naming
+    /// which enemy the exposure is to and that enemy is right here. One nobody of ours has eyes on is
+    /// named on the soldier's own terms instead, as <i>somebody unseen</i>.
+    /// </para>
     /// </remarks>
-    private static IEnumerable<string> SeenLines(SandboxFrame frame, Unit active)
+    private static IEnumerable<string> SeenLines(SandboxFrame frame, Unit active, Threat threat)
     {
         var battle = frame.Battle;
 
-        var threats = battle.Tactics.Known(active).Select(threat =>
-        {
-            var range = battle.Sight.Trace(active.Vantage, threat.Where.Vantage).Distance;
-            var where = threat.EyesOn
-                ? $"{threat.Unit.Name} {range:0.0} m {Held(battle, active, threat.Unit)}"
-                : $"{threat.Unit.Name} believed at {threat.Where.Position} {range:0.0} m "
-                  + $"x{threat.Credence:P0} {Held(battle, active, threat.Unit)}";
+        var range = battle.Sight.Trace(active.Vantage, threat.Where.Vantage).Distance;
+        yield return $"{range:0.0} m  ·  {Held(battle, active, threat.Unit)}";
 
-            return WorstShotAt(battle, threat, active) is { } worst
-                ? $"{where}, worst {battle.Tactics.Worth(worst):0.0} "
-                  + $"({worst.Mode.Name} {worst.Weapon.Name.ToLowerInvariant()} {worst.HitChance:P0})"
-                : $"{where}, no shot on you";
-        }).ToList();
+        yield return WorstShotAt(battle, threat, active) is { } worst
+            ? $"worst on you {battle.Tactics.Worth(worst):0.0} ({worst.Mode.Name} {worst.HitChance:P0})"
+            : "no shot on you";
 
-        if (threats.Count == 0) { yield return "taking seriously: nobody"; yield break; }
-        if (threats.Count == 1) { yield return $"taking seriously: {threats[0]}"; yield break; }
-
-        yield return "taking seriously:";
-        foreach (var threat in threats) yield return "    " + threat;
+        if (threat.EyesOn && frame.Sees(threat.Unit) && battle.Look(threat.Unit, active) is { CanSee: true } sight)
+            yield return $"sees you {sight.Exposure:P0}";
     }
 
     /// <summary>
@@ -1095,7 +1513,7 @@ public sealed class BattleHud(Font font)
         var contact = battle.Awareness.Of(observer.Id, subject.Id);
         var full = battle.Awareness.Model.Threshold(AwarenessState.Engaged);
 
-        return $"[you hold {contact.Detection:0}/{full:0}]";
+        return $"you hold {contact.Detection:0}/{full:0}";
     }
 
     /// <summary>Which enemies have a line to this soldier, and how much of it each can make out.</summary>
@@ -1207,14 +1625,24 @@ public sealed class BattleHud(Font font)
         if (!frame.Reach.TryGetPath(node, out var path) || path.Count == 0) return "";
 
         var loudness = frame.Battle.Loudness(active, path);
-        if (loudness <= 0) return "    silent";
+        if (loudness <= 0) return "";
 
         // Through Names, so a listener nobody of ours has found is somebody unseen. This line used
         // to name every listener in earshot, found or not, which on the waystation read out most of
         // the garrison's names from the first move of the mission. Brief four found it copying it.
-        var listeners = frame.Battle.Awareness.WouldHear(active, node, loudness).Select(word => word.Learner);
+        var listeners = frame.Battle.Awareness.WouldHear(active, node, loudness).Select(word => word.Learner).ToList();
 
-        return $"    noise {loudness:0}, heard by {frame.Names(listeners)}";
+        return listeners.Count == 0 ? "" : $"heard by {frame.Names(listeners)}";
+    }
+
+    /// <summary>How loud the walk to a place would be — one of the cursor's terms, since who hears it is the headline.</summary>
+    private static string LoudnessLine(SandboxFrame frame, NodeId node)
+    {
+        if (frame.Battle.Active is not { } active) return "";
+        if (!frame.Reach.TryGetPath(node, out var path) || path.Count == 0) return "";
+
+        var loudness = frame.Battle.Loudness(active, path);
+        return loudness <= 0 ? "silent" : $"noise {loudness:0}";
     }
 
     /// <summary>
@@ -1298,9 +1726,6 @@ public sealed class BattleHud(Font font)
         if (appraisal.Spent != 0) terms.Add($"spent {appraisal.Spent:0.00}");
         return terms.Count == 0 ? "nothing" : string.Join(", ", terms);
     }
-
-    /// <summary>The staged shot. See <see cref="SandboxFrame.StagedShot"/>, which the map's bill glyph reads as well.</summary>
-    private static ShotPlan? StagedShot(SandboxFrame frame) => frame.StagedShot;
 
     /// <summary>
     /// What the active unit can make out at the cursor, and what is protecting it.
