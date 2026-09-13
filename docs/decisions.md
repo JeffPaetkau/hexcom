@@ -5540,6 +5540,12 @@ that.
 firing mode, as the genre shows cover while aiming. The shield goes under the cursor. This way
 items 7 and 13 never share the ground at the same moment.
 
+**7. Not drawn as fog. Settled with the user.** A haze over unseen ground was proposed and rejected.
+Smoke is an existing rule, a walk-through sight-blocker in `WallProfile` that hides everybody from
+everybody, and fog of war hides nothing from the enemy, so the two must not share a look. A haze
+would also soften the hex edge, bury the ghosts standing in it, and move in captures. The art pass
+renders the fill as unlit, dimmed and desaturated as Invisible, Inc. does, and never as obscured.
+
 ### For View
 
 The section is the brief's material: the fill, the clip on the attention field, the zoom rule, the

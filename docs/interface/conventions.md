@@ -671,6 +671,26 @@ claim.
   The fill tints tile tops and not walls, so the shape of the place should survive. If a capture
   shows it does not, lighten the fill with distance and never remove it.
 
+**Considered and rejected: drawing the fog as fog.** A haze or drifting cloud over unseen ground
+was put forward by the user and argued against, and the user agreed.
+
+- **Smoke is already a rule, and it would look the same.** `WallProfile` carries a sight-blocker you
+  can walk through — smoke, a hedge, a curtain of hanging plastic — which hides everybody from
+  everybody. Fog of war hides nothing from the enemy; it is our side's ignorance. Draw both as
+  haze and a player seeing fog near a hostile will conclude the hostile cannot see through it
+  either. That is contract 3's *whose knowledge it is*, broken by a picture.
+- **The edge has to be crisp** enough to say which hex a ghost stands on, and a haze softens exactly
+  that.
+- **A volume has height, and the ghosts stand inside it.** Kept below prone body height so as not
+  to bury them, it is a tint with a texture.
+- **It moves**, and a capture needs a still frame.
+
+Neither game in the set that draws a fog draws haze: XCOM 2's is blacked out and Invisible, Inc.'s
+is dimmed and desaturated. **So the art pass renders this fill as unlit — dimmed and desaturated,
+Invisible, Inc.'s treatment — and never as obscured.** Desaturation reads as *not seen*, survives
+zooming out, keeps ghosts and tints legible on top, and cannot be mistaken for smoke. The
+greybox's dark tint stands until then.
+
 **Where the stance grade goes, if it is drawn anywhere.** Two games in the set draw a band for
 *seen standing, not crouched*: Shadow Tactics' striped segment of a cone, which a crouching
 character can cross unseen (verified), and Invisible, Inc.'s yellow hidden band. Both put it on
