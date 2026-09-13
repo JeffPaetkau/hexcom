@@ -140,13 +140,25 @@ public sealed class AwarenessTracker
     /// and learned he was there when he learned they were. Entry 087 measured it.
     /// <para>
     /// It is a marker, not a sighting: the place is where they are said to be, and nothing is in
-    /// view. So it stands at the rung given, with a position a soldier will go and check, and it
-    /// decays like any other contact the moment the soldier looks and does not find them — a
-    /// briefing is trusted until the ground says otherwise, and no longer. Only ever raises a
-    /// contact; telling a soldier less than it already knows changes nothing.
+    /// view. So it stands at the rung given, with a position a soldier will go and check — and it
+    /// holds until the soldier has had a line to that place and not found them there, or has
+    /// learned of them by some other channel. A briefing is trusted until the ground says
+    /// otherwise, and no longer. The first version decayed it like a sighting, and a sighting is
+    /// the wrong model: it decays because the man may have moved, and a post is where he was put.
+    /// On the waystation the four posts were gone from the file by round three, before anybody
+    /// had a line to any of them, and the scout walked up to a gate it had been told was manned.
+    /// Entry 091. Only ever raises a contact; telling a soldier less than it already knows
+    /// changes nothing.
+    /// </para>
+    /// <para>
+    /// A briefed marker reads as fresh for as long as it holds, because it has no contact round
+    /// to be stale from. That is deliberate: a post is <em>more</em> reliable as a place than a
+    /// sighting is, not less, and the fight terms priced against it are held in check by the term
+    /// that prices being seen rather than by a discount on the marker.
     /// </para>
     /// </remarks>
-    public void Brief(Unit observer, Unit subject, NodeId place, AwarenessState state)
+    /// <param name="facing">Which way the briefing says they watch, or null if it does not say.</param>
+    public void Brief(Unit observer, Unit subject, NodeId place, AwarenessState state, HexDirection? facing = null)
     {
         var contact = Of(observer.Id, subject.Id);
         var told = Model.Threshold(state);
@@ -154,8 +166,23 @@ public sealed class AwarenessTracker
 
         contact.Detection = told;
         contact.LastKnownPosition = place;
+        contact.LastKnownFacing = facing;
         contact.EyesOn = false;
+        contact.Briefed = true;
     }
+
+    /// <summary>
+    /// Whether a look from where the observer stands reaches the place a briefing named, so that
+    /// not finding anybody there means something.
+    /// </summary>
+    /// <remarks>
+    /// Against a standing man, because that is the most visible thing that could be there and the
+    /// same assumption a marker is priced under. A line to the place from a soldier who is prone
+    /// behind a wall is no line, and the briefing stands.
+    /// </remarks>
+    private bool Checked(Unit observer, Contact contact)
+        => contact.LastKnownPosition is { } place
+           && _battle.Sight.CanSee(observer.Vantage, new UnitPose(place, Stance.Standing, observer.Facing).Vantage);
 
     // ---- the channels ----------------------------------------------------------
 
@@ -185,10 +212,16 @@ public sealed class AwarenessTracker
             {
                 contact.Detection = Math.Min(contact.Detection + gain, Model.Ceiling);
                 contact.LastKnownPosition = subject.Position;
+                contact.LastKnownFacing = subject.Facing;
                 contact.LastContactRound = round;
+                contact.Briefed = false;
             }
-            else
+            else if (!contact.Briefed || Checked(observer, contact))
             {
+                // A look that finds nothing is a turn of forgetting — unless what is held is a
+                // briefing and the look never reached the place it names, in which case nothing
+                // has been learned and nothing is forgotten.
+                contact.Briefed = false;
                 contact.Detection = Math.Max(0, contact.Detection - Model.DecayPerTurn);
             }
         }
@@ -235,7 +268,9 @@ public sealed class AwarenessTracker
 
             contact.Detection = raised;
             contact.LastKnownPosition = place;
+            contact.LastKnownFacing = null;
             contact.LastContactRound = round;
+            contact.Briefed = false;
         }
     }
 
@@ -281,8 +316,10 @@ public sealed class AwarenessTracker
 
             contact.Detection = raised;
             contact.LastKnownPosition = source.Position;
+            contact.LastKnownFacing = source.Facing;
             contact.LastContactRound = round;
             contact.EyesOn = true;
+            contact.Briefed = false;
         }
     }
 
@@ -307,7 +344,9 @@ public sealed class AwarenessTracker
         var contact = Of(target.Id, shooter.Id);
         contact.Detection = Math.Max(contact.Detection, Model.AlertedAt);
         contact.LastKnownPosition = shooter.Position;
+        contact.LastKnownFacing = null;
         contact.LastContactRound = round;
+        contact.Briefed = false;
 
         Relay(target, contact, round);
     }
@@ -414,7 +453,9 @@ public sealed class AwarenessTracker
 
             theirs.Detection = passed;
             theirs.LastKnownPosition = source.LastKnownPosition;
+            theirs.LastKnownFacing = source.LastKnownFacing;
             theirs.LastContactRound = round;
+            theirs.Briefed = false;
         }
     }
 
@@ -467,9 +508,28 @@ public sealed class AwarenessTracker
     /// </para>
     /// </remarks>
     public double WouldNotice(Unit observer, UnitPose from, UnitPose subject)
+        => WouldNotice(observer, from, subject, _battle.Sight.Trace(from.Vantage, subject.Vantage));
+
+    /// <summary>The same, for a trace the caller has already taken.</summary>
+    public double WouldNotice(Unit observer, UnitPose from, UnitPose subject, SightResult sight)
+        => sight.CanSee ? LookGain(observer, from, subject, sight) : 0;
+
+    /// <summary>
+    /// What one look at that soldier would be worth to an observer standing there whose facing
+    /// nobody knows: the look averaged over every way they could be facing.
+    /// </summary>
+    /// <remarks>
+    /// One trace rather than six. Which way the observer faces changes how much attention the
+    /// place gets and nothing about whether it can be seen, so the geometry is asked once and the
+    /// six attentions are arithmetic. This is what a marker is priced with, and it is asked
+    /// hundreds of times per decision.
+    /// </remarks>
+    public double WouldNoticeFacingAnyWay(Unit observer, UnitPose where, UnitPose subject)
     {
-        var sight = _battle.Sight.Trace(from.Vantage, subject.Vantage);
-        return sight.CanSee ? LookGain(observer, from, subject, sight) : 0;
+        var sight = _battle.Sight.Trace(where.Vantage, subject.Vantage);
+        if (!sight.CanSee) return 0;
+
+        return HexDirectionExtensions.All.Average(facing => LookGain(observer, where with { Facing = facing }, subject, sight));
     }
 
     /// <summary>
@@ -499,8 +559,10 @@ public sealed class AwarenessTracker
         var contact = Of(observer.Id, subject.Id);
         contact.Detection = Math.Min(contact.Detection + gain, Model.Ceiling);
         contact.LastKnownPosition = where.Position;
+        contact.LastKnownFacing = where.Facing;
         contact.LastContactRound = round;
         contact.EyesOn = true;
+        contact.Briefed = false;
 
         return gain;
     }

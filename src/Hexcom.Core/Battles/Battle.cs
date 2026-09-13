@@ -201,7 +201,7 @@ public sealed class Battle
         if (about.Side == side) throw new ArgumentException("A side is briefed about the other side.", nameof(about));
 
         foreach (var unit in _units.Values.Where(u => u.Side == side))
-            Awareness.Brief(unit, about, about.Position, state);
+            Awareness.Brief(unit, about, about.Position, state, about.Facing);
     }
 
     /// <summary>

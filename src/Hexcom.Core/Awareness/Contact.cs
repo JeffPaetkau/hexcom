@@ -1,3 +1,4 @@
+using Hexcom.Core.Hexes;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Units;
 
@@ -65,11 +66,41 @@ public sealed class Contact
     /// <summary>Where the observer last had contact. Wrong as soon as the subject moves.</summary>
     public NodeId? LastKnownPosition { get; internal set; }
 
+    /// <summary>
+    /// Which way the subject was facing when last seen, or as the briefing said; null for a
+    /// contact made by ear, which says where and not which way.
+    /// </summary>
+    /// <remarks>
+    /// A marker used to carry a placeholder facing and be priced as if the man could be looking
+    /// any way at all, which is right for a noise and wrong for a post. A briefing says which way
+    /// a sentry watches — <em>watching the way anybody sensible would come</em> — and on the
+    /// waystation the difference is the whole approach: averaged over six facings the road past
+    /// the gate reads as half a look, and read with the facing it is a full one from the front
+    /// and next to nothing from behind. Entry 091. Stale the way the position is stale, and
+    /// discounted the same way.
+    /// </remarks>
+    public HexDirection? LastKnownFacing { get; internal set; }
+
     /// <summary>The round contact was last made, or zero if it never has been.</summary>
     public int LastContactRound { get; internal set; }
 
     /// <summary>Whether the observer can see the subject right now.</summary>
     public bool EyesOn { get; internal set; }
+
+    /// <summary>
+    /// True while this belief rests on the briefing alone: nothing has been seen, heard or passed
+    /// on since, and no look has yet reached the place it names.
+    /// </summary>
+    /// <remarks>
+    /// A briefing names a post, and a post is not a sighting. A sighting decays because the man
+    /// may have moved since; a post is where he was put, and a soldier who has not yet had a line
+    /// to it has learned nothing about whether he is still there. So a briefed contact holds until
+    /// the ground says otherwise — a look that reaches the place, or any channel that reports him
+    /// somewhere else — and only then decays like any other. Measured before this existed: the
+    /// briefing was gone from the contact file by round three and the scout walked up to a gate it
+    /// had been told was manned. Entry 091.
+    /// </remarks>
+    public bool Briefed { get; internal set; }
 
     /// <summary>
     /// The coarse state the rest of the game reasons in. Certainty alone is not enough to be

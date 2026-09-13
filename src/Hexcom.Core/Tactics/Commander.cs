@@ -276,21 +276,54 @@ public sealed class Commander(
     /// </remarks>
     private IReadOnlyList<Act> Run()
     {
-        while (battle.Active is { } unit && unit == _driving)
+        var driving = _driving;
+
+        while (Step() is { } act)
         {
-            if (Next() is not { } order) break;
-
-            var act = Carry(unit, order);
-            _taken.Add(act);
-
             if (_open is not null) return _taken;
             if (!act.Carried) break;
         }
 
-        if (battle.Active == _driving && battle.IsRunning) battle.EndTurn();
+        if (battle.Active == driving && battle.IsRunning) battle.EndTurn();
 
         _driving = null;
         return _taken;
+    }
+
+    /// <summary>
+    /// Pick the best thing the active soldier could do now and do it, without ending the turn:
+    /// one decision of the several a turn is made of. Null when the best thing is nothing, or
+    /// when the turn has passed to somebody else — either way the commander is finished with that
+    /// soldier, and ending the turn is the caller's.
+    /// </summary>
+    /// <remarks>
+    /// The unit of the search, made public so that an instrument can stand between two decisions
+    /// and ask what was on the table — <see cref="Options"/> before, the <see cref="Act"/> after.
+    /// A turn's orders read as a list say what a soldier did; they cannot say what the second move
+    /// was chosen over, and both search faults of entry 039 are about the second move. A commander
+    /// handing windows out can stop here with one open; resolve it with <see cref="Resume"/>
+    /// before stepping again. <see cref="Taken"/> starts afresh with each soldier stepped.
+    /// </remarks>
+    public Act? Step()
+    {
+        if (_open is not null)
+            throw new InvalidOperationException("There is a window open. Resolve it with Resume first.");
+
+        if (_driving is null)
+        {
+            _taken.Clear();
+            _driving = battle.Active;
+        }
+
+        if (battle.Active is not { } unit || unit != _driving || Next() is not { } order)
+        {
+            _driving = null;
+            return null;
+        }
+
+        var act = Carry(unit, order);
+        _taken.Add(act);
+        return act;
     }
 
     /// <summary>
@@ -523,7 +556,7 @@ public sealed class Commander(
             if (!reach.TryGetPath(reached.Node, out var path)) continue;
             var loudness = battle.Loudness(unit, path);
 
-            var worth = _judge.AppraiseMove(unit, arriving, reached.Cost, loudness, threats);
+            var worth = _judge.AppraiseMove(unit, arriving, reached.Cost, loudness, threats, Route(unit, path));
 
             // What the unit would do once it got there, out of what the walk left it. This is
             // ranking only: the order carried out is the move, and the shot is found again next
@@ -620,6 +653,16 @@ public sealed class Commander(
     }
 
     // ---- doing it --------------------------------------------------------------
+
+    /// <summary>
+    /// Every pose the walk passes through, start first, off the same timeline the reaction window
+    /// will read — so the crossing the scorer prices is the crossing a watcher will get its look at.
+    /// </summary>
+    private static List<UnitPose> Route(Unit unit, IReadOnlyList<TraversalLink> path)
+    {
+        var timeline = new CommittedMove(unit.Position, path, unit.Facing, unit.Stance);
+        return timeline.ArrivalTicks.Select(timeline.PoseAt).ToList();
+    }
 
     /// <summary>The pose a unit would be in having walked there. Moving turns you for nothing.</summary>
     private UnitPose Arriving(Unit unit, ReachedNode reached)

@@ -34,4 +34,16 @@ public static class Measurement
     /// <summary>Matches per arm. Paired across arms, so the same seeds are played every time.</summary>
     public static int Seeds =>
         int.TryParse(Environment.GetEnvironmentVariable("HEXCOM_SEEDS"), out var n) && n > 0 ? n : 100;
+
+    /// <summary>
+    /// A file to append a line to as each match finishes, or null for silence.
+    /// </summary>
+    /// <remarks>
+    /// The test runner holds a test's output until the test is over, and a batch is over an hour:
+    /// entry 087 ran three questions in parallel with no way to tell how far the slowest was.
+    /// <c>HEXCOM_PROGRESS=&lt;path&gt;</c> gets a line per match — arm, seed, how long — that a
+    /// person can tail.
+    /// </remarks>
+    public static string? Progress
+        => Environment.GetEnvironmentVariable("HEXCOM_PROGRESS") is { Length: > 0 } path ? path : null;
 }

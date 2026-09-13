@@ -113,9 +113,21 @@ public static class Batch
     public static Reading Run(string arm, int matches, Func<int, Battle> begin, UtilityModel? ours = null, UtilityModel? theirs = null)
     {
         var outcomes = new List<MatchOutcome>(matches);
+        var elapsed = 0.0;
 
         for (var seed = 1; seed <= matches; seed++)
-            outcomes.Add(Match.Play(begin(seed), seed, ours, theirs));
+        {
+            var outcome = Match.Play(begin(seed), seed, ours, theirs);
+            outcomes.Add(outcome);
+            elapsed += outcome.Seconds;
+
+            if (Measurement.Progress is { } path)
+                File.AppendAllText(
+                    path,
+                    $"{arm}: {seed}/{matches} in {outcome.Seconds:0.0} s, {elapsed:0} s so far; " +
+                    $"{outcome.Verdict.ToString().ToLowerInvariant()} r{outcome.Rounds}, looked {(outcome.Confirmed is { } c ? $"r{c}" : "never")}, " +
+                    $"alarm {(outcome.Alarm is { } a ? $"r{a}" : "never")}, shots {outcome.OurShots}/{outcome.TheirShots}{Environment.NewLine}");
+        }
 
         return new Reading(arm, outcomes);
     }

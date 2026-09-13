@@ -99,28 +99,172 @@ public class UnnoticedTests
     }
 
     /// <summary>
-    /// The briefing's own line: if the shift sees you the task is over. Once the sentry holds a
-    /// soldier at the rung, there is nothing left of the mission for that soldier to keep, and
-    /// the term says so — walking into his eye and firing both cost nothing more.
+    /// The mission is judged at departure and a contact decays, so being held at the rung is
+    /// not the end of it. A scout the sentry has at Alerted, with a wall to step behind: the
+    /// term reads him as over the bar and says by how much; a shot at the one man who has him
+    /// costs far less than the same shot would have while he was Unaware; stepping behind the
+    /// wall is worth a round of the sentry forgetting; and stepping up to him is worth less
+    /// than nothing still. The first version clamped the term at the rung and read every one
+    /// of those as nought, which is how entry 091's followers walked to the gate the turn they
+    /// were noticed.
     /// </summary>
     [Fact]
-    public void OnceTheSentryHasYouGoingLoudCostsTheMissionNothingMore()
+    public void OnceTheSentryHasYouAShotCostsLessAndGettingOutOfHisEyeIsWorthTheWayBack()
     {
-        var (battle, sentry, scout) = Posted(AwarenessState.Suspicious, Loadout.Rifleman);
+        var map = new BattleMap().FillDisc(Hex.Zero, 16);
+        map.AddSideWall(Hex.Zero, HexDirection.NorthEast, 0, WallProfile.Solid);
+        var battle = new Battle(map, new HexLayout(size: 1.0), seed: 1);
+
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(4, 0), Slow, HexDirection.SouthWest);
+        var scout = battle.Deploy("Vance", Side.Player, Node(1, 0), Quick, HexDirection.NorthEast, Loadout.Rifleman);
+        battle.SetObjective(new Reconnaissance(Side.Player, Node(-8, 0), [Node(-10, 0)]));
+        battle.Start();
+
+        battle.Awareness.Notice(scout, sentry, UnitPose.Of(sentry), battle.Round);
+        var plan = battle.PlanShot(scout, sentry);
+        Assert.True(plan.CanFire);
+        var unawareShot = battle.Tactics.Blowing(plan);
+        Assert.True(unawareShot < -Objective / 2, $"a shot at a man who has no idea should cost most of the mission, not {unawareShot:0.0}");
 
         // By the one channel that settles it outright: he has been shot at from there.
         battle.Awareness.TakeFireFrom(sentry, scout, battle.Round);
-        Assert.True(battle.Awareness.Of(sentry.Id, scout.Id).State >= AwarenessState.Searching);
+        Assert.True(battle.Awareness.Of(sentry.Id, scout.Id).State >= AwarenessState.Alerted);
 
         var before = UnitPose.Of(scout);
-        var inFront = before with { Position = Along(HexDirection.North, 3) };
+        Assert.True(battle.Tactics.Quiet(scout, before, battle.Tactics.Sensed(scout)) < 0, "over the bar, and the term says how far");
 
-        Assert.Equal(0, battle.Tactics.Quiet(scout, before, battle.Tactics.Sensed(scout)));
-        Assert.Equal(0, battle.Tactics.Keeping(scout, before, inFront), 9);
+        var alertedShot = battle.Tactics.Blowing(plan);
+        Assert.True(alertedShot <= 0);
+        Assert.True(alertedShot > unawareShot, $"once he has you a shot should cost less than {unawareShot:0.0}, not {alertedShot:0.0}");
 
-        var plan = battle.PlanShot(scout, sentry);
-        Assert.True(plan.CanFire);
-        Assert.Equal(0, battle.Tactics.Blowing(plan), 9);
+        var behindTheWall = before with { Position = Node(0, 0) };
+        Assert.Equal(0, battle.Awareness.WouldNotice(sentry, UnitPose.Of(sentry), behindTheWall));
+        var back = battle.Tactics.Keeping(scout, before, behindTheWall);
+        Assert.True(back > 0, $"getting out of his eye should be worth something, not {back:0.0}");
+
+        // Already as found as a man can be, so stepping up to him is worth nothing at best.
+        var upToHim = before with { Position = Node(3, 0) };
+        Assert.True(battle.Tactics.Keeping(scout, before, upToHim) <= 0);
+    }
+
+    /// <summary>
+    /// A reaction window hands anybody with reserve one look at somebody crossing its front, so
+    /// a walk that ends hidden and passes in front of a sentry on the way is scored on the
+    /// crossing and not on the hiding place. The same start, the same end, two ways round: one
+    /// through his front arc, one round behind him.
+    /// </summary>
+    [Fact]
+    public void WalkingAcrossASentrysFrontToAHidingPlaceIsPricedOnTheCrossingNotTheHidingPlace()
+    {
+        var battle = Field();
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Slow, HexDirection.North);
+        var scout = battle.Deploy("Vance", Side.Player, Node(-6, 0), Quick, HexDirection.NorthEast);
+        battle.SetObjective(new Reconnaissance(Side.Player, Node(8, -8), [Node(-10, 0)]));
+        battle.Start();
+
+        battle.Awareness.Notice(scout, sentry, UnitPose.Of(sentry), battle.Round);
+        Assert.Equal(AwarenessState.Unaware, battle.Awareness.Of(sentry.Id, scout.Id).State);
+
+        var before = UnitPose.Of(scout);
+        var after = before with { Position = Node(6, -6) };
+        UnitPose Step(int q, int r) => before with { Position = Node(q, r) };
+
+        Assert.True(battle.Awareness.AttentionOn(sentry, before.Position) <= battle.Awareness.Model.RearAcuity, "the start is behind him");
+        Assert.True(battle.Awareness.AttentionOn(sentry, after.Position) <= battle.Awareness.Model.RearAcuity, "and so is the end");
+        Assert.Equal(1.0, battle.Awareness.AttentionOn(sentry, Node(-3, 4)), 9);
+        Assert.Equal(1.0, battle.Awareness.AttentionOn(sentry, Node(0, 4)), 9);
+
+        var acrossHisFront = new[] { before, Step(-3, 4), Step(0, 4), Step(3, 1), after };
+        var roundBehindHim = new[] { before, Step(-3, -3), Step(0, -6), Step(3, -6), after };
+
+        var crossing = battle.Tactics.Keeping(scout, before, after, route: acrossHisFront);
+        var behind = battle.Tactics.Keeping(scout, before, after, route: roundBehindHim);
+
+        Assert.True(crossing < -Objective / 2, $"crossing his front should cost most of the mission, not {crossing:0.0}");
+        Assert.True(behind > -Objective / 10, $"going round behind him should cost a sliver of it, not {behind:0.0}");
+        Assert.True(crossing < behind);
+    }
+
+    /// <summary>
+    /// A briefing names a post, and a post is not a sighting. A soldier with no line to the
+    /// place it names has learned nothing by looking and forgets nothing; one who has had a line
+    /// to it and found nobody there holds the contact as any other, and it fades.
+    /// </summary>
+    [Fact]
+    public void ABriefingHoldsUntilTheSoldierHasHadALineToThePostAndFoundNobodyThere()
+    {
+        var map = new BattleMap().FillDisc(Hex.Zero, 16);
+        map.AddSideWall(Hex.Zero, HexDirection.NorthEast, 0, WallProfile.Solid);
+        var battle = new Battle(map, new HexLayout(size: 1.0), seed: 1);
+
+        // The sentry stands behind the wall from anybody up the north-east axis.
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Slow, HexDirection.South);
+        var blind = battle.Deploy("Vance", Side.Player, Node(8, 0), Quick, HexDirection.SouthWest);
+        var looker = battle.Deploy("Orsini", Side.Player, Node(4, 0), Quick, HexDirection.South);
+
+        // Told the truth, with no line to it; and told a post in plain view with nobody at it.
+        battle.Awareness.Brief(blind, sentry, Node(0, 0), AwarenessState.Searching, HexDirection.South);
+        battle.Awareness.Brief(looker, sentry, Node(4, -4), AwarenessState.Searching, HexDirection.South);
+        battle.Start();
+
+        Assert.False(battle.CanSee(blind, sentry));
+        Assert.False(battle.CanSee(looker, sentry));
+
+        for (var round = 1; round <= 3; round++)
+        {
+            battle.Awareness.Observe(blind, round);
+            battle.Awareness.Observe(looker, round);
+        }
+
+        var held = battle.Awareness.Of(blind.Id, sentry.Id);
+        Assert.True(held.Briefed);
+        Assert.Equal(AwarenessState.Searching, held.State);
+        Assert.Equal(1.0, battle.Tactics.Known(blind).Single().Credence);
+
+        var checkedOut = battle.Awareness.Of(looker.Id, sentry.Id);
+        Assert.False(checkedOut.Briefed);
+        Assert.True(checkedOut.State < AwarenessState.Searching, $"looked at and found empty, the post should be fading, not {checkedOut.State}");
+    }
+
+    /// <summary>
+    /// A briefing says which way a post watches, and a marker keeps it: the road he faces is a
+    /// full look and the ground behind him next to nothing. A marker made by ear has no facing,
+    /// and the same two places are priced alike.
+    /// </summary>
+    [Fact]
+    public void ABriefedPostCarriesTheWayHeWatchesAndAMarkerMadeByEarDoesNot()
+    {
+        var battle = Field();
+        var sentry = battle.Deploy("Kessel", Side.Hostile, Node(0, 0), Slow, HexDirection.North);
+        var scout = battle.Deploy("Vance", Side.Player, Along(HexDirection.South, 9), Quick, HexDirection.North);
+        battle.SetObjective(new Reconnaissance(Side.Player, Along(HexDirection.North, 8), [Along(HexDirection.South, 12)]));
+        battle.Brief(Side.Player, sentry, AwarenessState.Searching);
+        battle.Start();
+
+        var post = battle.Tactics.Known(scout).Single();
+        Assert.True(post.FacingKnown);
+        Assert.Equal(HexDirection.North, post.Where.Facing);
+
+        var inFront = UnitPose.Of(scout) with { Position = Along(HexDirection.North, 3) };
+        var behind = UnitPose.Of(scout) with { Position = Along(HexDirection.South, 3) };
+
+        var facedInFront = battle.Tactics.Quiet(scout, inFront, battle.Tactics.Sensed(scout));
+        var facedBehind = battle.Tactics.Quiet(scout, behind, battle.Tactics.Sensed(scout));
+        Assert.True(facedInFront < 0, $"in front of a post that watches this way should be over the bar, not {facedInFront:0.00}");
+        Assert.True(facedBehind > 0.8, $"behind it should be nearly whole, not {facedBehind:0.00}");
+
+        // Then he is heard from there, which says where and not which way.
+        battle.Awareness.Hear(sentry, 60, battle.Round);
+        var heard = battle.Tactics.Known(scout).Single();
+        Assert.False(heard.FacingKnown);
+        Assert.False(battle.Awareness.Of(scout.Id, sentry.Id).Briefed);
+
+        // Alike but for the rounds ahead, which differ by how far each spot is from the job.
+        var heardInFront = battle.Tactics.Quiet(scout, inFront, battle.Tactics.Sensed(scout));
+        var heardBehind = battle.Tactics.Quiet(scout, behind, battle.Tactics.Sensed(scout));
+        Assert.True(Math.Abs(heardInFront - heardBehind) < 0.1, $"{heardInFront:0.00} and {heardBehind:0.00} should be priced alike");
+        Assert.True(heardInFront > facedInFront);
+        Assert.True(heardBehind < facedBehind);
     }
 
     /// <summary>

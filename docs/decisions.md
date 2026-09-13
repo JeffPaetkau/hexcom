@@ -4924,3 +4924,199 @@ nobody of ours can see into. It is the map and brief five's out of scope said so
 here and not fixed; `SandboxFrame.Withheld` is the gate it wants. The strip still shows a *found*
 hostile's reserve and held arc, as it always has — a fact about their soldier rather than their
 knowledge, and left alone.
+
+## 091 — The followers were tagged crossing the gate, the term went dead at the rung and the briefing had faded; fixed, the squad stops at the edge of the watched ground
+**2026-09-12** · **Raised by** core · **For** core, content, view, master · **Status** open — the finding under *The finding* is the head of Core's next brief; item 1 under *For Content* is a question about the ground
+
+Entry 087 handed this brief a hypothesis: four posts in the contact file at full credence are four
+things a commander hunts, and the quiet term loses to the fight terms scored against them. The
+brief asked for a transcript of a briefed match before anything was changed. The transcript said
+the hypothesis was wrong in every part, found three faults nobody had guessed at, and once they
+were fixed found the limit underneath them.
+
+### The instrument
+
+`Measured/Transcript.cs`, `HEXCOM_TRANSCRIPT=<seed>`: one waystation match, briefed unless
+`HEXCOM_BLIND=1`, every decision of ours printed with the six options it was chosen from and,
+for a move, the two halves a total cannot show — what the pose keeps of the mission and what the
+ground is worth toward it — plus the two moves that would have gone furthest toward the job
+whatever they cost, and whose eye each ends in. It stands between decisions through a new public
+`Commander.Step`, which is one decision without the turn ending; `TakeTurn` is `Step` until
+nothing and then `EndTurn`, so nothing about a turn changed. A turn log says what a soldier did.
+Only this could say what the second move was chosen over, which is where every fault below lived.
+
+### What the transcript said, seed 1, briefed, at the shipped value
+
+**Nobody hunts a marker, at any point.** In round one all three find hidden ground at the bridge
+— keep +31 to +101 against progress of +11 to +26, and the shot a marker would open is +5 at most.
+With the term alive the fight terms are dwarfed, and no follower ever walked toward a marker for
+the shot on it. Three other things set them fighting, in this order:
+
+1. **The crossing.** Round two, Bekker hops three hexes within the hidden ground at the bridge.
+   The hop crosses the gate sentry's front; Cobb has a full reserve, takes the one look a reaction
+   window gives a reactor at the first step of the route it can see that is not behind it, and
+   goes from nought to Searching in that look — a look at twelve metres in the front arc is
+   fifty-one points. The term had priced the arrival, which was hidden, at nothing: it did not
+   know a route had a middle. Orsini was tagged the same way in round one.
+2. **The clamp.** The term read as nought for every pose the moment anybody held a soldier at the
+   rung, on the line *if the shift sees you the task is over*. Orsini in round two, with Cobb at
+   Searching on him: keep +0.0 on every move, so he walks toward the house. Bekker, after the
+   crossing: keep +0.0, so the same turn he walks to the gate, and next turn into the compound,
+   and in round four takes the look at Engaged and shoots the roof. Staying in the eye, stepping
+   out of it and firing all cost the same nothing, so the fight was free — not because a soldier
+   counted himself seen, but because the term could not see that a contact decays and the mission
+   is judged at departure.
+3. **The briefing that faded.** A briefed marker at Searching is fifty points and decay is fifteen
+   a turn, so it was out of `Known` after one look and out of `Sensed` after two — before anybody
+   had a line to any post. By round four Vance's only contact was the roof, marked at a crater by
+   the rule of entry 039, and he walked from the bridge to the hex beside the gate sentry with
+   keep +0.0, having forgotten the gate was manned.
+
+### What changed, and the two design questions answered
+
+- **A move is priced on the crossing.** `Tactician.Quiet` takes the route — every pose the walk
+  passes through, off the same `CommittedMove` timeline the window reads — and for each sensed
+  enemy prices the one look the window would give it, at the step `ReactionWindow` picks, with
+  the look it takes. Every sensed enemy is assumed to have the reserve the look needs, because the
+  walker cannot know, and on this ground every sentry does. `Commander.Moves` passes the route;
+  `AppraiseMove` without one prices the arrival alone, for tests.
+- **The slope carries on past the rung**, to the ceiling. Past the bar the share is how many
+  rounds of hiding the recovery would take; stepping out of the eye is worth one of them, and a
+  shot at the man who has you costs what it hands everybody else. Entry 087's third question —
+  whether the term should read the squad's worst rather than the soldier's own — is answered no:
+  the choice was not what set the followers fighting, the clamp and the crossing were, and the
+  recovery it preserves is now priced rather than merely permitted.
+- **The rounds ahead are counted.** After the first two, the squad found the edge of the watched
+  ground in round one and held there for thirty rounds, because a single look at Suspicious — a
+  quarter of the mission by the term, and taken back by one round of hiding by the rules — cost
+  more than any walk earns. Being in view is a rate and being out of it is a rate, so the arrival
+  look is a look a round for as long as the pose is held, a hidden arrival a round of forgetting
+  per round, both over a geometric count of the rounds until the job is done or the night is out
+  at `FutureDiscount`; a one-off crossing is netted against the forgetting that follows it.
+  `Ahead` reads `Objective.Owed` and `NightLeft` at the list allowance. No new dial.
+- **A briefing holds.** `Contact.Briefed` marks one and `Observe` will not decay it until the
+  observer has had a line to the place it names, or another channel has reported the man; every
+  site that refreshes a contact clears the flag. Entry 087's second question — a place to keep
+  out of the eye of, a threat to hunt, or a marker that starts stale — is answered: the first two
+  at once, at full credence, and that needed no rule, because the quiet term outweighs the hunt
+  for as long as it is alive. What needed a rule is that a post is not a sighting.
+- **A marker carries a facing.** `Contact.LastKnownFacing` from a look, a flash or a briefing,
+  copied by a relay, cleared by a sound and by being shot at; `Threat.FacingKnown` says which.
+  Found because with facings averaged over six the priced crossing came out at half a look and
+  the decay credit absorbed it, while Cobb's real look did not: the road past the gate is a full
+  look from the front and next to nothing from behind, and half is the wrong price for both.
+  `WouldNoticeFacingAnyWay` traces once and averages six attentions, where the old average
+  traced six times.
+- **`Tactician.Foreseen`** is the per-enemy prediction the term takes the worst of, public so an
+  interface can say whose eye a move walks into; `Batch.Run` writes a line per match to
+  `HEXCOM_PROGRESS`; `AwarenessTracker.Brief` takes the facing and `Battle.Brief` passes the
+  deploy line's. Five new tests and one rewritten; 381 in Core, all green.
+- **The sight solver remembers its traces.** Pricing the crossing traced every step of every
+  route against every sensed enemy and a briefed match went to two hundred seconds, most of it
+  the same lines over again; `SightSolver.Trace` now keeps every pair of vantages it has answered
+  until the map's revision changes, and the same match is about ten. Entry 083's *profile before
+  optimising* was honoured in the only way that mattered: the transcript's timing said where the
+  time went before anything was cached.
+
+### What the batch said
+
+The same instrument, the same seeds, the same four arms as entry 087's briefed question, a
+hundred seeds an arm. Each cell reads 087's figure, then this one; the pairing is exact.
+
+| | looked (round) | alarm out | our shots / theirs | ours down / theirs | got out | rounds | achieved |
+|---|---|---|---|---|---|---|---|
+| blind, value 120 | 100 (r2) → 95 (r5) | 68 → 78 | 0.2 / 3.2 → 0.2 / 4.9 | 0.85 / 0.00 → 0.75 / 0.37 | 2.15 → 2.10 | 4.2 → 12.7 | 0 → **15** |
+| **briefed, value 120** | 98 (r4) → **0** | 84 → **0** | 3.0 / 4.1 → 0 / 0 | 0.76 / 0.50 → 0 / 0 | 2.16 → 0 | 13.5 → 31 | 0 → 0 |
+| blind, value 30 | 100 (r4) → 95 (r5) | 91 → 80 | 2.7 / 4.6 → 0.5 / 4.9 | 0.78 / 1.01 → 0.72 / 0.58 | 2.13 → 1.85 | 10.2 → 21.3 | 2 → **13** |
+| briefed, value 30 | 94 (r8) → 0 | 91 → 0 | 3.5 / 7.5 → 0 / 0 | 0.79 / 1.24 → 0 / 0 | 1.73 → 0 | 22.2 → 31 | 3 → 0 |
+
+The worst rung any hostile held on each soldier, at the shipped value, matches of a hundred:
+
+| | unaware | suspicious | searching | alerted | engaged |
+|---|---|---|---|---|---|
+| Vance, briefed | **92** | 0 | 8 | 0 | 0 |
+| Orsini, briefed | 16 | 0 | **84** | 0 | 0 |
+| Bekker, briefed | **100** | 0 | 0 | 0 | 0 |
+| Vance, blind | 0 | 0 | 0 | 28 | 72 |
+| Orsini, blind | 0 | 7 | 41 | 16 | 36 |
+| Bekker, blind | 3 | 0 | 29 | 4 | 64 |
+
+- **Briefed, the followers are fixed, and nobody goes in.** Not a shot, not a throw, not an alarm
+  in a hundred matches at either value. Bekker is never registered at all; Vance in eight;
+  Orsini's eighty-four at Searching are the gate sentry's first two looks at the post he deploys
+  on, twenty-six metres out in the front arc, before he has moved — he then finds the hidden
+  ground and is never seen again. The look is taken in none. Every match runs to the clock with
+  the squad on the ground it found in round one.
+- **Blind, the squad now wins one match in seven, and nobody asked it to.** Fifteen of a hundred
+  achieved at the shipped value where 083 and 087 had none, thirteen at 30 where there were two.
+  The squad walks in and is seen exactly as before — Engaged in ninety-one — and then, with the
+  recovery priced past the rung, hides until the contacts decay and walks out under Suspicious;
+  matches run thirteen rounds where they ran four. The acceptance test of the last two briefs,
+  *more than a handful in a hundred*, is met by the arm nobody expected, and by waiting.
+- **What that says about the rules.** Entry 082 recorded the quiet kill as the best move in the
+  game because everything a departed soldier held goes with him. The batch has found the second
+  best, which is to be forgotten: a contact decays fifteen a round, so a soldier held at Alerted
+  is under Suspicious after four quiet rounds, and a garrison that does not move never goes to
+  look. The garrison that moves is milestone 2's; but `DecayPerTurn` is now load-bearing for the
+  mission in a way its size does not advertise, and it has never been measured.
+- **The value is still saturated**, as 083 and 087 found and for the same reason: the term is a
+  share of the objective and moves both sides of the trade at once. 120 and 30 differ in the
+  fight and not in the approach.
+- **Grenades at the gate.** Theirs down 0.37 at the shipped value where it was nought, off a
+  fifth of a shot a match: the blind squad throws — first aimed at Cobb sixty-one times, Cobb
+  down first in thirty-three. The bang is priced at the crater and the man it drops takes what he
+  held with him, which is the quiet kill by other means.
+
+Twenty-three minutes for the four arms at a hundred seeds. With the sight solver remembering its
+traces a briefed match that hides all night is about eight seconds and a blind one about one.
+
+### The finding: the quiet way round goes away before it comes back
+
+From the hidden ground at the bridge, every move toward the house either crosses the gate
+sentry's front — a crossing of fifty to a hundred and twenty-six in the term's currency — or is a
+stride four men hear, and the transcript's best move from there is backwards. A route that does
+neither — round the compound rather than past the gate, if the ground allows one at all, which
+is Content's question below — leaves the direct line, and `Objective.Progress` is a gradient
+along the graph's listed cost, so every hop on such a route reads as away from the house. A search one step deep will not take the first hop of a route
+whose first hop is away. That is the blade-carrier limit for the third time — a knife two turns
+off, a hunt past one move, and now an approach that leaves the direct line — and this time it is
+the mission: the waystation's brief says *in by the drain*, and the drain is where the quiet way
+ends.
+
+The fix is not in the term, which is now honest, and not a deeper search, which would cost
+combinatorially. It is the field: price the objective's approach, per soldier, through what that
+soldier believes is watched, so that the slope itself runs the quiet way and the one-step search
+follows it. That is Core's next brief, and build order 08.
+
+### For Content
+
+1. **Whether the quiet way exists.** Cobb faces south-west with a front arc of a hundred and
+   twenty degrees and a peripheral one of two hundred, twenty-five metres out from the gate on the
+   road the squad deploys on; the transcript says the whole west and south approach is inside one
+   or the other. A ground test in the harness could say whether a route from the west road to the
+   drain exists that never enters his front arc and is not heard from the gate, and how long it
+   is. If none does, the deployment decides the mission before it starts, and *the way anybody
+   sensible would come* is every way.
+2. The `known` grammar of 087 stands. `Battle.Brief` now hands on the facing the deploy line
+   already states, so the grammar needs no facing of its own.
+
+### For View
+
+- `Tactician.Foreseen(unit, pose, Sensed(unit), noise, route)` says what each enemy will hold on
+  one of your soldiers after a move — a certainty figure about your own side, which contract 3
+  allows. A move preview could say whose eye it walks into. Not asked for; noted.
+- `Commander.Step` is *what would you do here, do just that*, one decision at a time.
+
+### For Master
+
+- Build order 07 is done and 08 is named in `design.html`; the brief is in `core.md`.
+- **Being forgotten is now the second best move in the game**, and it wins the waystation blind
+  one match in seven. Whether that is the stealth game working — a squad that goes to ground
+  and waits is a real play, and the rules say the departure reading is what counts — or a decay
+  dial too generous for a garrison that never goes to look, is a design question for the
+  roadmap: milestone 2's moving garrison answers half of it, and a measurement of `DecayPerTurn`
+  the other half.
+- Entry 087's status can read: the followers' half is resolved by 091; the grammar half is still
+  Content's.
+
+---
