@@ -35,13 +35,39 @@ reaching into `src/`.
 
 ---
 
-## The job — Master's to set
+## The job — brief five, the strip and the pause say only what the player knows
 
-**Brief four has landed and nothing in this file names the next brief.** Brief one still waits on
-the captures in `../interface/captures.md`; the order of the rest of `../interface/briefs.md` is
-Master's, and a session pointed here should ask rather than pick. Brief four left one thing for
-Core rather than for View — the shot preview's missing relay, entry 086 — and when Core lands it the
-bill line's last clause becomes names instead of a caveat, which is a small View job of its own.
+Branch `view/order-strip`. Take a worktree.
+
+**Read brief five and its amendment in `../interface/briefs.md`, and nothing else from that
+file** — *Five — the strip, and the pause, say only what the player knows*, and *Amending Five*.
+The amendment corrects what the brief is departing from and promotes the banner; read both.
+
+**Why now, while the captures are still coming in.** The build leaks the thing the game is about.
+`BattleHud.DrawOrderStrip` still gives a hostile nobody has found a slot reading `?`, which tells a
+player that an enemy exists, how many there are, and roughly when each acts. Entry 064 decided in
+the user's words that an unfound hostile holds no slot at all, and entry 065 decided the pause gets
+one banner per stretch of hostile activity. Neither is built — the comment above the `?` still calls
+it an open question. **Both decisions are already made, so no capture blocks this job.**
+
+**The one figure a capture would change: the banner's minimum dwell.** The brief argues 0.6 to 1.2
+seconds. Captures **C7** and **C17** in `../interface/captures.md` would replace that with a measured
+figure. Put the dwell in a named setting rather than inline, pick inside the argued range, and say
+in the commit it is provisional against those two. Nothing else in the brief waits on a picture.
+
+**Carry the amendment's correction into the commit and the entry.** Zero of the ten reference games
+draw a per-unit initiative strip, so the dropped slot is a choice in a place the genre is silent, not
+a departure from a standard. The banner, by contrast, is the one turn-order element with positive
+evidence anywhere — XCOM 2 and Into the Breach both draw it.
+
+**How to know it worked.** The brief's own: a player can say whose go is next and when the round
+turns over, and **cannot count the enemy squad from the strip, the banner, or anywhere else**. A round
+in which an unfound hostile takes a turn shows the banner, leaves something to read if it made a
+sound, and nothing if it did not. Plus a capture of a round with an unfound hostile in it, checked
+against a round without one, showing the strip is identical.
+
+**Out of scope.** What is drawn on the map, which is brief two. Brief one, which waits on the
+captures. The relay line under the shot bill, which waits on Core's entry 086 work.
 
 **What the next View brief inherits from three, six and four, so it is not re-argued.**
 
