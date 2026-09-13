@@ -130,6 +130,14 @@ public static class SandboxPalette
     /// </remarks>
     public static readonly Color AimColor = new("ffffff", 0.9f);
 
+    /// <summary>An action bar slot that would do something if pressed, and one that would say no.</summary>
+    /// <remarks>
+    /// Both on the bar's own plate, so the difference is a step of lightness and not a colour: colour on
+    /// the bar is kept for the edge that says which state landed, and a dimmed slot still shows its price.
+    /// </remarks>
+    public static readonly Color SlotReady = new("38414e");
+    public static readonly Color SlotDim = new("15181c");
+
     /// <summary>
     /// Things: ground, walls, bodies. Lit, opaque, coloured by their vertices.
     /// </summary>

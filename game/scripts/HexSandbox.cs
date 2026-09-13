@@ -18,7 +18,7 @@ namespace Hexcom.Game;
 
 /// <summary>
 /// The greybox: a battle as boxes on the ground the rules describe. Click to move whoever is up,
-/// space to pass the turn, and watch the order strip decide who goes next.
+/// order the rest from the action bar, and watch the order strip decide who goes next.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -170,6 +170,21 @@ public partial class HexSandbox : Node3D
     /// on the shot because the shot is what announces you.
     /// </remarks>
     private Unit? _aim;
+
+    /// <summary>
+    /// The fire mode picked from the bar for the aim, or null for the weapon's default. Read through
+    /// <see cref="SandboxFrame.Mode"/>; cleared wherever <see cref="_aim"/> is.
+    /// </summary>
+    /// <remarks>
+    /// <b>Ability first, and the one-click habit kept.</b> The genre picks the ability, then the target,
+    /// then confirms — so a fire slot enters the mode in that mode, and pointing it at somebody else
+    /// keeps it. A click on a hostile with no slot picked still aims, in the default, and the default's
+    /// slot is lit, so the gesture brief three settled survives and the bar says what it did.
+    /// </remarks>
+    private FireMode? _mode;
+
+    /// <summary>The action bar slot under the pointer, by id, or null when the pointer is on the map.</summary>
+    private string? _pointing;
 
     /// <summary>What the last committed move got shot at with, if anything. Debug readout only.</summary>
     private string _lastWindow = "";
@@ -585,6 +600,8 @@ public partial class HexSandbox : Node3D
         _handed = null;
         _chooser = 0;
         _aim = null;
+        _mode = null;
+        _pointing = null;
         _lastWindow = "";
         _hover = null;
         _theirGo = null;
@@ -778,6 +795,7 @@ public partial class HexSandbox : Node3D
         // see whether the shot gets better is part of deciding to take it, and the shot line
         // re-plans from the new stance.
         _aim = null;
+        _mode = null;
 
         // An order of ours ends whatever was being said about their last go: the banner, if it was
         // still dwelling, and the account of what we perceived, which is *since you last acted*.
@@ -928,7 +946,7 @@ public partial class HexSandbox : Node3D
             _scenario, _camera.ShowsTileDetail,
             Open, _chooser, _byHand, _mission, _briefing, OutOfTime,
             _omniscient, _knowledge, _instruments.Visible, _aim,
-            _theirGo, _perceived, _found, _details, _termsFolded);
+            _theirGo, _perceived, _found, _details, _termsFolded, _mode, _pointing);
 
     // ---- actions ---------------------------------------------------------------
     //
@@ -1155,7 +1173,7 @@ public partial class HexSandbox : Node3D
     /// but a script that could name a hidden hostile would be a way of finding out where one
     /// is, and the whole point of the picture is that a player cannot.
     /// </remarks>
-    private string FireAt(Unit quarry)
+    private string FireAt(Unit quarry, FireMode? mode = null)
     {
         if (Open is not null) return "a reaction window is open";
         if (_battle.Active is null) return "nobody is up";
@@ -1164,7 +1182,7 @@ public partial class HexSandbox : Node3D
         var shooter = _battle.Active;
         var before = HeldOn(shooter);
 
-        var outcome = _battle.Fire(quarry);
+        var outcome = _battle.Fire(quarry, mode);
 
         // Who actually learned something, read straight off the contact files either side of the
         // shot and before anybody else acts — the other half of the check brief four set, whose
@@ -1174,7 +1192,8 @@ public partial class HexSandbox : Node3D
 
         return outcome is null
             ? $"no shot at {quarry.Name}"
-            : $"fired at {quarry.Name}: " + (outcome.AnyHit ? $"hit for {outcome.TotalDamage}" : "missed")
+            : $"fired {(mode ?? shooter.Weapon.DefaultMode).Name} at {quarry.Name} for {outcome.ApSpent} AP: "
+              + (outcome.AnyHit ? $"hit for {outcome.TotalDamage}" : "missed")
               + $"; told {told}";
     }
 
@@ -1213,7 +1232,11 @@ public partial class HexSandbox : Node3D
     /// hostile means that one; a player without means <i>somebody</i>, and the nearest is the
     /// answer that needs no explaining. <c>Tab</c> is there for when it is the wrong one.
     /// </remarks>
-    private string AimAt(Unit? quarry)
+    /// <param name="mode">
+    /// The fire mode to aim in, from a bar slot. Null keeps the mode of an aim already up — pointing a
+    /// snap at somebody else is still a snap — and otherwise aims in the weapon's default.
+    /// </param>
+    private string AimAt(Unit? quarry, FireMode? mode = null)
     {
         if (Open is not null) return "a reaction window is open";
         if (_battle.Active is not { } shooter) return "nobody is up";
@@ -1227,6 +1250,9 @@ public partial class HexSandbox : Node3D
         if (!quarry.IsHostileTo(shooter)) return $"{quarry.Name} is not a hostile";
         if (!frame.Sees(quarry)) return $"nobody of ours can see {quarry.Name}";
 
+        if (mode is not null) _mode = mode;
+        else if (frame.Aim is null) _mode = null;
+
         _aim = quarry;
 
         // Keep the target on screen, and only if it is not already — the same test FollowActive
@@ -1239,12 +1265,40 @@ public partial class HexSandbox : Node3D
         }
 
         HoverChanged();
+        return Aiming();
+    }
 
-        var plan = _battle.PlanShot(shooter, quarry);
+    /// <summary>What the staged aim is, as a script step reports it: the mode, the odds, the price and who it would tell.</summary>
+    private string Aiming()
+    {
+        var frame = Frame();
+        if (frame.Aim is not { } quarry || frame.StagedShot is not { } plan) return "not aiming at anybody";
+
         return plan.CanFire
-            ? $"aiming at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP; "
-              + $"would tell {Frame().Names(_battle.WouldAnnounce(plan).Select(word => word.Learner).OrderBy(unit => unit.Name))}"
-            : $"aiming at {quarry.Name}: {plan.Refusal}";
+            ? $"aiming {plan.Mode.Name} at {quarry.Name}: {plan.HitChance:P0} for {plan.ApCost} AP; "
+              + $"would tell {frame.Names(_battle.WouldAnnounce(plan).Select(word => word.Learner).OrderBy(unit => unit.Name))}"
+            : $"aiming {plan.Mode.Name} at {quarry.Name}: {plan.Refusal}";
+    }
+
+    /// <summary>
+    /// A fire slot: enter the firing mode in that mode, or change the mode of the aim already up, or —
+    /// on the slot already lit — back out.
+    /// </summary>
+    /// <remarks>
+    /// The lit slot backs out rather than fires, and that is the safe way round: a double tap on a
+    /// number key is a player who has changed their mind or fumbled, and the reference set is
+    /// unanimous that the gesture which cancels never spends a point. The confirm stays where brief
+    /// three put it — space, enter, or a second click on the body.
+    /// </remarks>
+    private string PressFire(FireMode mode)
+    {
+        var frame = Frame();
+        if (frame.Aim is null) return AimAt(null, mode);
+        if (frame.Mode == mode) return BackOut();
+
+        _mode = mode;
+        HoverChanged();
+        return Aiming();
     }
 
     /// <summary>Aim at the next hostile in sight, nearest first, wrapping round.</summary>
@@ -1278,12 +1332,13 @@ public partial class HexSandbox : Node3D
     /// </remarks>
     private string ConfirmShot()
     {
-        if (Frame().Aim is not { } quarry) return "not aiming at anybody";
+        var frame = Frame();
+        if (frame.Aim is not { } quarry) return "not aiming at anybody";
 
-        var plan = _battle.PlanShot(_battle.Active!, quarry);
+        var plan = _battle.PlanShot(_battle.Active!, quarry, frame.Mode);
         if (!plan.CanFire) return $"no shot at {quarry.Name}: {plan.Refusal}";
 
-        return FireAt(quarry);
+        return FireAt(quarry, frame.Mode);
     }
 
     /// <summary>
@@ -1300,11 +1355,13 @@ public partial class HexSandbox : Node3D
         if (Frame().Aim is { } was)
         {
             _aim = null;
+            _mode = null;
             HoverChanged();
             return $"stopped aiming at {was.Name}";
         }
 
         _aim = null;
+        _mode = null;
 
         if (_briefing)
         {
@@ -1337,6 +1394,14 @@ public partial class HexSandbox : Node3D
             return;
         }
 
+        // A click on the bar is a slot pressed and never a click on the ground under it. Pressing a
+        // slot is not backing out either, so it comes before the aim's click-anywhere-else rule.
+        if (_hud.SlotAt(GetViewport().GetMousePosition()) is { } slot)
+        {
+            PressSlot(slot);
+            return;
+        }
+
         var frame = Frame();
         var hostile = frame.HoveredUnit is { } unit && _battle.Active is { } shooter && unit.IsHostileTo(shooter)
             ? unit
@@ -1352,6 +1417,89 @@ public partial class HexSandbox : Node3D
 
         if (hostile is not null) AimAt(hostile);
         else if (NodeUnderMouse() is { } target) MoveTo(target);
+    }
+
+    /// <summary>
+    /// Press a slot on the action bar — by its id, its key or its name, first match in that order —
+    /// and do what it says, or say why not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The one way in for the key, the click and the script.</b> Each of the three used to call the
+    /// action methods directly, which is fine while the only thing between them is a keycode; with a
+    /// slot drawn that says <i>ready</i> or <i>needs 15</i>, the press has to be refused by the same
+    /// answer the slot was drawn from, or the bar is a picture of a different rule from the one the
+    /// key obeys. So this reads <see cref="SandboxFrame.Bar"/> and refuses what it shows refused, and
+    /// every slot still ends in the one method per action that touches the battle.
+    /// </para>
+    /// <para>
+    /// A name is ambiguous where a fire mode and an arc share one — <c>standard</c> — and resolves to
+    /// the fire mode, which comes first on the bar; <c>arc:standard</c> says the other.
+    /// </para>
+    /// </remarks>
+    private string PressSlot(string wanted)
+    {
+        var frame = Frame();
+        var bar = frame.Bar;
+
+        if (FindSlot(bar, wanted) is not { } slot)
+            return Open is not null ? "a reaction window is open"
+                : _battle.Active is null ? "nobody is up"
+                : bar.Count == 0 ? "nothing to order now"
+                : $"no slot {wanted} on the bar";
+
+        var active = _battle.Active!;
+        if (!slot.Affordable) return $"{slot.Name} needs {slot.Price} points, {active.Name} has {active.ActionPoints}";
+        if (slot.Reason is { } no) return $"{slot.Name}: {no}";
+
+        var colon = slot.Id.IndexOf(':');
+        var (kind, argument) = colon < 0 ? (slot.Id, "") : (slot.Id[..colon], slot.Id[(colon + 1)..]);
+
+        switch (kind)
+        {
+            case "fire":
+                return active.Weapon.Mode(argument) is { } mode ? PressFire(mode) : $"{active.Weapon.Name} has no {argument}";
+
+            case "arc":
+                // The lit arc stops watching; any other declares, replacing the one held.
+                return slot.Lit ? HoldArc(null) : HoldArc(OverwatchArc.All.First(arc => arc.Name == argument));
+
+            case "stance":
+                return SetStance(ActionBar.NextStance(active.Stance));
+
+            case "turn":
+                return FaceTo(active.Facing.Rotate(argument == "left" ? 1 : -1));
+
+            case "ambush":
+                if (active.Ambush is null) return ArmAmbush();
+                return (frame.Aim ?? frame.HoveredUnit) is { } prey ? SpringAmbushOn(prey) : "aim at somebody to spring it on";
+
+            case "shout":
+                return ActionBar.ShoutSubject(frame, active) is { } about ? ShoutAbout(about) : "nobody to call in";
+
+            case "leave":
+                return LeaveTheField();
+
+            case "end":
+                return EndTurn();
+
+            default:
+                return $"the bar has no action {slot.Id}";
+        }
+    }
+
+    /// <summary>A slot by id, else by key, else by name, case-insensitively.</summary>
+    private static BarSlot? FindSlot(IReadOnlyList<BarSlot> bar, string wanted)
+        => bar.FirstOrDefault(s => s.Id.Equals(wanted, System.StringComparison.OrdinalIgnoreCase))
+           ?? bar.FirstOrDefault(s => s.Key.Equals(wanted, System.StringComparison.OrdinalIgnoreCase))
+           ?? bar.FirstOrDefault(s => s.Name.Equals(wanted, System.StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Point at a slot, or at nothing, and redraw the line pointing shows.</summary>
+    private void PointAt(string? slot)
+    {
+        if (slot == _pointing) return;
+        _pointing = slot;
+        _readouts.QueueRedraw();
     }
 
     private string SetStance(Stance stance)
@@ -1665,10 +1813,45 @@ public partial class HexSandbox : Node3D
                 return Named(step.Argument) is { } quarry ? FireAt(quarry) : $"no unit called {step.Argument}";
 
             case "--aim":
-                // Bare, it is the 1 key: the hovered hostile or the nearest. Named, it is a
-                // left-click on that soldier, without having to --hover one first.
-                if (step.Argument is null) return AimAt(null);
-                return Named(step.Argument) is { } target ? AimAt(target) : $"no unit called {step.Argument}";
+            {
+                // Bare, it aims the way a click on a body does: the hovered hostile or the nearest, in
+                // the default mode. Named, it is a left-click on that soldier, without having to
+                // --hover one first. NAME:MODE is a fire slot pressed and then the click, which is
+                // the mode-first gesture in one step; :MODE alone is the slot pressed.
+                var parts = (step.Argument ?? "").Split(':');
+                FireMode? mode = null;
+                if (parts.Length > 1)
+                {
+                    if (_battle.Active?.Weapon.Mode(parts[1]) is not { } picked)
+                        return $"{_battle.Active?.Weapon.Name ?? "nobody's weapon"} has no mode called {parts[1]}";
+                    mode = picked;
+                }
+
+                if (parts[0].Length == 0) return mode is null ? AimAt(null) : PressSlot($"fire:{mode.Name}");
+                if (Named(parts[0]) is not { } target) return $"no unit called {parts[0]}";
+
+                // The slot's price is checked as pressing it would; pressing it outright would back
+                // out of an aim already in that mode, which is not what naming a target asks for.
+                if (mode is not null && FindSlot(Frame().Bar, $"fire:{mode.Name}") is { Affordable: false } dear)
+                    return $"{dear.Name} needs {dear.Price} points, {_battle.Active!.Name} has {_battle.Active.ActionPoints}";
+                return AimAt(target, mode);
+            }
+
+            case "--slot":
+                // A slot pressed, by id, key or name — the key or the click, as a step.
+                return step.Argument is null ? "wanted a slot: its id, its key or its name" : PressSlot(step.Argument);
+
+            case "--point":
+            {
+                // The pointer resting on a slot, so the line it shows can be photographed.
+                if (step.Argument is null) return "wanted a slot: its id, its key or its name";
+                if (FindSlot(Frame().Bar, step.Argument) is not { } slot) return $"no slot {step.Argument} on the bar";
+
+                _hover = null;
+                HoverChanged();
+                PointAt(slot.Id);
+                return $"pointing at {slot.Name}: {slot.Hint}";
+            }
 
             case "--next-target":
                 return NextTarget();
@@ -1852,7 +2035,12 @@ public partial class HexSandbox : Node3D
                     break;
                 }
 
-                var node = NodeUnderMouse();
+                // The bar sits over the map, so a pointer on a slot is on the slot and not on the tile
+                // under it: no cursor tag, no path preview, and no shot staged at whoever stands there.
+                var slot = _hud.SlotAt(motion.Position);
+                PointAt(slot);
+
+                var node = slot is null ? NodeUnderMouse() : null;
                 if (node != _hover) { _hover = node; HoverChanged(); }
                 break;
             }
@@ -1935,20 +2123,25 @@ public partial class HexSandbox : Node3D
 
         switch (key)
         {
-            // Space confirms whatever is up, which is the window's convention as well: it resolves
-            // a window, it fires an aim, and with neither it ends the turn. A player who pressed
-            // 1 and then space has read a line that says space fires.
+            // Space and enter confirm whatever is up and do nothing else: they resolve a window and
+            // fire an aim, and with neither they do nothing at all. They used to end the turn with
+            // nothing to confirm, which put the pass on the key a player presses to fire — one aim
+            // dropped a moment early and the go was gone. Entry 094, item 10; XCOM 2's binding.
             case Key.Space or Key.Enter:
                 if (Frame().Aim is not null) ConfirmShot();
-                else EndTurn();
                 break;
 
-            // The number keys are an action bar with one slot in it, and it is live only outside
-            // a window — AnswerKey has already taken them if one is open, and every action refuses
-            // while one is anyway, so a number never has two meanings at once. The window keeps its
-            // numbers because the readout prints them and --place NAME:N takes them.
-            case Key.Key1:
-                AimAt(null);
+            // Ending the go has a key of its own and a slot of its own, and nothing else is on either.
+            case Key.Backspace:
+                PressSlot("end");
+                break;
+
+            // The number keys are the bar's fire modes and arcs, and they are live only outside a
+            // window — AnswerKey has already taken them if one is open, and the bar is empty while
+            // one is, so a number never has two meanings at once. The window keeps its numbers
+            // because the readout prints them and --place NAME:N takes them.
+            case >= Key.Key1 and <= Key.Key6:
+                PressSlot(((int)(key - Key.Key1) + 1).ToString());
                 break;
 
             case Key.Tab:
@@ -1980,35 +2173,11 @@ public partial class HexSandbox : Node3D
                 Recalculate();
                 break;
 
-            case Key.C:
-                if (_battle.Active is { } unit)
-                    SetStance(unit.Stance switch
-                    {
-                        Stance.Standing => Stance.Crouching,
-                        Stance.Crouching => Stance.Prone,
-                        _ => Stance.Standing,
-                    });
-                break;
-
-            case Key.Z or Key.X:
-                if (_battle.Active is { } turner) FaceTo(turner.Facing.Rotate(key == Key.Z ? 1 : -1));
-                break;
-
-            case Key.V:
-                // Cycle none, narrow, standard, wide. Each declaration costs a point, which
-                // is honest: changing your mind about what you are watching is not free.
-                if (_battle.Active is { } watchman) HoldArc(NextArc(watchman.Overwatch?.Arc));
-                break;
-
-            case Key.B:
-                // Arm against the arc already being watched, or spring it if already armed.
-                if (_battle.Active is not { } trapper) break;
-                if (trapper.Ambush is null) ArmAmbush();
-                else if (HoveredUnit() is { } prey) SpringAmbushOn(prey);
-                break;
-
-            case Key.T:
-                LeaveTheField();
+            // The letters on the bar press their slots, so a key refuses exactly what the slot is
+            // drawn refusing. V is gone: it cycled four arcs at a point each with nothing saying which
+            // one had landed, which is item 6, and 4, 5 and 6 are the three arcs as slots.
+            case Key.C or Key.Z or Key.X or Key.B or Key.T or Key.L:
+                PressSlot(key.ToString());
                 break;
 
             case Key.M:
@@ -2022,14 +2191,6 @@ public partial class HexSandbox : Node3D
 
             case Key.P:
                 FoldTerms();
-                break;
-
-            case Key.L:
-                // Whoever is under the cursor, or the contact this soldier is taking most
-                // seriously if the cursor is on nobody.
-                if (HoveredUnit() is { } named) ShoutAbout(named);
-                else if (_battle.Active is { } caller && _battle.Tactics.Known(caller).FirstOrDefault() is { } threat)
-                    ShoutAbout(threat.Unit);
                 break;
 
             case Key.Pageup:
@@ -2180,15 +2341,6 @@ public partial class HexSandbox : Node3D
         }
     }
 
-    /// <summary>The next arc in the cycle, or null to stop holding one.</summary>
-    private static OverwatchArc? NextArc(OverwatchArc? held)
-    {
-        if (held is null) return OverwatchArc.All[0];
-
-        var index = OverwatchArc.All.ToList().IndexOf(held);
-        return index >= 0 && index + 1 < OverwatchArc.All.Count ? OverwatchArc.All[index + 1] : null;
-    }
-
     /// <summary>
     /// Which region of which tile the cursor is over, by casting a ray from the camera through
     /// it and asking which floor on the current storey it lands on.
@@ -2198,7 +2350,4 @@ public partial class HexSandbox : Node3D
         var (origin, direction) = _camera.Ray(GetViewport().GetMousePosition());
         return SandboxGeometry.Pick(_battle.Map, origin, direction, _layer);
     }
-
-    /// <summary>The unit under the cursor, if the picture is allowed to show one there.</summary>
-    private Unit? HoveredUnit() => Frame().HoveredUnit;
 }

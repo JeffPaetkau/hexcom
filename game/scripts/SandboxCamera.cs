@@ -306,11 +306,17 @@ public sealed class SandboxCamera
     /// is where the map sits rather than how big it is. So the view looks this far past the middle,
     /// which lifts the whole map, and stands a little further back than it did (<see cref="FitDistance"/>).
     /// Measured on the waystation and the compound, where the near rim now stops at the legend's edge.
+    /// <para>
+    /// <b>0.16 and 0.9 until the action bar</b>, which took the bottom edge and lifted the legend onto
+    /// it, about sixty pixels. At the old figures the waystation's rim ran under the legend again and
+    /// showed through between it and the bar; measured again on both maps at 1600 by 900, the rim now
+    /// stops some fifteen pixels short of the legend and the far edge still clears the top block.
+    /// </para>
     /// </remarks>
-    private const float FitLead = 0.16f;
+    private const float FitLead = 0.28f;
 
-    /// <summary>How much of the over-estimated distance <see cref="Fit"/> keeps. It was 0.8; see <see cref="FitLead"/>.</summary>
-    private const float FitDistance = 0.9f;
+    /// <summary>How much of the over-estimated distance <see cref="Fit"/> keeps. It was 0.8, then 0.9; see <see cref="FitLead"/>.</summary>
+    private const float FitDistance = 1.0f;
 
     /// <summary>
     /// Pull back until the whole map is on screen at once.
