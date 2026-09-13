@@ -87,10 +87,83 @@ public class MissionFileTests
     }
 
     [Fact]
-    public void TheMissionCarriesItsOwnClock()
+    public void TheMissionCarriesItsOwnClockAndTheObjectiveReadsIt()
     {
-        Assert.Equal(30, MissionLibrary.Load("waystation").Rounds);
+        var mission = MissionLibrary.Load("waystation");
+        Assert.Equal(30, mission.Rounds);
+
+        // Entry 082 put the clock on the objective. The file's thirty rounds used to be applied by
+        // whatever ran the battle; now it is the objective's own deadline, and the alarm half is
+        // left unwritten because the waystation's grace is the playtest's to set.
+        var objective = mission.Begin(seed: 1).ObjectiveOf(Side.Player)!;
+        Assert.Equal(new Deadline(Round: 30), objective.Stop);
     }
+
+    [Fact]
+    public void TheSquadIsToldWhatItsBriefingSaysAboutThePostsAndNoMore()
+    {
+        var battle = MissionLibrary.Load("waystation").Begin(seed: 1);
+        var held = (string ours, string theirs)
+            => battle.Awareness.ReadoutFor(Unit(battle, ours).Id, Unit(battle, theirs).Id).State;
+
+        // Three posts stated flat, and the barn after "the last two reports disagree".
+        foreach (var soldier in new[] { "Vance", "Orsini", "Bekker" })
+        {
+            Assert.Equal(AwarenessState.Searching, held(soldier, "Cobb"));
+            Assert.Equal(AwarenessState.Searching, held(soldier, "Teague"));
+            Assert.Equal(AwarenessState.Searching, held(soldier, "Marek"));
+            Assert.Equal(AwarenessState.Suspicious, held(soldier, "Hollis"));
+        }
+
+        // A briefing is one way: nobody told the garrison anything.
+        Assert.Equal(AwarenessState.Unaware, held("Cobb", "Vance"));
+    }
+
+    [Fact]
+    public void WhatASideIsToldIsAMarkerAtThePostTheSoldierIsActuallyStandingOn()
+    {
+        var battle = Parse(
+            "deploy Cobb hostile -5,0 facing sw kit beamer",
+            "told player alerted Cobb").Begin();
+
+        var contact = battle.Awareness.ReadoutFor(Unit(battle, "Vance").Id, Unit(battle, "Cobb").Id);
+        Assert.Equal(AwarenessState.Alerted, contact.State);
+        Assert.Equal(new NodeId(new Hex(-5, 0), 0), contact.LastKnownPosition);
+    }
+
+    [Fact]
+    public void ToldAboutSomebodyNotYetDeployedIsRefusedAtTheLine()
+    {
+        var error = Assert.Throws<MissionFormatException>(
+            () => Parse("told player searching Cobb", "deploy Cobb hostile -5,0"));
+        Assert.Contains("Nobody called Cobb has been deployed yet", error.Message);
+    }
+
+    [Fact]
+    public void ASideCannotBeToldAboutItsOwnOrToldNothing()
+    {
+        var own = Assert.Throws<MissionFormatException>(() => Parse("deploy Bekker player -19,-3", "told player searching Bekker"));
+        Assert.Contains("told about the other side", own.Message);
+
+        var nothing = Assert.Throws<MissionFormatException>(() => Parse("deploy Cobb hostile -5,0", "told player unaware Cobb"));
+        Assert.Contains("Leave the soldier off", nothing.Message);
+    }
+
+    [Fact]
+    public void TheClockCanStopAMissionWhenTheAlarmGoesOut()
+    {
+        var both = Parse("rounds 20 after-alarm 2");
+        Assert.Equal(new Deadline(Round: 20, AfterAlarm: 2), both.Stop);
+
+        var alarmOnly = Parse("rounds after-alarm 0");
+        Assert.Equal(new Deadline(AfterAlarm: 0), alarmOnly.Stop);
+        Assert.Contains("rounds after-alarm 0", MissionWriter.Write(alarmOnly));
+
+        var twice = Assert.Throws<MissionFormatException>(() => Parse("rounds 20", "rounds after-alarm 2"));
+        Assert.Contains("one 'rounds' line", twice.Message);
+    }
+
+    private static Unit Unit(Battle battle, string name) => battle.Units.Single(u => u.Name == name);
 
     // ---- what a mission becomes ------------------------------------------------------
 

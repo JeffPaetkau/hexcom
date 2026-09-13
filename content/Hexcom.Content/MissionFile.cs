@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Hexcom.Core.Awareness;
+using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
 using Hexcom.Core.Hexes;
 using Hexcom.Core.Maps;
@@ -16,10 +17,10 @@ namespace Hexcom.Content;
 /// <para>
 /// A mission file names a map and adds the four things entry 030 says a map deliberately cannot
 /// hold — somewhere to start with a facing, somewhere to end that is a named place, something to
-/// do, and when it stops — plus the squads. Six statements do it: <c>mission</c> and <c>map</c>
+/// do, and when it stops — plus the squads. Eight statements do it: <c>mission</c> and <c>map</c>
 /// say what this is and where; <c>brief</c> is the six-part briefing; <c>place</c> names ground;
-/// <c>deploy</c> puts a soldier on it; <c>objective</c> gives a side something to do; and
-/// <c>rounds</c> is the clock.
+/// <c>deploy</c> puts a soldier on it; <c>told</c> hands a side what the briefing says about the
+/// other; <c>objective</c> gives a side something to do; and <c>rounds</c> is the clock.
 /// </para>
 /// <para>
 /// The same primitives-plus-shorthand discipline as the map format, and here there is very
@@ -30,8 +31,8 @@ namespace Hexcom.Content;
 /// </para>
 /// <para>
 /// Order matters exactly where it should. A <c>place</c> has to be declared before the
-/// <c>objective</c> that names it, the same rule a <c>profile</c> has in a map; nothing else
-/// cares. The grammar is written out in <c>content/README.md</c>.
+/// <c>objective</c> that names it, and a soldier has to be deployed before a <c>told</c> line
+/// names him — the same rule a <c>profile</c> has in a map; nothing else cares. The grammar is written out in <c>content/README.md</c>.
 /// </para>
 /// </remarks>
 public static class MissionFile
@@ -98,9 +99,12 @@ public static class MissionFile
         private readonly Dictionary<string, IReadOnlyList<TileAddress>> _places = new(StringComparer.Ordinal);
         private readonly List<ObjectiveOrder> _objectives = [];
 
+        private readonly List<Intelligence> _told = [];
+
         private string? _name;
         private string? _map;
         private int? _rounds;
+        private int? _afterAlarm;
 
         public Mission Read()
         {
@@ -117,7 +121,9 @@ public static class MissionFile
                 _deployments,
                 _places,
                 _objectives,
-                _rounds);
+                _rounds,
+                _afterAlarm,
+                _told);
         }
 
         protected override ContentFormatException Error(string message)
@@ -130,22 +136,81 @@ public static class MissionFile
             {
                 case "mission": _name = string.Join(' ', c.Rest()); break;
                 case "map": _map = c.Next("a map name"); c.End(); break;
-                case "rounds": _rounds = Rounds(c); break;
+                case "rounds": Rounds(c); break;
                 case "brief": Brief(c); break;
                 case "place": Place(c); break;
                 case "deploy": Deploy(c); break;
+                case "told": Told(c); break;
                 case "objective": ObjectiveStatement(c); break;
                 default: throw Error($"Unknown statement '{keyword}'.");
             }
         }
 
-        private int Rounds(Cursor c)
+        /// <summary>
+        /// The clock: <c>rounds 30</c>, <c>rounds after-alarm 3</c>, or both on one line.
+        /// </summary>
+        /// <remarks>
+        /// One statement for both halves of <see cref="Deadline"/> because they are one clock —
+        /// whichever comes first stops the mission — and a file that wrote them on two lines
+        /// would read as two limits.
+        /// </remarks>
+        private void Rounds(Cursor c)
         {
-            var rounds = c.Int("a number of rounds");
-            c.End();
-            if (rounds <= 0) throw Error("A round limit has to be at least one round.");
-            return rounds;
+            if (_rounds is not null || _afterAlarm is not null)
+                throw Error("The mission already has a clock. Write both halves on one 'rounds' line.");
+
+            if (c.Peek is { } first && int.TryParse(first, out _))
+                _rounds = AtLeastOne(c.Int("a number of rounds"), "A round limit");
+
+            while (!c.Done)
+            {
+                var option = c.Next("'after-alarm'");
+                if (option != "after-alarm")
+                    throw Error($"Unknown clock option '{option}'. A clock is 'rounds N', 'rounds after-alarm N', or both.");
+                _afterAlarm = c.Int("a number of rounds after the alarm");
+                if (_afterAlarm < 0) throw Error("The alarm cannot stop a mission before it goes out.");
+            }
+
+            if (_rounds is null && _afterAlarm is null)
+                throw Error("A clock needs a number of rounds, an 'after-alarm N', or both.");
         }
+
+        private int AtLeastOne(int rounds, string what)
+            => rounds > 0 ? rounds : throw Error($"{what} has to be at least one round.");
+
+        /// <summary>
+        /// What one side is told about the other: <c>told player searching Cobb Teague Marek</c>.
+        /// </summary>
+        /// <remarks>
+        /// The side told, the rung, and then the soldiers by their deployed names — a line per
+        /// rung, because that is how a briefing states its certainty. A soldier has to be deployed
+        /// before he can be told about, the same rule that puts a place before the objective that
+        /// names it. See <see cref="Intelligence"/> for why this is not an option on <c>deploy</c>.
+        /// </remarks>
+        private void Told(Cursor c)
+        {
+            var side = c.Enum<Side>("the side that is told: player, hostile or neutral");
+            var rung = c.Enum<AwarenessState>("how firmly: suspicious, searching, alerted or engaged");
+            if (rung == AwarenessState.Unaware)
+                throw Error("Telling a side nothing is not telling it. Leave the soldier off the 'told' lines instead.");
+
+            var names = c.Rest();
+            if (names.Length == 0) throw Error($"The {Lower(side)} side is told {Lower(rung)} about nobody.");
+
+            foreach (var name in names)
+            {
+                var soldier = _deployments.FirstOrDefault(d => d.Name == name)
+                              ?? throw Error($"Nobody called {name} has been deployed yet. A soldier comes before what anybody is told about him.");
+                if (soldier.Side == side)
+                    throw Error($"{name} is on the {Lower(side)} side. A side is told about the other side.");
+                if (_told.Any(t => t.Told == side && t.About == name))
+                    throw Error($"The {Lower(side)} side has already been told about {name}.");
+
+                _told.Add(new Intelligence(side, name, rung, LineNumber));
+            }
+        }
+
+        private static string Lower<T>(T value) where T : struct, Enum => value.ToString()!.ToLowerInvariant();
 
         /// <summary>
         /// One line of the briefing. Repeating a part adds a line to it, which is how prose that

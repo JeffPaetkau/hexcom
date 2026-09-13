@@ -199,8 +199,24 @@ rounds 30
 ```
 
 `map` is required and names a `.hexmap` by library name. `mission` is the title, and falls back
-to the file name. `rounds` is the mission clock — no rule reads it yet, so whatever runs the
-battle applies it.
+to the file name.
+
+## The clock
+
+```
+rounds 30
+rounds after-alarm 3
+rounds 30 after-alarm 3
+```
+
+When the mission stops. A number is the last round it runs to; `after-alarm N` is how many rounds
+it outlives the alarm going out — the first moment somebody with a set passes on a contact at
+Alerted. Whichever comes first wins, and a squad still on the field after it has *abandoned* the
+mission rather than failed it. Both halves go on one line, because they are one clock.
+
+It is written onto every objective the file builds, as `Objective.Stop` — entry 082 put the clock
+on the objective rather than the battle, since the same ground carries a different hour under a
+different briefing.
 
 ## The briefing
 
@@ -252,6 +268,37 @@ and plate would be a balance change hiding in content, which is the same line th
 declare a hedge but not redefine what `low` means. Whether that line is in the right place is an
 open question in [`../docs/subprojects/content.md`](../docs/subprojects/content.md).
 
+## What a side is told
+
+```
+told player searching  Cobb Teague Marek
+told player suspicious Hollis
+```
+
+`told <side> <rung> <name...>` — the side that is told, how firmly, and who about, by deployed
+name. Each becomes a marker in every contact file on that side before the first turn, at the post
+the soldier is really standing on, through `Battle.Brief`. It decays like any other contact the
+moment somebody looks and does not find him: a briefing is trusted until the ground says
+otherwise.
+
+This is the presence part of the briefing handed to the rules, and without it a squad plays blind
+— entry 087 watched the scout walk its first turn into the view of a sentry the prose describes.
+The briefing names **posts** and this names **people**, for the same reason `deploy` does: a
+marker has to be on somebody.
+
+- **One line per rung**, because that is how a briefing states its certainty: three posts stated
+  flat, and the fourth the reports disagree about.
+- **A post not told is not known.** That is how a file says the reports missed somebody. It cannot
+  say somebody is where he is not, because a marker is put where the soldier stands — being wrong
+  about a post would be a different mission.
+- **A soldier is deployed before anybody is told about him**, and a side is told about the other
+  side. `unaware` is refused: telling a side nothing is leaving the name off.
+
+It is a statement of its own rather than an option on `deploy` because a deployment is a fact
+about the garrison and this is a belief the squad holds; putting it on the garrison's line would
+put both sides' knowledge in one statement, and would have to guess which side is told once there
+are three.
+
 ## Objectives
 
 ```
@@ -301,7 +348,7 @@ so the writer prints nothing rather than a second home for a balance number.
 ## Lowering
 
 `MissionWriter.Write` spells everything out: every place an explicit list of tiles, every facing,
-role, kit and threshold. There is only one piece of shorthand in the format — `place` takes the
-map's shapes — so the claim this proves is mostly about the *defaults*, which are the part of any
+role, kit and threshold, and one `told` line per soldier. There are only two pieces of shorthand in
+the format — `place` takes the map's shapes and `told` takes several names — so the claim this proves is mostly about the *defaults*, which are the part of any
 format that quietly stops meaning what the reader thinks. The two exceptions are `within` and
 `effort`, for the reason given above: they are the rules' defaults, not the format's.

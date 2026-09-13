@@ -27,14 +27,33 @@ public static class MissionWriter
 
         if (mission.Name is not null) sb.Append("mission ").AppendLine(mission.Name);
         sb.Append("map ").AppendLine(mission.MapName);
-        if (mission.Rounds is { } rounds) sb.Append("rounds ").AppendLine(rounds.ToString(CultureInfo.InvariantCulture));
+        if (mission.Stop is not null)
+        {
+            sb.Append("rounds");
+            if (mission.Rounds is { } rounds) sb.Append(' ').Append(rounds.ToString(CultureInfo.InvariantCulture));
+            if (mission.AfterAlarm is { } grace) sb.Append(" after-alarm ").Append(grace.ToString(CultureInfo.InvariantCulture));
+            sb.AppendLine();
+        }
 
         WriteBriefing(mission, sb);
         WritePlaces(mission, sb);
         WriteDeployments(mission, sb);
+        WriteTold(mission, sb);
         WriteObjectives(mission, sb);
 
         return sb.ToString();
+    }
+
+    /// <summary>One soldier per line: a <c>told</c> line naming several is the one shorthand it has.</summary>
+    private static void WriteTold(Mission mission, StringBuilder sb)
+    {
+        if (mission.Told.Count == 0) return;
+        sb.AppendLine();
+
+        foreach (var told in mission.Told)
+            sb.Append("told ").Append(Lower(told.Told))
+                .Append(' ').Append(Lower(told.Rung))
+                .Append(' ').AppendLine(told.About);
     }
 
     private static void WriteBriefing(Mission mission, StringBuilder sb)
