@@ -4720,3 +4720,33 @@ four. A hundred seeds of the briefed question is most of an hour on its own.
    And the briefing grammar is Content's, above.
 
 ---
+
+## 088 — The captures are in: one Opus session reads all eleven, and C8 cannot be taken
+**2026-09-12** · **Raised by** master, for the user · **For** interface · **Status** resolved
+
+The user captured eleven of the twelve entries above the cut line in `interface/captures.md`: sixteen
+files across five games, four of them clips. The twelfth, **C8, cannot be taken**. It asks for Gotcha
+Again's tile icons in XCOM 2, and the user's copy is the GOG build, which cannot load Workshop mods.
+What C8 would have settled is the glyph vocabulary for brief four's tile warning, which is built and
+marked provisional and stays so. Published screenshots of the mod could answer it at the grade
+*verified*, never *observed*, and the brief says not to pretend otherwise.
+
+**Pass two runs as one session, overriding the one-game-per-session rule in `interface.md`.** That
+rule was an argument about volume — twenty to forty shots a game do not compress, and two games'
+worth in one context is the wrong price. The inbox holds one to four files a game. Five parallel
+sessions would each pay a cold start to read a handful of pictures, and every one of them would
+have to edit `conventions.md` to clear a provisional mark and `captures.md` to strike an entry: the
+shared-file collision entry 072 barred for the documentary pass. The rule survives for a round that
+has a game's worth of pictures per game.
+
+**It runs on Opus, where the documentary pass ran on Sonnet, and the difference is permission.** The
+documentary pass was forbidden to recommend, which is what kept it inside Sonnet's competence
+(entry 072). This pass is allowed to settle a recommendation, and the first one it settles is the
+gesture brief one is built around. Brief one is the next View job and the largest; a weak call about
+it costs more in the build than the model saves in the read.
+
+**It may append to `briefs.md`, narrowly.** Two provisional marks block brief one — C1 on *show me
+the terms*, C10 on whether the reserve's cliff goes on the move range — and both were captured. The
+session appends a *Settling One* block after *Amending One* saying what the pictures showed. That is
+the amendment shape, so nothing in a brief is rewritten, and it is what lets Master promote brief one
+without a provisional mark on its central decision.

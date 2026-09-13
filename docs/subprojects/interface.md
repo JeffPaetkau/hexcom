@@ -155,11 +155,30 @@ than sampling at a fixed rate.
 
 ## The job — pass two: the pictures, against a list that is already ranked
 
-Branch `interface/captures`. Take a worktree. **This job cannot start until the user has captured
-something** — it is a fill, and the material comes from the keyboard rather than from a search.
-Check `reference-inbox/` before anything else; if it is empty, say so and stop rather than
-researching around the gap, because a documentary claim upgraded by more documentary reading is
-not what this pass is for.
+Branch `interface/captures`. Take a worktree. **One session, on Opus, for all eleven.**
+
+**The captures are in, and three things about them override what follows.** Entry 088 has why.
+
+- **Eleven of the twelve above the line, and C8 is not coming.** The user's XCOM 2 is the GOG
+  build, which cannot load Workshop mods, so Gotcha Again's tile icons cannot be photographed.
+  Strike C8 as *not capturable from the user's copy* rather than answered. What it would have
+  settled is the glyph vocabulary for brief four's tile warning, which is built and marked
+  provisional, and stays that way. Do not substitute published screenshots for it and tag them
+  observed.
+- **One session, not one per game.** The rule below was written for twenty to forty shots a game.
+  The inbox holds sixteen files across five games, one to four each, and five parallel sessions
+  would each have to edit `conventions.md` and `captures.md` — the shared-file collision entry 072
+  barred. Read all five folders in one context.
+- **Four of the sixteen are clips** — `invisible-inc/C7.mp4`, `phantom-brigade/C9.mp4`,
+  `warhounds/C4a.mp4`, and whatever the XCOM 2 notes point at. Pull the frames each entry in
+  `captures.md` names with `ffmpeg`, by the full path in *The inbox and the shots*, and never
+  sample a clip at a fixed rate. Read `xcom2/C1-notes.md` first: it is the user's own account of
+  what they saw, and it outranks any reading of the frames that disagrees with it.
+
+**Why Opus and not Sonnet, which the documentary pass ran on.** That pass was forbidden to
+recommend. This one is permitted to change a recommendation, and the first it changes is the
+gesture brief one is built around — the next thing View builds. A weak call here costs more in the
+View session that follows than the model saved.
 
 **What it is.** The ten reference files were written from published material and carry no
 `observed` tag. [../interface/captures.md](../interface/captures.md) ranks the 89 gap questions
@@ -185,8 +204,7 @@ inbox and the crop mechanism are in *The inbox and the shots* above, and they ar
   claim's tag.** Upgrading `remembered` to **observed** and naming the shot is the whole job.
   Rewriting a heading's prose because a picture suggested a better sentence is not, and neither is
   adding a finding a shot did not produce.
-- **One game per session.** Ten files open at once was the synthesis's job and it was expensive;
-  a fill needs one file and one folder of shots.
+- **One session for this round, overriding the old one-game rule** — see the head of this job.
 - **A shot that contradicts a claim is the best outcome and needs saying loudly.** Correct the
   claim in place, tag it **observed**, and append an entry to `../decisions.md` if the correction
   reaches a brief or a recommendation. Two such corrections came out of the documentary pass and
@@ -195,13 +213,21 @@ inbox and the crop mechanism are in *The inbox and the shots* above, and they ar
   full screen: it is smaller and it is better evidence, because it records which part of the
   picture was being read.
 
-**Out of scope.** Recommending anything, which is `conventions.md`'s and is done. Rewriting a
-brief, which is the amendment block's shape and belongs to whoever writes the next synthesis.
+**Settling brief one is in scope, narrowly.** Two provisional marks stand between brief one and
+View: C1, on the gesture for *show me the terms*, in both `conventions.md` and *Amending One*; and
+C10, on whether the reserve's cliff belongs on the move range. Where a capture settles one, drop
+or correct the mark in `conventions.md` and **append** a short *Settling One* block after *Amending
+One* in `briefs.md` saying what the picture showed and what the brief now builds. Appended, never
+rewritten, on the same reasoning as the amendments. The mark on C15 is below the line and stays.
+
+**Out of scope.** Recommending anything a capture did not settle. Rewriting a brief's text, which
+is the amendment block's shape.
 Capturing a game nobody owns. Researching a question a browser settles — the mod changelogs,
 subscriber counts and patch notes that captures.md deliberately excluded stay in their own files'
 gap lists.
 
-**How to know it worked.** A recommendation in `conventions.md` that said **provisional** now
+**How to know it worked.** Brief one can be promoted to View with no provisional mark left on its
+gesture or its move range. A recommendation in `conventions.md` that said **provisional** now
 either says nothing or says something different, and names the shot. A gap entry that was answered
 is struck rather than deleted. And somebody reading one reference file can tell, per claim,
 whether it came from a page or from a picture.
