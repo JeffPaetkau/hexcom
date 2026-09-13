@@ -160,7 +160,9 @@ public sealed class BattleView
     /// and it would be wrong: the ground's colour depends on the active soldier's reach, so it
     /// changes on every pass anyway, and one path that rebuilds everything is one path that
     /// cannot leave a stale mesh behind. Measured on the waystation the whole rebuild is a few
-    /// milliseconds, well inside the sight sweep that precedes it.
+    /// milliseconds, well inside the sight sweep that precedes it. The overlay has its own entry
+    /// point as well, because the firing mode changes it without changing anything true — see
+    /// <see cref="RebuildOverlay"/> — but this still rebuilds it every time.
     /// </remarks>
     public void Rebuild(SandboxFrame frame)
     {
@@ -168,30 +170,68 @@ public sealed class BattleView
 
         var ground = new MeshBuilder();
         var structure = new MeshBuilder();
-        var bodies = new MeshBuilder();
         var ghosted = new MeshBuilder();
-        var overlay = new MeshBuilder();
 
         BuildTiles(frame, ground, ghosted);
         BuildWalls(frame, structure, ghosted);
         BuildLinks(frame, structure);
-        BuildExit(frame, overlay);
-        BuildUnseen(frame, overlay);
-        BuildAttention(frame, overlay);
-        BuildHeldArcs(frame, overlay);
-        BuildCoverOutlines(frame, overlay);
-        BuildReachBands(frame, overlay);
-        BuildCommitted(frame, overlay);
-        BuildBeliefs(frame, overlay);
-        BuildMarkers(frame, overlay);
 
         _ground.Mesh = ground.Build();
         _structure.Mesh = structure.Build();
         _ghosted.Mesh = ghosted.Build();
-        _overlay.Mesh = overlay.Build();
 
+        RebuildOverlay(frame);
         RebuildBodies(frame);
         RebuildCursor(frame);
+    }
+
+    /// <summary>Whether the overlay was last built for the firing mode, so the cursor knows when it has to be rebuilt.</summary>
+    private bool _overlayFiring;
+
+    /// <summary>
+    /// The readouts on the ground, in the order they composite: the fog first, then what stands on it, then the
+    /// edges, then the marks.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Its own entry point because the firing mode changes it and the firing mode is a gesture.</b> At rest
+    /// the ground carries the reserve's edges; aiming, the cover outlines and the weapon's reach — see
+    /// <see cref="SandboxFrame.Firing"/>. An aim is taken and dropped through the cursor rebuild, which
+    /// runs on every mouse motion and must stay cheap, so that rebuild asks whether the mode has changed
+    /// since the overlay was built and rebuilds this only when it has. No trace is taken here: the sight
+    /// the fog, the clip and the outlines are drawn from is on the frame already.
+    /// </para>
+    /// <para>
+    /// One mesh rather than a mesh per mode shown and hidden, because transparent meshes at the same origin
+    /// are drawn in whichever order the engine likes (the gotcha about the ghosted storeys), and the order
+    /// inside one mesh is the order the triangles went in — which is the only thing keeping the fog under
+    /// the marks.
+    /// </para>
+    /// </remarks>
+    private void RebuildOverlay(SandboxFrame frame)
+    {
+        var overlay = new MeshBuilder();
+        _edgeLabels.Clear();
+        _overlayFiring = frame.Firing;
+
+        BuildUnseen(frame, overlay);
+        BuildObjective(frame, overlay);
+        BuildAttention(frame, overlay);
+        BuildHeldArcs(frame, overlay);
+        if (frame.Firing)
+        {
+            BuildCoverOutlines(frame, overlay);
+            BuildWeaponReach(frame, overlay);
+        }
+        else
+        {
+            BuildReachBands(frame, overlay);
+        }
+        BuildCommitted(frame, overlay);
+        BuildBeliefs(frame, overlay);
+        BuildMarkers(frame, overlay);
+
+        _overlay.Mesh = overlay.Build();
     }
 
     /// <summary>Rebuild only the soldiers, which is what a walk moves and nothing else.</summary>
@@ -219,6 +259,7 @@ public sealed class BattleView
     public void RebuildCursor(SandboxFrame frame)
     {
         _frame = frame;
+        if (frame.Firing != _overlayFiring) RebuildOverlay(frame);
 
         var cursor = new MeshBuilder();
         BuildHover(frame, cursor);
@@ -428,24 +469,56 @@ public sealed class BattleView
         overlay.Ribbon(corners, width, color);
     }
 
+    /// <summary>
+    /// The fog: every place on the storey being looked at that no soldier of ours has a line to a standing man
+    /// at, darkened, at every zoom.
+    /// </summary>
     /// <remarks>
-    /// Dead ground the active unit has no eyes on. Close up it goes dark; from a distance it is
-    /// left alone, because on a map this size one soldier cannot see most of it, so the wash
-    /// covers nine tiles in ten and takes the shape of the place with it — and the shape of the
-    /// place is the one thing an overview is being asked for.
+    /// <para>
+    /// <b><c>conventions.md</c>'s <i>What the squad can see</i>, all of its bullets, and entry 097 for why.</b>
+    /// It was the active soldier's dead ground, drawn only close in. Both halves were wrong. One soldier's
+    /// fog under the squad's bodies put a hostile a teammate had eyes on on dark ground; and a fog that leaves
+    /// at a distance says the squad sees everything from far away, when the camera changes what is drawn and
+    /// never what is true. The old reason for dropping it — one soldier's sight covers one tile in ten — is
+    /// weaker for a squad's, and the fill tints tile tops and not walls, so the buildings keep their shape.
+    /// </para>
+    /// <para>
+    /// <b>At standing height, whoever is there.</b> The fill is a question about the place and never its
+    /// occupant, or a dark hex among lit ones would say a man is lying flat on it. It is also the rules' own
+    /// test for having looked at a place — a marker and a briefing are tested against a standing body — and
+    /// it keeps the promise a capture checks: the trace hides a silhouette from the waterline up, so a man
+    /// who can be seen at any stance can be seen standing, and no drawn body stands on the dark.
+    /// </para>
+    /// <para>
+    /// <b>Lit does not mean empty.</b> A man can stand in plain view on lit ground nobody has registered yet,
+    /// because noticing is a rate and a look comes at a moment. The fill claims <i>a standing man here would
+    /// be in a line to one of ours</i> and nothing more, and it is not cut at a range: a line has none, and
+    /// the attention tint on top is what fades with distance. Nor is it withheld while a hostile is up,
+    /// since it was never the hostile's.
+    /// </para>
     /// </remarks>
     private static void BuildUnseen(SandboxFrame frame, MeshBuilder overlay)
     {
-        if (!frame.TileDetail || frame.Battle.Active is null || frame.Withheld) return;
+        foreach (var tile in frame.Battle.Map.Tiles)
+        {
+            if (tile.Address.Layer != frame.Layer) continue;
 
-        foreach (var (node, seen) in frame.View)
-            if (!seen.CanSee) Tint(overlay, frame.Battle.Map, node, SandboxPalette.Unseen);
+            foreach (var region in frame.Battle.Map.RegionsOf(tile.Address))
+            {
+                var node = new NodeId(tile.Address, region.Index);
+                if (!frame.Lit.Contains(node)) Tint(overlay, frame.Battle.Map, node, SandboxPalette.Unseen);
+            }
+        }
     }
 
+    /// <summary>Where a target would be safe from the soldier up, outlined in the grade's colour — in the firing mode only.</summary>
     /// <remarks>
-    /// Where the cover is, on the tiles the active soldier can see, in the colour of the grade.
-    /// Kept when zoomed out, because that is the one thing worth reading from a map you cannot
-    /// read a number off.
+    /// <b>Enemy's-eye cover, so it belongs to the shooter's question.</b> It used to lie on the ground at rest,
+    /// and a player asked what the five light-blue hexes along a wall were (entry 094, item 7): they were where
+    /// a hostile would be in light cover from the soldier up, which is the reverse of the genre's shield and
+    /// read as it. The genre shows cover while aiming, as a term of the shot, so the outlines went into the
+    /// firing mode and the shield went under the cursor. Kept when zoomed out, because that is the one thing
+    /// worth reading from a map you cannot read a number off.
     /// </remarks>
     private static void BuildCoverOutlines(SandboxFrame frame, MeshBuilder overlay)
     {
@@ -478,6 +551,24 @@ public sealed class BattleView
     /// storey being looked at, so a sentry in the tower tints the ground it watches and not the
     /// air at its own height, which is what the flat view drew and was right to.
     /// </para>
+    /// <para>
+    /// <b>Clipped to where that soldier has a line to a standing man</b> — entry 097. <c>AttentionOn</c> runs
+    /// through walls on purpose, since who is paying attention is a question about people, and the tint used
+    /// to follow it onto ground no look could land on. A look multiplies the two, so the drawing stacks them:
+    /// the fog is the sight half, the tint the attention half, and one reading comes out. <b>Dark</b>, no look
+    /// of ours can land; <b>tinted</b>, how hard we are looking; <b>lit and bare</b>, in a line and watched
+    /// by nobody. The convention is that a cone knows what blocks it (Invisible, Inc.'s stripes stop in the
+    /// lee of a desk). Ours reuse the lines the fog is drawn from, so no tint of ours lies on dark ground.
+    /// </para>
+    /// <para>
+    /// <b>A drawn hostile's field takes the same clip, from his line to a standing man of ours.</b> We see
+    /// him, so his lines are geometry anybody there could work out. Entry 097 asked for the price first: a
+    /// sweep of traces per drawn hostile, and on the waystation a fresh sweep is about 145 ms — but a trace
+    /// is remembered per pair of vantages, so it is paid only when a drawn hostile's place or stance has
+    /// changed, on an action and never a frame, and only out to the sight range, where his tint ends
+    /// anyway. Standing errs toward danger for a crouched soldier of ours behind a low wall, which is the
+    /// safe way to be wrong.
+    /// </para>
     /// </remarks>
     private static void BuildAttention(SandboxFrame frame, MeshBuilder overlay)
     {
@@ -493,7 +584,7 @@ public sealed class BattleView
 
         foreach (var unit in battle.InPlay)
         {
-            if (!frame.Sees(unit)) continue;
+            if (!frame.Sees(unit) || !frame.Lines.TryGetValue(unit.Id, out var lines)) continue;
 
             var peak = unit == battle.Active ? AttentionPeakActive
                 : unit.Side == Side.Hostile ? AttentionPeakHostile
@@ -512,6 +603,7 @@ public sealed class BattleView
 
                 var distance = CoreVec2.Distance(from, plane);
                 if (distance >= range) continue;
+                if (!lines.TryGetValue(node, out var line) || !line.CanSee) continue;
 
                 var closeness = distance / range;
                 var weight = peak * (1 - closeness * closeness) * battle.Awareness.AttentionOn(pose, node);
@@ -632,10 +724,22 @@ public sealed class BattleView
     /// Entry 090 found the map drawing whoever was up whichever side, so the AI's hostile stopped at a
     /// window of ours had its reach edged round a house nobody of ours could see into; brief two settled it
     /// with <see cref="SandboxFrame.Withheld"/>, the gate the readouts already used. The same gate takes
-    /// its sight — the dead-ground wash and the cover outlines — its route preview and its cost labels.
+    /// its cover outlines, its route preview and its cost labels. The fog it no longer takes, because the
+    /// fog is the squad's and never was the hostile's.
+    /// </para>
+    /// <para>
+    /// <b>Each edge says what it is, in words on the ground in its own colour</b> — entry 094's item 14, where
+    /// a player read these as weapon range: <i>can only shoot a handful</i>. <i>Stop inside: banks a snap</i>
+    /// names the reserve and the rung, and says the edge is about stopping rather than shooting; the pale one
+    /// says <i>walks to here</i>. On the ground rather than on the points bar's caption or the legend, because
+    /// the misreading happens looking at the ground, and a label that has to be found somewhere else does not
+    /// beat a glance. Words at the edge are what brief one's rule makes of it — a figure hangs from the thing
+    /// it describes — and one label per edge, on the piece nearest the top of the screen (see
+    /// <see cref="DrawEdgeLabels"/>). At rest only: the firing mode takes these edges off the ground and puts
+    /// the weapon's reach there instead, so the two are never read for each other.
     /// </para>
     /// </remarks>
-    private static void BuildReachBands(SandboxFrame frame, MeshBuilder overlay)
+    private void BuildReachBands(SandboxFrame frame, MeshBuilder overlay)
     {
         if (frame.Battle.Active is not { } active || frame.Withheld) return;
 
@@ -652,17 +756,19 @@ public sealed class BattleView
 
         HashSet<TileAddress> Within(int spend) => costs.Where(pair => pair.Value <= spend).Select(pair => pair.Key).ToHashSet();
 
-        var bands = new List<(HashSet<TileAddress> Inside, Color Hue, float Width, double Inset)>
+        var bands = new List<(HashSet<TileAddress> Inside, Color Hue, float Width, double Inset, string Label)>
         {
-            (Within(int.MaxValue), SandboxPalette.ReachEdge, 0.08f, 0.03),
+            (Within(int.MaxValue), SandboxPalette.ReachEdge, 0.08f, 0.03, "walks to here"),
         };
 
         if (frame.Ladder is { } ladder)
         {
             if (ladder.Floor is { } floor)
-                bands.Add((Within(active.ActionPoints - floor.Leftover), SandboxPalette.BandHue(SandboxPalette.Band.Floor), 0.09f, 0.10));
+                bands.Add((Within(active.ActionPoints - floor.Leftover), SandboxPalette.BandHue(SandboxPalette.Band.Floor), 0.09f, 0.10,
+                    "stop inside: banks a reserve"));
             if (ladder.Cheapest is { } cheap)
-                bands.Add((Within(active.ActionPoints - cheap.Leftover), SandboxPalette.BandHue(SandboxPalette.Band.Cheapest), 0.11f, 0.17));
+                bands.Add((Within(active.ActionPoints - cheap.Leftover), SandboxPalette.BandHue(SandboxPalette.Band.Cheapest), 0.11f, 0.17,
+                    $"stop inside: banks a {cheap.Name}"));
 
             // The better shot is the dearest one a move can still keep. A fresh rifleman keeps an
             // aimed shot only by not moving at all, and a band round the tile it stands on says
@@ -670,41 +776,106 @@ public sealed class BattleView
             var better = ladder.Rungs
                 .Where(rung => ladder.Better is { } first && rung.Price >= first.Price)
                 .OrderByDescending(rung => rung.Price)
-                .Select(rung => Within(active.ActionPoints - rung.Leftover))
-                .FirstOrDefault(inside => inside.Count > 1);
-            if (better is not null)
-                bands.Add((better, SandboxPalette.BandHue(SandboxPalette.Band.Better), 0.13f, 0.24));
+                .Select(rung => (Rung: rung, Inside: Within(active.ActionPoints - rung.Leftover)))
+                .FirstOrDefault(pair => pair.Inside.Count > 1);
+            if (better.Inside is not null)
+                bands.Add((better.Inside, SandboxPalette.BandHue(SandboxPalette.Band.Better), 0.13f, 0.24,
+                    $"stop inside: banks a {better.Rung.Name}"));
         }
 
         HashSet<TileAddress>? outside = null;
-        foreach (var (inside, hue, width, inset) in bands)
+        foreach (var (inside, hue, width, inset, label) in bands)
         {
             if (inside.Count <= 1) break;                          // nothing left but where it stands
             if (outside is not null && inside.SetEquals(outside)) continue;
             outside = inside;
 
-            foreach (var address in inside)
+            _edgeLabels.Add(new EdgeLabel(label, hue, Perimeter(overlay, map, inside, hue, width, inset)));
+        }
+    }
+
+    /// <summary>
+    /// A line along the outside edges of a set of tiles, inset toward each tile's centre, optionally in dashes.
+    /// Returns the middle of every edge drawn, which is where a label on it may go.
+    /// </summary>
+    private static List<Vector3> Perimeter(MeshBuilder overlay, BattleMap map, IReadOnlySet<TileAddress> inside, Color hue, float width,
+        double inset, bool dashed = false)
+    {
+        var middles = new List<Vector3>();
+
+        foreach (var address in inside)
+        {
+            if (map.GetTile(address) is not { } tile) continue;
+            var centre = SandboxScale.World.Center(address.Hex);
+            var height = tile.FloorHeight + Lift * 2;
+
+            foreach (var side in HexDirectionExtensions.All)
             {
-                if (map.GetTile(address) is not { } tile) continue;
-                var centre = SandboxScale.World.Center(address.Hex);
-                var height = tile.FloorHeight + Lift * 2;
+                if (inside.Contains(new TileAddress(address.Hex.Neighbor(side), address.Layer))) continue;
 
-                foreach (var side in HexDirectionExtensions.All)
+                var (a, b) = side.Corners();
+                var from = SandboxScale.World.Corner(address.Hex, a);
+                var to = SandboxScale.World.Corner(address.Hex, b);
+                from += (centre - from) * inset;
+                to += (centre - to) * inset;
+
+                if (dashed)
                 {
-                    if (inside.Contains(new TileAddress(address.Hex.Neighbor(side), address.Layer))) continue;
-
-                    var (a, b) = side.Corners();
-                    var from = SandboxScale.World.Corner(address.Hex, a);
-                    var to = SandboxScale.World.Corner(address.Hex, b);
-                    overlay.Ribbon(
-                        [
-                            SandboxScale.ToScene(from + (centre - from) * inset, height),
-                            SandboxScale.ToScene(to + (centre - to) * inset, height),
-                        ],
-                        width, hue);
+                    var run = to - from;
+                    (from, to) = (from + run * 0.25, from + run * 0.75);
                 }
+
+                overlay.Ribbon([SandboxScale.ToScene(from, height), SandboxScale.ToScene(to, height)], width, hue);
+                middles.Add(SandboxScale.ToScene((from + to) / 2, height));
             }
         }
+
+        return middles;
+    }
+
+    /// <summary>Words that belong to an edge on the ground, and the middles of the edge's pieces, one of which it hangs from.</summary>
+    private sealed record EdgeLabel(string Text, Color Hue, List<Vector3> Along, bool EveryZoom = false, bool Under = false);
+
+    /// <summary>The labels the edges built into the overlay carry, drawn with the rest of the map's words.</summary>
+    private readonly List<EdgeLabel> _edgeLabels = [];
+
+    /// <summary>
+    /// How far the soldier up's weapon reaches, as two edges round it on the storey being looked at — in the
+    /// firing mode only.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Entry 094's item 14: range was drawn nowhere a player could find it</b>, except inside a held arc, and
+    /// the reserve's violet edges round the soldier were read as it — <i>can run a stretch of 10 or so hexes but
+    /// can only shoot a handful</i>. The carbine is best to 14 m and reaches 42, eight and twenty-four hexes.
+    /// The brief left where range goes to View and named the firing mode as the obvious place; it is, for the
+    /// same reason as the cover outlines — it is the shooter's question — and because it means range and the
+    /// reserve are never edged on the ground at the same moment, so neither can be read as the other.
+    /// </para>
+    /// <para>
+    /// <b>Dashed, and in the aim's white</b>: the line of fire and the ring round the target are white, and these
+    /// are the same mode's; dashes keep them from being read as a move range, which is continuous and pale.
+    /// Measured on the plane from the soldier's tile to each tile's centre, which is what a range band is
+    /// judged by within a metre or so; the height of the target is the shot's to say, and the dock says it.
+    /// </para>
+    /// </remarks>
+    private void BuildWeaponReach(SandboxFrame frame, MeshBuilder overlay)
+    {
+        if (frame.Withheld || frame.Battle.Active is not { } shooter) return;
+
+        var map = frame.Battle.Map;
+        var from = SandboxGeometry.NodePlane(map, shooter.Position);
+        var weapon = shooter.Weapon;
+
+        HashSet<TileAddress> Within(double metres) => map.Tiles
+            .Where(t => t.Address.Layer == frame.Layer && CoreVec2.Distance(from, SandboxScale.World.Center(t.Address.Hex)) <= metres)
+            .Select(t => t.Address)
+            .ToHashSet();
+
+        _edgeLabels.Add(new EdgeLabel($"best to {weapon.OptimalRange:0} m", SandboxPalette.AimColor,
+            Perimeter(overlay, map, Within(weapon.OptimalRange), SandboxPalette.AimColor, 0.10f, 0.08, dashed: true)));
+        _edgeLabels.Add(new EdgeLabel($"reaches {weapon.MaxRange:0} m", SandboxPalette.WeaponReach,
+            Perimeter(overlay, map, Within(weapon.MaxRange), SandboxPalette.WeaponReach, 0.10f, 0.08, dashed: true)));
     }
 
     /// <summary>
@@ -730,21 +901,72 @@ public sealed class BattleView
     }
 
     /// <summary>
-    /// Where our side may walk off the field, if the mission gives us somewhere.
+    /// Our side's objective, if the mission gives one: the place the job is done at, the exit it leaves by,
+    /// and for a reconnaissance how close it has to look from.
     /// </summary>
     /// <remarks>
-    /// A named place rather than a map edge, which is entry 041's choice, and it has to be drawn
-    /// or it does not exist. Ours only; where the other side is going is theirs to know.
+    /// <para>
+    /// <b>Every <see cref="Sortie"/>, not only a <see cref="Withdrawal"/>.</b> This drew the exit only when the
+    /// objective was a withdrawal and returned otherwise, so on the default mission — a
+    /// <see cref="Reconnaissance"/> — neither the house the squad is sent to look at nor the cottages it leaves
+    /// by was on the map at all (entry 094, item 7). A named place rather than a map edge is entry 041's
+    /// choice, and a place that is not drawn does not exist. <c>Sortie.Exit</c> is the exit and
+    /// <c>Sortie.Place</c> the place for every shape. Ours only; where the other side is going is theirs.
+    /// </para>
+    /// <para>
+    /// <b>A place and an exit are hexes, so they are drawn in the shape of tiles</b> — 098's rule, and nothing
+    /// round. They must not look like anything else that outlines tiles: the reserve's edges are violet and
+    /// continuous, the cover outlines blue, yellow and orange per tile, a marker's brackets pale, a belief in
+    /// the rung colours. So the objective has a colour nothing else uses, <see cref="SandboxPalette.ObjectiveHue"/>,
+    /// and a fill as well as an edge, which no edge on the ground has: the exit a pale wash with its outside
+    /// edge, the place a strong fill with a double edge, and the words over each at every zoom, since the
+    /// brief's test is that the house and the cottages can be told apart at <c>--fit</c>. The exit's old edge
+    /// was the light-cover blue, which is one of the colours a player asked about.
+    /// </para>
+    /// <para>
+    /// <b>A reconnaissance's range is drawn, dashed, round the place.</b> <see cref="Reconnaissance.Within"/> is
+    /// 12 m on the waystation, and the look only counts from inside it, so a player standing at 15 m with the
+    /// house in plain view would be told nothing and not know why. Dashed because it is a distance and not a
+    /// set of places anybody stands on, and measured on the plane from the place to each tile's centre — the
+    /// rules measure eye to the place, which a metre of height moves by less than a tile.
+    /// </para>
     /// </remarks>
-    private static void BuildExit(SandboxFrame frame, MeshBuilder overlay)
+    private void BuildObjective(SandboxFrame frame, MeshBuilder overlay)
     {
-        if (frame.Battle.ObjectiveOf(Side.Player) is not Withdrawal way) return;
+        if (frame.Battle.ObjectiveOf(Side.Player) is not Sortie sortie) return;
 
-        foreach (var node in way.Exit.Where(n => n.Tile.Layer <= frame.Layer))
+        var map = frame.Battle.Map;
+
+        foreach (var storey in sortie.Exit.Where(n => n.Tile.Layer <= frame.Layer).GroupBy(n => n.Tile.Layer))
         {
-            Tint(overlay, frame.Battle.Map, node, SandboxPalette.ExitFill);
-            Outline(overlay, frame.Battle.Map, node, SandboxPalette.CoverLightHue, 0.10f);
+            foreach (var node in storey) Tint(overlay, map, node, SandboxPalette.ObjectiveFill);
+            _edgeLabels.Add(new EdgeLabel("EXIT", SandboxPalette.ObjectiveHue, EveryZoom: true, Under: true, Along:
+                Perimeter(overlay, map, storey.Select(n => n.Tile).ToHashSet(), SandboxPalette.ObjectiveHue, 0.14f, 0.04)));
         }
+
+        if (sortie.Place is not { } place || place.Tile.Layer > frame.Layer) return;
+
+        Tint(overlay, map, place, new Color(SandboxPalette.ObjectiveHue, 0.45f));
+        Outline(overlay, map, place, SandboxPalette.ObjectiveHue, 0.14f, inset: 0.04);
+        Outline(overlay, map, place, SandboxPalette.ObjectiveHue, 0.08f, inset: 0.26);
+
+        var task = sortie switch
+        {
+            Reconnaissance => "GET EYES ON",
+            Sabotage => "WORK HERE",
+            _ => "OBJECTIVE",
+        };
+        _edgeLabels.Add(new EdgeLabel(task, SandboxPalette.ObjectiveHue, [SandboxGeometry.NodeScene(map, place)], EveryZoom: true));
+
+        if (sortie is not Reconnaissance recon || place.Tile.Layer != frame.Layer) return;
+
+        var at = SandboxGeometry.NodePlane(map, place);
+        var near = map.Tiles
+            .Where(t => t.Address.Layer == frame.Layer && CoreVec2.Distance(at, SandboxScale.World.Center(t.Address.Hex)) <= recon.Within)
+            .Select(t => t.Address)
+            .ToHashSet();
+        _edgeLabels.Add(new EdgeLabel($"look from within {recon.Within:0} m", SandboxPalette.ObjectiveHue,
+            Perimeter(overlay, map, near, new Color(SandboxPalette.ObjectiveHue, 0.8f), 0.09f, 0.1, dashed: true)));
     }
 
     /// <summary>
@@ -1112,6 +1334,8 @@ public sealed class BattleView
         DrawCostLabels(canvas, frame);
         DrawLinkLabels(canvas, frame);
         DrawPlaceLabels(canvas, frame);
+        DrawEdgeLabels(canvas, frame);
+        DrawShield(canvas, frame);
         DrawRouteLabels(canvas, frame);
         DrawBeliefLabels(canvas, frame);
         DrawMarkerLabels(canvas, frame);
@@ -1172,6 +1396,137 @@ public sealed class BattleView
 
             Label(canvas, SandboxScale.ToScene(middle, height), name.ToUpperInvariant(), 12, SandboxPalette.LinkText, width: 200f);
         }
+    }
+
+    /// <summary>What each edge on the ground is, in its colour, hung from the piece of it nearest the top of the screen.</summary>
+    /// <remarks>
+    /// The top of the screen because the camera stands the soldier up is in the middle and looks down on it
+    /// from the south of the bearing, so the far edge of a band is the one clear of the soldier's own readouts
+    /// and of the bar along the bottom. Chosen per redraw, since which piece is nearest the top changes with the
+    /// camera and the words must stay on the edge. Only close in, like every word about a tile, except the
+    /// objective's, which is the one thing a player looks for zoomed out. On a dark outline so it reads on the
+    /// fog and on lit ground alike.
+    /// </remarks>
+    private void DrawEdgeLabels(CanvasItem canvas, SandboxFrame frame)
+    {
+        // Clear of the top block and the strip along the top, and of the legend and the bar along the bottom.
+        var viewport = canvas.GetViewportRect();
+        var screen = new Rect2(viewport.Position + new Vector2(24, EdgeLabelsTop), viewport.Size - new Vector2(48, EdgeLabelsTop + EdgeLabelsBottom));
+
+        // Where every drawn soldier's name hangs, so an edge's words do not land on one. Entry 094's item 12 is
+        // readouts over bodies, and this would be a new one.
+        var crowns = frame.Battle.InPlay.Where(frame.Sees).Select(unit => Crown(frame, unit)).OfType<Vector2>().ToList();
+
+        foreach (var label in _edgeLabels)
+        {
+            if (!label.EveryZoom && !frame.TileDetail) continue;
+
+            Vector2? best = null;
+            foreach (var point in label.Along)
+                if (_camera.Project(point) is { } at && screen.HasPoint(at)
+                    && crowns.All(crown => crown.DistanceTo(at) > ClearOfNames)
+                    && (best is null || (label.Under ? at.Y > best.Value.Y : at.Y < best.Value.Y)))
+                    best = at;
+
+            if (best is not { } spot) continue;
+
+            var size = label.EveryZoom ? 13 : 11;
+            var width = _font.GetStringSize(label.Text, HorizontalAlignment.Left, -1, size).X + 8;
+            var left = Mathf.Clamp(spot.X - width / 2f, viewport.Position.X + 8, viewport.End.X - width - 8);
+            var origin = new Vector2(left, spot.Y + (label.Under ? 14 : -6) + size * 0.36f);
+
+            // Lightened, because the reserve's violets are chosen to sit on the ground as a thin line and are too
+            // dark to read as words on it.
+            var hue = new Color(label.Hue, 1f).Lightened(0.3f);
+            canvas.DrawStringOutline(_font, origin, label.Text, HorizontalAlignment.Center, width, size, 4, SandboxPalette.UnitShadow);
+            canvas.DrawString(_font, origin, label.Text, HorizontalAlignment.Center, width, size, hue);
+        }
+    }
+
+    /// <summary>How much of the top and the bottom of the screen an edge's words keep off, in pixels: the top block and strip, the legend and the bar.</summary>
+    private const float EdgeLabelsTop = 150, EdgeLabelsBottom = 190;
+
+    /// <summary>How far from a soldier's name, in pixels, an edge's words may hang: about the width of the name.</summary>
+    private const float ClearOfNames = 90;
+
+    /// <summary>
+    /// The shield under the cursor: a glyph at the edge of the tile on the side of each wall that gives a soldier
+    /// of ours there cover against a threat our side holds, in the grade's colour.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Entry 094's item 13 — <i>no cover shield indicators</i> — built the genre's way</b>: at the tile under
+    /// the cursor, per direction, what cover <i>you</i> would have there. <see cref="SandboxFrame.Shield"/> is
+    /// the answer and says against whom; this is only its look.
+    /// </para>
+    /// <para>
+    /// <b>A shield, and neither a hex nor a ring.</b> 098 left two shapes on the ground spoken for — a place is
+    /// an outlined hex and a soldier a ring — and this is new on the ground, so it is neither: a small shield
+    /// painted flat on the label canvas over the point at the tile's edge toward the wall, raised to a man's
+    /// waist. Painted on the canvas rather than built as a mesh because a mesh at the foot of a low wall is
+    /// behind that wall from half the bearings, and XCOM 2's shield is a screen glyph for the same reason.
+    /// </para>
+    /// <para>
+    /// <b>The grade twice, as colour and as how full.</b> Light an empty outline, half filled to the waist, full
+    /// filled — the grade colours the cover outlines use, since it is the same grade of the same trace, and a
+    /// fill level so that it does not rest on telling blue from yellow. One glyph per wall, at the best grade it
+    /// gives against any of them; the terms under <c>Ctrl</c> say against whom.
+    /// </para>
+    /// </remarks>
+    private void DrawShield(CanvasItem canvas, SandboxFrame frame)
+    {
+        if (frame.Hover is not { } node) return;
+
+        var map = frame.Battle.Map;
+        var centre = SandboxGeometry.NodePlane(map, node);
+        var floor = SandboxGeometry.FloorOf(map, node);
+        var layout = SandboxScale.World;
+
+        var walls = frame.Shield
+            .Where(cover => cover.Wall is not null && cover.Grade != CoverGrade.None)
+            .GroupBy(cover => cover.Wall!.Value)
+            .Select(group => (Wall: group.Key, Grade: group.Max(cover => cover.Grade)));
+
+        foreach (var (wall, grade) in walls)
+        {
+            var middle = (layout.Position(wall.A) + layout.Position(wall.B)) / 2;
+            var toward = middle - centre;
+            var length = toward.Length;
+            if (length < Hexcom.Core.Geometry.Geometry2D.Epsilon) continue;
+
+            var edge = centre + toward * (System.Math.Min(length, ShieldReach) / length);
+            if (_camera.Project(SandboxScale.ToScene(edge, floor + ShieldHeight)) is not { } at) continue;
+
+            ShieldGlyph(canvas, at, grade);
+        }
+    }
+
+    /// <summary>How far out from a tile's centre toward its wall the shield stands, in metres: just inside the flat edge, which is 0.87 out.</summary>
+    private const double ShieldReach = 0.75;
+
+    /// <summary>How high over the floor the shield hangs, in metres: a man's waist, clear of a low wall's top from most bearings.</summary>
+    private const double ShieldHeight = 1.1;
+
+    /// <summary>One shield: a plate, a fill to the grade, and an edge in the grade's colour.</summary>
+    private static void ShieldGlyph(CanvasItem canvas, Vector2 at, CoverGrade grade)
+    {
+        const float w = 10f, top = -13f, shoulder = 4f, point = 14f;
+        Vector2[] outline = [new(-w, top), new(w, top), new(w, shoulder), new(0, point), new(-w, shoulder)];
+        var hue = SandboxPalette.CoverHue(grade);
+
+        canvas.DrawColoredPolygon(outline.Select(p => at + p * 1.25f).ToArray(), SandboxPalette.UnitShadow);
+        canvas.DrawColoredPolygon(outline.Select(p => at + p).ToArray(), SandboxPalette.Panel);
+
+        if (grade == CoverGrade.Full)
+            canvas.DrawColoredPolygon(outline.Select(p => at + p).ToArray(), hue);
+        else if (grade == CoverGrade.Half)
+        {
+            const float waist = 0f;
+            Vector2[] lower = [new(-w, waist), new(w, waist), new(w, shoulder), new(0, point), new(-w, shoulder)];
+            canvas.DrawColoredPolygon(lower.Select(p => at + p).ToArray(), hue);
+        }
+
+        canvas.DrawPolyline([.. outline.Select(p => at + p), at + outline[0]], hue, 2f, antialiased: true);
     }
 
     private void DrawRouteLabels(CanvasItem canvas, SandboxFrame frame)

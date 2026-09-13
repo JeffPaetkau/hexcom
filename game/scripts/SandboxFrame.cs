@@ -4,6 +4,7 @@ using Hexcom.Content;
 using Hexcom.Core.Awareness;
 using Hexcom.Core.Battles;
 using Hexcom.Core.Combat;
+using Hexcom.Core.Maps;
 using Hexcom.Core.Movement;
 using Hexcom.Core.Reactions;
 using Hexcom.Core.Tactics;
@@ -113,6 +114,13 @@ public sealed record ReserveLadder(Unit Unit, IReadOnlyList<ReserveRung> Rungs)
     }
 }
 
+/// <summary>What one threat our side holds would find between it and one of ours standing at a place.</summary>
+/// <param name="Threat">The threat, as our side holds it — in view, or at a mark.</param>
+/// <param name="Grade">The cover the place gives against it; none when it has a clear line, or no line at all for a reason that is not nearby.</param>
+/// <param name="Wall">The wall that gives that cover, so the shield can stand on its side of the tile. Null with no cover.</param>
+/// <param name="InLine">Whether the threat has any line to the soldier there at all.</param>
+public sealed record CoverFrom(Threat Threat, CoverGrade Grade, WallSegment? Wall, bool InLine);
+
 /// <summary>Everything the sandbox has worked out about the current moment, ready to be drawn.</summary>
 /// <param name="Battle">The battle itself. Queried, never changed, by anything that takes a frame.</param>
 /// <param name="Layer">Which storey is being looked at. Storeys above it are ghosted.</param>
@@ -193,6 +201,15 @@ public sealed record ReserveLadder(Unit Unit, IReadOnlyList<ReserveRung> Rungs)
 /// Whether the player has folded the shot's terms away. Remembered across targets and soldiers,
 /// the way the photographed game remembers its fold. Brief one's <i>Settling One</i>.
 /// </param>
+/// <param name="Lines">
+/// Each drawn soldier's line to a <b>standing</b> man at every place on the storey being looked at — a
+/// hostile's only out to the sight range, where his attention field ends. What the fog and the attention
+/// fields' clip are drawn from. See <see cref="HexSandbox"/>'s sweep for the price.
+/// </param>
+/// <param name="Lit">
+/// The places on the storey being looked at that at least one soldier of ours has a line to a standing
+/// man at: the squad's sight, and everything else is the fog. Entry 097.
+/// </param>
 /// <remarks>
 /// This exists so that drawing has no way to reach back into the node and ask another question.
 /// A frame is assembled once, in <see cref="HexSandbox.Recalculate"/>, and everything drawn from
@@ -236,7 +253,9 @@ public sealed record SandboxFrame(
     bool TermsFolded,
     FireMode? AimMode,
     string? Pointing,
-    IReadOnlyDictionary<UnitId, int> RungMoved)
+    IReadOnlyDictionary<UnitId, int> RungMoved,
+    IReadOnlyDictionary<UnitId, IReadOnlyDictionary<NodeId, SightResult>> Lines,
+    IReadOnlySet<NodeId> Lit)
 {
     /// <summary>
     /// The highest rung a hostile holds on any of ours: what <b>he</b> believes about our side.
@@ -505,6 +524,89 @@ public sealed record SandboxFrame(
         => Omniscient
            || unit.Side == Side.Player
            || (Knowledge.TryGetValue(unit.Id, out var held) && held.EyesOn);
+
+    /// <summary>
+    /// Whether the ground is in the firing mode: the soldier up is aiming at somebody.
+    /// </summary>
+    /// <remarks>
+    /// <b>Aiming and a fire slot lit are one state</b>, and that settled the brief's question of what
+    /// <i>the firing mode</i> is for the ground: a fire slot pressed with nobody in sight aims at nobody and
+    /// lights nothing (<c>HexSandbox.AimAt</c>), and a slot is lit only while <see cref="Aim"/> is somebody.
+    /// So there is one answer and it is <see cref="Aim"/>. In it the ground shows the shooter's question —
+    /// where a target would be safe from this soldier, and how far the weapon reaches — and at rest it
+    /// shows the squad's sight, the reserve's edges and the shield under the cursor. The two sets are never
+    /// on the ground together, which is <c>conventions.md</c>'s cheapest way to keep them from looking alike.
+    /// </remarks>
+    public bool Firing => Aim is not null;
+
+    /// <summary>
+    /// The cover a soldier of ours standing at the cursor would have against each threat our side holds,
+    /// or nothing when the shield is not the cursor's to show.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The genre's shield: what cover <i>you</i> would have here</b> — entry 094's item 13, and the
+    /// opposite question from the cover outlines, which say where a target would be safe from the
+    /// soldier up. Not while firing, when a click on the ground backs out and the outlines are what the
+    /// ground carries; not over a hostile the picture shows; and only on our side's go, since the threats
+    /// are our side's and a hand-driven hostile's cover against his own comrades is nobody's question.
+    /// </para>
+    /// <para>
+    /// <b>Against every threat our side holds, told and lost marks included — <see cref="Knowledge"/>, as
+    /// it is.</b> The brief offered the ones with eyes on as the other reading. A mark is a place somebody
+    /// may be standing, and the scorer prices a posture against exactly this list
+    /// (<c>Tactician.Known</c>, scaled by credence), so the shield a player reads and the <i>spared</i> term
+    /// the AI ranks by are asked of the same threats — contract 2. A shield that ignored the briefing's
+    /// posts would call a doorway open that the soldier's own appraisal calls covered. Credence is not
+    /// drawn: a shield against a stale mark is still a wall between you and where he was.
+    /// </para>
+    /// <para>
+    /// <b>At the stance the soldier would be in there</b>: the one of ours standing on the place if there is
+    /// one, else the soldier up, since a move does not change a stance. Cover here is mostly height, and a
+    /// shield that asked a standing man's question of a crouched one would call every low wall useless.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<CoverFrom> Shield
+        => Hover is { } node
+           && !Firing
+           && !Withheld
+           && Battle.Active is { Side: Side.Player } up
+           && HoveredUnit is not { Side: not Side.Player }
+            ? CoverAt(node, (Battle.UnitAt(node) is { Side: Side.Player } there ? there : up).Stance)
+            : [];
+
+    /// <summary>What each threat our side holds would find between it and one of ours at a place, in a stance.</summary>
+    /// <remarks>
+    /// A trace with no line counts as cover only when what blocks it is the soldier's own cover — within
+    /// <c>SightSolver.CoverRadius</c> of the place, which is the rule <c>SightSolver</c> grades cover by —
+    /// and at no more than the wall's material gives. A building across the square that hides him is not a
+    /// shield on this tile, and a hedge that hides him gives no cover at all.
+    /// </remarks>
+    public IReadOnlyList<CoverFrom> CoverAt(NodeId node, Stance stance)
+    {
+        var sight = Battle.Sight;
+        var standing = new Vantage(node, stance);
+        var covers = new List<CoverFrom>();
+
+        foreach (var threat in Knowledge.Values.OrderBy(t => t.Unit.Name))
+        {
+            if (threat.Where.Position == node) continue;
+
+            var line = sight.Trace(threat.Where.Vantage, standing);
+            if (line.CanSee)
+            {
+                covers.Add(new CoverFrom(threat, line.Cover, line.Cover == CoverGrade.None ? null : line.CoverSource, true));
+                continue;
+            }
+
+            var close = line.Obstructions.FirstOrDefault(o => o.Wall == line.Blocker && o.DistanceToTarget <= sight.CoverRadius);
+            covers.Add(close is not null && close.Wall.Profile.Cover != CoverGrade.None
+                ? new CoverFrom(threat, close.Wall.Profile.Cover, close.Wall, false)
+                : new CoverFrom(threat, CoverGrade.None, null, false));
+        }
+
+        return covers;
+    }
 
     /// <summary>The unit under the cursor, if the picture is allowed to show one there.</summary>
     public Unit? HoveredUnit

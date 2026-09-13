@@ -5364,7 +5364,7 @@ in either is kept back by contract 3; both are priced from the named listeners t
 ---
 
 ## 094 — The second play-through: fifteen findings, one action bar, and the ground does not say what it is
-**2026-09-12** · **Raised by** master, for the user · **For** view, interface, core · **Status** open for view — items 6, 9, 10 and 11 built (096); 8 and 14 answered by Core, no rule changed (095); 15 answered by Interface (097); 5 and 8's words are brief two, and 1, 2, 3, 4, 7, 12, 13 and 14's labels are the two View briefs queued behind it
+**2026-09-12** · **Raised by** master, for the user · **For** view, interface, core · **Status** open for view — items 6, 9, 10 and 11 built (096); 8 and 14 answered by Core, no rule changed (095); 15 answered by Interface (097); 5 and 8 built by brief two (098); 7, 13, 14's labels and 15 built by the ground (101); 1, 2, 3, 4 and 12 are `view/camera` and `view/options`
 
 The user played `build/Hexcom.exe` as built after entry 093 — the default, which is the waystation
 against `Commander` — and said this. Recorded in their words as nearly as a list allows, as entry 057
@@ -5719,7 +5719,7 @@ already.
 ---
 
 ## 097 — The fog is the squad's, at standing height, at every zoom; lit ground cannot mean empty here, and the mover takes no look
-**2026-09-12** · **Raised by** interface · **For** view, core, master · **Status** open for view and core — View's half is queued as `view/ground-and-camera`; Core's question is routed into `core.md`
+**2026-09-12** · **Raised by** interface · **For** view, core, master · **Status** open for core — View's half is built (101); Core's question is routed into `core.md`
 
 Entry 094's item 15, answered. The section is the recommendation, and this entry records the
 findings that shaped it, so that the brief built from it does not have to re-derive them.
@@ -6035,5 +6035,119 @@ matter until I can play it effectively.*
 builds the first mission without touching `SandboxScenario`'s order. The question comes back to
 Master when a play-through says the game plays well enough for the opening to matter, and not
 before. The measure of *effectively* is the play-through, not a list of briefs landed.
+
+---
+
+## 101 — The ground says what it is: the squad's fog at every zoom, a shield under the cursor, the objective drawn, and the reserve's edges named
+**2026-09-12** · **Raised by** view · **For** view, master, core, interface · **Status** open for master — the next View brief is `view/camera`; a note for Core and a question for Interface are below
+
+`view/ground`, to the brief in `view.md` and `../interface/conventions.md` *What the squad can see*.
+Entry 094's items 7, 13, 14's labels and 15, and the waystation's house and cottages, which were never
+drawn. `view.md` has the shape under *What landed on `view/ground`*; this is why each *settle first* came
+out as it did, what the captures said, and what was found.
+
+### Settled
+
+**The height and the cost.** Standing, as the section says. Profiled before anything was cached, on the
+waystation's ground storey (1,804 places): a sweep from a vantage `SightSolver` has not traced from is
+about **145 ms**, some 80 µs a trace, and a repeated one is about **1 ms**, because `SightSolver.Trace`
+already remembers every pair of vantages until the map changes. So **nothing is cached in `game/`**: Core's
+memory keys on exactly what a sweep depends on — where a soldier stands and how — and a second cache would
+be a second invalidation to get wrong. The first frame pays for everybody, about a second for seven
+soldiers with the code cold; after that only a soldier whose place or stance changed pays, and the soldier
+up's is already paid by the active sweep, which asks the same pairs. **A drawn hostile's clip is kept**:
+~145 ms when he moves, on an action and never a frame, and his lines stop at the 45 m sight range where
+his tint ends. The section's fallback — clip ours and leave his unclipped — was not needed.
+
+**What *the firing mode* is.** Aiming, and there is only one answer: a fire slot pressed with nobody in
+sight aims at nobody and lights nothing, and a slot is lit only while `SandboxFrame.Aim` is somebody. So
+`SandboxFrame.Firing` is `Aim is not null`. The cursor tag is not drawn while aiming, so its cover line
+under `Ctrl` followed the outlines by becoming the shield's line at rest; the target's cover and exposure
+against this shooter are in the docked terms, where they always were.
+
+**The shield's threats.** Every threat `Known` gives, told and lost marks included. The scorer prices a
+posture's *spared* term against exactly that list, so the shield and the AI's appraisal are asked of the
+same threats — contract 2 — and a shield that ignored the briefing's posts would call a doorway open that
+the soldier's own appraisal calls covered. **At the stance of whichever of ours would be there** — the one
+standing on the place, else the soldier up, since a move keeps the stance — because cover here is mostly
+height. A threat with no line counts as cover only when what hides it is within `CoverRadius` of the place,
+at no more than the wall's own grade; a building across the square is not a shield on this tile. **Drawn as
+a screen glyph**, not a mesh: a mesh at the foot of a low wall is behind that wall from half the bearings,
+and it had to be neither a hex nor a ring (098). Grade as colour and as fill: light an outline, half filled
+to the waist, full filled.
+
+**The objective's look.** Lime, the one colour nothing on the ground used — violet is the reserve; blue,
+yellow and orange cover; pale our file; the rung colours his beliefs; white the aim; teal ours and the
+route. The exit used to be edged in the light-cover blue. A fill as well as an edge, which no edge on the
+ground has: the place filled with a double edge, the exit washed with its outside edge, and each named at
+every zoom. **The reconnaissance's range is drawn**, dashed, round the place, labelled *look from within
+12 m*: the look counts only from inside it, and a player at 15 m with the house in view would otherwise
+be told nothing and not know why.
+
+**The edges' label.** Words on the ground at each edge in its colour — *stop inside: banks a snap*,
+*stop inside: banks a reserve*, *walks to here* — hung from the piece nearest the top of the screen and
+kept clear of soldiers' names. On the ground rather than the bar's caption or the legend, because the
+misreading happens looking at the ground. And **weapon range went into the firing mode**, dashed white,
+*best to 20 m* and *reaches 55 m*: the shooter's question, and it means the reserve's edges and the range
+are never on the ground at the same time, so neither can be read for the other.
+
+**The fog's weight.** `SandboxPalette.Unseen` went darker, 0.55 to 0.68: at the old weight, lit ground
+nobody watches and the fog were a step of grey apart, and the first capture could not say which a told
+mark stood on.
+
+### Measured
+
+- **No body on dark ground**: a new step, `--fog`, reports it. On the waystation at load, three bodies
+  and all on lit; storey 1, none; sixteen passes with the AI and at `--fit`, four bodies, all on lit.
+- **Our tint on dark ground** is impossible by construction: drawn only on its own lines, which are in
+  `Lit`.
+- **The waystation's turn one: no told mark stands on the dark.** Cobb's on storey 0, Teague's and Marek's
+  on storey 1, all on lit ground — every post the briefing names is in a line to one of ours. So item 5's
+  told-against-seen is brief two's brackets, as the section anticipated, and not the fog's. **A told
+  bracket on dark ground was not captured**; a lost mark on dark ground was (the compound's reaction
+  script, then a pass) and reads plainly.
+- **At `--fit` the buildings read as buildings**, the fog is plain, and the house and the cottages are
+  told apart by *GET EYES ON* with its dashed range and *EXIT*.
+- **The shield**: `--stance crouching --details --hover -6,0 --look -6,0 --zoom 20` on the waystation — a
+  half shield at the gate's low wall; terms *crouching here: half from a mark · light from a mark · out of
+  sight of a mark*.
+- **At rest against aiming**: `--ai --pass 16 --until Bekker` with and without `--aim Teague` — the band
+  edges and their words go, the cover outlines and the reach edges come.
+- **The pinned scene**: two runs, one hash; against master x 442–1158, y 193–828, the map only.
+- **Not measured**: a hand, a stranger reading the edges' words, the shield at the ends of the zoom.
+
+### Found
+
+- **The shield is rarely lit on the waystation, and that is the map.** A scan of every place for cover
+  against the three told marks found most low walls face away from the garrison, and the roof man
+  overlooks the rest — height advantage cancelling low cover, which the mission file's comments say is
+  the whole problem. Worth knowing before a play-through reports *the shield never shows*.
+- **A screen draws a light shield where the soldier is out of sight.** A walk-through sight-blocker hides
+  a man entirely and its profile gives light cover, so the rules say light and the shield says light. Left
+  as the rules say, and an open question in `view.md`.
+- **`Recalculate`'s remarks said the active sweep was 25 ms.** It is ~145 from a fresh vantage now; the
+  remarks were written on a smaller map. Corrected.
+
+### For Core — a note, not a request
+
+**A trace on the waystation is about 80 µs, and the view's sweeps are ~1,800 of them each.** Core's cache
+makes repeats free, so nothing is slow in play. But a sweep is paid in full whenever the solver's memory
+empties at its 250,000-trace bound, which a long AI search can reach, and then every drawn soldier's sweep
+is paid at once. `SightSolver.Intersections` is linear in the wall count and its remarks name a spatial
+index as the thing to do if it ever gets hot; this is the first measurement of it from outside the AI.
+
+### For Interface — a question
+
+**Whether a screen's light cover should read as cover at all on the shield**, when the rules also make the
+man behind it invisible. It is the rules' answer and it is drawn; the question is whether a player who sees
+*light* concludes *seen*.
+
+### For Master
+
+- **`view/camera` is next**, and `view.md` has no brief under *The job* until it is written. What the ground
+  leaves for it is there: words on the ground as one more readout that can cover things, the objective's
+  words and the fog at every zoom, and the shield's fixed size.
+- **Entry 094's items 7, 13, 14's labels and 15 are built**, and 097's View half; their Status lines are
+  flipped to say so.
 
 ---

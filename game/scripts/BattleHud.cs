@@ -732,6 +732,7 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
 
         if (frame.Details)
         {
+            if (CoverLine(frame) is { Length: > 0 } cover) lines.Add((cover, SandboxPalette.TextDim));
             lines.Add((SightLine(frame, node), SandboxPalette.TextDim));
             if (AttentionLine(frame, node) is { Length: > 0 } attention) lines.Add((attention, SandboxPalette.TextDim));
             if (LoudnessLine(frame, node) is { Length: > 0 } loud) lines.Add((loud, SandboxPalette.TextDim));
@@ -1897,24 +1898,70 @@ public sealed class BattleHud(Font font, SandboxCamera camera, System.Func<Sandb
     }
 
     /// <summary>
-    /// What the active unit can make out at the cursor, and what is protecting it.
+    /// The shield's terms: the cover one of ours would have at the cursor against each threat our side holds, by
+    /// grade, naming those the picture may name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This line used to be the other question</b> — the cover a man at the cursor had from the soldier up,
+    /// which is the cover outlines' question — and the brief said it follows wherever the outlines go. They went
+    /// into the firing mode, where this tag is not drawn and the shot's docked terms say the target's cover
+    /// against this shooter; so at rest the line says what the shield draws. One answer,
+    /// <see cref="SandboxFrame.Shield"/>, for the glyph and the words.
+    /// </para>
+    /// <para>
+    /// A threat the picture shows is named; a mark is <i>a mark</i>, counted, because a mark names only a man we
+    /// saw and how many marks our side holds is our own file and already on the map. The stance is said because
+    /// the grade depends on it.
+    /// </para>
+    /// </remarks>
+    private static string CoverLine(SandboxFrame frame)
+    {
+        var covers = frame.Shield;
+        if (covers.Count == 0 || frame.Hover is not { } node) return "";
+
+        string Who(IEnumerable<CoverFrom> group)
+        {
+            var list = group.ToList();
+            var named = list.Where(c => frame.Sees(c.Threat.Unit)).Select(c => c.Threat.Unit.Name).ToList();
+            var marks = list.Count(c => !frame.Sees(c.Threat.Unit));
+            if (marks > 0) named.Add(marks == 1 ? "a mark" : $"{marks} marks");
+            return string.Join(", ", named);
+        }
+
+        var parts = new List<string>();
+        foreach (var grade in new[] { CoverGrade.Full, CoverGrade.Half, CoverGrade.Light })
+            if (covers.Where(c => c.Grade == grade).ToList() is { Count: > 0 } graded)
+                parts.Add($"{grade.ToString().ToLowerInvariant()} from {Who(graded)}");
+        if (covers.Where(c => c.InLine && c.Grade == CoverGrade.None).ToList() is { Count: > 0 } open)
+            parts.Add($"open to {Who(open)}");
+        if (covers.Where(c => !c.InLine && c.Grade == CoverGrade.None).ToList() is { Count: > 0 } unseen)
+            parts.Add($"out of sight of {Who(unseen)}");
+
+        var stance = (frame.Battle.UnitAt(node) is { Side: Side.Player } there ? there : frame.Battle.Active!).Stance;
+        return $"{stance.ToString().ToLowerInvariant()} here: {string.Join("  ·  ", parts)}";
+    }
+
+    /// <summary>
+    /// Whether the soldier up has a line to a standing man at the cursor, how far it is, and the weapon's band there.
     /// </summary>
     /// <remarks>
     /// The distance is quoted in metres straight from the sight trace, so it is also the
     /// cheapest way to tell whether the world scale is right: adjacent hexes should read
     /// 1.7 m apart, not 76. Until the two layouts were separated it read in pixels, which is how
     /// entry 002 in <c>docs/decisions.md</c> was found.
+    /// <para>
+    /// The cover and the exposure it used to quote were a target's from the soldier up, and went with the cover
+    /// outlines into the firing mode, where the docked terms carry both for the target actually aimed at.
+    /// </para>
     /// </remarks>
     private static string SightLine(SandboxFrame frame, NodeId node)
     {
         if (!frame.View.TryGetValue(node, out var seen)) return "no sight data";
-        if (!seen.CanSee) return $"hidden by {seen.Blocker?.Profile.Id ?? "terrain"}";
 
-        var cover = seen.Cover == CoverGrade.None
-            ? "in the open"
-            : $"{seen.Cover.ToString().ToLowerInvariant()} cover behind {seen.CoverSource?.Profile.Id}";
-
-        return $"{cover}    {seen.Exposure:P0} exposed    {seen.Distance:0.0} m, {RangeBand(frame, seen.Distance)}";
+        var who = frame.Battle.Active?.Name ?? "nobody";
+        var line = seen.CanSee ? $"in {who}'s line" : $"out of {who}'s line, behind {seen.Blocker?.Profile.Id ?? "terrain"}";
+        return $"{line}    {seen.Distance:0.0} m, {RangeBand(frame, seen.Distance)}";
     }
 
     /// <summary>
