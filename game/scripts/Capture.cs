@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using Hexcom.Game.Rules;
 
 namespace Hexcom.Game;
 
@@ -18,8 +19,10 @@ namespace Hexcom.Game;
 /// <para>
 /// <c>--focus x,z</c>, <c>--yaw</c> and <c>--pitch</c> (degrees) and <c>--zoom</c> (metres back
 /// from the focus) set the camera, which lands there at once rather than easing.
-/// <c>--sun elevation,bearing</c> moves the sun for the run. <c>--shot-after N</c> waits N
-/// frames first, default eight, so the sky and shadows have settled. Not with <c>--headless</c>: the headless driver does not rasterise, so a window has
+/// <c>--sun elevation,bearing</c> moves the sun for the run. <c>--hover x,z</c> puts the
+/// cursor on a ground point, <c>--move q,r</c> orders the unit to a hex and waits for the
+/// walk, and <c>--end-turn</c> presses the button after it. <c>--shot-after N</c> waits N
+/// frames at the end, default eight, so the sky and shadows have settled. Not with <c>--headless</c>: the headless driver does not rasterise, so a window has
 /// to open for there to be anything to save.
 /// </para>
 /// </remarks>
@@ -49,7 +52,16 @@ public sealed class Capture
     /// </summary>
     public Vector2? Drag { get; private init; }
 
-    private bool _dragged;
+    /// <summary>A point on the ground to treat as the cursor, so the hover marks can be pictured.</summary>
+    public Vector2? Hover { get; private init; }
+
+    /// <summary>A hex to order the unit to before the picture; the capture waits for the walk.</summary>
+    public Hex? Move { get; private init; }
+
+    /// <summary>Whether to press End Turn after any move, before the picture.</summary>
+    public bool EndTurn { get; private init; }
+
+    private bool _dragged, _moved, _endedTurn;
 
     /// <summary>The capture this run was asked for, or null for an ordinary interactive run.</summary>
     public static Capture? Requested()
@@ -67,12 +79,31 @@ public sealed class Capture
             Distance = FloatOf(args, "--zoom"),
             Sun = PairOf(args, "--sun"),
             Drag = PairOf(args, "--drag"),
+            Hover = PairOf(args, "--hover"),
+            Move = PairOf(args, "--move") is { } hex ? new Hex((int)hex.X, (int)hex.Y) : null,
+            EndTurn = Array.IndexOf(args, "--end-turn") >= 0,
         };
     }
 
     /// <summary>Called once a frame. Saves and quits when the wait is up; true on the frame it did.</summary>
-    public bool Tick(Node node)
+    public bool Tick(Node node, Board board)
     {
+        // Orders go in first and the countdown waits for the walk to finish.
+        if (board.Busy) return false;
+
+        if (Move is { } target && !_moved)
+        {
+            _moved = true;
+            if (!board.OrderTo(target)) GD.Print($"move to {target} refused");
+            return false;
+        }
+
+        if (EndTurn && !_endedTurn)
+        {
+            _endedTurn = true;
+            board.EndTurn();
+        }
+
         if (Drag is { } drag && !_dragged && _framesLeft <= 4)
         {
             _dragged = true;

@@ -15,7 +15,46 @@ uniform float grain_cells_per_metre = 12.0;
 uniform float mottle_metres = 9.0;
 uniform float base_roughness : hint_range(0.0, 1.0) = 0.9;
 
+// The hex grid, drawn in the same world coordinates so it is as endless as the plain. Flat-
+// topped, hex_size metres centre to corner: the same layout as Hex.cs, and it must stay so.
+// Off by default: the grid is how the game works, not something it shows. Raise the strength
+// to check that what the board draws lines up with what the rules think.
+uniform float hex_size = 1.0;
+uniform vec3 grid_colour : source_color = vec3(0.62, 0.62, 0.64);
+uniform float grid_width = 0.03;
+uniform float grid_strength : hint_range(0.0, 1.0) = 0.0;
+
 varying vec3 world_pos;
+
+// Centre of the hex containing p, by rounding fractional axial coordinates.
+vec2 hex_centre(vec2 p) {
+	float q = 2.0 / 3.0 * p.x / hex_size;
+	float r = (-1.0 / 3.0 * p.x + 0.57735027 * p.y) / hex_size;
+	float s = -q - r;
+	float rq = round(q);
+	float rr = round(r);
+	float rs = round(s);
+	float dq = abs(rq - q);
+	float dr = abs(rr - r);
+	float ds = abs(rs - s);
+	if (dq > dr && dq > ds) {
+		rq = -rr - rs;
+	} else if (dr > ds) {
+		rr = -rq - rs;
+	}
+	return vec2(hex_size * 1.5 * rq, hex_size * 1.7320508 * (rr + rq / 2.0));
+}
+
+// Distance from a point (as an offset from its hex centre) to the nearest edge of the hex.
+float hex_edge_distance(vec2 d) {
+	float apothem = hex_size * 0.8660254;
+	float m = 0.0;
+	for (int k = 0; k < 3; k++) {
+		float a = radians(30.0 + 60.0 * float(k));
+		m = max(m, abs(dot(d, vec2(cos(a), sin(a)))));
+	}
+	return apothem - m;
+}
 
 float hash12(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -73,6 +112,14 @@ void fragment() {
 
 	float fleck_mask = step(0.988, hash12(floor(gp) + vec2(0.5, 0.5))) * grit_fade;
 	colour = mix(colour, fleck, fleck_mask * 0.4);
+
+	// Grid lines: anti-aliased by their screen footprint, and faded out altogether once a
+	// line would be thinner than a pixel, so the far plain does not shimmer.
+	float edge = hex_edge_distance(p - hex_centre(p));
+	float edge_fw = fwidth(edge);
+	float line = 1.0 - smoothstep(grid_width - edge_fw, grid_width + edge_fw, edge);
+	line *= clamp(1.0 - edge_fw / 0.25, 0.0, 1.0);
+	colour = mix(colour, grid_colour, line * grid_strength);
 
 	ALBEDO = colour;
 	ROUGHNESS = base_roughness - 0.08 * grain - 0.15 * fleck_mask;

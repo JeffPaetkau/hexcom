@@ -248,7 +248,7 @@ public partial class TacticalCamera : Node3D
     }
 
     /// <summary>Where the ray through a screen point meets the ground, or null near or above the horizon.</summary>
-    private Vector3? GroundUnder(Vector2 screen)
+    public Vector3? GroundUnder(Vector2 screen)
     {
         var origin = _camera.ProjectRayOrigin(screen);
         var direction = _camera.ProjectRayNormal(screen);

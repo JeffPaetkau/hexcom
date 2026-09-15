@@ -21,6 +21,8 @@ public partial class World : Node3D
 
     private TacticalCamera _camera = null!;
     private MeshInstance3D _ground = null!;
+    private ShaderMaterial _asphalt = null!;
+    private Board _board = null!;
     private Capture? _capture;
 
     public override void _Ready()
@@ -35,6 +37,21 @@ public partial class World : Node3D
 
         _camera = new TacticalCamera { TraceInput = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--trace-input") >= 0 };
         AddChild(_camera);
+
+        var hud = new Hud();
+        AddChild(hud);
+
+        _board = new Board { Camera = _camera, Hud = hud, PointerOverride = _capture?.Hover };
+        AddChild(_board);
+        hud.EndTurnPressed += _board.EndTurn;
+        hud.ShowPortrait(_board.PieceMesh);
+
+        // The grid is never shown in play; --grid draws it for checking that the board's marks
+        // land where the rules think the hexes are.
+        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--grid") >= 0)
+        {
+            _asphalt.SetShaderParameter("grid_strength", 0.45f);
+        }
 
         PlaceWindowOnLeftMonitor(_camera.TraceInput);
 
@@ -64,7 +81,10 @@ public partial class World : Node3D
         var focus = _camera.Focus;
         _ground.Position = new Vector3(focus.X, 0f, focus.Z);
 
-        if (_capture?.Tick(this) == true) GD.Print($"focus {_camera.Focus}");
+        if (_capture?.Tick(this, _board) == true)
+        {
+            GD.Print($"focus {_camera.Focus}; unit at {_board.Unit.Position} with {_board.Unit.Ap} AP");
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -151,14 +171,14 @@ public partial class World : Node3D
             ShadowBlur = 1.5f,
         };
 
-    private static MeshInstance3D BuildGround()
+    private MeshInstance3D BuildGround()
     {
-        var material = new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/asphalt.gdshader") };
+        _asphalt = new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/asphalt.gdshader") };
 
         return new MeshInstance3D
         {
             Name = "Ground",
-            Mesh = new PlaneMesh { Size = new Vector2(PlainReach * 2f, PlainReach * 2f), Material = material },
+            Mesh = new PlaneMesh { Size = new Vector2(PlainReach * 2f, PlainReach * 2f), Material = _asphalt },
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };
     }

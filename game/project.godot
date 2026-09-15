@@ -20,6 +20,9 @@ window/size/viewport_height=900
 window/size/mode=3
 window/size/initial_position_type=3
 window/size/initial_screen=0
+; The HUD is laid out for 1600 by 900 and scaled to the window; the 3D view renders at full size.
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [dotnet]
 

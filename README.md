@@ -6,9 +6,15 @@ first approach learned.
 
 ## What exists
 
-An endless asphalt plain under an open sky with a sun, and a tactical camera. No grid is
-drawn yet; one world unit is one metre and the hex geometry the grid will use is noted in
-[Units.cs](game/scripts/Units.cs).
+An endless asphalt plain under an open sky with a sun, a tactical camera, and one unit: a
+blue wooden piece with 50 action points a turn that can move, five points a hex. The hex
+grid is not drawn; it is how the game works, not something it shows (run with `-- --grid`
+to draw it for checking alignment). The hex under the cursor gets a white ring and the edge
+of the unit's reach a smoothed white outline with corners rounded to the same radius; a left
+click walks there and pays for it. A card top left shows the active unit, a live portrait of
+its token, and its points; End Turn, bottom right, restores them. One world unit is one metre
+([Units.cs](game/scripts/Units.cs)); the hex maths, the unit and the movement rules are plain
+C# under [game/scripts/rules](game/scripts/rules), ready to move into an engine-free library.
 
 ## Running
 
@@ -36,6 +42,8 @@ It opens fullscreen on the leftmost monitor; F11 switches to a window and back.
 
 | Control | Does |
 |---|---|
+| Left click | move the unit to the hex under the cursor, if in reach |
+| End Turn button | restore the unit's action points |
 | W A S D, arrows | pan (Shift hurries) |
 | Screen edges | pan |
 | Q, E | turn while held (Shift hurries) |
@@ -56,9 +64,11 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --pitch 15 
 ```
 
 Flags: `--focus x,z`, `--yaw` and `--pitch` in degrees, `--zoom` in metres back from the
-focus, `--sun elevation,bearing` in degrees, `--shot-after N` frames to wait (default 8),
-`--drag dx,dy` to feed a middle-button drag in pixels through the input pipeline first (the
-console prints the focus it ends at).
+focus, `--sun elevation,bearing` in degrees, `--hover x,z` to put the cursor on a ground
+point, `--move q,r` to order the unit to a hex and wait for the walk, `--end-turn` to press
+the button after it, `--shot-after N` frames to wait at the end (default 8), `--drag dx,dy`
+to feed a middle-button drag in pixels through the input pipeline first. The console prints
+the focus, the unit's hex and its points at the moment of the picture.
 
 Running with `-- --trace-input` prints every mouse button Godot receives, for checking what a
 mouse actually sends.
