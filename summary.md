@@ -21,16 +21,9 @@ decided by who saw whom first.** Action-point movement, individual initiative (n
 alternation), no aggro radius — every enemy that knows about you learned it through a channel
 you can see and cut.
 
-**Setting, in brief.** A power that ran the region has withdrawn and left its automated orbital
-interdiction running: anything that announces itself (aircraft, artillery, drones, sensor nets,
-most radios) is destroyed. Two successor factions each claim to be its continuation and so cannot
-admit they are at war. It is fought twelve people at a time, over installations rather than
-ground, by professionals with identical kit. Register: Star Trek / Star Wars / Babylon 5. Beams
+**Setting, in brief.**  General Sci-Fi: Star Trek / Star Wars / Babylon 5. Beams
 and slugs both survive because each defeats what the other's protection cannot, so nobody wins a
-frontal exchange and the game is about seeing first. Missions are about possession and
-information, with three endings: objective achieved, objective lost, or out of reach and everyone
-home anyway. Six mission shapes were written, among them withdrawal, sabotage, extraction,
-capture and denial (`docs/setting/missions.md` on the archive branch).
+frontal exchange and the game is about seeing first.
 
 ---
 

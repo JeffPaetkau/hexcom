@@ -1,0 +1,32 @@
+; Engine configuration file.
+; Hexcom — the Godot presentation layer. Take 2: the interface comes first, the rules follow it.
+
+config_version=5
+
+[application]
+
+config/name="Hexcom"
+config/description="Turn-based tactics on a hex grid."
+run/main_scene="res://scenes/World.tscn"
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+; Borderless fullscreen (mode 3) on a chosen screen (position type 3), so there is no flicker
+; from moving it after. Screen 0 is the left monitor on this machine; World.cs moves it there
+; if the numbering differs. F11 drops to a window; a capture run always uses one.
+window/size/mode=3
+window/size/initial_position_type=3
+window/size/initial_screen=0
+
+[dotnet]
+
+project/assembly_name="Hexcom.Game"
+project/solution_directory="res://.."
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+anti_aliasing/quality/msaa_3d=2

@@ -11,3 +11,8 @@ reference-inbox/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Godot and .NET build output
+game/.godot/
+**/bin/
+**/obj/

@@ -1,0 +1,16 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Hexcom.Game</RootNamespace>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
+
+  <!--
+    Presentation only. When the rules arrive they go in their own engine-free library that this
+    project references; nothing here should ever be referenced from there.
+  -->
+
+</Project>
