@@ -1,39 +1,11 @@
-# .NET
-bin/
-obj/
-*.user
-*.suo
-.vs/
-.idea/
-artifacts/
-
-# Godot
-game/.godot/
-game/.import/
-game/export.cfg
-game/android/
-game/*.sln
-game/*.csproj.user
-data_*/
-mono_crash.*.json
-
-# The exported game. Derived, exactly as a test result is: nothing checked in is a
-# claim about whether the tree builds. `## Shipping it` in docs/subprojects/view.md
-# says how to rebuild it.
-build/
-
-# Raw captures of other games, dropped here by the user for the interface
-# territory to read. Screenshots of somebody else's game are evidence, not source:
-# the curated crops that carry a claim are committed under
-# docs/interface/reference/shots/, and the rest stays out of the history.
-reference-inbox/
-
-# Per-machine tool settings (absolute paths, local permission grants)
+# Per-machine tool settings (absolute paths, local permission grants, the usage-feed token)
 .claude/settings.local.json
 
-# Worktrees created inside the repo by EnterWorktree. Their contents are a
-# checkout of this same repository, so they must never be tracked by it.
+# Worktrees created inside the repo by EnterWorktree
 .claude/worktrees/
+
+# Raw captures of other games, dropped here by the user; evidence, not source
+reference-inbox/
 
 # OS
 Thumbs.db
