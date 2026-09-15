@@ -132,9 +132,9 @@ showed the waystation recon was never won briefed and won ~15% blind.
   https://claude.ai/code/artifact/f7a71d6e-e493-43d7-88f7-bd569d06e201 (source
   `docs/design.html` on the archive branch).
 - A research layer of per-game interface reference files (XCOM 2, Invisible Inc., Shadow
-  Tactics, Phoenix Point, Mutant Year Zero, Into the Breach, …) lives under `docs/interface/`. Raw
-  screenshots are in `reference-inbox/`, which is gitignored and **is not in any branch** — it
-  was left in place.
+  Tactics, Phoenix Point, Mutant Year Zero, Into the Breach, …) lives under `docs/interface/`. The raw
+  screenshots and capture notes behind them are committed under `reference-inbox/` on the archive
+  branch (after the `v1-final` tag).
 - User preferences carried forward: **Windows a session opens go on the left monitor** (the user
   works on the centre one of three); British spelling in prose; test names as sentences about
   behaviour; doc comments explain why; **push back on doubtful ideas with reasoning** before
