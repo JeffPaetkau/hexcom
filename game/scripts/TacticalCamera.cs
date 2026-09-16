@@ -61,6 +61,7 @@ public partial class TacticalCamera : Node3D
     private bool _dragging, _orbiting;
     private Vector3 _grabbed;
     private Vector2 _orbitReturn;
+    private Vector3 _pivot;
 
     /// <summary>Off during a capture, so nothing at the keyboard or the window edge can move the shot.</summary>
     public bool ControlsEnabled { get; set; } = true;
@@ -70,6 +71,12 @@ public partial class TacticalCamera : Node3D
 
     /// <summary>The point on the ground being looked at.</summary>
     public Vector3 Focus => _focus;
+
+    /// <summary>
+    /// Whether a mouse button is moving the camera. The cursor is captured or busy holding the
+    /// ground, so nothing else should read it as pointing at anything.
+    /// </summary>
+    public bool Dragging => _dragging || _orbiting;
 
     public float Distance => _distance;
 
@@ -210,8 +217,11 @@ public partial class TacticalCamera : Node3D
             case MouseButton.Right:
                 if (button.Pressed)
                 {
+                    // The orbit turns about the ground under the cursor, or about the focus
+                    // when the cursor is on the sky.
                     _orbiting = true;
                     _orbitReturn = button.Position;
+                    _pivot = GroundUnder(button.Position) ?? _focus;
                     Input.MouseMode = Input.MouseModeEnum.Captured;
                 }
                 else if (_orbiting)
@@ -228,13 +238,27 @@ public partial class TacticalCamera : Node3D
     {
         if (_orbiting)
         {
-            // Dragging right swings the camera to the right around the focus; dragging up tilts
-            // it towards top-down.
+            // Dragging right swings the camera to the right around the pivot; dragging up tilts
+            // it towards top-down. Direct rather than eased: a drag is already continuous under
+            // the hand, and the pivot only stays pinned if the camera is where the maths put it.
             _yawTarget += motion.Relative.X * OrbitRadiansPerPixel;
             _pitchTarget = Mathf.Clamp(
                 _pitchTarget - motion.Relative.Y * OrbitRadiansPerPixel,
                 Mathf.DegToRad(LowestPitchDegrees),
                 Mathf.DegToRad(HighestPitchDegrees));
+            _yaw = _yawTarget;
+            _pitch = _pitchTarget;
+            Place();
+
+            // Turning about the focus moved the pivot on screen; slide the focus so the pivot
+            // is back under the cursor. A translation is exact, so one correction does it.
+            if (GroundUnder(_orbitReturn) is { } now)
+            {
+                var shift = _pivot - now;
+                _focus += shift;
+                _focusTarget = _focus;
+                Place();
+            }
         }
         else if (_dragging && GroundUnder(motion.Position) is { } under)
         {

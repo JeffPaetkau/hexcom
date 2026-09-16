@@ -52,6 +52,15 @@ public sealed class Capture
     /// </summary>
     public Vector2? Drag { get; private init; }
 
+    /// <summary>
+    /// A right-button drag in pixels, from <see cref="ProbePoint"/>, fed through the input
+    /// pipeline before the picture: the ground under that point should not move.
+    /// </summary>
+    public Vector2? Orbit { get; private init; }
+
+    /// <summary>Where an orbit starts on screen: off centre, so pinning is distinguishable from turning about the focus.</summary>
+    public static Vector2 ProbePoint(Node node) => node.GetViewport().GetVisibleRect().Size / 2f + new Vector2(300f, 150f);
+
     /// <summary>A point on the ground to treat as the cursor, so the hover marks can be pictured.</summary>
     public Vector2? Hover { get; private init; }
 
@@ -61,7 +70,7 @@ public sealed class Capture
     /// <summary>Whether to press End Turn after any move, before the picture.</summary>
     public bool EndTurn { get; private init; }
 
-    private bool _dragged, _moved, _endedTurn;
+    private bool _dragged, _orbited, _moved, _endedTurn;
 
     /// <summary>The capture this run was asked for, or null for an ordinary interactive run.</summary>
     public static Capture? Requested()
@@ -79,6 +88,7 @@ public sealed class Capture
             Distance = FloatOf(args, "--zoom"),
             Sun = PairOf(args, "--sun"),
             Drag = PairOf(args, "--drag"),
+            Orbit = PairOf(args, "--orbit"),
             Hover = PairOf(args, "--hover"),
             Move = PairOf(args, "--move") is { } hex ? new Hex((int)hex.X, (int)hex.Y) : null,
             EndTurn = Array.IndexOf(args, "--end-turn") >= 0,
@@ -107,7 +117,13 @@ public sealed class Capture
         if (Drag is { } drag && !_dragged && _framesLeft <= 4)
         {
             _dragged = true;
-            SimulateDrag(node, drag);
+            SimulateDrag(node, drag, MouseButton.Middle, node.GetViewport().GetVisibleRect().Size / 2f);
+        }
+
+        if (Orbit is { } orbit && !_orbited && _framesLeft <= 4)
+        {
+            _orbited = true;
+            SimulateDrag(node, orbit, MouseButton.Right, ProbePoint(node));
         }
 
         if (_framesLeft-- > 0) return false;
@@ -123,14 +139,14 @@ public sealed class Capture
         return true;
     }
 
-    private static void SimulateDrag(Node node, Vector2 drag)
+    private static void SimulateDrag(Node node, Vector2 drag, MouseButton button, Vector2 from)
     {
-        var from = node.GetViewport().GetVisibleRect().Size / 2f;
         const int steps = 8;
+        var mask = button == MouseButton.Right ? MouseButtonMask.Right : MouseButtonMask.Middle;
 
         Input.ParseInputEvent(new InputEventMouseButton
         {
-            ButtonIndex = MouseButton.Middle, Pressed = true, Position = from, GlobalPosition = from,
+            ButtonIndex = button, Pressed = true, Position = from, GlobalPosition = from,
         });
 
         for (var step = 1; step <= steps; step++)
@@ -138,13 +154,13 @@ public sealed class Capture
             var at = from + drag * step / steps;
             Input.ParseInputEvent(new InputEventMouseMotion
             {
-                Position = at, GlobalPosition = at, Relative = drag / steps, ButtonMask = MouseButtonMask.Middle,
+                Position = at, GlobalPosition = at, Relative = drag / steps, ButtonMask = mask,
             });
         }
 
         Input.ParseInputEvent(new InputEventMouseButton
         {
-            ButtonIndex = MouseButton.Middle, Pressed = false, Position = from + drag, GlobalPosition = from + drag,
+            ButtonIndex = button, Pressed = false, Position = from + drag, GlobalPosition = from + drag,
         });
     }
 

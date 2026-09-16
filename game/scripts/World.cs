@@ -24,6 +24,7 @@ public partial class World : Node3D
     private ShaderMaterial _asphalt = null!;
     private Board _board = null!;
     private Capture? _capture;
+    private bool _probed;
 
     public override void _Ready()
     {
@@ -58,7 +59,7 @@ public partial class World : Node3D
         if (_capture is { } capture)
         {
             // Controls stay on only when the capture is going to drive them itself.
-            _camera.ControlsEnabled = capture.Drag is not null;
+            _camera.ControlsEnabled = capture.Drag is not null || capture.Orbit is not null;
             _camera.Set(capture.Focus, capture.YawDegrees, capture.PitchDegrees, capture.Distance);
             _camera.Settle();
 
@@ -81,9 +82,16 @@ public partial class World : Node3D
         var focus = _camera.Focus;
         _ground.Position = new Vector3(focus.X, 0f, focus.Z);
 
+        if (_capture is { Orbit: not null } && !_probed)
+        {
+            _probed = true;
+            GD.Print($"ground under probe before: {_camera.GroundUnder(Capture.ProbePoint(this))}");
+        }
+
         if (_capture?.Tick(this, _board) == true)
         {
             GD.Print($"focus {_camera.Focus}; unit at {_board.Unit.Position} with {_board.Unit.Ap} AP");
+            if (_capture.Orbit is not null) GD.Print($"ground under probe after: {_camera.GroundUnder(Capture.ProbePoint(this))}");
         }
     }
 

@@ -96,7 +96,8 @@ public partial class Board : Node3D
 
     public override void _Process(double delta)
     {
-        var point = PointerOverride ?? PointUnderMouse();
+        // While the mouse is moving the camera it is not pointing at a hex.
+        var point = Camera.Dragging ? null : PointerOverride ?? PointUnderMouse();
         Hex? hovered = point is { } p ? Hex.At(p.X, p.Y) : null;
 
         if (hovered != _hovered)

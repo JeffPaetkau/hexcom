@@ -67,8 +67,10 @@ Flags: `--focus x,z`, `--yaw` and `--pitch` in degrees, `--zoom` in metres back 
 focus, `--sun elevation,bearing` in degrees, `--hover x,z` to put the cursor on a ground
 point, `--move q,r` to order the unit to a hex and wait for the walk, `--end-turn` to press
 the button after it, `--shot-after N` frames to wait at the end (default 8), `--drag dx,dy`
-to feed a middle-button drag in pixels through the input pipeline first. The console prints
-the focus, the unit's hex and its points at the moment of the picture.
+to feed a middle-button drag in pixels through the input pipeline first, `--orbit dx,dy` to
+feed a right-button drag from an off-centre point (the console prints the ground under that
+point before and after, which should match). The console prints the focus, the unit's hex
+and its points at the moment of the picture.
 
 Running with `-- --trace-input` prints every mouse button Godot receives, for checking what a
 mouse actually sends.
