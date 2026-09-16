@@ -25,14 +25,22 @@ public partial class Board : Node3D
     private const float HoverWidth = 0.06f;
     private const float ReachWidth = 0.06f;
 
+    // Marks lie this far above the drawn ground, enough to win the depth test against it and
+    // against each other, and far too little to float.
+    private const float ReachLift = 0.015f;
+    private const float UnitLift = 0.025f;
+    private const float HoverLift = 0.035f;
+
     private static readonly Color PieceBlue = new(0.16f, 0.36f, 0.82f);
 
     private readonly Unit _unit = new(new Hex(0, 0));
     private HashSet<Hex> _reachable = new();
 
-    private Material _overlay = null!;
+    private Material _white = null!;
+    private Material _accent = null!;
     private MeshInstance3D _piece = null!;
     private MeshInstance3D _reach = null!;
+    private MeshInstance3D _unitRing = null!;
     private MeshInstance3D _hover = null!;
 
     private Hex? _hovered;
@@ -58,16 +66,12 @@ public partial class Board : Node3D
 
     public override void _Ready()
     {
-        // Marks on the ground draw over everything: they follow the height function, and a
-        // coarse far chunk can cut through them where the mesh straightens a curve.
-        _overlay = new StandardMaterial3D
-        {
-            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            AlbedoColor = Colors.White,
-            CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            NoDepthTest = true,
-            RenderPriority = 1,
-        };
+        // Marks lie on the drawn ground and are depth tested like anything else on it, so a
+        // piece standing on a ring hides the far side of it. The cursor and reach marks are
+        // white; the ring under the active unit is the HUD's own colour, the one thing on the
+        // board that says "this is yours".
+        _white = Overlay(Colors.White);
+        _accent = Overlay(SciFi.Accent);
 
         var paint = new StandardMaterial3D
         {
@@ -83,20 +87,25 @@ public partial class Board : Node3D
             Position = ToScene(_unit.Position),
         };
 
-        // Stacked a little above the ground and each other so none of them z-fights.
-        _reach = new MeshInstance3D { Name = "Reach", Position = Vector3.Up * 0.015f };
-        _hover = new MeshInstance3D { Name = "Hover", Visible = false, Position = Vector3.Up * 0.025f };
+        _reach = new MeshInstance3D { Name = "Reach" };
+        _unitRing = new MeshInstance3D { Name = "UnitRing" };
+        _hover = new MeshInstance3D { Name = "Hover", Visible = false };
 
         AddChild(_piece);
         AddChild(_reach);
+        AddChild(_unitRing);
         AddChild(_hover);
 
         RefreshReach();
+        RefreshUnitRing();
         RefreshHover();
     }
 
     public override void _Process(double delta)
     {
+        // The ring walks with the piece, rebuilt each frame so it keeps to the ground.
+        if (_moving) RefreshUnitRing();
+
         // While the mouse is moving the camera it is not pointing at a hex.
         var point = Camera.Dragging ? null : PointerOverride ?? PointUnderMouse();
         Hex? hovered = point is { } p ? Hex.At(p.X, p.Y) : null;
@@ -157,8 +166,15 @@ public partial class Board : Node3D
             _unit.Position = destination;
             _moving = false;
             RefreshReach();
+            RefreshUnitRing();
             RefreshHover();
         };
+    }
+
+    /// <summary>The ring under the active unit, the same size as the cursor's so the two coincide when it is pointed at.</summary>
+    private void RefreshUnitRing()
+    {
+        _unitRing.Mesh = Meshes.Ring(_piece.Position, HoverRadius, HoverWidth, _accent, Drape(UnitLift));
     }
 
     /// <summary>Redraw the edge of what the unit can reach from where it stands with what it has.</summary>
@@ -171,6 +187,14 @@ public partial class Board : Node3D
     private void RefreshReach()
     {
         _reachable = Movement.Reachable(_unit.Position, _unit.Ap);
+
+        // A unit that can only stand where it is has no reach to outline; the ring under it
+        // already says where it is, and a second ring of another size would only argue with it.
+        if (_reachable.Count <= 1)
+        {
+            _reach.Mesh = null;
+            return;
+        }
 
         // An edge is on the outline when the hex across it is out of reach.
         var edges = new List<(Vector2, Vector2)>();
@@ -194,10 +218,18 @@ public partial class Board : Node3D
             polylines.Add(points);
         }
 
-        _reach.Mesh = Meshes.Ribbons(polylines, ReachWidth, _overlay, Drape);
+        _reach.Mesh = Meshes.Ribbons(polylines, ReachWidth, _white, Drape(ReachLift));
     }
 
-    private float Drape(float x, float z) => (float)Terrain.Height(x, z);
+    /// <summary>Lay a mark on the drawn ground, a set height above it.</summary>
+    private Meshes.HeightAt Drape(float lift) => (x, z) => TerrainView.MeshHeight(Terrain, x, z) + lift;
+
+    private static StandardMaterial3D Overlay(Color colour) => new()
+    {
+        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+        AlbedoColor = colour,
+        CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+    };
 
     /// <summary>Move the ring under the cursor, plan the path to it, and tell the HUD the cost.</summary>
     /// <remarks>The path is planned but not drawn: the ring and the cost are what the player sees.</remarks>
@@ -212,7 +244,7 @@ public partial class Board : Node3D
         }
 
         _hover.Visible = true;
-        _hover.Mesh = Meshes.Ring(ToScene(hovered), HoverRadius, HoverWidth, _overlay, Drape);
+        _hover.Mesh = Meshes.Ring(ToScene(hovered), HoverRadius, HoverWidth, _white, Drape(HoverLift));
 
         if (!_moving && hovered != _unit.Position && _reachable.Contains(hovered))
         {

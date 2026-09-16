@@ -14,9 +14,12 @@ splines that flatten the ground onto their own smoothed profile. The view draws 
 quadtree of mesh chunks out to eight kilometres ([TerrainView.cs](game/scripts/TerrainView.cs))
 with a shader that decides grass, dirt and asphalt per pixel from a baked road-distance map,
 the slope and noise. The hex grid is not drawn; it is how the game works, not something it
-shows (run with `-- --grid` to draw it for checking alignment). The hex under the cursor gets a white ring and the edge
-of the unit's reach a smoothed white outline with corners rounded to the same radius; a left
-click walks there and pays for it. A card top left shows the active unit, a live portrait of
+shows (run with `-- --grid` to draw it for checking alignment). The active unit stands in a
+ring of the HUD's cyan, the hex under the cursor gets a white ring of the same size, so the two
+coincide when the cursor is on the unit, and the edge of the unit's reach is a smoothed white
+outline with corners rounded to the same radius (not drawn when the unit can only stand where
+it is); a left click walks there and pays for it. The marks lie on the drawn ground and are
+depth tested, so a piece hides the far side of its own ring. A card top left shows the active unit, a live portrait of
 its token, and its points; End Turn, bottom right, restores them. One world unit is one metre
 ([Units.cs](game/scripts/Units.cs)); the hex maths, the unit and the movement rules are plain
 C# under [game/scripts/rules](game/scripts/rules), ready to move into an engine-free library.

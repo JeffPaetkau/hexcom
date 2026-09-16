@@ -159,6 +159,34 @@ public partial class TerrainView : Node3D
         }
     }
 
+    /// <summary>
+    /// The height of the drawn ground at a point: the height function sampled on the finest
+    /// chunk grid and interpolated across the same triangles the mesh is built from.
+    /// </summary>
+    /// <remarks>
+    /// Marks laid on the true height function sink into the mesh wherever it cuts a curve
+    /// straight, and drawing them without a depth test puts them in front of the pieces that
+    /// stand on them. Following the mesh instead lets them be depth tested and lie flat on it.
+    /// Exact within the finest chunks, which reach well beyond a turn's walk from the focus.
+    /// </remarks>
+    public static float MeshHeight(Terrain terrain, float x, float z)
+    {
+        const float spacing = LeafSize / Quads;
+        var x0 = Mathf.Floor(x / spacing) * spacing;
+        var z0 = Mathf.Floor(z / spacing) * spacing;
+        var fx = (x - x0) / spacing;
+        var fz = (z - z0) / spacing;
+
+        // Each quad is split from its (x + 1, z) corner to its (x, z + 1) corner.
+        var a = (float)terrain.Height(x0, z0);
+        var b = (float)terrain.Height(x0 + spacing, z0);
+        var c = (float)terrain.Height(x0, z0 + spacing);
+        var d = (float)terrain.Height(x0 + spacing, z0 + spacing);
+        return fx + fz <= 1f
+            ? a + (b - a) * fx + (c - a) * fz
+            : d + (c - d) * (1f - fx) + (b - d) * (1f - fz);
+    }
+
     /// <summary>The ground normal from the height function's slope, the same at every resolution.</summary>
     private Vector3 NormalAt(float x, float z)
     {
