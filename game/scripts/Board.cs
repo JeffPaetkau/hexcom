@@ -43,6 +43,8 @@ public partial class Board : Node3D
 
     public Hud Hud { get; set; } = null!;
 
+    public Terrain Terrain { get; set; } = null!;
+
     /// <summary>A point on the ground to treat as the cursor, for captures. Null reads the mouse.</summary>
     public Vector2? PointerOverride { get; set; }
 
@@ -56,11 +58,15 @@ public partial class Board : Node3D
 
     public override void _Ready()
     {
+        // Marks on the ground draw over everything: they follow the height function, and a
+        // coarse far chunk can cut through them where the mesh straightens a curve.
         _overlay = new StandardMaterial3D
         {
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             AlbedoColor = Colors.White,
             CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            NoDepthTest = true,
+            RenderPriority = 1,
         };
 
         var paint = new StandardMaterial3D
@@ -79,12 +85,7 @@ public partial class Board : Node3D
 
         // Stacked a little above the ground and each other so none of them z-fights.
         _reach = new MeshInstance3D { Name = "Reach", Position = Vector3.Up * 0.015f };
-        _hover = new MeshInstance3D
-        {
-            Name = "Hover",
-            Mesh = Meshes.Ring(HoverRadius, HoverWidth, _overlay),
-            Visible = false,
-        };
+        _hover = new MeshInstance3D { Name = "Hover", Visible = false, Position = Vector3.Up * 0.025f };
 
         AddChild(_piece);
         AddChild(_reach);
@@ -193,8 +194,10 @@ public partial class Board : Node3D
             polylines.Add(points);
         }
 
-        _reach.Mesh = Meshes.Ribbons(polylines, ReachWidth, _overlay);
+        _reach.Mesh = Meshes.Ribbons(polylines, ReachWidth, _overlay, Drape);
     }
+
+    private float Drape(float x, float z) => (float)Terrain.Height(x, z);
 
     /// <summary>Move the ring under the cursor, plan the path to it, and tell the HUD the cost.</summary>
     /// <remarks>The path is planned but not drawn: the ring and the cost are what the player sees.</remarks>
@@ -209,7 +212,7 @@ public partial class Board : Node3D
         }
 
         _hover.Visible = true;
-        _hover.Position = ToScene(hovered) + Vector3.Up * 0.025f;
+        _hover.Mesh = Meshes.Ring(ToScene(hovered), HoverRadius, HoverWidth, _overlay, Drape);
 
         if (!_moving && hovered != _unit.Position && _reachable.Contains(hovered))
         {
@@ -229,9 +232,12 @@ public partial class Board : Node3D
         return ground is { } g ? new Vector2(g.X, g.Z) : null;
     }
 
-    private static Vector3 ToScene(Hex hex) => ToScene(hex.Centre);
+    /// <summary>The centre of a hex, on the ground.</summary>
+    private Vector3 ToScene(Hex hex)
+    {
+        var (x, z) = hex.Centre;
+        return new Vector3((float)x, (float)Terrain.Height(x, z), (float)z);
+    }
 
     private static Vector2 ToPlane((double X, double Z) plane) => new((float)plane.X, (float)plane.Z);
-
-    private static Vector3 ToScene((double X, double Z) plane) => new((float)plane.X, 0f, (float)plane.Z);
 }

@@ -48,22 +48,30 @@ public static class Meshes
         return mesh;
     }
 
-    /// <summary>A flat band along a polyline on the ground, or null for fewer than two points.</summary>
-    public static ArrayMesh? Ribbon(IReadOnlyList<Vector3> points, float width, Material material)
-        => Ribbons(new[] { points }, width, material);
+    /// <summary>The height of the ground at a point on the plane, for draping marks over it.</summary>
+    public delegate float HeightAt(float x, float z);
 
-    /// <summary>Flat bands along several polylines at once, or null if none has two points.</summary>
-    public static ArrayMesh? Ribbons(IReadOnlyList<IReadOnlyList<Vector3>> polylines, float width, Material material)
+    /// <summary>A flat band along a polyline on the ground, or null for fewer than two points.</summary>
+    public static ArrayMesh? Ribbon(IReadOnlyList<Vector3> points, float width, Material material, HeightAt? drape = null)
+        => Ribbons(new[] { points }, width, material, drape);
+
+    /// <summary>
+    /// Flat bands along several polylines at once, or null if none has two points. With a
+    /// drape the bands follow the ground: long segments are cut into metre steps and every
+    /// point takes the ground's height.
+    /// </summary>
+    public static ArrayMesh? Ribbons(IReadOnlyList<IReadOnlyList<Vector3>> polylines, float width, Material material, HeightAt? drape = null)
     {
         var st = new SurfaceTool();
         st.Begin(Mesh.PrimitiveType.Triangles);
 
         var any = false;
-        foreach (var points in polylines)
+        foreach (var polyline in polylines)
         {
-            if (points.Count < 2) continue;
+            if (polyline.Count < 2) continue;
             any = true;
 
+            var points = drape is null ? polyline : Draped(polyline, drape);
             for (var i = 0; i + 1 < points.Count; i++) Band(st, points[i], points[i + 1], width);
             foreach (var point in points) Disc(st, point, width / 2f);
         }
@@ -71,41 +79,45 @@ public static class Meshes
         return any ? Finish(st, material) : null;
     }
 
-    /// <summary>Flat bands along separate segments on the ground, or null for none.</summary>
-    public static ArrayMesh? Segments(IReadOnlyList<(Vector3 A, Vector3 B)> segments, float width, Material material)
+    private static List<Vector3> Draped(IReadOnlyList<Vector3> polyline, HeightAt drape)
     {
-        if (segments.Count == 0) return null;
-
-        var st = new SurfaceTool();
-        st.Begin(Mesh.PrimitiveType.Triangles);
-
-        foreach (var (a, b) in segments)
+        var points = new List<Vector3>();
+        for (var i = 0; i + 1 < polyline.Count; i++)
         {
-            Band(st, a, b, width);
-            Disc(st, a, width / 2f);
-            Disc(st, b, width / 2f);
+            var a = polyline[i];
+            var b = polyline[i + 1];
+            var steps = Mathf.Max(1, Mathf.CeilToInt(new Vector2(b.X - a.X, b.Z - a.Z).Length()));
+            for (var s = 0; s < steps; s++)
+            {
+                var t = (float)s / steps;
+                var x = Mathf.Lerp(a.X, b.X, t);
+                var z = Mathf.Lerp(a.Z, b.Z, t);
+                points.Add(new Vector3(x, drape(x, z), z));
+            }
         }
 
-        return Finish(st, material);
+        var last = polyline[^1];
+        points.Add(new Vector3(last.X, drape(last.X, last.Z), last.Z));
+        return points;
     }
 
-    /// <summary>A flat ring on the ground, centred on the origin.</summary>
-    public static ArrayMesh Ring(float radius, float width, Material material)
+    /// <summary>A flat ring on the ground around a centre, draped over it if asked.</summary>
+    public static ArrayMesh Ring(Vector3 centre, float radius, float width, Material material, HeightAt? drape = null)
     {
         const int sides = 48;
         var points = new List<Vector3>(sides + 1);
         for (var i = 0; i <= sides; i++)
         {
             var a = Mathf.Tau * i / sides;
-            points.Add(new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius));
+            points.Add(centre + new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius));
         }
 
-        return Ribbon(points, width, material)!;
+        return Ribbon(points, width, material, drape)!;
     }
 
     private static void Band(SurfaceTool st, Vector3 a, Vector3 b, float width)
     {
-        var along = (b - a).Normalized();
+        var along = new Vector3(b.X - a.X, 0f, b.Z - a.Z).Normalized();
         var across = new Vector3(-along.Z, 0f, along.X) * (width / 2f);
         Quad(st, a + across, b + across, b - across, a - across, Vector3.Up);
     }

@@ -1,5 +1,37 @@
 # Hexcom — project summary
 
+## Where take 2 is (updated 2026-09-15)
+
+**The approach.** Take 2 builds the interface first, piece by piece, and pulls the rules in to
+match it, because the interface is the user's only view into how things are going. V1 (below)
+is reference only, not binding; check with the user when unsure. The v1 rules were reviewed on
+2026-09-15 and the user confirmed **"that is where we are going"**: costed movement graph
+(walk 5, rough 10, vault 15, climb and ladder 30, some tiles crossable but not standable),
+per-soldier cost profiles, stances (crouch 1.6, prone 3.0, change 2), facing (turn in place 2),
+a reaction reserve banked from unspent points, refusals with reasons, initiative rather than
+side alternation. Recommended order: costed reach and paths, then stance, then facing.
+
+**What exists.** [README.md](README.md) is the current description: build and run commands,
+controls, and the capture flags. In short: a Godot 4.7.2 .NET project under `game/`, built in
+code; a procedural landscape (hills, roads, tracks, grass and dirt) from one height function in
+plain C# under `game/scripts/rules/`, which is also where the hex maths, the unit (50 AP, 5 a
+stride) and the open-ground movement live, engine-free so they can lift into a rules library;
+a tactical camera; one unit with a hover ring, a smoothed reach outline, animated paid-for moves
+and End Turn; a sci-fi HUD with a unit card. The hex grid is never drawn in play (`--grid` for
+checking). Committed and pushed on `master`.
+
+**How the work is checked.** Every visual change gets a picture, not a claim: run the game with
+`-- --shot out.png` plus camera, hover, move, sun or drag flags (see README), read the PNG, and
+send the user the pictures. Scripted state checks print to the console (unit hex and AP, ground
+under a probe point). `--heights` prints the ground along a line when a picture cannot explain
+something. The user runs the game themselves on the left monitor and reports what they see.
+
+**Conventions kept.** British spelling; doc comments say why; commit only when the user says
+"commit", push when they say "push"; no branches unless asked. Godot's window opens fullscreen
+on screen 0 (the left monitor); captures force a 1600 by 900 window.
+
+---
+
 A summary of the first approach to this project, written at the fresh start on 2026-09-14. All of
 that work is preserved on the branch **`archive/v1-territories`** (also tagged **`v1-final`**) on
 `origin` (https://github.com/JeffPaetkau/hexcom). Anything here can be checked against it:

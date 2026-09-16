@@ -33,3 +33,6 @@ project/solution_directory="res://.."
 
 renderer/rendering_method="forward_plus"
 anti_aliasing/quality/msaa_3d=2
+; Hills and road cuttings cast real shadows; at the default size they arrive as blobs.
+lights_and_shadows/directional_shadow/size=8192
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3

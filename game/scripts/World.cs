@@ -1,4 +1,5 @@
 using Godot;
+using Hexcom.Game.Rules;
 
 namespace Hexcom.Game;
 
@@ -14,14 +15,25 @@ namespace Hexcom.Game;
 /// </remarks>
 public partial class World : Node3D
 {
-    /// <summary>Metres the plain extends each way from the focus. Well past where fog ends it.</summary>
+    /// <summary>Metres the far plane extends each way from the focus. Well past where fog ends it.</summary>
     private const float PlainReach = 20000f;
+
+    /// <summary>
+    /// Where the far plane sits. It only shows beyond the eight kilometres of terrain mesh,
+    /// deep in fog, and is kept below the hills so it never pokes through a valley before then.
+    /// </summary>
+    private const float FarPlaneHeight = -25f;
 
     private static readonly Color Horizon = new(0.72f, 0.79f, 0.90f);
 
+    /// <summary>The landscape's seed. One number decides every hill.</summary>
+    private const int Seed = 7;
+
     private TacticalCamera _camera = null!;
     private MeshInstance3D _ground = null!;
-    private ShaderMaterial _asphalt = null!;
+    private ShaderMaterial _surface = null!;
+    private Terrain _terrain = null!;
+    private TerrainView _terrainView = null!;
     private Board _board = null!;
     private Capture? _capture;
     private bool _probed;
@@ -33,16 +45,28 @@ public partial class World : Node3D
         AddChild(BuildSky());
         AddChild(BuildSun(_capture?.Sun ?? DefaultSun));
 
+        _terrain = new Terrain(Seed);
+        _surface = new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/terrain.gdshader") };
+        _surface.SetShaderParameter("surface_map", TerrainView.BakeSurfaceMap(_terrain));
+        _surface.SetShaderParameter("map_half_extent", (float)Terrain.MapHalfExtent);
+
+        _terrainView = new TerrainView(_terrain, _surface);
+        AddChild(_terrainView);
+
         _ground = BuildGround();
         AddChild(_ground);
 
-        _camera = new TacticalCamera { TraceInput = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--trace-input") >= 0 };
+        _camera = new TacticalCamera
+        {
+            Terrain = _terrain,
+            TraceInput = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--trace-input") >= 0,
+        };
         AddChild(_camera);
 
         var hud = new Hud();
         AddChild(hud);
 
-        _board = new Board { Camera = _camera, Hud = hud, PointerOverride = _capture?.Hover };
+        _board = new Board { Camera = _camera, Hud = hud, Terrain = _terrain, PointerOverride = _capture?.Hover };
         AddChild(_board);
         hud.EndTurnPressed += _board.EndTurn;
         hud.ShowPortrait(_board.PieceMesh);
@@ -51,8 +75,11 @@ public partial class World : Node3D
         // land where the rules think the hexes are.
         if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--grid") >= 0)
         {
-            _asphalt.SetShaderParameter("grid_strength", 0.45f);
+            _surface.SetShaderParameter("grid_strength", 0.45f);
         }
+
+        _terrainView.Update(new Vector2(_camera.Focus.X, _camera.Focus.Z));
+        PrintHeightsIfAsked();
 
         PlaceWindowOnLeftMonitor(_camera.TraceInput);
 
@@ -69,6 +96,35 @@ public partial class World : Node3D
         }
     }
 
+    /// <summary>
+    /// <c>--heights x0,z0,x1,z1</c> prints the ground along a line, for looking at the numbers
+    /// behind something a picture cannot explain.
+    /// </summary>
+    private void PrintHeightsIfAsked()
+    {
+        var args = OS.GetCmdlineUserArgs();
+        var at = System.Array.IndexOf(args, "--heights");
+        if (at < 0 || at + 1 >= args.Length) return;
+
+        var parts = args[at + 1].Split(',');
+        if (parts.Length != 4) return;
+
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        double x0 = double.Parse(parts[0], culture), z0 = double.Parse(parts[1], culture);
+        double x1 = double.Parse(parts[2], culture), z1 = double.Parse(parts[3], culture);
+
+        const int samples = 80;
+        var text = new System.Text.StringBuilder();
+        for (var i = 0; i <= samples; i++)
+        {
+            var t = (double)i / samples;
+            var x = x0 + (x1 - x0) * t;
+            var z = z0 + (z1 - z0) * t;
+            text.Append(culture, $"{x:F1},{z:F1}: base {_terrain.BaseHeight(x, z):F2} ground {_terrain.Height(x, z):F2}\n");
+        }
+        GD.Print(text.ToString());
+    }
+
     private void SetWindowed()
     {
         var window = GetWindow();
@@ -80,7 +136,8 @@ public partial class World : Node3D
     public override void _Process(double delta)
     {
         var focus = _camera.Focus;
-        _ground.Position = new Vector3(focus.X, 0f, focus.Z);
+        _ground.Position = new Vector3(focus.X, FarPlaneHeight, focus.Z);
+        _terrainView.Update(new Vector2(focus.X, focus.Z));
 
         if (_capture is { Orbit: not null } && !_probed)
         {
@@ -149,7 +206,7 @@ public partial class World : Node3D
             TonemapWhite = 6f,
             FogEnabled = true,
             FogLightColor = Horizon,
-            FogDensity = 0.0003f,
+            FogDensity = 0.0005f,
             // Fog takes its colour entirely from the sky behind it, so the far plain meets the
             // horizon in exactly the sky's colour rather than a guess at it.
             FogAerialPerspective = 1f,
@@ -160,8 +217,8 @@ public partial class World : Node3D
         return new WorldEnvironment { Environment = environment };
     }
 
-    /// <summary>Where the sun sits: 48 degrees up, in the south-south-west (bearing 215).</summary>
-    private static readonly Vector2 DefaultSun = new(48f, 215f);
+    /// <summary>Where the sun sits: 38 degrees up, in the south-south-west (bearing 215). Low enough that hills shade.</summary>
+    private static readonly Vector2 DefaultSun = new(38f, 215f);
 
     /// <param name="sun">Elevation above the horizon and compass bearing of the sun, degrees.</param>
     private static DirectionalLight3D BuildSun(Vector2 sun)
@@ -176,20 +233,17 @@ public partial class World : Node3D
             ShadowEnabled = true,
             DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel4Splits,
             DirectionalShadowMaxDistance = 300f,
-            ShadowBlur = 1.5f,
+            ShadowBlur = 0.7f,
         };
 
+    /// <summary>The flat plane that fills in past the terrain mesh, in the same surface so the horizon matches.</summary>
     private MeshInstance3D BuildGround()
-    {
-        _asphalt = new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/asphalt.gdshader") };
-
-        return new MeshInstance3D
+        => new()
         {
-            Name = "Ground",
-            Mesh = new PlaneMesh { Size = new Vector2(PlainReach * 2f, PlainReach * 2f), Material = _asphalt },
+            Name = "FarPlane",
+            Mesh = new PlaneMesh { Size = new Vector2(PlainReach * 2f, PlainReach * 2f), Material = _surface },
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };
-    }
 
     /// <summary>Open on the leftmost monitor, centred. The user works on the middle one.</summary>
     private static void PlaceWindowOnLeftMonitor(bool trace)

@@ -66,11 +66,14 @@ public partial class TacticalCamera : Node3D
     /// <summary>Off during a capture, so nothing at the keyboard or the window edge can move the shot.</summary>
     public bool ControlsEnabled { get; set; } = true;
 
+    /// <summary>The ground, for standing the focus on it and for finding what the cursor is over. Flat if null.</summary>
+    public Rules.Terrain? Terrain { get; set; }
+
     /// <summary>Print every mouse button that arrives, for finding out what a mouse actually sends.</summary>
     public bool TraceInput { get; set; }
 
-    /// <summary>The point on the ground being looked at.</summary>
-    public Vector3 Focus => _focus;
+    /// <summary>The point on the ground being looked at, at the ground's height.</summary>
+    public Vector3 Focus => OnGround(_focus);
 
     /// <summary>
     /// Whether a mouse button is moving the camera. The cursor is captured or busy holding the
@@ -255,6 +258,7 @@ public partial class TacticalCamera : Node3D
             if (GroundUnder(_orbitReturn) is { } now)
             {
                 var shift = _pivot - now;
+                shift.Y = 0f;
                 _focus += shift;
                 _focusTarget = _focus;
                 Place();
@@ -263,26 +267,69 @@ public partial class TacticalCamera : Node3D
         else if (_dragging && GroundUnder(motion.Position) is { } under)
         {
             // The ground point grabbed stays under the cursor. Moving the camera is a pure
-            // translation, so one correction is exact and there is nothing to ease.
+            // translation, so on flat ground one correction is exact; on a hill the next
+            // motion event corrects the little that the changing height leaves over.
             var shift = _grabbed - under;
+            shift.Y = 0f;
             _focusTarget += shift;
             _focus += shift;
             Place();
         }
     }
 
-    /// <summary>Where the ray through a screen point meets the ground, or null near or above the horizon.</summary>
+    /// <summary>Where the ray through a screen point meets the ground, or null if it never does within reason.</summary>
+    /// <remarks>
+    /// Marched along the height function rather than intersected with a plane, in steps that
+    /// start at half a metre and grow with distance, then bisected to the millimetre. A couple
+    /// of hundred height samples at most, which is nothing per frame.
+    /// </remarks>
     public Vector3? GroundUnder(Vector2 screen)
     {
         var origin = _camera.ProjectRayOrigin(screen);
         var direction = _camera.ProjectRayNormal(screen);
-        if (direction.Y >= -1e-4f) return null;
+        var limit = Mathf.Max(200f, _distance * 20f);
 
-        var t = -origin.Y / direction.Y;
-        if (t > _distance * 20f) return null;
+        if (Terrain is null)
+        {
+            if (direction.Y >= -1e-4f) return null;
+            var flat = -origin.Y / direction.Y;
+            return flat > limit ? null : origin + direction * flat;
+        }
 
-        return origin + direction * t;
+        float Above(float at)
+        {
+            var p = origin + direction * at;
+            return p.Y - (float)Terrain.Height(p.X, p.Z);
+        }
+
+        if (Above(0f) <= 0f) return null;
+
+        var previous = 0f;
+        var step = 0.5f;
+        for (var t = step; t < limit; t += step)
+        {
+            if (Above(t) <= 0f)
+            {
+                float low = previous, high = t;
+                for (var i = 0; i < 12; i++)
+                {
+                    var mid = (low + high) / 2f;
+                    if (Above(mid) <= 0f) high = mid;
+                    else low = mid;
+                }
+                return origin + direction * high;
+            }
+
+            if (direction.Y >= 0f && origin.Y + direction.Y * t > 80f) return null;
+            previous = t;
+            step = Mathf.Max(0.5f, t * 0.02f);
+        }
+
+        return null;
     }
+
+    private Vector3 OnGround(Vector3 point)
+        => new(point.X, Terrain is null ? 0f : (float)Terrain.Height(point.X, point.Z), point.Z);
 
     private void Ease(float delta)
     {
@@ -303,10 +350,18 @@ public partial class TacticalCamera : Node3D
 
     private void Place()
     {
+        var ground = OnGround(_focus);
         var back = -Forward() * (_distance * Mathf.Cos(_pitch));
         var up = Vector3.Up * (_distance * Mathf.Sin(_pitch));
 
-        _camera.Position = _focus + back + up;
-        _camera.LookAt(_focus, Vector3.Up);
+        // Never inside a hill: a low camera behind a rise is lifted just clear of it.
+        var position = ground + back + up;
+        if (Terrain is not null)
+        {
+            position.Y = Mathf.Max(position.Y, (float)Terrain.Height(position.X, position.Z) + 1.5f);
+        }
+
+        _camera.Position = position;
+        _camera.LookAt(ground, Vector3.Up);
     }
 }

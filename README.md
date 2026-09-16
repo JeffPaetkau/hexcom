@@ -6,10 +6,15 @@ first approach learned.
 
 ## What exists
 
-An endless asphalt plain under an open sky with a sun, a tactical camera, and one unit: a
-blue wooden piece with 50 action points a turn that can move, five points a hex. The hex
-grid is not drawn; it is how the game works, not something it shows (run with `-- --grid`
-to draw it for checking alignment). The hex under the cursor gets a white ring and the edge
+A landscape under an open sky with a sun, a tactical camera, and one unit: a blue wooden
+piece with 50 action points a turn that can move, five points a hex. The ground is one
+continuous height function ([Terrain.cs](game/scripts/rules/Terrain.cs), plain C#): hills,
+rolling ground and detail from seeded noise, with paved roads and dirt tracks laid on it as
+splines that flatten the ground onto their own smoothed profile. The view draws it as a
+quadtree of mesh chunks out to eight kilometres ([TerrainView.cs](game/scripts/TerrainView.cs))
+with a shader that decides grass, dirt and asphalt per pixel from a baked road-distance map,
+the slope and noise. The hex grid is not drawn; it is how the game works, not something it
+shows (run with `-- --grid` to draw it for checking alignment). The hex under the cursor gets a white ring and the edge
 of the unit's reach a smoothed white outline with corners rounded to the same radius; a left
 click walks there and pays for it. A card top left shows the active unit, a live portrait of
 its token, and its points; End Turn, bottom right, restores them. One world unit is one metre
@@ -73,4 +78,5 @@ point before and after, which should match). The console prints the focus, the u
 and its points at the moment of the picture.
 
 Running with `-- --trace-input` prints every mouse button Godot receives, for checking what a
-mouse actually sends.
+mouse actually sends. `--heights x0,z0,x1,z1` prints the ground height along a line, for
+looking at the numbers behind something a picture cannot explain.
