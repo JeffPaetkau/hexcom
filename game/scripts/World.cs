@@ -1,5 +1,5 @@
 using Godot;
-using Hexcom.Game.Rules;
+using Hexcom.Rules;
 
 namespace Hexcom.Game;
 
@@ -66,7 +66,14 @@ public partial class World : Node3D
         var hud = new Hud();
         AddChild(hud);
 
-        _board = new Board { Camera = _camera, Hud = hud, Terrain = _terrain, PointerOverride = _capture?.Hover };
+        _board = new Board
+        {
+            Camera = _camera,
+            Hud = hud,
+            Terrain = _terrain,
+            PointerOverride = _capture?.Hover,
+            Start = _capture?.UnitAt ?? new Hex(0, 0),
+        };
         AddChild(_board);
         hud.EndTurnPressed += _board.EndTurn;
         hud.ShowPortrait(_board.PieceMesh);

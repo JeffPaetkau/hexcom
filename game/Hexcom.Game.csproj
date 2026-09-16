@@ -9,8 +9,11 @@
   </PropertyGroup>
 
   <!--
-    Presentation only. When the rules arrive they go in their own engine-free library that this
-    project references; nothing here should ever be referenced from there.
+    Presentation only. The rules live in their own engine-free library, referenced here;
+    nothing in this project may ever be referenced from there.
   -->
+  <ItemGroup>
+    <ProjectReference Include="..\rules\Hexcom.Rules\Hexcom.Rules.csproj" />
+  </ItemGroup>
 
 </Project>

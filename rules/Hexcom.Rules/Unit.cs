@@ -1,6 +1,6 @@
-namespace Hexcom.Game.Rules;
+namespace Hexcom.Rules;
 
-/// <summary>A soldier on the board: where they stand and what they have left to spend this turn.</summary>
+/// <summary>A soldier on the board: where they stand, what they pay, and what they have left to spend this turn.</summary>
 public sealed class Unit
 {
     /// <summary>
@@ -11,13 +11,17 @@ public sealed class Unit
     /// </summary>
     public const int MaxAp = 50;
 
-    public Unit(Hex position)
+    public Unit(Hex position, CostProfile? profile = null)
     {
         Position = position;
+        Profile = profile ?? CostProfile.Default;
         Ap = MaxAp;
     }
 
     public Hex Position { get; set; }
+
+    /// <summary>What this soldier pays, against the shared price list.</summary>
+    public CostProfile Profile { get; }
 
     public int Ap { get; private set; }
 

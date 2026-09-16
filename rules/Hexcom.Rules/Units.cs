@@ -1,4 +1,4 @@
-namespace Hexcom.Game;
+namespace Hexcom.Rules;
 
 /// <summary>
 /// Units, and the one piece of hex geometry the interface already has to agree with.

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Hexcom.Game.Rules;
+namespace Hexcom.Rules;
 
 /// <summary>
 /// A hex on the grid, in axial coordinates. Flat-topped, <see cref="Units.HexSize"/> metres

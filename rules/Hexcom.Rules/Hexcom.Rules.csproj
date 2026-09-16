@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <RootNamespace>Hexcom.Rules</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!--
+      The rules of the game, and nothing that draws them. This assembly never references a
+      game engine: plain .NET, so the rules can be tested headless, run in batches with no
+      window, and be lifted into a different engine without a rewrite. The game project
+      references this one; nothing here may reference the game.
+    -->
+  </PropertyGroup>
+
+</Project>

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
-using Hexcom.Game.Rules;
+using Hexcom.Rules;
 
 namespace Hexcom.Game;
 

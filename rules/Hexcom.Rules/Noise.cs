@@ -1,6 +1,6 @@
 using System;
 
-namespace Hexcom.Game.Rules;
+namespace Hexcom.Rules;
 
 /// <summary>
 /// Seeded two-dimensional gradient noise, and a fractal sum of it. Deterministic: the same

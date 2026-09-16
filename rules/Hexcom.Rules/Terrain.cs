@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Hexcom.Game.Rules;
+namespace Hexcom.Rules;
 
 /// <summary>A road: a smooth centreline, a width, and whether it is paved or a dirt track.</summary>
 public sealed class Road
@@ -77,7 +77,7 @@ public sealed class Road
 /// marks on the board and eventually the rules, calls <see cref="Height"/>.
 /// </para>
 /// </remarks>
-public sealed class Terrain
+public sealed class Terrain : IGround
 {
     /// <summary>Roads are authored within this distance of the origin, metres.</summary>
     public const double MapHalfExtent = 1024;
@@ -180,6 +180,20 @@ public sealed class Terrain
         }
 
         return (paved, track);
+    }
+
+    /// <summary>What is underfoot: paved on a paved road, track on a dirt track, open anywhere else.</summary>
+    /// <remarks>
+    /// The line is the road edge itself, the one the road map defines, so the rules and the
+    /// picture agree on where the road stops even though the picture blends dirt across the
+    /// shoulder. A foot on the shoulder is on a field.
+    /// </remarks>
+    public Surface SurfaceAt(double x, double z)
+    {
+        var (paved, track) = EdgeDistances(x, z);
+        if (paved <= 0) return Surface.Paved;
+        if (track <= 0) return Surface.Track;
+        return Surface.Open;
     }
 
     private static double DistanceToSegment(Road road, int segment, double x, double z, out double t)

@@ -1,6 +1,6 @@
 # Hexcom — project summary
 
-## Where take 2 is (updated 2026-09-15)
+## Where take 2 is (updated 2026-09-15, evening)
 
 **The approach.** Take 2 builds the interface first, piece by piece, and pulls the rules in to
 match it, because the interface is the user's only view into how things are going. V1 (below)
@@ -11,14 +11,25 @@ per-soldier cost profiles, stances (crouch 1.6, prone 3.0, change 2), facing (tu
 a reaction reserve banked from unspent points, refusals with reasons, initiative rather than
 side alternation. Recommended order: costed reach and paths, then stance, then facing.
 
-**What exists.** [README.md](README.md) is the current description: build and run commands,
-controls, and the capture flags. In short: a Godot 4.7.2 .NET project under `game/`, built in
-code; a procedural landscape (hills, roads, tracks, grass and dirt) from one height function in
-plain C# under `game/scripts/rules/`, which is also where the hex maths, the unit (50 AP, 5 a
-stride) and the open-ground movement live, engine-free so they can lift into a rules library;
-a tactical camera; one unit with a hover ring, a smoothed reach outline, animated paid-for moves
-and End Turn; a sci-fi HUD with a unit card. The hex grid is never drawn in play (`--grid` for
-checking). Committed and pushed on `master`.
+**What exists.** [README.md](README.md) is the current description: build, test and run
+commands, controls, and the capture flags. In short: a Godot 4.7.2 .NET project under `game/`,
+built in code, and an engine-free rules library under `rules/Hexcom.Rules/` with xUnit tests
+beside it. The library holds the procedural landscape (hills, roads, tracks, grass and dirt)
+from one height function, the hex maths, the unit (50 AP), the movement price list
+(`MovementCosts`: stride 5, paved 4, slope by grade, banks over 0.7 refused), per-soldier
+`CostProfile` multipliers, and Dijkstra reach over the implicit hex graph. The game has a
+tactical camera; one unit in a cyan ring, a hover ring, a reach outline that follows the hex
+edges just inside them with rounded corners (the old straightened outline looked wrong once
+reach was notched by the ground), animated paid-for moves along the cheapest path, and End
+Turn; a sci-fi HUD with a unit card. The hex grid is never drawn in play (`--grid` for
+checking). Committed on `master`, not pushed since the landscape commit.
+
+**Next, in the agreed order: stance (crouch 1.6, prone 3.0, change 2), then facing (turn in
+place 2).** Things a fresh session should know: the steepest ground beside any road on seed 7
+is a grade of 0.40, under the 0.7 refusal, so nothing is ever refused on this landscape yet;
+the standard picture of priced reach is the unit beside the highway cutting, `--unit 99,-38
+--focus 148,20 --pitch 50 --zoom 40 --yaw 20`; the marks on the ground drape onto the drawn
+mesh (`TerrainView.MeshHeight`), not the raw height function, so they can be depth tested.
 
 **How the work is checked.** Every visual change gets a picture, not a claim: run the game with
 `-- --shot out.png` plus camera, hover, move, sun or drag flags (see README), read the PNG, and

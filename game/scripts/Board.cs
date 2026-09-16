@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Godot;
-using Hexcom.Game.Rules;
+using Hexcom.Rules;
 
 namespace Hexcom.Game;
 
@@ -25,6 +25,11 @@ public partial class Board : Node3D
     private const float HoverWidth = 0.06f;
     private const float ReachWidth = 0.06f;
 
+    // The reach line sits this far inside the hex edges, with corners rounded to this radius:
+    // clear of the grid lines, and soft enough not to look like the grid itself.
+    private const float ReachInset = 0.12f;
+    private const float ReachCorner = 0.25f;
+
     // Marks lie this far above the drawn ground, enough to win the depth test against it and
     // against each other, and far too little to float.
     private const float ReachLift = 0.015f;
@@ -33,8 +38,9 @@ public partial class Board : Node3D
 
     private static readonly Color PieceBlue = new(0.16f, 0.36f, 0.82f);
 
-    private readonly Unit _unit = new(new Hex(0, 0));
-    private HashSet<Hex> _reachable = new();
+    private Unit _unit = null!;
+    private Movement _movement = null!;
+    private Reach _reachable = null!;
 
     private Material _white = null!;
     private Material _accent = null!;
@@ -44,7 +50,7 @@ public partial class Board : Node3D
     private MeshInstance3D _hover = null!;
 
     private Hex? _hovered;
-    private IReadOnlyList<Hex>? _planned;
+    private Hex? _planned;
     private bool _moving;
 
     public TacticalCamera Camera { get; set; } = null!;
@@ -55,6 +61,9 @@ public partial class Board : Node3D
 
     /// <summary>A point on the ground to treat as the cursor, for captures. Null reads the mouse.</summary>
     public Vector2? PointerOverride { get; set; }
+
+    /// <summary>The hex the unit starts on.</summary>
+    public Hex Start { get; set; } = new(0, 0);
 
     /// <summary>Whether a move is being animated, during which nothing else is accepted.</summary>
     public bool Busy => _moving;
@@ -72,6 +81,9 @@ public partial class Board : Node3D
         // board that says "this is yours".
         _white = Overlay(Colors.White);
         _accent = Overlay(SciFi.Accent);
+
+        _movement = new Movement(Terrain);
+        _unit = new Unit(Start);
 
         var paint = new StandardMaterial3D
         {
@@ -119,9 +131,9 @@ public partial class Board : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && !_moving && _planned is { } path)
+        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && !_moving && _planned is { } to)
         {
-            Order(path);
+            Order(to);
         }
     }
 
@@ -129,7 +141,7 @@ public partial class Board : Node3D
     public bool OrderTo(Hex target)
     {
         if (_moving || target == _unit.Position || !_reachable.Contains(target)) return false;
-        Order(Movement.Path(_unit.Position, target));
+        Order(target);
         return true;
     }
 
@@ -142,10 +154,15 @@ public partial class Board : Node3D
         RefreshHover();
     }
 
-    private void Order(IReadOnlyList<Hex> path)
+    /// <summary>Walk the cheapest way to a hex in reach, paying for it first.</summary>
+    /// <remarks>
+    /// The way there is the reach query's, not a straight line: with slopes and roads priced
+    /// the cheapest route bends, and the piece walking it is how the player sees that.
+    /// </remarks>
+    private void Order(Hex destination)
     {
-        var cost = Movement.Cost(path);
-        if (!_unit.CanAfford(cost)) return;
+        if (_reachable.CostTo(destination) is not { } cost || !_unit.CanAfford(cost)) return;
+        var path = _reachable.PathTo(destination);
 
         _unit.Spend(cost);
         _moving = true;
@@ -160,7 +177,6 @@ public partial class Board : Node3D
             tween.TweenProperty(_piece, "position", ToScene(path[i]), perHex);
         }
 
-        var destination = path[^1];
         tween.Finished += () =>
         {
             _unit.Position = destination;
@@ -179,14 +195,14 @@ public partial class Board : Node3D
 
     /// <summary>Redraw the edge of what the unit can reach from where it stands with what it has.</summary>
     /// <remarks>
-    /// The hex edges that face out of the reachable set are the true boundary, but drawn as
-    /// they are they zigzag. <see cref="Outline"/> straightens them along the outer tips of the
-    /// rim hexes, so every reachable hex stays inside the line, and rounds the corners to the
-    /// hover ring's radius, so the two marks read as one family.
+    /// The hex edges that face out of the reachable set are the boundary, and the line follows
+    /// them: <see cref="Outline"/> links them into loops, sets the line a little inside the
+    /// edges and rounds the corners. With reach priced by the ground the boundary is notched
+    /// and bent, and a line that follows it is the one that means something.
     /// </remarks>
     private void RefreshReach()
     {
-        _reachable = Movement.Reachable(_unit.Position, _unit.Ap);
+        _reachable = _movement.Reachable(_unit.Position, _unit.Ap, _unit.Profile);
 
         // A unit that can only stand where it is has no reach to outline; the ring under it
         // already says where it is, and a second ring of another size would only argue with it.
@@ -198,7 +214,7 @@ public partial class Board : Node3D
 
         // An edge is on the outline when the hex across it is out of reach.
         var edges = new List<(Vector2, Vector2)>();
-        foreach (var hex in _reachable)
+        foreach (var hex in _reachable.Hexes)
         {
             for (var d = 0; d < 6; d++)
             {
@@ -207,7 +223,7 @@ public partial class Board : Node3D
             }
         }
 
-        var loops = Outline.Smooth(edges, 0.55f * Units.HexSize, 0f, HoverRadius);
+        var loops = Outline.Smooth(edges, ReachInset, ReachCorner);
 
         var polylines = new List<IReadOnlyList<Vector3>>(loops.Count);
         foreach (var loop in loops)
@@ -246,10 +262,10 @@ public partial class Board : Node3D
         _hover.Visible = true;
         _hover.Mesh = Meshes.Ring(ToScene(hovered), HoverRadius, HoverWidth, _white, Drape(HoverLift));
 
-        if (!_moving && hovered != _unit.Position && _reachable.Contains(hovered))
+        if (!_moving && hovered != _unit.Position && _reachable.CostTo(hovered) is { } cost)
         {
-            _planned = Movement.Path(_unit.Position, hovered);
-            Hud.ShowAp(_unit.Ap, Unit.MaxAp, Movement.Cost(_planned));
+            _planned = hovered;
+            Hud.ShowAp(_unit.Ap, Unit.MaxAp, cost);
         }
         else
         {

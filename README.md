@@ -7,8 +7,15 @@ first approach learned.
 ## What exists
 
 A landscape under an open sky with a sun, a tactical camera, and one unit: a blue wooden
-piece with 50 action points a turn that can move, five points a hex. The ground is one
-continuous height function ([Terrain.cs](game/scripts/rules/Terrain.cs), plain C#): hills,
+piece with 50 action points a turn that can move, priced by the ground: five points a stride
+across a field or along a dirt track, four along a paved road, more uphill than down, and
+too steep a bank refused ([MovementCosts.cs](rules/Hexcom.Rules/MovementCosts.cs) holds the
+numbers and the reasoning). Reach is Dijkstra over the hexes with the ground asked for the
+price of each step ([Movement.cs](rules/Hexcom.Rules/Movement.cs)), so the outline of what
+a unit can reach stretches along a road and shrinks up a hillside, and the piece walks the
+cheapest way rather than the straight one. Each soldier pays against the shared price list
+through a [CostProfile](rules/Hexcom.Rules/CostProfile.cs). The ground is one
+continuous height function ([Terrain.cs](rules/Hexcom.Rules/Terrain.cs), plain C#): hills,
 rolling ground and detail from seeded noise, with paved roads and dirt tracks laid on it as
 splines that flatten the ground onto their own smoothed profile. The view draws it as a
 quadtree of mesh chunks out to eight kilometres ([TerrainView.cs](game/scripts/TerrainView.cs))
@@ -16,13 +23,16 @@ with a shader that decides grass, dirt and asphalt per pixel from a baked road-d
 the slope and noise. The hex grid is not drawn; it is how the game works, not something it
 shows (run with `-- --grid` to draw it for checking alignment). The active unit stands in a
 ring of the HUD's cyan, the hex under the cursor gets a white ring of the same size, so the two
-coincide when the cursor is on the unit, and the edge of the unit's reach is a smoothed white
-outline with corners rounded to the same radius (not drawn when the unit can only stand where
-it is); a left click walks there and pays for it. The marks lie on the drawn ground and are
+coincide when the cursor is on the unit, and the edge of the unit's reach is a white line that
+follows the outward hex edges, set a little inside them with rounded corners (not drawn when
+the unit can only stand where it is); a left click walks there and pays for it. The marks lie on the drawn ground and are
 depth tested, so a piece hides the far side of its own ring. A card top left shows the active unit, a live portrait of
 its token, and its points; End Turn, bottom right, restores them. One world unit is one metre
-([Units.cs](game/scripts/Units.cs)); the hex maths, the unit and the movement rules are plain
-C# under [game/scripts/rules](game/scripts/rules), ready to move into an engine-free library.
+([Units.cs](rules/Hexcom.Rules/Units.cs)). The rules are their own engine-free library,
+[rules/Hexcom.Rules](rules/Hexcom.Rules): the hex maths, the ground, the unit, the price
+list and the movement, with xUnit tests beside it in
+[rules/Hexcom.Rules.Tests](rules/Hexcom.Rules.Tests) that price steps on ground drawn by
+hand. The game project references the library; nothing in the library knows about Godot.
 
 ## Running
 
@@ -32,6 +42,10 @@ Build first: Godot loads the assembly the build produces. The solution must stay
 
 ```bash
 dotnet build Hexcom.sln --nologo -v q
+```
+
+```bash
+dotnet test rules/Hexcom.Rules.Tests --nologo
 ```
 
 ```bash
@@ -74,7 +88,8 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --pitch 15 
 Flags: `--focus x,z`, `--yaw` and `--pitch` in degrees, `--zoom` in metres back from the
 focus, `--sun elevation,bearing` in degrees, `--hover x,z` to put the cursor on a ground
 point, `--move q,r` to order the unit to a hex and wait for the walk, `--end-turn` to press
-the button after it, `--shot-after N` frames to wait at the end (default 8), `--drag dx,dy`
+the button after it, `--unit q,r` to start the unit on a chosen hex (for picturing reach on
+particular ground), `--shot-after N` frames to wait at the end (default 8), `--drag dx,dy`
 to feed a middle-button drag in pixels through the input pipeline first, `--orbit dx,dy` to
 feed a right-button drag from an off-centre point (the console prints the ground under that
 point before and after, which should match). The console prints the focus, the unit's hex

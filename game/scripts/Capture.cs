@@ -1,6 +1,6 @@
 using System;
 using Godot;
-using Hexcom.Game.Rules;
+using Hexcom.Rules;
 
 namespace Hexcom.Game;
 
@@ -64,6 +64,9 @@ public sealed class Capture
     /// <summary>A point on the ground to treat as the cursor, so the hover marks can be pictured.</summary>
     public Vector2? Hover { get; private init; }
 
+    /// <summary>A hex to put the unit on at the start, for picturing reach on chosen ground.</summary>
+    public Hex? UnitAt { get; private init; }
+
     /// <summary>A hex to order the unit to before the picture; the capture waits for the walk.</summary>
     public Hex? Move { get; private init; }
 
@@ -90,6 +93,7 @@ public sealed class Capture
             Drag = PairOf(args, "--drag"),
             Orbit = PairOf(args, "--orbit"),
             Hover = PairOf(args, "--hover"),
+            UnitAt = PairOf(args, "--unit") is { } start ? new Hex((int)start.X, (int)start.Y) : null,
             Move = PairOf(args, "--move") is { } hex ? new Hex((int)hex.X, (int)hex.Y) : null,
             EndTurn = Array.IndexOf(args, "--end-turn") >= 0,
         };
