@@ -15,6 +15,16 @@ public static class SciFi
     public static readonly Color Glass = new(0.02f, 0.06f, 0.09f, 0.82f);
     public static readonly Color GlassLit = new(0.06f, 0.14f, 0.2f, 0.9f);
 
+    // Marks on hexes: one shape, the colour says what the hex means. See-through, because a
+    // mark that hides the ground hides what it is about. Movement is a quiet dark grey; the
+    // other two are reserved for what comes: warning in orange, danger in red.
+    public static readonly Color MarkMove = new(0.05f, 0.05f, 0.06f, 0.18f);
+    public static readonly Color MarkWarning = new(1f, 0.62f, 0.1f, 0.22f);
+    public static readonly Color MarkDanger = new(0.95f, 0.15f, 0.1f, 0.35f);
+
+    /// <summary>The warning colour for text: the orange of the marks, opaque.</summary>
+    public static readonly Color Warning = new(1f, 0.62f, 0.1f);
+
     private static Font? _font;
 
     /// <summary>A condensed system face if the machine has one, otherwise whatever it has.</summary>

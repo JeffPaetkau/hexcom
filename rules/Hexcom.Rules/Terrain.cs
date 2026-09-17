@@ -123,8 +123,36 @@ public sealed class Terrain : IGround
         return 40 * _relief.Fbm(wx / 700, wz / 700, 3)
              + 12 * _relief.Fbm(wx / 280 + 11.7, wz / 280 - 5.2, 3)
              + 5 * _relief.Fbm(wx / 120 + 3.1, wz / 120, 3)
-             + 0.5 * _relief.Fbm(x / 15, z / 15, 2);
+             + 0.5 * _relief.Fbm(x / 15, z / 15, 2)
+             + Bluff(x, z);
     }
+
+    /// <summary>
+    /// A bluff south of the highway cutting: a three-metre table whose north face runs east to
+    /// west and steepens along its length, from a ramp anyone can walk at the west end, through
+    /// the grades the price list argues about, to a sheer drop at the east end. Put there so
+    /// every slope the rules care about is within one turn of the standard picture, with the
+    /// refusals the rest of the landscape never produces.
+    /// </summary>
+    private static double Bluff(double x, double z)
+    {
+        const double height = 3;
+        const double foot = 30, west = 126, east = 174, crest = 50, back = 58;
+
+        // The grade climbs geometrically along the face, 0.15 at the west end to 6 at the
+        // east, so the walkable half and the refused half are about equal in length.
+        var along = Math.Clamp((x - west) / (east - west), 0, 1);
+        var grade = 0.15 * Math.Pow(40, along);
+        var face = Math.Clamp((z - foot) * grade / height, 0, 1);
+
+        // The table ends: an easy slope back down to the south, and soft caps east and west.
+        var rear = Math.Clamp((back - z) / (back - crest), 0, 1);
+        var caps = Rise((x - (west - 8)) / 8) * Rise(((east + 8) - x) / 8);
+        return height * Math.Min(face, rear) * caps;
+    }
+
+    /// <summary>Nothing below zero, everything above one, and a smooth step between.</summary>
+    private static double Rise(double v) => v <= 0 ? 0 : v >= 1 ? 1 : v * v * (3 - 2 * v);
 
     /// <summary>The height of the ground at a point, roads included.</summary>
     /// <remarks>

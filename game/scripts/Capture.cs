@@ -73,7 +73,14 @@ public sealed class Capture
     /// <summary>Whether to press End Turn after any move, before the picture.</summary>
     public bool EndTurn { get; private init; }
 
+    /// <summary>Frames into the walk to take the picture instead of waiting for it to end, or null to wait.</summary>
+    public int? MidWalk { get; private init; }
+
+    /// <summary>Whether every hurried step falls, so a fall can be pictured without luck.</summary>
+    public bool Trip { get; private init; }
+
     private bool _dragged, _orbited, _moved, _endedTurn;
+    private int _walkFrames;
 
     /// <summary>The capture this run was asked for, or null for an ordinary interactive run.</summary>
     public static Capture? Requested()
@@ -96,14 +103,20 @@ public sealed class Capture
             UnitAt = PairOf(args, "--unit") is { } start ? new Hex((int)start.X, (int)start.Y) : null,
             Move = PairOf(args, "--move") is { } hex ? new Hex((int)hex.X, (int)hex.Y) : null,
             EndTurn = Array.IndexOf(args, "--end-turn") >= 0,
+            MidWalk = IntOf(args, "--mid-walk"),
+            Trip = Array.IndexOf(args, "--trip") >= 0,
         };
     }
 
     /// <summary>Called once a frame. Saves and quits when the wait is up; true on the frame it did.</summary>
     public bool Tick(Node node, Board board)
     {
-        // Orders go in first and the countdown waits for the walk to finish.
-        if (board.Busy) return false;
+        // Orders go in first and the countdown waits for the walk to finish, unless the
+        // picture is wanted so many frames into the walk itself.
+        if (board.Busy)
+        {
+            return MidWalk is { } mid && ++_walkFrames >= mid && Shoot(node);
+        }
 
         if (Move is { } target && !_moved)
         {
@@ -132,6 +145,12 @@ public sealed class Capture
 
         if (_framesLeft-- > 0) return false;
 
+        return Shoot(node);
+    }
+
+    /// <summary>Save the viewport and quit; always true, for the caller's convenience.</summary>
+    private bool Shoot(Node node)
+    {
         var image = node.GetViewport().GetTexture().GetImage();
         var error = image.SavePng(_path);
 

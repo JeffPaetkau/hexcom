@@ -4,12 +4,15 @@ namespace Hexcom.Rules;
 public sealed class Unit
 {
     /// <summary>
-    /// Fifty rather than ten, as v1 settled: the cheapest action sets the resolution of every
-    /// price. At a stride of five, turning on the spot can cost two and a per-soldier movement
-    /// multiplier anywhere from three fifths to double lands on a distinct number; at a stride
-    /// of one none of that can be expressed.
+    /// A hundred, because the cheapest action sets the resolution of every price. With a metre
+    /// stride costing five, a paved road at four is a real saving, a scout at four fifths and a
+    /// gunner at half again land on distinct numbers, and turning on the spot or changing stance
+    /// can cost a few points and still be cheaper than a step. The turn was fifty when the hex
+    /// was 1.73 across; halving the stride at fifty would have priced it at three, where a road
+    /// rounds to either nothing or too much and the soldiers blur together. A hundred also
+    /// reads as a percentage of the ten seconds a turn stands for.
     /// </summary>
-    public const int MaxAp = 50;
+    public const int MaxAp = 100;
 
     public Unit(Hex position, CostProfile? profile = null)
     {

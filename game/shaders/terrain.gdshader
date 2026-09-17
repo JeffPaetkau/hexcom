@@ -20,11 +20,19 @@ uniform vec3 asphalt_light : source_color = vec3(0.30, 0.30, 0.31);
 uniform vec3 fleck : source_color = vec3(0.55, 0.54, 0.52);
 
 // The hex grid, never shown in play. Raise the strength to check that what the board draws
-// lines up with what the rules think the hexes are. Flat-topped, hex_size centre to corner.
-uniform float hex_size = 1.0;
+// lines up with what the rules think the hexes are. Flat-topped, hex_size centre to corner;
+// the game sets it from the rules (Units.HexSize) at start, the default only matches.
+uniform float hex_size = 0.57735027;
 uniform vec3 grid_colour : source_color = vec3(0.85, 0.85, 0.87);
-uniform float grid_width = 0.03;
+uniform float grid_width = 0.02;
 uniform float grid_strength : hint_range(0.0, 1.0) = 0.0;
+
+// Marks on hexes, painted here rather than built as meshes so nothing can poke through them:
+// one texel per hex, colour and strength, indexed by axial coordinate from marks_origin. The
+// game fills it (HexMarks); the disc drawn about each marked centre is mark_radius across.
+uniform sampler2D marks : filter_nearest, repeat_disable, hint_default_transparent;
+uniform ivec2 marks_origin = ivec2(0, 0);
+uniform float mark_radius = 0.46;
 
 varying vec3 world_pos;
 varying vec3 world_normal;
@@ -62,7 +70,8 @@ float fbm(vec2 p) {
 	return sum / norm;
 }
 
-vec2 hex_centre(vec2 p) {
+// The hex under a point, in axial coordinates: the same rounding as Hex.At in the rules.
+ivec2 hex_axial(vec2 p) {
 	float q = 2.0 / 3.0 * p.x / hex_size;
 	float r = (-1.0 / 3.0 * p.x + 0.57735027 * p.y) / hex_size;
 	float s = -q - r;
@@ -77,6 +86,12 @@ vec2 hex_centre(vec2 p) {
 	} else if (dr > ds) {
 		rr = -rq - rs;
 	}
+	return ivec2(int(rq), int(rr));
+}
+
+vec2 hex_centre_of(ivec2 axial) {
+	float rq = float(axial.x);
+	float rr = float(axial.y);
 	return vec2(hex_size * 1.5 * rq, hex_size * 1.7320508 * (rr + rq / 2.0));
 }
 
@@ -151,7 +166,23 @@ void fragment() {
 	vec3 colour = mix(grass, dirt, dirt_w);
 	colour = mix(colour, asphalt, paved_w);
 
-	float edge = hex_edge_distance(p - hex_centre(p));
+	// The mark on this hex, if any: a disc about the centre, its edge a pixel wide.
+	ivec2 axial = hex_axial(p);
+	vec2 centre = hex_centre_of(axial);
+	ivec2 texel = axial - marks_origin;
+	if (all(greaterThanEqual(texel, ivec2(0))) && all(lessThan(texel, textureSize(marks, 0)))) {
+		vec4 mark = texelFetch(marks, texel, 0);
+		float dist = length(p - centre);
+		float dist_fw = fwidth(dist);
+		float inside = 1.0 - smoothstep(mark_radius - dist_fw, mark_radius + dist_fw, dist);
+		// Blended in gamma space, where a strength of a third looks like a third. In linear
+		// light a bright mark over dark grass swamps it at any strength worth seeing.
+		vec3 gamma = pow(colour, vec3(1.0 / 2.2));
+		gamma = mix(gamma, mark.rgb, mark.a * inside);
+		colour = pow(gamma, vec3(2.2));
+	}
+
+	float edge = hex_edge_distance(p - centre);
 	float edge_fw = fwidth(edge);
 	float grid = 1.0 - smoothstep(grid_width - edge_fw, grid_width + edge_fw, edge);
 	grid *= clamp(1.0 - edge_fw / 0.25, 0.0, 1.0);

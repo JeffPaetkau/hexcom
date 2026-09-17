@@ -27,10 +27,10 @@ public class MovementTests
 {
     private static readonly Hex Origin = new(0, 0);
 
-    // The neighbour in direction 0 sits at x = 1.5, z = 0.87: a step with a run along +X.
+    // The neighbour in direction 0 sits at x = 0.87, z = 0.5: a step with a run along +X.
     private static readonly Hex East = Origin.Neighbour(0);
 
-    // The neighbour in direction 1 sits at x = 0, z = 1.73: a step with no run along X at all.
+    // The neighbour in direction 1 sits at x = 0, z = 1: a step with no run along X at all.
     private static readonly Hex South = Origin.Neighbour(1);
 
     /// <summary>How many hexes lie within a number of strides of one, on open ground.</summary>
@@ -44,23 +44,23 @@ public class MovementTests
     }
 
     [Fact]
-    public void Ten_strides_on_the_flat_spend_a_turn()
+    public void Twenty_strides_on_the_flat_spend_a_turn_exactly()
     {
         var reach = new Movement(DrawnGround.Flat).Reachable(Origin, Unit.MaxAp);
 
-        Assert.Equal(WithinStrides(10), reach.Count);
-        Assert.Equal(50, reach.CostTo(new Hex(10, 0)));
-        Assert.False(reach.Contains(new Hex(11, 0)));
+        Assert.Equal(WithinStrides(20), reach.Count);
+        Assert.Equal(100, reach.CostTo(new Hex(20, 0)));
+        Assert.False(reach.Contains(new Hex(21, 0)));
     }
 
     [Fact]
-    public void A_paved_road_is_a_cheaper_stride()
+    public void A_paved_road_is_a_cheaper_stride_and_twenty_five_of_them_are_a_turn()
     {
         var paved = new DrawnGround(surface: (_, _) => Surface.Paved);
         var movement = new Movement(paved);
 
         Assert.Equal(4, movement.StepCost(Origin, East));
-        Assert.Equal(WithinStrides(12), movement.Reachable(Origin, Unit.MaxAp).Count);
+        Assert.Equal(WithinStrides(25), movement.Reachable(Origin, Unit.MaxAp).Count);
     }
 
     [Fact]
@@ -89,15 +89,15 @@ public class MovementTests
     [Fact]
     public void A_climb_of_one_in_two_adds_a_whole_stride()
     {
-        // Rise of half the run between the two centres.
-        var steep = new DrawnGround(height: (x, _) => x / 1.5 * Movement.Stride / 2);
+        // Rise of half the run between the two centres, reached at the eastern neighbour's x.
+        var steep = new DrawnGround(height: (x, _) => x / (1.5 * Units.HexSize) * Movement.Stride / 2);
         Assert.Equal(10, new Movement(steep).StepCost(Origin, East));
     }
 
     [Fact]
     public void A_bank_too_steep_to_walk_is_refused_and_the_reach_stops_at_it()
     {
-        var bank = new DrawnGround(height: (x, _) => x > 1 ? 3 : 0);
+        var bank = new DrawnGround(height: (x, _) => x > 0.5 ? 3 : 0);
         var movement = new Movement(bank);
 
         Assert.Null(movement.StepCost(Origin, East));
@@ -109,10 +109,67 @@ public class MovementTests
     }
 
     [Fact]
+    public void Ground_too_steep_to_stand_on_is_refused_even_by_a_level_step_along_it()
+    {
+        // A one-in-one slope along +X: a step due south along the contour has no rise at all.
+        var face = new DrawnGround(height: (x, _) => x);
+        var movement = new Movement(face);
+
+        Assert.False(movement.CanStand(South));
+        Assert.Null(movement.StepCost(Origin, South));
+        Assert.Equal(1, movement.Reachable(Origin, Unit.MaxAp).Count);
+    }
+
+    [Fact]
+    public void A_steep_descent_can_be_hurried_for_less_at_the_risk_of_a_fall()
+    {
+        // Ground falling 0.52 along +Z, a shade past one in two so no price sits on a rounding
+        // midpoint: the step south is a descent of that grade.
+        var slope = new DrawnGround(height: (_, z) => -0.52 * z);
+        var movement = new Movement(slope);
+
+        Assert.Equal(7, movement.StepCost(Origin, South));
+        Assert.Equal(3, movement.HurriedStepCost(Origin, South));
+        Assert.Equal(0.052, movement.TripChance(Origin, South), 6);
+
+        // No hurrying uphill.
+        Assert.Null(movement.HurriedStepCost(South, Origin));
+    }
+
+    [Fact]
+    public void A_gentle_descent_has_no_hurried_way()
+    {
+        var gentle = new DrawnGround(height: (_, z) => -0.2 * z);
+        Assert.Null(new Movement(gentle).HurriedStepCost(Origin, South));
+    }
+
+    [Fact]
+    public void Hurrying_reaches_further_down_a_slope_and_the_risk_compounds_along_the_way()
+    {
+        var slope = new DrawnGround(height: (_, z) => -0.52 * z);
+        var movement = new Movement(slope);
+        var careful = movement.Reachable(Origin, Unit.MaxAp);
+        var hurried = movement.Reachable(Origin, Unit.MaxAp, hurrying: true);
+
+        // Twenty steps straight down the slope: 140 carefully, 60 at a run.
+        var far = new Hex(0, 20);
+        Assert.False(careful.Contains(far));
+        Assert.True(hurried.Contains(far));
+        Assert.Equal(60, hurried.CostTo(far));
+        Assert.True(hurried.HurriedInto(far));
+        Assert.Equal(1 - Math.Pow(1 - 0.052, 20), hurried.RiskTo(far)!.Value, 6);
+
+        // Everything the careful reach has, the hurrying one has too, and a step uphill is safe.
+        Assert.All(careful.Hexes, hex => Assert.True(hurried.Contains(hex)));
+        Assert.Equal(0.0, hurried.RiskTo(Origin.Neighbour(5)));
+        Assert.False(hurried.HurriedInto(Origin.Neighbour(5)));
+    }
+
+    [Fact]
     public void The_cheapest_way_goes_round_a_bank_rather_than_over_it()
     {
         // A bank three metres high across the way east, four hexes wide, with ground either side.
-        var bank = new DrawnGround(height: (x, z) => x is > 2 and < 4 && Math.Abs(z) < 4 ? 3 : 0);
+        var bank = new DrawnGround(height: (x, z) => x is > 1.2 and < 2.3 && Math.Abs(z) < 2.3 ? 3 : 0);
         var reach = new Movement(bank).Reachable(Origin, Unit.MaxAp);
 
         var beyond = new Hex(4, -2);
@@ -175,8 +232,9 @@ public class MovementTests
         var counting = new DrawnGround(height: (_, _) => { asked++; return 0; });
         var reach = new Movement(counting).Reachable(Origin, Unit.MaxAp);
 
-        // Every hex in reach, plus the ring just outside it that was priced and refused.
-        Assert.Equal(reach.Count + 6 * 11, asked);
+        // Every hex in reach, plus the ring just outside it that was priced and refused, each
+        // asked for its centre and the four points its slope is read from.
+        Assert.Equal((reach.Count + 6 * 21) * Movement.HeightsPerHex, asked);
         Assert.All(reach.Hexes, hex => Assert.NotNull(reach.CostTo(hex)));
     }
 }

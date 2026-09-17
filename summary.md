@@ -1,6 +1,6 @@
 # Hexcom — project summary
 
-## Where take 2 is (updated 2026-09-15, evening)
+## Where take 2 is (updated 2026-09-16, evening)
 
 **The approach.** Take 2 builds the interface first, piece by piece, and pulls the rules in to
 match it, because the interface is the user's only view into how things are going. V1 (below)
@@ -15,21 +15,60 @@ side alternation. Recommended order: costed reach and paths, then stance, then f
 commands, controls, and the capture flags. In short: a Godot 4.7.2 .NET project under `game/`,
 built in code, and an engine-free rules library under `rules/Hexcom.Rules/` with xUnit tests
 beside it. The library holds the procedural landscape (hills, roads, tracks, grass and dirt)
-from one height function, the hex maths, the unit (50 AP), the movement price list
-(`MovementCosts`: stride 5, paved 4, slope by grade, banks over 0.7 refused), per-soldier
+from one height function, the hex maths (**one metre centre to centre**, decided 2026-09-16:
+the stride is the base and the corner distance is derived; a standing or crouching soldier takes
+one hex), the unit (**100 AP**, doubled with the smaller hex so a paved road, a scout and a gunner
+still land on distinct prices; **a turn stands for ten seconds**, `Units.TurnSeconds`, so every
+price is a share of that and the animations are timed to it, then played at `Board.PlaybackSpeed`,
+default 2), the movement price list
+(`MovementCosts`: stride 5, paved 4, climb 10 and descent 3 per unit grade, banks over 0.7
+refused, and a hex whose own ground is steeper than 0.7 is unstandable however level the step
+onto it, `Movement.CanStand`, added 2026-09-16 when the user found the unit sidling along the
+bluff's contour onto its cliff; twenty metres a turn at two metres a second, a fast walk, since
+the default move is a walk and running will be a choice that buys distance with noise; **hurried
+descents**, added 2026-09-16 at the user's design: a descent of grade 0.25 or more can be taken
+at a run for 3 points less per unit grade instead of 3 more, with a fall chance per step of
+`TripPerGrade` 0.1 times the grade compounding along the way (raise it to 1.0 to see falls
+often when testing), a fall costing the rest of the turn, later also prone
+and damage; the board shows hexes reachable only by hurrying in orange and the fall risk on
+the card, clicking one accepts it, falls are rolled from `new Random(7)` in `Board` until the
+rules own their dice), per-soldier
 `CostProfile` multipliers, and Dijkstra reach over the implicit hex graph. The game has a
-tactical camera; one unit in a cyan ring, a hover ring, a reach outline that follows the hex
-edges just inside them with rounded corners (the old straightened outline looked wrong once
-reach was notched by the ground), animated paid-for moves along the cheapest path, and End
-Turn; a sci-fi HUD with a unit card. The hex grid is never drawn in play (`--grid` for
-checking). Committed on `master`, not pushed since the landscape commit.
+tactical camera; one unit in a cyan ring, a hover ring, a see-through dark grey disc on every
+hex in reach (the same size as the cursor ring; the user replaced the reach outline with per-hex
+marks on 2026-09-16 because one shape in different colours is more versatile: grey for
+movement, orange for warning, red for danger, the last two reserved in `SciFi`; the marks are
+painted by the terrain shader from a per-hex texture, `HexMarks`, after draped disc meshes let
+the ground poke through them on banks), animated
+paid-for moves along the cheapest path timed to the turn, and End Turn; a sci-fi HUD with a
+unit card. The hex grid is never drawn in play (`--grid` for checking; it is faint, 0.25, so the
+marks read through it). Committed on `master` on 2026-09-16 evening, not pushed since the
+landscape commit.
 
-**Next, in the agreed order: stance (crouch 1.6, prone 3.0, change 2), then facing (turn in
-place 2).** Things a fresh session should know: the steepest ground beside any road on seed 7
-is a grade of 0.40, under the 0.7 refusal, so nothing is ever refused on this landscape yet;
-the standard picture of priced reach is the unit beside the highway cutting, `--unit 99,-38
---focus 148,20 --pitch 50 --zoom 40 --yaw 20`; the marks on the ground drape onto the drawn
-mesh (`TerrainView.MeshHeight`), not the raw height function, so they can be depth tested.
+**The game, in the user's words (2026-09-16): a tactics combat game in which stealth is an
+important element, a servant of combat and the other objectives, not the main point.** V1's
+"stealth-first" below is the old framing.
+
+**Next, in the agreed order: stance (crouch 1.6, prone 3.0, change about 4 at the doubled
+scale), then facing (turn in place about 4).** Two loose ends from the fall rule to pick up when
+they fit: a fall should also put the soldier prone and hurt them (the user said "implement
+later"), and falls are rolled from `new Random(7)` in `Board` until the rules own a seeded source
+of chance; `--trip` forces every hurried step to fall for pictures. An open question to settle when stance arrives,
+not before: whether a prone soldier occupies two hexes (a body is 1.8 m long on a 1 m hex; the
+user leans that way) or one hex with the model overhanging. Two-hex occupancy touches every
+query that asks who is in a hex, so it is a decision, not a default. Things a fresh session
+should know: the natural landscape on seed 7 never refuses a step (the steepest ground beside a
+road is a grade of 0.40), so a **bluff** was added south of the highway cutting on 2026-09-16
+(`Terrain.Bluff`: a 3 m table, north face from x 126 to 174 at z 30, grade 0.15 at the west end
+rising geometrically to 6 at the east, refused from about x 146 on) to have every slope from
+ramp to cliff within one turn of the standard picture; the standard picture of priced reach is
+the unit beside the highway cutting, `--unit 171,-66 --focus 148,20 --pitch 50 --zoom 40
+--yaw 20`, with the bluff at the bottom of the frame (hex 171,-66 is also where the game starts
+the unit, `World.Home`, with the camera over it); the picture of hurried descents is the unit on
+the bluff table, `--unit 157,-33 --focus 136,34 --pitch 50 --zoom 30 --yaw 0 --hover 136,25.5`;
+the rings drape onto the drawn mesh (`TerrainView.MeshHeight`), not the raw height function, so
+they can be depth tested, while the hex marks are painted by the terrain shader and need no
+draping.
 
 **How the work is checked.** Every visual change gets a picture, not a claim: run the game with
 `-- --shot out.png` plus camera, hover, move, sun or drag flags (see README), read the PNG, and

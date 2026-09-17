@@ -29,6 +29,13 @@ public partial class World : Node3D
     /// <summary>The landscape's seed. One number decides every hill.</summary>
     private const int Seed = 7;
 
+    /// <summary>
+    /// Where the unit stands at the start unless a capture says otherwise: beside the highway
+    /// cutting, ten metres north of the bluff, so a run of the game opens on the ground that
+    /// has every kind of step in it.
+    /// </summary>
+    private static readonly Hex Home = new(171, -66);
+
     private TacticalCamera _camera = null!;
     private MeshInstance3D _ground = null!;
     private ShaderMaterial _surface = null!;
@@ -49,6 +56,18 @@ public partial class World : Node3D
         _surface = new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/terrain.gdshader") };
         _surface.SetShaderParameter("surface_map", TerrainView.BakeSurfaceMap(_terrain));
         _surface.SetShaderParameter("map_half_extent", (float)Terrain.MapHalfExtent);
+
+        // The grid is never shown in play; --grid draws it for checking that the marks on the
+        // board land where the rules think the hexes are. Its size comes from the rules, not
+        // the shader default, so the two cannot drift apart.
+        _surface.SetShaderParameter("hex_size", Units.HexSize);
+        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--grid") >= 0)
+        {
+            // Faint enough that the marks on the hexes still read through it: a brighter grid
+            // hides a see-through mark that fills a cell, because the eye reads the cell as
+            // its own colour rather than as marked.
+            _surface.SetShaderParameter("grid_strength", 0.25f);
+        }
 
         _terrainView = new TerrainView(_terrain, _surface);
         AddChild(_terrainView);
@@ -71,19 +90,19 @@ public partial class World : Node3D
             Camera = _camera,
             Hud = hud,
             Terrain = _terrain,
+            Surface = _surface,
+            AlwaysTrip = _capture?.Trip ?? false,
             PointerOverride = _capture?.Hover,
-            Start = _capture?.UnitAt ?? new Hex(0, 0),
+            Start = _capture?.UnitAt ?? Home,
         };
         AddChild(_board);
+
+        // The camera opens over the unit; a capture may move it afterwards.
+        var (homeX, homeZ) = _board.Start.Centre;
+        _camera.Set(focus: new Vector2((float)homeX, (float)homeZ));
+        _camera.Settle();
         hud.EndTurnPressed += _board.EndTurn;
         hud.ShowPortrait(_board.PieceMesh);
-
-        // The grid is never shown in play; --grid draws it for checking that the board's marks
-        // land where the rules think the hexes are.
-        if (System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--grid") >= 0)
-        {
-            _surface.SetShaderParameter("grid_strength", 0.45f);
-        }
 
         _terrainView.Update(new Vector2(_camera.Focus.X, _camera.Focus.Z));
         PrintHeightsIfAsked();
@@ -154,7 +173,7 @@ public partial class World : Node3D
 
         if (_capture?.Tick(this, _board) == true)
         {
-            GD.Print($"focus {_camera.Focus}; unit at {_board.Unit.Position} with {_board.Unit.Ap} AP");
+            GD.Print($"focus {_camera.Focus}; unit at {_board.Unit.Position} with {_board.Unit.Ap} AP; {_board.MarkCount} hexes marked");
             if (_capture.Orbit is not null) GD.Print($"ground under probe after: {_camera.GroundUnder(Capture.ProbePoint(this))}");
         }
     }

@@ -21,6 +21,9 @@ public partial class Hud : CanvasLayer
     private ProgressBar _apBar = null!;
     private Label _moveValue = null!;
     private Control _moveRow = null!;
+    private Label _riskValue = null!;
+    private Control _riskRow = null!;
+    private Label _note = null!;
     private PanelContainer _photo = null!;
     private Label _placeholder = null!;
 
@@ -84,8 +87,11 @@ public partial class Hud : CanvasLayer
         });
     }
 
-    /// <summary>Show the points left, and what the move under the cursor would cost if there is one.</summary>
-    public void ShowAp(int ap, int max, int? moveCost)
+    /// <summary>
+    /// Show the points left, what the move under the cursor would cost if there is one, and
+    /// the chance of a fall on the way if there is any.
+    /// </summary>
+    public void ShowAp(int ap, int max, int? moveCost, double? risk = null)
     {
         _apValue.Text = $"{ap} / {max}";
         _apBar.MaxValue = max;
@@ -93,6 +99,16 @@ public partial class Hud : CanvasLayer
 
         _moveRow.Visible = moveCost is not null;
         if (moveCost is { } cost) _moveValue.Text = cost.ToString();
+
+        _riskRow.Visible = moveCost is not null && risk is > 0;
+        if (risk is { } chance) _riskValue.Text = $"{Math.Round(chance * 100)}%";
+    }
+
+    /// <summary>A line about something that has just happened to the unit, or null to clear it.</summary>
+    public void ShowNote(string? note)
+    {
+        _note.Visible = note is not null;
+        _note.Text = note ?? "";
     }
 
     private Control BuildCard(Theme theme)
@@ -145,6 +161,16 @@ public partial class Hud : CanvasLayer
 
         _moveRow = Row("MOVE", out _moveValue);
         column.AddChild(_moveRow);
+
+        // The chance of a fall on a hurried way, in the warning colour, only when there is one.
+        _riskRow = Row("FALL RISK", out _riskValue);
+        _riskValue.AddThemeColorOverride("font_color", SciFi.Warning);
+        column.AddChild(_riskRow);
+
+        _note = new Label { Visible = false };
+        _note.AddThemeFontSizeOverride("font_size", 15);
+        _note.AddThemeColorOverride("font_color", SciFi.Warning);
+        column.AddChild(_note);
 
         return card;
     }
