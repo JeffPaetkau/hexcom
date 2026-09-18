@@ -2,7 +2,82 @@
 
 ## Where take 2 is (updated 2026-09-17)
 
-**Newest (2026-09-17): an enemy, hit points, a rifle, and simple shooting, at the user's ask
+**Newest (2026-09-17, evening): facing, built at the user's "do facing", not committed.** A unit
+faces one of the six hex directions, `Unit.Facing`, an index into `Hex.Directions`
+(`Facing.cs`: direction 4 is north, names SE S SW NW N NE, bearing 30 + 60d degrees from +X
+towards +Z, `Facing.Toward(from, to)` picks the nearest of the six, null for the same hex,
+`Facing.Steps` the fewest sixths either way round). Set three ways: a walk leaves the unit
+facing its last step (the piece turns into each step as it takes it); a shot turns the shooter
+to the target inside the shot's price (`Shooting.Fire`, since a shot that also charged for the
+turn would make firing at what is beside you dearer than at what is in front); and turning on
+the spot, `Movement.Turn`, priced per sixth, `MovementCosts.TurnPerSixth` 4, so an about-face
+is 12, through a new `CostProfile.Posture` multiplier (1.0 for everyone; its own dial because a
+gunner is slow over ground and no slower to turn their head). Per sixth rather than flat so
+that which way a move ends facing is worth a thought; the user had said "about 4", one number
+to change if flat is wanted. On screen: the piece has a short pale nose at eye height (1.65 m)
+built into its mesh so the portrait has it too; the card has a FACING row with the compass
+point, and with the cursor on a hex the unit does not face a "TURN TO FACE · RIGHT CLICK" row
+with the cost, orange if unaffordable; **right click turns the unit towards the hovered hex**
+(the hex is taken at the press because the camera captures the mouse for its orbit while the
+button is held; a release within six pixels is a click, further is the orbit); the piece turns
+the short way round in the time the price stands for, at playback speed. The two units start
+facing each other. Captures: `--face q,r`, play step `face:q,r`, `--mid-walk` works for a turn,
+the console prints each unit's facing. Eight rules tests in `FacingTests.cs`, 44 in all.
+Pictures checked on 2026-09-17: opening view with nose and FACING NE, hover with the turn cost
+8 to face south, turned south at 92 AP, facing SW after a walk west, facing N after a shot at
+an enemy to the north.
+
+**Before that (2026-09-17, later): the perception design is agreed, no code yet, and the order
+changed: facing next (only because the fog needs it), then perception and fog; stance is
+deferred, not key now.** The user's framing: fog of war is shown as actual fog, and later smoke,
+weather and night are the same thing mechanically and visually. Awareness is a gradient, not a
+switch, and the screen shows the active unit's view (the game is one unit at a time), not the
+squad's. What was agreed, in three layers:
+
+- **The map: which ground is known, per hex.** A hex is mapped if the briefing gave it or the
+  squad has ever seen it. Mapped ground stays legible as a map under any fog (a capped wash,
+  about three quarters, with reach marks painting through); unmapped ground is full fog with
+  only tall things poking through (a tower top). Defending our own base, every hex starts
+  mapped; a blind infiltration starts with none and the map fills in behind the squad. Partial
+  intel is some hexes mapped, so roofs-but-not-interiors falls out of the same bit later.
+- **The fog: what the active unit senses right now.** Each hex gets a clarity 0..1, the answer
+  to "how well could I make out a standing man there". The rules trace from the unit's eye and
+  accumulate optical density along the line: terrain is infinite density (the bluff blocks, and
+  elevation falls out for free), weather is a uniform density (a foggy dawn thickens with
+  distance from the unit, as real fog does from a point), smoke is a local density that casts a
+  shadow of fog behind it, night is uniform density in another colour; ground fog thins with
+  height. The observer's own factors multiply afterwards: facing arc (thin in front, thick
+  behind, so the player feels the cone without a cone overlay), stats and kit, and points held
+  back for watching (unspent points are spent watching; the reaction reserve doing double duty,
+  shown on the card before End Turn, never a retroactive penalty for having moved). Sight is
+  per unit and governs shooting: a mate's contact in your haze is a marker you cannot fire at
+  until you move to clear it.
+- **The marks: what he knows about things, on the ground.** Knowledge is never fog. A mate's
+  sighting from two turns ago, a radioed contact, a heard noise (a place, not a view) are marks
+  in the same language as the reach discs, dimmer as they go stale. Partly perceived enemies
+  climb the v1 ladder (suspicious 25, searching 50, alerted 75, engaged 100): an indistinct
+  shape or a question mark in hazy ground, a red piece once engaged. Friendlies in the fog stand
+  at their reported positions, dimmed when not actually seen: a radio mark, not a sighting, so no
+  radio or a mate who moved since reporting degrades to a stale mark like anyone else's.
+
+Rules the display must keep: **the shader never hides information**; an enemy the active unit
+has not perceived is not in the scene at all, the fog only explains why (the War Hounds
+half-a-unit leak is the failure to avoid). Rendering: clarity is per hex from the rules, written
+to a texture beside the marks texture, sampled with linear filtering and a small blur so the fog
+eases between areas and never steps at hex edges; the fog itself is a screen-space depth fog
+(reconstruct each pixel's world position, sample clarity at its xz, add a height falloff) so
+pieces and towers stand inside it, a ground tint alone being the War Hounds look; Godot's
+volumetric fog volumes are a later option, coarse and blurry. The fog re-forms when initiative
+passes and needs a short crossfade over the camera jump. V1 dials worth carrying
+(`AwarenessModel.cs` on the archive branch): sight 45 m, arcs 120° front and 200° peripheral,
+acuity 0.45 peripheral and 0.08 rear, relay fraction 0.6. Open, to settle later: what the player
+sees during the enemy's turn once there is an AI (own unit's fog, the squad's union, or the
+enemy's own view for the hot seat). First increment when it comes: a sight trace in the rules
+against the terrain heights with range and arc falloff, the clarity texture, the depth fog
+shader, and three pictures: the unit beside the cutting, on the bluff table seeing far, and
+below the bluff seeing nothing past it.
+
+**Before that (2026-09-17): an enemy, hit points, a rifle, and simple shooting, at the user's ask
 and with reactions, overwatch, armour and everything else explicitly ruled out for now.** A
 second unit, `HOSTILE 1`, a red piece (`Board.PieceRed`, the danger colour; the user confirmed red), starts
 twenty-three metres east along the highway (`World.EnemyHome`, hex 196,-86). Both units have
@@ -76,8 +151,9 @@ landscape commit.
 important element, a servant of combat and the other objectives, not the main point.** V1's
 "stealth-first" below is the old framing.
 
-**Next, in the agreed order: stance (crouch 1.6, prone 3.0, change about 4 at the doubled
-scale), then facing (turn in place about 4).** Two loose ends from the fall rule to pick up when
+**Next, in the order agreed 2026-09-17: facing is done (above), so perception and fog (the
+design above) is next; stance (crouch 1.6, prone 3.0, change about 4 at the doubled scale) is
+deferred until it is needed.** Two loose ends from the fall rule to pick up when
 they fit: a fall should also put the soldier prone and hurt them (the user said "implement
 later"), and falls are rolled from `new Random(7)` in `Board` until the rules own a seeded source
 of chance; `--trip` forces every hurried step to fall for pictures. An open question to settle when stance arrives,

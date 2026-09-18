@@ -91,6 +91,27 @@ public sealed class Movement
         return (profile ?? CostProfile.Default).Move(Costs.Stride(SurfaceAt(to)) - Costs.HurryPerGrade * descent);
     }
 
+    /// <summary>What turning on the spot from one direction to another costs a soldier: nothing for no turn, a price a sixth otherwise.</summary>
+    public int TurnCost(int from, int to, CostProfile? profile = null)
+    {
+        var steps = Facing.Steps(from, to);
+        return steps == 0 ? 0 : (profile ?? CostProfile.Default).Turn(Costs.TurnPerSixth * steps);
+    }
+
+    /// <summary>
+    /// Turn a soldier on the spot to face a direction, paying for it: the cost paid, nothing
+    /// for a direction already faced, or null if they cannot afford it and nothing is spent.
+    /// </summary>
+    public int? Turn(Unit unit, int direction)
+    {
+        var cost = TurnCost(unit.Facing, direction, unit.Profile);
+        if (!unit.CanAfford(cost)) return null;
+
+        unit.Spend(cost);
+        unit.Facing = direction;
+        return cost;
+    }
+
     /// <summary>The chance that a hurried step from one hex to the next ends in a fall.</summary>
     public double TripChance(Hex from, Hex to)
     {

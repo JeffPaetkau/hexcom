@@ -26,6 +26,14 @@ public partial class Board : Node3D
     private const float PieceHeight = 1.8f;
     private const float PieceChamfer = 0.04f;
 
+    // The nose that says which way a piece faces sits at eye height (v1's standing eye, 1.65 m),
+    // where the look it stands for will come from.
+    private const float NoseHeight = 1.65f;
+
+    // A right button that comes up within this many pixels of where it went down is a click,
+    // an order to face that way; further is the orbit the camera was already doing.
+    private const float ClickSlop = 6f;
+
     // Animations are timed to the turn (a step takes the share of the ten seconds it cost) and
     // then played this many times faster. One is real time; two keeps the proportions while
     // halving the wait, which is what a player watching several units will want.
@@ -76,6 +84,11 @@ public partial class Board : Node3D
     private Material _accent = null!;
     private Material _hostile = null!;
     private Material _tracerGlow = null!;
+    private Material _nose = null!;
+
+    // Where the right button went down, and how far the mouse has gone since: a click faces the unit that way.
+    private Hex? _rightPressedOn;
+    private Vector2 _rightMoved;
     private MeshInstance3D _unitRing = null!;
     private MeshInstance3D _hover = null!;
     private MeshInstance3D _tracer = null!;
@@ -139,12 +152,16 @@ public partial class Board : Node3D
         _accent = Overlay(SciFi.Accent);
         _hostile = Overlay(SciFi.Danger);
         _tracerGlow = Overlay(SciFi.Tracer);
+        _nose = Overlay(SciFi.Text);
         _marks = new HexMarks(Surface, HoverRadius);
 
         _movement = new Movement(Terrain);
 
-        Place(new Unit(Start, Side.Player, "UNIT 1"), PieceBlue);
-        Place(new Unit(EnemyStart, Side.Hostile, "HOSTILE 1"), PieceRed);
+        // The two start facing each other: there is nothing else on the board to face.
+        var ours = new Unit(Start, Side.Player, "UNIT 1", facing: Facing.Toward(Start, EnemyStart) ?? 0);
+        var theirs = new Unit(EnemyStart, Side.Hostile, "HOSTILE 1", facing: Facing.Toward(EnemyStart, Start) ?? 0);
+        Place(ours, PieceBlue);
+        Place(theirs, PieceRed);
 
         _unitRing = new MeshInstance3D { Name = "UnitRing" };
         _hover = new MeshInstance3D { Name = "Hover", Visible = false };
@@ -173,8 +190,9 @@ public partial class Board : Node3D
         var piece = new MeshInstance3D
         {
             Name = unit.Name.Replace(' ', '_'),
-            Mesh = Meshes.HexPrism(PieceRadius, PieceHeight, PieceChamfer, paint),
+            Mesh = Meshes.HexPrism(PieceRadius, PieceHeight, PieceChamfer, paint, _nose, NoseHeight),
             Position = ToScene(unit.Position),
+            Rotation = new Vector3(0f, Heading(unit.Facing), 0f),
         };
 
         _units.Add(unit);
@@ -203,10 +221,60 @@ public partial class Board : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } || _busy) return;
+        switch (@event)
+        {
+            case InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } when !_busy:
+                if (_target is { } target) Fire(target);
+                else if (_planned is { } to) Order(to);
+                break;
 
-        if (_target is { } target) Fire(target);
-        else if (_planned is { } to) Order(to);
+            // The right button is the camera's orbit, and a click of it, down and up without
+            // moving, faces the unit towards the hex it was on. The hex is taken at the press,
+            // because the camera captures the mouse while the button is held and there is no
+            // cursor on the ground at the release.
+            case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true }:
+                _rightPressedOn = _hovered;
+                _rightMoved = Vector2.Zero;
+                break;
+
+            case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: false }:
+                if (_rightPressedOn is { } toward && _rightMoved.Length() <= ClickSlop) FaceToward(toward);
+                _rightPressedOn = null;
+                break;
+
+            case InputEventMouseMotion motion when _rightPressedOn is not null:
+                _rightMoved += motion.Relative;
+                break;
+        }
+    }
+
+    /// <summary>Turn the active unit on the spot to face towards a hex, paying for it; false if it already faces that way or cannot afford to.</summary>
+    /// <remarks>
+    /// The piece turns the short way round in the time the turn cost, at playback speed, the
+    /// same rule as a walk: what the player watches is the price. The rules do not care which
+    /// way round a soldier turns, only how far, so the picture is free to choose the short way.
+    /// </remarks>
+    public bool FaceToward(Hex hex)
+    {
+        var unit = Unit;
+        if (_busy || Facing.Toward(unit.Position, hex) is not { } direction) return false;
+        if (_movement.Turn(unit, direction) is not { } cost || cost == 0) return false;
+
+        var piece = _pieces[unit];
+        _busy = true;
+        Hud.ShowUnit(unit);
+        Hud.ShowTurn(null);
+
+        var tween = CreateTween();
+        tween.TweenProperty(piece, "rotation:y", Swing(piece.Rotation.Y, Heading(direction)), cost * Units.TurnSeconds / Unit.MaxAp / PlaybackSpeed);
+        tween.Finished += () =>
+        {
+            _busy = false;
+            RefreshReach();
+            RefreshHover();
+        };
+
+        return true;
     }
 
     /// <summary>Move to a hex if it is in reach, hurrying if that is the only way; false if it is not.</summary>
@@ -306,20 +374,26 @@ public partial class Board : Node3D
         // watches is the price. The marks stay through the walk, and with each step the hexes
         // that could no longer be afforded from the hex being stepped to fade out over that
         // step, so the reach is seen to shrink as the points are walked away.
+        // The piece turns into each step as it takes it, the short way round, so it arrives
+        // facing the way it came, which is the facing the rules give it at the end.
         var tween = CreateTween();
+        var heading = piece.Rotation.Y;
         for (var i = 1; i <= end; i++)
         {
             var to = path[i];
             var step = reach.CostTo(to)!.Value - reach.CostTo(path[i - 1])!.Value;
             var seconds = step * Units.TurnSeconds / Unit.MaxAp / PlaybackSpeed;
             var left = before - reach.CostTo(to)!.Value;
+            heading = Swing(heading, Heading(Facing.Toward(path[i - 1], to)!.Value));
             tween.TweenCallback(Callable.From(() => FadeOutOfReach(to, left, seconds)));
             tween.TweenProperty(piece, "position", ToScene(to), seconds);
+            tween.Parallel().TweenProperty(piece, "rotation:y", heading, seconds);
         }
 
         tween.Finished += () =>
         {
             unit.Position = path[end];
+            unit.Facing = Facing.Toward(path[end - 1], path[end]) ?? unit.Facing;
             _busy = false;
 
             // A fall costs whatever was left of the turn. Going prone and getting hurt come later.
@@ -351,7 +425,11 @@ public partial class Board : Node3D
         _busy = true;
         _target = null;
         Hud.ShowUnit(shooter);
+        Hud.ShowTurn(null);
         Hud.ShowTarget(target, Shooting.Plan(shooter, target));
+
+        // The rules turned the shooter to the target; the piece snaps round with the shot.
+        _pieces[shooter].Rotation = new Vector3(0f, Heading(shooter.Facing), 0f);
 
         var from = _pieces[shooter].Position + Vector3.Up * MuzzleHeight;
         var at = _pieces[target].Position + Vector3.Up * ChestHeight;
@@ -530,6 +608,7 @@ public partial class Board : Node3D
         {
             _hover.Visible = false;
             Hud.ShowMove(null);
+            Hud.ShowTurn(null);
             Hud.ShowTarget(null, null);
             return;
         }
@@ -538,6 +617,18 @@ public partial class Board : Node3D
         _hover.Mesh = Meshes.Ring(ToScene(hovered), HoverRadius, HoverWidth, _white, Drape(HoverLift));
 
         var unit = Unit;
+
+        // What a right click would cost: the turn to face the hovered hex, if it is not faced already.
+        if (!_busy && Facing.Toward(unit.Position, hovered) is { } direction && direction != unit.Facing)
+        {
+            var turn = _movement.TurnCost(unit.Facing, direction, unit.Profile);
+            Hud.ShowTurn(turn, unit.CanAfford(turn));
+        }
+        else
+        {
+            Hud.ShowTurn(null);
+        }
+
         if (!_busy && UnitOn(hovered) is { } other && other.Side != unit.Side)
         {
             // The card is shown whether or not the shot can be taken: the refusal is on it.
@@ -566,6 +657,16 @@ public partial class Board : Node3D
         var ground = Camera.GroundUnder(GetViewport().GetMousePosition());
         return ground is { } g ? new Vector2(g.X, g.Z) : null;
     }
+
+    /// <summary>
+    /// The rotation about Y that points a piece's nose, built along +X, down a facing. A turn
+    /// about +Y carries +X towards -Z, and a bearing is measured towards +Z, so it is the
+    /// bearing negated.
+    /// </summary>
+    private static float Heading(int facing) => -(float)Facing.BearingRadians(facing);
+
+    /// <summary>The angle to tween a rotation to so it arrives at a heading the short way round: the heading, wound to within half a turn of where it is.</summary>
+    private static float Swing(float from, float to) => from + Mathf.Wrap(to - from, -Mathf.Pi, Mathf.Pi);
 
     /// <summary>The centre of a hex, on the ground.</summary>
     private Vector3 ToScene(Hex hex)

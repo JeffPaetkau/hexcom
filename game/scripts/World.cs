@@ -184,7 +184,7 @@ public partial class World : Node3D
             GD.Print($"focus {_camera.Focus}; {_board.Unit.Name} to play; {_board.MarkCount} hexes marked");
             foreach (var unit in _board.Roster)
             {
-                GD.Print($"  {unit.Name} at {unit.Position}: {unit.Ap} AP, {unit.HitPoints} HP, {unit.Rounds} rounds{(unit.IsDown ? ", down" : "")}");
+                GD.Print($"  {unit.Name} at {unit.Position} facing {Facing.Name(unit.Facing)}: {unit.Ap} AP, {unit.HitPoints} HP, {unit.Rounds} rounds{(unit.IsDown ? ", down" : "")}");
             }
             if (_capture.Orbit is not null) GD.Print($"ground under probe after: {_camera.GroundUnder(Capture.ProbePoint(this))}");
         }

@@ -22,7 +22,11 @@ steep a bank refused, and ground too steep to stand on refused even when the ste
 level, so no one sidles along a cliff face; and a descent of one in four or steeper can be
 hurried, cheaper than the careful step but with a chance of a fall that compounds along the
 run, a fall costing the rest of the turn ([MovementCosts.cs](rules/Hexcom.Rules/MovementCosts.cs)
-holds the numbers and the reasoning). A hex is a metre from centre to centre, the room a soldier takes
+holds the numbers and the reasoning). A unit faces one of the six hex directions
+([Facing.cs](rules/Hexcom.Rules/Facing.cs)): it arrives from a walk facing the way it came,
+faces what it fires at for nothing extra, and otherwise turns on the spot for four points a
+sixth of a turn, so an about-face is twelve. Facing decides nothing yet; perception, next,
+will read it for where the soldier is looking. A hex is a metre from centre to centre, the room a soldier takes
 standing or crouching, a stride is one hex, and a turn stands for ten seconds, so a full
 turn of walking is twenty metres at two metres a second and the piece walks each step in the
 time it cost ([Units.cs](rules/Hexcom.Rules/Units.cs)), played at double speed
@@ -55,7 +59,10 @@ tested, so a piece hides the far side of its own ring; the hex marks are painted
 shader itself from a one-texel-per-hex texture ([HexMarks.cs](game/scripts/HexMarks.cs)), so
 nothing can poke through them on a slope. A card top left shows the unit whose turn it is, a
 live portrait of its token, its name in its side's colour, its action points and hit points as
-bars, and its rifle with the rounds left and the numbers under; with the cursor on an enemy a
+bars, its rifle with the rounds left and the numbers under, and which way it faces as a compass
+point, the piece itself carrying a short pale nose at eye height that says the same; with the
+cursor on a hex it does not face, the card adds what a right click's turn would cost, in orange
+if it cannot be paid; with the cursor on an enemy a
 second card top right, red-edged, shows their hit points and what the shot would be, the range,
 the chance, the damage and the cost, or why it is refused. End Turn, bottom right, passes the
 board to the other unit and the camera goes to it; its points come back as its turn starts.
@@ -97,6 +104,7 @@ It opens fullscreen on the leftmost monitor; F11 switches to a window and back.
 | Control | Does |
 |---|---|
 | Left click | move the unit to the hex under the cursor if in reach, or fire at the enemy standing on it if in range |
+| Right click | turn the unit on the spot to face the hex under the cursor, four points a sixth of a turn |
 | End Turn button | pass the turn to the other unit, whose action points come back |
 | W A S D, arrows | pan (Shift hurries) |
 | Screen edges | pan |
@@ -119,11 +127,12 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --pitch 15 
 
 Flags: `--focus x,z`, `--yaw` and `--pitch` in degrees, `--zoom` in metres back from the
 focus, `--sun elevation,bearing` in degrees, `--hover x,z` to put the cursor on a ground
-point, `--move q,r` to order the unit to a hex and wait for the walk (or `--mid-walk N` to take
-the picture N frames into the walk, or into a shot, instead), `--fire N` to fire N shots at
+point, `--face q,r` to turn the unit to face a hex and wait for the turn, `--move q,r` to
+order the unit to a hex and wait for the walk (or `--mid-walk N` to take
+the picture N frames into the walk, turn or shot, instead), `--fire N` to fire N shots at
 the enemy after the move (`--sure` makes every shot hit, `--miss` every shot miss),
 `--end-turn` to press the button after that, or `--play "fire fire end end fire"` for the
-orders in any other order, a step per word (`move:q,r`, `fire` or `end`), `--unit q,r` to
+orders in any other order, a step per word (`face:q,r`, `move:q,r`, `fire` or `end`), `--unit q,r` to
 start our unit on a chosen hex (for picturing reach on particular ground; without it the unit
 starts beside the highway cutting, north of the bluff, with the camera over it) and
 `--enemy q,r` the enemy (without it he stands twenty-three metres east along the highway),
@@ -131,7 +140,7 @@ starts beside the highway cutting, north of the bluff, with the camera over it) 
 to feed a middle-button drag in pixels through the input pipeline first, `--orbit dx,dy` to
 feed a right-button drag from an off-centre point (the console prints the ground under that
 point before and after, which should match). The console prints the focus, whose turn it is,
-and each unit's hex, points, hit points and rounds at the moment of the picture.
+and each unit's hex, facing, points, hit points and rounds at the moment of the picture.
 
 Running with `-- --trace-input` prints every mouse button Godot receives, for checking what a
 mouse actually sends. `--heights x0,z0,x1,z1` prints the ground height along a line, for

@@ -74,6 +74,16 @@ public sealed record MovementCosts
     /// <summary>The chance that a hurried step ends in a fall, per unit of grade.</summary>
     public double TripPerGrade { get; init; } = 0.1;
 
+    /// <summary>
+    /// Points for each sixth of a turn made on the spot, so turning to the next direction
+    /// costs less than a stride and an about-face, three sixths, costs more than two: four
+    /// tenths of a second a sixth, a little over a second to turn right round with the weapon
+    /// up and settle on the new front. Per sixth rather than flat so that which way a soldier
+    /// ends a move facing is worth a thought, since the turn to look elsewhere is dearer the
+    /// further round it is.
+    /// </summary>
+    public int TurnPerSixth { get; init; } = 4;
+
     /// <summary>The stride price for a surface.</summary>
     public int Stride(Surface surface) => surface switch
     {

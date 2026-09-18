@@ -11,6 +11,34 @@ public static class Meshes
     /// board-game piece. Corners at 60-degree steps from +X, matching <c>Hex.Corner</c>.
     /// </summary>
     public static ArrayMesh HexPrism(float radius, float height, float chamfer, Material material)
+        => HexPrism(radius, height, chamfer, material, null, 0f);
+
+    /// <summary>
+    /// The piece with a nose: a short bar out of the front face along +X at a given height,
+    /// in its own material, so the piece has a way it is facing. Part of the one mesh rather
+    /// than a child, so the portrait rendered from the mesh has it too.
+    /// </summary>
+    public static ArrayMesh HexPrism(float radius, float height, float chamfer, Material material, Material? nose, float noseHeight)
+    {
+        var mesh = Prism(radius, height, chamfer, material);
+        if (nose is null) return mesh;
+
+        // Out of the middle of the +X face, which lies at the apothem rather than the radius.
+        var apothem = radius * 0.8660254f;
+        var st = new SurfaceTool();
+        st.Begin(Mesh.PrimitiveType.Triangles);
+        Box(st, new Vector3(apothem - NoseLength / 6f, noseHeight - NoseWidth / 2f, -NoseWidth / 2f),
+            new Vector3(apothem + NoseLength, noseHeight + NoseWidth / 2f, NoseWidth / 2f));
+        st.Commit(mesh);
+        mesh.SurfaceSetMaterial(1, nose);
+        return mesh;
+    }
+
+    /// <summary>The nose sticks this far out of the face; v1 found a bar this size the one mark that reads from every camera bearing.</summary>
+    private const float NoseLength = 0.3f;
+    private const float NoseWidth = 0.12f;
+
+    private static ArrayMesh Prism(float radius, float height, float chamfer, Material material)
     {
         var st = new SurfaceTool();
         st.Begin(Mesh.PrimitiveType.Triangles);
@@ -134,6 +162,19 @@ public static class Meshes
             st.AddVertex(centre + new Vector3(Mathf.Cos(a0), 0f, Mathf.Sin(a0)) * radius);
             st.AddVertex(centre + new Vector3(Mathf.Cos(a1), 0f, Mathf.Sin(a1)) * radius);
         }
+    }
+
+    /// <summary>An axis-aligned box between two opposite corners, faces outward.</summary>
+    private static void Box(SurfaceTool st, Vector3 lo, Vector3 hi)
+    {
+        Vector3 P(bool x, bool y, bool z) => new(x ? hi.X : lo.X, y ? hi.Y : lo.Y, z ? hi.Z : lo.Z);
+
+        Quad(st, P(true, false, false), P(true, true, false), P(true, true, true), P(true, false, true), Vector3.Right);
+        Quad(st, P(false, false, true), P(false, true, true), P(false, true, false), P(false, false, false), Vector3.Left);
+        Quad(st, P(false, true, false), P(false, true, true), P(true, true, true), P(true, true, false), Vector3.Up);
+        Quad(st, P(false, false, true), P(false, false, false), P(true, false, false), P(true, false, true), Vector3.Down);
+        Quad(st, P(false, false, true), P(true, false, true), P(true, true, true), P(false, true, true), Vector3.Back);
+        Quad(st, P(true, false, false), P(false, false, false), P(false, true, false), P(true, true, false), Vector3.Forward);
     }
 
     private static void Quad(SurfaceTool st, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)

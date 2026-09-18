@@ -11,8 +11,8 @@ namespace Hexcom.Rules;
 /// It is what lets a scout and a heavy trooper spend the same fifty points on different things.
 /// </para>
 /// <para>
-/// Only movement is priced yet. Firing and posture will get their own dials when they exist,
-/// so a scout can be quick on their feet and slow to bring a weapon to bear.
+/// Movement and posture are priced; firing will get its own dial when it needs one, so a
+/// scout can be quick on their feet and slow to bring a weapon to bear.
 /// </para>
 /// </remarks>
 public sealed record CostProfile
@@ -27,6 +27,18 @@ public sealed record CostProfile
 
     /// <summary>Multiplier on what every step costs this soldier.</summary>
     public double Movement { get; init; } = 1.0;
+
+    /// <summary>Multiplier on what turning on the spot, and later changing stance, costs this soldier.</summary>
+    /// <remarks>
+    /// Its own dial rather than the movement one because the two are different things about a
+    /// soldier: a gunner is slow over ground for the weight they carry, and no slower to turn
+    /// their head. Nobody's differs yet.
+    /// </remarks>
+    public double Posture { get; init; } = 1.0;
+
+    /// <summary>What turning through a listed price costs this soldier: nothing free, nothing fractional.</summary>
+    public int Turn(double listed)
+        => Math.Max(1, (int)Math.Round(listed * Posture, MidpointRounding.AwayFromZero));
 
     /// <summary>What a step at a listed price costs this soldier: nothing free, nothing fractional.</summary>
     /// <remarks>

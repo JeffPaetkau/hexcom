@@ -34,9 +34,10 @@ public sealed class Unit
     /// </summary>
     public const int MaxHitPoints = 30;
 
-    public Unit(Hex position, Side side = Side.Player, string name = "UNIT", Weapon? weapon = null, CostProfile? profile = null)
+    public Unit(Hex position, Side side = Side.Player, string name = "UNIT", Weapon? weapon = null, CostProfile? profile = null, int facing = 0)
     {
         Position = position;
+        Facing = facing;
         Side = side;
         Name = name;
         Weapon = weapon ?? Weapon.Rifle;
@@ -47,6 +48,9 @@ public sealed class Unit
     }
 
     public Hex Position { get; set; }
+
+    /// <summary>Which way the soldier faces: one of the six hex directions (see <see cref="Rules.Facing"/>).</summary>
+    public int Facing { get; set; }
 
     public Side Side { get; }
 

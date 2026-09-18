@@ -31,8 +31,11 @@ public partial class Hud : CanvasLayer
     private ProgressBar _hpBar = null!;
     private Label _roundsValue = null!;
     private Label _weaponDetail = null!;
+    private Label _facingValue = null!;
     private Label _moveValue = null!;
     private Control _moveRow = null!;
+    private Label _turnValue = null!;
+    private Control _turnRow = null!;
     private Label _riskValue = null!;
     private Control _riskRow = null!;
     private Label _note = null!;
@@ -138,6 +141,16 @@ public partial class Hud : CanvasLayer
         _roundsValue.Text = $"{unit.Rounds} / {weapon.Rounds}";
         _roundsValue.AddThemeColorOverride("font_color", unit.Rounds > 0 ? SciFi.Text : SciFi.Warning);
         _weaponDetail.Text = $"{weapon.Damage} DAMAGE  ·  {weapon.MaxRange:0} M RANGE  ·  {weapon.ShotCost} AP A SHOT";
+
+        _facingValue.Text = Facing.Name(unit.Facing);
+    }
+
+    /// <summary>Show what turning to face the hex under the cursor would cost, in the warning colour if it cannot be paid, or hide the row with null.</summary>
+    public void ShowTurn(int? cost, bool affordable = true)
+    {
+        _turnRow.Visible = cost is not null;
+        if (cost is { } points) _turnValue.Text = points.ToString();
+        _turnValue.AddThemeColorOverride("font_color", affordable ? SciFi.Text : SciFi.Warning);
     }
 
     /// <summary>Show what the move under the cursor would cost if there is one, and the chance of a fall on the way if there is any.</summary>
@@ -240,8 +253,15 @@ public partial class Hud : CanvasLayer
         _weaponDetail.AddThemeColorOverride("font_color", SciFi.Muted);
         column.AddChild(_weaponDetail);
 
+        // Which way the soldier faces, as a compass point; the board shows it as the piece's nose.
+        column.AddChild(Row("FACING", out _facingValue));
+
         _moveRow = Row("MOVE", out _moveValue);
         column.AddChild(_moveRow);
+
+        // What a right click would cost: the turn on the spot to face the hovered hex.
+        _turnRow = Row("TURN TO FACE  ·  RIGHT CLICK", out _turnValue);
+        column.AddChild(_turnRow);
 
         // The chance of a fall on a hurried way, in the warning colour, only when there is one.
         _riskRow = Row("FALL RISK", out _riskValue);

@@ -59,6 +59,11 @@ public static class Shooting
         shooter.Spend(shot.Cost);
         shooter.SpendRound();
 
+        // A soldier faces what they fire at. The turn is inside the shot's price: three and a
+        // half seconds is time enough to come round and aim, and a shot that also charged for
+        // the turn would make firing at what is beside you dearer than at what is in front.
+        shooter.Facing = Facing.Toward(shooter.Position, target.Position) ?? shooter.Facing;
+
         var hit = roll < shot.HitChance;
         if (hit) target.Hurt(shot.Damage);
 

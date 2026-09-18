@@ -21,12 +21,13 @@ namespace Hexcom.Game;
 /// <c>--focus x,z</c>, <c>--yaw</c> and <c>--pitch</c> (degrees) and <c>--zoom</c> (metres back
 /// from the focus) set the camera, which lands there at once rather than easing.
 /// <c>--sun elevation,bearing</c> moves the sun for the run. <c>--hover x,z</c> puts the
-/// cursor on a ground point, <c>--move q,r</c> orders the unit to a hex and waits for the
+/// cursor on a ground point, <c>--face q,r</c> turns the unit to face a hex and waits for the
+/// turn, <c>--move q,r</c> orders the unit to a hex and waits for the
 /// walk, <c>--enemy q,r</c> puts the enemy on a hex, <c>--fire N</c> fires N shots at him after
 /// the move (<c>--sure</c> makes every shot hit and <c>--miss</c> every shot miss), and
 /// <c>--end-turn</c> passes the turn after that. <c>--play "fire end end fire"</c> gives the
-/// orders in any order, a step per word: <c>move:q,r</c>, <c>fire</c> or <c>end</c>; each is
-/// waited for. <c>--shot-after N</c> waits N
+/// orders in any order, a step per word: <c>face:q,r</c>, <c>move:q,r</c>, <c>fire</c> or
+/// <c>end</c>; each is waited for. <c>--shot-after N</c> waits N
 /// frames at the end, default eight, so the sky and shadows have settled. Not with <c>--headless</c>: the headless driver does not rasterise, so a window has
 /// to open for there to be anything to save.
 /// </para>
@@ -115,8 +116,9 @@ public sealed class Capture
             Trip = Array.IndexOf(args, "--trip") >= 0,
         };
 
-        // The short flags are the common script, a move, some shots and an end of turn, in
-        // that order; --play spells out any other order, a step per word.
+        // The short flags are the common script, a turn to face somewhere, a move, some shots
+        // and an end of turn, in that order; --play spells out any other order, a step per word.
+        if (ValueOf(args, "--face") is { } face) capture._steps.Enqueue($"face:{face}");
         if (ValueOf(args, "--move") is { } move) capture._steps.Enqueue($"move:{move}");
         for (var shots = IntOf(args, "--fire") ?? 0; shots > 0; shots--) capture._steps.Enqueue("fire");
         if (Array.IndexOf(args, "--end-turn") >= 0) capture._steps.Enqueue("end");
@@ -167,6 +169,11 @@ public sealed class Capture
         {
             var target = new Hex((int)hex.X, (int)hex.Y);
             if (!board.OrderTo(target)) GD.Print($"move to {target} refused");
+        }
+        else if (step.StartsWith("face:") && PairIn(step[5..]) is { } toward)
+        {
+            var target = new Hex((int)toward.X, (int)toward.Y);
+            if (!board.FaceToward(target)) GD.Print($"turn to face {target} refused");
         }
         else GD.Print($"unknown step {step}");
     }
