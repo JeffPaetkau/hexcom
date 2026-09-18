@@ -24,7 +24,8 @@ green (`SciFi.Health`) and a rifle row with rounds and the numbers under. Other 
 block reach (`Movement.Reachable(..., blocked:)`). Captures: `--enemy q,r`, `--fire N`,
 `--play "fire end end fire"` (steps in any order), `--mid-walk` also works for a shot; the
 console prints every unit. Pictures checked on 2026-09-17: opening view, target card, tracer,
-hit, down, enemy's turn. Not committed yet.
+hit, down, enemy's turn, and point blank at 100%. Committed as 83f0b48 and pushed on
+2026-09-17.
 
 **Where it was (2026-09-16, evening).**
 
