@@ -25,6 +25,18 @@ public static class SciFi
     /// <summary>The warning colour for text: the orange of the marks, opaque.</summary>
     public static readonly Color Warning = new(1f, 0.62f, 0.1f);
 
+    /// <summary>The danger colour, opaque: the enemy's name, the ring under him on his turn, the edge of the target card.</summary>
+    public static readonly Color Danger = new(1f, 0.32f, 0.22f);
+
+    /// <summary>Hit points, on both cards: the green every game in the genre uses for what is left of a soldier.</summary>
+    public static readonly Color Health = new(0.45f, 0.9f, 0.5f);
+
+    /// <summary>A round in flight: hot and pale, so it reads against ground and sky alike for the moment it is there.</summary>
+    public static readonly Color Tracer = new(1f, 0.92f, 0.6f);
+
+    /// <summary>A side's colour on the cards: ours is the interface's own cyan, theirs the danger red.</summary>
+    public static Color SideColour(Hexcom.Rules.Side side) => side == Hexcom.Rules.Side.Player ? Accent : Danger;
+
     private static Font? _font;
 
     /// <summary>A condensed system face if the machine has one, otherwise whatever it has.</summary>
@@ -55,16 +67,20 @@ public static class SciFi
         return theme;
     }
 
-    /// <summary>A panel of dark glass with a hairline border and a heavier accent edge on the left.</summary>
-    public static StyleBoxFlat Panel()
+    /// <summary>A panel of dark glass with a hairline border and a heavier edge on the left, in the accent or a colour of the caller's.</summary>
+    public static StyleBoxFlat Panel(Color? edge = null)
     {
-        var box = new StyleBoxFlat { BgColor = Glass, BorderColor = AccentDim };
+        var colour = edge ?? Accent;
+        var box = new StyleBoxFlat { BgColor = Glass, BorderColor = new Color(colour, AccentDim.A) };
         box.SetBorderWidthAll(1);
         box.BorderWidthLeft = 3;
         box.SetCornerRadiusAll(2);
         box.SetContentMarginAll(16);
         return box;
     }
+
+    /// <summary>The fill of a bar in a colour of the caller's, for a bar that is not the accent.</summary>
+    public static StyleBoxFlat Fill(Color colour) => Bar(colour);
 
     /// <summary>A small framed square, for a photo or an icon.</summary>
     public static StyleBoxFlat Tile()

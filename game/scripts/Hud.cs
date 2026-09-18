@@ -1,15 +1,21 @@
 using System;
 using Godot;
+using Hexcom.Rules;
+using Side = Hexcom.Rules.Side; // Godot has a Side enum of its own
 
 namespace Hexcom.Game;
 
 /// <summary>
-/// The screen furniture: a card about the active unit top right, and End Turn bottom right.
+/// The screen furniture: a card about the active unit top left, a card about the enemy under
+/// the cursor top right, and End Turn bottom right.
 /// </summary>
 /// <remarks>
-/// The card is a column of rows that grows as the game learns more about a unit. Today it
-/// carries a photo tile, a name and type, the action points as a bar, and the cost of the
-/// move under the cursor; ammo and the rest slot in as rows when they exist.
+/// The unit card is a column of rows that grows as the game learns more about a unit. Today it
+/// carries a photo tile, a name and type in the side's colour, the action points and the hit
+/// points as bars, the rifle with its rounds, and the cost of the move under the cursor. The
+/// target card appears when the cursor is on an enemy and says what a shot at them would be:
+/// their hit points, the range, the chance, the damage and the cost, or why the shot is
+/// refused. Nothing on either card is a number the rules did not give.
 /// </remarks>
 public partial class Hud : CanvasLayer
 {
@@ -17,8 +23,14 @@ public partial class Hud : CanvasLayer
 
     private const int PortraitPixels = 176;
 
+    private Label _name = null!;
+    private Label _kind = null!;
     private Label _apValue = null!;
     private ProgressBar _apBar = null!;
+    private Label _hpValue = null!;
+    private ProgressBar _hpBar = null!;
+    private Label _roundsValue = null!;
+    private Label _weaponDetail = null!;
     private Label _moveValue = null!;
     private Control _moveRow = null!;
     private Label _riskValue = null!;
@@ -26,6 +38,17 @@ public partial class Hud : CanvasLayer
     private Label _note = null!;
     private PanelContainer _photo = null!;
     private Label _placeholder = null!;
+    private MeshInstance3D? _portrait;
+
+    private Control _targetCard = null!;
+    private Label _targetName = null!;
+    private Label _targetHpValue = null!;
+    private ProgressBar _targetHpBar = null!;
+    private Label _rangeValue = null!;
+    private Label _hitValue = null!;
+    private Label _damageValue = null!;
+    private Label _shotValue = null!;
+    private Label _refusal = null!;
 
     public event Action? EndTurnPressed;
 
@@ -34,15 +57,23 @@ public partial class Hud : CanvasLayer
         var theme = SciFi.Theme();
 
         AddChild(Anchored(Control.LayoutPreset.TopLeft, BuildCard(theme), theme));
+        AddChild(Anchored(Control.LayoutPreset.TopRight, BuildTargetCard(theme), theme));
         AddChild(Anchored(Control.LayoutPreset.BottomRight, BuildEndTurn(theme), theme));
     }
 
     /// <summary>
     /// Put a picture of the token in the photo slot, rendered live from its own mesh in a small
-    /// offscreen world lit the same way as the board.
+    /// offscreen world lit the same way as the board. Called again with another mesh when the
+    /// turn passes, and the same little world shows the new piece.
     /// </summary>
     public void ShowPortrait(Mesh piece)
     {
+        if (_portrait is not null)
+        {
+            _portrait.Mesh = piece;
+            return;
+        }
+
         var viewport = new SubViewport
         {
             Size = new Vector2I(PortraitPixels, PortraitPixels),
@@ -52,7 +83,8 @@ public partial class Hud : CanvasLayer
             RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
         };
 
-        viewport.AddChild(new MeshInstance3D { Mesh = piece });
+        _portrait = new MeshInstance3D { Mesh = piece };
+        viewport.AddChild(_portrait);
         viewport.AddChild(new DirectionalLight3D
         {
             RotationDegrees = new Vector3(-48f, 150f, 0f),
@@ -87,16 +119,30 @@ public partial class Hud : CanvasLayer
         });
     }
 
-    /// <summary>
-    /// Show the points left, what the move under the cursor would cost if there is one, and
-    /// the chance of a fall on the way if there is any.
-    /// </summary>
-    public void ShowAp(int ap, int max, int? moveCost, double? risk = null)
+    /// <summary>Show who is up and everything the card knows about them: name, side, points, hit points, rifle and rounds.</summary>
+    public void ShowUnit(Unit unit)
     {
-        _apValue.Text = $"{ap} / {max}";
-        _apBar.MaxValue = max;
-        _apBar.Value = ap;
+        _name.Text = unit.Name;
+        _name.AddThemeColorOverride("font_color", SciFi.SideColour(unit.Side));
+        _kind.Text = unit.Side == Side.Player ? "RIFLEMAN" : "HOSTILE RIFLEMAN";
 
+        _apValue.Text = $"{unit.Ap} / {Unit.MaxAp}";
+        _apBar.MaxValue = Unit.MaxAp;
+        _apBar.Value = unit.Ap;
+
+        _hpValue.Text = $"{unit.HitPoints} / {Unit.MaxHitPoints}";
+        _hpBar.MaxValue = Unit.MaxHitPoints;
+        _hpBar.Value = unit.HitPoints;
+
+        var weapon = unit.Weapon;
+        _roundsValue.Text = $"{unit.Rounds} / {weapon.Rounds}";
+        _roundsValue.AddThemeColorOverride("font_color", unit.Rounds > 0 ? SciFi.Text : SciFi.Warning);
+        _weaponDetail.Text = $"{weapon.Damage} DAMAGE  ·  {weapon.MaxRange:0} M RANGE  ·  {weapon.ShotCost} AP A SHOT";
+    }
+
+    /// <summary>Show what the move under the cursor would cost if there is one, and the chance of a fall on the way if there is any.</summary>
+    public void ShowMove(int? moveCost, double? risk = null)
+    {
         _moveRow.Visible = moveCost is not null;
         if (moveCost is { } cost) _moveValue.Text = cost.ToString();
 
@@ -104,7 +150,30 @@ public partial class Hud : CanvasLayer
         if (risk is { } chance) _riskValue.Text = $"{Math.Round(chance * 100)}%";
     }
 
-    /// <summary>A line about something that has just happened to the unit, or null to clear it.</summary>
+    /// <summary>Show the enemy under the cursor and what a shot at them would be, or hide the card with null.</summary>
+    public void ShowTarget(Unit? target, Shot? shot)
+    {
+        _targetCard.Visible = target is not null;
+        if (target is null || shot is null) return;
+
+        _targetName.Text = target.Name;
+        _targetName.AddThemeColorOverride("font_color", SciFi.SideColour(target.Side));
+
+        _targetHpValue.Text = $"{target.HitPoints} / {Unit.MaxHitPoints}";
+        _targetHpBar.MaxValue = Unit.MaxHitPoints;
+        _targetHpBar.Value = target.HitPoints;
+
+        _rangeValue.Text = $"{shot.Range:0} M";
+        _hitValue.Text = shot.CanFire ? $"{Math.Round(shot.HitChance * 100)}%" : "—";
+        _hitValue.AddThemeColorOverride("font_color", shot.CanFire ? SciFi.Accent : SciFi.Muted);
+        _damageValue.Text = shot.Damage.ToString();
+        _shotValue.Text = $"{shot.Cost} AP";
+
+        _refusal.Visible = !shot.CanFire;
+        _refusal.Text = shot.Refusal ?? "";
+    }
+
+    /// <summary>A line about something that has just happened, or null to clear it.</summary>
     public void ShowNote(string? note)
     {
         _note.Visible = note is not null;
@@ -138,13 +207,13 @@ public partial class Hud : CanvasLayer
 
         var identity = new VBoxContainer { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         identity.AddThemeConstantOverride("separation", 2);
-        var name = new Label { Text = "UNIT 1" };
-        name.AddThemeFontSizeOverride("font_size", 26);
-        var kind = new Label { Text = "RIFLEMAN" };
-        kind.AddThemeFontSizeOverride("font_size", 16);
-        kind.AddThemeColorOverride("font_color", SciFi.Muted);
-        identity.AddChild(name);
-        identity.AddChild(kind);
+        _name = new Label { Text = "UNIT" };
+        _name.AddThemeFontSizeOverride("font_size", 26);
+        _kind = new Label { Text = "RIFLEMAN" };
+        _kind.AddThemeFontSizeOverride("font_size", 16);
+        _kind.AddThemeColorOverride("font_color", SciFi.Muted);
+        identity.AddChild(_name);
+        identity.AddChild(_kind);
 
         header.AddChild(photo);
         header.AddChild(identity);
@@ -153,11 +222,23 @@ public partial class Hud : CanvasLayer
         column.AddChild(SciFi.Rule());
 
         // Action points: a label row and a bar.
-        var apRow = Row("ACTION POINTS", out _apValue);
-        column.AddChild(apRow);
-
+        column.AddChild(Row("ACTION POINTS", out _apValue));
         _apBar = new ProgressBar { ShowPercentage = false, CustomMinimumSize = new Vector2(0, 8) };
         column.AddChild(_apBar);
+
+        // Hit points: the same, in the health colour.
+        column.AddChild(Row("HIT POINTS", out _hpValue));
+        _hpBar = HealthBar();
+        column.AddChild(_hpBar);
+
+        column.AddChild(SciFi.Rule());
+
+        // The weapon: its name with the rounds left, and its numbers in a muted line under.
+        column.AddChild(Row("RIFLE  ·  ROUNDS", out _roundsValue));
+        _weaponDetail = new Label();
+        _weaponDetail.AddThemeFontSizeOverride("font_size", 14);
+        _weaponDetail.AddThemeColorOverride("font_color", SciFi.Muted);
+        column.AddChild(_weaponDetail);
 
         _moveRow = Row("MOVE", out _moveValue);
         column.AddChild(_moveRow);
@@ -173,6 +254,52 @@ public partial class Hud : CanvasLayer
         column.AddChild(_note);
 
         return card;
+    }
+
+    /// <summary>The card about the enemy under the cursor: who, how hurt, and the shot at them.</summary>
+    private Control BuildTargetCard(Theme theme)
+    {
+        var card = new PanelContainer { Theme = theme, CustomMinimumSize = new Vector2(300, 0), Visible = false };
+        card.AddThemeStyleboxOverride("panel", SciFi.Panel(SciFi.Danger));
+        _targetCard = card;
+
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 10);
+        card.AddChild(column);
+
+        var caption = new Label { Text = "TARGET" };
+        caption.AddThemeFontSizeOverride("font_size", 15);
+        caption.AddThemeColorOverride("font_color", SciFi.Muted);
+        column.AddChild(caption);
+
+        _targetName = new Label { Text = "HOSTILE" };
+        _targetName.AddThemeFontSizeOverride("font_size", 26);
+        column.AddChild(_targetName);
+
+        column.AddChild(SciFi.Rule());
+
+        column.AddChild(Row("HIT POINTS", out _targetHpValue));
+        _targetHpBar = HealthBar();
+        column.AddChild(_targetHpBar);
+
+        column.AddChild(Row("RANGE", out _rangeValue));
+        column.AddChild(Row("HIT CHANCE", out _hitValue));
+        column.AddChild(Row("DAMAGE", out _damageValue));
+        column.AddChild(Row("SHOT", out _shotValue));
+
+        _refusal = new Label { Visible = false };
+        _refusal.AddThemeFontSizeOverride("font_size", 15);
+        _refusal.AddThemeColorOverride("font_color", SciFi.Warning);
+        column.AddChild(_refusal);
+
+        return card;
+    }
+
+    private static ProgressBar HealthBar()
+    {
+        var bar = new ProgressBar { ShowPercentage = false, CustomMinimumSize = new Vector2(0, 8) };
+        bar.AddThemeStyleboxOverride("fill", SciFi.Fill(SciFi.Health));
+        return bar;
     }
 
     private static Control Row(string caption, out Label value)

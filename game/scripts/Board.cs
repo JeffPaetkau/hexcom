@@ -2,16 +2,21 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using Hexcom.Rules;
+using Side = Hexcom.Rules.Side; // Godot has a Side enum of its own
 
 namespace Hexcom.Game;
 
 /// <summary>
-/// The board: one unit as a blue wooden piece, the rings on the ground that say where the
-/// cursor is and which unit is active, and the marks on the hexes the unit can reach.
+/// The board: two units as wooden pieces, ours blue and theirs red, the rings on the ground
+/// that say where the cursor is and whose turn it is, the marks on the hexes the active unit
+/// can reach and on the enemy it can shoot, and the tracer of a shot.
 /// </summary>
 /// <remarks>
 /// The rules are asked, never guessed at: what is reachable and what a path costs come from
-/// <see cref="Movement"/>, and the piece only animates what the unit has already paid for.
+/// <see cref="Movement"/>, whether a shot can be taken and what it does from
+/// <see cref="Shooting"/>, and the pieces only animate what the units have already paid for.
+/// The turns alternate, ours then theirs, and both are played from the same mouse until there
+/// is an opponent to play the other: End Turn passes the board to the other unit.
 /// </remarks>
 public partial class Board : Node3D
 {
@@ -36,32 +41,53 @@ public partial class Board : Node3D
     private const float UnitLift = 0.025f;
     private const float HoverLift = 0.035f;
 
-    private static readonly Color PieceBlue = new(0.16f, 0.36f, 0.82f);
+    // A round leaves the rifle at chest height and is aimed at the target's, a little lower
+    // for the drop; a miss goes on past the target and a hand's width to one side of it.
+    private const float MuzzleHeight = 1.3f;
+    private const float ChestHeight = 1.15f;
+    private const float MissPast = 4f;
+    private const float MissAside = 0.5f;
+    private const float TracerWidth = 0.03f;
 
-    private Unit _unit = null!;
+    // A tracer is on screen for the moment a round takes to arrive and then fades; a piece
+    // put down topples in a little over half a second.
+    private const float TracerSeconds = 0.12f;
+    private const float TracerFadeSeconds = 0.3f;
+    private const float ToppleSeconds = 0.6f;
+
+    private static readonly Color PieceBlue = new(0.16f, 0.36f, 0.82f);
+    private static readonly Color PieceRed = new(0.80f, 0.18f, 0.14f);
+
+    private readonly List<Unit> _units = new();
+    private readonly Dictionary<Unit, MeshInstance3D> _pieces = new();
+    private readonly Dictionary<Unit, StandardMaterial3D> _paints = new();
+    private int _active;
     private Movement _movement = null!;
 
-    // What the unit can reach carefully, and what it can reach if it hurries down the slopes.
+    // What the active unit can reach carefully, and what it can reach if it hurries down the slopes.
     private Reach _reachable = null!;
     private Reach _hurried = null!;
 
-    // The dice for falls. One seed, so a run of the game can be replayed until there is a
-    // proper seeded source of chance in the rules.
+    // The dice for falls and for shots. One seed, so a run of the game can be replayed until
+    // there is a proper seeded source of chance in the rules.
     private readonly Random _dice = new(7);
 
     private Material _white = null!;
     private Material _accent = null!;
-    private MeshInstance3D _piece = null!;
+    private Material _hostile = null!;
+    private Material _tracerGlow = null!;
     private MeshInstance3D _unitRing = null!;
     private MeshInstance3D _hover = null!;
+    private MeshInstance3D _tracer = null!;
     private HexMarks _marks = null!;
 
-    // Which hexes carry a mark, so a walk can take away the ones that fall out of reach.
+    // Which hexes carry a movement mark, so a walk can take away the ones that fall out of reach.
     private readonly HashSet<Hex> _shown = new();
 
     private Hex? _hovered;
     private Hex? _planned;
-    private bool _moving;
+    private Unit? _target;
+    private bool _busy;
 
     public TacticalCamera Camera { get; set; } = null!;
 
@@ -78,64 +104,90 @@ public partial class Board : Node3D
     /// <summary>Whether every hurried step falls, for picturing a fall.</summary>
     public bool AlwaysTrip { get; set; }
 
-    /// <summary>The hex the unit starts on.</summary>
+    /// <summary>A roll to use for every shot instead of the dice, for picturing a hit or a miss without luck. Null throws the dice.</summary>
+    public double? ShotRoll { get; set; }
+
+    /// <summary>The hex our unit starts on.</summary>
     public Hex Start { get; set; } = new(0, 0);
 
-    /// <summary>Whether a move is being animated, during which nothing else is accepted.</summary>
-    public bool Busy => _moving;
+    /// <summary>The hex the enemy starts on.</summary>
+    public Hex EnemyStart { get; set; } = new(5, 0);
 
-    public Unit Unit => _unit;
+    /// <summary>Whether a move or a shot is being animated, during which nothing else is accepted.</summary>
+    public bool Busy => _busy;
 
-    /// <summary>The token's mesh, so a portrait can be rendered from the same thing that stands on the board.</summary>
-    public Mesh PieceMesh => _piece.Mesh;
+    /// <summary>The unit whose turn it is.</summary>
+    public Unit Unit => _units[_active];
 
-    /// <summary>How many hexes carry a mark, for the capture's console line.</summary>
+    /// <summary>Every unit on the board, ours first. Not named for the type, which the Units class already is.</summary>
+    public IReadOnlyList<Unit> Roster => _units;
+
+    /// <summary>The active unit's token mesh, so a portrait can be rendered from the same thing that stands on the board.</summary>
+    public Mesh PieceMesh => _pieces[Unit].Mesh;
+
+    /// <summary>How many hexes carry a movement mark, for the capture's console line.</summary>
     public int MarkCount => _shown.Count;
 
     public override void _Ready()
     {
         // Rings lie on the drawn ground and are depth tested like anything else on it, so a
         // piece standing on a ring hides the far side of it. The cursor ring is white; the ring
-        // under the active unit is the HUD's own colour, the one thing on the board that says
-        // "this is yours". The marks on the hexes in reach are painted by the ground itself.
+        // under the active unit is its side's colour, the HUD's cyan for ours and the danger
+        // red for theirs, so whose turn it is reads from the board. The marks on the hexes in
+        // reach are painted by the ground itself.
         _white = Overlay(Colors.White);
         _accent = Overlay(SciFi.Accent);
+        _hostile = Overlay(SciFi.Danger);
+        _tracerGlow = Overlay(SciFi.Tracer);
         _marks = new HexMarks(Surface, HoverRadius);
 
         _movement = new Movement(Terrain);
-        _unit = new Unit(Start);
 
+        Place(new Unit(Start, Side.Player, "UNIT 1"), PieceBlue);
+        Place(new Unit(EnemyStart, Side.Hostile, "HOSTILE 1"), PieceRed);
+
+        _unitRing = new MeshInstance3D { Name = "UnitRing" };
+        _hover = new MeshInstance3D { Name = "Hover", Visible = false };
+        _tracer = new MeshInstance3D { Name = "Tracer", Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+
+        AddChild(_unitRing);
+        AddChild(_hover);
+        AddChild(_tracer);
+
+        Hud.ShowUnit(Unit);
+        RefreshReach();
+        RefreshUnitRing();
+        RefreshHover();
+    }
+
+    /// <summary>Put a unit on the board as a piece of its side's colour.</summary>
+    private void Place(Unit unit, Color colour)
+    {
         var paint = new StandardMaterial3D
         {
-            AlbedoColor = PieceBlue,
+            AlbedoColor = colour,
             Roughness = 0.5f,
             CullMode = BaseMaterial3D.CullModeEnum.Disabled,
         };
 
-        _piece = new MeshInstance3D
+        var piece = new MeshInstance3D
         {
-            Name = "Piece",
+            Name = unit.Name.Replace(' ', '_'),
             Mesh = Meshes.HexPrism(PieceRadius, PieceHeight, PieceChamfer, paint),
-            Position = ToScene(_unit.Position),
+            Position = ToScene(unit.Position),
         };
 
-        _unitRing = new MeshInstance3D { Name = "UnitRing" };
-        _hover = new MeshInstance3D { Name = "Hover", Visible = false };
-
-        AddChild(_piece);
-        AddChild(_unitRing);
-        AddChild(_hover);
-
-        RefreshReach();
-        RefreshUnitRing();
-        RefreshHover();
+        _units.Add(unit);
+        _pieces[unit] = piece;
+        _paints[unit] = paint;
+        AddChild(piece);
     }
 
     public override void _Process(double delta)
     {
         // The ring walks with the piece, rebuilt each frame so it keeps to the ground, and the
         // marks that are fading do so a frame at a time.
-        if (_moving) RefreshUnitRing();
+        if (_busy) RefreshUnitRing();
         _marks.Tick((float)delta);
 
         // While the mouse is moving the camera it is not pointing at a hex.
@@ -151,27 +203,62 @@ public partial class Board : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } && !_moving && _planned is { } to)
-        {
-            Order(to);
-        }
+        if (@event is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } || _busy) return;
+
+        if (_target is { } target) Fire(target);
+        else if (_planned is { } to) Order(to);
     }
 
     /// <summary>Move to a hex if it is in reach, hurrying if that is the only way; false if it is not.</summary>
     public bool OrderTo(Hex target)
     {
-        if (_moving || target == _unit.Position || !_hurried.Contains(target)) return false;
+        if (_busy || target == Unit.Position || !_hurried.Contains(target)) return false;
         Order(target);
         return true;
     }
 
-    /// <summary>A new turn: the unit's points come back.</summary>
+    /// <summary>Fire at the enemy if the rules allow it; false if they refuse.</summary>
+    public bool FireAtEnemy()
+    {
+        if (_busy) return false;
+
+        foreach (var unit in _units)
+        {
+            if (unit.Side != Unit.Side && Shooting.Plan(Unit, unit).CanFire) return Fire(unit);
+        }
+
+        return false;
+    }
+
+    /// <summary>End the active unit's turn: the board passes to the next unit still standing, whose points come back.</summary>
+    /// <remarks>
+    /// Points come back at the start of a unit's own turn rather than at the end of it, so the
+    /// number on the card during the other side's turn is what was left, not what will be.
+    /// With one side down the turn comes straight back round.
+    /// </remarks>
     public void EndTurn()
     {
-        if (_moving) return;
-        _unit.Refresh();
+        if (_busy) return;
+
+        for (var i = 1; i <= _units.Count; i++)
+        {
+            var next = (_active + i) % _units.Count;
+            if (_units[next].IsDown) continue;
+            _active = next;
+            break;
+        }
+
+        Unit.Refresh();
         Hud.ShowNote(null);
+        Hud.ShowUnit(Unit);
+        Hud.ShowPortrait(PieceMesh);
+
+        // The camera goes to whoever is up, so the player is looking at the piece they are about to move.
+        var piece = _pieces[Unit].Position;
+        Camera.Set(focus: new Vector2(piece.X, piece.Z));
+
         RefreshReach();
+        RefreshUnitRing();
         RefreshHover();
     }
 
@@ -184,10 +271,12 @@ public partial class Board : Node3D
     /// </remarks>
     private void Order(Hex destination)
     {
+        var unit = Unit;
+        var piece = _pieces[unit];
         var reach = _reachable.Contains(destination) ? _reachable : _hurried;
-        if (reach.CostTo(destination) is not { } cost || !_unit.CanAfford(cost)) return;
+        if (reach.CostTo(destination) is not { } cost || !unit.CanAfford(cost)) return;
         var path = reach.PathTo(destination);
-        var before = _unit.Ap;
+        var before = unit.Ap;
 
         // A hurried step may end in a fall. The dice are thrown now for every hurried step on
         // the way and the walk is cut short at the first that comes up: the animation only
@@ -206,10 +295,11 @@ public partial class Board : Node3D
             }
         }
 
-        _unit.Spend(cost);
-        _moving = true;
+        unit.Spend(cost);
+        _busy = true;
         _planned = null;
-        Hud.ShowAp(_unit.Ap, Unit.MaxAp, null);
+        Hud.ShowUnit(unit);
+        Hud.ShowMove(null);
 
         // Each step takes the share of the turn it cost, at playback speed: a stride on the
         // flat is half a second of turn, a climb longer, a road quicker. What the player
@@ -224,55 +314,156 @@ public partial class Board : Node3D
             var seconds = step * Units.TurnSeconds / Unit.MaxAp / PlaybackSpeed;
             var left = before - reach.CostTo(to)!.Value;
             tween.TweenCallback(Callable.From(() => FadeOutOfReach(to, left, seconds)));
-            tween.TweenProperty(_piece, "position", ToScene(to), seconds);
+            tween.TweenProperty(piece, "position", ToScene(to), seconds);
         }
 
         tween.Finished += () =>
         {
-            _unit.Position = path[end];
-            _moving = false;
+            unit.Position = path[end];
+            _busy = false;
 
             // A fall costs whatever was left of the turn. Going prone and getting hurt come later.
             if (fell)
             {
-                _unit.Spend(_unit.Ap);
+                unit.Spend(unit.Ap);
                 Hud.ShowNote("FELL ON THE SLOPE");
             }
 
+            Hud.ShowUnit(unit);
             RefreshReach();
             RefreshUnitRing();
             RefreshHover();
         };
     }
 
-    /// <summary>The ring under the active unit, the same size as the cursor's so the two coincide when it is pointed at.</summary>
-    private void RefreshUnitRing()
+    /// <summary>Fire the active unit's weapon at a target, paying for it first; false if the rules refuse.</summary>
+    /// <remarks>
+    /// The dice are thrown before anything is drawn, so the tracer shows what has already
+    /// happened: it ends on the target on a hit and goes past on a miss. A target put down
+    /// topples away from the shot and stays where it lies.
+    /// </remarks>
+    private bool Fire(Unit target)
     {
-        _unitRing.Mesh = Meshes.Ring(_piece.Position, HoverRadius, HoverWidth, _accent, Drape(UnitLift));
+        var shooter = Unit;
+        var roll = ShotRoll ?? _dice.NextDouble();
+        if (Shooting.Fire(shooter, target, roll) is not { } result) return false;
+
+        _busy = true;
+        _target = null;
+        Hud.ShowUnit(shooter);
+        Hud.ShowTarget(target, Shooting.Plan(shooter, target));
+
+        var from = _pieces[shooter].Position + Vector3.Up * MuzzleHeight;
+        var at = _pieces[target].Position + Vector3.Up * ChestHeight;
+        var line = at - from;
+        var flat = new Vector3(line.X, 0f, line.Z).Normalized();
+        var to = result.Hit ? at : at + flat * MissPast + new Vector3(-flat.Z, 0f, flat.X) * MissAside;
+
+        ShowTracer(from, to);
+
+        var tween = CreateTween();
+        tween.TweenInterval(TracerSeconds);
+        tween.TweenProperty(_tracer, "transparency", 1f, TracerFadeSeconds);
+
+        if (result.TargetDown) Topple(target, flat, tween);
+
+        tween.Finished += () =>
+        {
+            _tracer.Visible = false;
+            _busy = false;
+
+            Hud.ShowNote(result.Hit
+                ? result.TargetDown ? $"HIT · {target.Name} DOWN" : $"HIT · {result.Damage} DAMAGE"
+                : "MISS");
+
+            RefreshReach();
+            RefreshHover();
+        };
+
+        return true;
     }
 
-    /// <summary>Mark every hex the unit can reach from where it stands with what it has.</summary>
+    /// <summary>A bright line from the muzzle to where the round went.</summary>
+    private void ShowTracer(Vector3 from, Vector3 to)
+    {
+        var length = from.DistanceTo(to);
+        _tracer.Mesh = new BoxMesh { Size = new Vector3(TracerWidth, TracerWidth, length), Material = _tracerGlow };
+        _tracer.Transparency = 0f;
+        _tracer.Visible = true;
+        _tracer.Position = (from + to) / 2f;
+        _tracer.LookAt(to, Vector3.Up);
+    }
+
+    /// <summary>Lay a piece down on the ground, falling away from the shot, in the same tween as the tracer.</summary>
+    private void Topple(Unit unit, Vector3 away, Tween tween)
+    {
+        var piece = _pieces[unit];
+        var axis = new Vector3(-away.Z, 0f, away.X);
+
+        // The piece turns about its base edge on the far side, so it lands with its length on
+        // the ground beyond it rather than sinking through it. A mesh rotates about its own
+        // origin, the centre of its foot, so the pivot is faked by moving the origin as it
+        // turns: to half a length away, one radius up.
+        var foot = ToScene(unit.Position);
+        var rest = new Vector3(foot.X + away.X * PieceHeight / 2f, foot.Y + PieceRadius, foot.Z + away.Z * PieceHeight / 2f);
+
+        tween.Parallel().TweenProperty(piece, "quaternion", new Quaternion(axis.Normalized(), Mathf.Pi / 2f), ToppleSeconds)
+            .SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Quad);
+        tween.Parallel().TweenProperty(piece, "position", rest, ToppleSeconds)
+            .SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Quad);
+
+        // A piece down goes dull.
+        var paint = _paints[unit];
+        tween.Parallel().TweenProperty(paint, "albedo_color", paint.AlbedoColor.Darkened(0.45f), ToppleSeconds);
+    }
+
+    /// <summary>The ring under the active unit, its side's colour, the same size as the cursor's so the two coincide when it is pointed at.</summary>
+    private void RefreshUnitRing()
+    {
+        var material = Unit.Side == Side.Player ? _accent : _hostile;
+        _unitRing.Mesh = Meshes.Ring(_pieces[Unit].Position, HoverRadius, HoverWidth, material, Drape(UnitLift));
+    }
+
+    /// <summary>The hexes other units stand on: not to be stepped onto or through.</summary>
+    private HashSet<Hex> Occupied()
+    {
+        var occupied = new HashSet<Hex>();
+        foreach (var unit in _units)
+        {
+            if (unit != Unit) occupied.Add(unit.Position);
+        }
+        return occupied;
+    }
+
+    /// <summary>Mark every hex the active unit can reach from where it stands with what it has, and every enemy it can shoot.</summary>
     /// <remarks>
     /// One disc per hex, the size of the cursor's ring: grey where a careful way fits the
-    /// points, orange where only a hurried way down a slope does, with its chance of a fall.
-    /// The marks are per hex rather than an outline of the set because a hex can mean more
-    /// than one thing, and colour is how it says which; red waits for danger. The unit's own
-    /// hex is marked like any other, under its ring, so the field of marks has no hole and
-    /// none opens behind a unit as it walks.
+    /// points, orange where only a hurried way down a slope does, with its chance of a fall,
+    /// and red under an enemy the unit can fire at from here. The marks are per hex rather
+    /// than an outline of the set because a hex can mean more than one thing, and colour is
+    /// how it says which. The unit's own hex is marked like any other, under its ring, so the
+    /// field of marks has no hole and none opens behind a unit as it walks.
     /// </remarks>
     private void RefreshReach()
     {
-        _reachable = _movement.Reachable(_unit.Position, _unit.Ap, _unit.Profile);
-        _hurried = _movement.Reachable(_unit.Position, _unit.Ap, _unit.Profile, hurrying: true);
+        var unit = Unit;
+        var occupied = Occupied();
+        _reachable = _movement.Reachable(unit.Position, unit.Ap, unit.Profile, blocked: occupied);
+        _hurried = _movement.Reachable(unit.Position, unit.Ap, unit.Profile, hurrying: true, blocked: occupied);
 
         _shown.Clear();
         _shown.UnionWith(_hurried.Hexes);
-        _marks.Set(_unit.Position, Coloured());
+        _marks.Set(unit.Position, Coloured());
     }
 
     private IEnumerable<(Hex, Color)> Coloured()
     {
         foreach (var hex in _shown) yield return (hex, _reachable.Contains(hex) ? SciFi.MarkMove : SciFi.MarkWarning);
+
+        foreach (var unit in _units)
+        {
+            if (unit.Side != Unit.Side && Shooting.Plan(Unit, unit).CanFire) yield return (unit.Position, SciFi.MarkDanger);
+        }
     }
 
     /// <summary>The cost of getting to a hex and the risk on the way: careful if a careful way fits the points, hurried otherwise, or null.</summary>
@@ -283,13 +474,23 @@ public partial class Board : Node3D
         return null;
     }
 
+    /// <summary>The unit standing on a hex, down or not, or null.</summary>
+    private Unit? UnitOn(Hex hex)
+    {
+        foreach (var unit in _units)
+        {
+            if (unit.Position == hex) return unit;
+        }
+        return null;
+    }
+
     /// <summary>
     /// Take the marks off every hex that can no longer be afforded from a hex with a budget,
     /// fading them out over some seconds, and keep the rest.
     /// </summary>
     private void FadeOutOfReach(Hex from, int budget, float seconds)
     {
-        var still = _movement.Reachable(from, budget, _unit.Profile, hurrying: true);
+        var still = _movement.Reachable(from, budget, Unit.Profile, hurrying: true, blocked: Occupied());
 
         var leaving = new List<Hex>();
         foreach (var hex in _shown)
@@ -315,30 +516,48 @@ public partial class Board : Node3D
         Transparency = colour.A < 1f ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
     };
 
-    /// <summary>Move the ring under the cursor, plan the path to it, and tell the HUD the cost.</summary>
+    /// <summary>
+    /// Move the ring under the cursor, and either plan the path to the hex and tell the HUD
+    /// the cost, or, with an enemy standing on it, work out the shot and show the target card.
+    /// </summary>
     /// <remarks>The path is planned but not drawn: the ring and the cost are what the player sees.</remarks>
     private void RefreshHover()
     {
+        _planned = null;
+        _target = null;
+
         if (_hovered is not { } hovered)
         {
             _hover.Visible = false;
-            _planned = null;
-            Hud.ShowAp(_unit.Ap, Unit.MaxAp, null);
+            Hud.ShowMove(null);
+            Hud.ShowTarget(null, null);
             return;
         }
 
         _hover.Visible = true;
         _hover.Mesh = Meshes.Ring(ToScene(hovered), HoverRadius, HoverWidth, _white, Drape(HoverLift));
 
-        if (!_moving && hovered != _unit.Position && WayTo(hovered) is { } way)
+        var unit = Unit;
+        if (!_busy && UnitOn(hovered) is { } other && other.Side != unit.Side)
+        {
+            // The card is shown whether or not the shot can be taken: the refusal is on it.
+            var shot = Shooting.Plan(unit, other);
+            _target = shot.CanFire ? other : null;
+            Hud.ShowMove(null);
+            Hud.ShowTarget(other, shot);
+            return;
+        }
+
+        Hud.ShowTarget(null, null);
+
+        if (!_busy && hovered != unit.Position && WayTo(hovered) is { } way)
         {
             _planned = hovered;
-            Hud.ShowAp(_unit.Ap, Unit.MaxAp, way.Cost, way.Risk);
+            Hud.ShowMove(way.Cost, way.Risk);
         }
         else
         {
-            _planned = null;
-            Hud.ShowAp(_unit.Ap, Unit.MaxAp, null);
+            Hud.ShowMove(null);
         }
     }
 
@@ -354,6 +573,4 @@ public partial class Board : Node3D
         var (x, z) = hex.Centre;
         return new Vector3((float)x, (float)Terrain.Height(x, z), (float)z);
     }
-
-    private static Vector2 ToPlane((double X, double Z) plane) => new((float)plane.X, (float)plane.Z);
 }

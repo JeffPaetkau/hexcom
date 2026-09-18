@@ -1,6 +1,32 @@
 # Hexcom — project summary
 
-## Where take 2 is (updated 2026-09-16, evening)
+## Where take 2 is (updated 2026-09-17)
+
+**Newest (2026-09-17): an enemy, hit points, a rifle, and simple shooting, at the user's ask
+and with reactions, overwatch, armour and everything else explicitly ruled out for now.** A
+second unit, `HOSTILE 1`, a red piece (`Board.PieceRed`, the danger colour; the user confirmed red), starts
+twenty-three metres east along the highway (`World.EnemyHome`, hex 196,-86). Both units have
+`Unit.MaxHitPoints` 30 and `Weapon.Rifle` (10 damage, 12 rounds, 100% at the next hex, the closest a
+target can be, falling to 80% at 20 m and 32% at 55 m, refused past it, 35 AP a shot, no
+reloading; the user ruled a flat 80% at arm's length wrong and then a 95% ceiling wrong too:
+a point-blank miss with nothing in the way would upset any player). `Shooting.Plan` gives range, chance,
+cost, damage and a refusal in the player's words (`OUT OF RANGE`, `NO ROUNDS`, `NOT ENOUGH
+POINTS`, `TARGET DOWN`, `FRIENDLY`); `Shooting.Fire` takes a roll handed in, so the rules
+never throw dice (`Board` rolls from its `Random(7)`, `--sure` and `--miss` force it). Turns
+alternate, ours then theirs, both played from the same mouse (hot seat, since there is no AI
+yet), End Turn passes the board, the camera goes to whoever is up, and points come back at
+the start of a unit's own turn. Both sides see everything; fog of war is later. On screen: the
+active ring is the side's colour (cyan ours, red theirs), an enemy in range carries the red
+danger mark, hovering him shows a red-edged target card top right (hit points, range, chance,
+damage, cost or refusal), clicking fires, a tracer ends on the target or goes past on a miss,
+and a downed piece topples away from the shot and dulls. The unit card gained hit points in
+green (`SciFi.Health`) and a rifle row with rounds and the numbers under. Other units' hexes
+block reach (`Movement.Reachable(..., blocked:)`). Captures: `--enemy q,r`, `--fire N`,
+`--play "fire end end fire"` (steps in any order), `--mid-walk` also works for a shot; the
+console prints every unit. Pictures checked on 2026-09-17: opening view, target card, tracer,
+hit, down, enemy's turn. Not committed yet.
+
+**Where it was (2026-09-16, evening).**
 
 **The approach.** Take 2 builds the interface first, piece by piece, and pulls the rules in to
 match it, because the interface is the user's only view into how things are going. V1 (below)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 using Hexcom.Rules;
 
@@ -21,7 +22,11 @@ namespace Hexcom.Game;
 /// from the focus) set the camera, which lands there at once rather than easing.
 /// <c>--sun elevation,bearing</c> moves the sun for the run. <c>--hover x,z</c> puts the
 /// cursor on a ground point, <c>--move q,r</c> orders the unit to a hex and waits for the
-/// walk, and <c>--end-turn</c> presses the button after it. <c>--shot-after N</c> waits N
+/// walk, <c>--enemy q,r</c> puts the enemy on a hex, <c>--fire N</c> fires N shots at him after
+/// the move (<c>--sure</c> makes every shot hit and <c>--miss</c> every shot miss), and
+/// <c>--end-turn</c> passes the turn after that. <c>--play "fire end end fire"</c> gives the
+/// orders in any order, a step per word: <c>move:q,r</c>, <c>fire</c> or <c>end</c>; each is
+/// waited for. <c>--shot-after N</c> waits N
 /// frames at the end, default eight, so the sky and shadows have settled. Not with <c>--headless</c>: the headless driver does not rasterise, so a window has
 /// to open for there to be anything to save.
 /// </para>
@@ -64,23 +69,26 @@ public sealed class Capture
     /// <summary>A point on the ground to treat as the cursor, so the hover marks can be pictured.</summary>
     public Vector2? Hover { get; private init; }
 
-    /// <summary>A hex to put the unit on at the start, for picturing reach on chosen ground.</summary>
+    /// <summary>A hex to put our unit on at the start, for picturing reach on chosen ground.</summary>
     public Hex? UnitAt { get; private init; }
 
-    /// <summary>A hex to order the unit to before the picture; the capture waits for the walk.</summary>
-    public Hex? Move { get; private init; }
+    /// <summary>A hex to put the enemy on at the start.</summary>
+    public Hex? EnemyAt { get; private init; }
 
-    /// <summary>Whether to press End Turn after any move, before the picture.</summary>
-    public bool EndTurn { get; private init; }
+    /// <summary>A roll to use for every shot, so a hit (0) or a miss (1) can be pictured without luck. Null throws the dice.</summary>
+    public double? ShotRoll { get; private init; }
 
-    /// <summary>Frames into the walk to take the picture instead of waiting for it to end, or null to wait.</summary>
+    /// <summary>Frames into a walk or a shot to take the picture instead of waiting for it to end, or null to wait.</summary>
     public int? MidWalk { get; private init; }
 
     /// <summary>Whether every hurried step falls, so a fall can be pictured without luck.</summary>
     public bool Trip { get; private init; }
 
-    private bool _dragged, _orbited, _moved, _endedTurn;
-    private int _walkFrames;
+    private bool _dragged, _orbited;
+    private int _busyFrames;
+
+    /// <summary>The orders still to give, in order: <c>move:q,r</c>, <c>fire</c> or <c>end</c>.</summary>
+    private readonly Queue<string> _steps = new();
 
     /// <summary>The capture this run was asked for, or null for an ordinary interactive run.</summary>
     public static Capture? Requested()
@@ -90,7 +98,7 @@ public sealed class Capture
         var path = ValueOf(args, "--shot");
         if (path is null) return null;
 
-        return new Capture(path, IntOf(args, "--shot-after") ?? 8)
+        var capture = new Capture(path, IntOf(args, "--shot-after") ?? 8)
         {
             Focus = PairOf(args, "--focus"),
             YawDegrees = FloatOf(args, "--yaw"),
@@ -101,34 +109,36 @@ public sealed class Capture
             Orbit = PairOf(args, "--orbit"),
             Hover = PairOf(args, "--hover"),
             UnitAt = PairOf(args, "--unit") is { } start ? new Hex((int)start.X, (int)start.Y) : null,
-            Move = PairOf(args, "--move") is { } hex ? new Hex((int)hex.X, (int)hex.Y) : null,
-            EndTurn = Array.IndexOf(args, "--end-turn") >= 0,
+            EnemyAt = PairOf(args, "--enemy") is { } enemy ? new Hex((int)enemy.X, (int)enemy.Y) : null,
+            ShotRoll = Array.IndexOf(args, "--sure") >= 0 ? 0.0 : Array.IndexOf(args, "--miss") >= 0 ? 1.0 : null,
             MidWalk = IntOf(args, "--mid-walk"),
             Trip = Array.IndexOf(args, "--trip") >= 0,
         };
+
+        // The short flags are the common script, a move, some shots and an end of turn, in
+        // that order; --play spells out any other order, a step per word.
+        if (ValueOf(args, "--move") is { } move) capture._steps.Enqueue($"move:{move}");
+        for (var shots = IntOf(args, "--fire") ?? 0; shots > 0; shots--) capture._steps.Enqueue("fire");
+        if (Array.IndexOf(args, "--end-turn") >= 0) capture._steps.Enqueue("end");
+        foreach (var step in (ValueOf(args, "--play") ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries)) capture._steps.Enqueue(step);
+
+        return capture;
     }
 
     /// <summary>Called once a frame. Saves and quits when the wait is up; true on the frame it did.</summary>
     public bool Tick(Node node, Board board)
     {
-        // Orders go in first and the countdown waits for the walk to finish, unless the
-        // picture is wanted so many frames into the walk itself.
+        // Orders go in one at a time and the countdown waits for each to finish, unless the
+        // picture is wanted so many frames into an animation itself.
         if (board.Busy)
         {
-            return MidWalk is { } mid && ++_walkFrames >= mid && Shoot(node);
+            return MidWalk is { } mid && ++_busyFrames >= mid && Shoot(node);
         }
 
-        if (Move is { } target && !_moved)
+        if (_steps.TryDequeue(out var step))
         {
-            _moved = true;
-            if (!board.OrderTo(target)) GD.Print($"move to {target} refused");
+            Play(step, board);
             return false;
-        }
-
-        if (EndTurn && !_endedTurn)
-        {
-            _endedTurn = true;
-            board.EndTurn();
         }
 
         if (Drag is { } drag && !_dragged && _framesLeft <= 4)
@@ -146,6 +156,19 @@ public sealed class Capture
         if (_framesLeft-- > 0) return false;
 
         return Shoot(node);
+    }
+
+    /// <summary>One step of the script: a move to a hex, a shot at the enemy, or the end of the turn.</summary>
+    private static void Play(string step, Board board)
+    {
+        if (step == "end") board.EndTurn();
+        else if (step == "fire") { if (!board.FireAtEnemy()) GD.Print("shot refused"); }
+        else if (step.StartsWith("move:") && PairIn(step[5..]) is { } hex)
+        {
+            var target = new Hex((int)hex.X, (int)hex.Y);
+            if (!board.OrderTo(target)) GD.Print($"move to {target} refused");
+        }
+        else GD.Print($"unknown step {step}");
     }
 
     /// <summary>Save the viewport and quit; always true, for the caller's convenience.</summary>
@@ -199,9 +222,11 @@ public sealed class Capture
     private static int? IntOf(string[] args, string flag)
         => int.TryParse(ValueOf(args, flag), out var value) ? value : null;
 
-    private static Vector2? PairOf(string[] args, string flag)
+    private static Vector2? PairOf(string[] args, string flag) => PairIn(ValueOf(args, flag));
+
+    private static Vector2? PairIn(string? value)
     {
-        var parts = ValueOf(args, flag)?.Split(',');
+        var parts = value?.Split(',');
         if (parts is not { Length: 2 }) return null;
 
         var culture = System.Globalization.CultureInfo.InvariantCulture;

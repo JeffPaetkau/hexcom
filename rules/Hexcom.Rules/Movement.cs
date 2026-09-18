@@ -100,9 +100,10 @@ public sealed class Movement
 
     /// <summary>
     /// Everywhere a soldier can get to from a hex on a budget, and the cheapest way to each:
-    /// carefully, or hurrying down every slope where that is cheaper.
+    /// carefully, or hurrying down every slope where that is cheaper. Blocked hexes, the ones
+    /// other soldiers stand on, are neither stepped onto nor through.
     /// </summary>
-    public Reach Reachable(Hex from, int budget, CostProfile? profile = null, bool hurrying = false)
+    public Reach Reachable(Hex from, int budget, CostProfile? profile = null, bool hurrying = false, IReadOnlySet<Hex>? blocked = null)
     {
         var reached = new Dictionary<Hex, Arrival> { [from] = new(0, null, 1.0, false) };
         var frontier = new PriorityQueue<Hex, int>();
@@ -116,6 +117,8 @@ public sealed class Movement
             for (var d = 0; d < 6; d++)
             {
                 var next = current.Neighbour(d);
+                if (blocked?.Contains(next) == true) continue;
+
                 var step = StepCost(current, next, profile);
                 var hurried = false;
 

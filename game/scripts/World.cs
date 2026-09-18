@@ -36,6 +36,12 @@ public partial class World : Node3D
     /// </summary>
     private static readonly Hex Home = new(171, -66);
 
+    /// <summary>
+    /// Where the enemy stands at the start: twenty-three metres east of our unit, along the
+    /// highway, a little past the rifle's best range so a step or two closer is worth taking.
+    /// </summary>
+    private static readonly Hex EnemyHome = new(196, -86);
+
     private TacticalCamera _camera = null!;
     private MeshInstance3D _ground = null!;
     private ShaderMaterial _surface = null!;
@@ -92,8 +98,10 @@ public partial class World : Node3D
             Terrain = _terrain,
             Surface = _surface,
             AlwaysTrip = _capture?.Trip ?? false,
+            ShotRoll = _capture?.ShotRoll,
             PointerOverride = _capture?.Hover,
             Start = _capture?.UnitAt ?? Home,
+            EnemyStart = _capture?.EnemyAt ?? EnemyHome,
         };
         AddChild(_board);
 
@@ -173,7 +181,11 @@ public partial class World : Node3D
 
         if (_capture?.Tick(this, _board) == true)
         {
-            GD.Print($"focus {_camera.Focus}; unit at {_board.Unit.Position} with {_board.Unit.Ap} AP; {_board.MarkCount} hexes marked");
+            GD.Print($"focus {_camera.Focus}; {_board.Unit.Name} to play; {_board.MarkCount} hexes marked");
+            foreach (var unit in _board.Roster)
+            {
+                GD.Print($"  {unit.Name} at {unit.Position}: {unit.Ap} AP, {unit.HitPoints} HP, {unit.Rounds} rounds{(unit.IsDown ? ", down" : "")}");
+            }
             if (_capture.Orbit is not null) GD.Print($"ground under probe after: {_camera.GroundUnder(Capture.ProbePoint(this))}");
         }
     }
