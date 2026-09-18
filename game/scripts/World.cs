@@ -102,6 +102,7 @@ public partial class World : Node3D
             PointerOverride = _capture?.Hover,
             Start = _capture?.UnitAt ?? Home,
             EnemyStart = _capture?.EnemyAt ?? EnemyHome,
+            SightModel = _capture?.Visibility is { } half ? SightModel.Default with { HalfSightMetres = half } : SightModel.Default,
         };
         AddChild(_board);
 
@@ -181,10 +182,11 @@ public partial class World : Node3D
 
         if (_capture?.Tick(this, _board) == true)
         {
-            GD.Print($"focus {_camera.Focus}; {_board.Unit.Name} to play; {_board.MarkCount} hexes marked");
+            GD.Print($"focus {_camera.Focus}; {_board.Unit.Name} to play; {_board.MarkCount} hexes marked; {_board.SeenCount} hexes made out");
             foreach (var unit in _board.Roster)
             {
-                GD.Print($"  {unit.Name} at {unit.Position} facing {Facing.Name(unit.Facing)}: {unit.Ap} AP, {unit.HitPoints} HP, {unit.Rounds} rounds{(unit.IsDown ? ", down" : "")}");
+                var seen = unit == _board.Unit ? "" : _board.Seen(unit) ? ", seen" : ", unseen";
+                GD.Print($"  {unit.Name} at {unit.Position} facing {Facing.Name(unit.Facing)}: {unit.Ap} AP, {unit.HitPoints} HP, {unit.Rounds} rounds{(unit.IsDown ? ", down" : "")}{seen}");
             }
             if (_capture.Orbit is not null) GD.Print($"ground under probe after: {_camera.GroundUnder(Capture.ProbePoint(this))}");
         }

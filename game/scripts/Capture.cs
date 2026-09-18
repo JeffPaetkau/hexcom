@@ -20,7 +20,8 @@ namespace Hexcom.Game;
 /// <para>
 /// <c>--focus x,z</c>, <c>--yaw</c> and <c>--pitch</c> (degrees) and <c>--zoom</c> (metres back
 /// from the focus) set the camera, which lands there at once rather than easing.
-/// <c>--sun elevation,bearing</c> moves the sun for the run. <c>--hover x,z</c> puts the
+/// <c>--sun elevation,bearing</c> moves the sun for the run. <c>--visibility N</c> sets the
+/// weather: metres at which a man ahead is half made out, forty being a clear day. <c>--hover x,z</c> puts the
 /// cursor on a ground point, <c>--face q,r</c> turns the unit to face a hex and waits for the
 /// turn, <c>--move q,r</c> orders the unit to a hex and waits for the
 /// walk, <c>--enemy q,r</c> puts the enemy on a hex, <c>--fire N</c> fires N shots at him after
@@ -85,6 +86,9 @@ public sealed class Capture
     /// <summary>Whether every hurried step falls, so a fall can be pictured without luck.</summary>
     public bool Trip { get; private init; }
 
+    /// <summary>The weather: metres at which a man ahead in the open is half made out, or null for a clear day.</summary>
+    public float? Visibility { get; private init; }
+
     private bool _dragged, _orbited;
     private int _busyFrames;
 
@@ -114,6 +118,7 @@ public sealed class Capture
             ShotRoll = Array.IndexOf(args, "--sure") >= 0 ? 0.0 : Array.IndexOf(args, "--miss") >= 0 ? 1.0 : null,
             MidWalk = IntOf(args, "--mid-walk"),
             Trip = Array.IndexOf(args, "--trip") >= 0,
+            Visibility = FloatOf(args, "--visibility"),
         };
 
         // The short flags are the common script, a turn to face somewhere, a move, some shots

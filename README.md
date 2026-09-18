@@ -11,7 +11,22 @@ piece and a red enemy one, each with 100 action points a turn, thirty hit points
 with twelve rounds that does ten damage out to fifty-five metres
 ([Weapon.cs](rules/Hexcom.Rules/Weapon.cs), [Unit.cs](rules/Hexcom.Rules/Unit.cs)). The
 turns alternate, ours then theirs, and both are played from the same mouse until there is an
-opponent to play the other side; both sides see everything, fog of war comes later. A shot
+opponent to play the other side. **The fog of war is shown as fog.** The screen shows what the
+unit whose turn it is makes out, per hex, from nothing to one ([Sight.cs](rules/Hexcom.Rules/Sight.cs)):
+a line from its eye to a standing man on each hex, with the ground along the way projecting a
+waterline onto him, so a bank hides him from the feet up, standing back from a cliff edge hides
+you from below and hides the ground below from you, and from the edge you see everything; the
+air halves what is made out at the weather's distance, forty metres on a clear day, and is gone
+by three times it; the eye makes out everything in the front arc, under half of it to the side
+and next to nothing behind, so a soldier's back is fogged and turning is worth its points. The
+fog is a screen pass ([fog.gdshader](game/shaders/fog.gdshader)) that fogs every pixel by the
+clarity of the hex under it, from a one-texel-per-hex texture
+([SightField.cs](game/scripts/SightField.cs)) sampled smoothly, thinning with height so tall
+things stand out of it, capped short of opaque so the ground stays a map, blended in gamma
+space like the marks, and crossfaded when the view changes. The fog hides nothing: an enemy
+the unit cannot see is not in the scene at all, cannot be hovered, shot at (`NOT IN SIGHT`)
+or walked around, and a walk that would step onto him stops short, the unit turning to face
+whoever it walked into. What a unit knows but cannot see now, marks on the ground, comes next. A shot
 costs 35 points, cannot miss the next hex, hits at 80% at twenty metres and two fifths of that
 at the limit, and
 is refused with a reason past it, with no rounds or without the points
@@ -126,7 +141,8 @@ Godot_v4.7.2-stable_mono_win64_console --path game -- --shot out.png --pitch 15 
 ```
 
 Flags: `--focus x,z`, `--yaw` and `--pitch` in degrees, `--zoom` in metres back from the
-focus, `--sun elevation,bearing` in degrees, `--hover x,z` to put the cursor on a ground
+focus, `--sun elevation,bearing` in degrees, `--visibility N` for the weather (metres at which
+a man ahead is half made out; forty is the clear day, eight a foggy dawn), `--hover x,z` to put the cursor on a ground
 point, `--face q,r` to turn the unit to face a hex and wait for the turn, `--move q,r` to
 order the unit to a hex and wait for the walk (or `--mid-walk N` to take
 the picture N frames into the walk, turn or shot, instead), `--fire N` to fire N shots at
@@ -140,7 +156,8 @@ starts beside the highway cutting, north of the bluff, with the camera over it) 
 to feed a middle-button drag in pixels through the input pipeline first, `--orbit dx,dy` to
 feed a right-button drag from an off-centre point (the console prints the ground under that
 point before and after, which should match). The console prints the focus, whose turn it is,
-and each unit's hex, facing, points, hit points and rounds at the moment of the picture.
+and each unit's hex, facing, points, hit points and rounds at the moment of the picture, whether
+the active unit sees each other unit, and how many hexes it makes out.
 
 Running with `-- --trace-input` prints every mouse button Godot receives, for checking what a
 mouse actually sends. `--heights x0,z0,x1,z1` prints the ground height along a line, for

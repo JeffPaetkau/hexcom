@@ -28,7 +28,8 @@ public static class Shooting
     }
 
     /// <summary>What a shot from one soldier at another would be: its range, chance, cost and damage, or why it is refused.</summary>
-    public static Shot Plan(Unit shooter, Unit target)
+    /// <param name="seen">Whether the shooter can see the target; a soldier fires only at what they themselves see.</param>
+    public static Shot Plan(Unit shooter, Unit target, bool seen = true)
     {
         var weapon = shooter.Weapon;
         var range = Range(shooter.Position, target.Position);
@@ -39,6 +40,7 @@ public static class Shooting
         if (shooter.IsDown) refusal = "DOWN";
         else if (target.IsDown) refusal = "TARGET DOWN";
         else if (shooter.Side == target.Side) refusal = "FRIENDLY";
+        else if (!seen) refusal = "NOT IN SIGHT";
         else if (!weapon.Reaches(range)) refusal = "OUT OF RANGE";
         else if (shooter.Rounds <= 0) refusal = "NO ROUNDS";
         else if (!shooter.CanAfford(weapon.ShotCost)) refusal = "NOT ENOUGH POINTS";
@@ -51,9 +53,9 @@ public static class Shooting
     /// Null if the shot is refused, and nothing is spent.
     /// </summary>
     /// <param name="roll">A throw of the dice from zero up to one.</param>
-    public static ShotResult? Fire(Unit shooter, Unit target, double roll)
+    public static ShotResult? Fire(Unit shooter, Unit target, double roll, bool seen = true)
     {
-        var shot = Plan(shooter, target);
+        var shot = Plan(shooter, target, seen);
         if (!shot.CanFire) return null;
 
         shooter.Spend(shot.Cost);

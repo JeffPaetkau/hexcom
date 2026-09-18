@@ -72,6 +72,11 @@ public partial class Board : Node3D
     private int _active;
     private Movement _movement = null!;
 
+    // What the active unit makes out, and the fog drawn from it.
+    private Sight _sight = null!;
+    private View _view = null!;
+    private SightField _field = null!;
+
     // What the active unit can reach carefully, and what it can reach if it hurries down the slopes.
     private Reach _reachable = null!;
     private Reach _hurried = null!;
@@ -110,6 +115,9 @@ public partial class Board : Node3D
 
     /// <summary>The ground's material, which paints the marks on the hexes.</summary>
     public ShaderMaterial Surface { get; set; } = null!;
+
+    /// <summary>The dials on seeing: the weather, above all.</summary>
+    public SightModel SightModel { get; set; } = SightModel.Default;
 
     /// <summary>A point on the ground to treat as the cursor, for captures. Null reads the mouse.</summary>
     public Vector2? PointerOverride { get; set; }
@@ -156,6 +164,20 @@ public partial class Board : Node3D
         _marks = new HexMarks(Surface, HoverRadius);
 
         _movement = new Movement(Terrain);
+        _sight = new Sight(Terrain, SightModel);
+
+        // The fog pass: a quad the shader stretches over the whole screen, drawn after every
+        // transparent thing, never culled wherever the camera is.
+        var fog = new ShaderMaterial { Shader = GD.Load<Shader>("res://shaders/fog.gdshader"), RenderPriority = 127 };
+        fog.SetShaderParameter("hex_size", (float)Units.HexSize);
+        _field = new SightField(fog);
+        AddChild(new MeshInstance3D
+        {
+            Name = "Fog",
+            Mesh = new QuadMesh { Size = new Vector2(2f, 2f), Material = fog },
+            CustomAabb = new Aabb(new Vector3(-1e6f, -1e6f, -1e6f), new Vector3(2e6f, 2e6f, 2e6f)),
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        });
 
         // The two start facing each other: there is nothing else on the board to face.
         var ours = new Unit(Start, Side.Player, "UNIT 1", facing: Facing.Toward(Start, EnemyStart) ?? 0);
@@ -172,7 +194,7 @@ public partial class Board : Node3D
         AddChild(_tracer);
 
         Hud.ShowUnit(Unit);
-        RefreshReach();
+        RefreshReach(fade: false);
         RefreshUnitRing();
         RefreshHover();
     }
@@ -207,6 +229,7 @@ public partial class Board : Node3D
         // marks that are fading do so a frame at a time.
         if (_busy) RefreshUnitRing();
         _marks.Tick((float)delta);
+        _field.Tick((float)delta);
 
         // While the mouse is moving the camera it is not pointing at a hex.
         var point = Camera.Dragging ? null : PointerOverride ?? PointUnderMouse();
@@ -292,11 +315,17 @@ public partial class Board : Node3D
 
         foreach (var unit in _units)
         {
-            if (unit.Side != Unit.Side && Shooting.Plan(Unit, unit).CanFire) return Fire(unit);
+            if (unit.Side != Unit.Side && Shooting.Plan(Unit, unit, Seen(unit)).CanFire) return Fire(unit);
         }
 
         return false;
     }
+
+    /// <summary>Whether the active unit sees another: itself always, anyone else if they stand on a hex it makes out.</summary>
+    public bool Seen(Unit other) => other == Unit || _view.Sees(other.Position);
+
+    /// <summary>How many hexes the active unit makes out at all, for the capture's console line.</summary>
+    public int SeenCount => _view.Count;
 
     /// <summary>End the active unit's turn: the board passes to the next unit still standing, whose points come back.</summary>
     /// <remarks>
@@ -346,12 +375,28 @@ public partial class Board : Node3D
         var path = reach.PathTo(destination);
         var before = unit.Ap;
 
+        // Somebody unseen may be standing on the way. The walk stops short of them, only the
+        // steps taken are paid for, and the unit turns to face whoever it walked into, which
+        // is how it comes to see them: the reach did not know they were there, because the
+        // unit did not.
+        var end = path.Count - 1;
+        var bumped = false;
+        for (var i = 1; i < path.Count; i++)
+        {
+            if (UnitOn(path[i]) is { } someone && someone != unit && !Seen(someone))
+            {
+                end = i - 1;
+                bumped = true;
+                cost = reach.CostTo(path[end])!.Value;
+                break;
+            }
+        }
+
         // A hurried step may end in a fall. The dice are thrown now for every hurried step on
         // the way and the walk is cut short at the first that comes up: the animation only
         // ever shows what has already happened.
-        var end = path.Count - 1;
         var fell = false;
-        for (var i = 1; i < path.Count; i++)
+        for (var i = 1; i <= end; i++)
         {
             if (!reach.HurriedInto(path[i])) continue;
             var roll = AlwaysTrip ? 0.0 : _dice.NextDouble();
@@ -364,10 +409,23 @@ public partial class Board : Node3D
         }
 
         unit.Spend(cost);
-        _busy = true;
         _planned = null;
         Hud.ShowUnit(unit);
         Hud.ShowMove(null);
+
+        // Walked into somebody on the very first step: nothing to animate, only the turn to face them.
+        if (end == 0)
+        {
+            unit.Facing = Facing.Toward(path[0], path[1]) ?? unit.Facing;
+            piece.Rotation = new Vector3(0f, Heading(unit.Facing), 0f);
+            Hud.ShowUnit(unit);
+            Hud.ShowNote("WALKED INTO SOMEONE");
+            RefreshReach();
+            RefreshHover();
+            return;
+        }
+
+        _busy = true;
 
         // Each step takes the share of the turn it cost, at playback speed: a stride on the
         // flat is half a second of turn, a climb longer, a road quicker. What the player
@@ -402,6 +460,12 @@ public partial class Board : Node3D
                 unit.Spend(unit.Ap);
                 Hud.ShowNote("FELL ON THE SLOPE");
             }
+            else if (bumped)
+            {
+                unit.Facing = Facing.Toward(path[end], path[end + 1]) ?? unit.Facing;
+                piece.Rotation = new Vector3(0f, Heading(unit.Facing), 0f);
+                Hud.ShowNote("WALKED INTO SOMEONE");
+            }
 
             Hud.ShowUnit(unit);
             RefreshReach();
@@ -420,7 +484,7 @@ public partial class Board : Node3D
     {
         var shooter = Unit;
         var roll = ShotRoll ?? _dice.NextDouble();
-        if (Shooting.Fire(shooter, target, roll) is not { } result) return false;
+        if (Shooting.Fire(shooter, target, roll, Seen(target)) is not { } result) return false;
 
         _busy = true;
         _target = null;
@@ -502,15 +566,31 @@ public partial class Board : Node3D
         _unitRing.Mesh = Meshes.Ring(_pieces[Unit].Position, HoverRadius, HoverWidth, material, Drape(UnitLift));
     }
 
-    /// <summary>The hexes other units stand on: not to be stepped onto or through.</summary>
+    /// <summary>The hexes other units the active unit can see stand on: not to be stepped onto or through. An unseen unit's hex is not blocked, or the marks would give them away.</summary>
     private HashSet<Hex> Occupied()
     {
         var occupied = new HashSet<Hex>();
         foreach (var unit in _units)
         {
-            if (unit != Unit) occupied.Add(unit.Position);
+            if (unit != Unit && Seen(unit)) occupied.Add(unit.Position);
         }
         return occupied;
+    }
+
+    /// <summary>
+    /// Survey what the active unit makes out from where it stands, facing as it does, fog the
+    /// board from it, and show only the pieces it sees. Its own piece is always shown.
+    /// </summary>
+    /// <remarks>
+    /// The fog is drawn from the view; the pieces are hidden by this and never by the fog. A
+    /// piece the unit cannot see is not in the scene, so nothing in the drawing can leak it.
+    /// </remarks>
+    private void RefreshSight(bool fade)
+    {
+        _view = _sight.Survey(Unit.Position, Unit.Facing);
+        _field.Show(_view, _sight.HeightAt, _sight.ReachHexes, fade);
+
+        foreach (var unit in _units) _pieces[unit].Visible = Seen(unit);
     }
 
     /// <summary>Mark every hex the active unit can reach from where it stands with what it has, and every enemy it can shoot.</summary>
@@ -522,8 +602,10 @@ public partial class Board : Node3D
     /// how it says which. The unit's own hex is marked like any other, under its ring, so the
     /// field of marks has no hole and none opens behind a unit as it walks.
     /// </remarks>
-    private void RefreshReach()
+    private void RefreshReach(bool fade = true)
     {
+        RefreshSight(fade);
+
         var unit = Unit;
         var occupied = Occupied();
         _reachable = _movement.Reachable(unit.Position, unit.Ap, unit.Profile, blocked: occupied);
@@ -540,7 +622,7 @@ public partial class Board : Node3D
 
         foreach (var unit in _units)
         {
-            if (unit.Side != Unit.Side && Shooting.Plan(Unit, unit).CanFire) yield return (unit.Position, SciFi.MarkDanger);
+            if (unit.Side != Unit.Side && Shooting.Plan(Unit, unit, Seen(unit)).CanFire) yield return (unit.Position, SciFi.MarkDanger);
         }
     }
 
@@ -629,7 +711,9 @@ public partial class Board : Node3D
             Hud.ShowTurn(null);
         }
 
-        if (!_busy && UnitOn(hovered) is { } other && other.Side != unit.Side)
+        // An enemy the unit cannot see is not there as far as the cursor is concerned: the
+        // hex is hovered like any empty hex, and a walk onto it finds out the hard way.
+        if (!_busy && UnitOn(hovered) is { } other && other.Side != unit.Side && Seen(other))
         {
             // The card is shown whether or not the shot can be taken: the refusal is on it.
             var shot = Shooting.Plan(unit, other);

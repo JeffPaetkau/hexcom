@@ -2,7 +2,51 @@
 
 ## Where take 2 is (updated 2026-09-17)
 
-**Newest (2026-09-17, evening): facing, built at the user's "do facing", not committed.** A unit
+**Newest (2026-09-17, night): the fog of war, drawn as fog. The first increment of the
+perception design below, not committed.** Rules: `Sight.cs` holds `SightModel` (eye 1.65,
+body 1.8, `HalfSightMetres` 40 as the weather, front arc 120, peripheral 200, acuities 0.45 and
+0.08, `ArcBlendDegrees` 30, `SeenAt` 0.1, `Negligible` 0.02) and `Sight`, whose `Clarity(from,
+facing, to)` is three factors multiplied: `Exposure`, the share of a standing man the ground
+leaves showing (v1's waterline trace with the ground as the wall: each hex on the line projects
+its height from the eye onto the man; so a low bank hides more of a man right behind it than
+far behind, a table hides what stands back from its edge from below, and from ten metres back
+on the table only a head shows at the foot: you have to go to the edge to look down);
+`RangeFactor`, a bell `exp(-ln2 (d/half)^2)` (half at the weather's distance, gone by three
+times it, chosen over plain extinction so a survey has a finite reach, `ReachMetres` about 95;
+smoke will thicken this locally later); and `ArcFactor` from the bands, blended. `Survey`
+gives a `View`, clarity per hex over the reach hexagon with negligible left out, `Sees(hex)`
+at 0.1. Knowledge is deliberately not here. `Shooting.Plan/Fire` take `seen`, refusing `NOT IN
+SIGHT`. A survey of the real landscape takes about 190 ms in debug (a test asserts under 1.5
+s); it runs at turn ends, walk ends, turns on the spot and shots, not per step. Nine tests in
+`SightTests.cs`, 53 in all. View: `fog.gdshader` is a full-screen quad (POSITION set in the
+vertex shader, `CustomAabb` huge, render priority 127, transparent pass) reconstructing each
+pixel's world position from the depth texture, sampling `SightField` (256 a side, `Rgf`: R
+clarity, G ground height, recentred on the unit, bilinear in axial space plus four taps a
+texel out, crossfaded over half a second by lerping arrays and re-uploading), fog amount =
+cap 0.75 × (1 − clarity) × exp(−height above ground / 6 m), blended **in gamma space through
+the screen texture** (the first try blended in linear light and looked like pea soup at every
+strength, the hex marks' lesson again), fog colour the horizon's. Ground heights are filled for
+every hex in the reach hexagon, seen or not, so a hill behind the unit does not stand out of
+the fog for want of a height; past the reach the ground is marked unknown (a height nothing is
+above) so the fog there sits at the cap whatever the hill. Board: pieces the
+active unit does not see are `Visible = false` (the fog hides nothing, ever); unseen enemies
+cannot be hovered, are not danger-marked and do not block reach; a walk that would step onto
+an unseen unit stops short, pays only the steps taken, and turns the walker to face them
+("WALKED INTO SOMEONE"); hot seat means the enemy's turn shows the enemy's fog. `--visibility
+N` sets the weather for a picture; the console prints hexes made out and seen/unseen per unit.
+Pictures checked on 2026-09-17: the standard view (a clear cone ahead, fog behind, the enemy
+in the cone), the bluff table (the table clear, the road below hazy), below the bluff facing
+south (the table top fogged past its edge, the face clear), a foggy dawn at eight metres, and
+a walk onto an unseen enemy behind the unit (`--play "face:196,-86 move:170,-65"` with
+`--enemy 170,-65`: refused as a move while he is seen, so the unit is turned away first).
+Standard fog pictures: the standard camera, `--unit 157,-33 --focus 136,34 --pitch 50 --zoom 30
+--yaw 0` for the table, `--face 171,-60 --focus 148,30 --pitch 45 --zoom 40 --yaw 180` for
+below the bluff, `--visibility 8` for the dawn.
+Not yet: the map layer (everything is treated as mapped, the cap is a constant), marks for
+knowledge, the ladder for partly seen enemies, points held back for watching, what the player
+sees on the enemy's turn once there is an AI.
+
+**Before that (2026-09-17, evening): facing, built at the user's "do facing", committed as 182cd9e and pushed.** A unit
 faces one of the six hex directions, `Unit.Facing`, an index into `Hex.Directions`
 (`Facing.cs`: direction 4 is north, names SE S SW NW N NE, bearing 30 + 60d degrees from +X
 towards +Z, `Facing.Toward(from, to)` picks the nearest of the six, null for the same hex,
@@ -151,9 +195,11 @@ landscape commit.
 important element, a servant of combat and the other objectives, not the main point.** V1's
 "stealth-first" below is the old framing.
 
-**Next, in the order agreed 2026-09-17: facing is done (above), so perception and fog (the
-design above) is next; stance (crouch 1.6, prone 3.0, change about 4 at the doubled scale) is
-deferred until it is needed.** Two loose ends from the fall rule to pick up when
+**Next: the rest of the perception design (above), in whatever order the user picks: the map
+layer (mapped ground per hex, a capped wash; unmapped full fog), marks for knowledge (stale
+sightings, radio contacts, noises), the ladder for partly seen enemies, and points held back
+for watching. Stance (crouch 1.6, prone 3.0, change about 4 at the doubled scale) is deferred
+until it is needed.** Two loose ends from the fall rule to pick up when
 they fit: a fall should also put the soldier prone and hurt them (the user said "implement
 later"), and falls are rolled from `new Random(7)` in `Board` until the rules own a seeded source
 of chance; `--trip` forces every hurried step to fall for pictures. An open question to settle when stance arrives,
