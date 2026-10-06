@@ -1,7 +1,7 @@
 # Research B — Character generators in Blender 4.5 headless (MPFB2, CharMorph)
 
 Date: 2026-10-06. Blender 4.5.14 LTS, Linux, 4 CPU cores, no GPU. Everything below was run, not guessed.
-Scripts: `scripts/research/mpfb_install.py`, `mpfb_build_v2.py`, `mpfb_rigify_test.py`, `charmorph_test.py`,
+Scripts: `scripts/research/mpfb_install.py`, `mpfb_build_v2.py`, `mpfb_rigify_test.py`, `mpfb_face_render.py`, `charmorph_test.py`,
 `mpfb_setup_from_zero.sh`, `mpfb_inspect_blend.py`. Logs and renders: `renders/research/`.
 Target/asset inventory: `notes/mpfb_targets_and_assets.txt` (1,534 lines).
 
@@ -12,9 +12,12 @@ Target/asset inventory: `notes/mpfb_targets_and_assets.txt` (1,534 lines).
   work from Python with no UI. Whole character build (no render) is **7.5 s**.
 * **Reproducing the install from zero: ~600 MB download, ~3 min wall clock** (download at the measured 9 MB/s +
   7 s extraction + ~10 s Blender install). `scripts/research/mpfb_setup_from_zero.sh` does it idempotently.
-* **Realism verdict: MPFB gives a correct, well-proportioned, riggable base mesh, but out of the box the face is
-  an obvious MakeHuman face** (soft generic features, flat painted skin texture, blocky hair/beard assets). It is
-  a *starting point for the body/base topology*, not a photoreal face. See "Realism judgement" below.
+* **Realism verdict (face closeups rendered and viewed, section 5): MPFB gives a correct, well-proportioned, riggable base
+  head, but out of the box it is an obvious MakeHuman face** — flat 2 K painted skin with no pores/normal map (lit cheek `#ebd6cb`
+  vs reference `#c5907d`), soft bone structure, cartoon procedural eyes, felt-cap hair and card eyebrows. Targets fix the
+  proportions (every slider in the face analysis exists except brow-ridge protrusion and jaw width/angle); skin, lines, hair,
+  stubble and eyes must be ours. CharMorph's default face is a little better (pore noise, textured iris) but still pale and
+  generic, 5× slower to render, bald, and AGPL3.
 * **CharMorph (MB-Lab successor) also loads in 4.5** as a *legacy* add-on (`bl_info` says Blender 3.3, last commit
   2024-10-10, no 4.x-format release, no `blender_manifest.toml`): enable 0.7 s, `mb_male` import 3.2 s, no errors.
   Its skin shader (`charmorph_skin_v2`, MB-Lab albedo/displacement/sebum maps) is more sophisticated than MPFB's
@@ -251,19 +254,134 @@ Morph data: `characters/mb_male/morphs/L1/{African,Asian,Caucasian,Latin,Anime,D
 Nose_*, Mouth_*, Head_CraniumDolichocephalic — listed in `morphs_meta.yaml` with age/mass/tone coefficients).
 Rigging: `config.yaml` armature types `tweaked` (Rigify metarig from `shared_lib.blend`), muscles, original, gaming.
 Licence: mb_male data is **AGPL3** (MB-Lab), textures `assets/albedo.png, displacement.png, sebum.png, ...`.
-Face render: see `renders/research/charmorph_face.png` (section 5).
+Face render: `renders/research/charmorph_face.png` (768², Cycles 32 spp denoised, **132.5 s** — the `charmorph_skin_v2` shader
+costs ~3× MPFB's ENHANCED_SSS per sample); scene saved as `charmorph_test.blend`. Default `mb_male` is 183.3 cm, faces −Y,
+feet on z≈0, 207 L2 morphs (`common.manager.morpher.core.morphs_l2` is a *list* of morph objects, not a dict). Judgement in section 5.
 
-## 5. Realism judgement (renders looked at with the Read tool)
+## 5. Realism judgement (renders looked at with the Read tool, beside ref/crop_head_face.png)
 
-PLACEHOLDER — filled in below after viewing mpfb_v2_face.png / charmorph_face.png.
+Renders used (all Cycles CPU, OIDN denoised, AgX Medium High Contrast, 85 mm lens 0.60 m from the eye centre, 3/4 view from
+the soldier's right-front like the reference crop):
 
-## 6. Setup-script fragment for scripts/setup_session.sh
+| file | what | cost |
+|---|---|---|
+| `renders/research/mpfb_v2_face.png` | MPFB **macro-only default male** from `mpfb_default.blend` (gender 1, age 0.554 ≈ 32 y, muscle 0.7, weight 0.5, caucasian; the v1 detail targets never loaded, so the mesh has only Basis + 8 macro keys), `middleage_caucasian_male` ENHANCED_SSS skin, `high-poly` PROCEDURAL_EYES, `eyebrow001`, `eyelashes02`, `short02` hair, worksuit. Lights ×0.35 (`mpfb_face_render.py ... threequarter 0.35`). | 1024², 64 spp: **93 s** |
+| `renders/research/mpfb_v2_face_hot.png` | same frame with the full-body lights (×1.0): skin clips to #fdf1ea — kept to show that the paleness below is albedo, not only exposure | 78 s |
+| `renders/research/charmorph_face.png` | CharMorph default `mb_male` (bald, no morphs), `charmorph_skin_v2` | 768², 32 spp: **132.5 s** (≈5× MPFB per sample-pixel) |
+| `renders/research/mpfb_v2_fullbody.png` | the v2 dressed build (detail targets, `wdg_scruffy_beard`, `short04`, cargo pants, t-shirt, boots) | 900×1600, 64 spp: 179 s |
+
+**Verdict: neither generator produces a photoreal face out of the box; MPFB gives a correct, cleanly-topologised, riggable head that is
+a *shape* starting point only. Everything the reference reads as "real" — skin, hair, stubble, eyes, bone definition, lines —
+has to be added by us.** Concretely, from the renders:
+
+*What MPFB's default already does well*
+* Proportions and anatomy are plausible: eye spacing, nose length, ear shape (rolled helix, lobe), philtrum and vermilion
+  border, neck/shoulder join. No shading artefacts, no pinching, clean all-quad topology; **4,119 of the 8,428 body vertices sit
+  above z = 1.60 (2,963 in the front half of the head)**, i.e. half of the base mesh's resolution is in the head, so one Subdivision
+  level + displacement is enough for closeups. Eyes, lashes, brows, teeth and tongue are separate fitted objects, so each can be
+  replaced without touching the body. The ENHANCED_SSS skin does give soft lit/shadow terminators and red bleed at the ear and nostril.
+* The full-body silhouette (`mpfb_v2_fullbody.png`) with muscle 0.7 / 182 cm is already in the reference's athletic range; the
+  measurement targets (shoulder-dist, neck-circ...) move the right things.
+
+*What reads as "MakeHuman" (and why it cannot be fixed by sliders)*
+* **Skin.** The face is a flat ivory with no pores, no colour zoning, no beard shadow and a uniform waxy sheen. Measured lit cheek
+  `#ebd6cb` (std 5) vs reference `#c5907d` (std 10); forehead `#ebd6cc` vs `#b98879`: ~30% too bright, far too desaturated, pink
+  instead of warm tan. The `middleage_caucasian_male.mhmat` still binds `young_lightskinned_male_diffuse.png` (2048² for the *whole
+  body*; the face gets ~500 px ≈ 0.3 mm/px) plus `sss.png` — there is no normal/displacement/roughness map at all. CharMorph's
+  `charmorph_skin_v2` is better (visible pore noise, lip texture, proper limbal ring, mesh brows and lashes) but is also pale (`#f3e0d7`),
+  5× slower, AGPL3 and welded into one 18k-vert mesh with the eyes and teeth.
+* **Bone structure.** Brow ridge weak (no supraorbital shadow pocket), cheekbones flat with no sub-zygomatic hollow, jaw narrow and
+  rounded with no gonial angle or masseter, chin small and soft, neck thin, no nasolabial fold, mentolabial sulcus shallow. The
+  reference is a long square-oblong face with a strong straight jaw, projecting broad chin and a neck 0.85–0.9 of the jaw width.
+* **Eyes.** PROCEDURAL_EYES gives a saturated cartoon-blue radial iris with no limbal ring and a too-white sclera; the fissures are
+  too round and open, the upper-lid fold too shallow for the deep-set, narrowed look of the reference.
+* **Hair / brows.** `short02` is a 1,755-vert cap with a painted 2 K diffuse (felt helmet, no hairline fade, wrong style); `eyebrow001`
+  is a 124-vert alpha card that floats slightly off the skin. `wdg_scruffy_beard` in the v2 build is a chunky polygon beard, not
+  2–4 mm stubble. These assets are the single biggest source of the "awful" look and must not be in the final model.
+* **Lines.** No glabellar "11" lines, forehead crease, crow's feet or lip lines — all part of the stern 40-y read.
+
+*Where MPFB targets WILL get us (verified to exist in the 1,214-target inventory; names are the file stems)*
+* Skull/jaw/chin: `head-square`, `head-rectangular`, `head-scale-horiz-incr`, `head-fat-decr`, `head-age-incr`,
+  `forehead-scale-vert-decr`, `forehead-nubian-incr`, `forehead-temple-decr`, `chin-width-incr`, `chin-height-incr`,
+  `chin-prominent-incr`, `chin-bones-incr`, `chin-jaw-drop-incr`, `chin-cleft-incr`.
+* Eyes/brows: `eyebrows-trans-down`, `eyebrows-angle-down`, `l/r-eye-push1-in`, `l/r-eye-push2-in` (deep-set), `l/r-eye-height1-decr`
+  (narrowed), `l/r-eye-scale-incr`, `l/r-eye-trans-in`, `l/r-eye-bag-incr`, `l/r-eye-corner1-up`.
+* Cheeks/nose/mouth/neck/ears: `l/r-cheek-bones-incr`, `l/r-cheek-volume-decr`, `nose-width1-decr`, `nose-width3-incr`, `nose-hump-incr`,
+  `nose-nostrils-width-incr`, `mouth-scale-horiz-incr`, `mouth-upperlip-height-decr`, `mouth-philtrum-volume-incr`,
+  `mouth-laugh-lines-incr`, `neck-scale-horiz-incr`, `neck-scale-depth-incr`, `neck-double-decr`, `l/r-ear-lobe-incr`, `l/r-ear-flap-incr`.
+  Together these cover every ratio in the likeness checklist of `analysis_face_grooming.md` §3 and the slider list in its §10, so the
+  expectation is a *recognisably lean, square-jawed, deep-eyed 40-year-old silhouette* after one targets pass (0.5 s to load 20 targets,
+  so an automated fit against the landmark table is cheap). Set the age macro to ≈0.58 (40 y) but expect it to add cheek sag that
+  `head-age` + `cheek-volume-decr` must counter.
+
+*What needs custom shape keys (no MPFB target exists — checked)*
+* Brow-ridge protrusion (`eyebrows-protrude` and `forehead-bulge` from §10 do **not** exist), gonial angle / jaw width / masseter bulge
+  (no `jaw-*` category; `chin-jaw-drop` and `chin-bones` are the nearest), sternocleidomastoid ridge, mentolabial-sulcus depth, a sharp
+  sub-zygomatic hollow. Make them as scripted targets (vertex-group-weighted offsets along normals, Laplacian-smoothed) saved to
+  `data/targets/custom/*.target` or as plain shape keys in the build script. Expression (brow-lower 0.25, lid-tightener 0.25,
+  lips-pressed 0.2) can come from MPFB's 102 `expression/` targets or the rig's face bones.
+
+*What needs displacement / textures / grooms (not geometry)*
+* **Albedo:** a custom 4 K face texture with colour zoning (warm tan base ≈ `#c5907d` lit → albedo ≈ `#9a6f5e`, red nose/ears/cheeks,
+  blue-grey beard-shadow map from §9, darker under-eyes), either painted procedurally in UV space by script or projected from the
+  reference via landmarks (see the AI-helpers note). MakeHuman's UV layout is fixed and sane, so a projected texture survives retargeting.
+* **Displacement/normal:** multi-scale pore noise (0.3–1 mm), the two glabellar lines (~27 mm), one forehead crease, nasolabial and
+  mentolabial creases, lip wrinkles — as a 4 K displacement baked onto the subdivided face (adaptive displacement tested in Research A).
+* **Grooms:** hair (short textured crop, faded temples), 2–4 mm stubble with the §9 density map and ~25% grey on the chin, and brows as
+  Blender hair curves — never MakeHuman proxy hair/beard cards.
+* **Eyes:** replace PROCEDURAL_EYES with a textured iris (hazel `#5b4a3e`, strong limbal ring), darker sclera, wet-line mesh kept.
+* **Shader:** keep MPFB's ENHANCED_SSS node group as the base (it is cheap: 1.4 µs per sample-pixel here) but feed it the new albedo,
+  roughness and normal maps; add a thin specular coat for the sheen. CharMorph's shader is a reference for the look, not a dependency.
+
+*Realism budget.* Targets alone: convincing head shape, still obviously CG. Targets + custom shape keys + textures + displacement: a
+credible stern soldier in a 1024² eval render at 64 spp within ~2 min CPU. A true likeness of the reference face is not promised by any
+of this — the ratios can be matched, the "who" depends on the projected albedo and on the groom.
+
+## 6. Exact install commands and timings for scripts/setup_session.sh
+
+Everything below was run on this container (Blender 4.5.14, 4 cores, 15 GB RAM). Replace the `TODO(research): MPFB2`
+line in `scripts/setup_session.sh` with the first block; the rest are the manual equivalents and the smoke tests.
 
 ```bash
-# MPFB2 + MakeHuman CC0 packs (~600 MB, ~3 min). Idempotent.
+# --- MPFB2 2.0.17 + 11 MakeHuman CC0 asset packs. 598,134,403 bytes download, ~700 MB on disk after unzip.
+#     Measured: downloads 9 MB/s (70-120 s for 598 MB), unzip of the 280 MB system pack 6.7 s, extension install +
+#     userpref save ~10 s of Blender start-up, verification ~5 s  =>  budget 3 min. Idempotent: re-runs skip complete files.
 bash "$PROJECT_DIR/scripts/research/mpfb_setup_from_zero.sh" "$PROJECT_DIR/assets/mpfb"
-# optional CharMorph fallback (~735 MB):
-#   GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/Upliner/charmorph   "$PROJECT_DIR/assets/charmorph/CharMorph"
-#   GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/Upliner/CharMorph-db "$PROJECT_DIR/assets/charmorph/CharMorph/data"
-#   ln -sfn "$PROJECT_DIR/assets/charmorph/CharMorph" ~/.config/blender/4.5/scripts/addons/CharMorph
 ```
+
+What that script does, as the individual commands (all verified 2026-10-06):
+```bash
+ASSET_DIR="$PROJECT_DIR/assets/mpfb"; mkdir -p "$ASSET_DIR/packs"
+# 1. extension zip (45,031,536 bytes, sha256 4f0a879d64a39bf646fbf5f53601ac678855da329d650617dca5737548239a87)
+curl -sS -L --retry 4 -C - -o "$ASSET_DIR/add-on-mpfb-v2.0.17.zip" \
+  "https://extensions.blender.org/download/sha256:4f0a879d64a39bf646fbf5f53601ac678855da329d650617dca5737548239a87/add-on-mpfb-v2.0.17.zip"
+# 2. install + enable + save prefs (~10 s). Result: ~/.config/blender/4.5/extensions/user_default/mpfb/ (84 MB)
+blender -b --python "$PROJECT_DIR/scripts/research/mpfb_install.py" -- "$ASSET_DIR/add-on-mpfb-v2.0.17.zip"
+# 3. asset packs -> MPFB user data dir (= LocationService.get_user_data())
+USERDATA="$HOME/.config/blender/4.5/extensions/.user/user_default/mpfb/data"; mkdir -p "$USERDATA"
+for p in makehuman_system_assets skins02 bodyparts05 eyebrows01 eyelashes01 pants01 shirts01 shoes01 gloves01 hats02 equipment01; do
+  curl -sS -L --retry 4 -C - -o "$ASSET_DIR/packs/${p}_cc0.zip" "https://files.makehumancommunity.org/asset_packs/$p/${p}_cc0.zip"
+  unzip -q -o "$ASSET_DIR/packs/${p}_cc0.zip" -d "$USERDATA"      # zip root holds packs/ skins/ eyes/ clothes/ ...
+done
+# 4. verify (prints 'system assets installed: True' and the 11 pack names)
+blender -b --python-expr "import bpy; bpy.ops.preferences.addon_enable(module='bl_ext.user_default.mpfb')
+from bl_ext.user_default.mpfb.services.assetservice import AssetService
+print('system assets installed:', AssetService.system_assets_pack_is_installed()); print('packs:', AssetService.get_pack_names())"
+```
+
+Smoke tests after setup (timings measured here):
+```bash
+blender -b --python scripts/research/mpfb_rigify_test.py            # human + rigify.human metarig + rigify_generate: 6.1 s, 930 bones
+blender -b --python scripts/research/mpfb_build_v2.py -- renders/research 16   # dressed+rigged human 7.5 s (measured); full-body render 900x1600 took 179 s @64 spp, so expect ~45 s @16 spp (not measured)
+blender -b renders/research/mpfb_default.blend --python scripts/research/mpfb_face_render.py -- /tmp/face.png 64 1024 threequarter 0.35
+#   ^ face closeup 1024^2 @64 spp denoised: 78-79 s (no beard); the v2 build WITH the polygon beard + hair cards took ~14 min for the same frame
+```
+
+Optional CharMorph fallback (not needed for the build; AGPL3 data):
+```bash
+GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/Upliner/charmorph   "$PROJECT_DIR/assets/charmorph/CharMorph"        # 1.3 MB, 2 s
+GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 https://github.com/Upliner/CharMorph-db "$PROJECT_DIR/assets/charmorph/CharMorph/data"   # 734 MB, 36 s
+mkdir -p ~/.config/blender/4.5/scripts/addons && ln -sfn "$PROJECT_DIR/assets/charmorph/CharMorph" ~/.config/blender/4.5/scripts/addons/CharMorph
+blender -b --python scripts/research/charmorph_test.py -- "$PROJECT_DIR/assets/charmorph/CharMorph" renders/research 32 1   # enable 0.7 s, import 3.2 s, face render see section 5
+```
+Disk after everything: `assets/mpfb` 573 MB (zips), MPFB user data ~620 MB, CharMorph 735 MB; Blender itself 1.2 GB.

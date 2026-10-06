@@ -4,7 +4,7 @@
   python3 -I build_manifest.py <assets_root> <contact_sheet.png>          # build/refresh manifest, verify maps, draw sheet
   python3 -I build_manifest.py <assets_root> --restore                     # setup mode: download anything missing/short, extract zips
 
-Schema (manifest.json, version 2): every asset lists its *files* with an exact download URL and byte size so a
+Schema (assets/manifest.json, version 2): every asset lists its *files* with an exact download URL and byte size so a
 fresh container can be restored without any API call. Zip files carry "extract": true. Assets fetched by hand
 (Google Drive / JS-only download pages) carry "manual": true and a "source_page" so a human can refetch them.
 Run with system python3 -I from OUTSIDE the asset folders (paths are passed as arguments only).
@@ -15,7 +15,7 @@ ROOT = os.path.abspath(sys.argv[1])
 RESTORE = "--restore" in sys.argv
 SHEET = next((a for a in sys.argv[2:] if a.endswith(".png")), None)
 TEX, HDRI, MODELS = (os.path.join(ROOT, d) for d in ("textures", "hdri", "models"))
-MAN_PATH = os.path.join(TEX, "manifest.json")
+MAN_PATH = os.path.join(ROOT, "manifest.json")   # assets/manifest.json is whitelisted in .gitignore
 UA = {"User-Agent": "sgt-morgan-research/1.0"}
 ACG_LIC = {"license": "CC0 1.0", "license_url": "https://docs.ambientcg.com/license/"}
 PH_LIC = {"license": "CC0 1.0", "license_url": "https://polyhaven.com/license"}
@@ -79,6 +79,27 @@ OGA = [("oga_m4a1_nisu", "https://opengameart.org/content/m4a1-assault-rifle", "
        ("oga_m4a1_lowpoly_mallninjamax", "https://opengameart.org/content/low-poly-m4a1", "https://opengameart.org/sites/default/files/m4a1.zip", "m4a1.zip",
         "167-tri hand-painted low-poly M4A1 (.blend + FBX); silhouette reference only", "MallNinjaMax")]
 PH_MAPS = ["Diffuse", "nor_gl", "Rough", "Displacement", "AO", "arm", "Metal"]
+# TheBaseMesh: the Wix product page of each asset (https://www.thebasemesh.com/product-page/<slug>) embeds the
+# hashed archive URL; recovered 2026-10-06 and verified by sha256 against the hand-downloaded zips.
+TBM_URLS = {"pouch_01": "https://www.thebasemesh.com/_files/archives/b36d2d_bc758246f9c3478a87a2045bae3d04ce.zip",
+            "pouch_02": "https://www.thebasemesh.com/_files/archives/b36d2d_83634159ebb545afb63f7707cc8df63e.zip",
+            "safety_helmet": "https://www.thebasemesh.com/_files/archives/b36d2d_2be2c461ff2a4e49924c3591c8669168.zip",
+            "wellington_boot": "https://www.thebasemesh.com/_files/archives/b36d2d_8c197c28bcf140fca9d9d7e45a9a2f69.zip",
+            "seatbelt_clip": "https://www.thebasemesh.com/_files/archives/b36d2d_692f118fb7a84f218d98d11a5d99f7cd.zip",
+            "watch_strap_buckle": "https://www.thebasemesh.com/_files/archives/b36d2d_64c19677f8534b8a9dfc35ad709a02dc.zip"}
+TBM_SLUG = {"pouch_01": "pouch-01", "pouch_02": "pouch-02", "safety_helmet": "safety-helmet", "wellington_boot": "wellington-boot",
+            "seatbelt_clip": "seatbelt-clip", "watch_strap_buckle": "watch-strap-buckle"}
+# 3dtextures.me Fabric_Nylon_Weave_001: Google Drive *file* ids (the folder itself is JS-only, but single files download
+# with drive.usercontent.google.com; verified by sha256 2026-10-06).
+GDRIVE_FILES = {"Fabric_Nylon_weave_001_ambientOcclusion.jpg": ("1XkbQ84_mKV3W507HA0bTk5EtIyBmch-B", 324232),
+                "Fabric_Nylon_weave_001_basecolor.jpg": ("1lgqC2teDhvncF-fyfd8ddEJQ0XVq89Gf", 202412),
+                "Fabric_Nylon_weave_001_height.png": ("1DvmYO-HtVh8ZnkrTPrT30OhjRvpnteYk", 213965),
+                "Fabric_Nylon_weave_001_normal.jpg": ("1mKz818FBSEXLrWx5z3py3qq8L5zhknob", 368633),
+                "Fabric_Nylon_weave_001_opacity.jpg": ("1G2f5jOfQuDOMC1OwcAse2d53RehG2Ugz", 40742),
+                "Fabric_Nylon_weave_001_roughness.jpg": ("1h6HBlA6383WcjFIlUMVSh8swDFD9T4Yn", 241750),
+                "Material_1561.jpg": ("1zFGrOXp-K0UwTUtTsBh9-oZ8_aOwNGhV", 121344)}
+GDRIVE_URL = "https://drive.usercontent.google.com/download?id=%s&export=download&confirm=t"
+GDRIVE_HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 
 def api(url, tries=4):
@@ -241,22 +262,25 @@ for need, src, aid, note, status in SEL:
              "files": [{"path": rel(os.path.join(folder, zname)), "url": url, "bytes": size, "extract": True, "headers": CGB_HEADERS}]}
     else:  # 3dtextures, fetched by hand
         folder = os.path.join(TEX, aid)
-        a = {"id": aid, "kind": "texture", "source": "3dtextures.me", "manual": True,
+        a = {"id": aid, "kind": "texture", "source": "3dtextures.me",
              "source_page": "https://3dtextures.me/2020/06/11/fabric-nylon-weave-001/",
-             "manual_download": "https://drive.google.com/drive/folders/1iVCAQn3VTrUD9tUKHldrv1zMIdB0BjNB (Google Drive folder; not scriptable, HTTP 500 via uc?export=download)",
+             "drive_folder": "https://drive.google.com/drive/folders/1iVCAQn3VTrUD9tUKHldrv1zMIdB0BjNB",
              "license": "CC0 1.0 (site states all textures CC0)", "license_url": "https://3dtextures.me/about/", "resolution": "1K",
-             "folder": rel(folder), "files": local_files(folder, (".jpg", ".png"))}
+             "folder": rel(folder),
+             "files": [{"path": rel(os.path.join(folder, n)), "url": GDRIVE_URL % gid, "bytes": size, "headers": GDRIVE_HEADERS}
+                       for n, (gid, size) in sorted(GDRIVE_FILES.items())]}
     a.update({"need": need, "note": note, "status": status})
     assets.append(a)
 assets += hdris + ph_models
 for t in TBM:
     folder = os.path.join(MODELS, "thebasemesh", t)
-    fl = local_files(folder, (".zip", ".glb", ".fbx", ".obj"))
-    for f in fl:
-        if f["path"].endswith(".zip"): f["extract"] = True; f["sha256"] = sha256(os.path.join(ROOT, f["path"]))
-    assets.append({"id": "thebasemesh_" + t, "kind": "model", "need": "model_base_mesh", "status": "alt", "manual": True,
-                   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip downloaded by hand, per-asset hashed URL not recoverable from the JS library page",
-                   "format": "zip with glb/fbx/obj", "source": "thebasemesh.com", "source_page": "https://www.thebasemesh.com/model-library",
+    zp = os.path.join(folder, t + ".zip")
+    fl = [{"path": rel(zp), "url": TBM_URLS[t], "bytes": os.path.getsize(zp), "extract": True, "sha256": sha256(zp),
+           "extracted": [rel(os.path.join(folder, n)) for n in zipfile.ZipFile(zp).namelist() if not n.endswith("/")]}]
+    assets.append({"id": "thebasemesh_" + t, "kind": "model", "need": "model_base_mesh", "status": "alt",
+                   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+                   "format": "zip with glb/fbx/obj", "source": "thebasemesh.com",
+                   "source_page": "https://www.thebasemesh.com/product-page/" + TBM_SLUG[t],
                    "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
                    "license_url": "https://www.thebasemesh.com/faq", "folder": rel(folder), "files": fl})
 for mid, page, url, zname, note, author in OGA:
@@ -295,6 +319,16 @@ for a in assets:
         a["resolution_px"] = sorted({tuple(v["px"]) for v in a["maps"].values() if v["kind"] not in ("preview",)})
         a["resolution_px"] = [list(s) for s in a["resolution_px"]]
     a["total_bytes"] = sum(f.get("bytes") or 0 for f in a["files"])
+
+IMPORT_JSON = os.path.join(os.path.dirname(ROOT), "renders", "research", "model_import_test.json")
+if os.path.exists(IMPORT_JSON):   # produced by: blender -b --python scripts/research/model_import_test.py -- assets/models renders/research/model_import_test.json
+    imp = json.load(open(IMPORT_JSON))
+    for a in assets:
+        if a["kind"] != "model": continue
+        sub = os.path.relpath(os.path.join(ROOT, a["folder"]), MODELS)
+        rows = [r for r in imp if r["file"].startswith(sub + "/") or r["file"].startswith(sub + os.sep)]
+        if rows:
+            a["import_test"] = [{k: r[k] for k in ("file", "ok", "seconds", "objects", "verts", "tris", "quads", "ngons", "dims_m", "has_uv", "materials", "images") if k in r} for r in rows]
 
 man = {"schema": 2, "generated": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), "assets_root": "assets/ (paths below are relative to it)",
        "restore_command": "python3 -I scripts/research/build_manifest.py assets --restore",

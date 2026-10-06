@@ -53,3 +53,24 @@ you are working on.
 - 4 CPU cores, 15 GB RAM, no GPU. Cycles CPU: budget minutes per evaluation render.
 - Network: download.blender.org, ambientcg.com, polyhaven.com, MakeHuman asset
   servers, extensions.blender.org, PyPI, Hugging Face are reachable.
+
+## Where work runs
+
+- **Cloud sessions (Linux, 4 CPU cores, no GPU):** analysis, research, specs, shared
+  tooling and the materials library, hard-surface parts, metric and optimiser code,
+  low-resolution checks. Form checks use the Workbench engine (matcap + cavity), which
+  renders headless here in about 5 s including start-up; EEVEE takes 40 s on software
+  GL and is not worth it here. Cycles is for acceptance renders only.
+- **Local session on Jeff's Windows machine (GPU):** the face likeness loop, hair
+  grooming, cloth simulation, beauty renders and critic rounds. Cycles previews there
+  take under a second and EEVEE runs live.
+- The repository is the hand-off between the two. `scripts/setup_session.sh` must work
+  on both Linux and Windows (Git Bash); keep paths relative to the project directory.
+- Tighten the loop before iterating on form: keep one Blender process alive, cache each
+  part in its own .blend, render contact sheets of many variants per look, and measure
+  (landmarks, girths, silhouettes) before rendering at all.
+
+## Session protocol
+
+Start: `bash scripts/setup_session.sh`, read `notes/session_log.md`, pick the next item.
+End: commit, push, append what was done and what is next to `notes/session_log.md`.
