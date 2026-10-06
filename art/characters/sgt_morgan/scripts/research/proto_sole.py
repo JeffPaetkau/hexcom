@@ -158,9 +158,10 @@ t_build = time.time() - t0
 objs = [shell, lugs]
 pc.report("Boot sole", t_build, objs, f"lugs={n_lugs}")
 
-pc.key_light((0, 0, 0), direction=(-0.5, -1, -1.2), dist=0.9, size=0.5)
-pc.camera_fit(objs, direction=(0.45, -0.5, -1), margin=0.95, lens=50)
-pc.render(os.path.join(pc.OUT_DIR, "proto_sole_below.png"), "sole below")
+if "side" not in sys.argv:          # pass 'side' after the numbers to skip the below view
+    pc.key_light((0, 0, 0), direction=(-0.5, -1, -1.2), dist=0.9, size=0.5)
+    pc.camera_fit(objs, direction=(0.45, -0.5, -1), margin=0.95, lens=50)
+    pc.render(os.path.join(pc.OUT_DIR, "proto_sole_below.png"), "sole below")
 pc.key_light((0, 0, 0), direction=(-0.5, -1, 1.2), dist=0.9, size=0.5)
 pc.camera_fit(objs, direction=(1, -0.35, 0.12), margin=0.95, lens=50, name="CamSide")
 pc.render(os.path.join(pc.OUT_DIR, "proto_sole_side.png"), "sole side")

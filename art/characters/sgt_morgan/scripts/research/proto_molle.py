@@ -111,7 +111,7 @@ print(f"[proto] thread segments: {n_thread}")
 def cordura(name, color, use_texture=True, weave_scale=1400.0):
     mat, nodes, links, b = pc.base_material(name)
     b.inputs["Roughness"].default_value = 0.72
-    b.inputs["Sheen Weight"].default_value = 0.35
+    b.inputs["Sheen Weight"].default_value = 0.06      # was 0.35: bleached the olive to white (see proto_dbg_sheen.png)
     b.inputs["Sheen Roughness"].default_value = 0.6
     tc = nodes.new("ShaderNodeTexCoord")
     wear = pc.edge_wear_mask(nodes, links, pointiness_mid=0.62, pointiness_width=0.12, ao_dist=0.004, noise_scale=300)
@@ -148,7 +148,7 @@ panel.data.materials.append(cordura("Molle.Cordura.Tex", OLIVE, use_texture=True
 web.data.materials.append(cordura("Molle.Webbing.Proc", (0.125, 0.112, 0.066), use_texture=False, weave_scale=1000.0))
 thr, nodes, links, b = pc.base_material("Molle.Thread")
 b.inputs["Base Color"].default_value = (0.20, 0.17, 0.10, 1); b.inputs["Roughness"].default_value = 0.6
-b.inputs["Sheen Weight"].default_value = 0.5
+b.inputs["Sheen Weight"].default_value = 0.12
 stitch.data.materials.append(thr)
 
 t_build = time.time() - t0

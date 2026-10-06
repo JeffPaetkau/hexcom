@@ -13,16 +13,20 @@ T = {}
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
 sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"
-sc.cycles.samples = 96; sc.cycles.use_denoising = True   # reduced from 256: CPU oversubscribed during tests
+sc.cycles.samples = 48; sc.cycles.use_denoising = True   # 96 spp took 428 s on the loaded box; 48 is enough with OIDN
 sc.cycles.denoiser = "OPENIMAGEDENOISE"; sc.cycles.denoising_input_passes = "RGB_ALBEDO_NORMAL"
-sc.render.resolution_x = 800; sc.render.resolution_y = 800
+sc.render.resolution_x = 640; sc.render.resolution_y = 640
 sc.view_settings.view_transform = "AgX"
-sc.view_settings.look = "AgX - Medium Contrast"
+# 4.5 look enum: 'None', 'AgX - Punchy', 'AgX - Greyscale', 'AgX - Very High Contrast', 'AgX - High Contrast',
+# 'AgX - Medium High Contrast', 'AgX - Base Contrast', 'AgX - Medium Low Contrast', 'AgX - Low Contrast',
+# 'AgX - Very Low Contrast'  (there is no 'AgX - Medium Contrast')
+sc.view_settings.look = "AgX - Medium High Contrast"
 w = bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True
 w.node_tree.nodes["Background"].inputs[0].default_value = (0.12, 0.12, 0.14, 1)
-for name, loc, e, col in (("Key", (0.5, -0.6, 0.6), 80, (1, 0.95, 0.9)),
-                          ("Fill", (-0.7, -0.5, 0.2), 20, (0.85, 0.9, 1)),
-                          ("Rim", (0.3, 0.7, 0.5), 90, (1, 1, 1))):
+# first run used 80/20/90 W at ~1 m on a 100 mm sphere: blown out to white. ~1-2 W/m^2 at the subject is right.
+for name, loc, e, col in (("Key", (0.5, -0.6, 0.6), 12, (1, 0.95, 0.9)),
+                          ("Fill", (-0.7, -0.5, 0.2), 3, (0.85, 0.9, 1)),
+                          ("Rim", (0.3, 0.7, 0.5), 12, (1, 1, 1))):
     ld = bpy.data.lights.new(name, "AREA"); ld.energy = e; ld.size = 0.5; ld.color = col
     lo = bpy.data.objects.new(name, ld); lo.location = loc
     sc.collection.objects.link(lo)
@@ -72,12 +76,12 @@ rr.inputs["To Min"].default_value = 0.35; rr.inputs["To Max"].default_value = 0.
 nt.links.new(mix.outputs[0], rr.inputs["Value"]); nt.links.new(rr.outputs["Result"], p.inputs["Roughness"])
 head.data.materials.append(mat)
 
-cd = bpy.data.cameras.new("Cam"); cd.lens = 100
-cam = bpy.data.objects.new("Cam", cd); cam.location = (0.12, -0.28, 0.08)
+cd = bpy.data.cameras.new("Cam"); cd.lens = 85
+cam = bpy.data.objects.new("Cam", cd); cam.location = (0.2, -0.48, 0.14)   # sphere fills ~90% of the frame
 cam.rotation_euler = (mathutils.Vector((0, 0, 0.01)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
 sc.collection.objects.link(cam); sc.camera = cam
 # DOF for realism
-cd.dof.use_dof = True; cd.dof.focus_object = head; cd.dof.aperture_fstop = 4.0
+cd.dof.use_dof = False   # f/4 at 0.3 m blurred the whole sphere in the first run; judge SSS sharp
 
 t0 = time.time()
 sc.render.filepath = f"{OUT}/t08_skin_sss.png"

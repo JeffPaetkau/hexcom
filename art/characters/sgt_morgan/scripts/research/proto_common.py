@@ -83,9 +83,9 @@ def camera_fit(objs, direction=(0, -1, 0.4), margin=1.15, lens=60, name="Cam"):
     cam = bpy.data.cameras.new(name); cam.lens = lens; cam.sensor_width = 36
     sc = bpy.context.scene
     aspect = sc.render.resolution_x / sc.render.resolution_y
-    fov = 2 * math.atan(cam.sensor_width / (2 * lens))
-    if aspect < 1:
-        fov = 2 * math.atan(math.tan(fov / 2) * aspect)
+    fov = 2 * math.atan(cam.sensor_width / (2 * lens))      # horizontal fov (sensor fit AUTO = wider side)
+    if aspect > 1:                                            # landscape: the vertical fov is the limiting one
+        fov = 2 * math.atan(math.tan(fov / 2) / aspect)
     dist = r * margin / math.sin(fov / 2)
     d = Vector(direction).normalized()
     co = bpy.data.objects.new(name, cam); bpy.context.collection.objects.link(co)
@@ -293,7 +293,8 @@ def cordura_material(name, color=(0.115, 0.105, 0.062), weave_scale=1000.0, wear
     """Procedural Cordura/webbing: plain-weave bump, colour variation, Pointiness/AO edge wear, sheen."""
     mat, nodes, links, b = base_material(name)
     b.inputs["Roughness"].default_value = rough
-    b.inputs["Sheen Weight"].default_value = 0.35
+    # 4.x sheen is a strong microflake layer: 0.35 lifted a 0.1-albedo olive to pale beige (proto_dbg_sheen.png). Keep <= 0.08.
+    b.inputs["Sheen Weight"].default_value = 0.06
     b.inputs["Sheen Roughness"].default_value = 0.6
     tc = nodes.new("ShaderNodeTexCoord")
     nz = nodes.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 60; nz.inputs["Detail"].default_value = 6
@@ -336,7 +337,7 @@ def polymer_material(name, color=(0.02, 0.02, 0.022), rough=0.4, wear=True, wear
 def thread_material(name="Thread", color=(0.20, 0.17, 0.10)):
     mat, nodes, links, b = base_material(name)
     b.inputs["Base Color"].default_value = (*color, 1); b.inputs["Roughness"].default_value = 0.6
-    b.inputs["Sheen Weight"].default_value = 0.5
+    b.inputs["Sheen Weight"].default_value = 0.12
     return mat
 
 

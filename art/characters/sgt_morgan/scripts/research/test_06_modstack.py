@@ -92,13 +92,15 @@ T["render_s"] = round(time.time() - t0, 1)
 # apply the whole stack via operator with temp_override (headless) to check that works
 t0 = time.time()
 applied = []
-for mod in list(sleeve.modifiers):
+# GOTCHA: after modifier_apply the Modifier RNA pointer is dangling; reading mod.name afterwards
+# returns garbage (UnicodeDecodeError). Capture the names first and apply by name.
+for name in [m.name for m in sleeve.modifiers]:
     try:
         with bpy.context.temp_override(object=sleeve, active_object=sleeve, selected_objects=[sleeve]):
-            bpy.ops.object.modifier_apply(modifier=mod.name)
-        applied.append(mod.name)
+            bpy.ops.object.modifier_apply(modifier=name)
+        applied.append(name)
     except Exception as e:
-        applied.append(f"{mod.name}:FAILED {e!r}")
+        applied.append(f"{name}:FAILED {e!r}")
 T["apply_stack_s"] = round(time.time() - t0, 2); T["applied"] = applied
 T["final_verts"] = len(sleeve.data.vertices)
 print("[6] applied:", applied, "final verts", T["final_verts"], flush=True)

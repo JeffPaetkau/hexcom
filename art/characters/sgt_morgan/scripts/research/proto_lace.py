@@ -92,7 +92,7 @@ grommets = pc.new_mesh_obj("Lace.Grommets", bm)
 def lace_end(name, seq, over_parity):
     cu = bpy.data.curves.new(name, "CURVE"); cu.dimensions = "3D"
     cu.bevel_depth = 0.0019; cu.bevel_resolution = 6; cu.resolution_u = 16
-    cu.use_fill_caps = True; cu.use_uv_as_generated = True
+    cu.use_fill_caps = True      # 4.5: Curve.use_uv_as_generated no longer exists; the bevel mesh always carries a UVMap
     sp = cu.splines.new("BEZIER")
     pts = []
     for idx, key in enumerate(seq):
@@ -125,7 +125,7 @@ laceB = lace_end("Lace.B", seqB, 1)
 def braid_material(name, color=(0.06, 0.055, 0.05), repeats_along=170.0, around=3.0):
     """Braid from curve UVs: u = along (0..1 over the whole lace), v = around (0..1)."""
     mat, nodes, links, b = pc.base_material(name)
-    b.inputs["Roughness"].default_value = 0.7; b.inputs["Sheen Weight"].default_value = 0.4
+    b.inputs["Roughness"].default_value = 0.7; b.inputs["Sheen Weight"].default_value = 0.1
     tc = nodes.new("ShaderNodeTexCoord")
     sep = nodes.new("ShaderNodeSeparateXYZ"); links.new(tc.outputs["UV"], sep.inputs["Vector"])
     def ma(op, a, bval=None):

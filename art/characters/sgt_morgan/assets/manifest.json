@@ -1,0 +1,5209 @@
+{
+ "schema": 2,
+ "generated": "2026-10-06 22:04:34 UTC",
+ "assets_root": "assets/ (paths below are relative to it)",
+ "restore_command": "python3 -I scripts/research/build_manifest.py assets --restore",
+ "counts": {
+  "texture": 31,
+  "hdri": 3,
+  "model": 13
+ },
+ "total_bytes": 713082513,
+ "downloaded_this_run": [],
+ "errors": [],
+ "assets": [
+  {
+   "id": "Fabric063",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Fabric063",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "63",
+    "fabric",
+    "rough"
+   ],
+   "tile_cm": [
+    40,
+    40
+   ],
+   "resolution": "2K",
+   "folder": "textures/Fabric063",
+   "files": [
+    {
+     "path": "textures/Fabric063/Fabric063_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Fabric063_2K-JPG.zip",
+     "bytes": 33153803,
+     "extract": true,
+     "extracted": [
+      "textures/Fabric063/Fabric063_2K-JPG.usdc",
+      "textures/Fabric063/Fabric063_2K-JPG_AmbientOcclusion.jpg",
+      "textures/Fabric063/Fabric063_2K-JPG_Color.jpg",
+      "textures/Fabric063/Fabric063_2K-JPG_Displacement.jpg",
+      "textures/Fabric063/Fabric063_2K-JPG_NormalDX.jpg",
+      "textures/Fabric063/Fabric063_2K-JPG_NormalGL.jpg",
+      "textures/Fabric063/Fabric063_2K-JPG_Roughness.jpg",
+      "textures/Fabric063/Fabric063_2K-JPG.blend",
+      "textures/Fabric063/Fabric063_2K-JPG.mtlx",
+      "textures/Fabric063/Fabric063_2K-JPG.tres",
+      "textures/Fabric063/Fabric063.png"
+     ]
+    }
+   ],
+   "need": "cordura_nylon_weave",
+   "note": "dark olive-brown tight weave; closest colour+scale match to the coyote/OD vest in ref",
+   "status": "primary",
+   "maps": {
+    "Fabric063.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Fabric063_2K-JPG_AmbientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric063_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric063_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric063_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric063_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric063_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 33153803
+  },
+  {
+   "id": "Fabric061",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Fabric061",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "61",
+    "fabric",
+    "rough"
+   ],
+   "tile_cm": [
+    40,
+    40
+   ],
+   "resolution": "2K",
+   "folder": "textures/Fabric061",
+   "files": [
+    {
+     "path": "textures/Fabric061/Fabric061_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Fabric061_2K-JPG.zip",
+     "bytes": 33405191,
+     "extract": true,
+     "extracted": [
+      "textures/Fabric061/Fabric061_2K-JPG.usdc",
+      "textures/Fabric061/Fabric061_2K-JPG_AmbientOcclusion.jpg",
+      "textures/Fabric061/Fabric061_2K-JPG_Color.jpg",
+      "textures/Fabric061/Fabric061_2K-JPG_Displacement.jpg",
+      "textures/Fabric061/Fabric061_2K-JPG_NormalDX.jpg",
+      "textures/Fabric061/Fabric061_2K-JPG_NormalGL.jpg",
+      "textures/Fabric061/Fabric061_2K-JPG_Roughness.jpg",
+      "textures/Fabric061/Fabric061_2K-JPG.blend",
+      "textures/Fabric061/Fabric061_2K-JPG.mtlx",
+      "textures/Fabric061/Fabric061_2K-JPG.tres",
+      "textures/Fabric061/Fabric061.png"
+     ]
+    }
+   ],
+   "need": "cordura_nylon_weave",
+   "note": "grey basket weave with fibre fuzz; good normal/rough for 1000D nylon, tint colour",
+   "status": "alt",
+   "maps": {
+    "Fabric061.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Fabric061_2K-JPG_AmbientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric061_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric061_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric061_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric061_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric061_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 33405191
+  },
+  {
+   "id": "Fabric066",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Fabric066",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "66",
+    "fabric",
+    "rough"
+   ],
+   "tile_cm": [
+    40,
+    40
+   ],
+   "resolution": "2K",
+   "folder": "textures/Fabric066",
+   "files": [
+    {
+     "path": "textures/Fabric066/Fabric066_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Fabric066_2K-JPG.zip",
+     "bytes": 35769326,
+     "extract": true,
+     "extracted": [
+      "textures/Fabric066/Fabric066_2K-JPG.usdc",
+      "textures/Fabric066/Fabric066_2K-JPG_AmbientOcclusion.jpg",
+      "textures/Fabric066/Fabric066_2K-JPG_Color.jpg",
+      "textures/Fabric066/Fabric066_2K-JPG_Displacement.jpg",
+      "textures/Fabric066/Fabric066_2K-JPG_NormalDX.jpg",
+      "textures/Fabric066/Fabric066_2K-JPG_NormalGL.jpg",
+      "textures/Fabric066/Fabric066_2K-JPG_Roughness.jpg",
+      "textures/Fabric066/Fabric066_2K-JPG.blend",
+      "textures/Fabric066/Fabric066_2K-JPG.mtlx",
+      "textures/Fabric066/Fabric066_2K-JPG.tres",
+      "textures/Fabric066/Fabric066.png"
+     ]
+    }
+   ],
+   "need": "cordura_nylon_weave",
+   "note": "grey plain weave, finer than 061; good for 500D pouches, tint colour",
+   "status": "alt",
+   "maps": {
+    "Fabric066.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Fabric066_2K-JPG_AmbientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric066_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric066_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric066_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric066_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric066_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 35769326
+  },
+  {
+   "id": "book_pattern",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/book_pattern",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Rob Tuytel": "All"
+   },
+   "tags": [
+    "plain",
+    "book",
+    "cover",
+    "textile ",
+    "olive",
+    "olive green",
+    "woven"
+   ],
+   "tile_cm": [
+    30.0,
+    30.0
+   ],
+   "resolution": "2K",
+   "folder": "textures/book_pattern",
+   "files": [
+    {
+     "path": "textures/book_pattern/book_pattern_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/book_pattern/book_pattern_nor_gl_2k.jpg",
+     "bytes": 787647,
+     "md5": "66d121dc79ae9e03ed2b9b401178ce24"
+    },
+    {
+     "path": "textures/book_pattern/book_pattern_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/book_pattern/book_pattern_rough_2k.jpg",
+     "bytes": 2134733,
+     "md5": "fcab4da8e9212afd5c18265d3b6e332c"
+    },
+    {
+     "path": "textures/book_pattern/book_pattern_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/book_pattern/book_pattern_disp_2k.jpg",
+     "bytes": 852175,
+     "md5": "85fb874ce687877d03d6dd00c404dd22"
+    },
+    {
+     "path": "textures/book_pattern/book_pattern_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/book_pattern/book_pattern_ao_2k.jpg",
+     "bytes": 1389732,
+     "md5": "aec0bc8ebedf4d54016f0d0169f2f1fc"
+    },
+    {
+     "path": "textures/book_pattern/book_pattern_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/book_pattern/book_pattern_arm_2k.jpg",
+     "bytes": 2188551,
+     "md5": "0e7dc7717c0c0c102fb6f6dfc4a126f3"
+    }
+   ],
+   "need": "cordura_nylon_weave",
+   "note": "olive plain-woven cotton book cloth (col1 olive, col2 maroon); colour already vest-like",
+   "status": "alt",
+   "maps": {
+    "book_pattern_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "book_pattern_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "book_pattern_col1_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "book_pattern_col2_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "book_pattern_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "book_pattern_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "book_pattern_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 7352838
+  },
+  {
+   "id": "Fabric048",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Fabric048",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "48",
+    "fabric",
+    "polyester",
+    "substance",
+    "vest",
+    "white"
+   ],
+   "tile_cm": [
+    40,
+    40
+   ],
+   "resolution": "2K",
+   "folder": "textures/Fabric048",
+   "files": [
+    {
+     "path": "textures/Fabric048/Fabric048_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Fabric048_2K-JPG.zip",
+     "bytes": 23656554,
+     "extract": true,
+     "extracted": [
+      "textures/Fabric048/Fabric048_2K-JPG.usdc",
+      "textures/Fabric048/Fabric048_2K-JPG_AmbientOcclusion.jpg",
+      "textures/Fabric048/Fabric048_2K-JPG_Color.jpg",
+      "textures/Fabric048/Fabric048_2K-JPG_Displacement.jpg",
+      "textures/Fabric048/Fabric048_2K-JPG_NormalDX.jpg",
+      "textures/Fabric048/Fabric048_2K-JPG_NormalGL.jpg",
+      "textures/Fabric048/Fabric048_2K-JPG_Roughness.jpg",
+      "textures/Fabric048/Fabric048_2K-JPG.blend",
+      "textures/Fabric048/Fabric048_2K-JPG.mtlx",
+      "textures/Fabric048/Fabric048_2K-JPG.tres",
+      "textures/Fabric048/Fabric048.png"
+     ]
+    }
+   ],
+   "need": "cordura_nylon_weave",
+   "note": "REJECTED: procedural quilted white polyester squares, not a weave",
+   "status": "rejected",
+   "maps": {
+    "Fabric048.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Fabric048_2K-JPG_AmbientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric048_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric048_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric048_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric048_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric048_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 23656554
+  },
+  {
+   "id": "3dtextures_Fabric_Nylon_Weave_001",
+   "kind": "texture",
+   "source": "3dtextures.me",
+   "source_page": "https://3dtextures.me/2020/06/11/fabric-nylon-weave-001/",
+   "drive_folder": "https://drive.google.com/drive/folders/1iVCAQn3VTrUD9tUKHldrv1zMIdB0BjNB",
+   "license": "CC0 1.0 (site states all textures CC0)",
+   "license_url": "https://3dtextures.me/about/",
+   "resolution": "1K",
+   "folder": "textures/3dtextures_Fabric_Nylon_Weave_001",
+   "files": [
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_ambientOcclusion.jpg",
+     "url": "https://drive.usercontent.google.com/download?id=1XkbQ84_mKV3W507HA0bTk5EtIyBmch-B&export=download&confirm=t",
+     "bytes": 324232,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    },
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_basecolor.jpg",
+     "url": "https://drive.usercontent.google.com/download?id=1lgqC2teDhvncF-fyfd8ddEJQ0XVq89Gf&export=download&confirm=t",
+     "bytes": 202412,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    },
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_height.png",
+     "url": "https://drive.usercontent.google.com/download?id=1DvmYO-HtVh8ZnkrTPrT30OhjRvpnteYk&export=download&confirm=t",
+     "bytes": 213965,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    },
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_normal.jpg",
+     "url": "https://drive.usercontent.google.com/download?id=1mKz818FBSEXLrWx5z3py3qq8L5zhknob&export=download&confirm=t",
+     "bytes": 368633,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    },
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_opacity.jpg",
+     "url": "https://drive.usercontent.google.com/download?id=1G2f5jOfQuDOMC1OwcAse2d53RehG2Ugz&export=download&confirm=t",
+     "bytes": 40742,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    },
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_roughness.jpg",
+     "url": "https://drive.usercontent.google.com/download?id=1h6HBlA6383WcjFIlUMVSh8swDFD9T4Yn&export=download&confirm=t",
+     "bytes": 241750,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    },
+    {
+     "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Material_1561.jpg",
+     "url": "https://drive.usercontent.google.com/download?id=1zFGrOXp-K0UwTUtTsBh9-oZ8_aOwNGhV&export=download&confirm=t",
+     "bytes": 121344,
+     "headers": {
+      "User-Agent": "Mozilla/5.0"
+     }
+    }
+   ],
+   "need": "cordura_nylon_weave",
+   "note": "1K chunky orange basket weave; only useful as a webbing normal map; fetched by hand from Google Drive",
+   "status": "alt",
+   "maps": {
+    "Fabric_Nylon_weave_001_ambientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      1024,
+      1024
+     ],
+     "mode": "RGB"
+    },
+    "Fabric_Nylon_weave_001_basecolor.jpg": {
+     "kind": "color",
+     "px": [
+      1024,
+      1024
+     ],
+     "mode": "RGB"
+    },
+    "Fabric_Nylon_weave_001_height.png": {
+     "kind": "displacement",
+     "px": [
+      1024,
+      1024
+     ],
+     "mode": "I;16"
+    },
+    "Fabric_Nylon_weave_001_normal.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      1024,
+      1024
+     ],
+     "mode": "RGB"
+    },
+    "Fabric_Nylon_weave_001_opacity.jpg": {
+     "kind": "opacity",
+     "px": [
+      1024,
+      1024
+     ],
+     "mode": "RGB"
+    },
+    "Fabric_Nylon_weave_001_roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      1024,
+      1024
+     ],
+     "mode": "RGB"
+    },
+    "Material_1561.jpg": {
+     "kind": "other",
+     "px": [
+      600,
+      800
+     ],
+     "mode": "RGB"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "normal_dx",
+    "opacity",
+    "other",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     600,
+     800
+    ],
+    [
+     1024,
+     1024
+    ]
+   ],
+   "total_bytes": 1513078
+  },
+  {
+   "id": "poly_wool_herringbone",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/poly_wool_herringbone",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "colormass": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "grey",
+    "rough",
+    "textile ",
+    "poly wool",
+    "fabric blend",
+    "polyester",
+    "wool",
+    "woven"
+   ],
+   "tile_cm": [
+    27.0,
+    27.6
+   ],
+   "resolution": "2K",
+   "folder": "textures/poly_wool_herringbone",
+   "files": [
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_diff_2k.jpg",
+     "bytes": 3650614,
+     "md5": "ab20cb6c120dfa5d38f4e4d3fd9b980d"
+    },
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_nor_gl_2k.jpg",
+     "bytes": 4048573,
+     "md5": "954185c16339c6bb3d1825071e4cfe90"
+    },
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_rough_2k.jpg",
+     "bytes": 3674893,
+     "md5": "009bf33f8d8a5fda0ba245e5a4dd646d"
+    },
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_disp_2k.jpg",
+     "bytes": 2870580,
+     "md5": "8a937325bf9de9c603d1b26c649db72d"
+    },
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_ao_2k.jpg",
+     "bytes": 3289574,
+     "md5": "b31b91c44b702dc130503ffea2bb1af3"
+    },
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_arm_2k.jpg",
+     "bytes": 5200286,
+     "md5": "e2dc5c919f185d41c594ee6ab70569c7"
+    },
+    {
+     "path": "textures/poly_wool_herringbone/poly_wool_herringbone_metal_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/poly_wool_herringbone/poly_wool_herringbone_metal_2k.jpg",
+     "bytes": 4291042,
+     "md5": "75e099ce5413745e519b183fdd06722c"
+    }
+   ],
+   "need": "webbing_strap",
+   "note": "grey herringbone twill - matches 25 mm webbing weave direction/scale when tiled ~2.5 cm",
+   "status": "primary",
+   "maps": {
+    "poly_wool_herringbone_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "L"
+    },
+    "poly_wool_herringbone_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "RGB"
+    },
+    "poly_wool_herringbone_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "RGB"
+    },
+    "poly_wool_herringbone_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "L"
+    },
+    "poly_wool_herringbone_metal_2k.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "L"
+    },
+    "poly_wool_herringbone_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "RGB"
+    },
+    "poly_wool_herringbone_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2091
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "metalness",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2091
+    ]
+   ],
+   "total_bytes": 27025562
+  },
+  {
+   "id": "denim_fabric_05",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/denim_fabric_05",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "colormass": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "jeans",
+    "dark",
+    "grey",
+    "denim",
+    "twill",
+    "matte",
+    "durable",
+    "textile ",
+    "weave"
+   ],
+   "tile_cm": [
+    27.0,
+    27.1
+   ],
+   "resolution": "2K",
+   "folder": "textures/denim_fabric_05",
+   "files": [
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_diff_2k.jpg",
+     "bytes": 3831014,
+     "md5": "af3eb2807ea3868d1dbed62dc0dc21d6"
+    },
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_nor_gl_2k.jpg",
+     "bytes": 4830674,
+     "md5": "914219959897e7c6d722cbc649854190"
+    },
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_rough_2k.jpg",
+     "bytes": 4378418,
+     "md5": "96308cda93dfa3933d549907fe4cfc1a"
+    },
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_disp_2k.jpg",
+     "bytes": 3551558,
+     "md5": "cf440f7d9573111303c2778685bbecea"
+    },
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_ao_2k.jpg",
+     "bytes": 2974795,
+     "md5": "b8ba25b5bd5087b76b99dc96f141c5a2"
+    },
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_arm_2k.jpg",
+     "bytes": 4463173,
+     "md5": "52b67a39a02755513dbb9dfef243303e"
+    },
+    {
+     "path": "textures/denim_fabric_05/denim_fabric_05_metal_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_05/denim_fabric_05_metal_2k.jpg",
+     "bytes": 4549450,
+     "md5": "32288e9921e30aa5b8a532647de4d696"
+    }
+   ],
+   "need": "ripstop_twill_fabric",
+   "note": "dark grey matte twill, 27 cm tile; trouser base, add procedural ripstop grid",
+   "status": "primary",
+   "maps": {
+    "denim_fabric_05_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "L"
+    },
+    "denim_fabric_05_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "RGB"
+    },
+    "denim_fabric_05_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "RGB"
+    },
+    "denim_fabric_05_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "L"
+    },
+    "denim_fabric_05_metal_2k.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "L"
+    },
+    "denim_fabric_05_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "RGB"
+    },
+    "denim_fabric_05_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2058
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "metalness",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2058
+    ]
+   ],
+   "total_bytes": 28579082
+  },
+  {
+   "id": "denim_fabric_06",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/denim_fabric_06",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Greg Zaal": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "dark",
+    "worn",
+    "jeans",
+    "denim",
+    "twill",
+    "matte",
+    "durable",
+    "textile ",
+    "weave"
+   ],
+   "tile_cm": [
+    25.4,
+    25.4
+   ],
+   "resolution": "2K",
+   "folder": "textures/denim_fabric_06",
+   "files": [
+    {
+     "path": "textures/denim_fabric_06/denim_fabric_06_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_06/denim_fabric_06_diff_2k.jpg",
+     "bytes": 3469007,
+     "md5": "b8ff46b2ea7e9ca997fb24d3123b1bd0"
+    },
+    {
+     "path": "textures/denim_fabric_06/denim_fabric_06_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_06/denim_fabric_06_nor_gl_2k.jpg",
+     "bytes": 5271131,
+     "md5": "f10e05f4338926353d242c82090f1625"
+    },
+    {
+     "path": "textures/denim_fabric_06/denim_fabric_06_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_06/denim_fabric_06_rough_2k.jpg",
+     "bytes": 3276268,
+     "md5": "157a22d387529385aae862af19ab86cb"
+    },
+    {
+     "path": "textures/denim_fabric_06/denim_fabric_06_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_06/denim_fabric_06_disp_2k.jpg",
+     "bytes": 3351338,
+     "md5": "04ba2c8160855ab7bdec8c7b544a6397"
+    },
+    {
+     "path": "textures/denim_fabric_06/denim_fabric_06_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_06/denim_fabric_06_ao_2k.jpg",
+     "bytes": 3864586,
+     "md5": "e9be616265d1e1097e3867c8aa3d5e1f"
+    },
+    {
+     "path": "textures/denim_fabric_06/denim_fabric_06_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/denim_fabric_06/denim_fabric_06_arm_2k.jpg",
+     "bytes": 4122751,
+     "md5": "6e78b4cda6ad4b6c7dbc12d754baf279"
+    }
+   ],
+   "need": "ripstop_twill_fabric",
+   "note": "dark worn twill, 25 cm tile",
+   "status": "alt",
+   "maps": {
+    "denim_fabric_06_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "denim_fabric_06_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "denim_fabric_06_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "denim_fabric_06_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "denim_fabric_06_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "denim_fabric_06_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 23355081
+  },
+  {
+   "id": "Fabric082A",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Fabric082A",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "82",
+    "fabric",
+    "fine",
+    "grey",
+    "smooth",
+    "woven"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Fabric082A",
+   "files": [
+    {
+     "path": "textures/Fabric082A/Fabric082A_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Fabric082A_2K-JPG.zip",
+     "bytes": 26530617,
+     "extract": true,
+     "extracted": [
+      "textures/Fabric082A/Fabric082A_2K-JPG.usdc",
+      "textures/Fabric082A/Fabric082A_2K-JPG_AmbientOcclusion.jpg",
+      "textures/Fabric082A/Fabric082A_2K-JPG_Color.jpg",
+      "textures/Fabric082A/Fabric082A_2K-JPG_Displacement.jpg",
+      "textures/Fabric082A/Fabric082A_2K-JPG_NormalDX.jpg",
+      "textures/Fabric082A/Fabric082A_2K-JPG_NormalGL.jpg",
+      "textures/Fabric082A/Fabric082A_2K-JPG_Roughness.jpg",
+      "textures/Fabric082A/Fabric082A_2K-JPG.blend",
+      "textures/Fabric082A/Fabric082A_2K-JPG.mtlx",
+      "textures/Fabric082A/Fabric082A_2K-JPG.tres",
+      "textures/Fabric082A/Fabric082A.png"
+     ]
+    }
+   ],
+   "need": "ripstop_twill_fabric",
+   "note": "fine grey smooth woven (procedural); shirt sleeves",
+   "status": "alt",
+   "maps": {
+    "Fabric082A.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Fabric082A_2K-JPG_AmbientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric082A_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric082A_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Fabric082A_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric082A_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Fabric082A_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 26530617
+  },
+  {
+   "id": "cotton_jersey",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/cotton_jersey",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "colormass": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "beige",
+    "rough",
+    "fabric",
+    "textile ",
+    "matte",
+    "woven",
+    "weave",
+    "cotton",
+    "jersey",
+    "ribbed"
+   ],
+   "tile_cm": [
+    26.4,
+    26.4
+   ],
+   "resolution": "2K",
+   "folder": "textures/cotton_jersey",
+   "files": [
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_diff_2k.jpg",
+     "bytes": 3009673,
+     "md5": "911fa5b8031c69d7051489f813b170ac"
+    },
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_nor_gl_2k.jpg",
+     "bytes": 3302722,
+     "md5": "6252598a3fdc5d229ed9aa50e77be587"
+    },
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_rough_2k.jpg",
+     "bytes": 4038839,
+     "md5": "e157b42a81932afa6a3f9386e446df47"
+    },
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_disp_2k.jpg",
+     "bytes": 3468978,
+     "md5": "acd2cd8f9e619f4c6c8027c3affae75f"
+    },
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_ao_2k.jpg",
+     "bytes": 3084210,
+     "md5": "8d22a86ad168584686789999ebcb1a24"
+    },
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_arm_2k.jpg",
+     "bytes": 4615270,
+     "md5": "77cfbbe30d92f90b8c2cc22bd2510baf"
+    },
+    {
+     "path": "textures/cotton_jersey/cotton_jersey_metal_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cotton_jersey/cotton_jersey_metal_2k.jpg",
+     "bytes": 124748,
+     "md5": "c6e1494c25fc320183d4bcfdfe91a398"
+    }
+   ],
+   "need": "ripstop_twill_fabric",
+   "note": "beige matte knit jersey; combat-shirt stretch torso under the carrier",
+   "status": "alt",
+   "maps": {
+    "cotton_jersey_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "L"
+    },
+    "cotton_jersey_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "RGB"
+    },
+    "cotton_jersey_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "RGB"
+    },
+    "cotton_jersey_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "L"
+    },
+    "cotton_jersey_metal_2k.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "L"
+    },
+    "cotton_jersey_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "RGB"
+    },
+    "cotton_jersey_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2050
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "metalness",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2050
+    ]
+   ],
+   "total_bytes": 21644440
+  },
+  {
+   "id": "knitted_fleece",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/knitted_fleece",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "colormass": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "brown",
+    "jersey",
+    "warm",
+    "knitted",
+    "fleece",
+    "textile ",
+    "knit",
+    "dense weave",
+    "woven",
+    "soft",
+    "insulating",
+    "winter wear"
+   ],
+   "tile_cm": [
+    26.6,
+    27.0
+   ],
+   "resolution": "2K",
+   "folder": "textures/knitted_fleece",
+   "files": [
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_diff_2k.jpg",
+     "bytes": 3531764,
+     "md5": "5ae8d0ed7af13b0ca1b61b1467854b2a"
+    },
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_nor_gl_2k.jpg",
+     "bytes": 4438653,
+     "md5": "d8caf68f2d990d9ba0a32e3948c2cb19"
+    },
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_rough_2k.jpg",
+     "bytes": 4215124,
+     "md5": "d69e1dac082ee522238e6cf4681ea33d"
+    },
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_disp_2k.jpg",
+     "bytes": 2706615,
+     "md5": "ca7eab9c58ff03ed7e3605fc975fdf53"
+    },
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_ao_2k.jpg",
+     "bytes": 2945691,
+     "md5": "c8bf54303abeaf1ab7874d8571051f7f"
+    },
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_arm_2k.jpg",
+     "bytes": 5262922,
+     "md5": "a437b9d794c21e5a5cbb69ce3e1a7abc"
+    },
+    {
+     "path": "textures/knitted_fleece/knitted_fleece_metal_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/knitted_fleece/knitted_fleece_metal_2k.jpg",
+     "bytes": 4476025,
+     "md5": "7eb419a04cd2a01c21ca702e5f1210a1"
+    }
+   ],
+   "need": "fleece_knit",
+   "note": "brown knitted fleece, 27 cm tile; neck gaiter",
+   "status": "primary",
+   "maps": {
+    "knitted_fleece_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "L"
+    },
+    "knitted_fleece_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "RGB"
+    },
+    "knitted_fleece_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "RGB"
+    },
+    "knitted_fleece_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "L"
+    },
+    "knitted_fleece_metal_2k.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "L"
+    },
+    "knitted_fleece_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "RGB"
+    },
+    "knitted_fleece_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2079
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "metalness",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2079
+    ]
+   ],
+   "total_bytes": 27576794
+  },
+  {
+   "id": "polar_fleece",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/polar_fleece",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "colormass": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "beige",
+    "fluffy",
+    "soft",
+    "cream",
+    "fleece",
+    "cozy",
+    "gauzy",
+    "fuzzy",
+    "napped",
+    "plush",
+    "shaggy",
+    "woven"
+   ],
+   "tile_cm": [
+    27.3,
+    27.1
+   ],
+   "resolution": "2K",
+   "folder": "textures/polar_fleece",
+   "files": [
+    {
+     "path": "textures/polar_fleece/polar_fleece_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_diff_2k.jpg",
+     "bytes": 2616215,
+     "md5": "ad4d2ac2a4a75dfdd6ad4efe204140f8"
+    },
+    {
+     "path": "textures/polar_fleece/polar_fleece_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_nor_gl_2k.jpg",
+     "bytes": 2013453,
+     "md5": "bfa61808a177a9da30f32ae0c2cbd280"
+    },
+    {
+     "path": "textures/polar_fleece/polar_fleece_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_rough_2k.jpg",
+     "bytes": 3938167,
+     "md5": "e621837caf2d100aa21265a513e46714"
+    },
+    {
+     "path": "textures/polar_fleece/polar_fleece_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_disp_2k.jpg",
+     "bytes": 1159054,
+     "md5": "64050aeeb34e3bfd5306c37d2250a216"
+    },
+    {
+     "path": "textures/polar_fleece/polar_fleece_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_ao_2k.jpg",
+     "bytes": 1354612,
+     "md5": "aa020003d0386de01e051b802aab9278"
+    },
+    {
+     "path": "textures/polar_fleece/polar_fleece_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_arm_2k.jpg",
+     "bytes": 4670269,
+     "md5": "76bb8ac71e5fed629c5ac46c27f83723"
+    },
+    {
+     "path": "textures/polar_fleece/polar_fleece_metal_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/polar_fleece/polar_fleece_metal_2k.jpg",
+     "bytes": 1311429,
+     "md5": "494ad3d9c828d5eba7b17dd340095eb6"
+    }
+   ],
+   "need": "fleece_knit",
+   "note": "cream polar fleece, 27 cm tile",
+   "status": "alt",
+   "maps": {
+    "polar_fleece_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2036
+     ],
+     "mode": "L"
+    },
+    "polar_fleece_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2035
+     ],
+     "mode": "RGB"
+    },
+    "polar_fleece_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2035
+     ],
+     "mode": "RGB"
+    },
+    "polar_fleece_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2036
+     ],
+     "mode": "L"
+    },
+    "polar_fleece_metal_2k.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2036
+     ],
+     "mode": "L"
+    },
+    "polar_fleece_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2035
+     ],
+     "mode": "RGB"
+    },
+    "polar_fleece_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2036
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "metalness",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2035
+    ],
+    [
+     2048,
+     2036
+    ]
+   ],
+   "total_bytes": 17063199
+  },
+  {
+   "id": "Leather032",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Leather032",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "32",
+    "black",
+    "leather",
+    "scratched"
+   ],
+   "tile_cm": [
+    45,
+    45
+   ],
+   "resolution": "2K",
+   "folder": "textures/Leather032",
+   "files": [
+    {
+     "path": "textures/Leather032/Leather032_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Leather032_2K-JPG.zip",
+     "bytes": 26138914,
+     "extract": true,
+     "extracted": [
+      "textures/Leather032/Leather032_2K-JPG.usdc",
+      "textures/Leather032/Leather032_2K-JPG_Color.jpg",
+      "textures/Leather032/Leather032_2K-JPG_Displacement.jpg",
+      "textures/Leather032/Leather032_2K-JPG_NormalDX.jpg",
+      "textures/Leather032/Leather032_2K-JPG_NormalGL.jpg",
+      "textures/Leather032/Leather032_2K-JPG_Roughness.jpg",
+      "textures/Leather032/Leather032_2K-JPG.blend",
+      "textures/Leather032/Leather032_2K-JPG.mtlx",
+      "textures/Leather032/Leather032_2K-JPG.tres",
+      "textures/Leather032/Leather032.png"
+     ]
+    }
+   ],
+   "need": "leather",
+   "note": "black scratched leather, 45 cm tile; boots",
+   "status": "primary",
+   "maps": {
+    "Leather032.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Leather032_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Leather032_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Leather032_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Leather032_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Leather032_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 26138914
+  },
+  {
+   "id": "Leather037",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Leather037",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRMultiAngle",
+   "tags": [
+    "37",
+    "brown",
+    "clean",
+    "dark",
+    "leather"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Leather037",
+   "files": [
+    {
+     "path": "textures/Leather037/Leather037_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Leather037_2K-JPG.zip",
+     "bytes": 21182522,
+     "extract": true,
+     "extracted": [
+      "textures/Leather037/Leather037_2K-JPG.usdc",
+      "textures/Leather037/Leather037_2K-JPG_Color.jpg",
+      "textures/Leather037/Leather037_2K-JPG_Displacement.jpg",
+      "textures/Leather037/Leather037_2K-JPG_NormalDX.jpg",
+      "textures/Leather037/Leather037_2K-JPG_NormalGL.jpg",
+      "textures/Leather037/Leather037_2K-JPG_Roughness.jpg",
+      "textures/Leather037/Leather037_2K-JPG.blend",
+      "textures/Leather037/Leather037_2K-JPG.mtlx",
+      "textures/Leather037/Leather037_2K-JPG.tres",
+      "textures/Leather037/Leather037.png"
+     ]
+    }
+   ],
+   "need": "leather",
+   "note": "dark brown clean full-grain (multi-angle photo); glove palms, tint",
+   "status": "alt",
+   "maps": {
+    "Leather037.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Leather037_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Leather037_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Leather037_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Leather037_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Leather037_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 21182522
+  },
+  {
+   "id": "Rubber004",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Rubber004",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "4",
+    "black",
+    "floor",
+    "gym",
+    "rubber"
+   ],
+   "tile_cm": [
+    75,
+    75
+   ],
+   "resolution": "2K",
+   "folder": "textures/Rubber004",
+   "files": [
+    {
+     "path": "textures/Rubber004/Rubber004_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Rubber004_2K-JPG.zip",
+     "bytes": 30486130,
+     "extract": true,
+     "extracted": [
+      "textures/Rubber004/Rubber004_2K-JPG.usdc",
+      "textures/Rubber004/Rubber004_2K-JPG_Color.jpg",
+      "textures/Rubber004/Rubber004_2K-JPG_Displacement.jpg",
+      "textures/Rubber004/Rubber004_2K-JPG_NormalDX.jpg",
+      "textures/Rubber004/Rubber004_2K-JPG_NormalGL.jpg",
+      "textures/Rubber004/Rubber004_2K-JPG_Roughness.jpg",
+      "textures/Rubber004/Rubber004_2K-JPG.blend",
+      "textures/Rubber004/Rubber004_2K-JPG.mtlx",
+      "textures/Rubber004/Rubber004_2K-JPG.tres",
+      "textures/Rubber004/Rubber004.png"
+     ]
+    }
+   ],
+   "need": "rubber",
+   "note": "black grainy rubber, 75 cm tile; soles/grips",
+   "status": "primary",
+   "maps": {
+    "Rubber004.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Rubber004_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Rubber004_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Rubber004_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Rubber004_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Rubber004_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 30486130
+  },
+  {
+   "id": "Metal038",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Metal038",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "38",
+    "metal",
+    "scratched",
+    "steel"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Metal038",
+   "files": [
+    {
+     "path": "textures/Metal038/Metal038_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Metal038_2K-JPG.zip",
+     "bytes": 18287653,
+     "extract": true,
+     "extracted": [
+      "textures/Metal038/Metal038_2K-JPG.usdc",
+      "textures/Metal038/Metal038_2K-JPG_Color.jpg",
+      "textures/Metal038/Metal038_2K-JPG_Displacement.jpg",
+      "textures/Metal038/Metal038_2K-JPG_Metalness.jpg",
+      "textures/Metal038/Metal038_2K-JPG_NormalDX.jpg",
+      "textures/Metal038/Metal038_2K-JPG_NormalGL.jpg",
+      "textures/Metal038/Metal038_2K-JPG_Roughness.jpg",
+      "textures/Metal038/Metal038_2K-JPG.blend",
+      "textures/Metal038/Metal038_2K-JPG.mtlx",
+      "textures/Metal038/Metal038_2K-JPG.tres",
+      "textures/Metal038/Metal038.png"
+     ]
+    }
+   ],
+   "need": "metal_dark_anodised_parkerised",
+   "note": "dark scratched steel, glossy; parkerised receiver/barrel base",
+   "status": "primary",
+   "maps": {
+    "Metal038.png": {
+     "kind": "metalness",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Metal038_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal038_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal038_2K-JPG_Metalness.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal038_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal038_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal038_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "metalness",
+    "normal_dx",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     512,
+     512
+    ],
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 18287653
+  },
+  {
+   "id": "Metal063",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Metal063",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRApproximated",
+   "tags": [
+    "063",
+    "63",
+    "aged",
+    "black",
+    "brown",
+    "dark",
+    "fine",
+    "glossy",
+    "industrial",
+    "metal",
+    "oxidized",
+    "polished",
+    "rust",
+    "rusty",
+    "smooth",
+    "steel"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Metal063",
+   "files": [
+    {
+     "path": "textures/Metal063/Metal063_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Metal063_2K-JPG.zip",
+     "bytes": 18357564,
+     "extract": true,
+     "extracted": [
+      "textures/Metal063/Metal063_2K-JPG.usdc",
+      "textures/Metal063/Metal063_2K-JPG_Color.jpg",
+      "textures/Metal063/Metal063_2K-JPG_Displacement.jpg",
+      "textures/Metal063/Metal063_2K-JPG_Metalness.jpg",
+      "textures/Metal063/Metal063_2K-JPG_NormalDX.jpg",
+      "textures/Metal063/Metal063_2K-JPG_NormalGL.jpg",
+      "textures/Metal063/Metal063_2K-JPG_Roughness.jpg",
+      "textures/Metal063/Metal063_2K-JPG.blend",
+      "textures/Metal063/Metal063_2K-JPG.mtlx",
+      "textures/Metal063/Metal063_2K-JPG.tres",
+      "textures/Metal063/Metal063.png"
+     ]
+    }
+   ],
+   "need": "metal_dark_anodised_parkerised",
+   "note": "aged dark glossy metal (photo approx)",
+   "status": "alt",
+   "maps": {
+    "Metal063.png": {
+     "kind": "metalness",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Metal063_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal063_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal063_2K-JPG_Metalness.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal063_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal063_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal063_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "metalness",
+    "normal_dx",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     512,
+     512
+    ],
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 18357564
+  },
+  {
+   "id": "Metal046B",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Metal046B",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "46",
+    "black",
+    "dark",
+    "dirty",
+    "metal"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Metal046B",
+   "files": [
+    {
+     "path": "textures/Metal046B/Metal046B_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Metal046B_2K-JPG.zip",
+     "bytes": 22225772,
+     "extract": true,
+     "extracted": [
+      "textures/Metal046B/Metal046B_2K-JPG.usdc",
+      "textures/Metal046B/Metal046B_2K-JPG_Color.jpg",
+      "textures/Metal046B/Metal046B_2K-JPG_Displacement.jpg",
+      "textures/Metal046B/Metal046B_2K-JPG_Metalness.jpg",
+      "textures/Metal046B/Metal046B_2K-JPG_NormalDX.jpg",
+      "textures/Metal046B/Metal046B_2K-JPG_NormalGL.jpg",
+      "textures/Metal046B/Metal046B_2K-JPG_Roughness.jpg",
+      "textures/Metal046B/Metal046B_2K-JPG.blend",
+      "textures/Metal046B/Metal046B_2K-JPG.mtlx",
+      "textures/Metal046B/Metal046B_2K-JPG.tres",
+      "textures/Metal046B/Metal046B.png"
+     ]
+    }
+   ],
+   "need": "metal_dark_anodised_parkerised",
+   "note": "black dirty metal, procedural",
+   "status": "alt",
+   "maps": {
+    "Metal046B.png": {
+     "kind": "metalness",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Metal046B_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal046B_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal046B_2K-JPG_Metalness.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal046B_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal046B_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal046B_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "metalness",
+    "normal_dx",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     512,
+     512
+    ],
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 22225772
+  },
+  {
+   "id": "Metal050C",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Metal050C",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "50",
+    "aluminum",
+    "metal",
+    "rough",
+    "scratched"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Metal050C",
+   "files": [
+    {
+     "path": "textures/Metal050C/Metal050C_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Metal050C_2K-JPG.zip",
+     "bytes": 10684478,
+     "extract": true,
+     "extracted": [
+      "textures/Metal050C/Metal050C_2K-JPG.usdc",
+      "textures/Metal050C/Metal050C_2K-JPG_Color.jpg",
+      "textures/Metal050C/Metal050C_2K-JPG_Displacement.jpg",
+      "textures/Metal050C/Metal050C_2K-JPG_Metalness.jpg",
+      "textures/Metal050C/Metal050C_2K-JPG_NormalDX.jpg",
+      "textures/Metal050C/Metal050C_2K-JPG_NormalGL.jpg",
+      "textures/Metal050C/Metal050C_2K-JPG_Roughness.jpg",
+      "textures/Metal050C/Metal050C_2K-JPG.blend",
+      "textures/Metal050C/Metal050C_2K-JPG.mtlx",
+      "textures/Metal050C/Metal050C_2K-JPG.tres",
+      "textures/Metal050C/Metal050C.png"
+     ]
+    }
+   ],
+   "need": "metal_dark_anodised_parkerised",
+   "note": "rough scratched aluminium (near-white albedo = bare metal F0); tint for anodising",
+   "status": "alt",
+   "maps": {
+    "Metal050C.png": {
+     "kind": "metalness",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Metal050C_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal050C_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal050C_2K-JPG_Metalness.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal050C_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal050C_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal050C_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "metalness",
+    "normal_dx",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     512,
+     512
+    ],
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 10684478
+  },
+  {
+   "id": "Plastic012B",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Plastic012B",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "12",
+    "black",
+    "plastic",
+    "scratched"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Plastic012B",
+   "files": [
+    {
+     "path": "textures/Plastic012B/Plastic012B_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Plastic012B_2K-JPG.zip",
+     "bytes": 26802875,
+     "extract": true,
+     "extracted": [
+      "textures/Plastic012B/Plastic012B_2K-JPG.usdc",
+      "textures/Plastic012B/Plastic012B_2K-JPG_Color.jpg",
+      "textures/Plastic012B/Plastic012B_2K-JPG_Displacement.jpg",
+      "textures/Plastic012B/Plastic012B_2K-JPG_NormalDX.jpg",
+      "textures/Plastic012B/Plastic012B_2K-JPG_NormalGL.jpg",
+      "textures/Plastic012B/Plastic012B_2K-JPG_Roughness.jpg",
+      "textures/Plastic012B/Plastic012B_2K-JPG.blend",
+      "textures/Plastic012B/Plastic012B_2K-JPG.mtlx",
+      "textures/Plastic012B/Plastic012B_2K-JPG.tres",
+      "textures/Plastic012B/Plastic012B.png"
+     ]
+    }
+   ],
+   "need": "matte_polymer",
+   "note": "black scratched plastic; magazine, grip, kneepads",
+   "status": "primary",
+   "maps": {
+    "Plastic012B.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Plastic012B_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Plastic012B_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Plastic012B_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Plastic012B_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Plastic012B_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 26802875
+  },
+  {
+   "id": "Plastic018B",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Plastic018B",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "18",
+    "dirty",
+    "gray",
+    "plastic",
+    "scratched"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Plastic018B",
+   "files": [
+    {
+     "path": "textures/Plastic018B/Plastic018B_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Plastic018B_2K-JPG.zip",
+     "bytes": 27783936,
+     "extract": true,
+     "extracted": [
+      "textures/Plastic018B/Plastic018B_2K-JPG.usdc",
+      "textures/Plastic018B/Plastic018B_2K-JPG_Color.jpg",
+      "textures/Plastic018B/Plastic018B_2K-JPG_Displacement.jpg",
+      "textures/Plastic018B/Plastic018B_2K-JPG_NormalDX.jpg",
+      "textures/Plastic018B/Plastic018B_2K-JPG_NormalGL.jpg",
+      "textures/Plastic018B/Plastic018B_2K-JPG_Roughness.jpg",
+      "textures/Plastic018B/Plastic018B_2K-JPG.blend",
+      "textures/Plastic018B/Plastic018B_2K-JPG.mtlx",
+      "textures/Plastic018B/Plastic018B_2K-JPG.tres",
+      "textures/Plastic018B/Plastic018B.png"
+     ]
+    }
+   ],
+   "need": "matte_polymer",
+   "note": "grey dirty scratched plastic; pauldron plates",
+   "status": "alt",
+   "maps": {
+    "Plastic018B.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Plastic018B_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Plastic018B_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Plastic018B_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Plastic018B_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Plastic018B_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 27783936
+  },
+  {
+   "id": "Metal027",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Metal027",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "27",
+    "black",
+    "covered",
+    "metal",
+    "painted",
+    "powder",
+    "steel"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Metal027",
+   "files": [
+    {
+     "path": "textures/Metal027/Metal027_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Metal027_2K-JPG.zip",
+     "bytes": 24858268,
+     "extract": true,
+     "extracted": [
+      "textures/Metal027/Metal027_2K-JPG.usdc",
+      "textures/Metal027/Metal027_2K-JPG_Color.jpg",
+      "textures/Metal027/Metal027_2K-JPG_Displacement.jpg",
+      "textures/Metal027/Metal027_2K-JPG_Metalness.jpg",
+      "textures/Metal027/Metal027_2K-JPG_NormalDX.jpg",
+      "textures/Metal027/Metal027_2K-JPG_NormalGL.jpg",
+      "textures/Metal027/Metal027_2K-JPG_Roughness.jpg",
+      "textures/Metal027/Metal027_2K-JPG.blend",
+      "textures/Metal027/Metal027_2K-JPG.mtlx",
+      "textures/Metal027/Metal027_2K-JPG.tres",
+      "textures/Metal027/Metal027.png"
+     ]
+    }
+   ],
+   "need": "worn_paint_over_metal",
+   "note": "black powder-coated steel",
+   "status": "primary",
+   "maps": {
+    "Metal027.png": {
+     "kind": "metalness",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Metal027_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal027_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal027_2K-JPG_Metalness.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Metal027_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal027_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Metal027_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "metalness",
+    "normal_dx",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     512,
+     512
+    ],
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 24858268
+  },
+  {
+   "id": "blue_metal_plate",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/blue_metal_plate",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Rob Tuytel": "All"
+   },
+   "tags": [
+    "scratched",
+    "metal sheet",
+    "metal",
+    "painted",
+    "industrial",
+    "scratches",
+    "scuffed",
+    "steel panel",
+    "abrasion marks",
+    "blue",
+    "metal plate"
+   ],
+   "tile_cm": [
+    250.0,
+    250.0
+   ],
+   "resolution": "2K",
+   "folder": "textures/blue_metal_plate",
+   "files": [
+    {
+     "path": "textures/blue_metal_plate/blue_metal_plate_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_metal_plate/blue_metal_plate_diff_2k.jpg",
+     "bytes": 1518621,
+     "md5": "6189f7c443f0b7767d3e046f021b5495"
+    },
+    {
+     "path": "textures/blue_metal_plate/blue_metal_plate_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_metal_plate/blue_metal_plate_nor_gl_2k.jpg",
+     "bytes": 948237,
+     "md5": "c460b1b25b5d418218982d8b100822b8"
+    },
+    {
+     "path": "textures/blue_metal_plate/blue_metal_plate_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_metal_plate/blue_metal_plate_rough_2k.jpg",
+     "bytes": 1588770,
+     "md5": "4be6436df5c7c5ecce9febb927051d52"
+    },
+    {
+     "path": "textures/blue_metal_plate/blue_metal_plate_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_metal_plate/blue_metal_plate_disp_2k.jpg",
+     "bytes": 124881,
+     "md5": "5fbe4f41f0f82de7cdecf1d0d5e75075"
+    },
+    {
+     "path": "textures/blue_metal_plate/blue_metal_plate_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_metal_plate/blue_metal_plate_ao_2k.jpg",
+     "bytes": 101861,
+     "md5": "3c496e1431121f0e4b48f94af9da332a"
+    },
+    {
+     "path": "textures/blue_metal_plate/blue_metal_plate_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_metal_plate/blue_metal_plate_arm_2k.jpg",
+     "bytes": 1640935,
+     "md5": "d0f422ae772522cc3978f2bf2bbb5902"
+    }
+   ],
+   "need": "worn_paint_over_metal",
+   "note": "scratched painted steel panel (photo, 2.5 m tile) - scratch mask source",
+   "status": "alt",
+   "maps": {
+    "blue_metal_plate_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "blue_metal_plate_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "blue_metal_plate_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "blue_metal_plate_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "blue_metal_plate_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "blue_metal_plate_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 5923305
+  },
+  {
+   "id": "SurfaceImperfections015",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/SurfaceImperfections015",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRProcedural",
+   "tags": [
+    "15",
+    "dust",
+    "imperfections",
+    "surface"
+   ],
+   "tile_cm": [
+    65,
+    65
+   ],
+   "resolution": "2K",
+   "folder": "textures/SurfaceImperfections015",
+   "files": [
+    {
+     "path": "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=SurfaceImperfections015_2K-JPG.zip",
+     "bytes": 31351965,
+     "extract": true,
+     "extracted": [
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.usdc",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG_Color.jpg",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG_Displacement.jpg",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG_NormalDX.jpg",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG_NormalGL.jpg",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG_Opacity.jpg",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG_Roughness.jpg",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.blend",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.mtlx",
+      "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.tres",
+      "textures/SurfaceImperfections015/SurfaceImperfections015.png"
+     ]
+    }
+   ],
+   "need": "grunge_masks",
+   "note": "dust overlay with opacity",
+   "status": "primary",
+   "maps": {
+    "SurfaceImperfections015.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "SurfaceImperfections015_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "SurfaceImperfections015_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "SurfaceImperfections015_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "SurfaceImperfections015_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "SurfaceImperfections015_2K-JPG_Opacity.jpg": {
+     "kind": "opacity",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "SurfaceImperfections015_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "opacity",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 31351965
+  },
+  {
+   "id": "SurfaceImperfections017",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/SurfaceImperfections017",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRApproximated",
+   "tags": [
+    "17",
+    "detail",
+    "dirt",
+    "dirty",
+    "imperfection",
+    "imperfections",
+    "overlay",
+    "sand",
+    "surface"
+   ],
+   "tile_cm": [
+    40,
+    40
+   ],
+   "resolution": "2K",
+   "folder": "textures/SurfaceImperfections017",
+   "files": [
+    {
+     "path": "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=SurfaceImperfections017_2K-JPG.zip",
+     "bytes": 24012377,
+     "extract": true,
+     "extracted": [
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.usdc",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG_Color.jpg",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG_Displacement.jpg",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG_NormalDX.jpg",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG_NormalGL.jpg",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG_Opacity.jpg",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG_Roughness.jpg",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.blend",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.mtlx",
+      "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.tres",
+      "textures/SurfaceImperfections017/SurfaceImperfections017.png"
+     ]
+    }
+   ],
+   "need": "grunge_masks",
+   "note": "dirt speckle overlay with opacity",
+   "status": "alt",
+   "maps": {
+    "SurfaceImperfections017.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "SurfaceImperfections017_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "SurfaceImperfections017_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "SurfaceImperfections017_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "SurfaceImperfections017_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "SurfaceImperfections017_2K-JPG_Opacity.jpg": {
+     "kind": "opacity",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "SurfaceImperfections017_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "normal_gl",
+    "opacity",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 24012377
+  },
+  {
+   "id": "concrete_floor_worn_001",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/concrete_floor_worn_001",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Dimitrios Savva": "Photography",
+    "Rico Cilliers": "Processing"
+   },
+   "tags": [
+    "worn",
+    "old",
+    "plain",
+    "grey",
+    "weathered",
+    "bare",
+    "discolored"
+   ],
+   "tile_cm": [
+    300.0,
+    300.0
+   ],
+   "resolution": "2K",
+   "folder": "textures/concrete_floor_worn_001",
+   "files": [
+    {
+     "path": "textures/concrete_floor_worn_001/concrete_floor_worn_001_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_diff_2k.jpg",
+     "bytes": 482906,
+     "md5": "6a3645f19f2ac4b7f60f43419c5d09ec"
+    },
+    {
+     "path": "textures/concrete_floor_worn_001/concrete_floor_worn_001_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_nor_gl_2k.jpg",
+     "bytes": 870609,
+     "md5": "210fbc9fe40492177e79fdb4afda268e"
+    },
+    {
+     "path": "textures/concrete_floor_worn_001/concrete_floor_worn_001_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_rough_2k.jpg",
+     "bytes": 735249,
+     "md5": "169cac76d6499d7d70d1dbb237fcc976"
+    },
+    {
+     "path": "textures/concrete_floor_worn_001/concrete_floor_worn_001_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_disp_2k.jpg",
+     "bytes": 666150,
+     "md5": "6e46161e741bf9a18e8f96d1def46f03"
+    },
+    {
+     "path": "textures/concrete_floor_worn_001/concrete_floor_worn_001_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_ao_2k.jpg",
+     "bytes": 689586,
+     "md5": "2515023779ca2c7a1e55721001859ecf"
+    },
+    {
+     "path": "textures/concrete_floor_worn_001/concrete_floor_worn_001_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_arm_2k.jpg",
+     "bytes": 649883,
+     "md5": "ed519bf68bcf8581447a9d3fbc1e8c45"
+    }
+   ],
+   "need": "concrete_floor",
+   "note": "grey worn plain concrete floor, 3 m tile; closest to the ref's dusty polished floor",
+   "status": "primary",
+   "maps": {
+    "concrete_floor_worn_001_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "concrete_floor_worn_001_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "concrete_floor_worn_001_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "concrete_floor_worn_001_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "concrete_floor_worn_001_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "concrete_floor_worn_001_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 4094383
+  },
+  {
+   "id": "hangar_concrete_floor",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/hangar_concrete_floor",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Dimitrios Savva": "All"
+   },
+   "tags": [
+    "rough",
+    "scratched",
+    "flat",
+    "concrete",
+    "cracked",
+    "damaged",
+    "chipped",
+    "scuffed",
+    "cemented floor",
+    "worn",
+    "cracked cement",
+    "cement",
+    "plastered",
+    "battered",
+    "deteriorated",
+    "timeworn"
+   ],
+   "tile_cm": [
+    200.0,
+    200.0
+   ],
+   "resolution": "2K",
+   "folder": "textures/hangar_concrete_floor",
+   "files": [
+    {
+     "path": "textures/hangar_concrete_floor/hangar_concrete_floor_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hangar_concrete_floor/hangar_concrete_floor_diff_2k.jpg",
+     "bytes": 2559056,
+     "md5": "35e620ca791e0105e680ef775ecf719d"
+    },
+    {
+     "path": "textures/hangar_concrete_floor/hangar_concrete_floor_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hangar_concrete_floor/hangar_concrete_floor_nor_gl_2k.jpg",
+     "bytes": 3100672,
+     "md5": "c255711a514478d91cd6e0424def0471"
+    },
+    {
+     "path": "textures/hangar_concrete_floor/hangar_concrete_floor_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hangar_concrete_floor/hangar_concrete_floor_rough_2k.jpg",
+     "bytes": 2367272,
+     "md5": "ade247a5fb74d12f1cbffdac5ebfd630"
+    },
+    {
+     "path": "textures/hangar_concrete_floor/hangar_concrete_floor_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hangar_concrete_floor/hangar_concrete_floor_disp_2k.jpg",
+     "bytes": 922332,
+     "md5": "a69e3aca5a8a120433c96accb89a3362"
+    },
+    {
+     "path": "textures/hangar_concrete_floor/hangar_concrete_floor_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hangar_concrete_floor/hangar_concrete_floor_ao_2k.jpg",
+     "bytes": 2544118,
+     "md5": "42103d623f34773aeb5228429da57199"
+    },
+    {
+     "path": "textures/hangar_concrete_floor/hangar_concrete_floor_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/hangar_concrete_floor/hangar_concrete_floor_arm_2k.jpg",
+     "bytes": 2994585,
+     "md5": "d99c4dc230d549d6cb6cd8927920f95c"
+    }
+   ],
+   "need": "concrete_floor",
+   "note": "dark scratched flat hangar floor, 2 m tile",
+   "status": "alt",
+   "maps": {
+    "hangar_concrete_floor_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "hangar_concrete_floor_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "hangar_concrete_floor_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "hangar_concrete_floor_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "hangar_concrete_floor_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "hangar_concrete_floor_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 14488035
+  },
+  {
+   "id": "smooth_concrete_floor",
+   "kind": "texture",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/smooth_concrete_floor",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Dimitrios Savva": "All"
+   },
+   "tags": [
+    "worn",
+    "scratched",
+    "cracked",
+    "dirty",
+    "floor",
+    "scuffed",
+    "grungy"
+   ],
+   "tile_cm": [
+    200.0,
+    200.0
+   ],
+   "resolution": "2K",
+   "folder": "textures/smooth_concrete_floor",
+   "files": [
+    {
+     "path": "textures/smooth_concrete_floor/smooth_concrete_floor_diff_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/smooth_concrete_floor/smooth_concrete_floor_diff_2k.jpg",
+     "bytes": 3561275,
+     "md5": "3b9f88588c6fec0110f7e112163a8986"
+    },
+    {
+     "path": "textures/smooth_concrete_floor/smooth_concrete_floor_nor_gl_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/smooth_concrete_floor/smooth_concrete_floor_nor_gl_2k.jpg",
+     "bytes": 2819837,
+     "md5": "94895c9460504dc4e4a3275e9eb84aee"
+    },
+    {
+     "path": "textures/smooth_concrete_floor/smooth_concrete_floor_rough_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/smooth_concrete_floor/smooth_concrete_floor_rough_2k.jpg",
+     "bytes": 2181493,
+     "md5": "de59a5a792ba784d4dbeb9cb2044ee2b"
+    },
+    {
+     "path": "textures/smooth_concrete_floor/smooth_concrete_floor_disp_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/smooth_concrete_floor/smooth_concrete_floor_disp_2k.jpg",
+     "bytes": 694884,
+     "md5": "b303e294e17f616e75924c94738b9b27"
+    },
+    {
+     "path": "textures/smooth_concrete_floor/smooth_concrete_floor_ao_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/smooth_concrete_floor/smooth_concrete_floor_ao_2k.jpg",
+     "bytes": 2960534,
+     "md5": "9a83243e0833a396a4375becf8dc1415"
+    },
+    {
+     "path": "textures/smooth_concrete_floor/smooth_concrete_floor_arm_2k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/smooth_concrete_floor/smooth_concrete_floor_arm_2k.jpg",
+     "bytes": 2932778,
+     "md5": "0ac33a1aee20dd2e7ddc54f2e72a1bad"
+    }
+   ],
+   "need": "concrete_floor",
+   "note": "orange-brown worn smooth floor - colour too warm",
+   "status": "alt",
+   "maps": {
+    "smooth_concrete_floor_ao_2k.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "smooth_concrete_floor_arm_2k.jpg": {
+     "kind": "arm(ao,rough,metal)",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "smooth_concrete_floor_diff_2k.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "smooth_concrete_floor_disp_2k.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "smooth_concrete_floor_nor_gl_2k.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "smooth_concrete_floor_rough_2k.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "arm(ao,rough,metal)",
+    "color",
+    "displacement",
+    "normal_gl",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 15150801
+  },
+  {
+   "id": "Concrete048",
+   "kind": "texture",
+   "source": "ambientCG",
+   "source_page": "https://ambientcg.com/a/Concrete048",
+   "license": "CC0 1.0",
+   "license_url": "https://docs.ambientcg.com/license/",
+   "creation_method": "PBRPhotogrammetry",
+   "tags": [
+    "048",
+    "48",
+    "beige",
+    "clean",
+    "concrete",
+    "floor",
+    "grey",
+    "hard",
+    "indoor",
+    "industrial",
+    "layered",
+    "minimalist",
+    "modern",
+    "outdoor",
+    "smooth",
+    "stone",
+    "subtle",
+    "uniform",
+    "urban"
+   ],
+   "tile_cm": [
+    0,
+    0
+   ],
+   "resolution": "2K",
+   "folder": "textures/Concrete048",
+   "files": [
+    {
+     "path": "textures/Concrete048/Concrete048_2K-JPG.zip",
+     "url": "https://ambientcg.com/get?file=Concrete048_2K-JPG.zip",
+     "bytes": 28990525,
+     "extract": true,
+     "extracted": [
+      "textures/Concrete048/Concrete048_2K-JPG.usdc",
+      "textures/Concrete048/Concrete048_2K-JPG_AmbientOcclusion.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG_Color.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG_Displacement.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG_Metalness.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG_NormalDX.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG_NormalGL.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG_Roughness.jpg",
+      "textures/Concrete048/Concrete048_2K-JPG.blend",
+      "textures/Concrete048/Concrete048_2K-JPG.mtlx",
+      "textures/Concrete048/Concrete048_2K-JPG.tres",
+      "textures/Concrete048/Concrete048.png"
+     ]
+    }
+   ],
+   "need": "concrete_floor",
+   "note": "clean beige-grey indoor concrete (photogrammetry) - too clean/light",
+   "status": "alt",
+   "maps": {
+    "Concrete048.png": {
+     "kind": "preview",
+     "px": [
+      512,
+      512
+     ],
+     "mode": "RGBA"
+    },
+    "Concrete048_2K-JPG_AmbientOcclusion.jpg": {
+     "kind": "ao",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Concrete048_2K-JPG_Color.jpg": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Concrete048_2K-JPG_Displacement.jpg": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Concrete048_2K-JPG_Metalness.jpg": {
+     "kind": "metalness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    },
+    "Concrete048_2K-JPG_NormalDX.jpg": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Concrete048_2K-JPG_NormalGL.jpg": {
+     "kind": "normal_gl",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGB"
+    },
+    "Concrete048_2K-JPG_Roughness.jpg": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "L"
+    }
+   },
+   "map_kinds": [
+    "ao",
+    "color",
+    "displacement",
+    "metalness",
+    "normal_dx",
+    "normal_gl",
+    "preview",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 28990525
+  },
+  {
+   "id": "cgbookcase_PolishedConcrete01",
+   "kind": "texture",
+   "source": "cgbookcase.com",
+   "source_page": "https://www.cgbookcase.com/textures/polished-concrete-01",
+   "license": "CC0 1.0",
+   "license_url": "https://www.cgbookcase.com/about",
+   "resolution": "2K",
+   "folder": "textures/cgbookcase_PolishedConcrete01",
+   "files": [
+    {
+     "path": "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_MR_2K.zip",
+     "url": "https://cgbookcase-volume.b-cdn.net/t/PolishedConcrete01_MR_2K.zip",
+     "bytes": 14325870,
+     "extract": true,
+     "headers": {
+      "Referer": "https://www.cgbookcase.com/"
+     },
+     "extracted": [
+      "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_BaseColor.png",
+      "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_Height.png",
+      "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_Normal.png",
+      "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_Roughness.png"
+     ]
+    }
+   ],
+   "need": "concrete_floor",
+   "note": "polished concrete 2K PNG (BaseColor/Height/Normal-DX/Roughness, RGBA); blend its roughness/normal under concrete_floor_worn_001 colour for the reflective finish seen in ref",
+   "status": "alt",
+   "maps": {
+    "PolishedConcrete01_2K_BaseColor.png": {
+     "kind": "color",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGBA"
+    },
+    "PolishedConcrete01_2K_Height.png": {
+     "kind": "displacement",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGBA"
+    },
+    "PolishedConcrete01_2K_Normal.png": {
+     "kind": "normal_dx",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGBA"
+    },
+    "PolishedConcrete01_2K_Roughness.png": {
+     "kind": "roughness",
+     "px": [
+      2048,
+      2048
+     ],
+     "mode": "RGBA"
+    }
+   },
+   "map_kinds": [
+    "color",
+    "displacement",
+    "normal_dx",
+    "roughness"
+   ],
+   "resolution_px": [
+    [
+     2048,
+     2048
+    ]
+   ],
+   "total_bytes": 14325870
+  },
+  {
+   "id": "empty_warehouse_01",
+   "kind": "hdri",
+   "need": "environment_hdri",
+   "status": "primary",
+   "note": "derelict warehouse, fluorescent + daylight, concrete; 16 EV; closest to the hangar backdrop",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/empty_warehouse_01",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Sergej Majboroda": "All"
+   },
+   "tags": [
+    "warehouse",
+    "derelict",
+    "fluorescent",
+    "concrete",
+    "industrial",
+    "backplates"
+   ],
+   "categories": [
+    "indoor",
+    "urban",
+    "morning-afternoon",
+    "medium contrast",
+    "artificial light"
+   ],
+   "evs_cap": 16,
+   "whitebalance": 5900,
+   "resolution": "2K",
+   "folder": "hdri",
+   "files": [
+    {
+     "path": "hdri/empty_warehouse_01_2k.hdr",
+     "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/empty_warehouse_01_2k.hdr",
+     "bytes": 6581920,
+     "md5": "bc3fa539601289d2a176b5e8d3be1740"
+    }
+   ],
+   "total_bytes": 6581920
+  },
+  {
+   "id": "small_hangar_01",
+   "kind": "hdri",
+   "need": "environment_hdri",
+   "status": "alt",
+   "note": "aircraft hangar, natural light, low contrast; 12 EV",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/small_hangar_01",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Sergej Majboroda": "All"
+   },
+   "tags": [
+    "hangar",
+    "plane",
+    "industrial",
+    "warehouse"
+   ],
+   "categories": [
+    "indoor",
+    "urban",
+    "morning-afternoon",
+    "low contrast",
+    "natural light"
+   ],
+   "evs_cap": 12,
+   "whitebalance": null,
+   "resolution": "2K",
+   "folder": "hdri",
+   "files": [
+    {
+     "path": "hdri/small_hangar_01_2k.hdr",
+     "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/small_hangar_01_2k.hdr",
+     "bytes": 6684096,
+     "md5": "318820f6b750d675452ceaf81db3d22d"
+    }
+   ],
+   "total_bytes": 6684096
+  },
+  {
+   "id": "autoshop_01",
+   "kind": "hdri",
+   "need": "environment_hdri",
+   "status": "alt",
+   "note": "garage/workshop artificial light; 8 EV",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/autoshop_01",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Oliksiy Yakovlyev": "All"
+   },
+   "tags": [
+    "garage",
+    "warehouse",
+    "industrial",
+    "car",
+    "workshop"
+   ],
+   "categories": [
+    "indoor",
+    "urban",
+    "low contrast",
+    "artificial light"
+   ],
+   "evs_cap": 8,
+   "whitebalance": 5050,
+   "resolution": "2K",
+   "folder": "hdri",
+   "files": [
+    {
+     "path": "hdri/autoshop_01_2k.hdr",
+     "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autoshop_01_2k.hdr",
+     "bytes": 6451683,
+     "md5": "15482ac3b9a1aa723add98d5612c2c15"
+    }
+   ],
+   "total_bytes": 6451683
+  },
+  {
+   "id": "service_pistol",
+   "kind": "model",
+   "need": "model_reference",
+   "status": "alt",
+   "note": "pistol reference (vintage semi-auto, 1K)",
+   "format": "glTF 2.0 + 1K JPG",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/service_pistol",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Mateusz Sadek": "All"
+   },
+   "tags": [
+    "vintage",
+    "semi-automatic",
+    "metal",
+    "cold war",
+    "bullet",
+    "gun",
+    "handgun"
+   ],
+   "categories": [
+    "collection: project_lighthouse",
+    "props",
+    "weapons",
+    "firearms"
+   ],
+   "folder": "models/service_pistol",
+   "files": [
+    {
+     "path": "models/service_pistol/service_pistol_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/service_pistol/service_pistol_1k.gltf",
+     "bytes": 17614,
+     "md5": "2c191ca39d102066b0e6b1021f38fc69"
+    },
+    {
+     "path": "models/service_pistol/service_pistol.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/service_pistol/service_pistol.bin",
+     "bytes": 1052048,
+     "md5": "d9113b4f3c452ccb58698fde28450546"
+    },
+    {
+     "path": "models/service_pistol/textures/service_pistol_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/service_pistol/service_pistol_arm_1k.jpg",
+     "bytes": 921086,
+     "md5": "c5ffe4a53cfb9ab9ceb18c44d5b6270f"
+    },
+    {
+     "path": "models/service_pistol/textures/service_pistol_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/service_pistol/service_pistol_diff_1k.jpg",
+     "bytes": 718216,
+     "md5": "9954be782e3d946c1c73d7d4f476687e"
+    },
+    {
+     "path": "models/service_pistol/textures/service_pistol_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/service_pistol/service_pistol_nor_gl_1k.jpg",
+     "bytes": 588720,
+     "md5": "208b6ba1dadddf152899337a0249a158"
+    }
+   ],
+   "total_bytes": 3297684,
+   "import_test": [
+    {
+     "file": "service_pistol/service_pistol_1k.gltf",
+     "ok": true,
+     "seconds": 0.07,
+     "objects": 11,
+     "verts": 28177,
+     "tris": 27548,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.302,
+      0.032,
+      0.281
+     ],
+     "has_uv": true,
+     "materials": [
+      "service_pistol"
+     ],
+     "images": [
+      "service_pistol_diff",
+      "service_pistol_metal-service_pistol_rough",
+      "service_pistol_nor_gl"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "rubber_boots",
+   "kind": "model",
+   "need": "model_reference",
+   "status": "alt",
+   "note": "boot-shaped base mesh, 1K, two material variants",
+   "format": "glTF 2.0 + 1K JPG",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/rubber_boots",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "L": "All"
+   },
+   "tags": [
+    "clothing",
+    "shoes",
+    "outdoor",
+    "waterproof",
+    "wellies",
+    "rubber",
+    "workwear",
+    "utility",
+    "garden",
+    "greenhouse",
+    "gardening",
+    "landscaping"
+   ],
+   "categories": [
+    "collection: project_lighthouse",
+    "props"
+   ],
+   "folder": "models/rubber_boots",
+   "files": [
+    {
+     "path": "models/rubber_boots/rubber_boots_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rubber_boots/rubber_boots_1k.gltf",
+     "bytes": 6106,
+     "md5": "c88bb060db54940d4d83b62ff940773f"
+    },
+    {
+     "path": "models/rubber_boots/textures/rubber_boots_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rubber_boots/rubber_boots_nor_gl_1k.jpg",
+     "bytes": 204450,
+     "md5": "bdc45b08754c7af00c28fec2011113e4"
+    },
+    {
+     "path": "models/rubber_boots/textures/rubber_boots_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rubber_boots/rubber_boots_diff_1k.jpg",
+     "bytes": 122413,
+     "md5": "d6cb4bd5f80fce60395aab9d7c4a7b03"
+    },
+    {
+     "path": "models/rubber_boots/textures/rubber_boots_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rubber_boots/rubber_boots_arm_1k.jpg",
+     "bytes": 111952,
+     "md5": "224ce695d3a8747a3b21f91babee87dd"
+    },
+    {
+     "path": "models/rubber_boots/textures/rubber_boots_dirty_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rubber_boots/rubber_boots_dirty_nor_gl_1k.jpg",
+     "bytes": 248492,
+     "md5": "ab4afe5620a55ce7cbb7b791992a6cb2"
+    },
+    {
+     "path": "models/rubber_boots/textures/rubber_boots_dirty_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rubber_boots/rubber_boots_dirty_diff_1k.jpg",
+     "bytes": 291900,
+     "md5": "cc4184c4749d12ee5e56c6ddfd7a51db"
+    },
+    {
+     "path": "models/rubber_boots/textures/rubber_boots_dirty_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rubber_boots/rubber_boots_dirty_arm_1k.jpg",
+     "bytes": 373800,
+     "md5": "edac8b0409217c3ac003e9e4d35dc296"
+    },
+    {
+     "path": "models/rubber_boots/rubber_boots.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rubber_boots/rubber_boots.bin",
+     "bytes": 653312,
+     "md5": "7c6d47a128a1703b2875208b9a6c5422"
+    }
+   ],
+   "total_bytes": 2012425,
+   "import_test": [
+    {
+     "file": "rubber_boots/rubber_boots_1k.gltf",
+     "ok": true,
+     "seconds": 0.15,
+     "objects": 4,
+     "verts": 30308,
+     "tris": 56128,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.891,
+      0.266,
+      0.373
+     ],
+     "has_uv": true,
+     "materials": [
+      "rubber_boots",
+      "rubber_boots_dirty"
+     ],
+     "images": [
+      "rubber_boots_diff",
+      "rubber_boots_dirty_diff",
+      "rubber_boots_dirty_nor_gl",
+      "rubber_boots_dirty_rough",
+      "rubber_boots_nor_gl",
+      "rubber_boots_rough"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "garden_gloves_01",
+   "kind": "model",
+   "need": "model_reference",
+   "status": "alt",
+   "note": "glove base mesh",
+   "format": "glTF 2.0 + 1K JPG",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/garden_gloves_01",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Satyaki Mandal": "All"
+   },
+   "tags": [
+    "outdoor",
+    "shed",
+    "garden",
+    "gardening",
+    "hand",
+    "dirty",
+    "used",
+    "worn",
+    "old",
+    "workshop",
+    "garage",
+    "greenhouse",
+    "farm"
+   ],
+   "categories": [
+    "props",
+    "collection: the_shed"
+   ],
+   "folder": "models/garden_gloves_01",
+   "files": [
+    {
+     "path": "models/garden_gloves_01/garden_gloves_01_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/garden_gloves_01/garden_gloves_01_1k.gltf",
+     "bytes": 2813,
+     "md5": "45015bb690b0b6d1ebf7a84f4ab9f8b9"
+    },
+    {
+     "path": "models/garden_gloves_01/garden_gloves_01.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/garden_gloves_01/garden_gloves_01.bin",
+     "bytes": 168132,
+     "md5": "1aed230a16b1b27887d9771bd51ee6ab"
+    },
+    {
+     "path": "models/garden_gloves_01/textures/garden_gloves_01_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/garden_gloves_01/garden_gloves_01_nor_gl_1k.jpg",
+     "bytes": 1042336,
+     "md5": "396d3c1fb391e00dbd222e55d1257c9e"
+    },
+    {
+     "path": "models/garden_gloves_01/textures/garden_gloves_01_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/garden_gloves_01/garden_gloves_01_diff_1k.jpg",
+     "bytes": 806038,
+     "md5": "23ae081e2e1375d7f73a7925bdacc92e"
+    },
+    {
+     "path": "models/garden_gloves_01/textures/garden_gloves_01_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/garden_gloves_01/garden_gloves_01_arm_1k.jpg",
+     "bytes": 885378,
+     "md5": "18f0ea0ab0f29af115581d7ad377b756"
+    }
+   ],
+   "total_bytes": 2904697,
+   "import_test": [
+    {
+     "file": "garden_gloves_01/garden_gloves_01_1k.gltf",
+     "ok": true,
+     "seconds": 0.02,
+     "objects": 1,
+     "verts": 3975,
+     "tris": 6822,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.227,
+      0.299,
+      0.076
+     ],
+     "has_uv": true,
+     "materials": [
+      "garden_gloves_01"
+     ],
+     "images": [
+      "garden_gloves_01_diff",
+      "garden_gloves_01_nor_gl",
+      "garden_gloves_01_rough"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "old_military_crate",
+   "kind": "model",
+   "need": "model_reference",
+   "status": "alt",
+   "note": "scene prop",
+   "format": "glTF 2.0 + 1K JPG",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/old_military_crate",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Jack Mava": "All"
+   },
+   "tags": [
+    "ammunition crate",
+    "military supply crate",
+    "hand-painted symbol",
+    "transport container",
+    "wooden",
+    "vintage",
+    "worn",
+    "military",
+    "army",
+    "weapon"
+   ],
+   "categories": [
+    "collection: project_lighthouse",
+    "containers",
+    "props"
+   ],
+   "folder": "models/old_military_crate",
+   "files": [
+    {
+     "path": "models/old_military_crate/old_military_crate_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/old_military_crate/old_military_crate_1k.gltf",
+     "bytes": 10126,
+     "md5": "4c83b9887a0db6ecd5af18293012c3f0"
+    },
+    {
+     "path": "models/old_military_crate/textures/old_military_crate_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_military_crate/old_military_crate_nor_gl_1k.jpg",
+     "bytes": 742682,
+     "md5": "4403c6773bcc7c0182fac32e750c7231"
+    },
+    {
+     "path": "models/old_military_crate/textures/old_military_crate_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_military_crate/old_military_crate_diff_1k.jpg",
+     "bytes": 709506,
+     "md5": "a679925cb14dbb3ffc39a5d152d23114"
+    },
+    {
+     "path": "models/old_military_crate/textures/old_military_crate_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/old_military_crate/old_military_crate_arm_1k.jpg",
+     "bytes": 704105,
+     "md5": "5e877bd1644fe490e9450794aadc3dd7"
+    },
+    {
+     "path": "models/old_military_crate/old_military_crate.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/old_military_crate/old_military_crate.bin",
+     "bytes": 329004,
+     "md5": "4aa204ebcc401c38206677a808aebea6"
+    }
+   ],
+   "total_bytes": 2495423,
+   "import_test": [
+    {
+     "file": "old_military_crate/old_military_crate_1k.gltf",
+     "ok": true,
+     "seconds": 0.03,
+     "objects": 10,
+     "verts": 16634,
+     "tris": 20952,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      1.815,
+      0.979,
+      0.301
+     ],
+     "has_uv": true,
+     "materials": [
+      "military_crate_m_01"
+     ],
+     "images": [
+      "old_military_crate_diff",
+      "old_military_crate_metal-old_military_crate_rough",
+      "old_military_crate_nor_gl"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "bolt_action_rifle_7_62",
+   "kind": "model",
+   "need": "model_reference",
+   "status": "alt",
+   "note": "rifle material/scale reference",
+   "format": "glTF 2.0 + 1K JPG",
+   "source": "Poly Haven",
+   "source_page": "https://polyhaven.com/a/bolt_action_rifle_7_62",
+   "license": "CC0 1.0",
+   "license_url": "https://polyhaven.com/license",
+   "authors": {
+    "Mateusz Sadek": "All"
+   },
+   "tags": [
+    "vintage",
+    "worn",
+    "old",
+    "weathered",
+    "aged",
+    "gun",
+    "scope",
+    "bullet"
+   ],
+   "categories": [
+    "collection: project_lighthouse",
+    "weapons",
+    "firearms"
+   ],
+   "folder": "models/bolt_action_rifle_7_62",
+   "files": [
+    {
+     "path": "models/bolt_action_rifle_7_62/bolt_action_rifle_7_62_1k.gltf",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_1k.gltf",
+     "bytes": 15369,
+     "md5": "1344ef06910be854e5b37657fb989b00"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/textures/bolt_action_rifle_7_62_accesories_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_accesories_nor_gl_1k.jpg",
+     "bytes": 1007303,
+     "md5": "61736b182ce7ff71780a406b486ee48e"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/textures/bolt_action_rifle_7_62_accesories_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_accesories_diff_1k.jpg",
+     "bytes": 878584,
+     "md5": "76b4134ecb47d62e76429dd16768403a"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/textures/bolt_action_rifle_7_62_accesories_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_accesories_arm_1k.jpg",
+     "bytes": 984292,
+     "md5": "47a110d72179aec84206e6331fc108a1"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/textures/bolt_action_rifle_7_62_nor_gl_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_nor_gl_1k.jpg",
+     "bytes": 670019,
+     "md5": "427d4d0f2ead7a3beb7644922628efea"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/textures/bolt_action_rifle_7_62_diff_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_diff_1k.jpg",
+     "bytes": 856375,
+     "md5": "43bfcb606edaf9728d98db42e9b16f0a"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/textures/bolt_action_rifle_7_62_arm_1k.jpg",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/bolt_action_rifle_7_62/bolt_action_rifle_7_62_arm_1k.jpg",
+     "bytes": 892057,
+     "md5": "92d40c8aa17f54373a15e9c03e783ae6"
+    },
+    {
+     "path": "models/bolt_action_rifle_7_62/bolt_action_rifle_7_62.bin",
+     "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/bolt_action_rifle_7_62/bolt_action_rifle_7_62.bin",
+     "bytes": 736616,
+     "md5": "8fe1b75cc0ffe2e527dd9b66bc0d9517"
+    }
+   ],
+   "total_bytes": 6040615,
+   "import_test": [
+    {
+     "file": "bolt_action_rifle_7_62/bolt_action_rifle_7_62_1k.gltf",
+     "ok": true,
+     "seconds": 0.11,
+     "objects": 7,
+     "verts": 19272,
+     "tris": 19985,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      1.231,
+      0.067,
+      0.205
+     ],
+     "has_uv": true,
+     "materials": [
+      "bolt_action_rifle_7_62",
+      "bolt_action_rifle_7_62_accesories",
+      "bolt_action_rifle_7_62_accesories_glass"
+     ],
+     "images": [
+      "bolt_action_rifle_7_62_accesories_diff",
+      "bolt_action_rifle_7_62_accesories_metal-bolt_action_rifle_7_62_",
+      "bolt_action_rifle_7_62_accesories_nor_gl",
+      "bolt_action_rifle_7_62_diff",
+      "bolt_action_rifle_7_62_metal-bolt_action_rifle_7_62_rough",
+      "bolt_action_rifle_7_62_nor_gl"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "thebasemesh_pouch_01",
+   "kind": "model",
+   "need": "model_base_mesh",
+   "status": "alt",
+   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+   "format": "zip with glb/fbx/obj",
+   "source": "thebasemesh.com",
+   "source_page": "https://www.thebasemesh.com/product-page/pouch-01",
+   "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
+   "license_url": "https://www.thebasemesh.com/faq",
+   "folder": "models/thebasemesh/pouch_01",
+   "files": [
+    {
+     "path": "models/thebasemesh/pouch_01/pouch_01.zip",
+     "url": "https://www.thebasemesh.com/_files/archives/b36d2d_bc758246f9c3478a87a2045bae3d04ce.zip",
+     "bytes": 44962,
+     "extract": true,
+     "sha256": "ecdc3e6eddea959de5c2f4f1acbb5f8e86d24fdba41af051ad41cbcc9e9c9dac",
+     "extracted": [
+      "models/thebasemesh/pouch_01/pouch_01.fbx",
+      "models/thebasemesh/pouch_01/pouch_01.glb",
+      "models/thebasemesh/pouch_01/pouch_01.obj"
+     ]
+    }
+   ],
+   "total_bytes": 44962,
+   "import_test": [
+    {
+     "file": "thebasemesh/pouch_01/pouch_01.fbx",
+     "ok": true,
+     "seconds": 0.01,
+     "objects": 1,
+     "verts": 421,
+     "tris": 820,
+     "quads": 410,
+     "ngons": 0,
+     "dims_m": [
+      0.066,
+      0.068,
+      0.01
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/pouch_01/pouch_01.glb",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 529,
+     "tris": 820,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.066,
+      0.068,
+      0.01
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/pouch_01/pouch_01.obj",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 421,
+     "tris": 820,
+     "quads": 410,
+     "ngons": 0,
+     "dims_m": [
+      0.066,
+      0.068,
+      0.01
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "thebasemesh_pouch_02",
+   "kind": "model",
+   "need": "model_base_mesh",
+   "status": "alt",
+   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+   "format": "zip with glb/fbx/obj",
+   "source": "thebasemesh.com",
+   "source_page": "https://www.thebasemesh.com/product-page/pouch-02",
+   "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
+   "license_url": "https://www.thebasemesh.com/faq",
+   "folder": "models/thebasemesh/pouch_02",
+   "files": [
+    {
+     "path": "models/thebasemesh/pouch_02/pouch_02.zip",
+     "url": "https://www.thebasemesh.com/_files/archives/b36d2d_83634159ebb545afb63f7707cc8df63e.zip",
+     "bytes": 47714,
+     "extract": true,
+     "sha256": "4b2b42a9da8691eb3ab1062003d92b7fa52b6ca69125f357e266bacb1a27a3b9",
+     "extracted": [
+      "models/thebasemesh/pouch_02/pouch_02.fbx",
+      "models/thebasemesh/pouch_02/pouch_02.glb",
+      "models/thebasemesh/pouch_02/pouch_02.obj"
+     ]
+    }
+   ],
+   "total_bytes": 47714,
+   "import_test": [
+    {
+     "file": "thebasemesh/pouch_02/pouch_02.fbx",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 411,
+     "tris": 800,
+     "quads": 400,
+     "ngons": 0,
+     "dims_m": [
+      0.069,
+      0.09,
+      0.01
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/pouch_02/pouch_02.glb",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 531,
+     "tris": 800,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.069,
+      0.09,
+      0.01
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/pouch_02/pouch_02.obj",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 411,
+     "tris": 800,
+     "quads": 400,
+     "ngons": 0,
+     "dims_m": [
+      0.069,
+      0.09,
+      0.01
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "thebasemesh_safety_helmet",
+   "kind": "model",
+   "need": "model_base_mesh",
+   "status": "alt",
+   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+   "format": "zip with glb/fbx/obj",
+   "source": "thebasemesh.com",
+   "source_page": "https://www.thebasemesh.com/product-page/safety-helmet",
+   "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
+   "license_url": "https://www.thebasemesh.com/faq",
+   "folder": "models/thebasemesh/safety_helmet",
+   "files": [
+    {
+     "path": "models/thebasemesh/safety_helmet/safety_helmet.zip",
+     "url": "https://www.thebasemesh.com/_files/archives/b36d2d_2be2c461ff2a4e49924c3591c8669168.zip",
+     "bytes": 110360,
+     "extract": true,
+     "sha256": "e181b1c1f760da7c1bff08c207b19afc553ddd6d28bd2910c58b673498c60e30",
+     "extracted": [
+      "models/thebasemesh/safety_helmet/safety_helmet.fbx",
+      "models/thebasemesh/safety_helmet/safety_helmet.glb",
+      "models/thebasemesh/safety_helmet/safety_helmet.obj"
+     ]
+    }
+   ],
+   "total_bytes": 110360,
+   "import_test": [
+    {
+     "file": "thebasemesh/safety_helmet/safety_helmet.fbx",
+     "ok": true,
+     "seconds": 0.01,
+     "objects": 1,
+     "verts": 769,
+     "tris": 1534,
+     "quads": 766,
+     "ngons": 0,
+     "dims_m": [
+      0.221,
+      0.28,
+      0.172
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/safety_helmet/safety_helmet.glb",
+     "ok": true,
+     "seconds": 0.01,
+     "objects": 1,
+     "verts": 1091,
+     "tris": 1534,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.221,
+      0.28,
+      0.172
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/safety_helmet/safety_helmet.obj",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 769,
+     "tris": 1534,
+     "quads": 766,
+     "ngons": 0,
+     "dims_m": [
+      0.221,
+      0.28,
+      0.172
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "thebasemesh_wellington_boot",
+   "kind": "model",
+   "need": "model_base_mesh",
+   "status": "alt",
+   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+   "format": "zip with glb/fbx/obj",
+   "source": "thebasemesh.com",
+   "source_page": "https://www.thebasemesh.com/product-page/wellington-boot",
+   "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
+   "license_url": "https://www.thebasemesh.com/faq",
+   "folder": "models/thebasemesh/wellington_boot",
+   "files": [
+    {
+     "path": "models/thebasemesh/wellington_boot/wellington_boot.zip",
+     "url": "https://www.thebasemesh.com/_files/archives/b36d2d_8c197c28bcf140fca9d9d7e45a9a2f69.zip",
+     "bytes": 130161,
+     "extract": true,
+     "sha256": "20f681215ea7be9ce0dcb79bc31cd5295ccb8e7221f50141fd4b9078560dbdf4",
+     "extracted": [
+      "models/thebasemesh/wellington_boot/wellington_boot.fbx",
+      "models/thebasemesh/wellington_boot/wellington_boot.glb",
+      "models/thebasemesh/wellington_boot/wellington_boot.obj"
+     ]
+    }
+   ],
+   "total_bytes": 130161,
+   "import_test": [
+    {
+     "file": "thebasemesh/wellington_boot/wellington_boot.fbx",
+     "ok": true,
+     "seconds": 0.01,
+     "objects": 1,
+     "verts": 832,
+     "tris": 1660,
+     "quads": 830,
+     "ngons": 0,
+     "dims_m": [
+      0.134,
+      0.381,
+      0.407
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/wellington_boot/wellington_boot.glb",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 1201,
+     "tris": 1660,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.134,
+      0.381,
+      0.407
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/wellington_boot/wellington_boot.obj",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 832,
+     "tris": 1660,
+     "quads": 830,
+     "ngons": 0,
+     "dims_m": [
+      0.134,
+      0.381,
+      0.407
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "thebasemesh_seatbelt_clip",
+   "kind": "model",
+   "need": "model_base_mesh",
+   "status": "alt",
+   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+   "format": "zip with glb/fbx/obj",
+   "source": "thebasemesh.com",
+   "source_page": "https://www.thebasemesh.com/product-page/seatbelt-clip",
+   "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
+   "license_url": "https://www.thebasemesh.com/faq",
+   "folder": "models/thebasemesh/seatbelt_clip",
+   "files": [
+    {
+     "path": "models/thebasemesh/seatbelt_clip/seatbelt_clip.zip",
+     "url": "https://www.thebasemesh.com/_files/archives/b36d2d_692f118fb7a84f218d98d11a5d99f7cd.zip",
+     "bytes": 27155,
+     "extract": true,
+     "sha256": "25d6834d44e147e2fc7ff8ab9c91460e0a3053ccab8cbc64da739e9c22ddc1c5",
+     "extracted": [
+      "models/thebasemesh/seatbelt_clip/seatbelt_clip.fbx",
+      "models/thebasemesh/seatbelt_clip/seatbelt_clip.glb",
+      "models/thebasemesh/seatbelt_clip/seatbelt_clip.obj"
+     ]
+    }
+   ],
+   "total_bytes": 27155,
+   "import_test": [
+    {
+     "file": "thebasemesh/seatbelt_clip/seatbelt_clip.fbx",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 198,
+     "tris": 400,
+     "quads": 200,
+     "ngons": 0,
+     "dims_m": [
+      0.037,
+      0.059,
+      0.002
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/seatbelt_clip/seatbelt_clip.glb",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 338,
+     "tris": 400,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.037,
+      0.059,
+      0.002
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/seatbelt_clip/seatbelt_clip.obj",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 198,
+     "tris": 400,
+     "quads": 200,
+     "ngons": 0,
+     "dims_m": [
+      0.037,
+      0.059,
+      0.002
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "thebasemesh_watch_strap_buckle",
+   "kind": "model",
+   "need": "model_base_mesh",
+   "status": "alt",
+   "note": "TheBaseMesh CC0 base mesh (quads, UV'd, no materials); zip = fbx+glb+obj",
+   "format": "zip with glb/fbx/obj",
+   "source": "thebasemesh.com",
+   "source_page": "https://www.thebasemesh.com/product-page/watch-strap-buckle",
+   "license": "CC0 1.0 (FAQ: 'You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission')",
+   "license_url": "https://www.thebasemesh.com/faq",
+   "folder": "models/thebasemesh/watch_strap_buckle",
+   "files": [
+    {
+     "path": "models/thebasemesh/watch_strap_buckle/watch_strap_buckle.zip",
+     "url": "https://www.thebasemesh.com/_files/archives/b36d2d_64c19677f8534b8a9dfc35ad709a02dc.zip",
+     "bytes": 134673,
+     "extract": true,
+     "sha256": "764fea20ae7a05917ae30db168d81ea57af14a5b4787cd6bd50d91f5db2dc26a",
+     "extracted": [
+      "models/thebasemesh/watch_strap_buckle/watch_strap_buckle.fbx",
+      "models/thebasemesh/watch_strap_buckle/watch_strap_buckle.glb",
+      "models/thebasemesh/watch_strap_buckle/watch_strap_buckle.obj"
+     ]
+    }
+   ],
+   "total_bytes": 134673,
+   "import_test": [
+    {
+     "file": "thebasemesh/watch_strap_buckle/watch_strap_buckle.fbx",
+     "ok": true,
+     "seconds": 0.01,
+     "objects": 1,
+     "verts": 1014,
+     "tris": 1974,
+     "quads": 987,
+     "ngons": 0,
+     "dims_m": [
+      0.023,
+      0.08,
+      0.006
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/watch_strap_buckle/watch_strap_buckle.glb",
+     "ok": true,
+     "seconds": 0.01,
+     "objects": 1,
+     "verts": 1557,
+     "tris": 1974,
+     "quads": 0,
+     "ngons": 0,
+     "dims_m": [
+      0.023,
+      0.08,
+      0.006
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    },
+    {
+     "file": "thebasemesh/watch_strap_buckle/watch_strap_buckle.obj",
+     "ok": true,
+     "seconds": 0.0,
+     "objects": 1,
+     "verts": 1014,
+     "tris": 1974,
+     "quads": 987,
+     "ngons": 0,
+     "dims_m": [
+      0.023,
+      0.08,
+      0.006
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "oga_m4a1_nisu",
+   "kind": "model",
+   "need": "model_reference_rifle",
+   "status": "alt",
+   "note": "M4A1 FBX, 5159 verts/9236 tris, 2K PBR PNGs (base colour, normal, rough, metal, height); mid-poly, good blockout/proportion reference",
+   "authors": [
+    "nisu"
+   ],
+   "format": "zip (FBX + PNG textures)",
+   "source": "OpenGameArt",
+   "source_page": "https://opengameart.org/content/m4a1-assault-rifle",
+   "license": "CC0 1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "folder": "models/oga_m4a1_nisu",
+   "files": [
+    {
+     "path": "models/oga_m4a1_nisu/m4a1_0.zip",
+     "url": "https://opengameart.org/sites/default/files/m4a1_0.zip",
+     "bytes": 3631284,
+     "extract": true,
+     "extracted": [
+      "models/oga_m4a1_nisu/M4A1/M4A1.fbx",
+      "models/oga_m4a1_nisu/M4A1/M4A1_Base_Color.png",
+      "models/oga_m4a1_nisu/M4A1/M4A1_Height.png",
+      "models/oga_m4a1_nisu/M4A1/M4A1_Metallic.png",
+      "models/oga_m4a1_nisu/M4A1/M4A1_Normal.png",
+      "models/oga_m4a1_nisu/M4A1/M4A1_Roughness.png"
+     ]
+    }
+   ],
+   "total_bytes": 3631284,
+   "import_test": [
+    {
+     "file": "oga_m4a1_nisu/M4A1/M4A1.fbx",
+     "ok": true,
+     "seconds": 0.05,
+     "objects": 13,
+     "verts": 5159,
+     "tris": 9236,
+     "quads": 3450,
+     "ngons": 43,
+     "dims_m": [
+      0.064,
+      0.859,
+      0.266
+     ],
+     "has_uv": true,
+     "materials": [],
+     "images": []
+    }
+   ]
+  },
+  {
+   "id": "oga_m4a1_lowpoly_mallninjamax",
+   "kind": "model",
+   "need": "model_reference_rifle",
+   "status": "alt",
+   "note": "167-tri hand-painted low-poly M4A1 (.blend + FBX); silhouette reference only",
+   "authors": [
+    "MallNinjaMax"
+   ],
+   "format": "zip (FBX + PNG textures)",
+   "source": "OpenGameArt",
+   "source_page": "https://opengameart.org/content/low-poly-m4a1",
+   "license": "CC0 1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "folder": "models/oga_m4a1_lowpoly_mallninjamax",
+   "files": [
+    {
+     "path": "models/oga_m4a1_lowpoly_mallninjamax/m4a1.zip",
+     "url": "https://opengameart.org/sites/default/files/m4a1.zip",
+     "bytes": 716723,
+     "extract": true,
+     "extracted": [
+      "models/oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1.blend",
+      "models/oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1.fbx",
+      "models/oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1Diffuse.png"
+     ]
+    }
+   ],
+   "total_bytes": 716723,
+   "import_test": [
+    {
+     "file": "oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1.fbx",
+     "ok": true,
+     "seconds": 0.04,
+     "objects": 2,
+     "verts": 106,
+     "tris": 167,
+     "quads": 81,
+     "ngons": 0,
+     "dims_m": [
+      0.062,
+      0.84,
+      0.309
+     ],
+     "has_uv": true,
+     "materials": [
+      "M4"
+     ],
+     "images": [
+      "M4diffuse.png"
+     ]
+    }
+   ]
+  }
+ ]
+}
