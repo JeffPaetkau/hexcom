@@ -156,7 +156,7 @@ objs = [panel, web, stitch]
 pc.report("MOLLE panel", t_build, objs)
 
 # ---------- camera + light: closeup on two rows ----------
-pc.key_light((0.1, 0, 0.075), direction=(-0.6, -1, 0.9), dist=0.6, power=40, size=0.3)
+pc.key_light((0.1, 0, 0.075), direction=(-0.6, -1, 0.9), dist=0.6, size=0.3)
 pc.camera_fit(objs, direction=(0.25, -1, 0.35), margin=0.75, lens=70)
 pc.render(os.path.join(pc.OUT_DIR, "proto_molle.png"), "molle")
 # very tight detail crop

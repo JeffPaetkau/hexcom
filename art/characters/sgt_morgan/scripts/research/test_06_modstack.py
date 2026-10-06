@@ -12,8 +12,8 @@ T = {}
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
-sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = 64; sc.cycles.use_denoising = True
-sc.render.resolution_x = 1024; sc.render.resolution_y = 1024
+sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = 48; sc.cycles.use_denoising = True
+sc.render.resolution_x = 800; sc.render.resolution_y = 800
 w = bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True
 w.node_tree.nodes["Background"].inputs[0].default_value = (0.25, 0.25, 0.28, 1)
 for name, loc, e in (("Key", (0.6, -0.7, 0.9), 250), ("Fill", (-0.7, -0.4, 0.3), 60), ("Rim", (0.2, 0.8, 0.7), 200)):

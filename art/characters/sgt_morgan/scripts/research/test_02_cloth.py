@@ -18,10 +18,10 @@ def reset_scene():
     sc = bpy.context.scene
     sc.render.engine = "CYCLES"
     sc.cycles.device = "CPU"
-    sc.cycles.samples = 64
+    sc.cycles.samples = 48   # modest: CPU oversubscribed during tests
     sc.cycles.use_denoising = True
-    sc.render.resolution_x = 960
-    sc.render.resolution_y = 1080
+    sc.render.resolution_x = 640
+    sc.render.resolution_y = 720
     sc.frame_start = 1
     sc.frame_end = 60
     w = bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True

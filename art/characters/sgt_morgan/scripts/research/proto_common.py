@@ -51,8 +51,13 @@ def world_hdri(strength=1.0, rot_z=0.0):
     links.new(mp.outputs["Vector"], env.inputs["Vector"])
     links.new(env.outputs["Color"], bg.inputs["Color"])
 
-def key_light(target, direction=(-1, -1, 1.5), dist=1.0, power=60, size=0.4):
+def key_light(target, direction=(-1, -1, 1.5), dist=1.0, power=None, size=0.4, irradiance=3.0):
+    """Area light aimed at target. Power is derived from a target irradiance at the target:
+    for a Lambertian area emitter E ~= P / (pi * dist^2), so P = E * pi * dist^2.
+    (A 40 W light at 0.6 m gives ~35 W/m^2 -> blows out dark fabrics; 3 W/m^2 is a sane key.)"""
     d = Vector(direction).normalized()
+    if power is None:
+        power = irradiance * math.pi * dist * dist
     ld = bpy.data.lights.new("Key", "AREA"); ld.energy = power; ld.size = size
     lo = bpy.data.objects.new("Key", ld); bpy.context.collection.objects.link(lo)
     lo.location = Vector(target) + d * dist

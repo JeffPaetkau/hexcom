@@ -3,7 +3,12 @@
 Bundled targets dir: /root/.config/blender/4.5/extensions/user_default/mpfb/data/targets
 User asset dir:      /root/.config/blender/4.5/extensions/.user/user_default/mpfb/data
 
-## TARGETS (shape keys; load via TargetService.set_target_value(basemesh, '<name>', weight); name = filename without .target.gz)
+## TARGETS (shape keys). name = filename stem without .target.gz, NO category prefix.
+## Load a new one:   TargetService.load_target(basemesh, TargetService.target_full_path('<name>'), weight=w)
+## or in bulk:       TargetService.bulk_load_targets(basemesh, [{'target': '<name>', 'value': w}, ...])
+## set_target_value(basemesh, '<name>', w) only CHANGES an already-loaded shape key (silently no-op otherwise).
+## Macro targets:    HumanObjectProperties.set_value('age'|'muscle'|'weight'|'height'|..., v, entity_reference=basemesh)
+##                   then TargetService.reapply_macro_details(basemesh).  Verified in scripts/research/mpfb_build_v2.py.
 
 ### arms (50)
   l-lowerarm-fat-decr
