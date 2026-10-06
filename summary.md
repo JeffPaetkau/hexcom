@@ -1,6 +1,13 @@
 # Hexcom — project summary
 
-## Where take 2 is (updated 2026-09-17)
+## Where take 2 is (updated 2026-10-06)
+
+**Art (2026-10-06): a photoreal Sgt. Alex Morgan soldier model is being specified under
+`art/characters/sgt_morgan/`** (read its `CLAUDE.md`, then `spec/00_overview.md`). It is built
+entirely by scripts in headless Blender from a loadout screenshot and checked by rendering against
+the reference; the analysis notes and per-part specs live beside the scripts. The rules' standing man
+is 1.80 m with the eye at 1.65 m (constants table below); the drawing scales to about 1.855 m, so the
+export is scaled to the rules' height. Nothing in `game/` uses it yet.
 
 **Newest (2026-09-17, night): the fog of war, drawn as fog. The first increment of the
 perception design below, not committed.** Rules: `Sight.cs` holds `SightModel` (eye 1.65,
