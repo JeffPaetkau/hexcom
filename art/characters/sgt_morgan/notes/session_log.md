@@ -5,6 +5,10 @@ next, anything a fresh session must know.
 
 ## 2026-10-07 00:10 UTC — stopped at Jeff's request (API window nearly full)
 
+Rule added after reading the drafts: **reality wins** over the AI-generated image where they
+conflict (see CLAUDE.md, Source of truth). The critique pass must revise specs 01 to 05 and 09
+against it; the writer prompts in `scripts/workflows/spec_writers.js` already carry it.
+
 State: specs 01, 02, 03, 04, 05, 09 written (drafts, uncritiqued); all six research notes
 done; everything pushed to hexcom master. Remaining specs to write: 06 head and face,
 07 hair, 08 rig and pose, 10 shirt and gaiter, 11 gloves, 12 hard armour, 13 plate
