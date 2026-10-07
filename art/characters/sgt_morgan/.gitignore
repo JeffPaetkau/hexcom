@@ -1,0 +1,13 @@
+# large binaries are re-downloaded by scripts/setup_session.sh
+assets/*
+!assets/manifest.json
+!assets/README.md
+renders/*
+!renders/eval/
+renders/eval/*
+!renders/eval/*.png
+*.blend1
+*.blend2
+__pycache__/
+*.pyc
+.venv/
