@@ -3,7 +3,7 @@
 ## Where take 2 is (updated 2026-09-17)
 
 **Newest (2026-09-17, night): the fog of war, drawn as fog. The first increment of the
-perception design below, not committed.** Rules: `Sight.cs` holds `SightModel` (eye 1.65,
+perception design below, committed as b11ff06 and pushed.** Rules: `Sight.cs` holds `SightModel` (eye 1.65,
 body 1.8, `HalfSightMetres` 40 as the weather, front arc 120, peripheral 200, acuities 0.45 and
 0.08, `ArcBlendDegrees` 30, `SeenAt` 0.1, `Negligible` 0.02) and `Sight`, whose `Clarity(from,
 facing, to)` is three factors multiplied: `Exposure`, the share of a standing man the ground
@@ -20,15 +20,21 @@ SIGHT`. A survey of the real landscape takes about 190 ms in debug (a test asser
 s); it runs at turn ends, walk ends, turns on the spot and shots, not per step. Nine tests in
 `SightTests.cs`, 53 in all. View: `fog.gdshader` is a full-screen quad (POSITION set in the
 vertex shader, `CustomAabb` huge, render priority 127, transparent pass) reconstructing each
-pixel's world position from the depth texture, sampling `SightField` (256 a side, `Rgf`: R
-clarity, G ground height, recentred on the unit, bilinear in axial space plus four taps a
-texel out, crossfaded over half a second by lerping arrays and re-uploading), fog amount =
-cap 0.75 × (1 − clarity) × exp(−height above ground / 6 m), blended **in gamma space through
-the screen texture** (the first try blended in linear light and looked like pea soup at every
-strength, the hex marks' lesson again), fog colour the horizon's. Ground heights are filled for
-every hex in the reach hexagon, seen or not, so a hill behind the unit does not stand out of
-the fog for want of a height; past the reach the ground is marked unknown (a height nothing is
-above) so the fog there sits at the cap whatever the hill. Board: pieces the
+pixel's world position from the depth texture and **marching the camera's ray back from that
+surface** (24 dithered steps over up to 80 m) through a fog field: density = 0.4/m × murk² ×
+exp(−height above the hex's ground / 5 m), murk being 1 − clarity, integrated to an optical
+depth, amount = cap 0.75 × (1 − e^−depth). The first version fogged each pixel by the hex under
+it alone and the user said it read as a wash on the ground, not fog in the air; the march is
+what makes it a volume: pieces stand in it, the bluff rises through it, a clear hex seen past
+a bank picks up haze, and a low camera sees a fog bank with a top. The trade: the picture now
+depends a little on the camera, as real fog does, and in dense weather the active unit's own
+piece is softened by the fog the camera looks down through (`fog_height` lower would keep a
+top-down view crisper). `SightField` (256 a side, `Rgf`: R clarity, G ground height, recentred
+on the unit, bilinear in axial space, crossfaded over half a second by lerping arrays and
+re-uploading) fills ground heights for every texel, seen or not, from the sight's cache, since
+the ray crosses unseen ground on its way. Blended **in gamma space through the screen texture**
+(a first try blended in linear light and looked like pea soup at every strength, the hex marks'
+lesson again), fog colour the horizon's. Board: pieces the
 active unit does not see are `Visible = false` (the fog hides nothing, ever); unseen enemies
 cannot be hovered, are not danger-marked and do not block reach; a walk that would step onto
 an unseen unit stops short, pays only the steps taken, and turns the walker to face them

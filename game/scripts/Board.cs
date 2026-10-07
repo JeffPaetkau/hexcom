@@ -588,7 +588,7 @@ public partial class Board : Node3D
     private void RefreshSight(bool fade)
     {
         _view = _sight.Survey(Unit.Position, Unit.Facing);
-        _field.Show(_view, _sight.HeightAt, _sight.ReachHexes, fade);
+        _field.Show(_view, _sight.HeightAt, fade);
 
         foreach (var unit in _units) _pieces[unit].Visible = Seen(unit);
     }

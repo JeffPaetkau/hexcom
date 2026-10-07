@@ -19,11 +19,13 @@ you from below and hides the ground below from you, and from the edge you see ev
 air halves what is made out at the weather's distance, forty metres on a clear day, and is gone
 by three times it; the eye makes out everything in the front arc, under half of it to the side
 and next to nothing behind, so a soldier's back is fogged and turning is worth its points. The
-fog is a screen pass ([fog.gdshader](game/shaders/fog.gdshader)) that fogs every pixel by the
-clarity of the hex under it, from a one-texel-per-hex texture
-([SightField.cs](game/scripts/SightField.cs)) sampled smoothly, thinning with height so tall
-things stand out of it, capped short of opaque so the ground stays a map, blended in gamma
-space like the marks, and crossfaded when the view changes. The fog hides nothing: an enemy
+fog is fog in the air: a screen pass ([fog.gdshader](game/shaders/fog.gdshader)) marches each
+pixel's ray back from the surface it hit towards the camera through a field of fog that is
+dense where the unit makes little out, lies on the ground and thins with height, read from a
+one-texel-per-hex texture ([SightField.cs](game/scripts/SightField.cs)) sampled smoothly; so
+pieces stand in it, a bluff rises through it, a clear hex seen past a bank of it picks up a
+little haze, and a low camera sees a bank with a top. It is capped short of opaque so the
+ground stays a map, blended in gamma space like the marks, and crossfaded when the view changes. The fog hides nothing: an enemy
 the unit cannot see is not in the scene at all, cannot be hovered, shot at (`NOT IN SIGHT`)
 or walked around, and a walk that would step onto him stops short, the unit turning to face
 whoever it walked into. What a unit knows but cannot see now, marks on the ground, comes next. A shot

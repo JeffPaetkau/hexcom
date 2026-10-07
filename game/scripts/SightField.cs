@@ -24,9 +24,6 @@ public sealed class SightField
     /// <summary>How long the fog takes to re-form from one view to the next.</summary>
     public const float FadeSeconds = 0.5f;
 
-    /// <summary>The ground height of a hex past the sight's reach: higher than anything, so no pixel is above it.</summary>
-    private const float UnknownGround = 1e6f;
-
     private readonly ShaderMaterial _fog;
     private readonly ImageTexture _texture;
     private float[] _from = new float[Size * Size];
@@ -47,9 +44,8 @@ public sealed class SightField
     }
 
     /// <summary>Replace the view: crossfade to it from what is shown now, or show it at once.</summary>
-    /// <param name="groundHeight">The height of a hex's ground, asked for every hex within the reach.</param>
-    /// <param name="reachHexes">How far the sight reaches in hexes; ground is known that far and no further.</param>
-    public void Show(View view, Func<Hex, double> groundHeight, int reachHexes, bool fade)
+    /// <param name="groundHeight">The height of a hex's ground, asked for every hex in the texture.</param>
+    public void Show(View view, Func<Hex, double> groundHeight, bool fade)
     {
         var origin = new Hex(view.From.Q - Size / 2, view.From.R - Size / 2);
 
@@ -64,22 +60,17 @@ public sealed class SightField
             if (ox >= 0 && ox < Size && oy >= 0 && oy < Size) from[y * Size + x] = _now[oy * Size + ox];
         }
 
-        // Ground heights are known as far as the sight reaches, unseen hexes included, since
-        // the fog thins with height above the ground and a hill behind the unit must not stand
-        // out of it for want of a height. Past the reach the ground is unknown, and is marked
-        // so high that nothing is ever above it: the fog there sits at the cap whatever the
-        // height. (A tall thing standing out of fog past the reach is the map layer's to draw,
-        // when there is one.)
+        // Ground heights are filled for the whole texture, seen hexes or not, because the fog
+        // lies on the ground and thins with height, and the camera's ray passes over ground
+        // the unit does not see on its way to ground it does: a hill behind the unit must not
+        // stand out of the fog, nor sink into it, for want of a height. The heights are
+        // remembered by the sight, so only the hexes newly in range are worked out each time.
         var to = new float[Size * Size];
         var ground = new float[Size * Size];
-        Array.Fill(ground, UnknownGround);
-        for (var dq = -reachHexes; dq <= reachHexes; dq++)
-        for (var dr = Math.Max(-reachHexes, -dq - reachHexes); dr <= Math.Min(reachHexes, -dq + reachHexes); dr++)
+        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Size; x++)
         {
-            var hex = new Hex(view.From.Q + dq, view.From.R + dr);
-            var x = hex.Q - origin.Q;
-            var y = hex.R - origin.R;
-            if (x < 0 || x >= Size || y < 0 || y >= Size) continue;
+            var hex = new Hex(origin.Q + x, origin.R + y);
             to[y * Size + x] = (float)view.ClarityAt(hex);
             ground[y * Size + x] = (float)groundHeight(hex);
         }
