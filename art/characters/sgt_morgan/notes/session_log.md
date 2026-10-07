@@ -3,6 +3,16 @@
 Newest first. One entry per working session, a few lines each: what was done, what is
 next, anything a fresh session must know.
 
+## 2026-10-07 00:10 UTC — stopped at Jeff's request (API window nearly full)
+
+State: specs 01, 02, 03, 04, 05, 09 written (drafts, uncritiqued); all six research notes
+done; everything pushed to hexcom master. Remaining specs to write: 06 head and face,
+07 hair, 08 rig and pose, 10 shirt and gaiter, 11 gloves, 12 hard armour, 13 plate
+carrier, 14 belt and leg rigs, 15 carbine, 16 materials library, 17 evaluation scene,
+18 pipeline. Their prompts are in `scripts/workflows/spec_writers.js` (Workflow tool
+script; run two agents at a time). After that: critique and revise pass, then
+`spec/00_overview.md`, then the fast-loop tooling.
+
 ## 2026-10-06 — cloud session 1 (Fable)
 
 Done: environment scouted; reference crops; five analyst notes plus a consolidated
