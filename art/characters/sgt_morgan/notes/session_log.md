@@ -99,16 +99,21 @@ in `notes/review_2026-10-10_foot.md` and are the foot's work list. The lock is t
 leg); `renders/01_foot/sheets/locked_variants.png`.
 
 **Next** (no new work was started after this point; Jeff stopped for the week's budget):
-1. Read `notes/research_foot_hires.md` and the renders under `renders/research/foot_hires/`: a
-   method trial on the big toe, toe 2 and their web (code in `scripts/research/foot_hires/`) that
-   compares ways to get real detail by script (a denser mesh with real webs, signed distance
-   fields with smooth unions, a parametric toe generator). If it was still running when this
-   session ended, its files may be incomplete.
+1. The method trial is done (`notes/research_foot_hires.md`, code in
+   `scripts/research/foot_hires/`, renders under `renders/research/foot_hires/`, which are not
+   committed and rebuild in about 144 s): the chosen method is a dense copy of the foot
+   (subdivided to about 0.17 mm on the toes) shaped by fields, with OpenVDB distance-field
+   closing only where surfaces must merge (the webs). On the big toe it sets the nail into the
+   toe under its folds, gives the tips a pulp, adds the first MTP prominence and the extensor
+   tendon, and keeps MakeHuman's topology, UVs, groups and weights. Still wrong: the IP creases
+   read as three parallel grooves, the nail ridges are too regular, a sawtooth at the free
+   edge's corner, plantar creases as hard lines, toe 2 a little tubular, toes 3 to 5 untouched.
 2. Build spec 18 §8.1's critic loop (`scripts/eval/critic/`: packet, prompts C1 to C3, schema,
    tally), adding a free-form ranked list like Jeff's two reviews, and for hidden parts with no
    reference crop, Jeff's photos (`cache/ref_feet/`, never committed) as C1's anchor. The
    critics are fresh agents spawned by the orchestrating session, one at a time.
-3. A first critic round on the trial's result; then the whole foot in the chosen method,
+3. A first critic round on `renders/research/foot_hires/critic_sheet.png` (and `_form`); then
+   the whole foot in the chosen method,
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

@@ -1,0 +1,247 @@
+{
+ "doc": "The high-resolution foot trial's views of its region (the hallux, toe 2 and the 1-2 web of the LEFT foot), in frame F (Frame.Foot.L, mm). Each looks along one of part 01's low-distortion directions (V5f, V1f mirrored to the medial side, V2, V4) from far off with a long lens, so the region fills the frame at a natural perspective (the far and near ends of the region within 1.1 of each other); hr.hallux and hr.toe2 are the 2048 px closeups of one toe's tip and nail. No depth of field: these judge form. Rendered by scripts/research/foot_hires/run.py with the registry of this file and p01.json.",
+ "owner": "research",
+ "presets": [
+  {
+   "id": "hr.front",
+   "label": "region_front",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     -81.5,
+     -1103.2,
+     427.1
+    ],
+    "target_mm": [
+     -14.0,
+     -258.0,
+     12.0
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 369.4,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "p01.V5f's direction, aimed at the hallux and toe 2, a 92 mm field"
+  },
+  {
+   "id": "hr.top34",
+   "label": "region_top_three_quarter",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     -708.2,
+     -1474.4,
+     1156.3
+    ],
+    "target_mm": [
+     -18.0,
+     -244.0,
+     16.0
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 653.0,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "p01.V1f's direction mirrored to the medial side (the region is the medial forefoot), a 100 mm field"
+  },
+  {
+   "id": "hr.medial",
+   "label": "region_medial",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     -923.6,
+     -235.0,
+     124.2
+    ],
+    "target_mm": [
+     -30.0,
+     -235.0,
+     17.0
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 289.3,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "p01.V2's side, slightly from above: the hallux in profile, its pulp, nail and the first MTP prominence"
+  },
+  {
+   "id": "hr.plantar",
+   "label": "region_plantar",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     -12.0,
+     -341.3,
+     -790.3
+    ],
+    "target_mm": [
+     -12.0,
+     -246.0,
+     4.0
+    ],
+    "up": [
+     0,
+     1,
+     0
+    ],
+    "lens_mm": 288.0,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Scene.Floor*",
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "p01.V4's view from below, tilted toward the toes' tips: the pulps, the plantar web and the flexion creases"
+  },
+  {
+   "id": "hr.hallux",
+   "label": "hallux_closeup",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     -198.3,
+     -862.0,
+     334.5
+    ],
+    "target_mm": [
+     -23.0,
+     -266.0,
+     12.0
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 547.8,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "the hallux's tip and nail from front, medial and above, a 46 mm field (45 px/mm)"
+  },
+  {
+   "id": "hr.toe2",
+   "label": "toe2_closeup",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     36.1,
+     -862.4,
+     365.4
+    ],
+    "target_mm": [
+     1.0,
+     -258.0,
+     14.0
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 600.0,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "toe 2's tip, nail and PIP knuckle from the front and above, a 42 mm field"
+  }
+ ]
+}
