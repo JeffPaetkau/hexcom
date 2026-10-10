@@ -112,3 +112,11 @@ is inconsistent with itself or with reality, reality wins.** Precedence:
    is accepted).
 
 Specs written before this rule (01 to 05, 09) are revised against it in the critique pass.
+
+## Paths
+
+Specs, notes and research scripts written in cloud sessions refer to `/home/user/sgt_morgan/...`;
+read that as this folder (`art/characters/sgt_morgan/` in the hexcom repository). Paths under
+`assets/ai/` in the notes have copies of the small results in `ref/ai/` (the face landmarks
+and meshes extracted from the reference). New scripts take paths relative to this folder and
+must run on both Linux and Windows.

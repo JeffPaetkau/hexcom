@@ -3,6 +3,45 @@
 Newest first. One entry per working session, a few lines each: what was done, what is
 next, anything a fresh session must know.
 
+## 2026-10-10 — hand-off: the vertical slice moves to Jeff's GPU workstation
+
+**State.** All eighteen specs are written and pushed. The consistency ledger
+(`notes/interface_ledger.md`: shared values and their owners, per-spec change lists, Jeff's
+open questions) is being finished by the cloud session and will be pushed when done; pull
+before starting the slice. Specs are revised just in time: each part's spec gets its ledger
+changes applied when that part is built, because the slice will teach lessons that change the
+later specs anyway.
+
+**Workstation prerequisites.** Blender 4.5 LTS (4.5.14 matches the cloud), Git for Windows
+(Git Bash), Python 3 with Pillow and numpy, Godot 4.7.2 for the import check. Git LFS is not
+needed until the first texture bake (0.35 to 0.6 GB per bake, spec 18).
+
+**First steps.**
+1. Make `scripts/setup_session.sh` work in Git Bash on Windows as spec 18 section 4 describes:
+   find or install Blender, install the MPFB2 extension and the MakeHuman packs
+   (`notes/research_generators.md` section 6; on Windows the user extension folder is under
+   `%APPDATA%/Blender Foundation/Blender/4.5/`), restore the textures and HDRIs from
+   `assets/manifest.json` with `scripts/research/build_manifest.py --restore`.
+2. Turn on the GPU for Cycles in a startup helper (OptiX for NVIDIA RTX, CUDA otherwise, HIP for
+   AMD) and time `scripts/research/test_01_cycles_bench.py` against the cloud's numbers in
+   `notes/research_blender_capabilities.md`.
+3. Build the shared tooling from spec 18: `scripts/lib/`, the persistent Blender server, the
+   measurement tools, the render harness with spec 17's camera presets, contact sheets.
+
+**The vertical slice.** Foot, then sock, then boot, as Jeff first described: apply the ledger's
+changes to specs 01 and 02 (and the shared values they take from 03, 08, 16 and 17), build
+`scripts/parts/01_foot_ankle_sock.py` and `02_boots.py`, render against
+`ref/crop_boots_feet.png`, run the critic rounds of spec 18, export the boots to glTF and check
+the import in Godot. Record measured effort per step so the 35 to 90 window estimate can be
+replaced by a real one.
+
+**Commits.** Jeff asked for this work to live in the repository; commit and push at
+milestones. Everything outside `art/` follows the game's own rule in `summary.md`.
+
+**Starter prompt for the local session:** "Read art/characters/sgt_morgan/CLAUDE.md and the
+newest entry of art/characters/sgt_morgan/notes/session_log.md, then begin the first steps
+listed there. Work in art/characters/sgt_morgan."
+
 ## 2026-10-10 — cloud session (Opus)
 
 Specs 06, 07, 08, 10, 11, 12, 13, 14 and 17 written under the reality-wins rule and pushed.
