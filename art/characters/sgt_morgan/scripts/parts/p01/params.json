@@ -1,4 +1,44 @@
 {
+ "doc": "2026-10-10, Jeff's lock from the variant sheets: toes X3 (the hallux 30 mm wide and set 4.5 mm apart, toe 2 slimmed to 16, the lesser toes of variant E curled 25 degrees, the fifth 32) and heel H1. 'sculpt' are pass A's amounts (fit_sculpt.py; the heel's and toe2_w set by the variant sheets), 'fixed' pass B's operations over fields.FIXED, 'targets' the MPFB foot targets S1 loads.",
+ "fixed": {
+  "hallux_ip_deg": 5.0,
+  "hallux_valgus_deg": {
+   "L": 7.5,
+   "R": 5.5
+  },
+  "hallux_width_mm": 30.0,
+  "toe_curl_deg": {
+   "2": 25.0,
+   "3": 25.0,
+   "4": 25.0,
+   "5": 32.0
+  },
+  "toe_dip_deg": {
+   "2": 8.0,
+   "3": 8.0,
+   "4": 8.0,
+   "5": 10.0
+  },
+  "toe_gap_mm": 0.3,
+  "toe_gap_pairs": {
+   "1-2": [
+    4.5,
+    4.5
+   ]
+  },
+  "toe_gather": true,
+  "toe_mid_short_mm": {
+   "2": 3.0,
+   "3": 3.5,
+   "4": 4.0
+  },
+  "toe_mtp_floor": true,
+  "web_y": {
+   "2-3": -235.0,
+   "3-4": -231.1,
+   "4-5": -218.0
+  }
+ },
  "sculpt": {
   "arch_drop": 5.925,
   "dorsum_50": -2.6237,
@@ -7,10 +47,12 @@
   "fore_w": -2.2076,
   "heel_back_high": 0.681,
   "heel_back_low": 1.0799,
-  "heel_back_w": 12.943,
-  "heel_fore_w": -4.1777,
-  "heel_low_w": -0.8428,
-  "heel_mid_w": 15.3828,
+  "heel_back_w": 20.8327,
+  "heel_end_w": 17.9599,
+  "heel_fore_w": -2.2884,
+  "heel_low_w": 0.7107,
+  "heel_mid_w": 16.9746,
+  "heel_top_w": 0.1942,
   "mall_lat": 12.0,
   "mall_med": 12.0,
   "mid_fill": 6.4004,
@@ -22,7 +64,7 @@
   "toe1_w": -13.7804,
   "toe2_ext": 4.3238,
   "toe2_h": -10.5836,
-  "toe2_w": -3.8689,
+  "toe2_w": -10.06,
   "toe3_ext": 6.6395,
   "toe3_h": -15.8174,
   "toe3_w": -2.5952,

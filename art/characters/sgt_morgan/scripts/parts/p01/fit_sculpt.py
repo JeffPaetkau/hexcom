@@ -27,14 +27,17 @@ from parts.p01 import fields, footmetrics as fm  # noqa: E402
 PARAMS = os.path.join(HERE, "params.json")
 BODY = "Body.Mesh"
 L_TARGET = 282.0
-TIP_SHARE = {1: 1.0, 2: 0.985, 3: 0.95, 4: 0.905, 5: 0.83}  # §3.3: tips as shares of the foot length
-TOE_W = {1: 26.0, 2: 17.0, 3: 16.0, 4: 15.0, 5: 14.5}
-TOE_H = {1: 22.0, 2: 16.0, 3: 15.0, 4: 14.0, 5: 13.0}
+# §3.3 as Jeff locked it on 2026-10-10 (from reference photos): the tips of the curled, shortened lesser toes,
+# the 30 mm hallux (pass B widens it to that whatever toe1_w is) and the 16 mm toe 2; toes 3-5 keep their
+# table widths here, since the closed webs that widen their bases in the build come after the fit's prediction
+TIP_SHARE = {1: 1.0, 2: 0.9658, 3: 0.9300, 4: 0.8870, 5: 0.8242}
+TOE_W = {1: 30.0, 2: 16.0, 3: 16.0, 4: 15.0, 5: 14.5}
+TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
 # (metric, target, weight tolerance): spec 01 §3.1 and §3.3 (tight where ANSUR measured, looser where the
-# spec estimated); the §8.2 tolerances are what measure() checks
+# spec estimated); the §8.2 tolerances are what measure() checks; the heel is H1 (Jeff, 2026-10-10)
 RESIDUALS = [("foot_length", 282.0, 0.5), ("ball_length", 210.0, 1.0), ("ball_breadth", 105.0, 0.7),
-             ("heel_breadth", 71.0, 0.7), ("heel_width_z10", 66.0, 1.0), ("heel_width_z20", 70.0, 1.0),
-             ("heel_width_z30", 71.0, 1.0), ("bimalleolar", 76.0, 0.7), ("pternion_z", 30.0, 1.0),
+             ("heel_breadth", 76.0, 0.7), ("heel_width_z10", 69.0, 1.0), ("heel_width_z20", 72.0, 1.0),
+             ("heel_width_z30", 73.0, 1.0), ("bimalleolar", 76.0, 0.7), ("pternion_z", 30.0, 1.0),
              ("heel_ankle_circ", 353.0, 6.0), ("instep_circ", 263.0, 3.0), ("ball_circ", 259.0, 2.5),
              ("ankle_circ_min", 229.0, 2.0), ("dorsum_h50", 66.0, 1.0), ("dorsum_h60", 56.0, 1.0),
              ("dorsum_h70", 40.0, 1.0), ("arch_medial_45", 13.0, 1.0), ("lateral_clear_50", 4.0, 1.0)]
@@ -80,12 +83,12 @@ class AnkleProbe:
         bpy.data.meshes.remove(me)
 
 
-def evaluate(body, a, side="L", gaps=True, probe=None):
+def evaluate(body, a, side="L", gaps=True, probe=None, opts=None):
     """The sculpted foot's metrics (and toe gaps) for amounts a, measured on the prediction; the malleoli on
     its subdivided surface when a probe is given."""
     co = body.co.copy()
     foot = body.feet[side]
-    co[foot.R] = foot.frame.to_w(body.sculpt_side(side, a, separate=False))
+    co[foot.R] = foot.frame.to_w(body.sculpt_side(side, a, opts, separate=False))  # pass B as params.json sets it
     m = fm.with_positions(body.m0, co)
     v = fm.foot(m, body.ix, side)
     f = v.pop("_frame", None)
@@ -116,7 +119,7 @@ def residuals(v):
 PRIOR = 0.03  # weight of the pull toward fields.py's start values, per unit (mm or %)
 
 
-def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None):
+def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None, opts=None):
     """Levenberg-Marquardt-style Gauss-Newton: the step solves the linearised residuals plus a weak prior
     toward the start values, damped toward the current amounts, inside the bounds, then halves until the
     true cost falls."""
@@ -129,7 +132,7 @@ def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None):
 
     def at(vec):
         try:
-            v = evaluate(body, dict(zip(names, vec)), probe=probe)
+            v = evaluate(body, dict(zip(names, vec)), probe=probe, opts=opts)
             r = np.concatenate([residuals(v), sq * (vec - start)])
             return v, r, float(r @ r)
         except (LookupError, ValueError, IndexError) as e:  # a shape the measurements cannot read
@@ -195,14 +198,15 @@ def main(argv):
     say(f"read the body in {time.perf_counter() - t0:.2f} s")
     params = cache.read_json(PARAMS) or {}
     a0 = fields.amounts({} if a.start else params)
+    opts = fields.options(params)
     out = {}
     probe = AnkleProbe(body, "L")
     try:
         if a.dry:
-            v = evaluate(body, a0, probe=probe)
+            v = evaluate(body, a0, probe=probe, opts=opts)
             amounts = a0
         else:
-            amounts, v, trail = fit(body, a0, a.iters, say=say, probe=probe)
+            amounts, v, trail = fit(body, a0, a.iters, say=say, probe=probe, opts=opts)
             out["trail"] = trail
     finally:
         probe.remove()

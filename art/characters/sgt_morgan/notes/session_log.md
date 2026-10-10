@@ -88,11 +88,32 @@ put the toes 1.3 times nearer than the heel, so the part now judges proportions 
 his pick of a big-toe row and a curl (recommended: X2c, the big toe 30 mm wide with a 4.5 mm
 gap to toe 2 and the lesser toes curled 35 degrees) and of the heel (H1 provisional).
 
-**Next.** Part 01's second and third sessions (spec 01 §9.3): the nail free edges; the
-guides (tendons, veins, creases on the closeup copies); spec 16's materials library, at least
-the skin, nail and sock recipes (`materials.py`, which does not exist yet); the sock and the
-last; the `foot.*` interface keys. Then spec 02 and the boot. Starter prompt: "Read
-art/characters/sgt_morgan/CLAUDE.md and the newest entry of
+**Jeff's decisions, late afternoon.** The bare foot is to be photoreal, not because it is seen
+but as practice for the much harder head ("if we can't get the foot right we have no hope"),
+and because a barefoot loadout shot may come later. He locked X3 (big toe about 30 mm, toe 2 16,
+a 4.5 mm gap between them, lesser toes curled 25 degrees, heel H1) as "an indication, not a
+law": the numbers are a direction while nothing looks right yet. Two blind reviews he ran (one
+ChatGPT, one fresh Claude) agree that the problems are structural, not proportional; they are
+in `notes/review_2026-10-10_foot.md` and are the foot's work list. The lock is the default build
+(spec 01 §0 row 16, §3.3, §10.2 Q3); everything passes but the heel-ankle girth (341, spec 03's
+leg); `renders/01_foot/sheets/locked_variants.png`.
+
+**Next** (no new work was started after this point; Jeff stopped for the week's budget):
+1. Read `notes/research_foot_hires.md` and the renders under `renders/research/foot_hires/`: a
+   method trial on the big toe, toe 2 and their web (code in `scripts/research/foot_hires/`) that
+   compares ways to get real detail by script (a denser mesh with real webs, signed distance
+   fields with smooth unions, a parametric toe generator). If it was still running when this
+   session ended, its files may be incomplete.
+2. Build spec 18 §8.1's critic loop (`scripts/eval/critic/`: packet, prompts C1 to C3, schema,
+   tally), adding a free-form ranked list like Jeff's two reviews, and for hidden parts with no
+   reference crop, Jeff's photos (`cache/ref_feet/`, never committed) as C1's anchor. The
+   critics are fresh agents spawned by the orchestrating session, one at a time.
+3. A first critic round on the trial's result; then the whole foot in the chosen method,
+   working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
+   forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
+4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
+   02's boot.
+Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md and the newest entry of
 art/characters/sgt_morgan/notes/session_log.md, then continue with the next steps listed
 there. Work in art/characters/sgt_morgan."
 

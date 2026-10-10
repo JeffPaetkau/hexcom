@@ -8,6 +8,12 @@
    "render": {"res": [2048, 2048], "tier": "eval"}, "hide": ["Body.Mesh", "Foot.{other}.*", "Sock.{other}.*"],
    "compare": []},
 
+  {"id": "p01.V1f", "label": "dorsal_oblique_far", "scene": "lookdev", "sides": ["L", "R"],
+   "camera": {"type": "look_at", "frame": "Frame.Foot.{side}", "pos_mm": [690, -1380, 1180], "target_mm": [0, -150, 40],
+              "up": [0, 0, 1], "lens_mm": 180, "sensor_mm": 36},
+   "render": {"res": [2048, 2048], "tier": "eval"}, "hide": ["Body.Mesh", "Foot.{other}.*", "Sock.{other}.*"],
+   "compare": [], "note": "2026-10-10 (Jeff): V1's direction at three times its distance with a three times longer lens, the same framing: the pternion is 1.10 times as far from the lens as the hallux tip, not 1.31 as in V1, so the toes are not drawn a third larger than the heel. The view to judge the foot's proportions in; V1 stays as the close view for skin detail"},
+
   {"id": "p01.V2", "label": "medial", "scene": "lookdev", "sides": ["L", "R"],
    "camera": {"type": "look_at", "frame": "Frame.Foot.{side}", "pos_mm": [-650, -140, 95], "target_mm": [0, -140, 55],
               "up": [0, 0, 1], "lens_mm": 70, "sensor_mm": 36},
@@ -32,6 +38,19 @@
    "dof": {"fstop": 8, "focus": "target"},
    "render": {"res": [2048, 2048], "tier": "eval"}, "hide": ["Body.Mesh", "Foot.{other}.*", "Sock.{other}.*"],
    "compare": [], "note": "focus on the hallux nail: the target point. 2026-10-10: aimed 22 mm further lateral than spec 01 §1.3's (-30, -265, 15): frame F puts the long axis through the 2nd toe, so this body's toes span x -35 to +55 and the spec's aim left them half out of frame"},
+
+  {"id": "p01.V5f", "label": "toe_closeup_far", "scene": "lookdev", "sides": ["L", "R"],
+   "camera": {"type": "look_at", "frame": "Frame.Foot.{side}", "pos_mm": [-75.5, -1107, 429], "target_mm": [-8, -262, 14],
+              "up": [0, 0, 1], "lens_mm": 250, "sensor_mm": 36},
+   "dof": {"fstop": 8, "focus": "target"},
+   "render": {"res": [2048, 2048], "tier": "eval"}, "hide": ["Body.Mesh", "Foot.{other}.*", "Sock.{other}.*"],
+   "compare": [], "note": "2026-10-10 (Jeff): V5's direction at 2.5 times its distance with a 2.5 times longer lens, the same framing and depth of field (the magnification is V5's): the nails and toes at a natural perspective"},
+
+  {"id": "p01.V8", "label": "posterior", "scene": "lookdev", "sides": ["L", "R"],
+   "camera": {"type": "look_at", "frame": "Frame.Foot.{side}", "pos_mm": [0, 700, 120], "target_mm": [0, -40, 60],
+              "up": [0, 0, 1], "lens_mm": 135, "sensor_mm": 36},
+   "render": {"res": [2048, 2048], "tier": "eval"}, "hide": ["Body.Mesh", "Foot.{other}.*", "Sock.{other}.*"],
+   "compare": [], "note": "2026-10-10 (Jeff's heel variants): the heel and ankle from behind, level, at a natural perspective (the lateral malleolus 1.08 times as far as the heel's back): the heel's breadth and roundness, the Achilles, the malleoli's heights side by side"},
 
   {"id": "p01.V6.R", "label": "ankle_in_boot_R", "alias": "p02.V1", "hide": ["Foot.*.Isolate"],
    "compare": ["ref/crop_boots_feet.png", "ref/zoom_foot_right_boot_x6.png"],

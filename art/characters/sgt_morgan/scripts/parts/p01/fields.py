@@ -29,11 +29,14 @@ REGION_Z = 330.0  # the part's reach up the leg (the sock's cuff is at 260)
 # Pass A: name -> (unit, lower bound, upper bound, start). The start values come from the S2 body's
 # measurements against spec 01 §3.1 (renders/01_foot/measure.json has the latest).
 FIELDS = {
+    "heel_end_w": ("%", -5.0, 40.0, 0.0),      # heel width at its back end (y_F -8): a round heel, not a point
     "heel_back_w": ("%", -5.0, 25.0, 8.0),     # heel width, back third (y_F -20)
     "heel_mid_w": ("%", -5.0, 20.0, 6.0),      # heel width at 15 % L (y_F -44)
     "heel_fore_w": ("%", -12.0, 10.0, -2.0),   # heel width under the malleoli (y_F -64): the heel's plan
                                                # is a rounded box, not a wedge widening into the midfoot
     "heel_low_w": ("%", -5.0, 20.0, 4.0),      # the heel pad's lower bulge (z < 20)
+    "heel_top_w": ("%", -20.0, 20.0, 0.0),     # the heel above the pad (z 35-55): its breadth there, apart
+                                               # from the pad's
     "heel_back_low": ("mm", -3.0, 10.0, 3.0),  # the calcaneus's back pushed back, apex near z 30
     "heel_back_high": ("mm", 0.0, 8.0, 2.0),   # the Achilles insertion above it recessed (forward only)
     "mall_lat": ("mm", 0.0, 12.0, 4.0),        # lateral malleolus (+38, -60, 76)
@@ -64,9 +67,26 @@ FIXED = {
     "toe4_roll_deg": {"L": 10.0, "R": 10.0},
     "toe2_ext_extra_mm": {"L": 0.0, "R": -1.5},       # right 2nd toe 1.5 mm shorter
     "toe_curl_deg": {2: 8.0, 3: 8.0, 4: 7.0, 5: 5.0},  # PIP flexion of the resting lesser toes
+    "toe_dip_deg": {2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0},   # DIP flexion
+    "hallux_ip_deg": 0.0,     # the hallux's IP flexion (it rests nearly straight)
+    "toe_mtp_floor": False,   # extend each lesser toe at its MTP until its pad is back on the floor (a curled
+                              # toe's tip would otherwise go through it): the knuckle rises, the tip tucks down
+    "toe_mid_short_mm": {2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0},  # middle phalanx shortened (MPFB's are long)
+    "toe_gap_mm": 1.5,        # the least gap kept between neighbouring toes in rest (separate_toes)
+    "toe_gather": False,      # and the most: the lesser toes turned toward the hallux until they touch
+    "toe_gap_pairs": {},      # {"1-2": [least, most]}: a pair's own gap band (the hallux stands apart)
+    "hallux_width_mm": 0.0,   # the hallux widened from its IP forward to this plan width (0: as fitted)
+    "nail_size": {},          # {toe: [width, visible length]} over §3.3's (the nail scaled with its toe)
+    "web_y": {},              # {"3-4": y_F}: the cleft between two toes closed back from y_F (webs forward)
+    "web_gap_mm": 0.2,        # what is left of a closed cleft: the toes touch but do not intersect
 }
-NAILS = {1: (17.0, 16.0, 1.5), 2: (11.0, 10.0, 1.2), 3: (10.0, 9.0, 1.0), 4: (9.0, 8.0, 1.0),
-         5: (7.0, 6.0, 0.8)}  # §3.3: plate width x visible length, and the free edge beyond the bed
+SIDE_KEYED = ("hallux_valgus_deg", "toe5_yaw_deg", "toe5_roll_deg", "toe4_roll_deg", "toe2_ext_extra_mm")
+TOE_KEYED = ("toe_curl_deg", "toe_dip_deg", "toe_mid_short_mm", "nail_size")
+NAILS = {1: (19.5, 18.35, 1.5), 2: (11.0, 10.0, 1.2), 3: (10.0, 9.0, 1.0), 4: (9.0, 8.0, 1.0),
+         5: (7.0, 6.0, 0.8)}  # §3.3: plate width x visible length, and the free edge beyond the bed (the
+# hallux's 19.5 x 18.35 since Jeff's lock of 2026-10-10, from reference photos: 17 x 16 scaled with the toe)
+NAIL_RADIUS = {1: 11.0, 2: 6.0, 3: 5.5, 4: 5.0, 5: 4.0}  # §3.3: the plate's transverse radius of curvature
+NAIL_TIP_MARGIN = {1: 2.5, 2: 1.6, 3: 1.5, 4: 1.4, 5: 1.2}  # skin left beyond the free edge, in plan
 JOINT_SHARE = {1: 0.55, 2: 0.56, 3: 0.56, 4: 0.55, 5: 0.46}  # MTP -> IP/PIP over MTP -> tip, §3.3
 
 
@@ -219,10 +239,13 @@ def fields(foot):
     # most posterior point sits lower (§3.1: heel breadth 71, 66/70/71 at 15 % L, pternion at z 30)
     xc = foot.xc_heel
     wz_heel = 1.0 - S.smoothstep(z, 32.0, 70.0)  # fading out under the malleoli (a quicker fade left a groove)
+    F["heel_end_w"] = dx((x - xc) * 0.01 * _gauss(y, -8.0, 8.0) * wz_heel)
     F["heel_back_w"] = dx((x - xc) * 0.01 * _gauss(y, -20.0, 13.0) * wz_heel)
     F["heel_mid_w"] = dx((x - xc) * 0.01 * _gauss(y, -44.0, 11.0) * wz_heel)
     F["heel_fore_w"] = dx((x - xc) * 0.01 * _gauss(y, -64.0, 9.0) * wz_heel)
     F["heel_low_w"] = dx((x - xc) * 0.01 * _plateau(y, 2.0, -12.0, -60.0, -90.0) * (1.0 - S.smoothstep(z, 8.0, 30.0)))
+    F["heel_top_w"] = dx((x - xc) * 0.01 * _plateau(y, 5.0, -5.0, -50.0, -70.0)
+                         * S.smoothstep(z, 28.0, 40.0) * (1.0 - S.smoothstep(z, 50.0, 75.0)))
     post = S.smoothstep(y, -30.0, -6.0) * (1.0 - S.smoothstep(np.abs(x - xc), 18.0, 40.0))
     F["heel_back_low"] = dy(post * _gauss(z, 24.0, 10.0))
     F["heel_back_high"] = dy(-post * _gauss(z, 58.0, 10.0))
@@ -289,6 +312,27 @@ def amounts(params=None):
     return {k: float(got.get(k, FIELDS[k][3])) for k in FIELD_NAMES}
 
 
+def options(params=None):
+    """Pass B's fixed operations: FIXED with params.json's "fixed" merged over it (JSON keys are strings,
+    so a per-toe table's keys are made ints again)."""
+    got = (params or {}).get("fixed") or {}
+    out = {}
+    for k, v in FIXED.items():
+        g = got.get(k, v)
+        if isinstance(v, dict) and isinstance(g, dict):
+            merged = dict(v)
+            merged.update(g)
+            if k in TOE_KEYED:
+                g = {int(t): (x if isinstance(x, (list, tuple)) else float(x)) for t, x in merged.items()}
+            else:
+                g = merged
+        out[k] = g
+    unknown = sorted(set(got) - set(FIXED))
+    if unknown:
+        raise ValueError(f"params.json 'fixed' names unknown operations {unknown}; known: {sorted(FIXED)}")
+    return out
+
+
 def pass_a(foot, F, a):
     out = foot.q.copy()
     for k in FIELD_NAMES:
@@ -337,18 +381,12 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
             q += S.rotation_field(q, mtp, -axis, roll, w)  # about the distal axis, negated: the nail turns lateral
     # 2. (§4.2 step 10's smoothing pass is left out: every field here is smooth, and a Laplacian pass over
     #    the foot flattened the malleoli the fit had placed, so the fit drove them to their bounds)
-    # the lesser toes rest slightly curled: the middle and distal phalanges flexed at the PIP, the knuckle up
-    for k in (2, 3, 4, 5):
-        T = foot.toe[k]
-        mtp, tip = toe_now(k)
-        cube = foot.cube_rows.get(f"toe-{k}-2")
-        if cube is None or not len(cube):
-            continue
-        pip = q[cube].mean(axis=0)
-        t = (q - pip) @ T["a"]
-        w = foot.w[k] * S.smoothstep(t, -1.5, 3.0)
-        side_axis = np.array([T["n"][0], T["n"][1], 0.0])
-        q += S.rotation_field(q, pip, side_axis, o["toe_curl_deg"][k], w)
+    # the hallux broadened (Jeff's reference photos, 2026-10-10), then the toes' resting pose: the lesser toes
+    # curled, the middle and distal phalanges flexed at the PIP and the distal at the DIP, the knuckle up;
+    # the hallux nearly straight
+    q = shape_hallux(foot, q, o)
+    for k in (1, 2, 3, 4, 5):
+        q = pose_lesser_toe(foot, q, k, o)
     # 3. knuckles: the IP / PIP joints raised dorsally, the skin just past them lowered (§4.3 step 3)
     for k in TOES:
         T = foot.toe[k]
@@ -399,40 +437,321 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
     q += 1.5 * foot.nq * S.line_weights(q, crest, 10.0)[:, None] * foot.body[:, None]
     # 6. nail beds: each nail patch sized to §3.3, sunk 0.4 mm, its folds raised (§4.3 step 6)
     if nails:
-        q = nail_beds(foot, q, adj)
-    # 7. no two toes closer than GAP_MM in rest (§4.3 step 5); fit_sculpt.py leaves it out (see Body)
-    return separate_toes(foot, q) if separate else q
+        q = nail_beds(foot, q, adj, o.get("nail_size"))
+    # 7. no two toes closer than toe_gap_mm in rest (§4.3 step 5); fit_sculpt.py leaves it out (see Body);
+    #    then the clefts named in web_y closed back from there, the toes touching (webs forward)
+    if separate:
+        q = separate_toes(foot, q, gap=float(o["toe_gap_mm"]), gather=bool(o["toe_gather"]),
+                          bands=o.get("toe_gap_pairs"))
+        q = close_webs(foot, q, o)
+        q = resolve_contacts(foot, q, gap=min(float(o.get("web_gap_mm", 0.2)), float(o["toe_gap_mm"])))
+    return q
+
+
+def resolve_contacts(foot, q, gap=0.2, rounds=4):
+    """Toes may touch, never cross (Jeff, 2026-10-10): any vertex clearly of one toe that ends inside its
+    neighbour (curled knuckles, the closed webs' tapers) is pushed out along the neighbour's nearest face
+    normal until `gap` is left. A few vertices move a millimetre or two; the subdivision smooths them."""
+    from mathutils import Vector
+    from mathutils.bvhtree import BVHTree
+    q = q.copy()
+    moved = {}
+    for _ in range(rounds):
+        pushed = 0
+        for k in (1, 2, 3, 4):
+            for me, other in ((k, k + 1), (k + 1, k)):
+                rows = np.nonzero((foot.w[me] > 0.5) & (foot.w[other] < 0.2) & foot.body)[0]
+                splits = foot.toe_tris_both[other]
+                if not len(rows) or not len(splits):
+                    continue
+                trees = [BVHTree.FromPolygons(q.tolist(), t.tolist(), all_triangles=True) for t in splits]
+                for i in rows.tolist():
+                    worst = None  # the deepest of the two triangulations' readings
+                    for tree in trees:
+                        loc, nrm, _, d = tree.find_nearest(Vector(q[i]), INSIDE_MM)
+                        if loc is None:
+                            continue
+                        n = np.array(nrm) * foot.frame.s  # outward in F (F mirrors the right foot)
+                        off = float((q[i] - np.array(loc)) @ n)
+                        if off < -0.5 * d:  # inside: behind the face, not merely beside one of its edges
+                            depth = -off
+                        elif d < gap:  # outside, nearer than the gap
+                            depth = -d
+                        else:
+                            continue
+                        if worst is None or depth > worst[0]:
+                            worst = (depth, n)
+                    if worst is None:
+                        continue
+                    depth, n = worst
+                    q[i] += (depth + gap) * n
+                    pushed += 1
+                    moved[f"{me}>{other}"] = moved.get(f"{me}>{other}", 0) + 1
+        if not pushed:
+            break
+    foot.contacts_resolved = moved
+    return q
+
+
+def _joint_now(foot, q, k, j):
+    """Toe k's joint cube j (1 MTP, 2 PIP or IP, 3 DIP, 4 the tip's end) on the current positions."""
+    rows = foot.cube_rows.get(f"toe-{k}-{j}")
+    return q[rows].mean(axis=0) if rows is not None and len(rows) else None
+
+
+def pose_lesser_toe(foot, q, k, o):
+    """A lesser toe's resting pose (§4.3 step 5, §7.3): the middle phalanx shortened, the DIP then the PIP
+    flexed about the toe's transverse axis (distal first, so each pivot travels with what is proximal to it),
+    and with toe_mtp_floor the whole toe extended at the MTP until its pad is back at the height it had,
+    which is how a curled toe stands: knuckle up, tip down on the floor. The defaults (PIP only, no lift)
+    are the first pass's curl."""
+    T = foot.toe[k]
+    side_axis = np.array([T["n"][0], T["n"][1], 0.0])
+    wk = foot.w[k]
+    mine = (wk > 0.5) & foot.body
+    mtp0 = _joint_now(foot, q, k, 1)
+    t0 = (q - (mtp0 if mtp0 is not None else T["mtp"])) @ T["a"]
+    distal = mine & (t0 > 0.45 * T["len"])
+    low0 = float(q[distal, 2].min()) if distal.any() else None
+    if k == 1:  # the hallux: one interphalangeal joint (cube 2), no middle phalanx
+        short, flex = 0.0, ((2, float(o["hallux_ip_deg"])),)
+    else:
+        short = float(o["toe_mid_short_mm"].get(k, 0.0))
+        flex = ((3, float(o["toe_dip_deg"].get(k, 0.0))), (2, float(o["toe_curl_deg"].get(k, 0.0))))
+    pip, dip = _joint_now(foot, q, k, 2), _joint_now(foot, q, k, 3)
+    if short and pip is not None and dip is not None:
+        tp, td = (pip - mtp0) @ T["a"], (dip - mtp0) @ T["a"]
+        q = q - (short * wk * S.smoothstep(t0, tp, td))[:, None] * T["a"][None, :]
+    for j, ang in flex:
+        piv = _joint_now(foot, q, k, j)
+        if not ang or piv is None:
+            continue
+        t = (q - piv) @ T["a"]
+        q = q + S.rotation_field(q, piv, side_axis, ang, wk * S.smoothstep(t, -1.5, 3.0))
+    if o["toe_mtp_floor"] and low0 is not None and mtp0 is not None:
+        mtp = _joint_now(foot, q, k, 1)
+        w = wk * S.smoothstep((q - mtp) @ T["a"], -2.0, 6.0)
+
+        def low(alpha):
+            return float((q + S.rotation_field(q, mtp, side_axis, -alpha, w))[distal, 2].min())
+
+        lo, hi = 0.0, 35.0
+        if low(lo) < low0:
+            for _ in range(30):  # the pad rises monotonically with the extension here
+                mid = 0.5 * (lo + hi)
+                lo, hi = (mid, hi) if low(mid) < low0 else (lo, mid)
+            q = q + S.rotation_field(q, mtp, side_axis, -hi, w)
+            foot.mtp_lift = getattr(foot, "mtp_lift", {})
+            foot.mtp_lift[k] = hi
+    return q
+
+
+def _plan_axis(qt):
+    """A toe's plan axis toward its tip from the principal direction of its vertices (as footmetrics reads)."""
+    c = qt[:, :2] - qt[:, :2].mean(axis=0)
+    a = np.linalg.svd(c, full_matrices=False)[2][0]
+    a = a if a[1] < 0 else -a
+    return np.array([a[0], a[1], 0.0])
+
+
+def hallux_width(foot, q):
+    """The hallux's plan width as §8.2 measures it: across its axis, over its distal 65 %."""
+    qt = q[(foot.w[1] > 0.5) & foot.body]
+    a = _plan_axis(qt)
+    n = np.array([-a[1], a[0], 0.0])
+    t = qt @ a
+    d = qt[t > t.min() + 0.35 * (t.max() - t.min())]
+    s = d @ n
+    return float(s.max() - s.min())
+
+
+def shape_hallux(foot, q, o, rounds=5):
+    """Jeff's broad hallux (2026-10-10, from reference photos): widened about its own centre line from its IP
+    forward to hallux_width_mm, and thickened above its plantar line by half the same share, so the pulp
+    stays a broad round pad rather than a toe squashed sideways. Measured as §8.2 measures it; a few rounds,
+    since the widest section moves as the toe widens."""
+    target = float(o.get("hallux_width_mm") or 0.0)
+    if not target:
+        return q
+    w1 = foot.w[1]
+    mine = (w1 > 0.5) & foot.body
+    for _ in range(rounds):
+        width = hallux_width(foot, q)
+        share = target / width - 1.0
+        if abs(share) < 0.002:
+            break
+        qt = q[mine]
+        a = _plan_axis(qt)
+        n = np.array([-a[1], a[0], 0.0])
+        t_all, s_all = q @ a, q @ n
+        t, s = qt @ a, qt @ n
+        t0, t1 = t.min(), t.max()
+        bins = np.arange(t0, t1 + 3.0, 2.0)
+        cs, zs = [], []
+        for b in bins:
+            sl = np.abs(t - b) < 2.5
+            cs.append(0.5 * (s[sl].min() + s[sl].max()) if sl.sum() > 2 else np.nan)
+            zs.append(qt[sl, 2].min() if sl.sum() > 2 else np.nan)
+        cs, zs = np.array(cs), np.array(zs)
+        okc, okz = np.isfinite(cs), np.isfinite(zs)
+        centre = np.interp(t_all, bins[okc], cs[okc])
+        floor = np.interp(t_all, bins[okz], zs[okz])
+        g = w1 * S.smoothstep((t_all - t0) / (t1 - t0), 0.30, 0.65)
+        q = q + (share * (s_all - centre) * g)[:, None] * n[None, :]
+        q[:, 2] += 0.5 * share * np.maximum(q[:, 2] - floor, 0.0) * g
+    return q
+
+
+def _tri_normals(q, tris):
+    """Area-weighted vertex normals of a region from its triangles (rows of q)."""
+    n = np.zeros_like(q)
+    fn = np.cross(q[tris[:, 1]] - q[tris[:, 0]], q[tris[:, 2]] - q[tris[:, 0]])
+    for c in range(3):
+        np.add.at(n, tris[:, c], fn)
+    ln = np.linalg.norm(n, axis=1)
+    ok = ln > 0
+    n[ok] /= ln[ok, None]
+    return n
+
+
+def close_webs(foot, q, o, passes=4):
+    """Jeff's webs forward (2026-10-10): each cleft named in web_y is closed from its web forward to y_F,
+    the facing sides of the two toes brought together until web_gap_mm is left between them, so that the
+    toes touch there as real toes do in front of their commissure and the cleft opens only at y_F. The
+    topology stays MakeHuman's (a web cannot be grown without new faces), so the closed stretch is two
+    surfaces 0.2 mm apart: a line, not a gap. Each facing vertex is moved half the gap along the pair's
+    transverse direction, measured by a ray to the neighbour's surface, in a few passes; nothing moves
+    further than 5-9 mm behind the old web (the pair's mean mid-proximal-phalanx, where MPFB's webs are) or
+    ahead of y_F."""
+    webs = o.get("web_y") or {}
+    if not webs:
+        return q
+    from mathutils import Vector
+    from mathutils.bvhtree import BVHTree
+    gap = float(o.get("web_gap_mm", 0.2))
+    tris = foot.region_tris
+    q = q.copy()
+    foot.webs_closed = {}
+    for pair, y_new in sorted(webs.items()):
+        k = int(str(pair).split("-")[0])
+        a, b = k, k + 1
+        ma, mb = _joint_now(foot, q, a, 1), _joint_now(foot, q, b, 1)
+        pa, pb = _joint_now(foot, q, a, 2), _joint_now(foot, q, b, 2)
+        if any(v is None for v in (ma, mb, pa, pb)):
+            continue
+        y_old = 0.25 * (ma[1] + pa[1] + mb[1] + pb[1])  # the pair's mean mid-proximal phalanx: MPFB's webs
+        am = foot.toe[a]["a"] + foot.toe[b]["a"]
+        am /= np.linalg.norm(am)
+        p = np.array([-am[1], am[0], 0.0])
+        if p @ (mb - ma) < 0:
+            p = -p
+        y = q[:, 1]
+        # closed from the old web to y_new, the cleft opening by 0.5 mm within a millimetre of y_new (behind the
+        # web the walls are the sides of the dorsal groove between the toes: closing them there crossed them)
+        W = S.smoothstep(y, y_new - 2.5, y_new + 1.5) * (1.0 - S.smoothstep(y, y_old + 1.0, y_old + 4.0))
+        moved = 0
+        for _ in range(passes):
+            nrm = _tri_normals(q, tris) * foot.frame.s  # frame F mirrors the right foot, and its winding with it
+            delta = np.zeros_like(q)
+            for me, other, sgn in ((a, b, 1.0), (b, a, -1.0)):
+                rows = np.nonzero((foot.w[me] > 0.5) & foot.body & (W > 0.0))[0]
+                H = S.smoothstep(sgn * (nrm[rows] @ p), 0.15, 0.5)
+                rows, H = rows[H > 0.0], H[H > 0.0]
+                tb = foot.toe_tris[other]
+                if not len(rows) or not len(tb):
+                    continue
+                tree = BVHTree.FromPolygons(q.tolist(), tb.tolist(), all_triangles=True)
+                d = sgn * p
+                for i, h in zip(rows.tolist(), H.tolist()):
+                    hit = tree.ray_cast(Vector(q[i]), Vector(d), 8.0)
+                    if hit[0] is None:
+                        continue
+                    move = max(0.0, hit[3] - gap) / 2.0 * W[i] * h
+                    if move > 1e-4:
+                        delta[i] += move * d
+            if not np.any(delta):
+                break
+            q += delta
+            moved = max(moved, int(np.count_nonzero(np.linalg.norm(delta, axis=1) > 0.01)))
+        # nothing may end inside the neighbour: a vertex nearer than the gap, or inside it (the walls are not
+        # parallel, so two half-moves can cross), is pushed back out along p; a few rounds, since a push along
+        # p is not along the neighbour's normal
+        for _ in range(3):
+            pushed = 0
+            for me, other, sgn in ((a, b, 1.0), (b, a, -1.0)):
+                rows = np.nonzero((foot.w[me] > 0.5) & foot.body & (W > 0.0))[0]
+                tb = foot.toe_tris[other]
+                if not len(rows) or not len(tb):
+                    continue
+                tree = BVHTree.FromPolygons(q.tolist(), tb.tolist(), all_triangles=True)
+                for i in rows.tolist():
+                    hit = tree.find_nearest(Vector(q[i]), INSIDE_MM + 1.0)
+                    if hit[0] is None:
+                        continue
+                    outside = (Vector(q[i]) - hit[0]).dot(hit[1]) * foot.frame.s >= 0.0
+                    short = gap - hit[3] if outside else gap + hit[3]
+                    if short > 0.01:
+                        q[i] -= sgn * p * short
+                        pushed += 1
+            if not pushed:
+                break
+        foot.webs_closed[pair] = {"from_y": round(float(y_old), 1), "to_y": float(y_new), "vertices": moved}
+    return q
 
 
 GAP_MM = 1.5  # §4.3 step 5 asks for 1.0 between neighbouring toes in rest; the margin covers the subdivision
-              # and measure()'s slightly different toe sets
+              # and measure()'s slightly different toe sets (FIXED["toe_gap_mm"] carries it now)
+INSIDE_MM = 3.0  # a vertex this near a neighbouring toe's surface, behind it, is inside that toe
 
 
 def toe_gaps(foot, q, beyond=0.4):
-    """{k: the smallest distance from toe k's outer vertices to toe k+1's surface} (F, mm)."""
+    """{k: the smallest signed distance from toe k's outer vertices to toe k+1's surface} (F, mm; negative
+    where a vertex is inside the neighbour, so curled knuckles that cross read as crossing)."""
     from mathutils import Vector
     from mathutils.bvhtree import BVHTree
     out = {}
     for k in (1, 2, 3, 4):
-        A = np.nonzero((foot.w[k] > 0.5) & foot.body)[0]
-        T = foot.toe[k]
-        t = (q[A] - T["mtp"]) @ T["a"]
-        A = A[t > beyond * T["len"]]
-        tb = foot.toe_tris[k + 1]
-        if not len(A) or not len(tb):
-            continue
-        tree = BVHTree.FromPolygons(q.tolist(), tb.tolist(), all_triangles=True)
-        out[k] = min(tree.find_nearest(Vector(q[i]))[3] for i in A.tolist())
+        best = None
+        for me, other in ((k, k + 1), (k + 1, k)):  # both ways: a curled toe can cross into either neighbour
+            A = np.nonzero((foot.w[me] > 0.5) & foot.body)[0]
+            T = foot.toe[me]
+            t = (q[A] - T["mtp"]) @ T["a"]
+            A = A[t > beyond * T["len"]]
+            tb = foot.toe_tris[other]
+            if not len(A) or not len(tb):
+                continue
+            tree = BVHTree.FromPolygons(q.tolist(), tb.tolist(), all_triangles=True)
+            for i in A.tolist():
+                loc, nrm, _, d = tree.find_nearest(Vector(q[i]))
+                if loc is None:
+                    continue
+                # inside the neighbour: behind its nearest face, near it (a toe's faces are an open patch, so
+                # a far vertex whose nearest point is on the patch's rim has no meaningful side; F mirrors the
+                # right foot's winding)
+                if d < INSIDE_MM and (Vector(q[i]) - loc).dot(nrm) * foot.frame.s < -0.5 * d:
+                    d = -d  # behind the face itself, not beside one of its edges
+                best = d if best is None else min(best, d)
+        if best is not None:
+            out[k] = best
     return out
 
 
-def separate_toes(foot, q, gap=GAP_MM, rounds=3):
+def separate_toes(foot, q, gap=GAP_MM, rounds=3, gather=False, bands=None):
     """Where two neighbouring toes come closer than `gap`, the outer one and every toe beyond it turn away
     by the shortfall at their tips (nothing moves at the MTP): the toes stay a set, spaced as real toes in
-    a relaxed foot."""
-    for _ in range(rounds):
+    a relaxed foot. With gather, toes further apart than `gap` turn toward each other the same way, so the
+    lesser toes rest against each other and the hallux, as real toes do. bands gives a pair its own
+    [least, most] gap (the hallux standing apart from toes 2-5, which move as a group)."""
+    bands = {int(str(p).split("-")[0]): (float(v[0]), float(v[1])) for p, v in (bands or {}).items()}
+    for _ in range(rounds + (2 if (gather or bands) else 0)):
         gaps = toe_gaps(foot, q)
-        short = {k: gap - g for k, g in gaps.items() if g < gap - 0.05}
+        short = {}
+        for k, g in gaps.items():
+            lo, hi = bands.get(k, (gap, gap if gather else float("inf")))
+            if g < lo - 0.05:
+                short[k] = lo - g
+            elif g > hi + 0.05:
+                short[k] = hi - g
         if not short:
             break
         for k, d in short.items():
@@ -460,7 +779,14 @@ def _top(foot, q, x0, y0, window=8.0):
     return c[np.argmax(c[:, 2])]
 
 
-def nail_beds(foot, q, adj):
+def nail_size(k, sizes=None):
+    """A nail's (width, visible length, free edge), §3.3's or the nail_size option's (the free edge kept)."""
+    w, vis, fe = NAILS[k]
+    got = (sizes or {}).get(k)
+    return (float(got[0]), float(got[1]), fe) if got else (w, vis, fe)
+
+
+def nail_beds(foot, q, adj, sizes=None):
     indptr, nb = adj
     for k in TOES:
         P = foot.nail_rows[k]
@@ -474,7 +800,8 @@ def nail_beds(foot, q, adj):
         b = np.cross(nrm, a)
         da, db = (q[P] - c) @ a, (q[P] - c) @ b
         width, length = db.max() - db.min(), da.max() - da.min()
-        tw, tl = NAILS[k][0], NAILS[k][1] - NAILS[k][2]  # the bed: the visible length less the free edge
+        nw, nvis, nfe = nail_size(k, sizes)
+        tw, tl = nw, nvis - nfe  # the bed: the visible length less the free edge
         sa, sb = tl / length, tw / width
         # the patch scales in its own plane; a ring two vertices deep around it follows by half and a quarter
         ring1 = np.setdiff1d(np.unique(np.concatenate([nb[indptr[i]:indptr[i + 1]] for i in P])), P)
@@ -482,11 +809,36 @@ def nail_beds(foot, q, adj):
         for rows, share in ((P, 1.0), (ring1, 0.5), (ring2, 0.2)):
             d = q[rows] - c
             q[rows] += share * (((d @ a) * (sa - 1.0))[:, None] * a + ((d @ b) * (sb - 1.0))[:, None] * b)
+        # the bed placed so that its plate's free edge ends short of the pulp's tip, as on a real toe (seen
+        # from above a rim of skin shows beyond the nail; a free edge past the tip stood off it like a flake)
+        mine = (foot.w[k] > 0.5) & foot.body
+        ah = np.array([a[0], a[1], 0.0]) / max(np.hypot(a[0], a[1]), 1e-9)  # in plan: the bed tilts down
+        reach = float(((q[mine] - c) @ ah).max())
+        end = float(((q[P] - c) @ ah).max()) + nfe * float(a @ ah)
+        shift = min(0.0, reach - NAIL_TIP_MARGIN[k] - end)
+        # the folds go back with the bed, the skin in front of it does not: it is the tip that shows beyond
+        q[P] += shift * ah
+        for rows, share in ((ring1, 0.6), (ring2, 0.25)):
+            along = ((q[rows] - c) @ a) / max(tl / 2.0, 1e-6)
+            q[rows] += (share * shift * (1.0 - S.smoothstep(along, 0.3, 0.8)))[:, None] * ah
+        foot.nail_shift = getattr(foot, "nail_shift", {})
+        foot.nail_shift[k] = round(shift, 2)
+        # the bed bent across to the plate's arc (§3.3's transverse radius: 11 mm on the hallux, 4-6 on the
+        # lesser toes), its sides down into the lateral grooves: a toe's own dorsum is flatter than its nail;
+        # the bed's curve across is read beside its curve along the toe, and a bed curved enough is left
+        d = q[P] - c
+        u, v, h = d @ b, d @ a, d @ nrm
+        coef = np.linalg.lstsq(np.stack([np.ones_like(u), u, v, v * v, u * u], axis=1), h, rcond=None)[0]
+        uc = 0.5 * (u.min() + u.max())
+        R = NAIL_RADIUS[k]
+        drop = R - np.sqrt(R * R - np.minimum(np.abs(u - uc), 0.98 * R) ** 2)
+        q[P] -= np.maximum(0.0, drop + coef[4] * (u - uc) ** 2)[:, None] * nrm
         q[P] -= 0.4 * nrm
-        # folds: proximal (eponychium) 0.4, lateral 0.3, none at the free edge (the hyponychium)
+        # folds: proximal (eponychium) 0.6, lateral 0.45, none at the free edge (the hyponychium): enough over
+        # a subdivided 4 mm cage to cover the plate's root and sides where they dive (nails.py)
         d = q[ring1] - c
         along = (d @ a) / max(tl / 2.0, 1e-6)
-        lift = np.where(along < -0.6, 0.4, np.where(along > 0.7, 0.0, 0.3))
+        lift = np.where(along < -0.6, 0.6, np.where(along > 0.7, 0.0, 0.45))
         q[ring1] += lift[:, None] * nrm
     return q
 
@@ -523,7 +875,14 @@ class Body:
             # the region's own adjacency (row indices), for smoothing and the nail rings; each toe's triangles
             foot.adj = _sub_adjacency(self.adj, foot.R, len(self.co))
             tris = _region_tris(self.topo, foot.R, len(self.co))
+            foot.region_tris = tris
             foot.toe_tris = {k: tris[((foot.w[k] > 0.5) & foot.body)[tris].all(axis=1)] for k in TOES}
+            # each quad split both ways: a warped quad's two triangulations differ by a millimetre or two
+            # (Blender's own may be either), so contacts are resolved against both
+            alt = _region_tris(self.topo, foot.R, len(self.co), both=True)[len(tris):]
+            alt = alt[(alt >= 0).all(axis=1)]
+            foot.toe_tris_both = {k: [t[((foot.w[k] > 0.5) & foot.body)[t].all(axis=1)] for t in (tris, alt)]
+                                  for k in TOES}
             self.feet[side] = foot
         self._fields = {}
 
@@ -552,8 +911,9 @@ class Body:
         return out
 
 
-def _region_tris(topo, rows, n):
-    """Fan triangles of the polygons lying wholly in a region, as region rows (T, 3)."""
+def _region_tris(topo, rows, n, both=False):
+    """Fan triangles of the polygons lying wholly in a region, as region rows (T, 3); with both, each quad's
+    other diagonal's two triangles as well."""
     ls, lt, lv = topo
     pos = np.full(n, -1, np.int64)
     pos[rows] = np.arange(len(rows))
@@ -562,6 +922,11 @@ def _region_tris(topo, rows, n):
         ok = lt > k + 1
         tri = np.stack([lv[ls[ok]], lv[ls[ok] + k], lv[ls[ok] + k + 1]], axis=1)
         out.append(pos[tri])
+    if both:
+        quad = lt == 4
+        s = ls[quad]
+        out.append(pos[np.stack([lv[s + 1], lv[s + 2], lv[s + 3]], axis=1)])
+        out.append(pos[np.stack([lv[s + 1], lv[s + 3], lv[s]], axis=1)])
     tri = np.concatenate(out)
     return tri[(tri >= 0).all(axis=1)]
 

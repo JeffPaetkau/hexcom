@@ -103,9 +103,14 @@ def stage_sculpt(ctx, scope, ob, st):
     _drop(ob, "Foot.Sculpt")
     body = _sculpt_body(ob, st)
     a = fields.amounts(ctx.params)
-    co = body.positions(a)
+    co = body.positions(a, fields.options(ctx.params))
     S.key_from_positions(ob, "Foot.Sculpt", co / 1000.0, base=body.co / 1000.0)
     st["amounts"] = a
+    for side in fields.SIDES:
+        foot = body.feet[side]
+        for what in ("mtp_lift", "webs_closed", "nail_shift", "contacts_resolved"):
+            if getattr(foot, what, None):
+                log.info("part 01", f"{side} {what}: {getattr(foot, what)}")
 
 
 def stage_nails(ctx, scope, ob, st):
@@ -132,11 +137,13 @@ def stage_nails(ctx, scope, ob, st):
             axis = foot.frame.vec_to_w(T["a"])
             w, vis, fe, thick = nails.PLATES[k]
             name = naming.name("Foot", side, "Nail", str(k))
-            me, dims = nails.build_plate(name, ob, co, faces[k], axis, thick, fe, nails.EDGE_SLOPE[k])
+            me, dims, frame = nails.build_plate(name, ob, co, faces[k], axis, thick, fe, fields.NAIL_RADIUS[k],
+                                                nails.CORNER_MM[k])
             nob = scope.new_object(name, me, coll)
             nails.finish(nob, thick)
             nails.parent_to_bone(nob, rig, f"{nails.DISTAL_BONE[k]}.{side}")
             nob["p01_axis"] = [float(v) for v in axis]
+            nob["p01_frame"] = json.dumps({k2: v for k2, v in frame.items()})  # world mm, for measure()
             made[name] = {k2: round(v, 3) for k2, v in dims.items()}
     st["nails"] = made
 
@@ -228,17 +235,24 @@ def build(ctx, args):
 
 # --------------------------------------------------------------------------- measure (§8.2)
 
-TIP_SHARE = {1: 1.0, 2: 0.985, 3: 0.95, 4: 0.905, 5: 0.83}
-TOE_W = {1: 26.0, 2: 17.0, 3: 16.0, 4: 15.0, 5: 14.5}
-TOE_H = {1: 22.0, 2: 16.0, 3: 15.0, 4: 14.0, 5: 13.0}
+# Jeff's lock of 2026-10-10, from reference photos (§3.3, §4.3 notes): the tips of the curled, shortened lesser
+# toes (the left foot's, as built; the right 2nd toe stays 1.5 shorter), the 30 mm hallux and the slim toe 2;
+# toes 3-5 measure wider than the §3.3 table where a closed web joins them to their neighbour, and the
+# hallux deeper where it was thickened with its width
+TIP_SHARE = {1: 1.0, 2: 0.9658, 3: 0.9300, 4: 0.8870, 5: 0.8242}
+TOE_W = {1: 30.0, 2: 16.0, 3: 17.0, 4: 17.2, 5: 16.9}
+TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
 L_TARGET = 282.0
 # metric: (target, tolerance, source); spec 01 §3.1 and §3.3 targets, §8.2 tolerances (lengths 3, widths and
 # heights 2, girths 6, toe tips 2, nails 1 and 0.2); (E) marks the spec's own estimates
 TARGETS = {
     "foot_length": (282.0, 3.0, "§3.1 ANSUR"), "ball_length": (210.0, 3.0, "§3.1 ANSUR"),
-    "ball_breadth": (105.0, 2.0, "§3.1 ANSUR"), "heel_breadth": (71.0, 2.0, "§3.1 ANSUR"),
-    "heel_width_z10": (66.0, 2.0, "§4.2 step 3"), "heel_width_z20": (70.0, 2.0, "§4.2 step 3"),
-    "heel_width_z30": (71.0, 2.0, "§4.2 step 3"), "bimalleolar": (76.0, 2.0, "§3.1 ANSUR"),
+    "ball_breadth": (105.0, 2.0, "§3.1 ANSUR"),
+    # heel H1 (Jeff, 2026-10-10): round at the back, widest at 18 % L; the calliper breadth reads 2 mm over
+    # the widest section (74) because the heel's inner side is fullest further back than its outer side
+    "heel_breadth": (76.0, 2.0, "§3.1, heel H1 (Jeff 2026-10-10)"), "heel_widest": (74.0, 2.0, "§3.1, heel H1"),
+    "heel_width_z10": (69.0, 2.0, "§4.2 step 3, heel H1"), "heel_width_z20": (72.0, 2.0, "§4.2 step 3, heel H1"),
+    "heel_width_z30": (73.0, 2.0, "§4.2 step 3, heel H1"), "bimalleolar": (76.0, 2.0, "§3.1 ANSUR"),
     "malleolus_lateral_z": (76.0, 2.0, "§3.1 ANSUR"), "malleolus_medial_z": (89.0, 2.0, "§3.1 (E)"),
     "ankle_circ_min": (229.0, 6.0, "§3.1 ANSUR"), "heel_ankle_circ": (353.0, 6.0, "§3.1 ANSUR"),
     "ball_circ": (259.0, 6.0, "§3.1 ANSUR"), "instep_circ": (263.0, 6.0, "§3.1 (E)"),
@@ -253,7 +267,9 @@ for _k, _s in TIP_SHARE.items():
 
 
 def _nail_dims(nob):
-    """A plate's width and visible length (mm) across and along its toe, from its own mesh."""
+    """A plate's width and visible length (mm) across and along its toe, from its own mesh; its transverse
+    radius across the middle; and its thickness just inside the free edge on the rendered (solidified,
+    subdivided) surface."""
     import numpy as np
     co = np.array([v.co for v in nob.data.vertices]) * 1000.0
     a = np.array(nob["p01_axis"], float)
@@ -262,8 +278,11 @@ def _nail_dims(nob):
     a /= np.linalg.norm(a)
     b = np.cross(nrm, a)
     sol = nob.modifiers.get("Solidify")
+    frame = json.loads(nob["p01_frame"]) if "p01_frame" in nob else None
     return {"width": float((co @ b).max() - (co @ b).min()), "length": float((co @ a).max() - (co @ a).min()),
-            "thickness": sol.thickness * 1000.0 if sol else 0.0}
+            "thickness": sol.thickness * 1000.0 if sol else 0.0,
+            "radius": nails.transverse_radius(co, np.array(nob["p01_axis"], float)),
+            "edge_thickness": nails.free_edge_thickness(nob, frame) if frame else None}
 
 
 def measure(ctx, args):
@@ -299,7 +318,10 @@ def measure(ctx, args):
                     t = t + 1.5  # the right 2nd toe is 1.5 mm shorter (§3.3)
                 add(f"{k}.{side}", None if v.get(k) is None else round(v[k], 2), t, tol, src)
             for pair, g in fm.toe_gaps(m, ix, side).items():
-                add(f"toe_gap_{pair}.{side}", None if g is None else round(g, 2), [1.0, 60.0], None, "§4.3 step 5 (>= 1.0)")
+                # Jeff, 2026-10-10: the lesser toes touch but never cross; the hallux stands about 4.5 mm off toe 2
+                band, why = ([3.0, 6.5], "§4.3 (the hallux apart: about 4.5)") if pair == "1-2" else \
+                    ([0.1, 60.0], "§4.3 (touching, never crossing)")
+                add(f"toe_gap_{pair}.{side}", None if g is None else round(g, 2), band, None, why)
             add(f"heading_deg.{side}", round(v["heading_deg"], 2), unit="deg")
         for nob in sorted((o for o in bpy.data.objects if o.name.startswith(("Foot.L.Nail.", "Foot.R.Nail."))),
                           key=lambda o: o.name):
@@ -310,6 +332,10 @@ def measure(ctx, args):
             add(f"nail{k}_width.{side}", round(d["width"], 2), w, 1.0, "§3.3")
             add(f"nail{k}_length.{side}", round(d["length"], 2), vis, 1.0, "§3.3 (visible, with the free edge)")
             add(f"nail{k}_thickness.{side}", round(d["thickness"], 2), thick, 0.2, "§3.3")
+            add(f"nail{k}_edge_thickness.{side}", None if d["edge_thickness"] is None else round(d["edge_thickness"], 2),
+                thick, 0.2, "§3.3 (0.5 mm inside the free edge, on the rendered surface)")
+            add(f"nail{k}_radius.{side}", None if d["radius"] is None else round(d["radius"], 2),
+                fields.NAIL_RADIUS[k], 1.5, "§3.3 (transverse, across the middle third)")
         if contact:
             contact.value = 1.0
             m1 = fm.read(ob)

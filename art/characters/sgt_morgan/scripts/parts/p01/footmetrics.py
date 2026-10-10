@@ -21,6 +21,9 @@ from lib import measure
 MM = 1000.0
 SIDES = {"L": 1.0, "R": -1.0}
 TOES = (1, 2, 3, 4, 5)
+INSIDE_MM = 3.0  # a vertex this near another toe's surface, behind its face (not beside an edge), is inside
+                 # it (a toe's faces are an open patch: further off, the nearest point can be on its rim,
+                 # where a side means nothing)
 
 
 # --------------------------------------------------------------------------- reads and index sets
@@ -342,6 +345,8 @@ def foot(m, ix, side, toes=True):
         out[f"heel_width_z{z}"] = width_at(m, f, -0.15 * L, z)
 
     out.update(ankle(m, f))
+    _, widest = heel_outline(m, f, ys=(), zs=())
+    out["heel_widest_y"], out["heel_widest"] = widest
 
     # the minimum ankle circumference above the malleoli
     girths = []
@@ -488,9 +493,92 @@ def toe_dims(m, ix, f, side):
     return out
 
 
+def _segments_distance(A, B):
+    """The least distance between two closed polylines (n, 2), vertex to segment both ways."""
+    def one(P, Q):
+        Q1 = np.roll(Q, -1, axis=0)
+        d = Q1 - Q
+        L2 = np.maximum((d * d).sum(axis=1), 1e-12)
+        t = np.clip(((P[:, None, :] - Q[None]) * d[None]).sum(axis=2) / L2[None], 0.0, 1.0)
+        return float(np.linalg.norm(P[:, None, :] - (Q[None] + t[..., None] * d[None]), axis=2).min())
+    return min(one(A, B), one(B, A))
+
+
+def _pair_at(m, f, Q, k, y):
+    """At the section across the foot at y_F: (joined, gap) of toes k and k+1, or None where either toe has no
+    skin near y. Joined: one section loop holds both toes' centres; else the gap between their two loops."""
+    na, nb = Q[k][np.abs(Q[k][:, 1] - y) < 3.0], Q[k + 1][np.abs(Q[k + 1][:, 1] - y) < 3.0]
+    if len(na) < 3 or len(nb) < 3:
+        return None
+    lp = [p[:, [0, 2]] for p, closed in loops(m, f, {"point": f.to_w(np.array([0.0, y, 0.0])), "normal": f.ey},
+                                                keep=0.5, x=(-90.0, 100.0), z=(-5.0, 80.0)) if closed]
+    ca, cb = na[:, [0, 2]].mean(axis=0), nb[:, [0, 2]].mean(axis=0)
+    la = [i for i, p in enumerate(lp) if measure._inside(ca, p)]
+    lb = [i for i, p in enumerate(lp) if measure._inside(cb, p)]
+    if not la or not lb:
+        return None
+    if set(la) & set(lb):
+        return True, 0.0
+    return False, _segments_distance(lp[la[0]], lp[lb[0]])
+
+
+def webs(m, ix, side, f=None, step=0.5, open_mm=0.5):
+    """Where neighbouring toes part (spec 01 §3.2's toe webs, y_F mm), scanning sections across the foot from
+    behind the shorter toe's base forward: `saddle_y`, the commissure (the first section in which the toes
+    are two loops), and `open_y`, where the cleft between them is first open by open_mm (toes that touch in
+    front of their commissure, as real toes do, are not yet apart). With each toe's tip y and its visible
+    length from its web(s) to its tip in plan."""
+    co = m.co * MM
+    f = f or frame(m, ix, side)
+    Q = {k: f.to_f(co[ix.toe[side][k]]) for k in TOES}
+    tips = {k: float(Q[k][:, 1].min()) for k in TOES}
+    out = {"tips": tips}
+    run = 3  # a state counts once it holds for three sections (1.5 mm): one odd section is a cage artefact
+    for k in (1, 2, 3, 4):
+        start = min(Q[k][:, 1].max(), Q[k + 1][:, 1].max()) - 1.0
+        end = max(tips[k], tips[k + 1]) + 1.0
+        ys, states = [], []
+        for y in np.arange(start, end, -step):
+            st = _pair_at(m, f, Q, k, float(y))
+            if st is not None:
+                ys.append(float(y))
+                states.append(st)
+        saddle = opened = None
+        for i in range(len(states) - run + 1):
+            win = states[i:i + run]
+            if saddle is None and not any(j for j, _ in win):
+                saddle = ys[i]
+            if opened is None and all(not j and g >= open_mm for j, g in win):
+                opened = ys[i]
+                break
+        out[f"{k}-{k + 1}"] = {"saddle_y": saddle, "open_y": opened}
+    vis = {}
+    for k in TOES:
+        ws = [out[p]["open_y"] for p in (f"{k - 1}-{k}", f"{k}-{k + 1}") if p in out and out[p]["open_y"] is not None]
+        if ws:
+            vis[k] = float(np.mean(ws) - tips[k])
+    out["visible"] = vis
+    return out
+
+
+def heel_outline(m, f, ys=(-6.0, -10.0, -14.0, -20.0, -28.0, -35.0, -42.0, -50.0, -56.0, -62.0, -70.0),
+                 zs=(10.0, 20.0, 30.0)):
+    """The heel's plan: its width across the foot at stations y_F and heights z ({(y, z): mm}), and where it is
+    widest at z 20-30 between y_F -6 and -75 (the y and the width)."""
+    out = {(y, z): width_at(m, f, y, z) for y in ys for z in zs}
+    best = (None, None)
+    for y in np.arange(-6.0, -76.0, -2.0):
+        w = [width_at(m, f, float(y), z) for z in (20.0, 25.0, 30.0)]
+        w = max(x for x in w if x is not None) if any(x is not None for x in w) else None
+        if w is not None and (best[1] is None or w > best[1]):
+            best = (float(y), w)
+    return out, best
+
+
 def toe_gaps(m, ix, side, beyond=0.4):
-    """The smallest distance (mm) between neighbouring toes, toe k's distal vertices against toe k+1's
-    surface, beyond the web (the outer `beyond` share of each toe): {"1-2": gap, ...}."""
+    """The smallest distance (mm) between neighbouring toes, each toe's distal vertices against the other's
+    surface, beyond the web (the outer `beyond` share of each toe): {"1-2": gap, ...}; negative where a
+    vertex lies inside the neighbour (curled toes whose knuckles cross)."""
     from mathutils import Vector
     from mathutils.bvhtree import BVHTree
     co = m.co * MM
@@ -498,22 +586,53 @@ def toe_gaps(m, ix, side, beyond=0.4):
     tris = m.tris
     out = {}
     for k in (1, 2, 3, 4):
-        A, B = ix.toe[side][k], ix.toe[side][k + 1]
-        if not len(A) or not len(B):
-            continue
-        qa = f.to_f(co[A])
-        ta = qa[:, :2] @ toe_axis(qa)
-        A = A[ta > ta.min() + beyond * (ta.max() - ta.min())]
-        inB = np.zeros(len(co), bool)
-        inB[B] = True
-        tb = tris[inB[tris].all(axis=1)]
-        if not len(tb) or not len(A):
-            continue
-        tree = BVHTree.FromPolygons(co.tolist(), tb.tolist(), all_triangles=True)
         best = None
-        for i in A.tolist():
-            hit = tree.find_nearest(Vector(co[i]))
-            if hit[0] is not None and (best is None or hit[3] < best):
-                best = hit[3]
+        for me, other in ((k, k + 1), (k + 1, k)):
+            A, B = ix.toe[side][me], ix.toe[side][other]
+            if not len(A) or not len(B):
+                continue
+            qa = f.to_f(co[A])
+            ta = qa[:, :2] @ toe_axis(qa)
+            A = A[ta > ta.min() + beyond * (ta.max() - ta.min())]
+            inB = np.zeros(len(co), bool)
+            inB[B] = True
+            tb = tris[inB[tris].all(axis=1)]
+            if not len(tb) or not len(A):
+                continue
+            tree = BVHTree.FromPolygons(co.tolist(), tb.tolist(), all_triangles=True)
+            for i in A.tolist():
+                hit = tree.find_nearest(Vector(co[i]))
+                if hit[0] is None:
+                    continue
+                d = -hit[3] if (hit[3] < INSIDE_MM and (Vector(co[i]) - hit[0]).dot(hit[1]) < -0.5 * hit[3]) else hit[3]
+                if best is None or d < best:
+                    best = d
         out[f"{k}-{k + 1}"] = best
     return out
+
+
+def hallux_gap(m, ix, side, f=None, distal=0.6):
+    """The gap between the hallux and the second toe at the tips: the least signed distance from toe 2's
+    distal 40 % to the hallux's surface (mm)."""
+    from mathutils import Vector
+    from mathutils.bvhtree import BVHTree
+    co = m.co * MM
+    f = f or frame(m, ix, side)
+    A = ix.toe[side][2]
+    q = f.to_f(co[A])
+    ta = q[:, :2] @ toe_axis(q)
+    A = A[ta > ta.min() + distal * (ta.max() - ta.min())]
+    inB = np.zeros(len(co), bool)
+    inB[ix.toe[side][1]] = True
+    tb = m.tris[inB[m.tris].all(axis=1)]
+    if not len(A) or not len(tb):
+        return None
+    tree = BVHTree.FromPolygons(co.tolist(), tb.tolist(), all_triangles=True)
+    best = None
+    for i in A.tolist():
+        hit = tree.find_nearest(Vector(co[i]))
+        if hit[0] is None:
+            continue
+        d = -hit[3] if (hit[3] < INSIDE_MM and (Vector(co[i]) - hit[0]).dot(hit[1]) < -0.5 * hit[3]) else hit[3]
+        best = d if best is None else min(best, d)
+    return best
