@@ -24,6 +24,12 @@ Spec 16 (materials library) done: 85 materials and 48 cross-spec conflicts resol
 supersedes the material values in every part spec's section 5. Next: an interface ledger
 (notes/interface_ledger.md) listing shared values, owners, per-spec changes and Jeff's open
 questions, then revisions of the specs that need them.
+Spec 18 (pipeline) done; all eighteen specs written. Fast-loop costs measured on this
+machine: a persistent Blender server answers over a local socket in 0.08 ms, a shape-key
+change plus a landmark read takes 10 ms, a zoomed-camera Workbench crop renders in 1.1 s
+(15 s with render borders), MPFB targets are linear so optimiser steps and the 3DDFA
+least-squares fit take microseconds, and a mesh silhouette takes 0.1 s. Its effort estimate
+for the whole build is 35 to 90 five-hour API windows; it proposes a vertical slice first.
 Next: critique and revise all specs (the six written before the rule first), overview
 spec, fast-loop tooling.
 
