@@ -469,6 +469,8 @@ Rules: run as `blender -b --python-exit-code 1 --python scripts/parts/NN_name.py
 
 From an empty cache to `--to assemble`: ≈ 25 min of CPU plus the one-off bakes (E, from the specs' own run times). Flags: `--from S`, `--to S`, `--only S`, `--parts 02,09`, `--force`, `--dry-run`, `--proxy-missing` (use declared proxies for absent dependencies and say so in the log), `--jobs 1|2` (independent parts of S3 and S4 in two processes; never while the other agent renders), `--quality` (S12 tier), `--server NAME` (run stages inside a warm server instead of fresh processes).
 
+**Built so far (2026-10-10), in cut-down form:** S0, S1 and S2. S1 sets MPFB's macros from specs 03 and 04, fits the height macro to the rest stature 1855 mm (measured 1855.2), re-grounds the lowest vertex at z 0 and centres the ankle joints on the origin, facing −Y; no proportion solver, remap or re-loop yet, so the hip joint stands at 998 against 963 and the knee at 537 against 526. S2 adds MPFB's `default` rig (163 bones) with its own weights, the armature modifier after the helper mask; no added bones, rolls or weight clean-up yet. S0 to S2 take 5.3 s; a re-run with nothing changed skips both in 0.6 s. Every later stage exits 5, "not built yet". MPFB's head bone ends at z 1862, above the skull, where spec 08 §4.1 expects 1835 (spec 08's own §3.4 dump shows MPFB's value); settle it when the rig fit is built.
+
 Process model: each stage runs in a fresh Blender process that opens the previous stage's output (`blender -b <input> --python-exit-code 1 --python scripts/build_all.py -- --exec S`); a cold start costs 2.2 s and an open 0.05–0.5 s (M), which buys isolation from memory growth and from a crash in one part.
 
 ### 4.7 Idempotency and resumability rules

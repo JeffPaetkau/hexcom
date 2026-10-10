@@ -34,16 +34,23 @@ process denoised on the CPU). Found: spec 17's nominal lights render 3 to 5 time
 agree within 1/255, not bit for bit; spec 01's medial view must isolate the foot. Cost: the two
 agents and this session took the week from 57 to 59 percent.
 
-**Next, in a fresh session (this one is long).** The foot, in this order: (1) the rest of W1
-track a that the foot needs, `measure.py` first (spec 01 step 1 fits foot length, ball width
-and ankle girth with it), then `linmodel.py` and `optim.py`; (2) a cut-down body base: the
-MPFB male at the final macro values for a 185 cm, 83 kg man (spec 03 and 04 targets), the full
-proportion solver later; (3) revise spec 01 against the reality-wins rule and the values it
-shares (spec 01 builds on `Human`, spec 18 calls it `Body.Mesh`; materials come from spec 16's
-library, which does not exist yet, so the first foot pass is judged on `form` renders with a
-placeholder skin); (4) `scripts/parts/01_foot_ankle_sock.py`, foot first, then the sock and the
-last; then spec 02 and the boot. Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md and
-the newest entry of art/characters/sgt_morgan/notes/session_log.md, then continue with the
+**Later the same day, toward the foot.** Spec 01 revised under the reality-wins rule and
+against the values it shares (its new §0 lists fifteen decisions: ANSUR "Tight" figures, foot
+282 mm; a 1855 mm, 83 kg man; the body is `Body.Mesh`, the rig `Morgan.Rig`; in the hero pose
+the feet stand on the boots' footbeds; materials from spec 16; spec 17's harness and presets;
+one-foot render copies for the closeups), with dated notes in specs 04 and 08. Open for Jeff:
+§10.2 Q7 (boots lift the figure about 42 mm), Q8 (foot size), Q9 (the body at the macros is
+about 75 kg, not 83). `scripts/build_all.py` builds S0 to S2 in cut-down form (spec 18 §4.6
+note): `cache/body/rigged.blend` is the 1855 mm MPFB male with the default rig, the start
+for part 01. In progress: `measure.py`, `linmodel.py`, `optim.py` (background agent).
+
+**Next.** `scripts/parts/01_foot_ankle_sock.py` on `cache/body/rigged.blend`, as revised
+spec 01 lays out (its §0, §4, §9.2): foot first (the MPFB foot targets in S1 by a linear
+least-squares fit, the landmark sculpt with `lib/sculpt.py`, toes, nails), judged on `form`
+renders with a placeholder skin, since spec 16's `materials.py` does not exist yet; then the
+sock and the last; then spec 02 and the boot. `measure.py`, `linmodel.py` and `optim.py` come
+first if they are not committed yet. Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md
+and the newest entry of art/characters/sgt_morgan/notes/session_log.md, then continue with the
 next steps listed there. Work in art/characters/sgt_morgan."
 
 **The ledger will not come.** The cloud session is archived (Jeff, 2026-10-10) and never pushed

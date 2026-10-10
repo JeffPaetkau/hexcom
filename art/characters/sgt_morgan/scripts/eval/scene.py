@@ -8,6 +8,8 @@ backdrop.
   python scripts/eval/scene.py --build --proxy                      (launches Blender)
   blender -b --python scripts/eval/scene.py -- --build [--proxy | --character cache/character_hero.blend]
                                              [--world hdri|gradient] [--out cache/scene_eval.blend]
+  python scripts/eval/scene.py --build --character cache/body/rigged.blend --collection Body
+                                             (the rigged rest body of build_all.py S2, before S11 exists)
 
 Idempotent: build() deletes and rebuilds everything named Scene.* and the proxy, and never touches a
 linked character's own objects. The proxy is spec 17 §4.7's Cal.Proxy: the MPFB default male (the
@@ -323,23 +325,24 @@ def build_proxy(scene):
             "faces_forward": bool(joints["joint-head-2"][1] - mid[1] < 0.02 and ec[:, 1].min() < -0.1)}
 
 
-def link_character(scene, path):
-    """Link the Character collection that spec 18's build_all.py writes."""
+def link_character(scene, path, name=CHAR_COLL):
+    """Link the Character collection that spec 18's build_all.py writes, or another collection by name:
+    `Body` (Body.Mesh and Morgan.Rig) from cache/body/rigged.blend until the assembly stage exists."""
     import bpy
     path = os.path.abspath(path)
     if not os.path.exists(path):
         raise FileNotFoundError(f"{path} is missing; spec 18's build_all.py writes it (or build with --proxy)")
     with bpy.data.libraries.load(path, link=True) as (src, dst):
-        if CHAR_COLL not in src.collections:
-            raise KeyError(f"{path} has no {CHAR_COLL!r} collection")
-        dst.collections = [CHAR_COLL]
+        if name not in src.collections:
+            raise KeyError(f"{path} has no {name!r} collection")
+        dst.collections = [name]
     coll = dst.collections[0]
     if coll not in scene.collection.children_recursive:
         scene.collection.children.link(coll)
     return {"linked": os.path.relpath(path, env.PROJECT_DIR), "objects": len(coll.all_objects)}
 
 
-def build(proxy=False, character=None, world="hdri"):
+def build(proxy=False, character=None, world="hdri", collection=CHAR_COLL):
     """Build or rebuild the hero scene in the open file. Returns a summary."""
     import bpy
     from eval import render  # the Cycles defaults live with the tiers
@@ -361,7 +364,7 @@ def build(proxy=False, character=None, world="hdri"):
                "world": used_world, "view": [scene.view_settings.view_transform, scene.view_settings.look],
                "lightgroups": [g.name for g in scene.view_layers[0].lightgroups]}
     if character:
-        summary["character"] = link_character(scene, character)
+        summary["character"] = link_character(scene, character, collection)
     elif proxy:
         summary["proxy"] = build_proxy(scene)
     summary["seconds"] = round(time.time() - t0, 2)
@@ -373,6 +376,8 @@ def main(argv):
     ap.add_argument("--build", action="store_true", help="build the hero scene from an empty file and save it")
     ap.add_argument("--proxy", action="store_true", help="add Cal.Proxy, the MPFB default male, as the character")
     ap.add_argument("--character", help="link the Character collection from this .blend instead")
+    ap.add_argument("--collection", default=CHAR_COLL,
+                    help="the collection --character links (default Character; Body for cache/body/rigged.blend)")
     ap.add_argument("--world", choices=("hdri", "gradient"), default="hdri")
     ap.add_argument("--out", default=os.path.relpath(OUT_BLEND, env.PROJECT_DIR), help="where to save (project-relative)")
     ap.add_argument("--no-save", action="store_true")
@@ -385,7 +390,7 @@ def main(argv):
     import bpy
     bpy.ops.wm.read_factory_settings(use_empty=True)  # resets preferences in memory only; MPFB is re-enabled by the proxy
     try:
-        summary = build(a.proxy, a.character, a.world)
+        summary = build(a.proxy, a.character, a.world, a.collection)
     except (FileNotFoundError, KeyError) as e:
         print(f"[scene] {e}", flush=True)
         return 3
