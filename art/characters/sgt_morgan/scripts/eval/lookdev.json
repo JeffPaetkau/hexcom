@@ -1,0 +1,47 @@
+{
+ "doc": "LookDev light powers at rig scale 1 (spec 17 \u00a74.8), written by lookdev.py --calibrate: with one light on and the world off, the 18 % Lambertian card facing it reads the target",
+ "power_w_at_s1": {
+  "LookDev.Light.C.Rim": 47.836,
+  "LookDev.Light.L.Fill": 32.072,
+  "LookDev.Light.R.Key": 92.113
+ },
+ "measured": {
+  "LookDev.Light.C.Rim": {
+   "power": 47.836,
+   "read_at_trial": 0.11289,
+   "trial_w": 60.0,
+   "rgb": [
+    0.11289,
+    0.11289,
+    0.11289
+   ]
+  },
+  "LookDev.Light.L.Fill": {
+   "power": 32.072,
+   "read_at_trial": 0.04209,
+   "trial_w": 30.0,
+   "rgb": [
+    0.04209,
+    0.04209,
+    0.04209
+   ]
+  },
+  "LookDev.Light.R.Key": {
+   "power": 92.113,
+   "read_at_trial": 0.19541,
+   "trial_w": 100.0,
+   "rgb": [
+    0.19541,
+    0.19541,
+    0.19541
+   ]
+  }
+ },
+ "targets": {
+  "LookDev.Light.R.Key": 0.18,
+  "LookDev.Light.L.Fill": 0.045,
+  "LookDev.Light.C.Rim": 0.09
+ },
+ "written": "2026-10-10 13:33",
+ "device": "OPTIX"
+}

@@ -186,10 +186,15 @@ def render_preset(preset, tier="form", out_dir=None, stem=None, mode="equiv", aa
         raise ValueError(f"tier {tier!r} not in {tuple(TIERS)}")
     T = TIERS[tier]
     scene, scene_note = pick_scene(p, tier, scene_name)
+    look = scene.name == "LookDev"
     r = scene.render
     tmp = _Temporarily()
+    rig = None
     try:
         cam_info = camera.apply(p, scene, mode=mode, percent=T["percent"], view=view)
+        if look:  # spec 17 §4.8: the look-dev rig goes on the subject and turns with the camera
+            from eval import lookdev
+            rig = lookdev.aim(scene, p, cam_info)
         engine, device = _set_tier(scene, tier, samples, aa, p.get("form"))
         film = bool(p["render"].get("film_transparent", True))
         if engine == "workbench":
@@ -203,6 +208,8 @@ def render_preset(preset, tier="form", out_dir=None, stem=None, mode="equiv", aa
         hide = list(p.get("hide") or [])
         if engine == "workbench" and not keep_floor:
             hide.append("Scene.Floor*")  # the form tier shows the model alone
+        if look and any(h.startswith("Scene.Floor") for h in hide):
+            hide.append("LookDev.Stage*")  # in LookDev the floor is the cyclorama's
         obs, colls = camera.hidden(hide, scene)
         for x in obs + colls:
             tmp.set(x, hide_render=True)
@@ -221,12 +228,16 @@ def render_preset(preset, tier="form", out_dir=None, stem=None, mode="equiv", aa
         else:
             _save(scene, base + "_ungraded.png", "PNG", "16", "RGBA" if film else "RGB")
             outputs["ungraded"] = base + "_ungraded.png"
+            if look:  # LookDev has no grade (spec 16 §5.6): its PNG is AgX Base Contrast as rendered
+                _save(scene, base + ".png", "PNG", "8", "RGBA" if film else "RGB")
+                outputs["png"] = base + ".png"
             if T["exr"]:
                 _save(scene, base + ".exr", "OPEN_EXR_MULTILAYER", T["exr"])
                 outputs["exr"] = base + ".exr"
     finally:
         tmp.restore()
-    if engine == "cycles":
+    do_grade = do_grade and not look
+    if engine == "cycles" and not look:
         if do_grade:
             grade.grade_file(outputs["ungraded"], base + ".png")
             outputs["png"] = base + ".png"
@@ -245,7 +256,7 @@ def render_preset(preset, tier="form", out_dir=None, stem=None, mode="equiv", aa
         "view_transform": [scene.view_settings.view_transform, scene.view_settings.look] if engine == "cycles" else ["Standard", "None"],
         "graded": bool(engine == "cycles" and do_grade), "film_transparent": film,
         "blender": bpy.app.version_string, "build_hash": bpy.app.build_hash.decode() if isinstance(bpy.app.build_hash, bytes) else bpy.app.build_hash,
-        "commit": git_commit(), "light_solution": None,
+        "commit": git_commit(), "light_solution": None, "lookdev_rig": rig,
         "blend": os.path.relpath(bpy.data.filepath, env.PROJECT_DIR).replace(os.sep, "/") if bpy.data.filepath else None,
         "time_utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "outputs": {k: os.path.relpath(v, env.PROJECT_DIR).replace(os.sep, "/") for k, v in outputs.items()},
@@ -267,7 +278,8 @@ def main(argv):
     ap.add_argument("--border", action="store_true", help="render crops with a render border instead of the equivalent camera")
     ap.add_argument("--aa", default="8", choices=AA, help="form tier anti-aliasing (FXAA for sweeps)")
     ap.add_argument("--samples", type=int, help="override the tier's sample count")
-    ap.add_argument("--scene", choices=("hero",), help="render look-dev presets in the hero scene")
+    ap.add_argument("--scene", choices=("hero", "lookdev"),
+                    help="render look-dev presets in the hero scene, or any preset in LookDev")
     ap.add_argument("--floor", action="store_true", help="keep the floor in form renders")
     ap.add_argument("--no-grade", action="store_true")
     ap.add_argument("--view", type=int, help="one view of a turntable preset (default all)")

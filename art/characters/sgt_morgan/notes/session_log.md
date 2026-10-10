@@ -67,6 +67,27 @@ publish). (3) The nail plates' free edges overhang the toe tips like a thin flak
 closeups. (4) The sole view (V4) is unlit in the hero scene; it needs spec 17's LookDev scene.
 (5) Library follow-ups part 01 worked around: spec 18 §4.13, "Left of W1 track a".
 
+**Materials, first part (afternoon).** spec 16's library core (`scripts/lib/materials.py` and
+`mat_catalogue`, `mat_core`, `mat_groups`, `mat_skin`, `mat_fabric`: recipes by name, the
+`MG.Skin.Core`, `MG.Skin.Micro`, `MG.Tile.AntiRepeat`, `MG.Knit.Stitch` and `MG.Weather.Grime`
+groups, lint) with the recipes part 01 needs (`Skin.Foot`, `Nail.Plate`, `Nail.FreeEdge`, the
+sock knit and its reinforced heel and toe); spec 17's LookDev scene (`scripts/eval/lookdev.py`,
+calibrated key 92 W, fill 32 W, rim 48 W; the rig turns with the camera so the sole is lit from
+below); `scripts/eval/lookdev_p01.py` renders part 01 there with the recipes. Specs 16 §9 and 17
+§4.8 carry the deviations (nail transmission, noise remapping, the knit's anti-repeat). The
+foot reads as real skin; open: the mottling reads as freckles on the shin, the nail free edges
+are uniformly white, the toes are barely redder than the dorsum, and part 01 has yet to publish
+the masks and guides the skin reads (`Foot.SSSScale`, callus, tendons, veins, creases).
+
+**The toes and the heel, with Jeff.** He found the toes too long, the heel too narrow, the
+big toe too narrow and the lesser toes too straight, from the renders and his own reference
+photos (kept in the ignored `cache/ref_feet/`). Part of what he saw was lens distortion: V1
+put the toes 1.3 times nearer than the heel, so the part now judges proportions in `V1f`,
+`V5f` and the square-on views. Variant sheets are in `renders/01_foot/sheets/` (`toes_`,
+`heel_`, `hallux_variants.png`); the part 01 agent's code for them is uncommitted, waiting for
+his pick of a big-toe row and a curl (recommended: X2c, the big toe 30 mm wide with a 4.5 mm
+gap to toe 2 and the lesser toes curled 35 degrees) and of the heel (H1 provisional).
+
 **Next.** Part 01's second and third sessions (spec 01 §9.3): the nail free edges; the
 guides (tendons, veins, creases on the closeup copies); spec 16's materials library, at least
 the skin, nail and sock recipes (`materials.py`, which does not exist yet); the sock and the

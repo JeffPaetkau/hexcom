@@ -342,8 +342,9 @@ def link_character(scene, path, name=CHAR_COLL):
     return {"linked": os.path.relpath(path, env.PROJECT_DIR), "objects": len(coll.all_objects)}
 
 
-def build(proxy=False, character=None, world="hdri", collection=CHAR_COLL):
-    """Build or rebuild the hero scene in the open file. Returns a summary."""
+def build(proxy=False, character=None, world="hdri", collection=CHAR_COLL, lookdev=False):
+    """Build or rebuild the hero scene in the open file (and, with lookdev, spec 17 §4.2 step 11's LookDev
+    scene beside it, linking the same character). Returns a summary."""
     import bpy
     from eval import render  # the Cycles defaults live with the tiers
     t0 = time.time()
@@ -367,6 +368,10 @@ def build(proxy=False, character=None, world="hdri", collection=CHAR_COLL):
         summary["character"] = link_character(scene, character, collection)
     elif proxy:
         summary["proxy"] = build_proxy(scene)
+    if lookdev:
+        from eval import lookdev as ld
+        char = next((c for c in scene.collection.children if c.name in (collection, CHAR_COLL)), None)
+        summary["lookdev"] = ld.build(bpy.data.scenes.get(ld.SCENE), character=char)
     summary["seconds"] = round(time.time() - t0, 2)
     return summary
 
@@ -381,6 +386,7 @@ def main(argv):
     ap.add_argument("--world", choices=("hdri", "gradient"), default="hdri")
     ap.add_argument("--out", default=os.path.relpath(OUT_BLEND, env.PROJECT_DIR), help="where to save (project-relative)")
     ap.add_argument("--no-save", action="store_true")
+    ap.add_argument("--no-lookdev", action="store_true", help="build the hero scene only (no LookDev, §4.8)")
     a = ap.parse_args(argv)
     if not a.build:
         ap.print_help()
@@ -390,7 +396,7 @@ def main(argv):
     import bpy
     bpy.ops.wm.read_factory_settings(use_empty=True)  # resets preferences in memory only; MPFB is re-enabled by the proxy
     try:
-        summary = build(a.proxy, a.character, a.world, a.collection)
+        summary = build(a.proxy, a.character, a.world, a.collection, lookdev=not a.no_lookdev)
     except (FileNotFoundError, KeyError) as e:
         print(f"[scene] {e}", flush=True)
         return 3

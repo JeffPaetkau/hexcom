@@ -1,0 +1,31 @@
+{
+ "doc": "Spec 16 (materials) views of §1.3, rendered in spec 17's LookDev (AgX Base Contrast, no grade) by materials.swatch() (python scripts/eval/lookdev.py --swatch IDS). V1 is the flat swatch LookDev.Swatch beside Cal.Card18, V2 the macro at 0.09 mm/px, V3 the wear block (Lib.Test.WearBlock is not built: it needs the weathering groups of §4.2-4.4). V7 (added 2026-10-10) puts the recipe on Lib.Test.Ball and on Lib.Test.Toe with Lib.Test.Nail (skin and nails) or on Lib.Test.Fold (fabrics): the material-ball view a flat swatch cannot give for translucent skin and nails. V4 (hero patches), V5 (camouflage) and V6 (bake round trip) wait for spec 17's light solve, MG.Camo.Blotch4 and the bakes.",
+ "owner": "16",
+ "presets": [
+  {"id": "p16.V1", "label": "swatch", "scene": "lookdev",
+   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -600, 1000], "target_mm": [-60, 0, 1000],
+              "up": [0, 0, 1], "lens_mm": 100, "sensor_mm": 36},
+   "render": {"res": [800, 800], "tier": "look"}, "hide": ["Lib.Test.*", "Cal.Chart", "Cal.Ball*"],
+   "compare": [], "note": "0.27 mm/px; the key 45 degrees off the camera axis so no specular peak reaches it"},
+
+  {"id": "p16.V2", "label": "macro", "scene": "lookdev",
+   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -250, 1000], "target_mm": [-60, 0, 1000],
+              "up": [0, 0, 1], "lens_mm": 100, "sensor_mm": 36},
+   "dof": {"fstop": 8, "focus": "target"},
+   "render": {"res": [1024, 1024], "tier": "look"}, "hide": ["Lib.Test.*", "Cal.Chart", "Cal.Ball*"],
+   "compare": [], "note": "0.09 mm/px: the weave, knit or grain period is measured here (spec 16 M4)"},
+
+  {"id": "p16.V3", "label": "wear", "scene": "lookdev",
+   "camera": {"type": "look_at", "frame": "W", "pos_mm": [300, -420, 1180], "target_mm": [0, 0, 1000],
+              "up": [0, 0, 1], "lens_mm": 85, "sensor_mm": 36},
+   "render": {"res": [1200, 900], "tier": "look"}, "hide": ["LookDev.Swatch", "Cal.Chart", "Cal.Ball*", "Cal.Card18"],
+   "compare": ["ref/zoom_armour_rknee_x8.png"],
+   "note": "needs Lib.Test.WearBlock and MG.Weather.Dust, MG.Mask.EdgeBevel and MG.Weather.Chips (not built)"},
+
+  {"id": "p16.V7", "label": "balls", "scene": "lookdev",
+   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -560, 1300], "target_mm": [-40, 0, 1000],
+              "up": [0, 0, 1], "lens_mm": 85, "sensor_mm": 36},
+   "render": {"res": [1024, 1024], "tier": "look"}, "hide": ["LookDev.Swatch", "Cal.Chart", "Cal.Ball*"],
+   "compare": [], "note": "Lib.Test.Ball (60 mm), Lib.Test.Toe (22 mm) with Lib.Test.Nail, or Lib.Test.Fold, beside the card; 28 degrees down"}
+ ]
+}
