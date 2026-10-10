@@ -5,6 +5,17 @@ built entirely by scripts, generators, simulation and downloaded assets, verifie
 rendering and looking. Read `spec/00_overview.md` first, then the spec for the part
 you are working on.
 
+## Scope (Jeff, 2026-10-10)
+
+The deliverable now is the **unit model**: the soldier, his clothing, armour, gear and
+carbine, rigged. Lighting, floor, background and lens effects matter only as far as they
+change how the model renders, so the evaluation scene is a matched camera, the key, cool
+side and world lights, a plain floor plane for contact shadows and bounce, and the colour
+grade. The hangar set, floor joints, the floor-pool light, depth of field, haze and glare
+are deferred. Once Jeff accepts the model, the scene is built in Blender and in several
+game engines to compare results, so the model must export cleanly (glTF 2.0 with baked
+textures, a skeleton that maps to Godot's humanoid profile) as well as render in Blender.
+
 ## Non-negotiable rules
 
 1. **Left/right are the soldier's own.** "Left hand" is his left hand. Never use
@@ -24,9 +35,14 @@ you are working on.
    images are named `<Part>.<Component>` (e.g. `Boot.L.Sole.Lugs`).
 5. **Nothing is hand-edited in a .blend.** The .blend is a build artifact. Fix the
    script, rebuild.
-6. **Large binaries are not committed.** `assets/` and `renders/` are gitignored except
-   for `assets/manifest.json` and the latest `renders/eval/*.png`. The setup script
-   re-downloads assets from the manifest.
+6. **Downloads and intermediates are not committed; deliverables are.** `assets/`,
+   `renders/` and `cache/` are gitignored except for `assets/manifest.json` and the latest
+   `renders/eval/*.png`; the setup script re-downloads assets from the manifest. The
+   deliverables (`deliver/`: the .blend, the .glb and the baked textures) live in the
+   repository and are committed at milestones only, never per iteration, because every
+   committed version stays in the history. GitHub refuses files over 100 MB, so textures
+   stay separate files rather than packed into the .blend; if `deliver/` grows past a few
+   hundred MB, propose Git LFS to Jeff.
 7. **Commit at every milestone.** The container is ephemeral; uncommitted work is lost.
 8. **Specs are the source of truth.** If you deviate from a spec, update the spec in
    the same commit and explain why in the commit message.

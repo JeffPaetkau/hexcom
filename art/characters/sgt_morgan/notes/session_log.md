@@ -11,6 +11,10 @@ pipeline queued. Spec 17 settles colour management (AgX, grade applied in numpy 
 view transform), a single neutral look-dev scene, and a JSON registry of named camera
 presets. Open for Jeff from spec 17: physical or floor-only light pool, physical or soft
 bokeh, floor joint layout, and where large deliverables (.blend, .glb, textures) live.
+Jeff's scope decision: the unit model first; the scene only as far as it affects the
+model's render; the scene is built later in Blender and several game engines; deliverables
+live in the repo under deliver/, committed at milestones (CLAUDE.md, Scope and rule 6).
+Spec 17 carries a scope note; spec 18 was briefed with it.
 Next: critique and revise all specs (the six written before the rule first), overview
 spec, fast-loop tooling.
 
