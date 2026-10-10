@@ -22,9 +22,29 @@ bash; this folder's `.gitattributes` now forces LF. Bash's `GROUPS` is a built-i
 spec's `GROUPS=ai` silently fetched nothing; it is `AI_GROUPS` now. Run Blender with
 `source cache/env.sh` first (it sets `BLENDER_USER_RESOURCES`), or through `lib/env.py`.
 
-**In progress.** Step 3 as two background agents: spec 18's library core, the Blender server
-and `bl.py`; spec 17's render harness (camera, presets, tiers, the in-scope scene, the grade)
-and `sheet.py`.
+**Step 3, first part, done** by two background agents, reviewed and run here: spec 17's
+render harness (camproj, camera with the equivalent crop camera, the preset registry with
+ref, p17, p01 and p02 presets, render tiers, the in-scope scene, the grade, minimal masks) and
+spec 18's `sheet.py` (spec 17 §4.14); spec 18's library core, the Blender server and `bl.py`
+(spec 18 §4.13). `setup_session.sh --check` now ends with `bl.py selftest`; `bl.py selftest
+--lib` runs the nine module self-tests in the server. On the RTX 3050 a warm Workbench crop
+is 0.03 to 0.10 s and an `eval` hero frame 4 s. Review fixed one bug (later renders in a
+process denoised on the CPU). Found: spec 17's nominal lights render 3 to 5 times too bright
+(calibration will settle it; nothing in the foot or boot form work depends on it); GPU renders
+agree within 1/255, not bit for bit; spec 01's medial view must isolate the foot. Cost: the two
+agents and this session took the week from 57 to 59 percent.
+
+**Next, in a fresh session (this one is long).** The foot, in this order: (1) the rest of W1
+track a that the foot needs, `measure.py` first (spec 01 step 1 fits foot length, ball width
+and ankle girth with it), then `linmodel.py` and `optim.py`; (2) a cut-down body base: the
+MPFB male at the final macro values for a 185 cm, 83 kg man (spec 03 and 04 targets), the full
+proportion solver later; (3) revise spec 01 against the reality-wins rule and the values it
+shares (spec 01 builds on `Human`, spec 18 calls it `Body.Mesh`; materials come from spec 16's
+library, which does not exist yet, so the first foot pass is judged on `form` renders with a
+placeholder skin); (4) `scripts/parts/01_foot_ankle_sock.py`, foot first, then the sock and the
+last; then spec 02 and the boot. Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md and
+the newest entry of art/characters/sgt_morgan/notes/session_log.md, then continue with the
+next steps listed there. Work in art/characters/sgt_morgan."
 
 **The ledger will not come.** The cloud session is archived (Jeff, 2026-10-10) and never pushed
 `notes/interface_ledger.md`. Its job is done here instead, one part at a time: before a part

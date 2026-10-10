@@ -69,6 +69,12 @@ textures, a skeleton that maps to Godot's humanoid profile) as well as render in
 - 4 CPU cores, 15 GB RAM, no GPU. Cycles CPU: budget minutes per evaluation render.
 - Network: download.blender.org, ambientcg.com, polyhaven.com, MakeHuman asset
   servers, extensions.blender.org, PyPI, Hugging Face are reachable.
+- Jeff's workstation (Windows 11, Git Bash): Blender 4.5.14 LTS at `C:\Program Files\Blender
+  Foundation\Blender 4.5\blender.exe`, 8 threads, NVIDIA RTX 3050 6 GB (Cycles on OptiX, OIDN
+  on the GPU). After `bash scripts/setup_session.sh`, `source cache/env.sh` gives `$SGT_BLENDER`,
+  `BLENDER_USER_RESOURCES` (the project's own MPFB) and `$SGT_PYIMG` (the AI venv, the Python
+  with PIL; `python3` there is a Store stub). Python code uses `scripts/lib/env.py`; the fast
+  loop is `scripts/tools/bl.py` (spec 18 §4.13), renders `scripts/eval/render.py` (spec 17 §4.14).
 
 ## Where work runs
 
