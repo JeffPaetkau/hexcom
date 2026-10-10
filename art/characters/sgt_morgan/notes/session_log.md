@@ -24,7 +24,13 @@ spec's `GROUPS=ai` silently fetched nothing; it is `AI_GROUPS` now. Run Blender 
 
 **In progress.** Step 3 as two background agents: spec 18's library core, the Blender server
 and `bl.py`; spec 17's render harness (camera, presets, tiers, the in-scope scene, the grade)
-and `sheet.py`. The interface ledger had not been pushed by the cloud session yet.
+and `sheet.py`.
+
+**The ledger will not come.** The cloud session is archived (Jeff, 2026-10-10) and never pushed
+`notes/interface_ledger.md`. Its job is done here instead, one part at a time: before a part
+is built, its spec is revised against the reality-wins rule and against the values it shares
+with other specs (each spec's §10, spec 18 §10.2, spec 16's material resolutions, which
+override every part's §5), and the decisions are written into the specs themselves.
 
 ## 2026-10-10 — hand-off: the vertical slice moves to Jeff's GPU workstation
 

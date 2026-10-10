@@ -46,7 +46,7 @@ S1–S5 render the full character (or, before it exists, `Cal.Proxy`, §4.7); S2
 7. **Depth of field.** Edge-spread width of the crate-stack top edge 8 ± 1.5 px; Laplacian variance of face, chest, hands and boots ≥ 0.6 × the reference's (§8.3).
 8. **Physical shadow present** (the client's ruling): mean floor luminance inside the key-shadow mask ≤ 0.8 × the same pixels in the `noshadow` diagnostic.
 9. **Look-dev.** Grey ball |a*|, |b*| ≤ 1.0; chart median ΔE00 ≤ 2, max ≤ 4 (linear-normalised, §8.3); swatch read-back of `Cal.Mat.Grey18` 0.180 ± 0.004.
-10. **Reproducibility.** The same preset rendered twice is bit-identical (fixed seed, CPU OIDN); `camera.py --lint` resolves every preset in the registry.
+10. **Reproducibility.** The same preset rendered twice is bit-identical on the CPU (fixed seed); on the GPU within 1/255 on under 2 % of pixels (§4.14); `camera.py --lint` resolves every preset in the registry.
 11. **Time** on this box (4 cores, shared): S1 at the `eval` tier ≤ 4 min; the `cal` render ≤ 7 min; S6 ≤ 90 s.
 
 ---
@@ -467,6 +467,34 @@ Inputs: a graded render, the reference, a preset (to map border and scale), `lan
 * **Renders** in `deliver/renders/`: `hero_1672x941.png` (graded) and its ungraded twin; `hero_3344x1882.png`; `hero_3840x2160.png` (same horizontal field of view; vertical 0.05 % wider, 0.5 px at 941); `compare_hero.png` (reference | render side by side, same size) and `_flicker.gif`; the ten `ref.*` crops; the look-dev turntable (8 views and a contact sheet); `calibration.png` (patch boxes with ΔE) and `calibration.json`; `render_report.json`. The latest `renders/eval/*.png` are committed (CLAUDE.md rule 6).
 
 ---
+
+### 4.14 First build on Jeff's workstation (2026-10-10): what changed, what was found
+
+Built under the scope note: `camproj.py`, `camera.py`, `render.py`, `scene.py`, `grade.py` (+ `grade.json`), a minimal `masks.py` (+ `ui_mask.json`), the registry `presets/ref.json`, `p17.json`, `p01.json`, `p02.json` (50 presets), and spec 18's `scripts/tools/sheet.py`. Every script also runs from a plain Python and relaunches itself in Blender (`python scripts/eval/render.py --preset ref.boots_feet --tier eval`).
+
+**Checked.** `camproj` agrees with Blender's own projection within 0.0006 px (hero, crops, look-at cameras); the equivalent crop camera matches the render-border path (IoU 1.0000, centroids within 0.005 px); the in-Blender grade equals the same grade in numpy on the 16-bit file; `camera.py --lint` is clean; the scene rebuilds idempotently. On a stand-in MPFB human (1.729 m, A-pose) the floor contact lands on the reference's sole rows (toes y ≈ 912 against 895/907) and the figure is centred on x 836.
+
+**Timings (RTX 3050, OptiX, OIDN on the GPU).** `form` 0.9 s for the first render in a process, then 0.03–0.05 s per crop; `look` 0.9–1.1 s; `eval` hero 1672 × 941 at 64 spp 3.95 s (≈ 5.3 s with the 16-bit PNG, EXR and grade), boots crop 3.7–3.9 s; `cal` 450 × 555 2.4 s; a whole command ≈ 3.2 s (`form`) to 7.7 s (`eval`) including Blender's start.
+
+**Deviations from §4.**
+1. Crops and other non-hero views use a second camera, `Scene.Cam.Preset`; `Scene.Cam.Hero` is never changed.
+2. Depth of field is off for every hero preset, the `ref.*` crops included (scope note). If it returns, the crop camera scales the f-number by the lens ratio to keep the aperture.
+3. Hero renders are transparent, graded, then laid over a flat backdrop (31.4, 32.6, 32.1), measured by `grade.py --measure-backdrop` on strips beside the figure above the horizon.
+4. The `form` tier uses the Standard view transform, hides the floor and keeps a transparent background; `--aa FXAA` for sweeps.
+5. Files: `<preset>_<tier>.png` is the graded 8-bit image, with `_ungraded.png` (16-bit), `.exr` and `.json` beside it, in `renders/<NN_part>/` (`renders/17_scene/` for this spec's own and the `ref.*` presets).
+6. Only the key, cool and world light groups exist; the kicker and under fill (both 0 W here) are not built.
+7. The floor is a plain 30 m plane with uniform §3.4 values; no maps, no slab.
+8. Registry keys added: `alias`, `sides` (`{side}`/`{other}`), `hide`, `mask`, `form`, `note`. `p01.json` and `p02.json` were written ahead of their parts; each part still owns and revises its own file. `p01.V6` points at `p02.V1`/`V2` at ×3; `p01.V7` is a visibility variant, not a preset; `p01.V1o`–`V4o` add spec 01's ortho measurement views; `hero.alt50` is a look-at preset; the `p17.V7` probe framing is provisional; turntables orbit the camera only.
+9. Look-dev presets render in the hero scene for `form`; Cycles tiers refuse until `--scene hero` is given. Reference crops are cut with PIL's LANCZOS filter, which reproduces `ref/crop_*.png` pixel for pixel.
+10. `masks.py` covers the boot masks, the UI mask and the full-figure mask from the rembg matte, which is not yet on the workstation (so full-figure presets have no cyan edge); scratch masks go to `cache/masks/`, nothing to `ref/masks/` yet.
+
+**Findings.**
+* **The nominal lights are 3–5 × too bright.** Floor patches read F3 163 (reference 53), F2 185 (124), far floor 104 (37); lit skin comes out near white. Calibration (§8.2) will have to take the key below its 400 W lower bound (a rough estimate is 250–400 W for the cheek patch), so the §4.4 bounds are provisional until stage A runs. Not tuned now: stage A needs a real head, and nothing in the foot and boot work depends on absolute exposure.
+* **GPU renders are not bit-identical.** Two `eval` renders on OptiX differ by 1/255 in 1.7 % of pixels, so item 10 of §1.4 holds on the CPU only; on the GPU, reproducibility means within 1/255 on under 2 % of pixels, and determinism checks that need bit identity render on the CPU (`SGT_DEVICE=CPU`).
+* **Medial views look across the other foot.** Spec 01 V2 and spec 02 V7 put the camera beyond the other foot or boot. `p02.V7` hides the other boot; `p01.V2` cannot, both feet being one body mesh, so part 01 must isolate the foot it renders (a mask or a temporary split).
+* The stand-in is the MPFB default with gender 1.0, ankles at ±0.198 m, moved +0.0149 m in Y to centre them; skin colour above the neck, 0.05 grey below, no subsurface.
+
+**Left under the scope note.** The LookDev scene and its S6 view; `colour.py` and `calibrate.py` (floor stage B, light stage A, anchors, `lights_solution.json`); `overlay.py` (landmarks, patches, grading statistics); Cryptomatte render masks, `recipes.json` and the committed `ref/masks`; the light-linking diagnostics, `--assert-hero` and `scene.py --selftest`; the §5.1 floor maps; `render.py --part` writing overlays and a sheet itself; `deliver.py`.
 
 ## 5. Materials and textures
 

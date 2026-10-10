@@ -1,0 +1,11 @@
+{
+ "doc": "UI panels of ref/reference_full.png (spec 17 §2.6), measured from the panel borders: inclusive boxes [x0, y0, x1, y1] in full-reference pixels. shadow_key_fallback is the polygon of floor the physical key shadow darkens (D1), used until a noshadow render gives the real mask.",
+ "boxes": {
+  "tabs_title": [0, 0, 466, 196],
+  "item_cards": [44, 196, 412, 760],
+  "back": [35, 848, 189, 899],
+  "unit_stats": [1259, 61, 1637, 374],
+  "confirm_loadout": [1325, 841, 1637, 900]
+ },
+ "shadow_key_fallback": [[740, 912], [1000, 912], [1250, 880], [1480, 830], [1460, 795], [1200, 820], [980, 850], [760, 880]]
+}

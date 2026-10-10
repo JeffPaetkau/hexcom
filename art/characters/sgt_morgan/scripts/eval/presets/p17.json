@@ -1,0 +1,44 @@
+{
+ "doc": "Spec 17's own views (§1.3). S2 and S5 are the boxes of ref.boots_feet and ref.head_face, so they are aliases. S6 needs the LookDev scene and V7 the calibration probe, neither of which is built yet (scope note: LookDev and calibration come after the camera, lights, floor and grade).",
+ "owner": "17",
+ "presets": [
+  {"id": "p17.V1", "label": "hero_full", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": null, "scale": 1, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/reference_full.png"], "mask": ["soldier_full"],
+   "note": "S1: framing, light directions, grading statistics; UI masked in comparisons (§2.6)"},
+
+  {"id": "p17.V2", "label": "floor_feet", "alias": "ref.boots_feet",
+   "note": "S2: contact cores, boot reflection smudges, the start of the physical key shadow"},
+
+  {"id": "p17.V3", "label": "bg_left", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [412, 380, 640, 760], "scale": 2, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/reference_full.png"],
+   "note": "S3: the background set is deferred (scope note); kept for when it is built"},
+
+  {"id": "p17.V4", "label": "bg_right", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [960, 0, 1672, 760], "scale": 1, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/reference_full.png"],
+   "note": "S4: the background set is deferred (scope note); kept for when it is built"},
+
+  {"id": "p17.V5", "label": "face_light", "alias": "ref.head_face",
+   "note": "S5: patch dE, nose shadow toward his left, cool left cheek, black under-jaw"},
+
+  {"id": "p17.V6", "label": "lookdev_rig", "scene": "lookdev",
+   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -1300, 1000], "target_mm": [0, 0, 1000],
+              "up": [0, 0, 1], "lens_mm": 85, "sensor_mm": 36},
+   "dof": {"fstop": 8, "focus": "target"},
+   "render": {"res": [1600, 1200], "scale": 1, "tier": "eval", "film_transparent": false},
+   "compare": [],
+   "note": "S6: neutrality of the look-dev light, ColorChecker dE, chrome-ball light map; needs the LookDev scene (lookdev.py, not written yet)"},
+
+  {"id": "p17.V7", "label": "probe", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [736, 184, 936, 324], "scale": 4, "tier": "eval", "film_transparent": true},
+   "hide": ["Character"],
+   "compare": [],
+   "note": "grey and chrome balls of Cal.Probe at the chest (0, -400, 1300) mm, which projects to (836, 254); the box is provisional, spec 17 names the view but not its framing, and Cal.Probe is not built yet"}
+ ]
+}

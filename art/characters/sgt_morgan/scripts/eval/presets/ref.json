@@ -1,0 +1,62 @@
+{
+ "doc": "Shared reference-crop presets (spec 17 §4.3). Hero camera with a box (x0, y0, x1, y1) of the 1672 x 941 frame at a scale; the box at the scale reproduces the crop file pixel for pixel (PIL LANCZOS, checked 2026-10-10). Rendered through the equivalent crop camera of spec 18 §4.8.2 unless render.py --border. Depth of field off (scope note, 2026-10-10). Schema and the keys added to spec 17's: camera.py's module doc.",
+ "owner": "17",
+ "presets": [
+  {"id": "ref.full", "label": "full", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": null, "scale": 1, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/reference_full.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.soldier_full", "label": "soldier_full", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [580, 20, 1020, 935], "scale": 2, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_soldier_full.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.head_face", "label": "head_face", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [715, 30, 885, 200], "scale": 5, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_head_face.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.torso_vest", "label": "torso_vest", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [630, 140, 990, 490], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_torso_vest.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.arm_R", "label": "arm_R", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [600, 170, 770, 490], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_arm_right_viewerleft.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.arm_L", "label": "arm_L", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [850, 170, 1000, 490], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_arm_left_viewerright.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.hands_rifle", "label": "hands_rifle", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [630, 230, 950, 570], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_hands_rifle.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.belt_hips", "label": "belt_hips", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [630, 410, 990, 630], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_belt_hips.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.legs_knees", "label": "legs_knees", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [630, 550, 990, 830], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_legs_knees.png"], "mask": ["soldier_full"]},
+
+  {"id": "ref.boots_feet", "label": "boots_feet", "scene": "hero",
+   "camera": {"type": "hero"},
+   "render": {"border_px": [610, 750, 1010, 935], "scale": 3, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/crop_boots_feet.png"], "mask": ["boot_R", "boot_L"]},
+
+  {"id": "hero.alt50", "label": "alt50", "scene": "hero",
+   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -4910, 590], "target_mm": [0, 0, 924.74],
+              "up": [0, 0, 1], "lens_mm": 50, "sensor_mm": 36},
+   "render": {"res": [1672, 941], "scale": 1, "tier": "eval", "film_transparent": true},
+   "compare": ["ref/reference_full.png"], "mask": ["soldier_full"],
+   "note": "sensitivity only (spec 17 D5): the analysts' round alternative, 50 mm at 4.91 m, pitched 3.9 degrees up like the hero (the target sets the pitch)"}
+ ]
+}

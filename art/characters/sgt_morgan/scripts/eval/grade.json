@@ -1,0 +1,10 @@
+{
+ "doc": "Display grade of spec 17 §5.6 (lift and gain in Blender's form, saturation about Rec.709 luma, black crush) and the flat backdrop (8-bit display) that transparent-film hero renders are composited over; grade.py --measure-backdrop rewrites the backdrop.",
+ "lift": [0.985, 1.0, 1.025],
+ "gain": [1.035, 1.0, 0.96],
+ "saturation": 0.92,
+ "black": 0.02,
+ "backdrop": [31.4, 32.6, 32.1],
+ "backdrop_sd": [30.2, 27.7, 25.7],
+ "backdrop_source": {"ref": "ref/reference_full.png", "boxes": [[560, 0, 620, 616], [1000, 0, 1060, 616]], "stat": "mean of 8-bit display values"}
+}
