@@ -20,6 +20,10 @@ barrel, mid-length gas, MCMR-13 handguard, MFT Minimalist stock, A2 birdcage, Su
 Aimpoint T-2, PMAG GEN M3). It moved the grip frame and changed the handguard section, so
 specs 05, 08 and 11 must be revised against it in the critique pass.
 Jeff confirmed fictional "AR-12" markings on the carbine (spec 15, Q7).
+Spec 16 (materials library) done: 85 materials and 48 cross-spec conflicts resolved; it
+supersedes the material values in every part spec's section 5. Next: an interface ledger
+(notes/interface_ledger.md) listing shared values, owners, per-spec changes and Jeff's open
+questions, then revisions of the specs that need them.
 Next: critique and revise all specs (the six written before the rule first), overview
 spec, fast-loop tooling.
 
