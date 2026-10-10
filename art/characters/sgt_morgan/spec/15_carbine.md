@@ -1124,7 +1124,7 @@ Main risks and mitigations:
 4. **Q4 Barrel finish.** Default **whole barrel and A2 in Burnt Bronze** (the bronze tube in the picture is the barrel). Alternative: factory phosphate barrel and a bronze A2 only (the analysis's reading).
 5. **Q5 The three "screws".** Default **dropped** (nothing real sits there; the M-LOK rims give the glints). Alternative: a short M-LOK rail section on the 3 o'clock face at Y 200–250 with its two screws.
 6. **Q6 Light.** Default **SureFire M300C** (matches the drawn 2.9 cm head and the short body). Alternative: the M600 Scout class of the brief (≈ 140 mm long), which would reach Y 150 and crowd the left thumb.
-7. **Q7 Markings.** Default **fictional "AR-12" markings**, no real maker logos on a game asset. Real marks only for reference renders.
+7. **Q7 Markings. Answered by Jeff, 2026-10-10: fictional "AR-12" markings.** No real maker logos on the game asset; real marks only for reference renders.
 8. **Q8 Back-up iron sights.** Default **none** (as drawn); `--buis` adds folded ones.
 9. **Q9 Magazine.** Default **PMAG GEN M3 Stealth Gray**. Alternative: USGI aluminium 30-round (matches "worn aluminium" but has no published dimensions in our notes).
 10. **Q10 Sidearm.** Default **not built on the body** (none visible). Option: the Appendix A P226 in spec 14's optional holster at his right rear.

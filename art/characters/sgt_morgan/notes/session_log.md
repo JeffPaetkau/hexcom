@@ -19,6 +19,7 @@ Spec 15 (carbine) builds one real configuration (BCM M4 upper and lower, 16 in g
 barrel, mid-length gas, MCMR-13 handguard, MFT Minimalist stock, A2 birdcage, SureFire M300C,
 Aimpoint T-2, PMAG GEN M3). It moved the grip frame and changed the handguard section, so
 specs 05, 08 and 11 must be revised against it in the critique pass.
+Jeff confirmed fictional "AR-12" markings on the carbine (spec 15, Q7).
 Next: critique and revise all specs (the six written before the rule first), overview
 spec, fast-loop tooling.
 
