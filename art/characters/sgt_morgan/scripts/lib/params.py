@@ -9,14 +9,24 @@ An address is a string, so it travels in JSON, on the command line and in params
                                                or by its interface name when that name is unique
   xf:<Object>:<location|rotation_euler|scale>[:<0|1|2>]   a transform, whole or one axis
   const:<part>:<name>                          a part constant, merged into the part's params on build
+  macro:<Object>:<name>                        an MPFB macro slider (gender, age, muscle, weight, height,
+                                               proportions, cupsize, firmness, african, asian, caucasian), in
+                                               [0, 1]; a write reapplies the macro targets once per object
+                                               (MPFB's reapply_macro_details: under 1 ms, ≈ 0.2 s when a
+                                               corner target must be loaded), after which a linear target
+                                               model must refresh(); the race values are not renormalised
 
 A registered name stands for an address with bounds, a unit and a factor from that unit to Blender's:
 register("collar_h", "mod:Boot.L.Collar:Solidify:thickness", lo=4, hi=12, unit="mm", factor=0.001).
 Every lookup goes by name when it is used, never through a stored RNA reference, so registered values
 survive the server's restore (which re-opens the file) and module reloads.
 """
-KINDS = ("key", "mod", "gn", "xf", "const")
+import contextlib
+
+KINDS = ("key", "mod", "gn", "xf", "const", "macro")
 TRANSFORMS = ("location", "rotation_euler", "scale")
+MACROS = ("gender", "age", "muscle", "weight", "height", "proportions", "cupsize", "firmness", "african", "asian",
+          "caucasian")
 
 # importlib.reload re-runs this module in its old namespace, and the server reloads changed modules
 # before a build, so the registry is carried over rather than emptied.
@@ -38,7 +48,7 @@ class Param:
 def parse(address):
     """('key', ['Body.Mesh', 'Face.Jaw']) and the like; ValueError for a malformed address."""
     kind, sep, rest = address.partition(":")
-    n = {"key": 2, "mod": 3, "gn": 3, "const": 2}.get(kind)
+    n = {"key": 2, "mod": 3, "gn": 3, "const": 2, "macro": 2}.get(kind)
     if not sep or kind not in KINDS:
         raise ValueError(f"bad address {address!r}: expected one of {KINDS} then ':'")
     if kind == "xf":
@@ -49,6 +59,8 @@ def parse(address):
     args = rest.split(":", n - 1)
     if len(args) != n or not all(args):
         raise ValueError(f"bad address {address!r}: {kind} takes {n} fields")
+    if kind == "macro" and args[1] not in MACROS:
+        raise ValueError(f"bad address {address!r}: MPFB's macros are {', '.join(MACROS)}")
     return kind, args
 
 
@@ -143,6 +155,43 @@ def _like(cur, v):
     return [float(x) for x in v] if isinstance(v, (list, tuple)) else v
 
 
+def _mpfb():
+    """MPFB's human properties and target service, or KeyError when MPFB is not enabled in this session."""
+    try:
+        from bl_ext.user_default.mpfb.entities.objectproperties import HumanObjectProperties
+        from bl_ext.user_default.mpfb.services.targetservice import TargetService
+    except ImportError:
+        raise KeyError("macro: parameters need MPFB enabled in this session (not --factory-startup)") from None
+    return HumanObjectProperties, TargetService
+
+
+_MACRO_PENDING = []  # objects whose macros changed in this write, reapplied once each at its end
+# MPFB deletes a corner target whose weight falls to 0 and reads it from disk again when a slider brings it
+# back: 25-35 ms each time a slider crosses a corner (0.5), against 0.3 ms with the target kept. Searches and
+# sweeps keep them (keep_macro_targets()) and prune once at the end, so a build's key set never depends on
+# the values a search happened to visit.
+_MACRO_KEEP = {"on": False, "touched": []}
+
+
+@contextlib.contextmanager
+def keep_macro_targets():
+    """Keep MPFB's zero-weight corner targets loaded while macros change; prune them once on the way out."""
+    if _MACRO_KEEP["on"]:
+        yield
+        return
+    _MACRO_KEEP.update(on=True, touched=[])
+    try:
+        yield
+    finally:
+        _MACRO_KEEP["on"] = False
+        for name in _MACRO_KEEP["touched"]:
+            try:
+                _mpfb()[1].reapply_macro_details(_object(name))
+            except KeyError:  # the object went away (a restore)
+                pass
+        _MACRO_KEEP["touched"] = []
+
+
 def _get(address):
     kind, a = parse(address)
     if kind == "const":
@@ -150,6 +199,8 @@ def _get(address):
             raise KeyError(f"part {a[0]} has no constant {a[1]!r} set in this session")
         return CONSTANTS[a[0]][a[1]]
     ob = _object(a[0])
+    if kind == "macro":
+        return float(_mpfb()[0].get_value(a[1], entity_reference=ob))
     if kind == "key":
         return _key_block(ob, a[1]).value
     if kind == "mod":
@@ -167,7 +218,11 @@ def _set(address, v):
         CONSTANTS.setdefault(a[0], {})[a[1]] = v
         return
     ob = _object(a[0])
-    if kind == "key":
+    if kind == "macro":
+        _mpfb()[0].set_value(a[1], float(v), entity_reference=ob)
+        if ob.name not in _MACRO_PENDING:
+            _MACRO_PENDING.append(ob.name)
+    elif kind == "key":
         kb = _key_block(ob, a[1])
         kb.slider_min, kb.slider_max = min(kb.slider_min, v), max(kb.slider_max, v)  # else Blender clamps
         kb.value = v
@@ -217,9 +272,19 @@ def write(values, bounds=True):
         comps = v if isinstance(v, (list, tuple)) else [v]
         if bounds and any((p.lo is not None and c < p.lo) or (p.hi is not None and c > p.hi) for c in comps):
             raise ValueError(f"{n} = {v} is outside [{p.lo}, {p.hi}]{' ' + p.unit if p.unit else ''}")
+        if p.address.startswith("macro:") and not 0.0 <= v * p.factor <= 1.0:
+            raise ValueError(f"{n} = {v}: MPFB's macro sliders run from 0 to 1 (outside, it blends no targets)")
         plan.append((p, list(v) if isinstance(v, tuple) else v))
-    for p, v in plan:
-        _set(p.address, _scale(v, p.factor))
+    del _MACRO_PENDING[:]
+    try:
+        for p, v in plan:
+            _set(p.address, _scale(v, p.factor))
+    finally:
+        for name in _MACRO_PENDING:  # once per object, however many of its macros changed
+            _mpfb()[1].reapply_macro_details(_object(name), remove_zero_weight_targets=not _MACRO_KEEP["on"])
+            if _MACRO_KEEP["on"] and name not in _MACRO_KEEP["touched"]:
+                _MACRO_KEEP["touched"].append(name)
+        del _MACRO_PENDING[:]
     return read([p.name for p, _ in plan])
 
 
@@ -286,7 +351,8 @@ def selftest():
         write({"bulge": 0.9, "bevel_mm": 1, "z_mm": 0})
         restore(snap)
         assert read() == snap
-        for bad in ("xf:X:location:7", "nope:X", "mod:X:Y", "key:"):
+        assert parse("macro:Body.Mesh:muscle") == ("macro", ["Body.Mesh", "muscle"])  # live: linmodel's selftest
+        for bad in ("xf:X:location:7", "nope:X", "mod:X:Y", "key:", "macro:Body.Mesh:strength"):
             try:
                 parse(bad)
                 raise AssertionError(f"parsed {bad}")

@@ -45,14 +45,13 @@ drawn line; at rest, barefoot, it measures 9 px below it, as it should); Q8 the 
 282 mm; Q9 the build follows the drawing's lean V-taper, not ANSUR's 83 kg. CLAUDE.md records
 it; specs 01, 03, 04, 08 and 18 carry dated notes; the others are corrected when their part is
 built. `scripts/build_all.py` builds S0 to S2 in cut-down form (spec 18 §4.6 note):
-`cache/body/rigged.blend` is the 1835 mm MPFB male with the default rig, the start for part 01. In progress: `measure.py`, `linmodel.py`, `optim.py` (background agent).
+`cache/body/rigged.blend` is the 1835 mm MPFB male with the default rig, the start for part 01. `measure.py`, `linmodel.py` and `optim.py` are built and wired into the server (spec 18 §4.13, second part); review fixed a Windows lock race in `cache.locked()` that killed about one contended writer in twenty.
 
 **Next.** `scripts/parts/01_foot_ankle_sock.py` on `cache/body/rigged.blend`, as revised
 spec 01 lays out (its §0, §4, §9.2): foot first (the MPFB foot targets in S1 by a linear
 least-squares fit, the landmark sculpt with `lib/sculpt.py`, toes, nails), judged on `form`
 renders with a placeholder skin, since spec 16's `materials.py` does not exist yet; then the
-sock and the last; then spec 02 and the boot. `measure.py`, `linmodel.py` and `optim.py` come
-first if they are not committed yet. Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md
+sock and the last; then spec 02 and the boot. Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md
 and the newest entry of art/characters/sgt_morgan/notes/session_log.md, then continue with the
 next steps listed there. Work in art/characters/sgt_morgan."
 

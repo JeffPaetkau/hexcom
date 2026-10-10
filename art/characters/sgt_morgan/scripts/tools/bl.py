@@ -8,12 +8,20 @@
   python -I scripts/tools/bl.py snapshot [K] | restore [K] | save PART | load PART [--link]
   python -I scripts/tools/bl.py build PART [--stage S] [--params JSON] [--rebuild] [--check] [--proxy IDS]
   python -I scripts/tools/bl.py render [--out PNG] [--preset P] [--tier form] [--size W H] [--aa 8|FXAA]
-  python -I scripts/tools/bl.py measure | silhouette | variants | optimise      (later sessions)
-  python -I scripts/tools/bl.py selftest [--lib] [--bench] [--keep]
+  python -I scripts/tools/bl.py measure girth ob=Body.Mesh plane=700 around=[130,-38,700] [kind=loop]
+  python -I scripts/tools/bl.py measure --part 06 | --calls '[{"fn": "bbox", "args": {"ob": "Body.Mesh"}}]'
+  python -I scripts/tools/bl.py silhouette --preset ref.soldier_full [--objects Body.*,Rifle.*] [--out PNG]
+                                           [--diff PNG] [--method span|splat] [--scale S] [--band 3]
+  python -I scripts/tools/bl.py variants SPEC.json | '{"grid": {...}, "measure": [...], "render": {...}}'
+  python -I scripts/tools/bl.py optimise SPEC.json | '{"method": "cmaes", "params": {...}, "objective": [...]}'
+  python -I scripts/tools/bl.py selftest [--lib] [--modules measure,optim] [--bench] [--keep]
 
 Every command takes --name (default $SGT_SERVER, else "a": one server per agent, a and b). Standard
 library only, so it runs on the image-tools Python, the cloud's python3 or Blender's own. Results print
-as JSON; the exit status is 0, 1 for an error, or for `build` the part's own exit code (§4.4).
+as JSON; the exit status is 0, 1 for an error, or for `build` the part's own exit code (§4.4), and for
+`measure --part` 2 when a tolerance fails. The measurement primitives and their arguments are
+scripts/lib/measure.py's; variants and optimise take a JSON object (inline or a file) as the server's
+commands of the same names document them, and print the server's progress lines to stderr.
 """
 import argparse
 import json
@@ -32,7 +40,7 @@ from server import protocol  # noqa: E402
 
 SERVER_PY = env.path("scripts", "server", "blender_server.py")
 # errors that are answers rather than bugs: printed without the server's traceback
-EXPECTED = ("NotImplementedError", "MissingDependency", "PermissionError", "FileNotFoundError")
+EXPECTED = ("NotImplementedError", "MissingDependency", "PermissionError", "FileNotFoundError", "LookupError")
 
 
 class ServerError(Exception):
@@ -146,7 +154,7 @@ def tail(path, n=25):
 class Client:
     """One connection to a named server; call() sends a request and waits for its reply."""
 
-    def __init__(self, name, timeout=900.0):
+    def __init__(self, name, timeout=900.0, on_progress=None):
         self.name = name
         self.state = cache.read_json(protocol.state_path(name))
         if not self.state:
@@ -158,16 +166,22 @@ class Client:
         self.sock.settimeout(timeout)
         self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.lines, self.backlog, self.n = protocol.Lines(), [], 0
+        self.on_progress = on_progress  # called with each progress line of the request in hand
 
     def call(self, cmd, args=None, token=None):
-        """The raw reply: {id, ok, result | error, ms}."""
+        """The raw reply: {id, ok, result | error, ms}. Progress lines ({id, progress}, no "ok") of a long
+        command go to on_progress on the way."""
         self.n += 1
         self.sock.sendall(protocol.encode(protocol.request(self.n, token or self.state["token"], cmd, args)))
         while True:
             while self.backlog:
                 msg = protocol.decode(self.backlog.pop(0))
-                if msg.get("id") == self.n:
+                if msg.get("id") != self.n:
+                    continue
+                if "ok" in msg:
                     return msg
+                if self.on_progress is not None and "progress" in msg:
+                    self.on_progress(msg["progress"])
             data = self.sock.recv(1 << 16)
             if not data:
                 raise ServerError(f"server {self.name!r} closed the connection")
@@ -289,6 +303,13 @@ cam.location, cam.rotation_euler = (7.36, -6.93, 4.96), (math.radians(63.6), 0.0
 bpy.context.scene.camera = cam
 """
 
+# a shape key that lifts the cube 1 m, for the linear-model solve through the server
+_SELFTEST_KEY = """
+kb = bpy.data.objects["Selftest.Cube"].shape_key_add(name="Selftest.Up", from_mix=False)
+for p in kb.data:
+    p.co.z += 1.0
+"""
+
 # the cloud probe's framing (spec 18 §1.3, §3.2): the hero camera and two equivalent crop cameras
 _BENCH_SETUP = """
 import numpy as np
@@ -375,9 +396,10 @@ def _bench(report):
     report["bench"] = b
 
 
-def selftest(lib=False, bench=False, keep=False):
-    """Start a server, ping it, set and get, one Workbench render, snapshot and restore, then stop
-    (spec 18 §8.4, run by setup_session.sh --check); --lib adds every lib module's selftest()."""
+def selftest(lib=False, bench=False, keep=False, modules=None):
+    """Start a server, ping it, set and get, one Workbench render, snapshot and restore, a scratch part's
+    builds, the measurement commands, then stop (spec 18 §8.4, run by setup_session.sh --check); --lib
+    adds every lib module's selftest() (or the named modules')."""
     import statistics
     name = "selftest"
     report, problems = {}, []
@@ -449,8 +471,44 @@ def selftest(lib=False, bench=False, keep=False):
         report["build_s"] = [x["timings"]["total"] for x in b]
         report["reloaded"] = b[2]["reloaded"]
 
-        r = c.call("measure")
-        check(not r["ok"] and "not implemented yet" in r["error"], f"measure answered {r}")
+        # the measurement commands on the cube (2 m, centred on the origin): a primitive, the scratch part's
+        # measure(), a silhouette, a variant sweep put back afterwards, an optimiser with progress lines
+        # and the linear-model solve
+        z = "xf:Selftest.Cube:location:2"
+        ms, r = _ms(lambda: c.result("measure", {"fn": "bbox", "args": {"ob": "Selftest.Cube"}}))
+        check([round(v, 3) for v in r["size"]] == [2000.0] * 3, f"measure bbox: {r}")
+        report["measure_bbox_ms"] = round(ms, 2)
+        r = c.result("measure", {"part": "95"})
+        check(abs(r["metrics"][0]["value"] - 30.0) < 1e-3 and r["pass"] is False, f"measure part 95: {r}")
+        ms, r = _ms(lambda: c.result("silhouette", {"preset": "ref.full", "objects": ["Selftest.Cube"]}))
+        check(r["size"] == [1672, 941] and r["px"] > 100000, f"silhouette: {r}")
+        report["silhouette_full_frame_ms"] = round(ms, 1)
+        seen = []
+        c.on_progress = seen.append
+        r = c.result("variants", {"list": [{z: 0.0}, {z: 0.5}], "progress": 1, "measure": [
+            {"fn": "bbox", "args": {"ob": "Selftest.Cube"}, "metric": "min.2", "name": "bottom"}]})
+        check([round(v["metrics"]["bottom"], 3) for v in r["variants"]] == [-1000.0, -500.0]
+              and c.result("get", {"names": [z]})[z] == 0.0 and len(seen) == 2, f"variants: {r} progress {seen}")
+        del seen[:]
+        r = c.result("optimise", {"method": "cd", "params": {z: [-1.0, 1.0]}, "run": "selftest", "progress": 5,
+                                  "objective": [{"fn": "bbox", "args": {"ob": "Selftest.Cube"}, "metric": "min.2",
+                                                 "target": -500.0, "tol": 1.0}]})
+        log_file = env.path(r["log"])
+        check(abs(r["x"][z] - 0.5) < 1e-3 and r["f_confirm"] < 1e-3 and seen and os.path.isfile(log_file),
+              f"optimise: {r} progress {len(seen)}")
+        report["optimise_cd_nfev"], report["optimise_cd_s"] = r["nfev"], r["s"]
+        c.on_progress = None
+        if os.path.exists(log_file):
+            os.remove(log_file)
+        c.result("set", {z: 0.0})
+        c.result("exec", {"code": _SELFTEST_KEY})
+        v0 = c.result("measure", {"fn": "landmarks", "args": {"ob": "Selftest.Cube", "spec": {"v0": 0}}})["v0"]
+        r = c.result("optimise", {"method": "lsq", "object": "Selftest.Cube", "keys": ["Selftest.Up"],
+                                  "landmarks": {"v0": 0}, "targets": {"v0": [v0[0], v0[1], v0[2] + 300.0]},
+                                  "bounds": [0.0, 1.0], "restore": True})
+        check(abs(r["x"]["Selftest.Up"] - 0.3) < 1e-9 and r["confirm_max_err_mm"] < 1e-3, f"optimise lsq: {r}")
+        r = c.call("measure", {"fn": "nonsense"})
+        check(not r["ok"] and "no measurement" in r["error"], f"measure of nothing answered {r}")
         r = c.call("ping", token="0" * 32)
         check(not r["ok"] and "bad token" in r["error"], "a wrong token was accepted")
         r = c.call("exec", {"code": "import sys; sys.exit(3)"})
@@ -459,9 +517,10 @@ def selftest(lib=False, bench=False, keep=False):
         report["rss_mb"] = status["rss_mb"]
 
         if lib:
-            res = c.result("selftest")
+            res = c.result("selftest", {"modules": modules} if modules else {})
             report["lib"] = {n: ("ok" if v["ok"] else v["error"]) for n, v in res.items()}
             report["lib_s"] = {n: v["s"] for n, v in res.items()}
+            report["lib_results"] = {n: v["result"] for n, v in res.items() if v["ok"] and v.get("result")}
             for n, v in res.items():
                 if not check(v["ok"], f"lib.{n}.selftest"):
                     print(f"--- lib.{n} ---\n{v.get('trace') or v['error']}", file=sys.stderr)
@@ -488,6 +547,19 @@ def _value(text):
         return json.loads(text)
     except ValueError:
         return text
+
+
+def _json_arg(text):
+    """A JSON value given inline, as a file name, or as @file."""
+    path = text[1:] if text.startswith("@") else text
+    if os.path.isfile(path):
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    return json.loads(text)
+
+
+def _print_progress(p):
+    print("progress " + json.dumps(p, separators=(",", ":")), file=sys.stderr, flush=True)
 
 
 def main(argv=None):
@@ -529,10 +601,29 @@ def main(argv=None):
     p.add_argument("--tier", default="form")
     p.add_argument("--size", nargs=2, type=int, metavar=("W", "H"))
     p.add_argument("--aa", default="8")
-    for n in ("measure", "silhouette", "variants", "optimise"):
-        cmd(n).add_argument("args", nargs="?", default="{}", help="a JSON object")
+    p = cmd("measure")
+    p.add_argument("fn", nargs="?", help="a primitive of scripts/lib/measure.py (girth, section, landmarks, "
+                                         "project, clearance, stature, bbox, silhouette), or a JSON request")
+    p.add_argument("pairs", nargs="*", help="ARG=VALUE; VALUE is JSON (700, [130,-38,700]) or text (object names)")
+    p.add_argument("--part", help="the part's own measure() on the session")
+    p.add_argument("--params", help="with --part: a JSON object merged over its params.json")
+    p.add_argument("--calls", help="several primitives sharing one mesh read: a JSON list of {fn, args}, inline or a file")
+    p = cmd("silhouette")
+    p.add_argument("--preset", default="ref.soldier_full")
+    p.add_argument("--objects", help="object names or patterns, comma-separated (default: what renders)")
+    p.add_argument("--method", choices=("span", "splat"), default="span")
+    p.add_argument("--scale", type=float, help="override the preset's scale")
+    p.add_argument("--out", help="write the mask PNG here")
+    p.add_argument("--diff", help="write the silhouette map (p18.V2 colours) here")
+    p.add_argument("--band", type=int, default=3, help="the don't-care band around the reference edge, px")
+    p.add_argument("--no-declared", action="store_true", help="count the declared differences too")
+    for n in ("variants", "optimise"):
+        p = cmd(n)
+        p.add_argument("spec", help="a JSON object, inline or a file")
+        p.add_argument("--quiet", action="store_true", help="no progress lines on stderr")
     p = cmd("selftest")
     p.add_argument("--lib", action="store_true", help="also run every lib module's selftest() in the server")
+    p.add_argument("--modules", help="with --lib: only these modules, comma-separated (measure,optim)")
     p.add_argument("--bench", action="store_true", help="also time the cloud probe's operations on an MPFB human")
     p.add_argument("--keep", action="store_true", help="leave the selftest server running")
     a = ap.parse_args(argv)
@@ -549,12 +640,12 @@ def main(argv=None):
         elif a.cmd in ("stop", "shutdown"):
             out = stop(a.name)
         elif a.cmd == "selftest":
-            out = selftest(a.lib, a.bench, a.keep)
+            out = selftest(a.lib, a.bench, a.keep, [m for m in (a.modules or "").split(",") if m] or None)
             print(json.dumps(out, indent=1))
             print("SELFTEST " + ("PASS" if out["pass"] else "FAIL: " + "; ".join(out["problems"])))
             return 0 if out["pass"] else 1
         else:
-            args = {}
+            args, progress = {}, None
             if a.cmd == "exec":
                 args = {"code": a.code}
             elif a.cmd == "set":
@@ -570,12 +661,35 @@ def main(argv=None):
                     args["params"] = json.loads(args["params"])
             elif a.cmd == "render":
                 args = {k: v for k, v in vars(a).items() if k not in ("cmd", "name") and v is not None}
-            elif a.cmd in ("measure", "silhouette", "variants", "optimise"):
-                args = json.loads(a.args)
-            c = Client(a.name)
+            elif a.cmd == "measure":
+                if a.part:
+                    args = {"part": a.part, **({"params": json.loads(a.params)} if a.params else {})}
+                elif a.calls:
+                    args = {"calls": _json_arg(a.calls)}
+                elif a.fn and a.fn.lstrip().startswith("{"):
+                    args = json.loads(a.fn)  # a whole request, as the server takes it
+                elif a.fn:
+                    args = {"fn": a.fn, "args": {k: _value(v) for k, _, v in (p.partition("=") for p in a.pairs)}}
+                else:
+                    raise ValueError("measure needs a primitive (girth ob=... plane=...), --part or --calls")
+            elif a.cmd == "silhouette":
+                args = {"preset": a.preset, "method": a.method, "band": a.band, "declared": not a.no_declared}
+                for k in ("scale", "out", "diff"):
+                    if getattr(a, k) is not None:
+                        args[k] = getattr(a, k)
+                if a.objects:
+                    args["objects"] = [o for o in a.objects.split(",") if o]
+            elif a.cmd in ("variants", "optimise"):
+                args = _json_arg(a.spec)
+                if not a.quiet:
+                    args.setdefault("progress", 1 if a.cmd == "variants" else 10)
+                    progress = _print_progress
+            c = Client(a.name, on_progress=progress)
             out = c.result(a.cmd, args)
             c.close()
         print(json.dumps(out, indent=1))
+        if a.cmd == "measure" and isinstance(out, dict) and "part" in out:
+            return 0 if out.get("pass") else 2  # §4.4's exit 2: a tolerance failed
         return out.get("exit", 0) if a.cmd == "build" else 0
     except (ServerError, OSError, ValueError) as e:
         print(f"bl.py {a.cmd}: {e}", file=sys.stderr)

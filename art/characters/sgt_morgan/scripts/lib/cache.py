@@ -83,11 +83,23 @@ def write_json(path, obj, indent=1):
 
 
 def read_json(path, default=None):
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return default
+    """The file's JSON, or `default` if it is missing or unreadable as JSON.
+
+    On Windows a file just replaced can be held for a moment by a scanner or indexer; that is retried
+    like `_replace`, and raised if it persists, because answering `default` there would let a
+    read-modify-write (the journal, interfaces.json) rebuild the file from nothing."""
+    for attempt in range(10):
+        try:
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return default
+        except PermissionError:
+            if os.name != "nt" or attempt == 9:
+                raise
+            time.sleep(0.05)
+        except (OSError, ValueError):
+            return default
 
 
 @contextlib.contextmanager
@@ -102,7 +114,11 @@ def locked(path, timeout=30.0, stale=120.0):
             os.write(fd, str(os.getpid()).encode())
             os.close(fd)
             break
-        except FileExistsError:
+        except (FileExistsError, PermissionError) as e:
+            # Windows answers PermissionError, not FileExistsError, while the last holder's delete of
+            # the lock file is still pending: the lock is busy, not forbidden
+            if isinstance(e, PermissionError) and os.name != "nt":
+                raise
             try:
                 if time.time() - os.path.getmtime(lock) > stale:  # its holder was killed
                     os.remove(lock)

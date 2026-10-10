@@ -146,13 +146,20 @@ def pick_scene(p, tier, force=None):
     return hero, "hero"
 
 
+_commit = []
+
+
 def git_commit():
-    try:
-        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=env.PROJECT_DIR, capture_output=True,
-                             text=True, timeout=10)
-        return out.stdout.strip() or None
-    except (OSError, subprocess.SubprocessError):
-        return None
+    """The commit the sidecars record, looked up once per process: `git rev-parse` costs about 0.55 s on
+    Windows, more than a warm Workbench render, and HEAD does not move during a render run."""
+    if not _commit:
+        try:
+            out = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=env.PROJECT_DIR,
+                                 capture_output=True, text=True, timeout=10)
+            _commit.append(out.stdout.strip() or None)
+        except (OSError, subprocess.SubprocessError):
+            _commit.append(None)
+    return _commit[0]
 
 
 def _save(scene, path, fmt, depth, mode="RGBA"):

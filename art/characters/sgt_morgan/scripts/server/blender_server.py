@@ -5,9 +5,12 @@ on 127.0.0.1 by scripts/tools/bl.py.
 
 Started by `bl.py start`, which passes the token in SGT_SERVER_TOKEN and reads the port from the
 `LISTENING <port>` line of the server's log. Single-threaded on purpose: Blender's operators must run
-on its main thread, so requests from several connections queue and run one at a time. Before a build
-(or a render) every changed module under scripts/ is reloaded in place, with the modules that import
-it, so an edited part or library runs without a restart.
+on its main thread, so requests from several connections queue and run one at a time. Before a build,
+a render or a measurement every changed module under scripts/ is reloaded in place, with the modules
+that import it, so an edited part or library runs without a restart.
+
+Long commands (optimise, variants) stream progress when the request asks: lines {"id", "progress"} with
+no "ok", before the reply, on the same connection; bl.py prints them and keeps waiting.
 """
 import argparse
 import ast
@@ -17,7 +20,9 @@ import hmac
 import importlib
 import importlib.util
 import io
+import itertools
 import json
+import math
 import os
 import selectors
 import socket
@@ -26,18 +31,18 @@ import time
 import traceback
 
 import bpy
+import numpy as np
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
 
-from lib import cache, cli, env, log, naming, params, replace  # noqa: E402
+from lib import cache, cli, env, linmodel, log, measure, naming, optim, params, replace  # noqa: E402
 from server import protocol  # noqa: E402
 
 RESTART_BUILDS = 200  # §4.8.1 hygiene: a restart is advised after this many builds ...
 RESTART_RSS_MB = 5000  # ... or past this resident size (two servers fit in 15 GB with Cycles headroom)
-NOT_YET = {"measure": "lib/measure.py, spec 18 §4.8.4", "silhouette": "lib/measure.py silhouette(), §4.8.4",
-           "variants": "the variant sweep, §4.8.1 (needs measure)", "optimise": "lib/optim.py, §4.8.5"}
+SILHOUETTE_ARGS = ("preset", "objects", "method", "scale", "out", "diff", "band", "declared", "view")
 
 
 def rel(path):
@@ -187,8 +192,11 @@ class Server:
         self.parts = {}  # part id -> (path, mtime, module)
         self.parts_dir = os.path.join(SCRIPTS, "parts")  # a selftest points this at a scratch folder
         self.events = protocol.events_path(name)
+        self.models = {}  # (object, keys) -> linmodel.LinearModel, dropped when the session's meshes change
+        self._conn, self._rid, self._progress = None, None, False  # the request in hand, for progress lines
         self.ns = {"bpy": bpy, "server": self, "cache": cache, "cli": cli, "env": env, "log": log,
-                   "naming": naming, "params": params, "replace": replace}  # exec's namespace, kept
+                   "naming": naming, "params": params, "replace": replace, "measure": measure,
+                   "linmodel": linmodel, "optim": optim}  # exec's namespace, kept
 
     # ------------------------------------------------------------------ transport
 
@@ -219,10 +227,13 @@ class Server:
                         conn.close()
                         continue
                     for line in lines:
+                        self._conn = conn
                         try:
                             conn.sendall(protocol.encode(self.handle(line)))
                         except OSError:
                             break
+                        finally:
+                            self._conn = None
                         if self.done:
                             break
         finally:
@@ -239,6 +250,7 @@ class Server:
             rid, cmd, args = req.get("id"), str(req.get("cmd")), req.get("args") or {}
             if not hmac.compare_digest(str(req.get("token", "")), self.token):
                 raise PermissionError("bad token")
+            self._rid, self._progress = rid, bool(isinstance(args, dict) and args.get("progress"))
             fn = getattr(self, "cmd_" + cmd, None)
             if fn is None:
                 raise KeyError(f"unknown command {cmd!r}; the commands are {', '.join(protocol.COMMANDS)}")
@@ -257,6 +269,27 @@ class Server:
     def restart_advised(self, mem=None):
         mem = rss_mb() if mem is None else mem
         return self.builds >= RESTART_BUILDS or (mem or 0) > RESTART_RSS_MB
+
+    def progress(self, rec):
+        """A progress line for the request in hand, if it asked for them: {"id", "progress"}, no "ok"."""
+        if self._conn is None or not self._progress:
+            return
+        try:
+            self._conn.sendall(protocol.encode({"id": self._rid, "progress": log.jsonable(rec)}))
+        except OSError:  # the client went away; finish the work regardless
+            self._conn = None
+
+    def invalidate(self):
+        """The session's meshes may have changed under the measurement caches (a build, load or restore)."""
+        measure.forget()
+        self.models.clear()
+
+    def refresh_code(self):
+        """Reload changed modules before a measurement; models built by an old linmodel are dropped."""
+        reloaded = self.reloader.refresh()
+        if reloaded:
+            self.invalidate()
+        return reloaded
 
     def part_module(self, pid, force=False):
         """The part script for an id, imported afresh when it changed or anything was reloaded."""
@@ -324,6 +357,7 @@ class Server:
             raise FileNotFoundError(f"no snapshot {k!r} of server {self.name}")
         t = time.perf_counter()
         bpy.ops.wm.open_mainfile(filepath=path, load_ui=False)
+        self.invalidate()
         return {"k": k, "objects": len(bpy.data.objects), "s": round(time.perf_counter() - t, 4)}
 
     def cmd_save(self, a):
@@ -337,6 +371,7 @@ class Server:
         pid = str(a["part"]).zfill(2)
         link = bool(a.get("link"))
         coll = cache.load_part(pid if link else self.part_module(pid).PART, link=link)
+        self.invalidate()
         return {"collection": coll.name, "objects": len(coll.all_objects), "linked": coll.library is not None}
 
     def cmd_build(self, a):
@@ -357,6 +392,7 @@ class Server:
         res = cli.run(mod.PART, mod.build, getattr(mod, "measure", None), argv)
         self.builds += 1
         replace.purge()
+        self.invalidate()
         res.update(reloaded=reloaded, restart_advised=self.restart_advised())
         return res
 
@@ -414,20 +450,261 @@ class Server:
             out[n]["s"] = round(time.perf_counter() - t, 3)
         return out
 
-    def _not_yet(self, cmd):
-        raise NotImplementedError(f"{cmd}: not implemented yet ({NOT_YET[cmd]}; a later session)")
+    # ------------------------------------------------------------------ measurement (spec 18 §4.8.1, §4.8.4-6)
+
+    def _part_measure(self, pid, extra=None):
+        """A part's measure() on the session as it stands, in the §4.8.4 envelope; the context is the part's
+        last run in this session, else a fresh one from its params.json."""
+        pid = str(pid).zfill(2)
+        mod = self.part_module(pid)
+        fn = getattr(mod, "measure", None)
+        if fn is None:
+            raise AttributeError(f"part {pid} ({mod.__file__}) defines no measure()")
+        ctx = cli.LAST.get(pid)
+        if ctx is None or extra:
+            ctx = cli.Context(mod.PART, cli.parse(["--params", json.dumps(extra)] if extra else []))
+        t = time.perf_counter()
+        metrics = cli.envelopes(mod.PART, fn(ctx, ctx.args))
+        failed = [m["metric"] for m in metrics if m.get("pass") is False]
+        return {"part": pid, "metrics": metrics, "failed": failed, "pass": not failed,
+                "passed": f"{sum(1 for m in metrics if m.get('pass'))}/{len(metrics)}",
+                "ms": round((time.perf_counter() - t) * 1e3, 2)}
 
     def cmd_measure(self, a):
-        self._not_yet("measure")
+        """A part's measure() ({"part", "params"}), one lib/measure.py primitive ({"fn", "args"}, objects by
+        name) or several ({"calls": [{"fn", "args"}, ...]}, sharing one mesh read per object)."""
+        self.refresh_code()
+        if "part" in a:
+            return self._part_measure(a["part"], a.get("params"))
+        if "calls" in a:
+            reads = {}
+            return [measure.call(c["fn"], c.get("args"), reads) for c in a["calls"]]
+        if "fn" not in a:
+            raise KeyError(f"measure takes part, fn (with args) or calls; the primitives are {', '.join(measure.PRIMITIVES)}")
+        return measure.call(a["fn"], a.get("args"))
 
     def cmd_silhouette(self, a):
-        self._not_yet("silhouette")
+        """The objects' mask through a preset (default: what renders) and its IoU against the preset's
+        reference mask: {preset, objects, method, scale, out, diff, band, declared, view}."""
+        self.refresh_code()
+        if not a.get("preset"):
+            raise KeyError("silhouette needs a preset (ref.soldier_full, ref.head_face, ...)")
+        return log.jsonable(measure.silhouette_report(**{k: v for k, v in a.items() if k in SILHOUETTE_ARGS}))
+
+    def _metrics(self, specs, reads):
+        out = {}
+        for j, s in enumerate(specs):
+            name = s.get("name") or (f"p{s['part']}" if "part" in s else f"{s.get('fn')}{j}")
+            if "part" in s:
+                r = self._part_measure(s["part"], s.get("params"))
+                out[name] = r["passed"]
+                out.update({f"{name}.{m['metric']}": m["value"] for m in r["metrics"]})
+            else:
+                out[name] = measure.pick(measure.call(s["fn"], s.get("args"), reads), s.get("metric"))
+        return out
 
     def cmd_variants(self, a):
-        self._not_yet("variants")
+        """For each variant: set it, measure, optionally render, then put the session back (§4.8.1).
+
+        {base: {name: value}, list: [{name: value}, ...] | grid: {name: [values]}, delta: values are added to
+        the base, measure: [{fn, args, metric, name} | {part}], objective: terms (measure.Objective),
+        render: {preset, tier (form), aa (FXAA)}, run, out (folder)}. Every variant is checked against its
+        parameters' bounds before anything changes. With a render, the run's JSON for sheet.py is written
+        beside the images: {preset, variants: [{image, params (the deltas), metrics, objective}]}."""
+        self.refresh_code()
+        harness, cam = importlib.import_module("eval.render"), importlib.import_module("eval.camera")
+        if a.get("grid"):
+            names = list(a["grid"])
+            variants = [dict(zip(names, combo)) for combo in itertools.product(*(a["grid"][n] for n in names))]
+        else:
+            variants = [dict(v) for v in a.get("list") or []]
+        if not variants:
+            raise ValueError("variants needs a non-empty list or grid")
+        touched = list(dict.fromkeys(list(a.get("base") or {}) + [k for v in variants for k in v]))
+        snap = params.snapshot(touched)
+        start = dict(snap, **(a.get("base") or {}))
+        if a.get("delta"):
+            variants = [{k: (start[k] + v if not isinstance(v, list) else [s + d for s, d in zip(start[k], v)])
+                         for k, v in var.items()} for var in variants]
+        for i, var in enumerate(variants):
+            for k, v in dict(start, **var).items():
+                p = params.lookup(k)
+                comps = v if isinstance(v, list) else [v]
+                if any((p.lo is not None and c < p.lo) or (p.hi is not None and c > p.hi) for c in comps):
+                    raise ValueError(f"variant {i}: {k} = {v} is outside [{p.lo}, {p.hi}]")
+        specs = list(a.get("measure") or [])
+        objective = measure.Objective(a["objective"]) if a.get("objective") else None
+        rnd = a.get("render") or None
+        preset = (rnd or {}).get("preset") or a.get("preset")
+        run = a.get("run") or time.strftime("variants_%Y%m%d_%H%M%S")
+        owner = a.get("part") or (measure.preset_of(preset).get("owner") if preset else None) or "18"
+        out_dir = env.path(a["out"]) if a.get("out") else os.path.join(cam.part_dir(owner), "variants")
+        records, t0 = [], time.perf_counter()
+        with params.keep_macro_targets(), self._restoring(snap):
+            for i, var in enumerate(variants):
+                t = time.perf_counter()
+                values = dict(start, **var)
+                params.write(values)
+                reads = {}
+                metrics = self._metrics(specs, reads)
+                f = objective() if objective else None
+                image = None
+                if rnd:
+                    side = harness.render_preset(preset, tier=rnd.get("tier", "form"), out_dir=out_dir,
+                                                 stem=f"{run}_v{i:02d}", aa=rnd.get("aa", "FXAA"))
+                    image = side["outputs"]["png"]
+                delta = {k: (round(values[k] - snap[k], 9) if isinstance(values[k], (int, float)) else values[k])
+                         for k in touched if values[k] != snap[k]}
+                records.append({"i": i, "values": {k: values[k] for k in touched}, "params": delta,
+                                "metrics": metrics, "objective": f["f"] if f else None,
+                                "objective_values": f["values"] if f else None, "image": image,
+                                "ms": round((time.perf_counter() - t) * 1e3, 1)})
+                self.progress({"variant": i + 1, "of": len(variants), "objective": records[-1]["objective"]})
+        out = {"run": run, "preset": preset, "variants": records, "restored": snap, "json": None,
+               "s": round(time.perf_counter() - t0, 3)}
+        if rnd:
+            path = os.path.join(out_dir, f"{run}.json")
+            sheet = {"preset": preset, "run": run, "variants": [
+                {"image": os.path.relpath(env.path(r["image"]), out_dir).replace(os.sep, "/"), "params": r["params"],
+                 "metrics": {k: v for k, v in r["metrics"].items() if isinstance(v, (int, float))},
+                 "objective": r["objective"]} for r in records]}
+            cache.write_json(path, sheet)
+            out["json"] = rel(path)
+        return out
+
+    def _bounds(self, a, names, need):
+        lo, hi = [], []
+        given = a["params"] if isinstance(a.get("params"), dict) else {}
+        for n in names:
+            b = (a.get("bounds") or {}).get(n) or given.get(n)
+            p = params.lookup(n)
+            lo_n, hi_n = (b[0], b[1]) if b else (p.lo, p.hi)
+            if (lo_n is None or hi_n is None) and need:
+                raise ValueError(f"{n} has no bounds: register them or pass bounds {{{n!r}: [lo, hi]}}")
+            if b and ((p.lo is not None and lo_n < p.lo) or (p.hi is not None and hi_n > p.hi)):
+                raise ValueError(f"bounds {b} for {n} leave its registered range [{p.lo}, {p.hi}]")
+            lo.append(-math.inf if lo_n is None else float(lo_n))
+            hi.append(math.inf if hi_n is None else float(hi_n))
+        return lo, hi
 
     def cmd_optimise(self, a):
-        self._not_yet("optimise")
+        """An optimiser of lib/optim.py on registered parameters against a term objective (§4.8.5).
+
+        {method: cmaes | cd | lm | lsq, params: [names] | {name: [lo, hi]}, bounds, objective (terms, see
+        measure.Objective), budget, seed, sigma0, x0: {name: value}, ftarget, tol, fd_step, clamp, run,
+        part, progress (a line every n evaluations), restore}. Every evaluation goes to
+        renders/<part>/opt/<run>.jsonl; the session is left at the best point found (restore: at the
+        start), confirmed by one more evaluation. lsq is the linear target model's solve (§4.8.6), see
+        _lsq. A result on a bound is reported in at_bound, never hidden."""
+        self.refresh_code()
+        method = a.get("method", "cmaes")
+        if method == "lsq":
+            return self._lsq(a)
+        if method not in ("cmaes", "cd", "lm"):
+            raise ValueError(f"method {method!r}: cmaes, cd, lm or lsq")
+        names = list(a["params"])
+        lo, hi = self._bounds(a, names, need=method != "lm")
+        objective = measure.Objective(a["objective"])
+        start = params.snapshot(names)
+        if any(not isinstance(v, (int, float)) for v in start.values()):
+            raise ValueError("optimise works on scalar parameters (address one axis: xf:Obj:location:2)")
+        x0 = [float((a.get("x0") or {}).get(n, start[n])) for n in names]
+        cam = importlib.import_module("eval.camera")
+        run = a.get("run") or time.strftime(f"{method}_%Y%m%d_%H%M%S")
+        path = os.path.join(cam.part_dir(a.get("part") or "18"), "opt", f"{run}.jsonl")
+        every = int(a.get("progress") or 0)
+        state = {"n": 0, "best": math.inf, "t0": time.perf_counter()}
+        if os.path.exists(path):
+            os.remove(path)
+
+        def evaluate(x):
+            values = dict(zip(names, (float(v) for v in x)))
+            params.write(values, bounds=False)
+            r = objective()
+            state["n"] += 1
+            state["best"] = min(state["best"], r["f"])
+            log.jsonl(path, i=state["n"], x=values, f=r["f"], values=r["values"])
+            if every and state["n"] % every == 0:
+                self.progress({"nfev": state["n"], "f": r["f"], "best": state["best"],
+                               "s": round(time.perf_counter() - state["t0"], 2)})
+            return r
+
+        budget = int(a.get("budget", 2000 if method != "lm" else 1000))
+        with params.keep_macro_targets():
+            with self._restoring(start, always=bool(a.get("restore"))):
+                f0 = evaluate(x0)["f"]
+                if method == "cd":
+                    res = optim.coordinate_descent(lambda x: evaluate(x)["f"], x0, lo, hi, tol=a.get("tol", 1e-4),
+                                                   budget=budget)
+                elif method == "cmaes":
+                    res = optim.cmaes(lambda x: evaluate(x)["f"], x0, lo, hi, sigma0=a.get("sigma0", 0.25),
+                                      seed=a.get("seed", 17), budget=budget, ftarget=a.get("ftarget", -math.inf))
+                else:
+                    res = optim.levenberg_marquardt(lambda x: evaluate(x)["residuals"], x0, lo=lo, hi=hi,
+                                                    max_iter=a.get("max_iter", 30), fd_step=a.get("fd_step", 0.1),
+                                                    clamp=a.get("clamp", 0.15), budget=budget)
+            best = dict(zip(names, (float(v) for v in res["x"])))
+            out = {"method": method, "x": best, "start": start, "f_start": f0, "f": res["f"], "nfev": state["n"],
+                   "nit": res["nit"], "converged": res["converged"], "message": res["message"],
+                   "at_bound": [names[i] for i in res["at_bound"]], "log": rel(path),
+                   "s": round(time.perf_counter() - state["t0"], 3)}
+            if not a.get("restore"):
+                out["f_confirm"] = evaluate(res["x"])["f"]
+        self.progress({"done": True, "nfev": state["n"], "f": res["f"]})
+        return out
+
+    @contextlib.contextmanager
+    def _restoring(self, snap, always=True):
+        """Put the parameters back afterwards: always, or only when the work inside fails."""
+        ok = False
+        try:
+            yield
+            ok = True
+        finally:
+            if always or not ok:
+                params.restore(snap)
+
+    def _lsq(self, a):
+        """§4.8.6's solve: shape-key weights by bounded linear least squares against landmark targets through
+        the linear target model, then set and confirmed by the depsgraph. {object, keys (default: the
+        non-macro keys), landmarks (a measure.landmarks spec), targets ({name: [x, y, z] mm}), weights
+        ({name: w}, default 1), lam (toward w0), w0 ("current" or a list), bounds ([lo, hi] or {key: [lo,
+        hi]}, default [-1, 1]), restore}."""
+        t0 = time.perf_counter()
+        ob, keys = a["object"], a.get("keys")
+        mkey = (ob, tuple(keys) if keys else None)
+        model = self.models.get(mkey)
+        if model is None:
+            model = self.models[mkey] = linmodel.LinearModel(ob, keys)
+        else:
+            model.refresh()
+        rows = model.rows(a["landmarks"])
+        targets = a["targets"]
+        missing = [n for n in rows.names if n not in targets]
+        if missing:
+            raise KeyError(f"no target for landmarks {missing[:5]}")
+        b = np.array([[float(c) for c in targets[n]] for n in rows.names]).reshape(-1) - rows.p0_flat
+        wts = a.get("weights") or {}
+        W = [float(wts.get(n, 1.0)) if isinstance(wts, dict) else float(wts) for n in rows.names for _ in range(3)]
+        bnd = a.get("bounds", [-1.0, 1.0])
+        lo = [(bnd.get(k) or [-1.0, 1.0])[0] if isinstance(bnd, dict) else bnd[0] for k in model.keys]
+        hi = [(bnd.get(k) or [-1.0, 1.0])[1] if isinstance(bnd, dict) else bnd[1] for k in model.keys]
+        w_start = model.values()
+        w0 = w_start if a.get("w0", "current") == "current" else a["w0"]
+        res = optim.bounded_lsq(rows.J, b, lo, hi, weights=W, lam=float(a.get("lam", 0.0)), w0=w0)
+        model.apply(res["x"])
+        actual = measure.landmarks(ob, a["landmarks"])
+        actual = actual if isinstance(actual, dict) else dict(zip(rows.names, actual))
+        pred = rows.predict(res["x"])
+        err = max(float(np.abs(pred[i] - actual[n]).max()) for i, n in enumerate(rows.names))
+        miss = [float(np.linalg.norm(np.asarray(actual[n]) - np.asarray(targets[n], float))) for n in rows.names]
+        out = {"method": "lsq", "x": dict(zip(model.keys, res["x"].tolist())), "f": res["f"], "kkt": res["kkt"],
+               "at_bound": [model.keys[i] for i in res["at_bound"]], "confirm_max_err_mm": err,
+               "rms_mm": float(sum(m * m for m in miss) / len(miss)) ** 0.5, "max_miss_mm": max(miss),
+               "keys": len(model.keys), "landmarks": len(rows.names), "ms": round((time.perf_counter() - t0) * 1e3, 2)}
+        if a.get("restore"):
+            model.apply(w_start)
+        return out
 
     def cmd_shutdown(self, a):
         self.done = True
