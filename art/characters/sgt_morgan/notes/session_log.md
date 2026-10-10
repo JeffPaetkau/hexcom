@@ -15,6 +15,10 @@ Jeff's scope decision: the unit model first; the scene only as far as it affects
 model's render; the scene is built later in Blender and several game engines; deliverables
 live in the repo under deliver/, committed at milestones (CLAUDE.md, Scope and rule 6).
 Spec 17 carries a scope note; spec 18 was briefed with it.
+Spec 15 (carbine) builds one real configuration (BCM M4 upper and lower, 16 in government
+barrel, mid-length gas, MCMR-13 handguard, MFT Minimalist stock, A2 birdcage, SureFire M300C,
+Aimpoint T-2, PMAG GEN M3). It moved the grip frame and changed the handguard section, so
+specs 05, 08 and 11 must be revised against it in the critique pass.
 Next: critique and revise all specs (the six written before the rule first), overview
 spec, fast-loop tooling.
 
