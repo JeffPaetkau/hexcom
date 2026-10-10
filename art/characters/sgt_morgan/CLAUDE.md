@@ -108,7 +108,8 @@ is inconsistent with itself or with reality, reality wins.** Precedence:
    real product or anatomical standard (AR-15/M4-pattern carbine with a 16 in government
    barrel and a 13 in handguard; STANAG magazine; Lowa Zephyr class boot; Crye G3 class
    trousers and AirFlex class kneepads; Mechanix M-Pact class gloves; JPC class carrier with
-   a MIL-spec PALS grid; ANSUR II anthropometry for a 185 cm, 83 kg man) and build to it.
+   a MIL-spec PALS grid; ANSUR II anthropometry for the segment proportions and the feet)
+   and build to it.
 2. **The image, where it is internally consistent and physically plausible**, for everything
    that carries identity: the face, hair and stubble, pose, colours, gear arrangement,
    emblem, wear and dirt.
@@ -118,6 +119,13 @@ is inconsistent with itself or with reality, reality wins.** Precedence:
    is accepted).
 
 Specs written before this rule (01 to 05, 09) are revised against it in the critique pass.
+
+**The man's height and build follow the drawing** (Jeff, 2026-10-10, spec 01 §10.2 Q7 to
+Q9). Rest stature **1835 mm** barefoot: in the hero pose, in boots, the skull top meets the
+drawn line 1855 mm above the floor (the footbeds add 42, the pose costs 22). The build is the
+drawing's lean V-taper, not ANSUR's 83 kg man; the mass is an outcome. The feet keep their
+ANSUR size (282 mm). Specs still citing 1855, 1877 or 83 kg are corrected when their part is
+built.
 
 ## Paths
 

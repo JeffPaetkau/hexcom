@@ -38,11 +38,14 @@ agents and this session took the week from 57 to 59 percent.
 against the values it shares (its new §0 lists fifteen decisions: ANSUR "Tight" figures, foot
 282 mm; a 1855 mm, 83 kg man; the body is `Body.Mesh`, the rig `Morgan.Rig`; in the hero pose
 the feet stand on the boots' footbeds; materials from spec 16; spec 17's harness and presets;
-one-foot render copies for the closeups), with dated notes in specs 04 and 08. Open for Jeff:
-§10.2 Q7 (boots lift the figure about 42 mm), Q8 (foot size), Q9 (the body at the macros is
-about 75 kg, not 83). `scripts/build_all.py` builds S0 to S2 in cut-down form (spec 18 §4.6
-note): `cache/body/rigged.blend` is the 1855 mm MPFB male with the default rig, the start
-for part 01. In progress: `measure.py`, `linmodel.py`, `optim.py` (background agent).
+one-foot render copies for the closeups), with dated notes in specs 04 and 08. Jeff answered
+its questions (§10.2): Q7 the figure matches the drawing, so the rest stature is **1835 mm**
+barefoot (in boots the footbeds add 42 mm and the pose costs 22, putting the skull top on the
+drawn line; at rest, barefoot, it measures 9 px below it, as it should); Q8 the foot stays
+282 mm; Q9 the build follows the drawing's lean V-taper, not ANSUR's 83 kg. CLAUDE.md records
+it; specs 01, 03, 04, 08 and 18 carry dated notes; the others are corrected when their part is
+built. `scripts/build_all.py` builds S0 to S2 in cut-down form (spec 18 §4.6 note):
+`cache/body/rigged.blend` is the 1835 mm MPFB male with the default rig, the start for part 01. In progress: `measure.py`, `linmodel.py`, `optim.py` (background agent).
 
 **Next.** `scripts/parts/01_foot_ankle_sock.py` on `cache/body/rigged.blend`, as revised
 spec 01 lays out (its §0, §4, §9.2): foot first (the MPFB foot targets in S1 by a linear

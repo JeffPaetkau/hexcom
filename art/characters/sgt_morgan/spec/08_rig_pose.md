@@ -92,6 +92,8 @@ Pinning the butt-pad centre at pixel (695, 268) and depth 4350 mm (0–3 mm off 
 Status marks: **M** measured on this machine (MPFB dump, pixel work), **S** sourced (ANSUR II Tight column via `research_dimensions.md`; MPFB/Rigify JSON; Blender 4.5 API dump), **E** estimated (anatomy texts from memory, tagged [VERIFY] where a number matters).
 
 ### 3.1 Segment lengths and joint-centre heights for a 1855 mm man (ANSUR Tight × 1.005; joint centres from landmark offsets)
+
+> **2026-10-10, Jeff (spec 01 §10.2 Q7):** the rest stature is **1835 mm** barefoot, so that the posed figure in boots meets the drawn skull top; the joint heights in this spec scale with it when part 08 is built.
 | Segment / joint | Value (mm) | Status | Derivation |
 |---|---|---|---|
 | Stature | 1855 | S (analysis) | 875 px at 4.72 px/cm |

@@ -91,6 +91,8 @@ The legs are inside loose camouflage trousers, the pelvis under the trousers, be
 ## 3. Real-world reference
 
 ### 3.1 Segment proportions — the decision
+
+> **2026-10-10, Jeff (spec 01 §10.2 Q7, Q9):** the figure matches the drawing. The rest stature is **1835 mm** barefoot (the drawn posed skull top 1855 above the floor, less the boots' 42 mm footbed lift, plus the pose's 22 mm), not 1855; ANSUR segment proportions still hold, scaled to 1835. The build follows the drawing's lean V-taper, not ANSUR's 83 kg man: girths are fitted to the drawing where it shows them, and the mass is an outcome. Revise this section's figures when part 03 is built.
 ANSUR II Tight scaled to 1855 mm, against the drawing:
 
 | Landmark (height above floor) | ANSUR Tight ×1.0049 (S) | Drawing (M, posed) | Adopted REST (this spec) | Adopted POSED (expected) |

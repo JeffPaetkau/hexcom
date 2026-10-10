@@ -72,11 +72,11 @@ def age_macro(years):
 # Specs 03 §4.1 and 04 §4.1 (the same macro values in both): a lean, muscular 40-year-old man.
 MACRO = {"gender": 1.0, "age": round(age_macro(40.0), 6), "muscle": 0.70, "weight": 0.45, "proportions": 0.5,
          "cupsize": 0.5, "firmness": 0.5, "race": {"caucasian": 1.0, "asian": 0.0, "african": 0.0}}
-# Rest stature, barefoot, skull top to sole: CLAUDE.md's 185 cm man, spec 03 §3.1 and spec 08 §3.1.
-# Spec 04 D1's 1877 (the drawn posed figure kept in place) is superseded under the reality-wins rule:
-# spec 01 §0 item 2 (2026-10-10).
-STATURE_MM, STATURE_TOL_MM = 1855.0, 0.25
-HEIGHT_START = 0.583  # spec 03 §4.1's start value for 1855
+# Rest stature, barefoot, skull top to sole. Jeff, 2026-10-10 (spec 01 §10.2 Q7): the figure matches the
+# drawing, whose posed skull top stands 1855 mm above the floor; in boots the feet stand on the footbeds
+# (+42 mm) and the pose costs 22 mm, so the rest stature is 1855 - 42 + 22 = 1835.
+STATURE_MM, STATURE_TOL_MM = 1835.0, 0.25
+HEIGHT_START = 0.583  # spec 03 §4.1's start value for 1855; the fit moves it
 S1_PARAMS = {"macro": MACRO, "stature_mm": STATURE_MM, "tol_mm": STATURE_TOL_MM, "height_start": HEIGHT_START,
              "create": {"mask_helpers": True, "detailed_helpers": True, "extra_vertex_groups": True,
                         "feet_on_ground": True, "scale": 0.1},
