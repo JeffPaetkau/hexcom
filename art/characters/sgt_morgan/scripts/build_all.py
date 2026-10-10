@@ -4,8 +4,9 @@ so that an interrupted build resumes where it stopped and a stage whose inputs d
 
 Built so far (2026-10-10), in cut-down form:
   S0 env        cache/env.json, the Blender and MPFB versions, free disk
-  S1 body.base  the MPFB human at the macro values of specs 03 and 04, height fitted to the rest stature,
-                re-grounded on its lowest vertex and centred between the ankle joints, facing -Y;
+  S1 body.base  the MPFB human at the macro values of specs 03 and 04 with part 01's foot targets (spec 01
+                §4.1), height fitted to the rest stature, re-grounded on its lowest vertex and centred
+                between the ankle joints, facing -Y;
                 no proportion solver, remap or re-loop yet          -> cache/body/base.blend
   S2 rig.fit    MPFB's `default` rig with its own weights; no added bones, rolls or weight clean-up yet
                 (spec 08 §4.2-4.4)                       -> cache/body/rigged.blend, bones.json
@@ -77,9 +78,22 @@ MACRO = {"gender": 1.0, "age": round(age_macro(40.0), 6), "muscle": 0.70, "weigh
 # (+42 mm) and the pose costs 22 mm, so the rest stature is 1855 - 42 + 22 = 1835.
 STATURE_MM, STATURE_TOL_MM = 1835.0, 0.25
 HEIGHT_START = 0.583  # spec 03 §4.1's start value for 1855; the fit moves it
+# Spec 01 §4.1 and §0 item 6: the MPFB foot targets load here, with the macros, so the height fit and the
+# rig fit (S2) see the feet and the joint cubes they move. Their weights are part 01's, solved by
+# scripts/parts/p01/fit_targets.py against spec 01 §3.1 and kept in its params.json ("targets").
+FOOT_PARAMS = os.path.join(SCRIPTS, "parts", "p01", "params.json")
+
+
+def foot_targets():
+    """{MPFB target: weight} from part 01's params.json; empty until the part has solved them."""
+    data = cache.read_json(FOOT_PARAMS) or {}
+    return {k: float(v) for k, v in sorted((data.get("targets") or {}).items())}
+
+
 S1_PARAMS = {"macro": MACRO, "stature_mm": STATURE_MM, "tol_mm": STATURE_TOL_MM, "height_start": HEIGHT_START,
              "create": {"mask_helpers": True, "detailed_helpers": True, "extra_vertex_groups": True,
                         "feet_on_ground": True, "scale": 0.1},
+             "detail_targets": foot_targets(),
              "origin": "floor under the midpoint of the ankle joint cubes"}
 S2_PARAMS = {"rig": "default", "import_weights": True}
 PARAMS = {"S1": S1_PARAMS, "S2": S2_PARAMS}
@@ -286,6 +300,21 @@ def fit_height(mpfb, body, target_mm, tol_mm, h0, say):
     return h, s, len(seen), round(sum(t_apply) / len(t_apply), 3)
 
 
+def load_detail_targets(mpfb, body, targets, say):
+    """Load MPFB detail targets as shape keys at their weights; {shape key: weight}. Detail targets are
+    linear and fixed in size, so they go on before the height fit, which then sees the body they make."""
+    out = {}
+    for name, weight in targets.items():
+        path = mpfb.targets.target_full_path(name)
+        if not path or os.path.basename(path).split(".")[0] != name:  # MPFB also accepts a prefix: refuse it
+            raise FileNotFoundError(f"MPFB has no target {name!r} (scripts/parts/p01/params.json, targets)")
+        kb = mpfb.targets.load_target(body, path, weight=weight)
+        out[kb.name] = round(float(kb.value), 6)
+    if out:
+        say(f"detail targets: {out}")
+    return out
+
+
 def ground_and_centre(body, say):
     """Move the body so its lowest vertex is on z 0 and the midpoint of its ankle joint cubes is over the
     origin (CLAUDE.md: the origin is on the floor midway between the feet), baking the move into the mesh
@@ -335,6 +364,7 @@ def stage_body_base(say):
     say(f"create_human: {len(body.data.vertices)} vertices, "
         f"{len(body.data.shape_keys.key_blocks) if body.data.shape_keys else 0} shape keys, "
         f"{len(body.vertex_groups)} vertex groups, {time.perf_counter() - t0:.1f} s")
+    details = load_detail_targets(mpfb, body, S1_PARAMS["detail_targets"], say)
     h, s, n, t_apply = fit_height(mpfb, body, STATURE_MM, STATURE_TOL_MM, HEIGHT_START, say)
     placed = ground_and_centre(body, say)
     final = stature_mm(body)
@@ -343,8 +373,9 @@ def stage_body_base(say):
     save_blend(out)
     macros = {k: (dict(v) if isinstance(v, dict) else v) for k, v in macro.items()}
     macros["height"] = round(h, 6)
-    summary = {"stage": "S1", "macro": macros, "stature_mm": round(final, 3), "stature_target_mm": STATURE_MM,
-               "stature_tol_mm": STATURE_TOL_MM, "height_iterations": n, "reapply_macro_details_s": t_apply,
+    summary = {"stage": "S1", "macro": macros, "detail_targets": details, "stature_mm": round(final, 3),
+               "stature_target_mm": STATURE_MM, "stature_tol_mm": STATURE_TOL_MM, "height_iterations": n,
+               "reapply_macro_details_s": t_apply,
                "placement": placed, "vertices": len(body.data.vertices),
                "body_vertices": len(group_indices(body, "body")),
                "shape_keys": [k.name for k in body.data.shape_keys.key_blocks] if body.data.shape_keys else [],

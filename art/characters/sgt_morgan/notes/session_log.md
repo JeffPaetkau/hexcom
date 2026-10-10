@@ -47,13 +47,33 @@ it; specs 01, 03, 04, 08 and 18 carry dated notes; the others are corrected when
 built. `scripts/build_all.py` builds S0 to S2 in cut-down form (spec 18 §4.6 note):
 `cache/body/rigged.blend` is the 1835 mm MPFB male with the default rig, the start for part 01. `measure.py`, `linmodel.py` and `optim.py` are built and wired into the server (spec 18 §4.13, second part); review fixed a Windows lock race in `cache.locked()` that killed about one contended writer in twenty.
 
-**Next.** `scripts/parts/01_foot_ankle_sock.py` on `cache/body/rigged.blend`, as revised
-spec 01 lays out (its §0, §4, §9.2): foot first (the MPFB foot targets in S1 by a linear
-least-squares fit, the landmark sculpt with `lib/sculpt.py`, toes, nails), judged on `form`
-renders with a placeholder skin, since spec 16's `materials.py` does not exist yet; then the
-sock and the last; then spec 02 and the boot. Starter prompt: "Read art/characters/sgt_morgan/CLAUDE.md
-and the newest entry of art/characters/sgt_morgan/notes/session_log.md, then continue with the
-next steps listed there. Work in art/characters/sgt_morgan."
+**Part 01, first pass (foot geometry), done** by a background agent; rebuilt, measured and
+looked at here. S1 now loads the MPFB foot targets, solved by least squares through `linmodel`
+(`scripts/parts/p01/fit_targets.py`); `scripts/parts/01_foot_ankle_sock.py` builds stages
+sculpt, nails, masks, contact and frames (`Foot.Sculpt` and `Foot.Contact` on `Body.Mesh`, the
+foot's vertex groups, ten nail plates, `Frame.Foot.L/R`); the sculpt's 32 amounts are fitted by
+least squares (`p01/fit_sculpt.py`) into `p01/params.json`, not set by hand. 121 of 123 metrics
+of spec 01 §8.2 pass (foot 282.0, ball 105.7, heel 72.1, bimalleolar 75.2, malleoli 77.1/87.6,
+dorsum, arch, toe cascade, nails within 0.15 mm); three `--rebuild` runs give the same key and
+the same twelve mesh hashes; a run is 4 s, 18 `form` views 13 s, a 2048² `eval` closeup 23 to
+32 s. The renders read as an adult male foot (`renders/01_foot/sheets/`).
+
+**Open from the foot pass.** (1) The heel-ankle girth is 335.7 against 353 +-6: this body's
+shin front stands about 12 mm too far forward over the ankle, so the measure's front point lands
+on the instep; that is spec 03's leg, not the foot. (2) MPFB's `vert-decr` foot target lowers
+the ankle joint cube from 75 to 64 mm, so S2's ankle pivot sits below the malleoli; spec 08's
+rig fit should place the ankle from the malleoli (the `foot.*` interface keys part 01 is to
+publish). (3) The nail plates' free edges overhang the toe tips like a thin flake in 2048 px
+closeups. (4) The sole view (V4) is unlit in the hero scene; it needs spec 17's LookDev scene.
+(5) Library follow-ups part 01 worked around: spec 18 §4.13, "Left of W1 track a".
+
+**Next.** Part 01's second and third sessions (spec 01 §9.3): the nail free edges; the
+guides (tendons, veins, creases on the closeup copies); spec 16's materials library, at least
+the skin, nail and sock recipes (`materials.py`, which does not exist yet); the sock and the
+last; the `foot.*` interface keys. Then spec 02 and the boot. Starter prompt: "Read
+art/characters/sgt_morgan/CLAUDE.md and the newest entry of
+art/characters/sgt_morgan/notes/session_log.md, then continue with the next steps listed
+there. Work in art/characters/sgt_morgan."
 
 **The ledger will not come.** The cloud session is archived (Jeff, 2026-10-10) and never pushed
 `notes/interface_ledger.md`. Its job is done here instead, one part at a time: before a part
