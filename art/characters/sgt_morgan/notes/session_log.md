@@ -3,6 +3,29 @@
 Newest first. One entry per working session, a few lines each: what was done, what is
 next, anything a fresh session must know.
 
+## 2026-10-10 — first local session on Jeff's workstation (Opus): setup and GPU
+
+**Done.** Hand-off steps 1 and 2. Jeff's Blender MSI install upgraded in place from 4.5.0
+to 4.5.14 LTS at his word (the same build the cloud measured). `scripts/setup_session.sh` runs
+in Git Bash; the new `scripts/setup/` holds `fetch.py` (verified, resumable downloads, the
+manifest restore and `--record-hashes`, the env record), `downloads.json`, `mpfb_install.py`,
+`gpu_probe.py`, `smoke.py` and the requirements. First run 469 s, a re-run 33 s; MPFB 2.0.17
+and the 11 packs live in `cache/blender_user` (Jeff's own Blender is untouched); the 137
+manifest files verify, and the manifest is now schema 3 with sha256 for the 27 that had only a
+size. `scripts/lib/env.py` records the Cycles device (OptiX on the RTX 3050, `SGT_DEVICE`
+overrides) and `use_device()` also puts the OIDN denoiser on the GPU, which Blender leaves on
+the CPU by default: test 1 at 1080p went from 15.3 s to 4.1 s at 32 spp (40.6 s at 512); the
+cloud took 68 to 91 s at 32 spp. Spec 18 §3.2, §4.2.2 and §4.2.4 record it all.
+
+**Know this.** Git for Windows checks text out with CRLF (`core.autocrlf=true`), which breaks
+bash; this folder's `.gitattributes` now forces LF. Bash's `GROUPS` is a built-in, so the
+spec's `GROUPS=ai` silently fetched nothing; it is `AI_GROUPS` now. Run Blender with
+`source cache/env.sh` first (it sets `BLENDER_USER_RESOURCES`), or through `lib/env.py`.
+
+**In progress.** Step 3 as two background agents: spec 18's library core, the Blender server
+and `bl.py`; spec 17's render harness (camera, presets, tiers, the in-scope scene, the grade)
+and `sheet.py`. The interface ledger had not been pushed by the cloud session yet.
+
 ## 2026-10-10 — hand-off: the vertical slice moves to Jeff's GPU workstation
 
 **State.** All eighteen specs are written and pushed. The consistency ledger

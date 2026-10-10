@@ -1,19 +1,25 @@
-"""Test 1: Cycles CPU benchmark, headless.
+"""Test 1: Cycles benchmark, headless.
 Run: blender -b --python test_01_cycles_bench.py -- [samples list e.g. 32,128,512] [repeats]
 Scene: subdivided UV sphere, Principled BSDF, 3 area lights, 1920x1080, OIDN denoise.
+The device comes from scripts/lib/env.py (SGT_DEVICE, else the setup probe, else CPU); the cloud's
+CPU figures are in notes/research_blender_capabilities.md §1.
 """
 import bpy, sys, time, json, os
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+import env  # noqa: E402
 
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 samples_list = [int(s) for s in (argv[0] if argv else "32,128,512").split(",")]
 repeats = int(argv[1]) if len(argv) > 1 else 2
-OUT = "/home/user/sgt_morgan/renders/research"
+OUT = env.path("renders", "research")
 os.makedirs(OUT, exist_ok=True)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
-scene.cycles.device = "CPU"
+DEVICE = env.use_device(scene)
+print(f"[BENCH] device={DEVICE}", flush=True)
 scene.render.resolution_x = 1920
 scene.render.resolution_y = 1080
 scene.render.resolution_percentage = 100
@@ -94,7 +100,8 @@ for s in samples_list:
         times.append(dt)
         print(f"[BENCH] samples={s} run={r} seconds={dt:.2f}", flush=True)
     results[s] = {"times": [round(t, 2) for t in times], "min": round(min(times), 2)}
+results["device"] = DEVICE
 
 print("[BENCH_JSON] " + json.dumps(results))
-with open(f"{OUT}/t01_cycles_bench.json", "w") as f:
+with open(f"{OUT}/t01_cycles_bench_{DEVICE.lower()}.json", "w") as f:
     json.dump(results, f, indent=1)

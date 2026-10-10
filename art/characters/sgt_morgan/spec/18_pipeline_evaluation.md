@@ -150,6 +150,18 @@ Probes: `scripts/research/probe18_fastloop.py` and `probe18_crop_camera.py` (Ble
 | glTF export of a small rig / reimport | 0.32 s / 0.2 s | research C §7 | S |
 | MPFB character build, no render | 7.5 s | research B | S |
 
+On Jeff's workstation (Windows 11, 8 threads, NVIDIA GeForce RTX 3050 6 GB, Cycles on OptiX; measured 2026-10-10 with two agents working beside it, so a little noisy):
+
+| Operation | Cost | Notes | Tag |
+|---|---|---|---|
+| Cycles test 1 (`test_01_cycles_bench.py`, 1920 × 1080, OIDN) | 4.1 s at 32 spp, 11.4 s at 128, 40.6 s at 512 | ≈ 0.076 s per sample, ≈ 27 MP·spp/s; the cloud took 68–91 s at 32 spp and never finished 128 | M |
+| The same with OIDN on the CPU (Blender's default) | 15.3 s at 32 spp | the denoiser alone ≈ 11 s; `lib/env.py` `use_device()` puts it on the GPU | M |
+| The same on the CPU, 8 threads | 45.4 s at 32 spp | | M |
+| A re-render with `render.use_persistent_data` | 2.6 s against 3.2 s (32 spp, no denoiser) | keeps the scene on the device between renders in one process | M |
+| 960 × 540, 32 spp, GPU denoiser, persistent data | 0.75 s | the size of most closeups | M |
+| First Cycles render in a process | + ≈ 2 s | kernel load (smoke test: 4.3 s cold, 2.1 s warm, 480², 32 spp) | M |
+| Workbench 480², MPFB human; MPFB enable; `create_human` | 1.3–1.8 s; 0.1 s; 0.4–0.5 s | `scripts/setup/smoke.py` | M |
+
 ### 3.3 Setup time and bytes (from the component sizes; downloads at the measured 9 MB/s for large files, 2.7 MB/s aggregate for the manifest's many small files)
 
 | Step | Download | Disk after | Time | Tag |
@@ -278,159 +290,20 @@ LF everywhere keeps `setup_session.sh` runnable in Git Bash (a CRLF checkout bre
 * Options: `--no-ai`, `--with-depth`, `--with-3ddfa`, `--with-godot`, `--no-assets`, `--prune` (deletes research leftovers, research E §9), `--check` (smoke test). Default = Blender + MPFB + packs + manifest + AI keepers.
 * Writes `cache/env.json` and `cache/env.sh` (Blender path, user-resources path, the image-tools Python, the AI venv Python, Godot path, OS, thread count), which every launcher reads (`scripts/lib/env.py`, `scripts/tools/bl.py`).
 
-#### 4.2.2 Full contents of `scripts/setup_session.sh`
-```bash
-#!/usr/bin/env bash
-# Rebuilds the Sgt. Morgan toolchain: spec/18_pipeline_evaluation.md §4.2.
-# Runs on Linux cloud containers and in Git Bash on Jeff's Windows machine. Idempotent and
-# resumable: each step checks what is present, verifies sizes and hashes, and can be re-run.
-# Options: --no-ai --with-depth --with-3ddfa --with-godot --no-assets --prune --check
-set -euo pipefail
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$PROJECT_DIR"
-BL_VER=4.5.14; BL_SERIES=4.5
-AI=1; DEPTH=0; DDFA=0; GODOT=0; ASSETS=1; PRUNE=0; CHECK=0
-for a in "$@"; do case "$a" in
-  --no-ai) AI=0 ;; --with-depth) DEPTH=1 ;; --with-3ddfa) DDFA=1 ;; --with-godot) GODOT=1 ;;
-  --no-assets) ASSETS=0 ;; --prune) PRUNE=1 ;; --check) CHECK=1 ;;
-  *) echo "unknown option: $a" >&2; exit 2 ;;
-esac; done
-T0=$(date +%s)
-say() { printf '\n== %s\n' "$*"; }
-case "$(uname -s)" in
-  Linux*) OS=linux ;;
-  MINGW*|MSYS*|CYGWIN*) OS=windows ;;
-  *) echo "unsupported system: $(uname -s)" >&2; exit 2 ;;
-esac
-winpath() { if [ "$OS" = windows ]; then cygpath -w "$1"; else printf '%s' "$1"; fi; }
-mkdir -p assets cache/tools cache/stamps cache/blender_user renders/eval deliver
-# The project's Blender preferences, MPFB and its packs live in cache/blender_user, so Jeff's own
-# Blender set-up is never touched and deleting cache/ resets everything (§4.2.1).
-export BLENDER_USER_RESOURCES="$(winpath "$PROJECT_DIR/cache/blender_user")"
+#### 4.2.2 `scripts/setup_session.sh`
+The script is the authority; it was listed here in full until the first Windows run (2026-10-10) changed it, and a second copy would only drift. Its steps, in order:
+1. **Blender 4.5.14.** `SGT_BLENDER` if set. Linux: `/opt/blender` as root, else `~/.local/opt`, downloaded and verified (§3.1) if absent. Windows: the installed `C:\Program Files\Blender Foundation\Blender 4.5\blender.exe` first, else a portable copy in `%LOCALAPPDATA%\sgt_morgan` from the verified zip. Another 4.5 patch release is accepted with a warning; the project was measured on 4.5.14.
+2. **The setup Python**: `python3` on Linux, Blender's bundled Python on Windows (standard library only, D13).
+3. **The Cycles device**: `scripts/setup/gpu_probe.py` asks Cycles for OptiX, CUDA, HIP, oneAPI and Metal devices in that order; the first back end with a GPU (else CPU) goes into `cache/env.json` as `device`. `lib/env.py` `use_device(scene)` applies it, `SGT_DEVICE` overrides it.
+4. **MPFB 2.0.17 and the 11 packs**: `fetch.py list --group mpfb`, then `mpfb_install.py`, run without `--factory-startup` because it saves preferences (the project's own, in `cache/blender_user`).
+5. **The manifest** (`--no-assets` skips): `fetch.py manifest`.
+6. **AI helpers** (`--no-ai` skips): the venv from `requirements-ai.txt` (and `requirements-depth.txt` with `--with-depth`), the models of `downloads.json` groups `ai` (and `depth`), 3DDFA with `--with-3ddfa`.
+7. **The image-tools Python** (PIL and numpy): `python3` if it has both, else the AI venv, else a project `.venv`.
+8. **Godot 4.7.2** with `--with-godot`: downloaded on Linux; on Windows Jeff's WinGet install is found, never downloaded.
+9. `--prune`; then `fetch.py env` writes `cache/env.json` and `cache/env.sh`; then `--check`: `scripts/setup/smoke.py` (an MPFB human, one Workbench and one Cycles render, timings in `cache/stamps/smoke.json`), `bl.py selftest` once `scripts/tools/bl.py` exists, and the AI imports.
 
-size_of() { wc -c < "$1" | tr -d ' '; }
-fetch() {  # url dest bytes sha256: resumable download, verified by size and hash
-  local url=$1 dest=$2 bytes=$3 sum=$4
-  mkdir -p "$(dirname "$dest")"
-  if [ ! -f "$dest" ] || [ "$(size_of "$dest")" != "$bytes" ]; then
-    curl -fsSL --retry 4 --retry-delay 3 -C - -o "$dest" "$url" || curl -fsSL --retry 4 -o "$dest" "$url"
-  fi
-  [ "$(size_of "$dest")" = "$bytes" ] || { echo "size mismatch: $dest" >&2; rm -f "$dest"; return 1; }
-  echo "$sum  $dest" | sha256sum -c --status - || { echo "hash mismatch: $dest" >&2; rm -f "$dest"; return 1; }
-}
+First run on Jeff's machine (2026-10-10, `--with-godot --check`): 469 s, most of it the downloads (MPFB and packs 598 MB at 0.4–4 MB/s from the MakeHuman server, the manifest 713 MB, the venv wheels); the MPFB install 16 s; the smoke test 8 s (Workbench 1.3–1.8 s, Cycles OptiX 32 spp at 480 px 2.1 s warm, 4.3 s with the first kernel load). A re-run with everything present: 33 s, including the 180 MB of AI models the first run missed (§4.2.4, `GROUPS`). Disk: `assets/` 2.6 GB (venv 0.73 GB, textures 1.1 GB, MPFB zips 0.57 GB), `cache/blender_user` 0.70 GB.
 
-say "1. Blender $BL_VER"
-BLENDER="${SGT_BLENDER:-}"
-if [ -z "$BLENDER" ] && [ "$OS" = linux ]; then
-  if [ "$(id -u)" = 0 ]; then BL_HOME=/opt/blender; else BL_HOME="$HOME/.local/opt"; fi
-  BLENDER="$BL_HOME/blender-$BL_VER-linux-x64/blender"
-  if [ ! -x "$BLENDER" ]; then
-    ARCH="cache/tools/blender-$BL_VER-linux-x64.tar.xz"
-    fetch "https://download.blender.org/release/Blender$BL_SERIES/blender-$BL_VER-linux-x64.tar.xz" "$ARCH" \
-      378045212 9ba871ff2ecd36526b77432745980b7e6664ecd0c7ca11c48849073dcfe06da3
-    mkdir -p "$BL_HOME"; tar -xJf "$ARCH" -C "$BL_HOME"; rm -f "$ARCH"
-  fi
-  [ "$(id -u)" != 0 ] || ln -sf "$BLENDER" /usr/local/bin/blender
-elif [ -z "$BLENDER" ]; then
-  LAD="$(cygpath -u "$LOCALAPPDATA")"
-  for c in "/c/Program Files/Blender Foundation/Blender $BL_SERIES/blender.exe" \
-           "$LAD/sgt_morgan/blender-$BL_VER-windows-x64/blender.exe"; do
-    if [ -x "$c" ]; then BLENDER="$c"; break; fi
-  done
-  if [ -z "$BLENDER" ]; then
-    ARCH="cache/tools/blender-$BL_VER-windows-x64.zip"
-    fetch "https://download.blender.org/release/Blender$BL_SERIES/blender-$BL_VER-windows-x64.zip" "$ARCH" \
-      398661046 b9533d2397ac1984db4466fb23a7a4649391cca93f6e84209f9bcc60d071c8b9
-    mkdir -p "$LAD/sgt_morgan"
-    /c/Windows/System32/tar.exe -xf "$(cygpath -w "$ARCH")" -C "$(cygpath -w "$LAD/sgt_morgan")"
-    rm -f "$ARCH"; BLENDER="$LAD/sgt_morgan/blender-$BL_VER-windows-x64/blender.exe"
-  fi
-fi
-BL_VERSION="$("$BLENDER" -b --factory-startup --version 2>/dev/null | head -1)"
-case "$BL_VERSION" in
-  "Blender $BL_VER"*) echo "$BL_VERSION" ;;
-  "Blender $BL_SERIES."*) echo "WARN: $BL_VERSION; the project was measured on $BL_VER" ;;
-  *) echo "need Blender $BL_SERIES, found: $BL_VERSION" >&2; exit 3 ;;
-esac
-BL_PY="$(ls -d "$(dirname "$(readlink -f "$BLENDER")")/$BL_SERIES/python/bin/"python* 2>/dev/null | head -1 || true)"
-
-say "2. Python for the setup tools"
-if [ "$OS" = linux ] && command -v python3 >/dev/null; then PY=python3; else PY="$BL_PY"; fi
-"$PY" -I -c 'import ssl, hashlib, zipfile, json' || { echo "no usable Python for setup" >&2; exit 3; }
-
-say "3. MPFB 2.0.17 and the MakeHuman packs (598 MB)"
-"$PY" -I scripts/setup/fetch.py list --root . --list scripts/setup/downloads.json --group mpfb --jobs 4
-"$BLENDER" -b --factory-startup --python-exit-code 1 --python scripts/setup/mpfb_install.py -- \
-  --zip assets/mpfb/add-on-mpfb-v2.0.17.zip --packs assets/mpfb/packs --report cache/stamps/mpfb.json
-
-if [ "$ASSETS" = 1 ]; then
-  say "4. Textures, HDRIs and reference models (assets/manifest.json, 713 MB)"
-  "$PY" -I scripts/setup/fetch.py manifest --root assets --manifest assets/manifest.json --jobs 4
-fi
-
-AIPY=""
-if [ "$AI" = 1 ]; then
-  say "5. AI helpers (MediaPipe, rembg; Depth Anything with --with-depth)"
-  VENV=assets/ai/venv
-  if [ "$OS" = linux ]; then AIPY="$VENV/bin/python"; else AIPY="$VENV/Scripts/python.exe"; fi
-  [ -x "$AIPY" ] || "$PY" -m venv "$VENV"
-  REQS="scripts/setup/requirements-ai.txt"; [ "$DEPTH" = 0 ] || REQS="$REQS scripts/setup/requirements-depth.txt"
-  STAMP="cache/stamps/venv-$(cat $REQS | sha256sum | cut -c1-12)"
-  if [ ! -f "$STAMP" ]; then
-    for r in $REQS; do "$AIPY" -m pip install --quiet --disable-pip-version-check -r "$r"; done
-    touch "$STAMP"
-  fi
-  GROUPS=ai; [ "$DEPTH" = 0 ] || GROUPS=ai,depth
-  "$PY" -I scripts/setup/fetch.py list --root . --list scripts/setup/downloads.json --group "$GROUPS" --jobs 4
-  if [ "$DDFA" = 1 ] && [ ! -d assets/ai/3ddfa_v2/repo ]; then
-    git clone --quiet https://github.com/cleardusk/3DDFA_V2.git assets/ai/3ddfa_v2/repo
-    git -C assets/ai/3ddfa_v2/repo checkout --quiet 1b6c676
-    rm -rf assets/ai/3ddfa_v2/repo/.git assets/ai/3ddfa_v2/repo/examples assets/ai/3ddfa_v2/repo/docs
-  fi
-fi
-
-# image tools (contact sheets, overlays, metrics) need PIL and numpy
-PYIMG=""
-for c in python3 "$AIPY"; do
-  if [ -n "$c" ] && "$c" -I -c 'import PIL, numpy' 2>/dev/null; then PYIMG="$c"; break; fi
-done
-if [ -z "$PYIMG" ]; then
-  [ -x .venv/bin/python ] || [ -x .venv/Scripts/python.exe ] || "$PY" -m venv .venv
-  if [ "$OS" = linux ]; then PYIMG=.venv/bin/python; else PYIMG=.venv/Scripts/python.exe; fi
-  "$PYIMG" -m pip install --quiet --disable-pip-version-check pillow==12.3.0 numpy
-fi
-
-GODOT_BIN=""
-if [ "$GODOT" = 1 ]; then
-  say "6. Godot 4.7.2 for import checks"
-  if [ "$OS" = linux ]; then
-    "$PY" -I scripts/setup/fetch.py list --root . --list scripts/setup/downloads.json --group godot
-    GODOT_BIN="$PROJECT_DIR/cache/tools/godot/Godot_v4.7.2-stable_linux.x86_64"; chmod +x "$GODOT_BIN"
-  else
-    GODOT_BIN="$(ls "$(cygpath -u "$LOCALAPPDATA")"/Microsoft/WinGet/Packages/GodotEngine.GodotEngine.Mono*/*/Godot_v4.7.2-stable_mono_win64_console.exe 2>/dev/null | head -1 || true)"
-  fi
-  [ -n "$GODOT_BIN" ] || echo "WARN: Godot 4.7.2 not found; export import checks will be skipped"
-fi
-
-if [ "$PRUNE" = 1 ]; then
-  say "prune: research leftovers (research E §9)"
-  rm -rf assets/ai/sd_turbo assets/ai/triposr assets/ai/rembg_models/models/bria-rmbg \
-         assets/ai/mediapipe/selfie_multiclass_256x256.tflite
-fi
-
-say "7. Environment record (cache/env.json, cache/env.sh)"
-"$PY" -I scripts/setup/fetch.py env --root . --os "$OS" --blender "$(winpath "$BLENDER")" \
-  --user-resources "$BLENDER_USER_RESOURCES" --pyimg "$PYIMG" --aipy "$AIPY" --godot "$GODOT_BIN"
-
-if [ "$CHECK" = 1 ]; then
-  say "8. Smoke test"
-  "$BLENDER" -b --python-exit-code 1 --python scripts/setup/smoke.py -- --out cache/stamps/smoke.png
-  "$PYIMG" -I scripts/tools/bl.py selftest       # start a server, ping, one Workbench crop, stop
-  [ -z "$AIPY" ] || "$AIPY" -I -c 'import mediapipe, rembg; print("mediapipe", mediapipe.__version__)'
-fi
-du -sh assets cache 2>/dev/null || true
-echo "setup complete in $(( $(date +%s) - T0 )) s"
-```
 Every other entry point starts with `source cache/env.sh` (bash) or `lib/env.py` (Python), which export `BLENDER_USER_RESOURCES`; an agent who runs Blender by hand uses `scripts/tools/bl.py blender -- <args>` so the redirect is never forgotten.
 
 #### 4.2.3 `scripts/setup/fetch.py` and `scripts/setup/downloads.json`
@@ -462,12 +335,18 @@ Pack hashes were computed on this box from the copies whose sizes research B ver
 
 `mpfb_install.py` (Blender side, replacing the research copy): installs the extension with `bpy.ops.extensions.package_install_files(repo="user_default", enable_on_install=True)` if `blender_manifest.toml` is absent, enables `bl_ext.user_default.mpfb`, saves preferences (inside `cache/blender_user`), extracts each pack zip into `LocationService.get_user_data()` unless `packs/<name>.json` exists, and writes a report with `AssetService.system_assets_pack_is_installed()` and the pack names; non-zero exit on failure.
 
-#### 4.2.4 Windows notes (Git Bash) [VERIFY each on Jeff's machine at the first GPU session]
+#### 4.2.4 Windows notes (Git Bash), verified on Jeff's machine on 2026-10-10
+Windows 11, Git Bash, Blender 4.5.14 (MSI install), NVIDIA GeForce RTX 3050 6 GB.
+* **Blender**: the MSI install was 4.5.0; Jeff chose to upgrade it rather than keep a portable copy beside it. The 4.5.14 MSI from download.blender.org (359,874,560 bytes, sha256 `5e04b3f587250d611bdd40d41fd9e3f75207a44e7d554d495dfe81ff6345937c`, from the release's `.sha256` file) upgrades an installed 4.5 in place (`msiexec /i … /passive`, one UAC prompt). `winget upgrade` would jump to the newest series (5.2.2 that day), not the newest 4.5.
+* **Line endings**: Git for Windows sets `core.autocrlf=true` in its system config, so without `.gitattributes` every text file checks out with CRLF and bash stops on `\r`. The project's `.gitattributes` (§4.1.2) forces LF; a checkout made before it existed keeps its CRLF files until they are deleted and checked out again (only clean files: `git status` first).
+* **Logs**: `tee /dev/stderr` reopens the file that stdout and stderr are redirected to and truncates it; the script captures the probe's output in a variable instead.
+* `python3` on a stock Windows is the Microsoft Store alias and fails; the setup Python is Blender's (3.11.15, OpenSSL 3.1.8, which reads the Windows certificate store), and the image-tools Python is the AI venv.
 * Paths handed to `blender.exe`, `tar.exe` or Python are converted with `cygpath -w`; paths inside the scripts are POSIX.
-* Blender's bundled Python creates the AI venv (`python.exe -m venv`); MediaPipe 0.10.35 and onnxruntime 1.30.0 publish `win_amd64` wheels for CPython 3.11.
-* `C:\Windows\System32\tar.exe` (bsdtar, Windows 10 1803 and later) extracts the Blender zip; `fetch.py` extracts all other zips.
-* Long paths: MakeHuman packs nest deeply; enable `core.longpaths` in git and keep the project path short (for example `C:\dev\hexcom`).
-* GPU: `scripts/eval/render.py` reads `SGT_DEVICE` (`OPTIX`, `CUDA`, `HIP` or `CPU`; default: probe `cycles` preferences for a GPU and fall back to CPU).
+* Long paths: `LongPathsEnabled` is 1 on Jeff's machine; MPFB's data extracts under `cache\blender_user\extensions\.user\user_default\mpfb\data` without trouble from `E:\hexcom`.
+* **GPU**: the probe finds OptiX and CUDA on the RTX 3050 and records OptiX. Scripts call `lib/env.py` `use_device(scene)`, which enables the GPUs of that back end and leaves the CPU out; `SGT_DEVICE` (`OPTIX`, `CUDA`, `HIP`, `ONEAPI`, `METAL` or `CPU`) overrides it.
+* **Denoiser**: Blender's default runs OIDN on the CPU even in a GPU render; on the RTX 3050 that was 11 of the 15 s of test 1's 1080p 32-spp frame. `use_device()` sets `denoising_use_gpu`, which brings the frame to 4.1 s (§3.2, last table).
+* **AI venv**: made by Blender's Python 3.11.15; the pinned `win_amd64` wheels installed (mediapipe 0.10.35, onnxruntime 1.30.0, rembg 2.0.85, pillow 12.3.0; numpy resolved to 2.4.6, scipy 1.17.1, numba 0.68.0), 0.73 GB.
+* **`GROUPS` is a bash built-in** (the user's group ids, an array that ignores assignment): the script as first specified set `GROUPS=ai`, so its first run fetched no AI models and still exited 0 (`197121: 0 of 0 files verified`). The variable is `AI_GROUPS`.
 
 ### 4.3 The shared library (`scripts/lib/`)
 Blender-side modules import only `bpy`, `bmesh`, `mathutils` and `numpy` (Blender 4.5 ships numpy 1.26.4, M). System-Python tools (PIL) live in `scripts/tools/` and `scripts/eval/` (spec 16's `texmeasure.py` and `decal.py` are the two exceptions it names). Every module has a `selftest()` run by `python scripts/tools/bl.py selftest --lib`.

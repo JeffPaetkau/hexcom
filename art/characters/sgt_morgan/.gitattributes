@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.sh  text eol=lf
+*.py  text eol=lf
+*.png -text
+*.jpg -text
+*.exr -text
+*.blend -text
+*.glb -text
+*.bin -text
+*.npz -text

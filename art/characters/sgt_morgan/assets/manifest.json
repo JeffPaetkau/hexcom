@@ -1,8 +1,8 @@
 {
- "schema": 2,
+ "schema": 3,
  "generated": "2026-10-06 22:04:34 UTC",
  "assets_root": "assets/ (paths below are relative to it)",
- "restore_command": "python3 -I scripts/research/build_manifest.py assets --restore",
+ "restore_command": "bash scripts/setup_session.sh (fetch.py manifest)",
  "counts": {
   "texture": 31,
   "hdri": 3,
@@ -49,7 +49,8 @@
       "textures/Fabric063/Fabric063_2K-JPG.mtlx",
       "textures/Fabric063/Fabric063_2K-JPG.tres",
       "textures/Fabric063/Fabric063.png"
-     ]
+     ],
+     "sha256": "3b8287ca8e4e9029f84edb189a5ff6d66bda1639ec2eb05257b6141e0c9b070c"
     }
    ],
    "need": "cordura_nylon_weave",
@@ -167,7 +168,8 @@
       "textures/Fabric061/Fabric061_2K-JPG.mtlx",
       "textures/Fabric061/Fabric061_2K-JPG.tres",
       "textures/Fabric061/Fabric061.png"
-     ]
+     ],
+     "sha256": "27b729c1bafa7c47f5f89dea8ca43d6107156acd437c1439a30d28e9de0013c2"
     }
    ],
    "need": "cordura_nylon_weave",
@@ -285,7 +287,8 @@
       "textures/Fabric066/Fabric066_2K-JPG.mtlx",
       "textures/Fabric066/Fabric066_2K-JPG.tres",
       "textures/Fabric066/Fabric066.png"
-     ]
+     ],
+     "sha256": "7af520fce64a91a7c0eeb89a6b4e02d0c57da8c886a44ec2b5d8624eb4688be6"
     }
    ],
    "need": "cordura_nylon_weave",
@@ -638,7 +641,8 @@
      "bytes": 324232,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "305de1050f7813aae775292ac8875037ff5548c684e1a02cfe9f9603a6aec2f0"
     },
     {
      "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_basecolor.jpg",
@@ -646,7 +650,8 @@
      "bytes": 202412,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "9963da7d777015b260ee6712f545a0e0a0ad45295a78a10f968b1e84f0f3ae73"
     },
     {
      "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_height.png",
@@ -654,7 +659,8 @@
      "bytes": 213965,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "0f9773087a66b3f13032e590871c6ca0b40037cfc48a3a26cd759827154038ee"
     },
     {
      "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_normal.jpg",
@@ -662,7 +668,8 @@
      "bytes": 368633,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "256ae92936d3a05fee47874a2a9fcc4e24fc550f97349170ca199963fa6dc438"
     },
     {
      "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_opacity.jpg",
@@ -670,7 +677,8 @@
      "bytes": 40742,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "862491dff91809c019c546f88cf96783a8dbbbfc95314f8f2f81e942324ecf52"
     },
     {
      "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Fabric_Nylon_weave_001_roughness.jpg",
@@ -678,7 +686,8 @@
      "bytes": 241750,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "8dfc6d4773b5d1e2b736f0c7b7068f56e545f6f1b8409b7605a7e4d54a6430a4"
     },
     {
      "path": "textures/3dtextures_Fabric_Nylon_Weave_001/Material_1561.jpg",
@@ -686,7 +695,8 @@
      "bytes": 121344,
      "headers": {
       "User-Agent": "Mozilla/5.0"
-     }
+     },
+     "sha256": "7c96f6f6553cc67de3394c695c76fe0656f865e30ae1243d7c209b72e10e39d9"
     }
    ],
    "need": "cordura_nylon_weave",
@@ -1245,7 +1255,8 @@
       "textures/Fabric082A/Fabric082A_2K-JPG.mtlx",
       "textures/Fabric082A/Fabric082A_2K-JPG.tres",
       "textures/Fabric082A/Fabric082A.png"
-     ]
+     ],
+     "sha256": "7c8347e092066673e72281d4605e3cb2ec9860d785c03285dbab2bb05740e3c5"
     }
    ],
    "need": "ripstop_twill_fabric",
@@ -1824,7 +1835,8 @@
       "textures/Leather032/Leather032_2K-JPG.mtlx",
       "textures/Leather032/Leather032_2K-JPG.tres",
       "textures/Leather032/Leather032.png"
-     ]
+     ],
+     "sha256": "55fb7e280edd13046740c73fa231a35485e31d8c466f0781ae3cbc25baa2e30b"
     }
    ],
    "need": "leather",
@@ -1934,7 +1946,8 @@
       "textures/Leather037/Leather037_2K-JPG.mtlx",
       "textures/Leather037/Leather037_2K-JPG.tres",
       "textures/Leather037/Leather037.png"
-     ]
+     ],
+     "sha256": "edfefef45891df244eee88d392e30bf70e797b77898926f00ea7cde7b88e1c14"
     }
    ],
    "need": "leather",
@@ -2044,7 +2057,8 @@
       "textures/Rubber004/Rubber004_2K-JPG.mtlx",
       "textures/Rubber004/Rubber004_2K-JPG.tres",
       "textures/Rubber004/Rubber004.png"
-     ]
+     ],
+     "sha256": "dc1566f645f6ef7853bb3a3e7a15ef450edbb90cbd471c6097d44cd04521bea0"
     }
    ],
    "need": "rubber",
@@ -2154,7 +2168,8 @@
       "textures/Metal038/Metal038_2K-JPG.mtlx",
       "textures/Metal038/Metal038_2K-JPG.tres",
       "textures/Metal038/Metal038.png"
-     ]
+     ],
+     "sha256": "9c4cd701a53ea208decbc160bcae71e204f6d518e442f6dfcf9d4c9e2af712bf"
     }
    ],
    "need": "metal_dark_anodised_parkerised",
@@ -2288,7 +2303,8 @@
       "textures/Metal063/Metal063_2K-JPG.mtlx",
       "textures/Metal063/Metal063_2K-JPG.tres",
       "textures/Metal063/Metal063.png"
-     ]
+     ],
+     "sha256": "4c4a995457002ff5288c337254893d3bd42bdd13cecba3e3dadf84e71ebae4a6"
     }
    ],
    "need": "metal_dark_anodised_parkerised",
@@ -2411,7 +2427,8 @@
       "textures/Metal046B/Metal046B_2K-JPG.mtlx",
       "textures/Metal046B/Metal046B_2K-JPG.tres",
       "textures/Metal046B/Metal046B.png"
-     ]
+     ],
+     "sha256": "b10bffa3d74ce925ee12b9425b077609a1775e1aeebdc2dab2a750c55b882521"
     }
    ],
    "need": "metal_dark_anodised_parkerised",
@@ -2534,7 +2551,8 @@
       "textures/Metal050C/Metal050C_2K-JPG.mtlx",
       "textures/Metal050C/Metal050C_2K-JPG.tres",
       "textures/Metal050C/Metal050C.png"
-     ]
+     ],
+     "sha256": "a32f383d4627f4d969dd12b2ec959dd2b34a1c5634afaae56b6fb5ab14b45e6c"
     }
    ],
    "need": "metal_dark_anodised_parkerised",
@@ -2655,7 +2673,8 @@
       "textures/Plastic012B/Plastic012B_2K-JPG.mtlx",
       "textures/Plastic012B/Plastic012B_2K-JPG.tres",
       "textures/Plastic012B/Plastic012B.png"
-     ]
+     ],
+     "sha256": "c49168dfd0a4cc2df8a08dbc4bcb027499d7bd87a2cb89c732162d3c388c32b9"
     }
    ],
    "need": "matte_polymer",
@@ -2765,7 +2784,8 @@
       "textures/Plastic018B/Plastic018B_2K-JPG.mtlx",
       "textures/Plastic018B/Plastic018B_2K-JPG.tres",
       "textures/Plastic018B/Plastic018B.png"
-     ]
+     ],
+     "sha256": "189085f3e072c07ad615c98ef41dbe3ff5d711ae805c6715ce578439dad967d4"
     }
    ],
    "need": "matte_polymer",
@@ -2878,7 +2898,8 @@
       "textures/Metal027/Metal027_2K-JPG.mtlx",
       "textures/Metal027/Metal027_2K-JPG.tres",
       "textures/Metal027/Metal027.png"
-     ]
+     ],
+     "sha256": "17a17e2e83342e9280d06671c3136c9869fe112e31a7c9dee3e3a05ed3759544"
     }
    ],
    "need": "worn_paint_over_metal",
@@ -3136,7 +3157,8 @@
       "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.mtlx",
       "textures/SurfaceImperfections015/SurfaceImperfections015_2K-JPG.tres",
       "textures/SurfaceImperfections015/SurfaceImperfections015.png"
-     ]
+     ],
+     "sha256": "00f704bfac5d731ad8dfa87d24d31b2bda31542604dac06d1d00e90e3b82dcce"
     }
    ],
    "need": "grunge_masks",
@@ -3260,7 +3282,8 @@
       "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.mtlx",
       "textures/SurfaceImperfections017/SurfaceImperfections017_2K-JPG.tres",
       "textures/SurfaceImperfections017/SurfaceImperfections017.png"
-     ]
+     ],
+     "sha256": "0af6b78d100815a207bb955cad1797a586fb98cc1b6036b125a6103b34b9c804"
     }
    ],
    "need": "grunge_masks",
@@ -3801,7 +3824,8 @@
       "textures/Concrete048/Concrete048_2K-JPG.mtlx",
       "textures/Concrete048/Concrete048_2K-JPG.tres",
       "textures/Concrete048/Concrete048.png"
-     ]
+     ],
+     "sha256": "c61a3e7f03c625889c7fd71351a928217a15e81ea26e6f7dda16865b2882e483"
     }
    ],
    "need": "concrete_floor",
@@ -3914,7 +3938,8 @@
       "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_Height.png",
       "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_Normal.png",
       "textures/cgbookcase_PolishedConcrete01/PolishedConcrete01_2K_Roughness.png"
-     ]
+     ],
+     "sha256": "7abf4d4f01d91dfae616207f9658c09db43b61deca3831133c613079a1a88c89"
     }
    ],
    "need": "concrete_floor",
@@ -5126,7 +5151,8 @@
       "models/oga_m4a1_nisu/M4A1/M4A1_Metallic.png",
       "models/oga_m4a1_nisu/M4A1/M4A1_Normal.png",
       "models/oga_m4a1_nisu/M4A1/M4A1_Roughness.png"
-     ]
+     ],
+     "sha256": "ed5779ec82718861964227e2aad2a900978ea087081154365d6d86246be62f0d"
     }
    ],
    "total_bytes": 3631284,
@@ -5176,7 +5202,8 @@
       "models/oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1.blend",
       "models/oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1.fbx",
       "models/oga_m4a1_lowpoly_mallninjamax/M4A1/M4A1Diffuse.png"
-     ]
+     ],
+     "sha256": "439e1fd889cf11fa24fa845022ef53ce18b287362dac3da1bc1332cfe4ce9d11"
     }
    ],
    "total_bytes": 716723,

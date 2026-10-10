@@ -1,16 +1,21 @@
-# large binaries are re-downloaded by scripts/setup_session.sh
+# downloads are restored by scripts/setup_session.sh
 assets/*
 !assets/manifest.json
+!assets/interfaces.json
 !assets/README.md
+# everything rebuildable (per-part caches, Blender user resources, bakes, server state)
+cache/
+# renders: only the evaluation log and the milestone images are kept
 renders/*
 !renders/eval/
 renders/eval/*
-!renders/eval/*.png
+!renders/eval/log.md
+!renders/eval/log.jsonl
+!renders/eval/*.jpg
+# deliverables are tracked; scratch output is not
+deliver/tmp/
 *.blend1
 *.blend2
 __pycache__/
 *.pyc
 .venv/
-
-# per-part .blend caches and other rebuildable intermediates (spec 17, spec 18)
-cache/
