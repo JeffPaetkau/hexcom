@@ -11,3 +11,6 @@ renders/eval/*
 __pycache__/
 *.pyc
 .venv/
+
+# per-part .blend caches and other rebuildable intermediates (spec 17, spec 18)
+cache/

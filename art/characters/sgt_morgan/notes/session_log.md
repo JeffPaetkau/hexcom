@@ -3,6 +3,17 @@
 Newest first. One entry per working session, a few lines each: what was done, what is
 next, anything a fresh session must know.
 
+## 2026-10-10 — cloud session (Opus)
+
+Specs 06, 07, 08, 10, 11, 12, 13, 14 and 17 written under the reality-wins rule and pushed.
+In progress: 15 carbine and 16 materials library (separate agents, two at a time); 18
+pipeline queued. Spec 17 settles colour management (AgX, grade applied in numpy after the
+view transform), a single neutral look-dev scene, and a JSON registry of named camera
+presets. Open for Jeff from spec 17: physical or floor-only light pool, physical or soft
+bokeh, floor joint layout, and where large deliverables (.blend, .glb, textures) live.
+Next: critique and revise all specs (the six written before the rule first), overview
+spec, fast-loop tooling.
+
 ## 2026-10-07 00:10 UTC — stopped at Jeff's request (API window nearly full)
 
 Rule added after reading the drafts: **reality wins** over the AI-generated image where they
