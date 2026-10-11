@@ -61,7 +61,7 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
             "t_fold": round(nail.t0, 2), "t_free_edge": round(nail.t_fe, 2),
             "free_edge_F": nail.to_world(nail.L, 0.0, nail.plate_top(nail.L, 0.0)).round(2).tolist(),
             "fold_F": nail.to_world(0.0, 0.0, nail.plate_top(0.0, 0.0)).round(2).tolist(),
-            "plate_vertices": len(verts)}
+            "plate_vertices": len(verts), "burial": nail.burial()}
     dq, cw = M.creases(q, nrm, segs, P)
     return q + dq, beds, cw, made
 
@@ -96,35 +96,76 @@ def finish(ctx, q, beds, cw, groups):
         ctx.plates[k] = (bpy.data.objects[f"Foot.L.Nail.{k}"], None)
 
 
-def web_by_closing(q, topo, segs, P, adj):
+def cleft(q, groups, P):
+    """The 1-2 cleft's centre line and half-gap (F, x), measured just ahead of the commissure where the toes
+    part: the hallux's lateral-most skin and toe 2's medial-most. (Round 1 took the midpoint of the two MTP
+    joints, x -17.8; the hallux is 30 mm wide and toe 2 16, so the cleft is at x -8, in the mask's fade.)"""
+    y0 = P["web_y"] - 3.0
+    band = np.abs(q[:, 1] - y0) < 1.0
+    x_lat = q[band & (groups["toe1-1.L"] > 0.5), 0].max()
+    x_med = q[band & (groups["toe2-1.L"] > 0.5), 0].min()
+    return 0.5 * (x_lat + x_med), max(0.5 * (x_med - x_lat), 0.5)
+
+
+def web_by_closing(q, topo, segs, P, adj, groups=None, report=None):
     """The hybrid's web: a signed distance field of the skin around the 1-2 cleft, closed by P['web_r'] over
     the cleft's floor (sdf.Field.close), and the dense skin there moved onto it. The cleft's two walls and
     its floor are already one surface on MakeHuman's mesh, so projecting them onto the closed field rounds
-    and fills the floor without new topology."""
+    and fills the floor without new topology.
+
+    Round 1's tear (a black slit on the hallux's lateral wall deep in the cleft) came from three things: the
+    mask centred between the MTP joints left the cleft in its fade, so the field there was only partly closed;
+    the projection was weighted by that mask, so vertices stopped part-way, inside the closed surface; and a
+    plain Laplacian relax shrank what it spread. Now the mask is centred on the cleft itself and full across
+    it, a vertex moves by how deep the closing swallowed it (the field's own value: on the old surface it is
+    0 and nothing moves), with a gradient step of one voxel, and the crowded vertices are spread within the
+    surface (tangential relax) before each re-projection."""
     import sdf as S
-    a, b = segs["h1"].o, segs["t2p"].o
-    xm, xw = 0.5 * (a[0] + b[0]), 0.5 * abs(b[0] - a[0])
-    lo = (xm - xw - 6.0, P["web_y"] - 12.0, -3.0)
-    hi = (xm + xw + 6.0, a[1] + 22.0, 34.0)
-    field = S.Field(q, topo[2].reshape(-1, 4), y_cut=-140.0, voxel=P.get("web_voxel", 0.15), half_mm=4.0)
+    a = segs["h1"].o
+    if groups is not None:
+        xm, half = cleft(q, groups, P)
+    else:
+        b = segs["t2p"].o
+        xm, half = 0.5 * (a[0] + b[0]), 2.0
+    full, fade = half + P.get("web_band", 2.5), half + P.get("web_band", 2.5) + 3.0
+    lo = (xm - fade - 4.0, P["web_y"] - 12.0, -3.0)
+    hi = (xm + fade + 4.0, a[1] + 22.0, 34.0)
+    vox = P.get("web_voxel", 0.15)
+    field = S.Field(q, topo[2].reshape(-1, 4), y_cut=-140.0, voxel=vox, half_mm=4.0)
     field.box(lo, hi)
 
     def web_mask(Pts):
         x, y, z = Pts[..., 0], Pts[..., 1], Pts[..., 2]
-        return (1.0 - T.smoothstep(np.abs(x - xm), 0.45 * xw, 0.85 * xw))             * T.window(y, P["web_y"] - 3.5, P["web_y"] + 0.5, a[1] + 6.0, a[1] + 14.0)             * (1.0 - T.smoothstep(z, 20.0, 27.0))
+        return (1.0 - T.smoothstep(np.abs(x - xm), full, fade)) \
+            * T.window(y, P["web_y"] - 3.5, P["web_y"] + 0.5, a[1] + 6.0, a[1] + 14.0) \
+            * (1.0 - T.smoothstep(z, 20.0, 27.0))
 
     field.close(P["web_r"], web_mask)
-    w = np.ones(len(q))
+    box = np.ones(len(q))
     for d in range(3):
-        w *= T.window(q[:, d], lo[d] + 0.5, lo[d] + 2.0, hi[d] - 2.0, hi[d] - 0.5)
-    w *= np.clip(web_mask(q) * 3.0, 0.0, 1.0)
-    q = field.project(q, w)
-    # where the cleft's two walls came onto one surface they crumple: relax the vertices along it (a plain
-    # Laplacian) and put them back on the field, a few rounds, so they spread evenly over the new web
-    zone = np.clip(w * 2.0, 0.0, 1.0)
+        box *= T.window(q[:, d], lo[d] + 0.5, lo[d] + 2.0, hi[d] - 2.0, hi[d] - 0.5)
+    inb = np.nonzero(box > 1e-4)[0]
+    f0 = np.full(len(q), 0.0)
+    f0[inb] = np.nan_to_num(field.sample(q[inb]), nan=0.0)
+    swallowed = T.smoothstep(-f0, 0.02, 0.12) * box
+    q0 = q
+    q = field.project(q, swallowed, iterations=8, h=vox, max_step=1.0)
+    moved = np.linalg.norm(q - q0, axis=1)
+    # the zone to relax: what moved, widened by a few rings so the crowding spreads into its surroundings
+    zone = T.smoothstep(moved, 0.01, 0.1)
+    ptr, nb = adj
+    deg = np.diff(ptr)
+    row = np.repeat(np.arange(len(deg)), deg)
+    for _ in range(int(P.get("web_zone_rings", 12))):
+        zone = np.maximum(zone, 0.85 * np.bincount(row, zone[nb], minlength=len(deg)) / np.maximum(deg, 1))
+    zone = np.clip(zone, 0.0, 1.0) * box
     for _ in range(int(P.get("web_relax", 6))):
-        q = M.taubin(q, adj, 0.8 * zone, iterations=8, lam=0.5, mu=0.0)
-        q = field.project(q, w, iterations=3)
+        nrm = C.vertex_normals(q, topo)
+        q = M.relax_tangent(q, adj, nrm, 0.9 * zone, iterations=8, lam=0.5)
+        q = field.project(q, zone, iterations=3, h=vox, max_step=0.5)
+    if report is not None:
+        report["web"] = {"cleft_x": round(float(xm), 2), "half_gap": round(float(half), 2),
+                         "moved_max": round(float(moved.max()), 2), "moved_n": int((moved > 0.05).sum())}
     return q
 
 
@@ -143,13 +184,49 @@ def build(ctx):
     edges, _ = C.edge_lengths(skin)
     adj = M.adjacency(edges, len(q))
     q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
+    q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
     ctx.report["t_macro"] = round(time.time() - t1, 2)
     if P.get("web_sdf"):
         t1 = time.time()
-        q = web_by_closing(q, topo, segs, P, adj)
+        q = web_by_closing(q, topo, segs, P, adj, groups, ctx.report)
         ctx.report["t_web_sdf"] = round(time.time() - t1, 2)
     t1 = time.time()
     q, beds, cw, _ = nails_and_creases(ctx, q, topo, groups, segs, P)
     ctx.report["t_detail"] = round(time.time() - t1, 2)
     finish(ctx, q, beds, cw, groups)
     ctx.report["params"] = P
+    ctx.report["joints"] = {k: np.round(v, 2).tolist() for k, v in ctx.joints.items() if k.startswith(("toe-1", "toe-2"))}
+    ctx.report["axes"] = {k: {"a": np.round(s.a, 3).tolist(), "n": np.round(s.n, 3).tolist(), "length": round(s.length, 2)}
+                          for k, s in segs.items()}
+    ip_y = float(segs["h2"].point(1.2 + P.get("ip_shift", 0.0), 0.0, 0.0)[1])
+    ctx.report["measure"] = measure(q, groups, ctx.report.get("nails", {}), ip_y)
+
+
+def measure(q, groups, nails, ip_y):
+    """The region's dimensions on the finished skin (F, mm): the hallux's depth (its vertical extent) at the
+    nail's proximal fold and at the IP crease, and both toes' plan widths along their length (the plantar
+    outline the critics read as blocks)."""
+    out = {}
+    floor = float(q[:, 2].min())
+    for name, gs in (("hallux", ("toe1-1.L", "toe1-2.L")), ("toe2", ("toe2-2.L", "toe2-3.L"))):
+        w = sum(groups[g] for g in gs) > 0.5
+        c = q[w]
+        rows = []
+        for y0 in np.arange(np.floor(c[:, 1].max()) - 1.0, c[:, 1].min(), -2.0):
+            s = np.abs(c[:, 1] - y0) < 0.3
+            if s.sum() > 20:
+                cc = c[s]
+                rows.append([round(float(y0), 1), round(float(cc[:, 2].min()), 2), round(float(cc[:, 2].max()), 2),
+                             round(float(np.ptp(cc[:, 2])), 2), round(float(np.ptp(cc[:, 0])), 2)])
+        out[name] = {"columns": ["y", "z_min", "z_max", "depth", "width"], "rows": rows}
+    out["floor_z"] = round(floor, 2)
+    nail = nails.get(1) or nails.get("1")
+    if nail:
+        w = (groups["toe1-1.L"] + groups["toe1-2.L"]) > 0.5
+        c = q[w]
+        for key, y0 in (("hallux_depth_nail_root", nail["fold_F"][1]), ("hallux_depth_ip", ip_y),
+                        ("hallux_depth_free_edge", nail["free_edge_F"][1])):
+            s = np.abs(c[:, 1] - y0) < 0.3
+            out[key] = round(float(np.ptp(c[s][:, 2])), 2)
+            out[key + "_y"] = round(float(y0), 2)
+    return out

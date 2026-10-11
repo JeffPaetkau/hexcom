@@ -11,6 +11,16 @@ import numpy as np
 # spec 01 §3.3 gives the hallux a 3.5 mm lunula and toe 2 a faint one; on the trial's plates 3.5 mm read as a
 # white band (a manicure), so the trial shows the crescent's last 1.6 mm beyond the fold, and none on toe 2
 LUNULA_MM = {1: 1.6, 2: 0.0}
+# The recipe draws the lunula's distal edge as lunula_mm x sqrt(1 - (u / nail_half_mm)^2); nail_coords sets
+# nail_half_mm to the whole plate's half-width (hidden margins included), so the arc ran edge to edge and the
+# curved cuticle line cut it into a band. A half-width of 6 mm on the hallux (its visible half is 9.25) makes it
+# a crescent over the middle of the root, as on a real big toe (critic round 1, m6).
+LUNULA_HALF_MM = {1: 6.0}
+# Recipe overrides for the trial's plates (critic round 1: m8 the plates "combed" with white streaks, m16/m17/
+# m41 an even, opaque French-white free edge). The library's values are spec 16's; these are what the trial
+# shows, and the notes list them as proposed library changes rather than editing scripts/lib.
+PLATE_OVERRIDES = {"ridge_depth_mm": 0.004}
+FREE_EDGE_OVERRIDES = {"albedo_hex": "#dfd2bb", "transmission": 0.56, "rough": 0.34}
 
 
 def dress_skin(skin, standin=True):
@@ -58,11 +68,15 @@ def dress_plate(nob, k, uvw_mm=None, ridge_mm=0.0):
     if uvw_mm is None:
         w, vis, fe, thick = nails.PLATES[k]
         free = M.nail_coords(nob, vis, fe, lunula_mm=LUNULA_MM.get(k, 0.0), ridge_mm=ridge_mm)
+        over_p, over_f = {}, {}
     else:
         free = write_nail_coords(nob, uvw_mm, LUNULA_MM.get(k, 0.0), ridge_mm)
+        if k in LUNULA_HALF_MM:
+            nob["nail_half_mm"] = float(LUNULA_HALF_MM[k])
+        over_p, over_f = PLATE_OVERRIDES, FREE_EDGE_OVERRIDES
     nob.data.materials.clear()
-    M.assign(nob, "Nail.Plate")
-    M.assign(nob, "Nail.FreeEdge", faces=free)
+    M.assign(nob, "Nail.Plate", **over_p)
+    M.assign(nob, "Nail.FreeEdge", faces=free, **over_f)
     sol = nob.modifiers.get("Solidify")
     if sol is not None:
         sol.material_offset_rim = 0  # each rim takes its own face's material (as lookdev_p01 does)

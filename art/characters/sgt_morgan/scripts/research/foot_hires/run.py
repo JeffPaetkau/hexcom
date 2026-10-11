@@ -131,6 +131,7 @@ def save_region(ctx, out_dir):
         co = np.array([ob.matrix_world @ v.co for v in me.vertices]) * C.MM
         data[name + "_co"] = co.astype(np.float32)
         data[name + "_faces"] = np.array([list(p.vertices) + [-1] * (4 - len(p.vertices)) for p in me.polygons], np.int32)
+    data["F_R"], data["F_o"] = ctx.frame.R, ctx.frame.o      # frame F: q = (p - F_o) @ F_R
     np.savez_compressed(path, **data)
     return os.path.relpath(path, C.env.PROJECT_DIR)
 

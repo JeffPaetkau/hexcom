@@ -75,6 +75,37 @@ def adjacency(edges, n):
     return np.cumsum(ptr), e[:, 1]
 
 
+def relax_tangent(q, adj, nrm, weight, iterations=10, lam=0.5):
+    """Laplacian relaxation within the surface: each step toward the neighbours' mean with its component
+    along the vertex normal (nrm, held for the call) taken out, so vertices crowded onto a new surface spread
+    over it instead of shrinking it. Runs on the weighted vertices' subgraph, as taubin."""
+    ptr, nb = adj
+    active = np.nonzero(weight > 1e-4)[0]
+    if not len(active):
+        return q
+    deg = np.diff(ptr)
+    counts = deg[active]
+    offs = np.repeat(ptr[active] - np.concatenate([[0], np.cumsum(counts)[:-1]]), counts) + np.arange(counts.sum())
+    nbr = nb[offs]
+    row = np.repeat(np.arange(len(active)), counts)
+    sub = np.unique(np.concatenate([active, nbr]))
+    loc = np.searchsorted(sub, nbr)
+    act = np.searchsorted(sub, active)
+    Q = q[sub].copy()
+    w = weight[active][:, None]
+    na = nrm[active]
+    inv = 1.0 / np.maximum(counts, 1)[:, None]
+    for _ in range(iterations):
+        Qn = Q[loc]
+        mean = np.stack([np.bincount(row, Qn[:, k], minlength=len(active)) for k in range(3)], 1) * inv
+        d = mean - Q[act]
+        d -= np.einsum("ij,ij->i", d, na)[:, None] * na
+        Q[act] += lam * w * d
+    q = q.copy()
+    q[sub] = Q
+    return q
+
+
 def taubin(q, adj, weight, iterations=60, lam=0.5, mu=-0.53):
     """Taubin's lambda|mu fairing where weight > 0 (the weight scales each step): a narrow concavity (a slot
     between two toes) rounds out and fills without the rest shrinking. Runs on the weighted vertices'
@@ -104,6 +135,103 @@ def taubin(q, adj, weight, iterations=60, lam=0.5, mu=-0.53):
     return q
 
 
+def sections(seg, qm, step=1.0):
+    """A distal segment's section extents along it, from its own vertices qm (F): functions of t giving the
+    section's lowest and highest h and its midline u (each smoothed over a few stations)."""
+    t, u, h = seg.local(qm)
+    st = np.arange(np.floor(t.min()), np.ceil(t.max()) + step, step)
+    lo, hi, mid = [], [], []
+    for s in st:
+        m = np.abs(t - s) < 0.75 * step
+        if m.sum() < 8:
+            lo.append(np.nan), hi.append(np.nan), mid.append(np.nan)
+            continue
+        lo.append(h[m].min()), hi.append(h[m].max()), mid.append(0.5 * (u[m].min() + u[m].max()))
+    arrs = []
+    for a in (lo, hi, mid):
+        a = np.asarray(a, float)
+        ok = np.isfinite(a)
+        a = np.interp(st, st[ok], a[ok])
+        a = np.convolve(np.pad(a, 2, mode="edge"), np.ones(5) / 5.0, mode="valid")
+        arrs.append(a)
+    return (lambda x: np.interp(x, st, arrs[0])), (lambda x: np.interp(x, st, arrs[1])), \
+        (lambda x: np.interp(x, st, arrs[2])), float(t.max())
+
+
+def smin(a, b, k):
+    """Polynomial smooth minimum (union) with fillet radius k."""
+    hh = np.clip(0.5 + 0.5 * (b - a) / k, 0.0, 1.0)
+    return b + (a - b) * hh - k * hh * (1.0 - hh)
+
+
+def ellipsoid_sdf(Pts, centre, axes, radii):
+    """Quilez's bound of the distance to an ellipsoid (negative inside): centre (F), axes as rows."""
+    d = (np.asarray(Pts, float) - centre) @ np.asarray(axes).T
+    r = np.asarray(radii, float)
+    k0 = np.linalg.norm(d / r, axis=-1)
+    k1 = np.linalg.norm(d / (r * r), axis=-1)
+    return k0 * (k0 - 1.0) / np.maximum(k1, 1e-9)
+
+
+def grow(q, nrm, prim, k, weight, dmax=8.0, iterations=24):
+    """How far each vertex moves along its normal to lie on the smooth union of the skin and a primitive
+    (prim: signed distance, negative inside; k: the fillet). Bisection on the ray p + d n for the least d >= 0
+    with smin(d, prim(p + d n), k) >= 0: the toe grows into the primitive and blends out over k, and only ever
+    grows, so a pulp adds flesh where the toe is short of it and leaves the rest alone."""
+    out = np.zeros(len(q))
+    sel = np.nonzero(weight > 1e-4)[0]
+    if not len(sel):
+        return out
+    need = smin(0.0, prim(q[sel]), k) < -1e-4
+    idx = sel[need]
+    p, n = q[idx], nrm[idx]
+    lo, hi = np.zeros(len(idx)), np.full(len(idx), dmax)
+    for _ in range(iterations):
+        mid = 0.5 * (lo + hi)
+        neg = smin(mid, prim(p + mid[:, None] * n), k) < 0.0
+        lo, hi = np.where(neg, mid, lo), np.where(neg, hi, mid)
+    out[idx] = hi * weight[idx]
+    return out
+
+
+def pulps(q, nrm, segs, groups, P, report):
+    """The pulps as smooth unions with ellipsoids, after the other fields (spec 01 §3.3: 5-8 mm of pulp past
+    the bone). Each pad is an oval in plan, widest mid-pad, its front rounding into the tip; the hallux's rests
+    on the floor (its frame level with the floor), toe 2's follows its curled distal phalanx and sinks
+    `sink` mm below its present underside. Returns the new positions."""
+    floor = float(q[:, 2].min())
+    out = q.copy()
+    rep = {}
+    for key, segname, g in (("pulp1_e", "h2", "toe1-2.L"), ("pulp2_e", "t2d", "toe2-3.L")):
+        E = P.get(key)
+        if not E:
+            continue
+        seg = segs[segname]
+        mine = groups[g] > 0.5
+        hbot, htop, umid, t_tip = sections(seg, q[mine])
+        tc = t_tip - E["back"]
+        if E.get("frame") == "floor":
+            a = seg.a.copy()
+            a[2] = 0.0
+            a /= np.linalg.norm(a)
+            z = np.array([0.0, 0.0, 1.0])
+            b = np.cross(z, a)
+            axes = np.stack([a, b, z])
+            c = seg.point(tc, float(umid(tc)), 0.0)
+            c[2] = floor + E.get("lift", 0.15) + E["radii"][2]
+        else:
+            axes = np.stack([seg.a, seg.b, seg.n])
+            c = seg.point(tc, float(umid(tc)), float(hbot(tc)) + E["radii"][2] - E.get("sink", 0.0))
+        c = c + axes[1] * E.get("u_shift", 0.0)
+        w = np.clip(groups[g], 0.0, 1.0)
+        d = grow(q, nrm, lambda Pts: ellipsoid_sdf(Pts, c, axes, E["radii"]), E["k"], w)
+        out += d[:, None] * nrm
+        rep[key] = {"centre_F": np.round(c, 2).tolist(), "front_F": np.round(c + axes[0] * E["radii"][0], 2).tolist(),
+                    "max_mm": round(float(d.max()), 2)}
+    report["pulps"] = rep
+    return out
+
+
 def apply(q, nrm, segs, groups, adj, P, report):
     """The large forms of the region (method a). groups: {name: weights} of the dense skin; returns the
     new positions and the crease weight."""
@@ -112,19 +240,63 @@ def apply(q, nrm, segs, groups, adj, P, report):
     w_h = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"], 0.0, 1.0)
     w_2 = np.clip(groups["toe2-1.L"] + groups["toe2-2.L"] + groups["toe2-3.L"], 0.0, 1.0)
     dq = np.zeros_like(q)
-    # the pulps: a fleshy pad under and around each tip (spec 01 §3.3: 5-8 mm of pulp past the bone)
+    # the pulps: a fleshy pad under and around each tip (spec 01 §3.3: 5-8 mm of pulp past the bone); round 2
+    # grows them as ellipsoid unions instead (pulps()), so these default to nothing
     L = h2.length
-    dq += (P["pulp1"] * window(q, h2, (0.60 * L, 0.0, -7.0), (12.0, 15.0, 9.0)) * plantar(h2) * w_h)[:, None] * nrm
+    if P["pulp1"]:
+        dq += (P["pulp1"] * window(q, h2, (0.60 * L, 0.0, -7.0), (12.0, 15.0, 9.0)) * plantar(h2) * w_h)[:, None] * nrm
     L2 = t2d.length
-    dq += (P["pulp2"] * window(q, t2d, (0.55 * L2, 0.0, -3.5), (7.5, 8.0, 5.5)) * plantar(t2d) * w_2)[:, None] * nrm
+    if P["pulp2"]:
+        dq += (P["pulp2"] * window(q, t2d, (0.55 * L2, 0.0, -3.5), (7.5, 8.0, 5.5)) * plantar(t2d) * w_2)[:, None] * nrm
     # the tips: the pulp's nose carried forward below the nail (from above a rim of it shows beyond the free
     # edge), so the end of a toe is a pad, not a sawn-off cylinder
     for seg, g, amt, (dt, dh), radii in ((h2, "toe1-2.L", P["tip1"], (3.0, -4.5), (7.0, 14.0, 6.0)),
                                           (t2d, "toe2-3.L", P["tip2"], (2.0, -2.5), (4.5, 8.0, 4.0))):
+        if not amt:
+            continue
         mine = groups[g] > 0.5
         t_tip = float(seg.local(q[mine])[0].max())
         wt = window(q, seg, (t_tip - dt, 0.0, dh), radii) * np.clip(groups[g], 0.0, 1.0)
         dq += (amt * wt)[:, None] * (seg.a - 0.25 * seg.n)[None, :]
+    # the distal dorsum raised toward the tip: MakeHuman's hallux falls 19 degrees from the IP to the tip (its
+    # joint cubes sit under the dorsum, so the segment's axis is the dorsal line), where a real one keeps ~19 mm
+    # of depth at the nail root and runs nearly level to the free edge. The upper part of each section moves
+    # up, the pad stays, so the toe thickens rather than tilts
+    for seg, g, amt in ((h2, "toe1-2.L", P.get("lift1", 0.0)), (t2d, "toe2-3.L", P.get("lift2", 0.0))):
+        if not amt:
+            continue
+        mine = groups[g] > 0.5
+        hbot, htop, umid, t_tip = sections(seg, q[mine])
+        t, u, hh = seg.local(q)
+        rel = (hh - hbot(t)) / np.maximum(htop(t) - hbot(t), 1.0)
+        ramp = T.smoothstep(t, P.get("lift_from", 3.0), t_tip - 4.0)
+        dq += (amt * ramp * T.smoothstep(rel, 0.3, 0.75) * np.clip(groups[g], 0.0, 1.0))[:, None] * np.array([0.0, 0.0, 1.0])
+    # the crown: the dorsum over the nail raised along its midline, so the section is domed under a domed plate
+    # (the plate's transverse radius is 11 mm on the hallux, 6 on toe 2; a flat dorsum buries its edges)
+    for seg, g, amt, nl, ru in ((h2, "toe1-2.L", P.get("crown1", 0.0), P["nail1"]["length"], 14.0),
+                                (t2d, "toe2-3.L", P.get("crown2", 0.0), P["nail2"]["length"], 8.0)):
+        if not amt:
+            continue
+        mine = groups[g] > 0.5
+        hbot, htop, umid, t_tip = sections(seg, q[mine])
+        t, u, hh = seg.local(q)
+        tc = t_tip - 3.0 - 0.5 * nl
+        r2 = ((t - tc) / (0.5 * nl + 5.0)) ** 2 + ((u - umid(t)) / ru) ** 2
+        wc = np.clip(1.0 - r2, 0.0, 1.0) ** 2 * T.smoothstep(hh - htop(t), -0.45 * (htop(t) - hbot(t)), -0.1 * (htop(t) - hbot(t)))
+        dq += (amt * wc * T.smoothstep(nrm @ seg.n, 0.2, 0.6) * np.clip(groups[g], 0.0, 1.0))[:, None] * nrm
+    # the neck: the pad pinched in a little at the flexion crease (the IP on the hallux, the DIP on toe 2)
+    for seg, g, amt, t_c in ((h2, "toe1-2.L", P.get("neck1", 0.0), 1.2 + P.get("ip_shift", 0.0)),
+                             (t2d, "toe2-3.L", P.get("neck2", 0.0), 0.8)):
+        if not amt:
+            continue
+        mine = groups[g] > 0.5
+        hbot, htop, umid, t_tip = sections(seg, q[mine])
+        t, u, hh = seg.local(q)
+        depth = np.maximum(htop(t) - hbot(t), 1.0)
+        wn = np.clip(1.0 - ((t - t_c) / 4.0) ** 2, 0.0, 1.0) ** 2 * (1.0 - T.smoothstep((hh - hbot(t)) / depth, 0.35, 0.75))
+        side = T.smoothstep(-(nrm @ seg.n), -0.75, 0.1)
+        g_all = np.clip(groups[g] + groups[g.replace("-3.L", "-2.L").replace("1-2.L", "1-1.L")], 0.0, 1.0)
+        dq += (-amt * wn * side * g_all)[:, None] * nrm
     # the first MTP prominence on the inner border, and the metatarsal head's dorsal knuckle
     mtp = segs["h1"].o
     c = medial_point(q, mtp[1] + 3.0, mtp[2] - 8.0)
@@ -141,15 +313,27 @@ def apply(q, nrm, segs, groups, adj, P, report):
     dq += (P["edl"] * along_line(q, edl, 3.0))[:, None] * nrm
     # the distal segments' sections squared a little (flat-topped, broad-bottomed, rounded at the corners,
     # not round: "fingers, not toes") and the hallux's end widened into a spade rather than a dome
+    # a negative amount rounds the upper corners in instead (the shoulders beside a domed nail), the pad left
+    # to the pulp's union; it works per station (the section's own centre), the old way on the segment's box
     for seg, g, amt, t_from in ((h2, "toe1-2.L", P["square1"], 4.0), (t2d, "toe2-3.L", P["square2"], 1.0)):
+        if not amt:
+            continue
         mine = groups[g] > 0.5
         t, u, hh = seg.local(q)
-        tm, um, hm = seg.local(q[mine])
-        uc, hc = 0.5 * (um.min() + um.max()), 0.5 * (hm.min() + hm.max())
+        if amt > 0:
+            tm, um, hm = seg.local(q[mine])
+            uc, hc = 0.5 * (um.min() + um.max()), 0.5 * (hm.min() + hm.max())
+            upper = None
+        else:
+            hbot, htop, umid, _ = sections(seg, q[mine])
+            uc, hc = umid(t), 0.5 * (hbot(t) + htop(t))
         du, dh = u - uc, hh - hc
         r = np.hypot(du, dh)
         th = np.arctan2(dh, du)
-        upper = 0.25 + 0.75 * T.smoothstep(dh, -2.0, 2.0)          # the pad's underside stays round
+        if amt > 0:
+            upper = 0.25 + 0.75 * T.smoothstep(dh, -2.0, 2.0)      # the pad's underside stays round
+        else:
+            upper = T.smoothstep(dh, -1.0, 3.0)
         push = amt * upper * np.sin(2.0 * th) ** 2 * r * T.smoothstep(t, t_from, t_from + 4.0) * np.clip(groups[g], 0.0, 1.0)
         dq += (push / np.maximum(r, 1e-6))[:, None] * (np.outer(du, seg.b) + np.outer(dh, seg.n))
     t, u, hh = h2.local(q)
@@ -159,13 +343,21 @@ def apply(q, nrm, segs, groups, adj, P, report):
     spread = P["spade1"] * (u - uc) * T.smoothstep(t, t_tip - 16.0, t_tip - 5.0) * np.clip(groups["toe1-2.L"], 0.0, 1.0)
     dq += spread[:, None] * h2.b[None, :]
     # the droop: each tip's last stretch of dorsum turned down toward its nose, so the nail's free edge
-    # rides a descending dorsum and the pulp leads it (MakeHuman's toes end as flat-topped cylinders)
-    for seg, g, amt, reach in ((h2, "toe1-2.L", P["droop1"], 9.0), (t2d, "toe2-3.L", P["droop2"], 5.5)):
+    # rides a descending dorsum and the pulp leads it (MakeHuman's toes end as flat-topped cylinders); round 2
+    # keeps it to the stretch ahead of the free edge (`droop_reach`), so the nail itself is not tipped down
+    for seg, g, amt, reach in ((h2, "toe1-2.L", P["droop1"], P.get("droop_reach1", 9.0)),
+                               (t2d, "toe2-3.L", P["droop2"], P.get("droop_reach2", 5.5))):
         mine = groups[g] > 0.5
         t, u, hh = seg.local(q)
         t_tip, crest = float(t[mine].max()), float(hh[mine].max())
         ramp = T.smoothstep(t, t_tip - reach, t_tip + 1.0) ** 1.5
-        upper = T.smoothstep(hh, -3.0, crest)
+        if P.get("droop_sections", True):
+            # over the whole front face (each station's own depth), so the top-front corner rounds over; round
+            # 1's 3 mm band folded the face, a crease 1-2 mm under the free edge
+            hbot, htop, _, _ = sections(seg, q[mine])
+            upper = T.smoothstep((hh - hbot(t)) / np.maximum(htop(t) - hbot(t), 1.0), 0.15, 0.95)
+        else:
+            upper = T.smoothstep(hh, -3.0, crest)
         dq += (-amt * ramp * upper * np.clip(groups[g], 0.0, 1.0))[:, None] * seg.n[None, :]
     q = q + dq
     report["anchors"] = {"mtp_prominence": c.round(2).tolist(), "mt_head": top.round(2).tolist()}

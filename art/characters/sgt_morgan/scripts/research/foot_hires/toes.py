@@ -14,11 +14,21 @@ import numpy as np
 PARAMS = {
     "level": 5,           # Catmull-Clark level of the dense copy: 0.16-0.19 mm on the toes
     # method (a)'s large forms (macro.py), mm
-    "pulp1": 2.4, "pulp2": 1.4,          # the pulps' fullness under and around the tips
-    "tip1": 2.0, "tip2": 1.0,            # the pulps' noses carried forward under the free edges
-    "droop1": 2.2, "droop2": 1.0,        # the tips' dorsum turned down toward the nose
-    "square1": 0.07, "square2": 0.06,    # the distal sections' corners pushed out (share of their radius)
-    "spade1": 0.07,                      # the hallux's end widened (share of its half-breadth)
+    # round 2 (critic round 1's fixes): the pulps are grown as smooth unions with ellipsoids (macro.pulps:
+    # radii along, across, up; `back` from the nose to the centre; the hallux's on the floor, toe 2's sunk
+    # `sink` below its underside), so round 1's inflations (pulp, tip) and the spade are off
+    "pulp1": 0.0, "pulp2": 0.0,          # round 1's pulp inflations (2.4, 1.4)
+    "tip1": 0.0, "tip2": 0.0,            # round 1's noses carried forward (2.0, 1.0)
+    "pulp1_e": {"frame": "floor", "back": 14.3, "radii": [14.0, 14.8, 6.8], "lift": 0.15, "k": 2.5},
+    "pulp2_e": {"frame": "seg", "back": 7.0, "radii": [7.5, 7.9, 4.6], "sink": 0.5, "k": 1.5},
+    "lift1": 2.4, "lift2": 0.0,          # the distal dorsum raised toward the tip (the hallux's wedge)
+    "crown1": 0.8, "crown2": 0.4,        # the dorsum over the nail raised along its midline
+    "neck1": 0.8, "neck2": 0.5,          # the pad pinched in at the flexion crease
+    "droop1": 3.0, "droop2": 1.2,        # the tips' dorsum turned down toward the nose ...
+    "droop_reach1": 4.5, "droop_reach2": 3.5,   # ... over the stretch ahead of the free edge only (round 1: 9, 5.5)
+    "square1": -0.15, "square2": -0.15,  # the distal sections' upper corners (share of their radius): round 1
+                                         # pushed them out (0.07, 0.06), a flat top that buried a domed nail's edges
+    "spade1": 0.0,                       # the hallux's end widened (share of its half-breadth; round 1 0.07)
     "web_sdf": 1,                        # the 1-2 web by a projected closing (method_fields.web_by_closing)
     "fair_dorsum": 250,                   # Taubin passes over the distal segments' dorsum before the nails
     "ip_shift": 3.0,                     # the hallux IP's creases this far distal of MakeHuman's joint cube
@@ -31,14 +41,22 @@ PARAMS = {
     # nails: visible width and length (proximal fold to free-edge tip), free edge beyond the bed, plate
     # thickness at the root and at the free edge, transverse radius, the plate hidden under each lateral
     # fold and under the proximal fold, the pulp left beyond the free edge in plan
+    # round 2: `radius` is the plate's least transverse curvature (round 1 allowed 26 mm), `level` the depth
+    # below the crest that bounds the visible width (deeper, as the dorsum is now domed), `cuticle` the cuticle
+    # line's rise toward the sides, `epo_*` the eponychium lying on the plate at the root, `lat_fade` the
+    # lateral folds' fade (now to the bed's end), `bed_wave` and `edge_wave` the free edge's unevenness
     "nail1": {"width": 18.5, "length": 17.5, "free_edge": 1.3, "thick_root": 0.55, "thick_edge": 0.75,
-              "radius": 12.0, "hidden_side": 1.1, "root": 4.5, "tip_margin": 3.0, "roll_deg": -5.0,
+              "radius": 11.0, "hidden_side": 1.1, "root": 4.5, "tip_margin": 3.0, "roll_deg": -5.0,
               "fold_prox": 0.22, "fold_lat": 0.5, "prox_width": 2.6, "lat_width": 1.2, "corner": 2.8,
-              "fold_back_prox": 3.0},
+              "fold_back_prox": 1.6, "level": 4.6, "cuticle": 2.2, "corner_prox": 3.0, "epo_h": 0.3,
+              "epo_w": 0.35, "epo_lap": 1.4, "lat_fade": (0.55, 0.92), "bed_wave": 0.22, "edge_wave": 0.1,
+              "min_width": 0.55},
     "nail2": {"width": 10.5, "length": 10.0, "free_edge": 0.9, "thick_root": 0.4, "thick_edge": 0.55,
-              "radius": 6.5, "hidden_side": 0.7, "root": 2.8, "tip_margin": 1.8, "roll_deg": 0.0,
+              "radius": 6.0, "hidden_side": 0.7, "root": 2.8, "tip_margin": 1.8, "roll_deg": 0.0,
               "fold_prox": 0.16, "fold_lat": 0.32, "prox_width": 1.6, "lat_width": 0.7, "corner": 1.8,
-              "fold_back_prox": 2.0},
+              "fold_back_prox": 1.2, "level": 3.0, "cuticle": 1.2, "corner_prox": 1.8, "epo_h": 0.22,
+              "epo_w": 0.25, "epo_lap": 0.9, "lat_fade": (0.55, 0.9), "bed_wave": 0.15, "edge_wave": 0.06,
+              "min_width": 0.55},
 }
 
 

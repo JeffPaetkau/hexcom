@@ -99,3 +99,61 @@ in `lib/sculpt.py` a subgraph Taubin/Laplacian (bincount, not `np.add.at`), a 2-
 top-most-skin gate and the wrinkle crease; part 01's `nails.py` plate and `fields.nail_beds` replaced by
 `detail.Nail` on a dense copy; in spec 16's `Nail.Plate` a cuticle and onychodermal band and a lunula of about
 1.6 mm (3.5 reads as a manicure); a multi-tier render in one process (`run.py --tier form,eval`).
+
+## Round 1 fixes (2026-10-10)
+
+Critic round 1 (`notes/critic/foot_hires_r1/tally.md`): 4/10 from all three, ten blocking. Fixed on the same
+region, run `fields_r2` (parameters in `toes.PARAMS`, marked "round 2"); round 2's packet is
+`renders/research/foot_hires/critic/r2/`, round 1 beside round 2 in `renders/research/foot_hires/fields_r2/zooms/`.
+`--params '{"nail1": {"debug_dump": 1}}'` dumps a nail's fit and every term of its skin target to
+`cache/research/foot_hires/nail1_dbg.npz`, which is how the causes below were found.
+
+* **Torn nail corners (m2, m4, m5).** Cause: the plate was allowed a 26 mm transverse radius and was fitted on
+  a dorsum that was flat and, laterally, higher than its midline (the squaring field pushed the section's upper
+  corners out), so near the free edge its corners sat 1-2.5 mm inside the side skin. The skin was cut back
+  under them by a gate (`on_top`) and a blend (the blurred dorsum) that fell to zero cell by cell where the
+  dorsal height map had no vertex (NaN): neighbouring vertices alternated between pulled a millimetre under the
+  plate and left where they were, and the plate's white rim showed between them (628 folded edges, all at the
+  corners). `past` also switched the target at the outline in the free-edge zone. Fix at the source: the dorsum
+  domed to the nail (`square` < 0 rounds the shoulders in, `crown` raises the midline), the plate held to at
+  least its own radius (11 / 6 mm), the maps filled outward with a coverage mask for the blend, the skin target
+  rewritten so every regime meets the next at the same height (inside and outside blended across +-0.08 mm,
+  `past` read at the outline point), the lateral fold running from the plate's edge to the toe's own skin (held
+  at the plate's level it stood as a shelf where the side falls away near the tip), the blurred dorsum used only
+  over the bed and bias-corrected ("twicing": a plain blur lowered the dome by sigma^2 / 2R, a step at the
+  sides). Folds over the plate's edges now 0.5-0.9 mm, equal both sides (round 1: up to 2.5 laterally).
+* **Torn web (m3).** The closing was right; the projection was not. Vertices were moved by a mask weight, so
+  part-moved ones stopped inside the closed surface; the Newton steps used a 0.1 mm gradient step inside
+  0.15 mm voxels with steps up to 3 mm; the relax was a plain Laplacian. Now a vertex moves by how deep the
+  closing swallowed it (the field's own value; on the old surface nothing moves), the gradient step is one
+  voxel, steps are at most 1 mm, the crowded vertices are spread within the surface (tangential relax) between
+  re-projections, and the mask is centred on the measured cleft (x -16.1). In the web's box: one edge with a
+  dihedral cosine under 0.9, none folded.
+* **Wedge profile (m1).** MakeHuman's toe joint cubes sit under the dorsum, so the hallux's distal axis, and
+  the dorsum with it, falls 21 degrees from the IP to the tip; round 1's droop (2.2 mm over the last 9 mm)
+  tipped it further, and its pulp inflations peaked mid-pad with the underside rising 3 mm toward the tip.
+  Now `lift1` raises the distal dorsum toward the tip (2.4 mm), the droop only rounds the stretch ahead of the
+  free edge (over the whole front face, not a 3 mm band that folded it), and the pulp is grown as a smooth union
+  with an ellipsoid resting on the floor (`macro.grow`, `macro.pulps`; 28 x 29.6 x 13.6 mm, its front just ahead
+  of the nose), so the tip is blunt and fleshy, the pulp bulging below and just beyond the free edge.
+  Hallux depth (vertical extent, `report["measure"]`): 19.0 mm at the nail root (round 1 17.6 measured the same
+  way, the critics read 15.6 off the profile; spec 19), 22.3 at the IP crease (unchanged; spec 22, X3 about 25).
+* **Nails (m6, m14-m17, m21).** Domed (fitted radius 9.5-11 mm on the hallux, 4.5-4.7 on toe 2), the edges
+  under soft folds, a curved cuticle line (rising 2.2 / 1.2 mm to the sides), an eponychium lying 1.4 / 0.9 mm
+  on the plate 0.3 / 0.22 mm thick so the plate's root never shows, the free edge's line and the bed's end
+  uneven (+-0.1, +-0.22 mm), a flatter rim. Material through the trial's own overrides (`look.py`): the lunula a
+  1.6 mm crescent over the middle 12 mm (the recipe's arc takes the plate's whole half-width, so the object's
+  `nail_half_mm` is set to 6), the free edge ivory and matte (#dfd2bb, transmission 0.56, roughness 0.34), the
+  longitudinal ridges 0.004 mm.
+* **Pulps (m7).** Grown as ellipsoid unions, so from below they are oval domes: the hallux widest mid-pad (29.4
+  mm at y -269, 25.7 at the IP), rounding into the tip, with a `neck` at the flexion crease; toe 2 widest
+  mid-pad (15.5 mm) with its neck at the DIP, its pad 2 mm lower and fuller.
+
+Still open: the other majors of round 1 (creases, friction ridges, the skin's crackle, hair, veins, toe 2's
+plantar step); a soft vertical crease on the hallux's lateral wall of the web, where its wall meets the web; a
+faint mark at toe 2's medial distal corner. Cost: build 167 s (the closing 127).
+
+Library changes proposed (not made): `Nail.FreeEdge` ivory and matte as above; `Nail.Plate`'s ridge depth
+0.004 mm; `nail_coords` to take the lunula's half-width separately from the plate's, and the hallux's lunula 1.6
+mm; in `lib/sculpt.py` `grow` (a smooth union along the normals), the tangential relax, the map fill with a
+coverage mask and the twicing blur; in `lib/sdf.py` the projection weighted by the field's own depth.

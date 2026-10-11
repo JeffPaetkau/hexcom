@@ -121,7 +121,16 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    Major: the nails read as press-on tiles (flat, a thick white root edge, no eponychium, cuticle
    or lunula, an even French tip); the pulps are blocks from below, not oval domes. Fix these on
    the trial region and run round 2 (`packet.py --previous` turns round 1's defects into claims)
-   before taking the method to the whole foot,
+   before taking the method to the whole foot. **Round 2 (late evening)**: the fixes (cause of the
+   torn corners: a skin-cutting gate that switched on and off between neighbouring vertices; of
+   the torn web: a projection that stopped vertices part-way inside the closed surface; the big
+   toe now 19.0 mm deep at the nail root) took the blocking defects from 10 to 0; scores 4, 4, 5,
+   still FAIL (`notes/critic/foot_hires_r2/`). All three critics now lead with the nails: still
+   press-ons (a template rounded rectangle in an even channel with a raised rim), an opaque cream
+   French-tip free edge, highlights combed into regular streaks, no pink bed or lunula seen
+   through the plate; then toe 2, an even sausage with no knuckle, waist or pulp flare. Next:
+   the nail as geometry and shading together (no channel or rim; a clear plate over a pink bed;
+   a thin, translucent, straight-cut free edge; faint broken ridges), toe 2's form, round 3,
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
