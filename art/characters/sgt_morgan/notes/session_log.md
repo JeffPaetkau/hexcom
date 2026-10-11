@@ -112,8 +112,16 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    tally), adding a free-form ranked list like Jeff's two reviews, and for hidden parts with no
    reference crop, Jeff's photos (`cache/ref_feet/`, never committed) as C1's anchor. The
    critics are fresh agents spawned by the orchestrating session, one at a time.
-3. A first critic round on `renders/research/foot_hires/critic_sheet.png` (and `_form`); then
-   the whole foot in the chosen method,
+3. **Done (evening): the critic loop and its first round.** `scripts/eval/critic/` (packet, prompts
+   C1 to C3, schema with a ranked free-form list, tally; runbook in spec 18 §8.1). Round 1 on the
+   trial (`notes/critic/foot_hires_r1/`: the three results, `tally.md`, the brief): FAIL, all three
+   critics 4/10, 10 blocking, 42 merged items. Blocking, from all three: torn geometry at both
+   distal corners of the big-toe nail (sawtooth) and deep in the 1-2 web; the big toe a wedge in
+   profile (15.6 mm deep at the nail root against 19, no pulp ahead of or below the free edge).
+   Major: the nails read as press-on tiles (flat, a thick white root edge, no eponychium, cuticle
+   or lunula, an even French tip); the pulps are blocks from below, not oval domes. Fix these on
+   the trial region and run round 2 (`packet.py --previous` turns round 1's defects into claims)
+   before taking the method to the whole foot,
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
