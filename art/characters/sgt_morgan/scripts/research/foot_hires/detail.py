@@ -24,6 +24,13 @@ the plate:
 
 The free edge ends `tip_margin` short of the toe's nose, so the pulp leads the nail as on a real toe.
 
+Round 3 (critic round 2: press-ons in an even gutter, a piped rim, a French-tip bead): the folds are the toe's
+own skin running on to the outline and rounding down onto the plate, which is fitted under them (no roll on
+top of the skin, no eponychium plateau); each nail has its own plan (`plan`, `asym`, `cuticle`, per-side
+corners) and its own fold heights per side; the free edge is cut nearly straight (`clip`: the corners taken
+back at a slant, as clippers leave them) with a flat cut face, and the bed ends in an arc (`bed_arc`), so the
+white edge is narrowest at the centre.
+
 Creases are wrinkle sections (a groove with low shoulders) along curves across a segment, varied along
 their length by a seeded wobble.
 """
@@ -179,11 +186,19 @@ class Nail:
         lo, hi = self.P.get("lat_fade", (0.45, 0.85))
         return 1.0 - T.smoothstep(v, lo * self.L, hi * self.L)
 
-    def fold_lat(self, v):
+    def fold_lat(self, v, side=0.0):
         """The lateral folds' height over the plate's visible edge: full proximally, none near the free edge
-        (where the plate rests on the skin, `edge_rest` above it)."""
+        (where the plate rests on the skin, `edge_rest` above it). Each side its own (side < 0 medial, > 0
+        lateral, 0 their mean): `fold_asym` raises the lateral fold and lowers the medial, `fold_wobble` varies
+        each along its length, so the folds are not one even piping round the plate (round 2)."""
+        P = self.P
+        v = np.asarray(v, float)
         f = self._fold_share(v)
-        return self.P["fold_lat"] * f - self.P.get("edge_rest", 0.08) * (1.0 - f)
+        sd = np.sign(np.asarray(side, float))
+        wob = P.get("fold_wobble", 0.0)
+        uneven = 1.0 + wob * np.where(sd > 0, self._wave(v, 5), np.where(sd < 0, self._wave(v, 4), 0.0))
+        h = P["fold_lat"] * (1.0 + P.get("fold_asym", 0.0) * sd) * uneven
+        return h * f - P.get("edge_rest", 0.08) * (1.0 - f)
 
     def fold_min(self, v):
         """The lateral lips' least height over the plate's edge, fading out with the lateral folds."""
@@ -199,7 +214,7 @@ class Nail:
     def _plate_raw(self, v, x, margin):
         """The plate's top at (v, x) during the fit, before its hidden margins are settled."""
         c, al, be = self._coef(v)
-        side = max(abs(float(x)) - float(self.half_vis(v)), 0.0)
+        side = max(abs(float(x)) - float(self.half_vis(v, x)), 0.0)
         return float(c + al * x + be * x * x) - self._side_dive(side)
 
     def _side_dive(self, side):
@@ -210,46 +225,44 @@ class Nail:
 
     def _fit_plate(self):
         """Per 0.25 mm station from behind the root to the bed's end, on the blurred dorsum: the visible
-        half-width (the nail's own, or the dorsum's breadth `level` mm below its crest less `side_margin`,
-        whichever is less), then a parabola across through the centre (the skin plus `lift`) and the two
-        visible edges (the skin less the fold's height), its curvature held between `radius_min` and
-        `radius_max`, smoothed along the toe; past the bed the plate runs on straight (the free edge)."""
+        half-widths per side (the nail's own plan), then a parabola across through the centre (the skin plus
+        `lift`, `lift_root` at the fold) and the two visible edges (the skin less each fold's height), its
+        curvature held between `radius_min` and `radius_max`, smoothed along the toe; past the bed the plate
+        runs on straight (the free edge)."""
         P = self.P
         st = 0.25
         vs = np.arange(-P["root"] - 1.0, self.L_bed + 1e-6, st)
-        c = self.skin_vx(vs, 0.0 * vs) + P.get("lift", 0.12)
+        c = self.skin_vx(vs, 0.0 * vs)
         ok = np.isfinite(c)
         c = np.interp(vs, vs[ok], c[ok])
-        c = _smooth1d(c, int(2.0 / st))
-        # the dorsum's breadth: walk out from the midline until the blurred skin drops `level` below the crest
-        xs = np.arange(0.0, 0.5 * P["width"] + 4.0, 0.1)
-        half = np.full(len(vs), 0.5 * P["width"])
-        # also where the skin falls below the domed plate's own edge (its least curvature, less `slack`): near the
-        # tip the toe's sides fall away, and a plate kept wide there stood 1-3 mm over them, the fold dragging
-        # the skin up to it and crumpling (the dark crease at toe 2's distal corner)
-        dome = xs * xs / (2.0 * P["radius"]) + P.get("slack", 0.35)
-        for i, v in enumerate(vs):
-            for sgn in (-1.0, 1.0):
-                hh = self.skin_vx(np.full(len(xs), v), sgn * xs)
-                low = np.nonzero(~np.isfinite(hh) | (hh < c[i] - P.get("level", 2.6)) | (hh < c[i] - dome))[0]
-                if len(low):
-                    half[i] = min(half[i], xs[low[0]] - P.get("side_margin", 0.9))
-        half = np.clip(_smooth1d(half, int(1.5 / st)), P.get("min_width", 0.25) * P["width"], 0.5 * P["width"])
-        self.fit_half = half
-        el = self.skin_vx(vs, -half) - self.fold_lat(vs)
-        er = self.skin_vx(vs, half) - self.fold_lat(vs)
-        sag = half * half / (2.0 * P["radius"])
-        el = np.where(np.isfinite(el), el, np.where(np.isfinite(er), er, c - sag))
+        # the centre a little proud of the skin over the bed (`lift`) and under it at the root (`lift_root`,
+        # negative): the proximal fold is then the dorsum running on, its edge rounding down onto the plate.
+        # Round 2 stood the plate proud of the dorsum at the fold, so the eponychium was a rim on top of the skin
+        lift, lr = P.get("lift", 0.12), P.get("lift_root", P.get("lift", 0.12))
+        c = _smooth1d(c, int(2.0 / st)) + lr + (lift - lr) * T.smoothstep(vs, 0.0, P.get("lift_reach", 3.0))
+        # the visible half-widths, the nail's own plan: `plan` the share of the half-width along the nail ((v / L,
+        # share) pairs), `asym` > 0 narrowing the lateral side (< 0 the medial). Round 2's clip of the dorsum's
+        # breadth (its lower bound, min_width x width, was over its upper) left every station at width / 2: both
+        # nails one rounded rectangle, scaled
+        base = 0.5 * P["width"] * self._plan(vs)
+        a = P.get("asym", 0.0)
+        hm, hl = base * (1.0 - max(-a, 0.0)), base * (1.0 - max(a, 0.0))
+        self.fit_half_m, self.fit_half_l, self.fit_half = hm, hl, 0.5 * (hm + hl)
+        el = self.skin_vx(vs, -hm) - self.fold_lat(vs, -1.0)
+        er = self.skin_vx(vs, hl) - self.fold_lat(vs, 1.0)
+        el = np.where(np.isfinite(el), el, np.where(np.isfinite(er), er, c - hm * hm / (2.0 * P["radius"])))
         er = np.where(np.isfinite(er), er, el)
         # behind the visible fold the root dives toward the matrix
         dip = P.get("root_dive", 1.2) * T.smoothstep(-vs, 0.0, P.get("root_fall", 2.2))
         c, el, er = c - dip, el - dip, er - dip
-        alpha = (er - el) / (2.0 * half)
-        beta = (0.5 * (er + el) - c) / (half * half)
+        A, B = el - c, er - c
+        beta = (A * hl + B * hm) / (hm * hl * (hm + hl))
         # at least the nail's own transverse curvature (spec 01 §3.3: 11 mm on the hallux, 6 on toe 2), domed
         # more only where the dorsum is; round 1 allowed up to 26 mm and the plate read as a flat tile
         R = P["radius"]
         beta = np.clip(beta, -1.0 / (2.0 * P.get("radius_min", 0.75 * R)), -1.0 / (2.0 * P.get("radius_max", R)))
+        # the tilt fitted to both edges at that curvature (least squares; the halves' mean slope when equal)
+        alpha = (-hm * (A - beta * hm * hm) + hl * (B - beta * hl * hl)) / (hm * hm + hl * hl)
         n = int(1.5 / st)
         self.fit_v = vs
         self.fit_c, self.fit_alpha, self.fit_beta = _smooth1d(c, n), _smooth1d(alpha, n), _smooth1d(beta, n)
@@ -264,8 +277,8 @@ class Nail:
             ok_m = 0.0
             for m in steps:
                 good = True
-                for sgn in (-1.0, 1.0):
-                    xx = sgn * (half[i] + m)
+                for sgn, hh in ((-1.0, hm[i]), (1.0, hl[i])):
+                    xx = sgn * (hh + m)
                     sk = self.skin_vx(v, xx)
                     if not np.isfinite(sk) or sk < self._plate_raw(v, xx, m) + P.get("cover", 0.1) + 0.05:
                         good = False
@@ -282,9 +295,24 @@ class Nail:
         c = np.interp(vc, self.fit_v, self.fit_c) + np.maximum(v - self.fit_v[-1], 0.0) * self.free_slope
         return c, np.interp(vc, self.fit_v, self.fit_alpha), np.interp(vc, self.fit_v, self.fit_beta)
 
-    def half_vis(self, v):
-        """The visible half-width at v (after the bed, the bed's last)."""
-        return np.interp(np.clip(v, self.fit_v[0], self.fit_v[-1]), self.fit_v, self.fit_half)
+    def _plan(self, v):
+        """The visible half-width's share along the nail (`plan`: (v / L, share) pairs; 1 without)."""
+        pts = self.P.get("plan")
+        v = np.asarray(v, float)
+        if not pts:
+            return np.ones_like(v)
+        a = np.asarray(pts, float)
+        return np.interp(v / self.L, a[:, 0], a[:, 1])
+
+    def half_vis(self, v, x=None):
+        """The visible half-width at v (after the bed, the bed's last) on x's side (x < 0 medial), or the two
+        sides' mean."""
+        vc = np.clip(v, self.fit_v[0], self.fit_v[-1])
+        hm = np.interp(vc, self.fit_v, self.fit_half_m)
+        hl = np.interp(vc, self.fit_v, self.fit_half_l)
+        if x is None:
+            return 0.5 * (hm + hl)
+        return np.where(np.asarray(x, float) < 0.0, hm, hl)
 
     def burial(self):
         """How far the skin (the blurred dorsum before the nail) stands over the plate's visible edges, medial
@@ -292,23 +320,27 @@ class Nail:
         free edge, a plate buried in the toe's side), and the plate's transverse radius there."""
         out = {}
         for v in (0.0, 0.5 * self.L, self.L_bed - 0.5):
-            hv = float(self.half_vis(v))
-            sk = self.skin_vx(np.array([v, v]), np.array([-hv, hv]))
-            pl = self.plate_top(np.array([v, v]), np.array([-hv, hv]))
+            hm, hl = float(self.half_vis(v, -1.0)), float(self.half_vis(v, 1.0))
+            sk = self.skin_vx(np.array([v, v]), np.array([-hm, hl]))
+            pl = self.plate_top(np.array([v, v]), np.array([-hm, hl]))
             beta = float(np.interp(v, self.fit_v, self.fit_beta))
             out[f"v{v:.1f}"] = {"medial": round(float(sk[0] - pl[0]), 2), "lateral": round(float(sk[1] - pl[1]), 2),
-                                "radius": round(-0.5 / beta, 1), "half": round(hv, 2)}
+                                "radius": round(-0.5 / beta, 1), "half": [round(hm, 2), round(hl, 2)]}
         return out
 
-    def half_width(self, v):
-        """The plate's half-width at v: the visible half-width, the hidden margin, the rounded corners of the
-        free edge's trim and of the root (negative off the plate's length)."""
+    def half_width(self, v, side=1.0):
+        """The plate's half-width at v on side's side (< 0 medial): the visible half-width, the hidden margin,
+        the rounded corners of the free edge's trim (`corner_m`, `corner_l`) and of the root (negative off the
+        plate's length)."""
         P = self.P
         v = np.asarray(v, float)
-        cf, cr, root, L = P["corner"], P.get("corner_root", 3.0), P["root"], self.L
+        side = np.broadcast_to(np.asarray(side, float), v.shape)
+        cf = np.where(side < 0.0, P.get("corner_m", P["corner"]), P.get("corner_l", P["corner"]))
+        cr, root, L = P.get("corner_root", 3.0), P["root"], self.L
         e1 = np.clip(v - (L - cf), 0.0, cf)
         e2 = np.clip((-root + cr) - v, 0.0, cr)
-        half = self.half_vis(v) + self.hidden(v) - (cf - np.sqrt(cf * cf - e1 * e1)) - (cr - np.sqrt(cr * cr - e2 * e2))
+        half = self.half_vis(v, side) + self.hidden(v) - (cf - np.sqrt(cf * cf - e1 * e1)) \
+            - (cr - np.sqrt(cr * cr - e2 * e2))
         return np.where((v < -root) | (v > L), -1.0, np.maximum(half, 0.3))
 
     def plate_top(self, v, x):
@@ -316,7 +348,7 @@ class Nail:
         lateral grooves."""
         c, al, be = self._coef(v)
         x = np.asarray(x, float)
-        side = np.maximum(np.abs(x) - self.half_vis(v), 0.0)
+        side = np.maximum(np.abs(x) - self.half_vis(v, x), 0.0)
         return c + al * x + be * x * x - self._side_dive(side)
 
     def thickness(self, v):
@@ -332,19 +364,37 @@ class Nail:
             + 0.15 * np.sin(2.0 * math.pi * x / 1.7 + ph[2])
 
     def L_bed_x(self, x):
-        """Where the plate leaves the bed (the onychodermal band's distal line) across the nail."""
-        return self.L_bed + self.P.get("bed_wave", 0.0) * self._wave(x, 0)
+        """Where the plate leaves the bed (the onychodermal band's distal line) across the nail: an arc falling
+        back `bed_arc` mm at the visible edges, a little uneven (`bed_wave`). Under a straight cut the free edge
+        is then narrowest at the centre and widest at the corners (round 2's was one even band)."""
+        P = self.P
+        x = np.asarray(x, float)
+        a = np.clip(x / np.maximum(self.half_vis(self.L_bed, x), 1e-3), -1.1, 1.1)
+        return self.L_bed + P.get("bed_wave", 0.0) * self._wave(x, 0) - P.get("bed_arc", 0.0) * a * a
 
     def L_x(self, x):
-        """The free edge's line across the nail."""
-        return self.L + self.P.get("edge_wave", 0.0) * self._wave(x, 1)
+        """The free edge's line across the nail: straight across the middle, its corners taken back at a slant
+        past `clip` = (share of the half-width, medial and lateral angles in degrees), as clippers leave a
+        trimmed toenail, joined softly; `edge_wave` a hand's unevenness (round 2's 0.1 mm wave and the rounded
+        corners read as an S)."""
+        P = self.P
+        x = np.asarray(x, float)
+        out = self.L + P.get("edge_wave", 0.0) * self._wave(x, 1)
+        clip = P.get("clip")
+        if clip:
+            frac, deg_m, deg_l = clip
+            hv = self.half_vis(self.L, x)
+            over = np.minimum(np.abs(x), hv) - frac * hv
+            k = P.get("clip_soft", 0.5)
+            out = out - k * np.logaddexp(0.0, over / k) * np.tan(np.radians(np.where(x < 0.0, deg_m, deg_l)))
+        return out
 
     # ---- the visible outline: open toward the free edge, a curved cuticle line, its corners rounded
     def cuticle(self, x):
         """The visible proximal fold's line (v at x): an arc rising `cuticle` mm toward the sides, so the
         root reads as a curve with no proximal corners (round 1's was straight across)."""
-        W0 = max(float(self.half_vis(0.0)), 1e-3)
-        a = np.asarray(x, float) / W0
+        x = np.asarray(x, float)
+        a = x / np.maximum(self.half_vis(0.0, x), 1e-3)
         return self.P.get("cuticle", 0.0) * a * a
 
     def outline(self, v, x):
@@ -354,12 +404,12 @@ class Nail:
         `corner_prox`, so every output is a smooth function of (v, x): no switch for the vertices to straddle."""
         P = self.P
         v, x = np.asarray(v, float), np.asarray(x, float)
-        W0 = max(float(self.half_vis(0.0)), 1e-3)
+        W0 = np.maximum(self.half_vis(0.0, x), 1e-3)
         cu = P.get("cuticle", 0.0)
         slope = 2.0 * cu * x / (W0 * W0)                       # dv/dx of the cuticle
         ln = np.sqrt(1.0 + slope * slope)
         s_p = (self.cuticle(x) - v) / ln                         # > 0 behind (proximal of) the cuticle
-        s_l = np.abs(x) - self.half_vis(v)                       # > 0 outside the sides
+        s_l = np.abs(x) - self.half_vis(v, x)                    # > 0 outside the sides
         sx = np.where(x < 0.0, -1.0, 1.0)
         k = P.get("corner_prox", 3.5)
         hh = np.clip(0.5 + 0.5 * (s_p - s_l) / k, 0.0, 1.0)      # the proximal line's share
@@ -410,22 +460,16 @@ class Nail:
         climb = T.smoothstep(s, -ramp, 0.0) ** 2
         inside = inner + (top - inner) * (1.0 - past) * climb
         land = e * (1.0 - past_n) + inner_at(e, nv, past_n) * past_n   # = inside at s = 0
-        # the folds over the bed: rise, lie (the eponychium), then hand over to the toe's skin
-        rise = p * P.get("epo_w", 0.35) + (1.0 - p) * P["lat_width"]
-        lap = p * P.get("epo_lap", 1.4)
-        back = p * P.get("fold_back_prox", 1.2) + (1.0 - p) * P.get("fold_back_lat", 2.2)
-        Hc = p * P.get("epo_h", P["fold_prox"]) + (1.0 - p) * self.fold_h(nv)
-        # proximal: the eponychium rises off the plate, lies on it for `epo_lap`, then hands over to the dorsum
-        xs = np.clip(s / np.maximum(rise, 1e-6), 0.0, 1.0)
-        fold = land + Hc * (1.0 - (1.0 - xs) ** 2)
-        t_prox = fold + (h - fold) * T.smoothstep(s, rise + lap, rise + lap + back)
-        # lateral: from the plate's edge to the toe's own skin across the fold's width, a soft roll on the way.
-        # Where the side stands higher the fold laps down onto the edge; where it falls away (near the tip, up to
-        # 2.2 mm within a millimetre of the edge) the skin wraps the edge and follows the side: a fold held at
-        # the plate's level for its width stood there as a shelf and crumpled (round 2's first try)
-        xl = np.clip(s / P["lat_width"], 0.0, 1.0)
-        t_lat = land + (h - land) * (1.0 - (1.0 - xl) ** 2) + self.fold_h(nv) * 4.0 * xl * (1.0 - xl)
-        t_bed = t_prox * p + t_lat * (1.0 - p)
+        # the folds over the bed (round 3): the toe's own skin running on to the outline and rounding down onto
+        # the plate over the last `rise` mm, a fold's free edge (`roll_k`: how full the roll is). The plate is
+        # fitted under the skin there (the lateral folds' heights, the proximal fold's `lift_root`), so a fold's
+        # top is the dorsum or the toe's side: nothing stands above the skin and no channel is cut below it.
+        # Round 2 added a roll on top of the toe's skin all round and laid the eponychium flat on the plate before
+        # stepping back up to the dorsum: a piped rim in an even gutter and a second ridge behind the fold. Where
+        # the side falls away below the plate (near the tip) the skin wraps the edge and follows the side
+        rise = p * P.get("epo_w", 0.45) + (1.0 - p) * P["lat_width"]
+        xr = np.clip(s / np.maximum(rise, 1e-6), 0.0, 1.0)
+        t_bed = land + (h - land) * (1.0 - (1.0 - xr) ** P.get("roll_k", 2.0))
         # along the free sides: under the plate's edge, opening out at `open` (a slope) to the skin's own
         reach = land + P.get("open", 1.0) * np.maximum(s, 0.0)
         t_free = np.minimum(h, reach) - 0.15 * np.log1p(np.exp(-np.abs(h - reach) / 0.15)) \
@@ -435,7 +479,7 @@ class Nail:
         target = inside * (1.0 - sig) + outside * sig
         # where the plate runs on under the skin (hidden margins, the root) the skin stays `cover` over it
         Le = self.L_x(x)
-        covered = T.smoothstep(self.half_width(v) + 0.1 - np.abs(x), -0.25, 0.25) \
+        covered = T.smoothstep(self.half_width(v, x) + 0.1 - np.abs(x), -0.25, 0.25) \
             * T.smoothstep(v, -P["root"] - 0.3, -P["root"] + 0.3) * (1.0 - T.smoothstep(v, Le - 0.25, Le + 0.35))
         hid = covered * T.smoothstep(s, 0.0, 0.3) * (1.0 - past_n)
         need = top + P.get("cover", 0.1) - target
@@ -447,7 +491,7 @@ class Nail:
         target = target + (h - target) * beyond
         if getattr(self, "_dbg", None) is not None:
             self._dbg.update(p=p, covered=covered, past=past, past_n=past_n, inside=inside, outside=outside,
-                             hid=hid, lift=lift, land=land, e=e, top=top, Hc=Hc, t_bed=t_bed, t_free=t_free,
+                             hid=hid, lift=lift, land=land, e=e, top=top, t_bed=t_bed, t_free=t_free,
                              nv=nv, nx=nx, beyond=beyond)
         return target, s
 
@@ -503,20 +547,21 @@ class Nail:
         bed[idx] = (1.0 - T.smoothstep(s, -0.4, 0.05)) * (1.0 - T.smoothstep(vi, lb - 0.1, lb + 0.5))
         return q, bed
 
-    def plate_mesh(self, dv=0.15, dx=0.15, rim_rows=5, bulge=0.3):
+    def plate_mesh(self, dv=0.15, dx=0.15, rim_rows=5, bulge=0.0):
         """The plate as a closed shell (F, mm): top and bottom grids over its outline (the hidden root and
-        side margins included, the free edge trimmed straight with rounded corners) joined by a half-round
-        rim, with (u, v, w) per vertex for the nail recipes (u across, v from the visible proximal fold, w past
-        the bed). Returns (vertices, quads, uvw)."""
+        side margins included, the free edge cut nearly straight with small corners) joined by a rim, flat by
+        default: a trimmed edge is a cut face, and round 2's half-round rim (bulge 0.3) read as a rolled bead.
+        With (u, v, w) per vertex for the nail recipes (u across, v from the visible proximal fold, w past the
+        bed). Returns (vertices, quads, uvw)."""
         P = self.P
         root, L = P["root"], self.L
         nv = int(math.ceil((L + root) / dv)) + 1
         vs = np.linspace(-root, L, nv)
-        half = self.half_width(vs)
+        half_m, half_l = self.half_width(vs, -1.0), self.half_width(vs, 1.0)
         nx = int(math.ceil(2.0 * (0.5 * P["width"] + P["hidden_side"]) / dx)) + 1
         ss = np.linspace(-1.0, 1.0, nx)
         S = np.repeat(vs[:, None], nx, axis=1)
-        X = half[:, None] * ss[None, :]
+        X = np.where(ss[None, :] < 0.0, half_m[:, None], half_l[:, None]) * ss[None, :]
         # the rows warped so one lies on the bed's (uneven) end and the last on the (uneven) free edge: the
         # free edge's material starts exactly there, its band a little uneven in width, the cut not ruled
         Lb = self.L_bed

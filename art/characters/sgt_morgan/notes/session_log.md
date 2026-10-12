@@ -130,7 +130,23 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    French-tip free edge, highlights combed into regular streaks, no pink bed or lunula seen
    through the plate; then toe 2, an even sausage with no knuckle, waist or pulp flare. Next:
    the nail as geometry and shading together (no channel or rim; a clear plate over a pink bed;
-   a thin, translucent, straight-cut free edge; faint broken ridges), toe 2's form, round 3,
+   a thin, translucent, straight-cut free edge; faint broken ridges), toe 2's form, round 3.
+   **Round 3 (Monday 12 October)**: the fixes (per-nail outlines, after finding that a width
+   setting with inverted bounds had made every nail one scaled template; the plate under the
+   folds; a straight-cut edge; a clear plate and a lunula by recipe override; a knuckle, waist
+   and flare on toe 2) scored 4, 4, 4, FAIL, 2 blocking, and only 1 or 2 of round 2's 28 claims
+   confirmed fixed (`notes/critic/foot_hires_r3/`). The packet was not stale: the changes are
+   too subtle to read at the packet's scale (no visible lunula, the plate still milky, its
+   outline still a rim; compare `renders/research/foot_hires/fields_r3/zooms/`). Blocking: no
+   lunula or plate zoning; a crisp ledge ringing the underside of toe 2 like a sleeve cuff (from
+   the new knuckle and waist fields). New and broad: every skin surface wears one crisp Voronoi
+   crackle, read as crazed porcelain (spec 16's `MG.Skin.Micro`, a library fix). Lessons: a fix
+   agent's report claimed more than its renders show, so check each fix in the critics' own
+   views at packet scale (or with one critic) before a full round; three rounds of nail tweaks
+   have stalled at 4, so the next attempt should rebuild the nail from its anatomy (matrix
+   under the proximal fold, the bed, the onychodermal band, the lateral grooves) against close
+   photographs, not adjust the current one. Order for the next run: the toe 2 ledge, the skin
+   micro-relief in the library, the nail rebuild, then round 4,
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

@@ -157,3 +157,71 @@ Library changes proposed (not made): `Nail.FreeEdge` ivory and matte as above; `
 0.004 mm; `nail_coords` to take the lunula's half-width separately from the plate's, and the hallux's lunula 1.6
 mm; in `lib/sculpt.py` `grow` (a smooth union along the normals), the tangential relax, the map fill with a
 coverage mask and the twicing blur; in `lib/sdf.py` the projection weighted by the field's own depth.
+
+## Round 2 fixes (2026-10-12)
+
+Critic round 2 (`notes/critic/foot_hires_r2/tally.md`): 4 / 4 / 5, nothing blocking, all three leading with the
+nails. Fixed on the same region, run `fields_r3` (parameters in `toes.PARAMS`, marked "round 3"); round 3's
+packet is `renders/research/foot_hires/critic/r3/`, round 2 beside round 3 in
+`renders/research/foot_hires/fields_r3/zooms/`.
+
+* **Press-on nails (m1, m20, m33).** Three causes. The lateral fold's target added a roll on top of the toe's
+  own skin (`fold_h x 4x(1 - x)`), so a rim stood above the skin all round with a crevice at the plate: the
+  piped rim in an even gutter. The proximal fold rose 0.3 mm over a plate that stood 0.12 proud of the dorsum,
+  lay flat on it for 1.4 mm, then stepped back up to the dorsum: the second ridge, and the plate's root showing
+  as a lip. And the width clip's lower bound (`min_width` x width, 10.2 mm) was over its upper (9.25), so every
+  station was width / 2, and toe 2's parameters were the hallux's ratios: one rounded rectangle, scaled. Now a
+  fold is the toe's own skin running on to the outline and rounding down onto the plate over its last
+  `epo_w` / `lat_width` mm (`roll_k`), and the plate is fitted under it: the lateral folds' heights as before,
+  at the root `lift_root` (-0.32 / -0.22 mm) below the dorsum, so the plate comes out from under the proximal
+  fold and nothing stands above the skin. Each nail has its own plan (`plan`, `asym`, `cuticle`, `corner_prox`)
+  and each lateral fold its own height (`fold_asym`, `fold_wobble`): the hallux a broad shovel, narrower at the
+  root, its lateral side tucked under a higher fold; toe 2 a short rounded D whose sides converge toward the cut.
+  The plate keeps its 9.7-11 mm transverse radius (4.7-4.9 on toe 2); the folds now stand 1.1 / 1.4 mm (medial /
+  lateral) over the hallux plate's visible edge at the root, 0.4 / 0.7 mid-nail and none at the free edge (toe 2
+  0.6 / 0.5, 0.4 / 0.35, none).
+* **French-tip free edge (m2).** Round 2's rim was a half-round (`bulge` 0.3): the bead. The cut face is now
+  flat and thinner (0.6 / 0.42 mm at the edge, spec 1.1 / 0.8, which read as a slab at 45 px/mm), the cut
+  straight across with its corners taken back at a slant (`clip`: past 0.6 / 0.5 of the half-width, 6-9 degrees)
+  and small, unequal corner radii, `edge_wave` 0.03 (round 2's 0.1 mm wave and 2.8 mm corners curling back read
+  as an S). The bed ends in an arc (`bed_arc` 0.8 / 0.45 mm back at the sides), so the white edge is narrowest at
+  the centre.
+* **Nail shading (m3, m4), through `look.py`'s overrides only.** The plate clear (transmission 0.96: at 0.88
+  each of its two surfaces sent 12 % of the light to a diffuse lobe of the pale base, which milked the bed over),
+  rough 0.10; the ridges 0.0015 mm and the coat's roughness 0.18 (at 0.10 the coat's lobe was narrower than
+  the ridges' slopes, so every ridge lit as a line; now they ripple only at a highlight's edge); the hallux's
+  lunula 2.3 mm over its middle 13 mm, a translucent pinkish white (transmission 0.8); the onychodermal band as
+  two steps of a paler, less clear plate over the last 0.75 mm of the bed (`BAND_STEPS`: the library names a
+  material by recipe and part, so they are parts of their own); the free edge off-white and translucent
+  (transmission 0.74). The clear plate showed the skin's crackle on the bed, so the bed's faces (the face
+  attribute `Hires.Bed`, written by `method_fields.finish`) carry the skin recipe with its line network
+  nearly flat and its cavity shading off (`BED_OVERRIDES`).
+* **Toe 2, a sausage (m5).** `macro.toe2_outline`: Gaussians along the segments on the toe's sides (|n . b|^1.5),
+  along the normals: the PIP knuckle +1.6 mm (and a little on top), the middle phalanx's waist -1.2, the pulp's
+  flare +0.45; growth stops 0.35 mm from any other toe's skin (a k-d tree's nearest distance, by a soft minimum),
+  because toes 2 and 3 touch: the knuckle grows medially and on top, the waist opens a gap to toe 3. Plan widths
+  (`report["measure"]`, y slices): 15.9 mm at the PIP, 12.7 at the waist (round 2 14.2-14.5), 14.3 at the DIP,
+  15.5 at the pulp.
+* **A stage cache.** The large forms and the web take about 150 s, the nails 6: `method_fields.build` keeps the
+  skin after the web in `cache/research/foot_hires/stage_<key>.npz`, the key hashing the dense skin as copied,
+  every parameter but the nails' and creases', and macro.py and sdf.py (`--params '{"stage_cache": 0}'` turns it
+  off; clear it if `web_by_closing` changes). A nail-only change rebuilds in about 16 s.
+
+Library changes proposed (not made): in `Nail.Plate` transmission 0.96, roughness 0.10, coat roughness 0.18,
+albedo #eee4dc, lunula #f3e7e3 at transmission 0.8, and `ridge_depth_mm` 0.0015 in the nails' common values;
+in `Nail.FreeEdge` albedo #efe8dd, transmission 0.74, coat roughness 0.18; in `mat_skin.build_nail` each ridge's
+strength varied along the nail every couple of millimetres (its noise reads `v x 0.08`, so a ridge keeps one
+strength for the nail's whole length, which no override reaches) with its floor at 0 rather than 0.15, an
+onychodermal band term (a smooth paler, less clear band before the free edge) in place of the trial's stepped
+materials, and the lunula's half-width as its own property; in `Skin.Foot` the micro network and its cavity
+shading faded out on the nail bed (the `toenails` mask), and the catalogue's unused `nail_bed.hyponychium_hex`
+put on the skin under the free edge; in part 01, `detail.Nail`'s fold and plan (a fold as the skin rounding
+onto a plate fitted under it, per-nail plans, a clipped straight cut with a flat cut face) replacing
+`nails.py`'s plates.
+
+Still open: round 2's other majors (the hallux's plantar IP notch, toe 2's knife-cut DIP crease and PIP cuff, the
+MTP line, the base sulcus, tendons, veins and hair, the stamped knuckle wrinkles, the boxy pulps, the web's
+shelf, the friction ridges, the skin's crackle, the hallux's depth); the ridges still run the nail's whole length
+(the library's noise, above); a pinch on toe 2's medial side just past the DIP (the trial's `neck2`); toes 3-5 keep
+part 01's nails, whose combed streaks and white tips now stand out beside the new ones. Cost: build 161 s from
+scratch (16 s with the stage cached), render 63 s a view at 2048 px eval.

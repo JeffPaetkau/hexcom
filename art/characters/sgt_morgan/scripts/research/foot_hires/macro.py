@@ -297,6 +297,7 @@ def apply(q, nrm, segs, groups, adj, P, report):
         side = T.smoothstep(-(nrm @ seg.n), -0.75, 0.1)
         g_all = np.clip(groups[g] + groups[g.replace("-3.L", "-2.L").replace("1-2.L", "1-1.L")], 0.0, 1.0)
         dq += (-amt * wn * side * g_all)[:, None] * nrm
+    dq += toe2_outline(q, nrm, segs, groups, P, report)
     # the first MTP prominence on the inner border, and the metatarsal head's dorsal knuckle
     mtp = segs["h1"].o
     c = medial_point(q, mtp[1] + 3.0, mtp[2] - 8.0)
@@ -374,6 +375,62 @@ def apply(q, nrm, segs, groups, adj, P, report):
         cleft = web_zone(q, segs, P)
         q = taubin(q, adj, cleft, iterations=int(P["web_fair"]))
     return q
+
+
+def room(q, mine, others, gap):
+    """How far each of `mine`'s vertices may move out before it comes within `gap` of the `others` (bool
+    masks; a k-d tree's nearest distance, conservative for growth along the normal). 0 elsewhere."""
+    from mathutils.kdtree import KDTree
+    out = np.zeros(len(q))
+    oi, mi = np.nonzero(others)[0], np.nonzero(mine)[0]
+    if not len(oi) or not len(mi):
+        out[mi] = np.inf
+        return out
+    kd = KDTree(len(oi))
+    for i, j in enumerate(oi):
+        kd.insert(q[j], i)
+    kd.balance()
+    out[mi] = [kd.find(q[j])[2] for j in mi]
+    return np.maximum(out - gap, 0.0)
+
+
+def toe2_outline(q, nrm, segs, groups, P, report):
+    """Toe 2's outline in plan (critic round 2, m5: an even tube from the PIP to the pulp): the PIP knuckle
+    broad (the proximal phalanx's head: its condyles to the sides and a little on top), a waist over the
+    middle phalanx, a slight swelling at the DIP and the pulp flaring under the nail. Each is a Gaussian along
+    its segment on the toe's sides (|n . b|^1.5), moved along the normals; what grows stays `t2_gap` from any
+    other toe's skin (toes 2 and 3 touch, so the knuckle and the flare grow on the free sides and on top), by a
+    soft minimum so the limit leaves no crease. Returns the displacement."""
+    t2m, t2d = segs["t2m"], segs["t2d"]
+    w2 = np.clip(groups["toe2-1.L"] + groups["toe2-2.L"] + groups["toe2-3.L"], 0.0, 1.0)
+    mine = groups["toe2-3.L"] > 0.5
+    t_tip = float(t2d.local(q[mine])[0].max())
+    jobs = [  # amount, segment, centre t (mm), sigma (mm), share on top
+        (P.get("t2_knuckle", 0.0), t2m, P.get("t2_knuckle_t", -0.8), 2.4, 0.45),
+        (P.get("t2_waist", 0.0), t2m, P.get("t2_waist_t", 0.5 * t2m.length), 2.6, 0.0),
+        (P.get("t2_dip", 0.0), t2d, 0.3, 1.5, 0.0),
+        (P.get("t2_flare", 0.0), t2d, t_tip - P.get("t2_flare_back", 6.5), 2.3, 0.0),
+    ]
+    g = np.zeros(len(q))
+    for amt, seg, tc, sig, top in jobs:
+        if not amt:
+            continue
+        t = seg.local(q)[0]
+        shape = np.abs(nrm @ seg.b) ** 1.5 + top * np.clip(nrm @ seg.n, 0.0, 1.0) ** 2
+        g += amt * T.gauss(t - tc, sig) * np.clip(shape, 0.0, 1.0)
+    g *= w2
+    pos = np.maximum(g, 0.0)
+    grow = pos > 1e-3
+    if grow.any():
+        lo, hi = q[grow].min(axis=0) - 5.0, q[grow].max(axis=0) + 5.0
+        near = np.all((q > lo) & (q < hi), axis=1) & (w2 < 0.05)
+        r = room(q, grow, near, P.get("t2_gap", 0.35))
+        k = 0.08
+        lim = -k * np.logaddexp(-pos[grow] / k, -r[grow] / k)
+        report["toe2_outline"] = {"grow_max": round(float(pos.max()), 2), "limited_n": int((r[grow] < pos[grow]).sum()),
+                                  "grown_n": int(grow.sum())}
+        pos[grow] = np.clip(lim, 0.0, None)
+    return (pos + np.minimum(g, 0.0))[:, None] * nrm
 
 
 def web_zone(q, segs, P):

@@ -90,6 +90,18 @@ def finish(ctx, q, beds, cw, groups):
     mine = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"] + groups["toe2-1.L"] + groups["toe2-2.L"]
                    + groups["toe2-3.L"], 0.0, 1.0) > 0.02
     C.set_group(skin, "toenails", np.where(mine, beds, groups["toenails"]))
+    # the new beds' faces (every corner on the bed) as a face attribute: look.py gives them a smoother skin, as
+    # the clear plates show the bed (round 3)
+    me = skin.data
+    loops = np.empty(len(me.loops), np.int64)
+    me.loops.foreach_get("vertex_index", loops)
+    start = np.empty(len(me.polygons), np.int64)
+    me.polygons.foreach_get("loop_start", start)
+    sel = np.logical_and.reduceat(np.where(mine, beds, 0.0)[loops] >= 0.5, start)
+    att = me.attributes.get("Hires.Bed")
+    if att is not None:
+        me.attributes.remove(att)
+    me.attributes.new("Hires.Bed", "BOOLEAN", "FACE").data.foreach_set("value", sel)
     # the shader also darkens and wrinkles along Foot.Crease: at half weight, or the two together read as cuts
     C.set_group(skin, "Foot.Crease", 0.5 * cw)
     for k in (3, 4, 5):
@@ -169,7 +181,28 @@ def web_by_closing(q, topo, segs, P, adj, groups=None, report=None):
     return q
 
 
+# the keys that act only after the large forms and the web (the nails and creases): a change to them reuses
+# the cached stage (stage_key)
+DETAIL_KEYS = ("nail1", "nail2", "crease_scale", "debug_sections", "stage_cache")
+
+
+def stage_key(q, P):
+    """The large forms' and the web's inputs: the dense skin as copied, every other parameter and the sources
+    of macro.py and sdf.py (web_by_closing's own code is not hashed: clear the cache if it changes)."""
+    import hashlib
+    import json
+    import os
+    h = hashlib.sha256(np.ascontiguousarray(q).tobytes())
+    h.update(json.dumps({k: v for k, v in P.items() if k not in DETAIL_KEYS}, sort_keys=True, default=str).encode())
+    for f in ("macro.py", "sdf.py"):
+        with open(os.path.join(C.HERE, f), "rb") as fh:
+            h.update(fh.read())
+    return h.hexdigest()[:16]
+
+
 def build(ctx):
+    import json
+    import os
     P = T.merged(ctx.params)
     t0 = time.time()
     skin = dense_skin(ctx, P)
@@ -180,16 +213,30 @@ def build(ctx):
     groups = read_groups(skin)
     segs = T.segments(ctx.joints)
     ctx.report["t_dense"] = round(time.time() - t0, 2)
-    t1 = time.time()
-    edges, _ = C.edge_lengths(skin)
-    adj = M.adjacency(edges, len(q))
-    q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
-    q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
-    ctx.report["t_macro"] = round(time.time() - t1, 2)
-    if P.get("web_sdf"):
+    # the large forms and the web take about 150 s, the nails 6: with `stage_cache` (default on) the skin
+    # after them is kept in cache/research/foot_hires/stage_<key>.npz, so a nail-only change rebuilds in seconds
+    path = os.path.join(C.CACHE, f"stage_{stage_key(q, P)}.npz") if P.get("stage_cache", 1) else None
+    if path and os.path.exists(path):
+        with np.load(path) as z:
+            q = z["q"]
+            ctx.report.update(json.loads(str(z["report"])))
+        ctx.report["stage_cache"] = os.path.basename(path)
+    else:
         t1 = time.time()
-        q = web_by_closing(q, topo, segs, P, adj, groups, ctx.report)
-        ctx.report["t_web_sdf"] = round(time.time() - t1, 2)
+        edges, _ = C.edge_lengths(skin)
+        adj = M.adjacency(edges, len(q))
+        q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
+        q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
+        ctx.report["t_macro"] = round(time.time() - t1, 2)
+        if P.get("web_sdf"):
+            t1 = time.time()
+            q = web_by_closing(q, topo, segs, P, adj, groups, ctx.report)
+            ctx.report["t_web_sdf"] = round(time.time() - t1, 2)
+        if path:
+            os.makedirs(C.CACHE, exist_ok=True)
+            keep = {k: ctx.report[k] for k in ("anchors", "pulps", "web", "toe2_outline", "t_macro", "t_web_sdf")
+                    if k in ctx.report}
+            np.savez(path, q=q, report=json.dumps(keep))
     t1 = time.time()
     q, beds, cw, _ = nails_and_creases(ctx, q, topo, groups, segs, P)
     ctx.report["t_detail"] = round(time.time() - t1, 2)
@@ -208,7 +255,7 @@ def measure(q, groups, nails, ip_y):
     outline the critics read as blocks)."""
     out = {}
     floor = float(q[:, 2].min())
-    for name, gs in (("hallux", ("toe1-1.L", "toe1-2.L")), ("toe2", ("toe2-2.L", "toe2-3.L"))):
+    for name, gs in (("hallux", ("toe1-1.L", "toe1-2.L")), ("toe2", ("toe2-1.L", "toe2-2.L", "toe2-3.L"))):
         w = sum(groups[g] for g in gs) > 0.5
         c = q[w]
         rows = []
