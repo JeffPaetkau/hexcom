@@ -364,3 +364,49 @@ Still open: from below the free edges' corners show as dark specks past the pulp
 free edge is still a fairly even band; round 4's other majors (the web's shelf m6, the hallux's plantar sulcus and
 pads m7, the stamped knuckle wrinkles m8, the tendons m9, the friction ridges m10, the MTP scar line m11, toe 2's
 DIP crease m12, the micro-relief m13, toe 2's distal segment m16); toes 3-5 keep part 01's old nails (declared).
+
+## Whole foot, pass 1 (2026-10-13)
+
+Jeff accepted the method at round 5's level ("Accept for now"); the whole left foot starts its own round count. Run
+`fields_w1` (`run.py --method fields --tier eval --tag w1 --views p01.V1f.L,p01.V5f.L,p01.V2.L,p01.V3.L,p01.V4.L,
+p01.V8.L,hr.hallux,hr.plantar,hr.lesser`); clay and the first look in `fields_w1b`; round 5 beside it by eye at the
+same crops. Packet `renders/research/foot_hires/critic/whole_r1/` (sha 8f060149975d), round 1 of the new series.
+New code: `whole.py` (after the stage, so none of it rebuilds the stage cache), `toes.TOES` and the toes 3-5 keys in
+`toes.PARAMS`, a `hr.lesser` preset.
+
+* **Toes 3-5 in the method.** Part 01's beds stripped on every toe; `detail.Nail` on all five (spec 01 §3.3's
+  sizes, each its own plan and fold heights: toe 3 a short rounded square, toe 4 rolled 9 degrees with a higher
+  medial fold, toe 5 6.6 x 6.2, thick, rolled 38 degrees out with a puffy medial fold; no lunula on 3-5); the
+  nails start 4-5 mm past the DIP. Pulps, droop, crown, squaring and dorsal fairing as toe 2's; toe 2's plantar
+  fold closing on every lesser toe; `macro.toe5_form` (1.4 mm shorter, 0.6 mm stouter on its free sides). The
+  2-3, 3-4 and 4-5 webs by one closing (`method_fields.webs_lesser`: one level set, r 1.6, a mask 0.7 mm full and
+  1.8 of fade either side of each cleft, low on the toes; the first try, 1.6 + 3 mm, filled the plantar sulcus and
+  ended in seams across the toes). Stand-in corn off (a zero `Foot.Corn.L4`); the callus stand-ins softened.
+* **Tendons** (`whole.tendons`): the EHL a cord 1.1 mm proud, radius 3.6, along a Catmull-Rom path over the first
+  metatarsal, the MTP and the proximal phalanx, fading at the IP; four EDL slips 0.62-0.4 mm, fading into the
+  dorsum and over the proximal phalanges; `Foot.Tendon` on the crests. A polyline with a gutter read as piping.
+* **Lunula**: a half-moon 3.4 mm at the centre over the middle 60 % of the root, 1.6 mm more of it under the fold
+  (`lunula_hide`, so its border meets the fold steeply), duller and paler (`look.NAIL_LOOK`); the plate's root no
+  longer paler than its body. Faint on toe 2.
+* **Knuckle creases** (`whole.KNUCKLES`): a seeded cluster of 2-6 short Gaussian grooves per joint (IP, MTP, every
+  PIP and DIP), varied in place, length, angle, bow and depth, some broken or forked, 0.01-0.03 mm deep so nothing
+  dents the profile; the shader draws them from `Foot.Crease`; the recipe's world-Y toe wrinkles are off
+  (`look.SKIN_OVERRIDES`). Plantar flexion creases on every toe.
+* **Friction ridges** (library, spec 16 §9 2026-10-13): `MG.Skin.Micro` follows an optional phase field,
+  `Skin.Foot` reads it from `Foot.Ridges`; `whole.ridge_field` writes a whorl (hallux, toe 3) or a loop (2, 4, 5)
+  on each pulp, gentle arcs on the proximal pads and the ball, the amplitude nil at the creases, the region borders
+  and a whorl's core. At V4's 0.21 mm a pixel the 0.45 mm ridges aliased into phantom rings over the ball, so the
+  trial fades them by the pixel's footprint (`look.ridge_lod`, the camera's mm per pixel from `common.render`).
+* **Sheen**: `Hires.Sheen` (the forefoot's dorsum, 0.75 on the toes) adds 0.18 roughness and keeps 25 % of the coat.
+
+What reads at the evaluation scale: toes 3-5 carry nails set in rolled folds, no press-on tips or corn
+(`p01.V5f.L_eval.png`, `hr.lesser_eval.png`); the tendons as soft ridges along the toes' lines (`p01.V1f.L_eval.png`,
+V5f); the lunula as a soft pale half-moon in `hr.hallux_eval.png` (still a little heavier medially); no stamped
+grooves (the new creases are faint at V5f's 15 px/mm); whorls and arcs in `hr.plantar_eval.png`, smooth pads at V4;
+a matte dorsum. Still wrong: from below thin dark seams cross the lesser toes' bases and run along their touching
+sides (`p01.V4.L_eval.png`; also in clay, not from the web mask: unexplained); `method_fields.untangle` lays flat
+10,855 folded face pairs on the toes (round 5: 32), source not found; the hair still reads as scratches (round 5
+m8); no veins; the 1-2 web's shelf and the hallux's base sulcus (round 5 m7, m9) untouched.
+
+Cost: stage from scratch 397-408 s (the 1-2 closing 137, the lesser webs 137-143, macro 74), with it cached 46 s;
+dress 11 s; eval at 2048 px: V1f 40 s, V5f 63, V2 48, V3 47, V4 19, V8 59, hr.hallux 111, hr.plantar 94, hr.lesser 109.

@@ -131,11 +131,19 @@ def build_skin_foot(mat, rec):
                 "Line Warp": L["warp"], "Line Breakup": L["breakup"], "Fine Cell mm": fine_cell * cell,
                 "Fine Depth mm": fine_depth * B["depth_mm"]}
 
+    # the friction ridges' pattern (2026-10-13): where the mesh carries `Foot.Ridges` (a point attribute: the phase in
+    # mm whose level lines the ridges follow, its coverage, its amplitude; whorls or loops on the pulps, arcs on the
+    # ball, breaking at the creases), MG.Skin.Micro follows it; a mesh without it reads (0, 0, 0): the diagonal
+    # bands at full depth, as before
+    rf_phase, rf_cov, rf_amp = nb.separate(nb.attr("Foot.Ridges", out="Vector"))
+    ridge_mask = nb.math("MULTIPLY", sole, nb.math("ADD", nb.math("SUBTRACT", 1.0, rf_cov), nb.math("MULTIPLY", rf_cov, rf_amp)),
+                         clamp=True)
     micro = nb.group("MG.Skin.Micro", dict(
         network(B["cell_mm"]), **{
             "Vector": obj, "Pit Cell mm": Cf["cell_mm"], "Pit Threshold": Cf["threshold"], "Pit Depth mm": Cf["depth_mm"],
             "Pit Mask": thin, "Ridge Pitch mm": D["pitch_mm"], "Ridge Depth mm": D["depth_mm"],
-            "Ridge Distortion": D["distortion"], "Ridge Distortion mm": D["distortion_mm"], "Ridge Mask": sole}))
+            "Ridge Distortion": D["distortion"], "Ridge Distortion mm": D["distortion_mm"], "Ridge Mask": ridge_mask,
+            "Ridge Field mm": rf_phase, "Ridge Field Weight": rf_cov}))
     toe_lines = nb.group("MG.Skin.Micro", dict(network(B["cell_toes_mm"]), Vector=obj))
     lines = nb.mix(toe, K.sock(micro, "Lines", out=True), K.sock(toe_lines, "Lines", out=True), kind="FLOAT")
     pits, ridges = K.sock(micro, "Pits", out=True), K.sock(micro, "Ridges", out=True)
@@ -422,7 +430,10 @@ def selftest():
             assert abs(n.inputs["Line Stretch"].default_value - LINES["stretch"]) < 1e-6
             assert n.inputs["Line Mask"].is_linked and n.inputs["Fine Depth mm"].default_value > 0.0
         reads = {n.attribute_name for n in skin.node_tree.nodes if n.bl_idname == "ShaderNodeAttribute"}
-        assert {"toenails", "Foot.Crease", "Foot.ToeRed", "Foot.Sole"} <= reads, reads
+        assert {"toenails", "Foot.Crease", "Foot.ToeRed", "Foot.Sole", "Foot.Ridges"} <= reads, reads
+        # the friction ridges follow the mesh's ridge field where it has one (2026-10-13)
+        ridged = [n for n in micros if n.inputs["Ridge Field Weight"].is_linked]
+        assert len(ridged) == 1 and ridged[0].inputs["Ridge Mask"].is_linked, len(ridged)
         plate = M.get("Nail.Plate", "Lib")
         kinds = {n.bl_idname for n in plate.node_tree.nodes}
         assert {"ShaderNodeLightPath", "ShaderNodeBsdfTransparent", "ShaderNodeMixShader"} <= kinds, kinds

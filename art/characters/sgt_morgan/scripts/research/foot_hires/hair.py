@@ -26,6 +26,10 @@ HAIR = {
     "tufts": [
         {"seg": "h1", "centre": 0.52, "half": (6.0, 5.0), "u0": -0.8, "n": 10, "len": (4.0, 7.0), "spacing": 1.4},
         {"seg": "t2p", "centre": 0.45, "half": (3.2, 2.2), "u0": 0.0, "n": 3, "len": (2.8, 4.8), "spacing": 1.2},
+        # whole foot, pass 1: spec 01 §3.4's 2-4 hairs on toes 3 and 4, 0-3 short ones on toe 5
+        {"seg": "t3p", "centre": 0.45, "half": (3.0, 2.0), "u0": 0.0, "n": 3, "len": (2.6, 4.4), "spacing": 1.2},
+        {"seg": "t4p", "centre": 0.45, "half": (2.8, 1.9), "u0": 0.2, "n": 2, "len": (2.4, 4.0), "spacing": 1.2},
+        {"seg": "t5p", "centre": 0.5, "half": (2.4, 1.6), "u0": 0.6, "n": 1, "len": (2.2, 3.0), "spacing": 1.2},
     ],
 }
 
@@ -36,8 +40,7 @@ def build(ctx, q, nrm, segs, groups, params=None):
     from mathutils.kdtree import KDTree
     H = dict(HAIR, **(params or {}))
     rng = np.random.default_rng(H["seed"])
-    near = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"] + groups["toe2-1.L"] + groups["toe2-2.L"]
-                   + groups["toe2-3.L"], 0.0, 1.0) > 0.02
+    near = T.toes_weight(groups) > 0.02
     ids = np.nonzero(near)[0]
     kd = KDTree(len(ids))
     for i, j in enumerate(ids):

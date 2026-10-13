@@ -70,7 +70,8 @@ def build_skin_core(ng):
 def build_skin_micro(ng):
     """§4.1's five switchable layers as one height (metres): skin lines (Voronoi distance to edge, two cell
     sizes), follicle pits (Voronoi F1 under a threshold), friction ridges (Wave bands with a noise
-    distortion), pores (smooth F1) and an orange-peel noise. A layer with depth 0 costs nothing: Cycles
+    distortion, or, where the mesh gives a ridge field, its level lines: 2026-10-13), pores (smooth F1) and an
+    orange-peel noise. A layer with depth 0 costs nothing: Cycles
     folds the product with zero away. Per-layer heights are outputs too, so a material can blend two cell
     sizes by a mask without warping the cells (a varying Voronoi scale would).
 
@@ -95,6 +96,7 @@ def build_skin_micro(ng):
         ("Pit Mask", "Float", 1.0, 0.0, 1.0),
         ("Ridge Pitch mm", "Float", 0.45), ("Ridge Depth mm", "Float", 0.0), ("Ridge Distortion", "Float", 3.0),
         ("Ridge Distortion mm", "Float", 5.0), ("Ridge Mask", "Float", 1.0, 0.0, 1.0),
+        ("Ridge Field mm", "Float", 0.0), ("Ridge Field Weight", "Float", 0.0, 0.0, 1.0),
         ("Pore Cell mm", "Float", 1.1), ("Pore Radius", "Float", 0.3), ("Pore Depth mm", "Float", 0.0),
         ("Pore Mask", "Float", 1.0, 0.0, 1.0),
         ("Peel mm", "Float", 1.1), ("Peel Depth mm", "Float", 0.0), ("LOD", "Float", 0.0)],
@@ -150,7 +152,19 @@ def build_skin_micro(ng):
     wave = nb.node("ShaderNodeTexWave", wave_type="BANDS", bands_direction="DIAGONAL", wave_profile="SIN",
                    inputs={"Vector": v, "Scale": scale, "Distortion": i("Ridge Distortion"), "Detail": 2.0,
                            "Detail Scale": dscale, "Detail Roughness": 0.5})
-    ridges = nb.math("MULTIPLY", nb.math("SUBTRACT", wave.outputs["Fac"], 0.5),
+    # 2026-10-13 (the foot trial's whole-foot pass; its critics read the diagonal bands as corduroy over the pads
+    # and the ball): where the mesh gives a ridge field (`Ridge Field mm`, a phase whose level lines the ridges
+    # follow: whorls and loops on the pulps, arcs on the ball; `Ridge Field Weight` 1), the ridges are
+    # sin(2 pi (field + wobble) / pitch), the wobble the bands' own distortion (`Ridge Distortion` radians of phase
+    # over features of `Ridge Distortion mm`); with the weight at its default 0 the bands are unchanged
+    wob = nb.math("MULTIPLY", nb.noise_signed(v, nb.math("DIVIDE", 1.0, nb.math("MULTIPLY", i("Ridge Distortion mm"), m)),
+                                              detail=2.0),
+                  nb.math("DIVIDE", nb.math("MULTIPLY", i("Ridge Distortion"), i("Ridge Pitch mm")), 2.0 * math.pi))
+    phase = nb.math("DIVIDE", nb.math("MULTIPLY", nb.math("ADD", i("Ridge Field mm"), wob), 2.0 * math.pi),
+                    i("Ridge Pitch mm"))
+    pattern = nb.mix(i("Ridge Field Weight"), nb.math("SUBTRACT", wave.outputs["Fac"], 0.5),
+                     nb.math("MULTIPLY", nb.math("SINE", phase), 0.5), kind="FLOAT")
+    ridges = nb.math("MULTIPLY", pattern,
                      nb.math("MULTIPLY", nb.math("MULTIPLY", i("Ridge Depth mm"), m), i("Ridge Mask")))
     pore_d = nb.voronoi(v, per_m(i("Pore Cell mm")), feature="SMOOTH_F1", randomness=1.0)
     pore = nb.math("SUBTRACT", 1.0, nb.smoothstep(pore_d, 0.0, i("Pore Radius")))
@@ -301,7 +315,8 @@ SOCKETS = {
     "MG.Skin.Micro": ({"Vector", "Line Cell mm", "Line Width mm", "Line Depth mm", "Line Mask", "Langer Direction",
                        "Line Stretch", "Line Warp", "Line Breakup", "Fine Cell mm",
                        "Fine Depth mm", "Pit Cell mm", "Pit Threshold", "Pit Depth mm", "Pit Mask", "Ridge Pitch mm",
-                       "Ridge Depth mm", "Ridge Distortion", "Ridge Distortion mm", "Ridge Mask", "Pore Cell mm",
+                       "Ridge Depth mm", "Ridge Distortion", "Ridge Distortion mm", "Ridge Mask", "Ridge Field mm",
+                       "Ridge Field Weight", "Pore Cell mm",
                        "Pore Radius", "Pore Depth mm", "Pore Mask", "Peel mm", "Peel Depth mm", "LOD"},
                       {"Height", "Lines", "Pits", "Ridges"}),
     "MG.Tile.AntiRepeat": ({"Vector", "Tile mm", "Turn", "LOD"}, {"Vector A", "Vector B", "Blend"}),
@@ -346,6 +361,10 @@ def selftest():
         ops = {n.operation for n in ng.nodes if n.bl_idname in ("ShaderNodeMath", "ShaderNodeVectorMath")}
         assert len(noises) >= 5 and {"EXPONENT", "DOT_PRODUCT", "NORMALIZE"} <= ops, (len(noises), ops)
         out["micro_lines"] = {"voronoi_edges": len(vor), "noises": len(noises)}
+        # the ridge field (2026-10-13): off by default (weight 0, the diagonal bands), a sine of the field's phase
+        assert items["Ridge Field Weight"].default_value == 0.0 and "SINE" in ops, ops
+        waves = [n for n in ng.nodes if n.bl_idname == "ShaderNodeTexWave"]
+        assert len(waves) == 1 and waves[0].bands_direction == "DIAGONAL", len(waves)
     finally:
         bpy.data.node_groups.remove(ng)
     try:

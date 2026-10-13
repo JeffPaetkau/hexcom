@@ -43,7 +43,11 @@ BED_OVERRIDES = {"micro__A_undulation__height_mm": 0.1}
 # running a fraction of a millimetre onto the plate with a ragged edge, a narrow pink-brown onychodermal band
 # before the free edge (round 4's was paler than the plate: the white stripe), a faint yellow-grey cast
 NAIL_LOOK = {
-    "body_hex": "#d3a596", "root_hex": "#d6ab9e", "root_mm": 3.0, "lunula_hex": "#ebe0da", "lunula_soft_mm": 0.9,
+    # whole foot, pass 1 (round 5's blocking m2): the lunula paler and greyer than the plate, dull (rougher, less
+    # coat: a matte half-moon breaks the plate's sheen, which is how it reads in photographs), its border softened
+    # over 0.7 mm; the plate's root no paler than its body, so the half-moon has something to stand against
+    "body_hex": "#d3a596", "root_hex": "#d4a798", "root_mm": 3.0, "lunula_hex": "#eee3de", "lunula_soft_mm": 1.0,
+    "lunula_rough_add": 0.16, "lunula_coat_keep": 0.35,
     "band_hex": "#b98073", "band_mm": 0.55, "band_soft_mm": 0.25, "band_wobble_mm": 0.16, "band_share": 0.75,
     "yellow_hex": "#d6bc9c", "yellow_share": 0.12,
     "streak_mm": (0.7, 6.0), "streak_value": 0.035,
@@ -67,6 +71,11 @@ FREE_EDGE_LOOK = {
 # (method_fields.tint_masks): capillary redness on the knuckles and toe tips, slightly darker creases, a faint
 # blue-grey cast (#a89a95 at about 10 %) over the hallux's dorsum
 TINT = {"cap_hex": "#b4645a", "cap_share": 0.30, "cool_hex": "#a89a95", "cool_share": 0.12, "crease_dark": 0.10}
+# whole foot, pass 1: the forefoot's dorsum (Hires.Sheen) rougher by this much and keeping this share of its coat;
+# the recipe's dorsum is 0.42 with a 0.08 coat, and in LookDev its broad highlight read as grease
+MATTE = {"rough_add": 0.18, "coat_keep": 0.25}
+# the trial's overrides of Skin.Foot (spec 16's recipe; dotted paths, materials._overridden)
+SKIN_OVERRIDES = {"micro__I_toe_wrinkles__depth_mm": 0.0}
 # spec 01 §3.4 / spec 16 Hair.Body (#3a2a1e root -> #5a4030 tip): dark brown terminal hair, by melanin
 HAIR_LOOK = {"melanin": 0.82, "redness": 0.45, "roughness": 0.32, "radial": 0.35, "random_rough": 0.15,
              "random_color": 0.12, "coat": 0.0, "ior": 1.55}
@@ -83,20 +92,47 @@ def dress_skin(skin, standin=True):
         from eval import lookdev_p01 as LP
         LP.standin_masks([skin])
     skin.data.materials.clear()
-    mat = M.assign(skin, "Skin.Foot", part="Body")
+    # whole foot, pass 1 (round 5's m6, the stamped knuckles): the recipe's toe wrinkles (world-Y bands, 1 mm apart,
+    # wherever Foot.Crease meets the toes) off; the knuckles' creases are whole.creases' own short ones
+    mat = M.assign(skin, "Skin.Foot", part="Body", **SKIN_OVERRIDES)
     att = skin.data.attributes.get("Hires.Bed")
     if att is not None and att.domain == "FACE" and skin.data.attributes.get("Hires.NailA") is None:
         M.assign(skin, "Skin.Foot", part="HiresNailBed", faces="Hires.Bed", **BED_OVERRIDES)
-    if skin.data.attributes.get("Hires.NailA") is None and skin.data.attributes.get("Hires.Tint") is None:
+    if all(skin.data.attributes.get(a) is None for a in ("Hires.NailA", "Hires.Tint", "Hires.Sheen")):
         return
     # the trial's own copy (the library's material is shared and cached by its hash)
     own = mat.copy()
     own.name = "Hires.Mat.Skin.Foot"
     skin.data.materials[0] = own
     tint_skin(own, tint=skin.data.attributes.get("Hires.Tint") is not None,
-              nail=skin.data.attributes.get("Hires.NailA") is not None)
+              nail=skin.data.attributes.get("Hires.NailA") is not None,
+              sheen=skin.data.attributes.get("Hires.Sheen") is not None)
     if skin.data.attributes.get("Hires.NailA") is not None:
         nail_on_skin(own)
+    if skin.data.attributes.get("Foot.Ridges") is not None:
+        ridge_lod(own)
+
+
+# whole foot, pass 1: the friction ridges (0.45 mm) fade where a pixel covers more than `mm_px` of skin; at V4's
+# 0.21 mm a pixel the whorls aliased into phantom rings over the ball, and no photograph at that scale shows ridges
+RIDGE_LOD = {"mm_px": (0.08, 0.13)}
+
+
+def ridge_lod(mat):
+    """The ridges' mask (MG.Skin.Micro's Ridge Mask, on the node that follows Foot.Ridges) times a fade by the
+    pixel's footprint: View Distance x the camera's mm per pixel at 1 m (scene property hires_px_k, set by
+    common.render per view; 0 or missing = no fade)."""
+    from lib import mat_core as K
+    nb = K.NodeBuilder(mat.node_tree)
+    micro = next((n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeGroup" and n.node_tree is not None
+                  and n.node_tree.name == "MG.Skin.Micro" and n.inputs["Ridge Field Weight"].is_linked), None)
+    if micro is None or not micro.inputs["Ridge Mask"].is_linked:
+        return
+    src = micro.inputs["Ridge Mask"].links[0].from_socket
+    dist = nb.node("ShaderNodeCameraData").outputs["View Distance"]
+    foot = nb.math("MULTIPLY", nb.math("MULTIPLY", dist, 1000.0), nb.attr("hires_px_k", kind="VIEW_LAYER"))
+    a0, a1 = RIDGE_LOD["mm_px"]
+    nb.link(nb.math("MULTIPLY", src, nb.math("SUBTRACT", 1.0, nb.smoothstep(foot, a0, a1))), micro.inputs["Ridge Mask"])
 
 
 def _core(mat):
@@ -115,13 +151,21 @@ def _contact_line(nb, s, w):
     return nb.math("MULTIPLY", line, nb.math("SUBTRACT", 1.0, nb.smoothstep(w, -0.6, -0.1)))
 
 
-def tint_skin(mat, tint=True, nail=False):
+def tint_skin(mat, tint=True, nail=False, sheen=False):
     """Spec 01 §3.4's colour zones on the skin's base colour, from Hires.Tint (capillary, cool, crease), and
-    the nail folds' contact line (from Hires.NailA)."""
+    the nail folds' contact line (from Hires.NailA); with `sheen`, the forefoot's dorsum made matte (Hires.Sheen,
+    whole.sheen_mask; whole foot, pass 1: the dorsum's broad highlight read greasy in V5f): rougher, less coat."""
     from lib import mat_catalogue as CAT
     from lib import mat_core as K
     nb = K.NodeBuilder(mat.node_tree)
     core = _core(mat)
+    if sheen:
+        sh = nb.attr("Hires.Sheen")
+        for key, fn in (("Roughness", lambda r: nb.math("ADD", r, nb.math("MULTIPLY", sh, MATTE["rough_add"]), clamp=True)),
+                        ("Coat Weight", lambda c: nb.math("MULTIPLY", c, nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", sh, 1.0 - MATTE["coat_keep"]))))):
+            sock = core.inputs[key]
+            src = sock.links[0].from_socket if sock.links else sock.default_value
+            nb.link(fn(src), sock)
     sock_in = core.inputs["Base Color"]
     c = sock_in.links[0].from_socket
     if tint:
@@ -177,6 +221,8 @@ def nail_on_skin(mat):
     col = nb.mix(N["yellow_share"], col, lin(N["yellow_hex"]))
     col = nb.vmath("SCALE", col, scale=nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", _contact_line(nb, s, w), N["line_dark"])))
     rough = nb.math("ADD", N["rough"], nb.math("MULTIPLY", streak, N["rough_var"]))
+    rough = nb.math("ADD", rough, nb.math("MULTIPLY", lw, N.get("lunula_rough_add", 0.0)))
+    coat = nb.math("MULTIPLY", N["coat"], nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", lw, 1.0 - N.get("lunula_coat_keep", 1.0))))
     # longitudinal ridges, each its own strength along its length
     pitch = N["ridge_pitch_mm"]
     phase = nb.math("ADD", nb.math("MULTIPLY", x, 2.0 * math.pi / pitch), nb.math("MULTIPLY", nb.noise(obj, 400.0, detail=1.0), 3.0))
@@ -186,7 +232,7 @@ def nail_on_skin(mat):
     n = nb.bump(h)
     nail = K.principled(nb, base=col, rough=rough, ior=N["ior"], spec=N["spec"], sss=1.0,
                         sss_radius=N["sss_radius"], sss_scale=N["sss_scale"], sss_ior=1.4,
-                        coat=N["coat"], coat_rough=N["coat_rough"], coat_ior=1.5, normal=n, coat_normal=n)
+                        coat=coat, coat_rough=N["coat_rough"], coat_ior=1.5, normal=n, coat_normal=n)
     mix = nb.node("ShaderNodeMixShader", inputs={"Fac": mask})
     nb.link(skin_bsdf, mix.inputs[1])
     nb.link(nail.outputs[0], mix.inputs[2])

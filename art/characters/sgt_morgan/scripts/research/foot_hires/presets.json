@@ -242,6 +242,46 @@
    ],
    "compare": [],
    "note": "toe 2's tip, nail and PIP knuckle from the front and above, a 42 mm field"
+  },
+  {
+   "id": "hr.lesser",
+   "label": "lesser_toes_closeup",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     130.0,
+     -860.0,
+     380.0
+    ],
+    "target_mm": [
+     28.0,
+     -245.0,
+     12.0
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 420.0,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "eval"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*"
+   ],
+   "compare": [],
+   "note": "whole foot, pass 1 (2026-10-13): toes 3-5, their nails, webs and knuckles from the front, above and a little lateral, a 62 mm field"
   }
  ]
 }

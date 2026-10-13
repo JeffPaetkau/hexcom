@@ -174,7 +174,19 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    or keep iterating on the region; or step back to the foot's purpose (practice for the head)
    and move on. Recommended: the first. **Jeff, Tuesday 13 October: "Accept for now."** The
    method is accepted at round 5's level; the whole-foot pass starts its own round count
-   (`foot_whole`), and the open items above are its work list.
+   (`foot_whole`), and the open items above are its work list. **Whole foot, pass 1 (Tuesday
+   morning)**: all five left toes in the method (per-toe nails as skin, pulps, toe 5 stubby and
+   rolled, the lesser webs by closing), the extensor tendons, a big-toe lunula that reads, varied
+   knuckle creases, whorled and looped pads with arcs on the ball (`MG.Skin.Micro` gained an
+   optional ridge field; spec 16 §9), less sheen; code in `scripts/research/foot_hires/whole.py`
+   and the trial's modules. Critic series `foot_whole`, round 1: 5, 5, 4, FAIL, 4 blocking, 44
+   merged (`notes/critic/foot_whole_r1/`); all three critics' blocking item: no veins (dorsal
+   venous arch, tributaries, great saphenous in front of the medial malleolus). Also open: the
+   foot reads young and unused; a hard-edged heel callus cap; a nearly flat medial arch in V2;
+   dark seams under toes 3 and 4; 10,855 folded face pairs flattened by the repair step (32 in
+   round 5), cause not found; toe hair reads as scratches. Next: the veins, the seams and the
+   folded faces at their cause, the arch, wear and age; then round 2; then the right foot and
+   bringing the method into part 01 (spec 01) so the sock and the last can follow.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

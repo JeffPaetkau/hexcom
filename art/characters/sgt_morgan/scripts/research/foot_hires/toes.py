@@ -134,6 +134,101 @@ PARAMS = {
     "t2_knuckle_low": 0.3,
 }
 
+# --------------------------------------------------------------------------- whole foot, pass 1 (2026-10-13)
+# Toes 3-5 in the method (notes/research_foot_hires.md, "Whole foot, pass 1"). Spec 01 §3.3's nails (10 x 9, 9 x 8,
+# 7 x 6; radii 5.5, 5, 4; folds 1.0 / 0.8 ... 0.8 / 0.6) on part 01's toes, which lean 0, 9 and 41 degrees laterally
+# (measured: the nail beds' mean normals about the distal axes; part 01 rolls toe 4 by 10 and toe 5 by 40, so the
+# fifth nail faces up and out). Each nail its own plan: toe 3 a short rounded square, toe 4 narrower at the root
+# with its medial side under a higher fold (it leans toward toe 3), toe 5 small, thick and rounded, rolled out,
+# its medial half under a puffy fold. The nails start 4-5 mm past the DIP (round 5's m13: toe 2's 8 mm of bare
+# skin read finger-long). No lunula on toes 3-5 (spec 01 §3.3).
+TOES = {  # distal segment, its group, the next group in, every group of the toe
+    1: ("h2", "toe1-2.L", "toe1-1.L", ("toe1-1.L", "toe1-2.L")),
+    2: ("t2d", "toe2-3.L", "toe2-2.L", ("toe2-1.L", "toe2-2.L", "toe2-3.L")),
+    3: ("t3d", "toe3-3.L", "toe3-2.L", ("toe3-1.L", "toe3-2.L", "toe3-3.L")),
+    4: ("t4d", "toe4-3.L", "toe4-2.L", ("toe4-1.L", "toe4-2.L", "toe4-3.L")),
+    5: ("t5d", "toe5-3.L", "toe5-2.L", ("toe5-1.L", "toe5-2.L", "toe5-3.L")),
+}
+
+
+def _nail(base, **kw):
+    out = dict(base)
+    out.update(kw)
+    return out
+
+
+PARAMS.update({
+    "nail3": _nail(PARAMS["nail2"], width=9.6, length=9.4, free_edge=0.55, radius=5.5, hidden_side=0.6, root=2.5,
+                   tip_margin=1.9, prox_width=1.4, lat_width=1.0, corner=1.5, level=2.8, cuticle=1.5, corner_prox=2.3,
+                   lift_root=-0.24, epo_w=0.9, fold_prox=0.15, fold_lat=0.3, fold_asym=0.15, fold_wobble=0.3,
+                   cover_wobble=0.2, fold_halo_mm=1.1, plan=[[0.0, 0.86], [0.35, 0.97], [0.7, 1.0], [1.0, 0.95]],
+                   asym=0.05, corner_m=1.6, corner_l=1.9, clip=[0.5, 7.0, 6.0], bed_arc=0.3, edge_curl=0.85,
+                   edge_drop=0.13, undercut=0.22, fe_thick=0.3, fe_back=0.4, lunula_mm=0.0, lunula_half=2.5,
+                   lunula_k=0.0, roll_deg=0.0),
+    "nail4": _nail(PARAMS["nail2"], width=8.6, length=8.4, free_edge=0.5, radius=5.0, hidden_side=0.55, root=2.3,
+                   tip_margin=1.8, prox_width=1.3, lat_width=0.95, corner=1.4, level=2.6, cuticle=1.4, corner_prox=2.1,
+                   lift_root=-0.22, epo_w=0.85, fold_prox=0.15, fold_lat=0.3, fold_asym=-0.18, fold_wobble=0.32,
+                   cover_wobble=0.2, fold_halo_mm=1.0, plan=[[0.0, 0.82], [0.35, 0.96], [0.7, 1.0], [1.0, 0.92]],
+                   asym=-0.06, corner_m=1.5, corner_l=1.7, clip=[0.45, 8.0, 7.0], bed_arc=0.3, edge_curl=0.8,
+                   edge_drop=0.12, undercut=0.22, fe_thick=0.3, fe_back=0.4, lunula_mm=0.0, lunula_half=2.2,
+                   lunula_k=0.0, roll_deg=-9.0),
+    # toe 5: spec 01 §3.3's 7 x 6, 0.9 thick and slightly ridged at the free edge, radius 4, rolled out with its toe
+    "nail5": _nail(PARAMS["nail2"], width=6.6, length=6.2, free_edge=0.45, radius=4.0, hidden_side=0.5, root=2.0,
+                   tip_margin=1.6, prox_width=1.2, lat_width=0.9, corner=1.3, level=2.2, cuticle=1.1, corner_prox=1.8,
+                   lift_root=-0.2, epo_w=0.8, fold_prox=0.16, fold_lat=0.36, fold_asym=-0.35, fold_wobble=0.35,
+                   cover_wobble=0.25, fold_halo_mm=1.0, plan=[[0.0, 0.8], [0.4, 0.95], [0.75, 1.0], [1.0, 0.9]],
+                   asym=-0.14, corner_m=1.4, corner_l=1.6, clip=[0.4, 10.0, 12.0], bed_arc=0.25, edge_curl=0.7,
+                   edge_drop=0.12, undercut=0.2, fe_thick=0.42, fe_back=0.35, lunula_mm=0.0, lunula_half=2.0,
+                   lunula_k=0.0, roll_deg=-38.0),
+    # the lesser toes' pulps (macro.pulps), as toe 2's: ellipsoids under the curled distal phalanges
+    "pulp3_e": {"frame": "seg", "back": 6.4, "radii": [6.8, 7.2, 4.3], "sink": 0.45, "k": 1.4},
+    "pulp4_e": {"frame": "seg", "back": 6.0, "radii": [6.4, 6.8, 4.1], "sink": 0.45, "k": 1.4},
+    "pulp5_e": {"frame": "seg", "back": 5.4, "radii": [6.0, 6.8, 4.2], "sink": 0.4, "k": 1.4},
+    "droop3": 1.0, "droop4": 0.9, "droop5": 0.7, "droop_reach3": 3.2, "droop_reach4": 3.0, "droop_reach5": 2.6,
+    "crown3": 0.3, "crown4": 0.25, "crown5": 0.0, "crown_len3": 9.4, "crown_len4": 8.4,
+    "square3": -0.15, "square4": -0.15, "square5": -0.1,
+    # toe 5's own form (macro.toe5_form): shorter and stouter, in its plan frame: the middle and distal segments
+    # shortened by `toe5_short` mm toward the PIP, the distal half filled out by `toe5_girth` mm on its free
+    # (lateral and dorsal) sides, never nearer toe 4 than `t2_gap`
+    "toe5_short": 1.4, "toe5_girth": 0.6,
+    # toe 2's plantar fold closing (macro.close_folds) on every curled lesser toe
+    "fold_close_toes": [2, 3, 4, 5],
+    # the 2-3, 3-4 and 4-5 webs by one closing (method_fields.webs_lesser): the commissures where part 01 left
+    # them (spec 01 §3.3, Jeff's direction: y -235, -231.1, -218), a smaller radius than the 1-2 web's (the
+    # lesser toes touch), low on the toes, so the dorsal grooves between the proximal phalanges stay
+    # (version 2: the first build's mask, 1.6 mm full and 3 mm of fade either side of each cleft, reached most of
+    # each toe's underside, filled the plantar sulcus at the toes' bases and ended in seams across them)
+    "webs_lesser": {"version": 2, "y": [-235.0, -231.1, -218.0], "r": 1.6, "band": 0.7, "fade": 1.8,
+                    "z": [13.0, 18.0], "voxel": 0.15},
+    # the long extensors moved out of the stage (whole.tendons, after the webs)
+    "ehl": 0.0, "edl": 0.0,
+})
+# round 5's blocking m2 (no lunula reads on the hallux): a dull, paler half-moon about 3 mm deep at the centre over
+# the middle 13 mm, 2 mm more of it under the fold (detail.Nail.nail_fields), stronger (look.NAIL_LOOK's colour
+# and roughness); toe 2's stays faint
+# (the first render: a band along the whole root, too white and too crisp; now a narrower, deeper, softer
+# half-moon over the middle 60 % of the root)
+PARAMS["nail1"].update(lunula_mm=3.4, lunula_half=5.4, lunula_k=0.85, lunula_hide=1.6)
+PARAMS["nail2"].update(lunula_mm=0.7, lunula_half=3.0, lunula_k=0.35, lunula_hide=0.8)
+
+
+def toe_weight(groups, k):
+    return np.clip(sum(groups[g] for g in TOES[k][3]), 0.0, 1.0)
+
+
+def toes_weight(groups, ks=(1, 2, 3, 4, 5)):
+    return np.clip(sum(toe_weight(groups, k) for k in ks), 0.0, 1.0)
+
+
+def rolled(seg, deg):
+    """A copy of a segment frame turned about its axis (positive toward medial, as detail.Nail's roll_deg)."""
+    import copy
+    out = copy.copy(seg)
+    if deg:
+        out.n = rotate(seg.n, seg.a, deg)
+        out.b = np.cross(out.n, out.a)
+    return out
+
 
 class Seg:
     """A toe segment's frame in F."""
@@ -173,13 +268,13 @@ def rotate(v, axis, deg):
 
 
 def segments(J):
-    """The region's segment frames from the joints (common.joints): hallux proximal and distal, toe 2's
-    three, toe 3's distal (for the crowding check)."""
-    return {
-        "h1": Seg(J["toe-1-1"], J["toe-1-2"]), "h2": Seg(J["toe-1-2"], J["toe-1-3"]),
-        "t2p": Seg(J["toe-2-1"], J["toe-2-2"]), "t2m": Seg(J["toe-2-2"], J["toe-2-3"]),
-        "t2d": Seg(J["toe-2-3"], J["toe-2-4"]), "t3d": Seg(J["toe-3-3"], J["toe-3-4"]),
-    }
+    """The toes' segment frames from the joints (common.joints): the hallux's proximal and distal (h1, h2),
+    each lesser toe's three (t<k>p, t<k>m, t<k>d; whole foot, pass 1)."""
+    out = {"h1": Seg(J["toe-1-1"], J["toe-1-2"]), "h2": Seg(J["toe-1-2"], J["toe-1-3"])}
+    for k in (2, 3, 4, 5):
+        for i, nm in enumerate("pmd", start=1):
+            out[f"t{k}{nm}"] = Seg(J[f"toe-{k}-{i}"], J[f"toe-{k}-{i + 1}"])
+    return out
 
 
 def merged(params):

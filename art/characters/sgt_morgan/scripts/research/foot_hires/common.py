@@ -218,9 +218,17 @@ def render(ids, tier, out_dir, tag="", hide=(), samples=None):
     reg = registry()
     os.makedirs(out_dir, exist_ok=True)
     out = {}
+    import bpy
     for pid in ids:
         p = reg.get(pid)
         p["hide"] = list(p.get("hide") or []) + list(hide)
+        # whole foot, pass 1: the camera's millimetres per pixel at 1 m (sensor / (lens x width)) for the skin's
+        # texture LOD (look.ridge_lod reads it through a View Layer attribute; 0 = no fade)
+        cam = p.get("camera") or {}
+        res = (p.get("render") or {}).get("res") or [2048, 2048]
+        k = cam.get("sensor_mm", 36.0) / (cam["lens_mm"] * res[0]) if cam.get("lens_mm") else 0.0
+        for sc in bpy.data.scenes:   # the harness renders in LookDev or Hero (render.pick_scene)
+            sc["hires_px_k"] = float(k)
         out[pid] = R.render_preset(p, tier=tier, out_dir=out_dir, stem=f"{pid}{tag}_{tier}", samples=samples,
                                    registry=reg)
     return out

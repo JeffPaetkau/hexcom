@@ -569,7 +569,11 @@ class Nail:
         P = self.P
         lh = max(P.get("lunula_half", 0.5 * P["width"]), 0.1)
         arc = np.sqrt(np.clip(1.0 - (np.asarray(x, float) / lh) ** 2, 0.0, 1.0))
-        lun = v - P.get("lunula_mm", 0.0) * arc
+        # whole foot, pass 1 (round 5's blocking m2: no lunula reads): the crescent is the visible part of a
+        # half-moon that runs on under the proximal fold, `lunula_hide` mm of it hidden, so its border meets the
+        # fold steeply at the sides instead of tangentially (a lens lying on the fold read as nothing)
+        c = P.get("lunula_hide", 0.0)
+        lun = v - ((P.get("lunula_mm", 0.0) + c) * arc - c)
         w = v - self.L_bed_x(x)
         return np.stack([s, p, lun], 1), np.stack([x, v, w], 1)
 

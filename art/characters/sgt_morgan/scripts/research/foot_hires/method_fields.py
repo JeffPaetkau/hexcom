@@ -15,7 +15,7 @@ import detail as D
 import macro as M
 import toes as T
 
-GROUPS = ("toe1-1.L", "toe1-2.L", "toe2-1.L", "toe2-2.L", "toe2-3.L", "toenails")
+GROUPS = tuple(g for k in (1, 2, 3, 4, 5) for g in T.TOES[k][3]) + ("toenails",)
 
 
 def read_groups(skin, names=GROUPS):
@@ -24,8 +24,9 @@ def read_groups(skin, names=GROUPS):
 
 
 def dense_skin(ctx, P):
-    """The dense skin with part 01's nail beds taken out on the hallux and toe 2."""
-    ctx.report["strip_nail_beds_mm"] = round(C.strip_nail_beds(ctx.body, (1, 2)), 3)
+    """The dense skin with part 01's nail beds taken out on every toe (whole foot, pass 1; the trial took them
+    out on the hallux and toe 2)."""
+    ctx.report["strip_nail_beds_mm"] = round(C.strip_nail_beds(ctx.body, (1, 2, 3, 4, 5)), 3)
     return C.dense_copy(ctx.part, ctx.body, ctx.args.level or P["level"], name="Hires.L.Skin")
 
 
@@ -38,10 +39,11 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
     beds = np.zeros(len(q))
     made = {}
     adj = None
-    if any(P[f"nail{k}"].get("relax_iters") for k in (1, 2)):
+    toes = [k for k in (1, 2, 3, 4, 5) if P.get(f"nail{k}")]
+    if any(P[f"nail{k}"].get("relax_iters") for k in toes):
         edges, _ = C.edge_lengths(ctx.skin)
         adj = M.adjacency(edges, len(q))
-    for k, segname, distal, near in ((1, "h2", "toe1-2.L", "toe1-1.L"), (2, "t2d", "toe2-3.L", "toe2-2.L")):
+    for k, segname, distal, near in [(k,) + T.TOES[k][:3] for k in toes]:
         mine = groups[distal] > 0.5
         nail = D.Nail(k, segs[segname], q, nrm, mine, P[f"nail{k}"])
         region = (groups[distal] + groups[near]) > 0.05
@@ -88,7 +90,8 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
             "free_edge_F": nail.to_world(nail.L, 0.0, nail.plate_top(nail.L, 0.0)).round(2).tolist(),
             "fold_F": nail.to_world(0.0, 0.0, nail.plate_top(0.0, 0.0)).round(2).tolist(),
             "plate_vertices": len(verts), "burial": nail.burial()}
-    dq, cw = M.creases(q, nrm, segs, P, groups)
+    import whole
+    dq, cw = whole.creases(q, nrm, segs, P, groups, ctx.report)
     q = q + dq
     if P.get("untangle", 0):
         q, ctx.report["untangle"] = untangle(q, topo, groups, adj if adj is not None else None, ctx, P)
@@ -104,8 +107,7 @@ def untangle(q, topo, groups, adj, ctx, P):
     rings round them smoothed by plain Laplacian passes (positions toward the neighbours' mean), which lays a fold
     of a few faces flat without moving anything else. Returns (positions, report)."""
     import macro as M
-    w = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"] + groups["toe2-1.L"] + groups["toe2-2.L"]
-                + groups["toe2-3.L"], 0.0, 1.0) > 0.05
+    w = T.toes_weight(groups) > 0.05
     ls, lt, lv = topo
     quads = lv.reshape(-1, 4) if np.all(lt == 4) else None
     if quads is None:
@@ -201,8 +203,7 @@ def finish(ctx, q, beds, cw, groups):
     import bpy
     skin, fr = ctx.skin, ctx.frame
     C.set_positions(skin, fr.to_w(q))
-    mine = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"] + groups["toe2-1.L"] + groups["toe2-2.L"]
-                   + groups["toe2-3.L"], 0.0, 1.0) > 0.02
+    mine = T.toes_weight(groups) > 0.02
     C.set_group(skin, "toenails", np.where(mine, beds, groups["toenails"]))
     # the new beds' faces (every corner on the bed) as a face attribute: look.py gives them a smoother skin, as
     # the clear plates show the bed (round 3)
@@ -218,10 +219,13 @@ def finish(ctx, q, beds, cw, groups):
     me.attributes.new("Hires.Bed", "BOOLEAN", "FACE").data.foreach_set("value", sel)
     # the shader also darkens and wrinkles along Foot.Crease: at half weight, or the two together read as cuts
     C.set_group(skin, "Foot.Crease", 0.5 * cw)
-    for k in (3, 4, 5):
-        ctx.plates[k] = (bpy.data.objects[f"Foot.L.Nail.{k}"], None)
+    for k in (3, 4, 5):   # whole foot, pass 1: every toe has its nail in the method; part 01's plates only without
+        if k not in ctx.plates:
+            ctx.plates[k] = (bpy.data.objects[f"Foot.L.Nail.{k}"], None)
     write_nail_fields(skin, getattr(ctx, "nail_shade", {}))
     P = T.merged(ctx.params)
+    import whole
+    ctx.report["whole_masks"] = whole.write_masks(ctx, skin, q, groups, cw, P)
     if P.get("toe_sole", 0):
         ctx.report["toe_sole"] = soften_sole(skin, q, groups, P)
     if P.get("tint", 0):
@@ -245,8 +249,7 @@ def soften_sole(skin, q, groups, P):
     import macro as M
     topo = C.faces(skin)
     nrm = C.vertex_normals(q, topo)
-    w = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"] + groups["toe2-1.L"] + groups["toe2-2.L"]
-                + groups["toe2-3.L"], 0.0, 1.0)
+    w = T.toes_weight(groups)
     old = C.group(skin, "Foot.Sole")
     plantar = T.smoothstep(-nrm[:, 2], 0.25, 0.6)
     new = old + (np.maximum(old, plantar) - old) * T.smoothstep(w, 0.3, 0.8)
@@ -280,6 +283,15 @@ def tint_masks(q, nrm, segs, groups, cw, P):
         t = seg.local(q)[0]
         t_tip = float(t[w > 0.5].max())
         cap = np.maximum(cap, 0.85 * T.smoothstep(t, t_tip - reach, t_tip - 2.0) * w)
+    # whole foot, pass 1: the lesser toes' knuckles and tips as toe 2's, a little less each toe outward
+    for k, amt in ((3, 0.9), (4, 0.85), (5, 0.8)):
+        tm, td = segs[f"t{k}m"], segs[f"t{k}d"]
+        wk = T.toe_weight(groups, k)
+        for c, r, a in ((M.skin_top(q, tm.o[0], tm.o[1]), 4.8, 1.0), (M.skin_top(q, td.o[0], td.o[1]), 3.8, 0.65)):
+            cap = np.maximum(cap, amt * a * M.sphere(q, c, r) * up)
+        t = td.local(q)[0]
+        t_tip = float(t[wk > 0.5].max())
+        cap = np.maximum(cap, 0.85 * amt * T.smoothstep(t, t_tip - 5.5, t_tip - 1.5) * wk)
     cool = w1 * T.smoothstep(nrm[:, 2], 0.25, 0.75)
     crease = np.clip(cw, 0.0, 1.0)
     return np.stack([cap, cool, crease], 1)
@@ -384,10 +396,83 @@ def web_by_closing(q, topo, segs, P, adj, groups=None, report=None):
     return q
 
 
+def webs_lesser(q, topo, segs, P, adj, groups, report=None):
+    """Whole foot, pass 1: the 2-3, 3-4 and 4-5 webs by one closing, as web_by_closing does the 1-2 web (one
+    level set of the forefoot, one dilation and erosion, so the three cost about what one does). Each cleft is
+    measured just ahead of its commissure (`webs_lesser.y`, part 01's closed clefts): the toes' facing sides,
+    which touch there (0.2-0.35 mm apart), so the half-gap is the floor's 0.5. The mask is full across the cleft
+    (`band` mm either side), from just ahead of the commissure back over the toes' bases, and low (`z`): a closing
+    by r fills every concavity narrower than 2 r, and between two touching toes that is a groove r^2 / R-ish
+    high, so up on the dorsum it would fuse the proximal phalanges. Returns positions."""
+    import sdf as S
+    W = P.get("webs_lesser")
+    if not W:
+        return q
+    clefts = []
+    for (ka, kb), yw in zip(((2, 3), (3, 4), (4, 5)), W["y"]):
+        y0 = yw - 3.0
+        band = np.abs(q[:, 1] - y0) < 1.0
+        # the whole toes' skin (3 mm ahead of the 4-5 commissure toe 5 is already past its proximal phalanx)
+        x_lat = q[band & (T.toe_weight(groups, ka) > 0.5), 0].max()
+        x_med = q[band & (T.toe_weight(groups, kb) > 0.5), 0].min()
+        xm, half = 0.5 * (x_lat + x_med), max(0.5 * (x_med - x_lat), 0.5)
+        clefts.append((float(xm), float(half), float(yw), float(segs[f"t{ka}p"].o[1])))
+    full_w, fade_w = W.get("band", 1.6), W.get("fade", 3.0)
+    z0, z1 = W.get("z", (15.0, 21.0))
+    lo = (min(c[0] for c in clefts) - c_pad(clefts, full_w, fade_w), min(c[2] for c in clefts) - 10.0, -3.0)
+    hi = (max(c[0] for c in clefts) + c_pad(clefts, full_w, fade_w), max(c[3] for c in clefts) + 16.0, z1 + 6.0)
+    vox = W.get("voxel", 0.15)
+    field = S.Field(q, topo[2].reshape(-1, 4), y_cut=-140.0, voxel=vox, half_mm=4.0)
+    field.box(lo, hi)
+
+    def mask(Pts):
+        x, y, z = Pts[..., 0], Pts[..., 1], Pts[..., 2]
+        m = np.zeros(x.shape)
+        for xm, half, yw, my in clefts:
+            full, fade = half + full_w, half + full_w + fade_w
+            m = np.maximum(m, (1.0 - T.smoothstep(np.abs(x - xm), full, fade))
+                           * T.window(y, yw - 3.5, yw + 0.5, my + 4.0, my + 10.0))
+        return m * (1.0 - T.smoothstep(z, z0, z1))
+
+    field.close(W.get("r", 1.6), mask)
+    box = np.ones(len(q))
+    for d in range(3):
+        box *= T.window(q[:, d], lo[d] + 0.5, lo[d] + 2.0, hi[d] - 2.0, hi[d] - 0.5)
+    inb = np.nonzero(box > 1e-4)[0]
+    f0 = np.zeros(len(q))
+    f0[inb] = np.nan_to_num(field.sample(q[inb]), nan=0.0)
+    swallowed = T.smoothstep(-f0, 0.02, 0.12) * box
+    q0 = q
+    q = field.project(q, swallowed, iterations=8, h=vox, max_step=1.0)
+    moved = np.linalg.norm(q - q0, axis=1)
+    zone = T.smoothstep(moved, 0.01, 0.1)
+    ptr, nb = adj
+    deg = np.diff(ptr)
+    row = np.repeat(np.arange(len(deg)), deg)
+    for _ in range(int(P.get("web_zone_rings", 12))):
+        zone = np.maximum(zone, 0.85 * np.bincount(row, zone[nb], minlength=len(deg)) / np.maximum(deg, 1))
+    zone = np.clip(zone, 0.0, 1.0) * box
+    for _ in range(int(P.get("web_relax", 6))):
+        nrm = C.vertex_normals(q, topo)
+        q = M.relax_tangent(q, adj, nrm, 0.9 * zone, iterations=8, lam=0.5)
+        q = field.project(q, zone, iterations=3, h=vox, max_step=0.5)
+    if report is not None:
+        report["webs_lesser"] = {"clefts": [[round(c, 2) for c in cl] for cl in clefts],
+                                 "moved_max": round(float(moved.max()), 2), "moved_n": int((moved > 0.05).sum())}
+    return q
+
+
+def c_pad(clefts, full_w, fade_w):
+    """The box's margin across the clefts: the widest mask's reach and 4 mm."""
+    return max(c[1] for c in clefts) + full_w + fade_w + 4.0
+
+
 # the keys that act only after the large forms and the web (the nails and creases): a change to them reuses
 # the cached stage (stage_key)
 DETAIL_KEYS = ("nail1", "nail2", "crease_scale", "debug_sections", "stage_cache", "tint", "hair", "toe_sole",
-               "toe_sole_smooth", "untangle", "untangle_rings", "crease2p_s", "crease2p_d", "crease2p_w")
+               "toe_sole_smooth", "untangle", "untangle_rings", "crease2p_s", "crease2p_d", "crease2p_w",
+               # whole foot, pass 1: everything whole.py and the lesser nails read acts after the stage
+               "nail3", "nail4", "nail5", "tendons", "knuckles", "plantar_lesser", "ridges", "sheen", "corn")
 
 
 def stage_key(q, P):
@@ -433,17 +518,27 @@ def build(ctx):
         q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
         q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
         q = M.deepen(q, segs, groups, P, ctx.report)
+        q = M.toe5_form(q, segs, groups, P, ctx.report)
         ctx.report["t_macro"] = round(time.time() - t1, 2)
         if P.get("web_sdf"):
             t1 = time.time()
             q = web_by_closing(q, topo, segs, P, adj, groups, ctx.report)
             ctx.report["t_web_sdf"] = round(time.time() - t1, 2)
+        if P.get("webs_lesser"):
+            t1 = time.time()
+            q = webs_lesser(q, topo, segs, P, adj, groups, ctx.report)
+            ctx.report["t_webs_lesser"] = round(time.time() - t1, 2)
         if path:
             os.makedirs(C.CACHE, exist_ok=True)
             keep = {k: ctx.report[k] for k in ("anchors", "pulps", "web", "toe2_outline", "fold_close", "deepen", "t_macro",
-                                               "t_web_sdf")
+                                               "t_web_sdf", "toe5_form", "webs_lesser", "t_webs_lesser")
                     if k in ctx.report}
             np.savez(path, q=q, report=json.dumps(keep))
+    # whole foot, pass 1: the long extensors after the webs (whole.tendons), so a tendon change keeps the stage
+    import whole
+    t1 = time.time()
+    q, ctx.tendon_mask = whole.tendons(q, C.vertex_normals(q, topo), segs, groups, ctx.joints, P, ctx.report)
+    ctx.report["t_tendons"] = round(time.time() - t1, 2)
     t1 = time.time()
     q, beds, cw, _ = nails_and_creases(ctx, q, topo, groups, segs, P)
     ctx.report["t_detail"] = round(time.time() - t1, 2)
@@ -452,7 +547,7 @@ def build(ctx):
         import hair
         ctx.report["hair"] = hair.build(ctx, q, C.vertex_normals(q, topo), segs, groups)
     ctx.report["params"] = P
-    ctx.report["joints"] = {k: np.round(v, 2).tolist() for k, v in ctx.joints.items() if k.startswith(("toe-1", "toe-2"))}
+    ctx.report["joints"] = {k: np.round(v, 2).tolist() for k, v in ctx.joints.items() if k.startswith("toe-")}
     ctx.report["axes"] = {k: {"a": np.round(s.a, 3).tolist(), "n": np.round(s.n, 3).tolist(), "length": round(s.length, 2)}
                           for k, s in segs.items()}
     ip_y = float(segs["h2"].point(1.2 + P.get("ip_shift", 0.0), 0.0, 0.0)[1])

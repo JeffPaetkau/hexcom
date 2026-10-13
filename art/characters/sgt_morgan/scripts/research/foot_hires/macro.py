@@ -253,7 +253,7 @@ def pulps(q, nrm, segs, groups, P, report):
     floor = float(q[:, 2].min())
     out = q.copy()
     rep = {}
-    for key, segname, g in (("pulp1_e", "h2", "toe1-2.L"), ("pulp2_e", "t2d", "toe2-3.L")):
+    for key, segname, g in [(f"pulp{k}_e", T.TOES[k][0], T.TOES[k][1]) for k in (1, 2, 3, 4, 5)]:
         E = P.get(key)
         if not E:
             continue
@@ -363,7 +363,9 @@ def apply(q, nrm, segs, groups, adj, P, report):
     # the crown: the dorsum over the nail raised along its midline, so the section is domed under a domed plate
     # (the plate's transverse radius is 11 mm on the hallux, 6 on toe 2; a flat dorsum buries its edges)
     for seg, g, amt, nl, ru in ((h2, "toe1-2.L", P.get("crown1", 0.0), P["nail1"]["length"], 14.0),
-                                (t2d, "toe2-3.L", P.get("crown2", 0.0), P["nail2"]["length"], 8.0)):
+                                (t2d, "toe2-3.L", P.get("crown2", 0.0), P["nail2"]["length"], 8.0),
+                                (segs["t3d"], "toe3-3.L", P.get("crown3", 0.0), P.get("crown_len3", 9.0), 7.5),
+                                (segs["t4d"], "toe4-3.L", P.get("crown4", 0.0), P.get("crown_len4", 8.0), 7.0)):
         if not amt:
             continue
         mine = groups[g] > 0.5
@@ -410,7 +412,10 @@ def apply(q, nrm, segs, groups, adj, P, report):
     # not round: "fingers, not toes") and the hallux's end widened into a spade rather than a dome
     # a negative amount rounds the upper corners in instead (the shoulders beside a domed nail), the pad left
     # to the pulp's union; it works per station (the section's own centre), the old way on the segment's box
-    for seg, g, amt, t_from in ((h2, "toe1-2.L", P["square1"], 4.0), (t2d, "toe2-3.L", P["square2"], 1.0)):
+    for seg, g, amt, t_from in ((h2, "toe1-2.L", P["square1"], 4.0), (t2d, "toe2-3.L", P["square2"], 1.0),
+                                (segs["t3d"], "toe3-3.L", P.get("square3", 0.0), 1.0),
+                                (segs["t4d"], "toe4-3.L", P.get("square4", 0.0), 1.0),
+                                (segs["t5d"], "toe5-3.L", P.get("square5", 0.0), 1.0)):
         if not amt:
             continue
         mine = groups[g] > 0.5
@@ -441,7 +446,10 @@ def apply(q, nrm, segs, groups, adj, P, report):
     # rides a descending dorsum and the pulp leads it (MakeHuman's toes end as flat-topped cylinders); round 2
     # keeps it to the stretch ahead of the free edge (`droop_reach`), so the nail itself is not tipped down
     for seg, g, amt, reach in ((h2, "toe1-2.L", P["droop1"], P.get("droop_reach1", 9.0)),
-                               (t2d, "toe2-3.L", P["droop2"], P.get("droop_reach2", 5.5))):
+                               (t2d, "toe2-3.L", P["droop2"], P.get("droop_reach2", 5.5))) + tuple(
+            (segs[f"t{k}d"], f"toe{k}-3.L", P.get(f"droop{k}", 0.0), P.get(f"droop_reach{k}", 3.0)) for k in (3, 4, 5)):
+        if not amt:
+            continue
         mine = groups[g] > 0.5
         t, u, hh = seg.local(q)
         t_tip, crest = float(t[mine].max()), float(hh[mine].max())
@@ -461,7 +469,8 @@ def apply(q, nrm, segs, groups, adj, P, report):
     if P.get("fair_dorsum", 0):
         nq = vertex_normals_like(q, nrm)
         dorsal = np.zeros(len(q))
-        for seg, g in ((h2, "toe1-2.L"), (t2d, "toe2-3.L")):
+        for seg, g in ((h2, "toe1-2.L"), (t2d, "toe2-3.L"), (T.rolled(segs["t3d"], 0.0), "toe3-3.L"),
+                       (T.rolled(segs["t4d"], -9.0), "toe4-3.L"), (T.rolled(segs["t5d"], -38.0), "toe5-3.L")):
             dorsal = np.maximum(dorsal, np.clip(groups[g], 0.0, 1.0) * T.smoothstep(nq @ seg.n, 0.2, 0.6))
         q = taubin(q, adj, 0.8 * dorsal, iterations=int(P["fair_dorsum"]))
     # the 1-2 web: the slot's floor faired (a slot is concave across, so fairing fills it from its floor)
@@ -511,8 +520,20 @@ def close_folds(q, segs, groups, P, adj=None, report=None):
     sig = float(P.get("fold_close_sigma", 0.0))
     if not sig:
         return q
-    t2m, t2d = segs["t2m"], segs["t2d"]
-    w2 = np.clip(groups["toe2-1.L"] + groups["toe2-2.L"] + groups["toe2-3.L"], 0.0, 1.0)
+    # whole foot, pass 1: every curled lesser toe has the same squeezed fold under its PIP (round 5's critics read
+    # toes 3-4 from below as caps fitted on, like toe 2 before its closing)
+    reps = {}
+    for k in P.get("fold_close_toes", [2]):
+        q, reps[k] = _close_fold(q, segs, groups, P, int(k), sig, adj)
+    if report is not None:
+        report["fold_close"] = dict(reps[2], toes=reps) if 2 in reps else {"toes": reps}
+    return q
+
+
+def _close_fold(q, segs, groups, P, k, sig, adj):
+    """close_folds on toe k; returns (positions, report)."""
+    t2m, t2d = segs[f"t{k}m"], segs[f"t{k}d"]
+    w2 = T.toe_weight(groups, k)
     mine = w2 > 0.5
     pl = Plan(q, mine, t2m.o, t2d.point(t2d.length, 0.0, 0.0))
     s, u, h = pl.local(q)
@@ -572,10 +593,53 @@ def close_folds(q, segs, groups, P, adj=None, report=None):
     h2 = h2 + omega * np.minimum(closed - h2, 0.0)
     out = q.copy()
     out[sel] = pl.o + np.outer(s2, pl.a) + np.outer(u2, pl.b) + np.outer(h2, pl.n)
+    moved = np.linalg.norm(out[sel] - q[sel], axis=1)
+    return out, {"sigma": sig, "relax": n_rel, "moved_max": round(float(moved.max()), 3),
+                 "moved_n": int((moved > 0.01).sum())}
+
+
+def toe5_form(q, segs, groups, P, report=None):
+    """Whole foot, pass 1: the fifth toe's own form, stubby and stout (spec 01 §3.3: 52 mm from the MTP, 14.5
+    wide, rolled 35-40 degrees; part 01 gives the roll). In the toe's plan frame (Plan, from the PIP toward the
+    tip): its middle and distal segments shortened by `toe5_short` mm toward the PIP (a displacement along the
+    toe that grows from 0 at the PIP to the full amount at the tip, slope under 0.1, so nothing folds), and the
+    distal half filled out by `toe5_girth` mm sideways and on top (toe2_outline's way: by the share of the side,
+    stopped `t2_gap` short of toe 4). Returns positions."""
+    short, girth = P.get("toe5_short", 0.0), P.get("toe5_girth", 0.0)
+    if not (short or girth):
+        return q
+    t5m, t5d = segs["t5m"], segs["t5d"]
+    w5 = T.toe_weight(groups, 5)
+    pl = Plan(q, w5 > 0.5, t5m.o, t5d.point(t5d.length, 0.0, 0.0))
+    s, u, h = pl.local(q)
+    s_tip = float(s[groups["toe5-3.L"] > 0.5].max())
+    fade = T.smoothstep(w5, 0.2, 0.7)
+    ramp = np.clip(s / max(s_tip, 1.0), 0.0, 1.0)
+    ramp = ramp * ramp * (3.0 - 2.0 * ramp) * T.smoothstep(s, -1.0, 2.0)
+    out = q - (short * ramp * fade)[:, None] * pl.a[None, :]
+    umid, half, hlo, hhi = pl.section(s)
+    du = u - umid
+    side = T.smoothstep(np.abs(du) / np.maximum(half, 1.0), 0.2, 0.95)
+    top = T.smoothstep((h - 0.5 * (hlo + hhi)) / np.maximum(0.5 * (hhi - hlo), 1.0), 0.15, 0.75)
+    # broad (the first build's 0.28 s_tip Gaussian at 0.62 s_tip left a bulb with a neck behind it)
+    gs = T.gauss(s - 0.55 * s_tip, 0.45 * s_tip)
+    lat = np.where(du > 0.0, 1.0, 0.45)                       # the free (lateral) side more than toe 4's
+    pos = girth * gs * fade * (side * lat + 0.5 * top)
+    grow = pos > 1e-3
+    scale = np.ones(len(q))
+    if grow.any():
+        lo, hi = q[grow].min(axis=0) - 5.0, q[grow].max(axis=0) + 5.0
+        near = np.all((q > lo) & (q < hi), axis=1) & (w5 < 0.05)
+        r = room(q, grow, near, P.get("t2_gap", 0.35))
+        k = 0.08
+        lim = np.clip(-k * np.logaddexp(-pos[grow] / k, -r[grow] / k), 0.0, None)
+        scale[grow] = lim / pos[grow]
+    sideways = girth * gs * fade * side * lat * scale * np.sign(du)
+    upward = 0.5 * girth * gs * fade * top * scale
+    out = out + sideways[:, None] * pl.b[None, :] + upward[:, None] * pl.n[None, :]
     if report is not None:
-        moved = np.linalg.norm(out[sel] - q[sel], axis=1)
-        report["fold_close"] = {"sigma": sig, "relax": n_rel, "moved_max": round(float(moved.max()), 3),
-                                "moved_n": int((moved > 0.01).sum())}
+        report["toe5_form"] = {"s_tip": round(s_tip, 2), "grow_max": round(float(pos.max()), 2),
+                               "limited_n": int((scale < 0.999).sum())}
     return out
 
 

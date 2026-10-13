@@ -1,0 +1,298 @@
+# Tally: part 01, round 1
+
+Packet `renders/research/foot_hires/critic/whole_r1/`, sha 8f060149975d. Scope: the whole left foot (barefoot).
+
+**FAIL**, decision **revise**: median 5 (C1 fidelity 5, C2 reality 5, C3 craft 4; spread 1), 4 blocking, metrics none in the packet.
+
+| Question | C1 | C2 | C3 | Min | Mean |
+|---|---|---|---|---|---|
+| Q2 | 6 | 6 | 5 | 5 | 5.7 |
+| Q3 | 5 | 4 | 4 | 4 | 4.3 |
+| Q6 | 4 | 3 | 3 | 3 | 3.3 |
+| Q9 | 5 | 5 | 4 | 4 | 4.7 |
+| Overall | 5 | 5 | 4 | 4 | 4.7 |
+
+## Blocking
+
+- **m1** [C2, C3] No dorsal veins anywhere: no venous arch across the dorsum, no tributaries, no great saphenous in front of the medial malleolus. A lean 40-year-old soldier's foot shows them as raised, branching cords; without them the whole foot reads young and mannequin-smooth.
+  - at C2 blocking `zoom_p01.V1f.L_eval_tendons.png` [250, 100, 1300, 850]; C3 blocking `pair_p01.V1f.L_eval.png` [725, 673, 1397, 1294]
+  - ranked C2 #1, C3 #4
+  - fix: Build the dorsal venous arch with 2–4 meandering, branching tributaries, 2.5–3 mm across and 0.7 mm proud, draining into a 3–3.5 mm great saphenous 1 mm proud in front of the medial malleolus, tinted grey-green.
+  - fix: A lean adult male foot shows a raised venous arch across the mid-dorsum with tributaries, and the great saphenous running up in front of the medial malleolus, soft 2.5-3.5 mm cords with a faint blue-green tint.
+  - spec §3.2, §3.4, §3.2
+  - also: No dorsal veins: no venous arch across the dorsum at 55–65 % L, no tributaries, and (in V2) no great saphenous in front of the medial malleolus; only straight tendon lines break the smooth dorsum.
+  - also: No veins anywhere: no dorsal venous arch, no tributaries, no great saphenous in front of the medial malleolus. On a lean man's foot, as the anchor photos show, they are the most visible relief on the dorsum.
+  - also: No dorsal venous arch, no tributaries and no great saphenous vein in front of the medial malleolus read in any view (V1f, V2, V5f): the dorsum is smooth unveined skin, which on a lean man's foot reads as a mannequin.
+- **m2** [C1, C2] The back of the ankle is a smooth column: no Achilles cord narrowing into the heel and no hollows between it and the malleoli, so from behind and from either side the ankle reads like a cast or a stuffed stocking.
+  - at C1 major `pair_p01.V8.L_eval.png` [660, 465, 1295, 1090]; C2 blocking `pair_p01.V8.L_eval.png` [621, 466, 1304, 1190]
+  - ranked C1 #10, C2 #2
+  - fix: The Achilles is a distinct cord about 16 mm wide and 7 mm proud, with 4 mm hollows either side between it and the malleoli.
+  - fix: Raise a cord 16 mm wide and 7 mm deep that narrows to its insertion at z ≈ 52, with hollows 4 mm deep (the pre-Achilles fat pads) between it and each malleolus.
+  - spec §3.2
+  - also: From behind, the Achilles is only a faint ridge in a broad smooth column with shallow hollows either side (V8); a lean soldier's Achilles stands out as a cord with deep pre-Achilles hollows.
+  - also: From behind, the Achilles is a faint ridge in a broad, smooth column; the retro-malleolar hollows barely show, so the back of the ankle reads padded rather than lean.
+  - also: No Achilles tendon or retro-malleolar hollows: from z ≈ 40 to 100 mm the back of the ankle is one broad convex surface with a faint central highlight; nothing narrows into the heel and nothing dips beside the malleoli.
+- **m3** [C1] No veins anywhere: no dorsal venous arch over the metatarsals, no great saphenous in front of the medial malleolus. On a lean forty-year-old they stand out as raised blue-grey cords, as on most of the anchor's feet.
+  - at C1 blocking `pair_p01.V2.L_eval.png` [565, 720, 1225, 1140]
+  - ranked C1 #4
+  - fix: On a lean man the dorsal venous arch and the great saphenous stand 0.7–1 mm proud, 2.5–3.5 mm wide, faintly blue-grey, and catch the rim light.
+  - spec §3.2
+  - also: No veins anywhere: no great saphenous in front of the medial malleolus, no dorsal venous arch or tributaries over the metatarsals (V1f, V2); the foot reads bloodless next to the anchor's men's feet.
+
+## Major
+
+- **m4** [C1, C2, C3] The heel callus is the loudest tell: from below it is a cream decal over the whole heel pad, cut off by a ruler-straight edge and printed with an even crack net. Real callus is a raised rim band at the posterior-lateral margin that grades into the sole.
+  - at C1 major `pair_p01.V4.L_eval.png` [835, 385, 1160, 575]; C2 major `pair_p01.V4.L_eval.png` [833, 388, 1159, 580]; C3 major `pair_p01.V4.L_eval.png` [833, 388, 1164, 569]
+  - ranked C1 #2, C2 #4, C3 #1
+  - fix: Real heel callus is a 12–18 mm band on the posterior-lateral rim with a feathered edge; the pad's centre is thick, pressure-pink skin, not crust.
+  - fix: Keep the thick callus to a 12–18 mm band round the posterior and lateral rim, fading over 5–10 mm into the pinker weight-bearing heel centre with its friction ridges; no straight edge anywhere.
+  - fix: Real heel callus is a raised rim band thickest at the posterior-lateral margin, yellow-grey, grading into the sole over several mm along the pressure zone, with fissures along the rim; no straight mask edge.
+  - spec §3.4
+  - also: From below, the whole heel pad wears a pale crackle cap that ends on a dead-straight line across the heel, an obvious texture edge (V4). Real heel callus is a rim band with a feathered edge; the pad's centre is thick, pinkish skin.
+  - also: The whole plantar heel pad is capped by pale crackle callus that ends on a hard straight line across the heel, like a decal edge; the pad centre reads as cracked crust instead of thick, pink-blended weight-bearing skin.
+  - also: On the sole the heel callus covers the whole heel pad and stops at a ruler-straight transverse line, a mask edge. Real callus is thickest at the posterior-lateral rim and feathers out into the pinker weight-bearing centre.
+  - also: The heel callus covers the whole plantar heel pad (≈67 × 37 mm at 4.6 px/mm) and ends forward in a ruler-straight transverse edge, a visible mask boundary.
+  - also: Heel callus is a flat cream patch over the whole plantar heel, cut off by a ruler-straight transverse edge and printed with an even Voronoi crack net: a texture decal, not thickened skin.
+- **m5** [C1, C2, C3] From the medial side the foot is nearly flat: the medial border hangs a few mm over the floor from heel to ball and the instep is a straight ramp (V2). A fit man's standing foot shows a clear arch and the navicular bump.
+  - at C1 major `pair_p01.V2.L_eval.png` [515, 905, 1265, 1340]; C2 major `pair_p01.V2.L_eval.png` [393, 1242, 1201, 1346]; C3 major `pair_p01.V2.L_eval.png` [393, 932, 1190, 1320]
+  - ranked C1 #3, C2 #10, C3 #7
+  - fix: A fit man's standing foot lifts its medial border clearly between heel and ball, with the navicular tuberosity a small dome near z 42 and a convex instep.
+  - fix: Shape the medial border as an arch peaking under the navicular, with the 12 mm tuberosity 2 mm proud at about z 42 and the abductor hallucis fullness below it.
+  - fix: A real foot shows the navicular tuberosity and the arch clearly lifted between heel and ball on the medial side, the abductor's soft bulge below it, and the styloid as a sharp bump on the lateral border.
+  - spec §3.2
+  - also: Medial view: from heel to ball the medial border sits only a few mm off the floor and the dorsum is a straight ramp; the longitudinal arch and the navicular bump barely read, so the foot looks flat-footed.
+  - also: The medial arch is low and straight when standing: the plantar border clears the floor by about 6 mm as a flat ramp from heel to ball, with no navicular bump. A normal arch rises to a peak under the navicular.
+  - also: The medial arch is low and straight when standing: the plantar border clears the floor by about 6 mm (≈40 px at 6 px/mm) along a flat ramp from heel to ball; no navicular tuberosity shows.
+  - also: The medial midfoot is a smooth ramp with no navicular knob or abductor bulge and an arch that barely clears the floor, and the lateral border has no styloid bump: a generic base mesh, not a bony, articulated foot.
+  - also: The medial midfoot is a smooth featureless ramp: no navicular knob, no abductor hallucis bulge, and the arch barely clears the floor; the lateral border likewise lacks the 5th MT styloid bump. The generic base-mesh look.
+- **m6** [C1, C2, C3] The callus crack pattern is an even mesh of fine dark polygons on grey-cream, like dried mud or crackle glaze, with a sharp top edge (V8, V2, V3). Real heel callus is yellow-white, fades into the skin and splits in a few deep fissures across the rim.
+  - at C1 major `pair_p01.V8.L_eval.png` [750, 1475, 1350, 1600]; C2 major `pair_p01.V8.L_eval.png` [745, 1480, 1346, 1599]; C3 major `pair_p01.V8.L_eval.png` [766, 1496, 1340, 1589]
+  - ranked C1 #5, C2 #5, C3 #16
+  - fix: Real heel callus is yellow-white and thick, fading into the skin, split by a few deeper fissures running across the rim edge, not an even polygon mesh.
+  - fix: Real callus crazing is pale, with white scaly edges, irregular and fading inward, plus a few deeper radial fissures 0.3–0.8 mm wide with pale lips and pink-brown floors, on yellowish, waxy, matte callus.
+  - fix: Real heel fissures are fewer and mostly run across the rim, open V-shaped with depth and a darker floor, with white dry flakes at their lips; plates vary in size and the band grades into the heel skin.
+  - spec §3.4
+  - also: The heel callus crack pattern is a fine, even Voronoi mesh of thin dark lines on grey-cream, reading as dried mud or crackle glaze, with a sharp top boundary.
+  - also: The callus cracks are a regular net of thin dark closed polygons on chalky grey-white skin, which reads as crackle glaze, dried mud or grime. Real heel callus is yellowish and waxy, its crazing pale and scaly, with a few radial fissures on the rim.
+  - also: Callus fissures are a regular net of thin, dark, closed polygons on chalky grey-white skin along the heel rim; it reads as crackle glaze, dried mud or grime rather than callus.
+  - also: From behind, the heel band's fissures are thin dark lines of constant width in a regular polygon net on flat cream, a crackle glaze; real heel fissures are fewer, open, deeper and edged with white flakes.
+  - also: From behind, the heel band's fissures are thin dark lines of constant width in a regular polygon net on a flat cream band, like crackle glaze, with no opening, depth or lifted flakes.
+- **m7** [C1, C2, C3] From below, toe 3 (and toe 4 at its base) is crossed by a ruler-straight hairline cut with a tone step across it, a seam between two pieces rather than a flexion crease; it shows even in V4.
+  - at C1 major `pair_hr.plantar_eval.png` [55, 505, 640, 850]; C2 minor `pair_hr.plantar_eval.png` [310, 807, 621, 859]; C3 major `pair_hr.plantar_eval.png` [330, 800, 600, 860]
+  - ranked C1 #16, C2 #17, C3 #11
+  - fix: Flexion creases curve with the toe's cross-section, about 0.5 mm deep, the skin rolling into them; where toes touch, the skin flattens and bulges against its neighbour.
+  - fix: Digital creases are curved, soft-edged folds about 0.5 mm deep with the ridges running into them; touching toes meet in a rounded, shadowed groove.
+  - fix: A digital flexion crease is a curved soft fold with rounded lips, often doubled, that the ridges run into; tone and ridge flow continue across it.
+  - spec §3.4
+  - also: The plantar creases on toes 3–4 and the lines where the toes meet are razor-straight dark slits, like cuts, with no fold either side; real flexion creases curve round the toe and roll the skin.
+  - also: The plantar flexion creases on toes 3–4 and the lines where the toes meet are razor-straight dark slits, like cuts across the toe, with no fold either side.
+  - also: The flexion creases on toes 3 and 4 are ruler-straight black cuts, and the clefts between touching lesser toes are hairline black slits. Real creases are curved, soft folds; touching toes meet in shadowed grooves.
+  - also: Flexion creases on toes 3 and 4 are ruler-straight black cuts across the toe, and the clefts between the touching lesser toes are hairline black slits like mesh seams.
+  - also: Toe 3 (and toe 4 at its base) is crossed by a ruler-straight hairline cut with a tone step across it, beige above and pink below: a seam between two pieces, not a flexion crease; it shows in V4 too.
+- **m8** [C1, C2, C3] Each toe pad's whorl is a perfect set of concentric ovals with a straight radial seam where the ridge phase jumps, the same target on every pad; real pads have loops and whorls with ridge endings, forks and pores.
+  - at C1 major `pair_hr.plantar_eval.png` [300, 1000, 1545, 1760]; C2 minor `zoom_hr.plantar_eval_pad.png` [150, 150, 900, 900]; C3 major `zoom_hr.plantar_eval_pad.png` [470, 0, 620, 510]
+  - ranked C1 #14, C2 #16, C3 #12
+  - fix: Real plantar ridges vary in pattern per pad, break and fork, carry pores along the crests, flatten under callus and are crossed by fine flexion and dryness lines.
+  - fix: Real dermatoglyphs are irregular loops and whorls with deltas, ridge endings and forks every few mm, pores along the ridges, and fine creases crossing them on an adult sole.
+  - fix: A real toe pad has a loop or whorl with ridge endings, bifurcations and a delta, uneven spacing and pores along the ridges; each toe differs, and nothing marks a radial seam.
+  - spec §3.4
+  - also: The plantar ridges are too perfect: concentric target whorls on every toe pad and even corduroy lines across the ball, one pitch and depth everywhere, no pores, forks or crossing creases; they read as an engraved pattern.
+  - also: Plantar friction ridges are too perfect: concentric target whorls on every toe pad and even corduroy lines over the ball, one pitch and depth everywhere, no pores, ridge breaks or crossing creases.
+  - also: The plantar friction ridges are perfect concentric bullseyes, the same on every pulp, with no breaks, forks, pores or white lines. Real dermatoglyphs are irregular loops and whorls with deltas, and an adult sole is crossed by fine creases.
+  - also: Pulp friction ridges are perfect concentric bullseyes, evenly spaced and the same on every toe, with no ridge endings, forks, pores, deltas or white lines.
+  - also: The hallux pad whorl is a perfect set of concentric ovals round one point, with a straight seam from the centre to the edge where the ridge phase jumps; the same target and seam recur on toes 2 and 3.
+- **m9** [C2, C3] The extensor tendons are thin hard-edged lines 1-2 mm wide fanning at even spacing like wires under the skin; real extensors are soft cords 3.5-5 mm wide that rise near the ankle and the MTPs and fade between.
+  - at C2 minor `zoom_p01.V1f.L_eval_tendons.png` [180, 100, 1120, 950]; C3 major `zoom_p01.V1f.L_eval_tendons.png` [270, 160, 1130, 930]
+  - ranked C2 #13, C3 #5
+  - fix: Make the EHL a 5 mm cord 1.5 mm proud and the EDL slips 3.5 mm wide and 1 mm proud, rounded in section and fading in and out over the MT heads.
+  - fix: Real extensors are soft rounded cords 3.5-5 mm wide (EHL broadest) that rise near the ankle and the MTPs and fade between, catching the rim light as broad soft highlights.
+  - spec §3.2
+  - also: The extensor tendons are thin, even, straight lines about 1–1.5 mm wide fanning from the ankle. Real tendons are 3.5–5 mm cords that rise and fade along their course, with the EHL to the hallux clearly the strongest.
+  - also: Extensor tendons are thin, even, straight lines about 1–1.5 mm wide (≈12–16 px at 11 px/mm); the EHL is not distinct from the fan to toes 2–5.
+  - also: The extensor tendons are thin hard-edged lines 1-2 mm wide fanning with even spacing over the dorsum, like wires or scored grooves under the skin, not cords; the EHL is no broader than the others.
+- **m10** [C1, C2] No 5th metatarsal tuberosity: the lateral border runs smooth from heel to the 5th MTP with no bump at mid-foot, though it is one of the most visible landmarks of a real lateral foot.
+  - at C1 minor `pair_p01.V3.L_eval.png` [825, 1155, 1005, 1305]; C2 major `pair_p01.V3.L_eval.png` [787, 1139, 994, 1314]
+  - ranked C1 #21, C2 #8
+  - fix: The styloid is a sharp 8 mm bump about 2.5 mm proud on the lateral border near half the foot's length.
+  - fix: Add the styloid, 8 mm across and 2.5 mm proud, at (+50, −150, 18), with the lateral border dipping slightly in front of it.
+  - spec §3.2
+  - also: The lateral border lacks the 5th metatarsal styloid bump at mid-foot, so the outer edge is a featureless curve (V3).
+  - also: The lateral border is a smooth featureless curve, with no 5th metatarsal styloid bump at mid-foot.
+  - also: No 5th metatarsal tuberosity: the lateral border runs smooth from the heel to the 5th MTP with no bump at mid-foot, about 150 mm from the heel (≈900 px from it at 6 px/mm).
+- **m11** [C1, C2] Only the heel carries callus: none under the 1st–2nd metatarsal heads, on the lateral 5th MTP or on the medial hallux IP, and no corn on toe 4's PIP, all places boots mark a soldier's foot.
+  - at C1 major `pair_p01.V4.L_eval.png` [970, 1185, 1215, 1360]; C2 major `pair_p01.V4.L_eval.png` [756, 1180, 1221, 1366]
+  - ranked C1 #12, C2 #12
+  - fix: A boot-wearing foot has paler, drier, rougher callus at the ball (32 x 22 mm), the lateral 5th MTP (18 mm) and the medial hallux IP (14 x 10 mm), and often a small corn on a lesser toe's PIP.
+  - fix: Add callus 2 (32 × 22 mm under MT1–2, ridges flattened), callus 3 (Ø 18 mm at the 5th MTP, wrapping onto the border), callus 4 (14 × 10 mm at the medial hallux IP) and the 5 mm dorsal corn on toe 4's PIP.
+  - spec §3.4
+  - also: No callus where boots wear a soldier's foot: none under the 1st–2nd MT heads, on the lateral 5th MTP or the medial hallux IP, and no corn on toe 4's PIP; only the heel has any.
+  - also: Callus only at the heel: no pale flattened patch under MT heads 1–2, no boot-rub callus at the 5th MTP, no pinch callus on the medial hallux IP, no corn on toe 4. The forefoot looks unworn for a man who lives in boots.
+  - also: Callus only at the heel: the ball under MT heads 1–2 is pink and evenly ridged with no pale flattened patch; no boot-rub callus at the 5th MTP, no pinch callus on the medial hallux IP, no corn on the 4th toe.
+- **m12** [C2, C3] Thin brown stair-stepped outlines trace arcs over the plantar toe bases where the pad texture region meets the sole's: an aliased mask edge drawn on the skin.
+  - at C2 minor `pair_hr.plantar_eval.png` [93, 186, 1045, 693]; C3 major `pair_hr.plantar_eval.png` [690, 515, 1050, 700]
+  - ranked C2 #19, C3 #13
+  - fix: Blend the sole and toe colour zones over several mm and put the digito-plantar crease there as a soft fold.
+  - fix: No visible boundary: pad and sole skin blend through the plantar web crease, feathered over several mm, the change carried by real creases.
+  - spec §3.4
+  - also: Jagged brownish arcs at the toe bases on the sole mark where two texture zones meet; they read as a torn decal edge, not a crease.
+  - also: Jagged brownish arcs at the bases of toes 2–4 on the sole mark a texture-zone boundary with a torn edge, not a crease.
+  - also: Thin brown stair-stepped outlines trace arcs over the plantar bases of toes 2-4 and the hallux where the pad texture region meets the sole's: an aliased mask edge printed on the skin.
+- **m13** [C1, C3] A bright white crescent at the very base of the hallux plate, as bright as the free edge, reads as the plate's exposed proximal edge lifting off the skin, not as a lunula under a cuticle.
+  - at C1 minor `pair_hr.hallux_eval.png` [885, 655, 1670, 1275]; C3 major `pair_hr.hallux_eval.png` [869, 657, 1325, 756]
+  - ranked C1 #24, C3 #15
+  - fix: Lateral folds about 1 mm wide roll over the plate's edges, and the lunula is a soft milky crescent fading into the bed.
+  - fix: The proximal fold laps over the plate base with a thin cuticle; the lunula is a soft, slightly paler crescent seen through the plate just distal to the fold, never brighter than the free edge.
+  - spec §3.3
+  - also: The hallux nail's lateral folds are thin lines, so the plate looks laid on top rather than tucked under rolled skin; the lunula is a hard bright crescent.
+  - also: The hallux nail's lateral folds are thin lines, so the plate looks laid on the toe rather than tucked under rolled skin; the lunula is a hard bright white crescent.
+  - also: A bright white crescent at the very base of the hallux plate, as bright and hard-edged as the free edge, reads as the plate's exposed proximal edge lifting off the skin, not as a lunula under a cuticle.
+- **m14** [C1, C3] The dorsum is bare; the only hairs are tight clumps of short, straight, parallel dark strokes at the toe bases, like pen hatching, which adds to the young, hairless read.
+  - at C1 minor `zoom_p01.V1f.L_eval_tendons.png` [80, 750, 175, 905]; C3 major `zoom_p01.V1f.L_eval_tendons.png` [80, 750, 870, 950]
+  - ranked C1 #23, C3 #17
+  - fix: 8–12 slightly curved hairs, 5–8 mm long, spread over a 12 x 10 mm patch, lying flat toward the tip.
+  - fix: A man's dorsum carries sparse fine dark hairs scattered singly over its proximal half, lying flat toward the toes with random yaw, plus a loose tuft on the hallux's proximal phalanx.
+  - spec §3.4
+  - also: The hallux tuft is a tight clump of short straight dark strokes, some crossing, that reads as scratches rather than hairs lying toward the tip.
+  - also: The hallux tuft is a tight clump of short, straight dark strokes, some crossing at angles, reading as scratches rather than hairs lying toward the tip.
+  - also: The dorsum is bare; the only hairs are tight clumps of 2-8 short, straight, parallel dark strokes at the toe bases, like pen hatching, so the foot reads hairless and younger than a 40-year-old man's.
+- **m15** [C3] At native size every nail carries the same bright, even white free-edge strip on a pale opaque pink plate, a French manicure on five toes. Real toenail edges are thin, off-white to yellowish, uneven and often dirty underneath.
+  - at C3 major `pair_p01.V5f.L_eval.png` [693, 818, 1780, 1190]
+  - ranked C3 #2
+  - fix: Real toenail free edges are thin, off-white to yellowish and translucent, uneven in width, with grime beneath; the pink bed shows through the plate, and each toe's nail differs in tone, thickness and wear.
+  - spec §3.4
+  - also: Every nail ends in the same bright, even white strip on a uniformly pale, opaque pink plate, like a French manicure; at native size the five toes read as press-on nails with one treatment repeated.
+- **m16** [C2] The hallux nail reads as a stuck-on acrylic tip: an even, glossy plate whose white rim shows at its base and sides, no cuticle, no lunula, no pink bed or onychodermal band. A real plate slides under the proximal fold and sinks into its side grooves.
+  - at C2 major `pair_hr.hallux_eval.png` [787, 652, 1656, 1397]
+  - ranked C2 #3
+  - fix: Tuck the plate's base 4–5 mm under the eponychium with a thin cuticle over it, sink its sides into the lateral grooves, show a soft 3.5 mm lunula, a pink bed through the plate and a narrow onychodermal band; satin, not varnished.
+  - spec §3.3
+  - also: Hallux nail reads as a stuck-on acrylic tip: a white rim shows along its base and sides instead of the plate passing under the folds; no cuticle, no lunula reads, an even beige plate with no pink bed or onychodermal band, glossy hotspots.
+- **m17** [C1] Nails 2–4 are near-identical rounded tombstones of pale glossy pink with a white French-tip line, and the 5th is a small copy: copy-pasted press-ons. Real lesser toenails differ toe to toe, are thicker and ridged, often yellowed, the 5th small and misshapen.
+  - at C1 major `pair_hr.lesser_eval.png` [0, 700, 1730, 1465]
+  - ranked C1 #6
+  - fix: Real lesser nails differ per toe in shape and curvature, with faint yellowing, ridges, slightly ragged trimmed edges and grime beneath; the 5th is small, thick and ridged.
+  - spec §3.3
+  - also: Nails 2–4 are near-identical rounded tombstones of uniform pale glossy pink with a crisp white French-tip line, and the 5th is a small copy of them; they read as copy-pasted press-ons.
+- **m18** [C2] Toes 2–5 are smooth tubes: soft knuckles, almost no transverse wrinkles over the PIP and DIP joints, smooth skin right up to the nail folds, round glossy pulps. A boot-wearer of 40 has knobbly, creased toes that narrow between the joints.
+  - at C2 major `pair_hr.lesser_eval.png` [310, 248, 1822, 1501]
+  - ranked C2 #6
+  - fix: Real toes narrow between the joints, with defined dorsal knuckles, 3–6 transverse wrinkles 0.2 mm deep over each IP joint, fine lines above each nail fold, and drier, duller pulps.
+  - spec §3.4
+  - also: Toes 2–5 are smooth tubes with soft knuckles: almost no transverse wrinkles over the PIP and DIP joints, smooth skin up to the nail folds, round glossy pulps; they read young and rubbery.
+- **m19** [C3] One cloud-noise mottle of red and pale blotches covers dorsum, heel, ankle and sole at the same size and contrast, an obvious procedural overlay; real colour changes by region and follows pores, veins and creases.
+  - at C3 major `pair_p01.V3.L_eval.png` [621, 880, 1811, 1304]
+  - ranked C3 #6
+  - fix: Real foot colour varies by region: redder toes and knuckles, paler yellower sole and heel, bluish veins, pigment at rub zones, with fine variation tied to pores, hair and creases.
+  - spec §3.4
+  - also: One cloud-noise mottle of soft red and pale blotches 3-8 mm across covers dorsum, heel, ankle and sole at the same size and contrast: a procedural overlay, not perfusion, freckling or veins.
+- **m20** [C1] The hallux nail reads as a fresh pedicure: one even pale pink, glossy, whiter than the skin even at native size (V1f), a clean grey free edge, no ridges, yellowing or grime under the edge.
+  - at C1 major `pair_hr.hallux_eval.png` [785, 660, 1660, 1395]
+  - ranked C1 #7
+  - fix: A 40-year-old soldier's hallux nail is thicker, faintly ivory-yellow and less glossy, with fine longitudinal ridges, a slightly irregular edge and dark debris under it.
+  - spec §3.4
+  - also: The hallux nail reads as a fresh pedicure: one even pale pink, glossy, whiter than the skin even at native size, a clean grey free edge, no ridges, no yellowing, no grime under the edge.
+- **m21** [C2] The lesser nails are scaled copies of one rounded plate with the same thin white free edge. Real lesser toenails differ toe to toe: narrower, more curved, half-hidden by the folds, unevenly trimmed, and the 5th small, thick and ridged.
+  - at C2 major `zoom_p01.V5f.L_eval_lesser_nails.png` [30, 110, 1400, 870]
+  - ranked C2 #7
+  - fix: Give each lesser nail its own outline, curvature and edge: narrower and more curved than the hallux's, partly hidden by the folds, unevenly trimmed; the 5th small, 0.9 mm thick, ridged and turned outward.
+  - spec §3.3
+  - also: Nails of toes 2–4 are scaled copies of one rounded plate with the same thin white free-edge line and crisp outline; the 5th is a clean miniature of them, not a small, thickened, ridged nail.
+- **m22** [C1] The lesser toes are plump smooth cylinders with soft knuckles, almost no DIP, a few shallow wrinkle strokes, no redness over the joints and little curl. A boot-wearer's toes are knobbly, creased, ruddy at the knuckles and curled.
+  - at C1 major `pair_p01.V5f.L_eval.png` [960, 620, 1790, 1200]
+  - ranked C1 #8
+  - fix: Boot-wearer's toes are knobbly: defined PIP knuckles with bunched, darker, redder skin and 3–6 wrinkles, a visible DIP, curled so the knuckles rise and the tips tuck down.
+  - spec §3.3
+  - also: The lesser toes are smooth plump cylinders: soft PIP knuckles, almost no DIP, one or two shallow wrinkles, no redness or darkening over the joints and little curl; they read young and soft.
+- **m23** [C1] The instep and metatarsal dorsum are hairless while the toes carry a few hairs, so the foot looks shaved; men's feet, as in the anchor, carry sparse dark hairs lying toward the toes there.
+  - at C1 major `pair_p01.V1f.L_eval.png` [930, 670, 1400, 1035]
+  - ranked C1 #9
+  - fix: Sparse dark terminal hairs, about 2 per cm² and 6–10 mm long, lie flat toward the toes over the dorsum, thinning toward the toes.
+  - spec §3.4
+  - also: The instep and metatarsal dorsum carry no hair at all; only the hallux and toes 2–4 have a few, so the foot looks shaved next to the anchor's men's feet.
+- **m24** [C3] The ball and toe bases carry one uniform field of parallel wavy ridges, same pitch, depth and direction everywhere, like corduroy, unbroken by the ball and web creases and unworn where the foot bears weight.
+  - at C3 major `pair_hr.plantar_eval.png` [621, 0, 1635, 497]
+  - ranked C3 #10
+  - fix: Plantar ridges follow each region's own flow, flatten and wear on the weight-bearing ball, stop at the creases, and carry pores, dry scaling and fine wrinkles; pitch and depth vary.
+  - spec §3.4
+  - also: The ball and toe bases carry one uniform field of parallel wavy ridges, the same pitch, depth and direction everywhere, like corduroy laid over the forms, unbroken by the ball and web creases.
+- **m25** [C1] From the side the lateral malleolus is a soft swelling, not a bony knob with a hollow in front and behind (V3); the outside of the ankle reads padded.
+  - at C1 major `pair_p01.V3.L_eval.png` [1290, 720, 1700, 1090]
+  - ranked C1 #11
+  - fix: The lateral malleolus is a distinct 24 mm dome about 5 mm proud, lower and further back than the medial, with the sinus-tarsi hollow in front and a groove behind.
+  - spec §3.2
+  - also: Lateral view: the lateral malleolus reads only as a soft broad swelling, with no crisp bony knob and no hollow in front of or behind it; the outer ankle looks smooth and puffy.
+- **m26** [C2] The skin is one peach tone under large blotchy noise (5–10 mm blobs) everywhere. A real foot is zoned: redder toes and knuckles, a grey-green cast over veins, paler yellow plantar margins, browner creases at the ankle.
+  - at C2 major `pair_p01.V3.L_eval.png` [580, 880, 1822, 1346]
+  - ranked C2 #11
+  - fix: Zone it: redder toes and knuckles, grey-green over the veins, paler yellow plantar margins rising onto the sides, browner creases at the ankle; keep variation at freckle and capillary scale, not large blobs.
+  - spec §3.4
+  - also: The skin is one peach tone with large blotchy noise (5–10 mm blobs) over the dorsum, ankle and heel, with no anatomical colour zoning.
+- **m27** [C3] The hallux plate sits on the toe like a glued acrylic tile: crisp outline, no lateral folds lapping over it, a milky plate of one even tone with soft glossy blooms, and a free edge cut like plastic sheet of constant thickness.
+  - at C3 major `pair_hr.hallux_eval.png` [787, 662, 1656, 1392]
+  - ranked C3 #14
+  - fix: A real plate sinks into lateral grooves under overlapping folds, shows the pink bed through translucent keratin with fine ridging and tone variation, and its free edge is thin, slightly ragged and translucent.
+  - spec §3.3
+  - also: The hallux plate sits on the toe like a glued acrylic tile: a crisp outline with skin merely butting against it, no lateral folds lapping over, a milky plate of one even tone with soft glossy blooms, and a free edge cut like plastic sheet.
+- **m28** [C1] Thin, jagged outline lines trace each toe's base on the sole like a mask edge or torn paper (hr.plantar); the real toe sulcus is a soft fold.
+  - at C1 major `pair_hr.plantar_eval.png` [80, 195, 1360, 715]
+  - ranked C1 #15
+  - fix: The toe-base sulcus is a soft curved fold with shading, with no outline.
+  - spec §3.4
+  - also: Thin, jagged outline lines trace the base of each toe on the sole, like a mask boundary or a torn paper edge, with a slight colour step across them.
+- **m29** [C1] The extensor tendons are thin, evenly spaced parallel ridges running at full strength down to the webs, the EHL no stronger than the slips to toes 2–5; real ones fade toward the MTPs and the EHL dominates.
+  - at C1 major `pair_p01.V5f.L_eval.png` [620, 0, 1710, 580]
+  - ranked C1 #17
+  - fix: The EHL is the broadest cord (5 mm, 1.5 mm proud); the EDL slips are thinner and fade toward the MTPs.
+  - spec §3.2
+  - also: The extensor tendons are thin, evenly spaced parallel ridges running at full strength right down to the webs; the EHL to the hallux is no stronger than the slips to toes 2–5.
+
+## Minor
+
+- **m30** [C1, C2] A straight seam runs from the hallux's IP crease into the pad's whorl centre with the ridges mismatched across it; toe 3's pad has the same line.
+  - at C1 minor `zoom_hr.plantar_eval_pad.png` [480, 0, 610, 510]; C2 minor `zoom_hr.plantar_eval_pad.png` [460, 0, 620, 520]
+  - ranked C1 #22, C2 #18
+  - fix: Ridges flow continuously around the whorl's core; no line runs through it.
+  - fix: Let the ridges flow continuously across the pad, with no discontinuity.
+  - spec §3.4
+  - also: A thin straight seam runs into the hallux pad's whorl centre, the ridges breaking across it.
+  - also: A thin straight seam runs from the base of the hallux pad into the whorl's centre; the ridges break and misalign across it.
+  - also: A straight seam runs from the hallux IP crease into the whorl centre with the ridges mismatched across it; the same line runs down toe 3's pad.
+- **m31** [C1] Toe 5 sits beside toe 4 as a separate small toe at the same level, instead of tucking partly under it.
+  - at C1 minor `pair_p01.V5f.L_eval.png` [1550, 455, 1795, 890]
+  - ranked C1 #20
+  - fix: A real 5th toe rolls and tucks against and slightly under the 4th, its nail facing up and outward.
+  - spec §3.3
+  - also: Toe 5 sits beside toe 4 as a separate small toe at the same level, rather than tucked partly under it.
+- **m32** [C2] The hallux tuft and the toe hairs are short, straight, parallel dark dashes, like scratches in the skin, not fine curved hairs lying flat toward the tips.
+  - at C2 minor `pair_p01.V5f.L_eval.png` [611, 580, 745, 725]
+  - ranked C2 #20
+  - fix: 8–12 hairs 5–8 mm long tapering from 0.035 to 0.02 mm, gently curved and lying flat toward the tip with 10–20° random yaw.
+  - spec §3.4
+  - also: The hallux tuft (and the toe hairs) read as short, straight, parallel dark dashes, like scratches in the skin rather than fine hairs.
+
+## Unrated: free-form, no located defect
+
+- **m33** [C1] Overall the foot reads young, soft and unused, a foot model's or a mannequin's rather than a forty-year-old's who lives in boots: every surface is clean and even, nothing is worn, reddened, thickened or marked. The anchor's men's feet all show their use.
+  - ranked C1 #1
+- **m34** [C3] Overall the foot is too young and too clean for a boot-wearing 40-year-old soldier: even tone, no redness or darkening at the knuckles and rub points, no dryness or flaking. It reads as a silicone prosthetic, not a working man's foot.
+  - ranked C3 #3
+- **m35** [C3] Toe skin is smooth and slightly waxy in V5f and hr.lesser: at 15-30 px/mm there is little cell or pore relief, and the knuckle creases are few and shallow where a man's toes show deep, darker wrinkles over each PIP.
+  - ranked C3 #8
+- **m36** [C2] The lateral malleolus reads from the side only as a soft swelling, with no crisp lower tip, no sinus tarsi hollow in front of it and no peroneal groove behind it; V8 shows it about 5 mm proud, so it is the modelling around it that is too soft.
+  - ranked C2 #9
+- **m37** [C3] Detail is sharp in one place and soft in the next: the plantar ridges are crisp and deep at 20 px/mm while the dorsum and toe tops at the same scale are nearly featureless, and the few hair strokes are pin-sharp on that soft skin.
+  - ranked C3 #9
+- **m38** [C1] The skin's colour variation is one cloudy noise of pale and darker blobs at a single scale over the whole foot (V3, V2), with no regional logic: no redness at knuckles, toe tips and nail folds, no dusky heel sides.
+  - ranked C1 #13
+- **m39** [C2] The front of the ankle has no transverse crease or fine parallel lines at the dorsiflexion line; a real ankle at rest shows at least one soft fold there.
+  - ranked C2 #14
+- **m40** [C2] The 5th toe stands apart from the 4th with an open gap and its nail facing mostly up. A boot-wearer's 5th toe is usually rolled further, nail facing outward, and pressed against or under the 4th.
+  - ranked C2 #15
+- **m41** [C1] At V5f's 15 px/mm the toes look smooth and faintly rubbery: no cell network, pores or dry flaking on the dorsum or the pulps; micro-relief shows only in the hr closeups.
+  - ranked C1 #18
+- **m42** [C3] The lesser toes repeat one design, the same smooth cylinder, soft knuckle and pulp bulb at three sizes, so the row reads copy-pasted rather than four individual toes.
+  - ranked C3 #18
+- **m43** [C1] The front of the ankle is smooth: no anterior ankle crease and none of the fine parallel lines above it (V1f, V2), which a real adult ankle shows at rest.
+  - ranked C1 #19
+- **m44** [C3] The back of the heel and ankle is mannequin-smooth: the Achilles is a faint ridge, there are no skin creases above the heel, and the malleoli read as soft swellings, not bony points with hollows around them.
+  - ranked C3 #19
