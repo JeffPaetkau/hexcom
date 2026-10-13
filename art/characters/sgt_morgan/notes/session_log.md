@@ -172,7 +172,9 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    not read, stamped knuckle creases, friction ridges as straight stripes instead of whorls,
    the extensor tendons) are worked as part of the whole-foot pass with its own round count;
    or keep iterating on the region; or step back to the foot's purpose (practice for the head)
-   and move on. Recommended: the first.
+   and move on. Recommended: the first. **Jeff, Tuesday 13 October: "Accept for now."** The
+   method is accepted at round 5's level; the whole-foot pass starts its own round count
+   (`foot_whole`), and the open items above are its work list.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
