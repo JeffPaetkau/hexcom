@@ -31,6 +31,15 @@ corners) and its own fold heights per side; the free edge is cut nearly straight
 back at a slant, as clippers leave them) with a flat cut face, and the bed ends in an arc (`bed_arc`), so the
 white edge is narrowest at the centre.
 
+Round 5 (critic round 4 m2, m3, m15, m17, m18, m20, m25; four rounds at 4 with every critic seeing a tile in
+an even gutter with exposed, bevelled edges and a French tip, whatever the shading): with `continuous` the
+nail and its folds are one surface. The plate's visible top is the skin's own surface (its dome, turning down
+into the lateral grooves over its last `edge_curl` mm), shaded as nail by the skin material through the
+attributes `nail_fields` returns; the folds are the same skin rolling over its margins, unevenly; the
+lunula, the cuticle and the onychodermal band are zones of that shading. Only the free edge is a separate
+mesh (`free_edge_mesh`): a thin sliver that emerges from the skin just behind the bed's end, so the cut is the
+one plate edge anywhere.
+
 Creases are wrinkle sections (a groove with low shoulders) along curves across a segment, varied along
 their length by a seeded wobble.
 """
@@ -80,6 +89,34 @@ def _blur2d(H, sigma_cells):
         M = np.apply_along_axis(lambda m: np.convolve(m, k, mode="same"), axis, M)
     out = np.where(M > 0.3, A / np.maximum(M, 1e-9), np.nan)
     return np.where(ok, out, np.nan)
+
+
+def _relax_springs(q, adj, n_dir, weight, iterations=3, lam=0.35, alpha=1.5):
+    """Round 5: the weighted vertices pulled toward their neighbours with weights |edge|^alpha (3-D lengths),
+    the move kept in the plane normal to n_dir: a vertex beside a steep step is drawn toward it, so after
+    reprojection onto the height field the step gets vertices of its own. (A plain umbrella Laplacian is
+    separable by axis and never moves a vertex sideways for a vertical step.) Jacobi steps on the active
+    vertices' rows of the CSR adjacency."""
+    ptr, nb = adj
+    active = np.nonzero(weight > 1e-4)[0]
+    if not len(active):
+        return q
+    deg = np.diff(ptr)
+    counts = deg[active]
+    offs = np.repeat(ptr[active] - np.concatenate([[0], np.cumsum(counts)[:-1]]), counts) + np.arange(counts.sum())
+    nbr = nb[offs]
+    row = np.repeat(np.arange(len(active)), counts)
+    w = weight[active][:, None]
+    n_dir = np.asarray(n_dir, float)
+    q = q.copy()
+    for _ in range(iterations):
+        e = q[nbr] - q[active][row]
+        ln = np.linalg.norm(e, axis=1) ** alpha + 1e-12
+        num = np.stack([np.bincount(row, ln * e[:, k], minlength=len(active)) for k in range(3)], 1)
+        d = num / np.bincount(row, ln, minlength=len(active))[:, None]
+        d -= (d @ n_dir)[:, None] * n_dir[None, :]
+        q[active] += lam * w * d
+    return q
 
 
 class Nail:
@@ -451,6 +488,145 @@ class Nail:
         """The lateral folds' height over the plate's edge, fading toward the free edge."""
         return self.P["fold_lat"] * self._fold_share(v)
 
+    # ---- round 5: the nail and its folds as one continuous surface (`continuous`)
+    def curl(self, v, x):
+        """How far the plate's visible surface turns down into its lateral groove over the last `edge_curl` mm
+        of its own (smooth) half-width, toward the fold that covers it (mm): the plate's sides slip under the
+        folds instead of meeting them square. Fades with the lateral folds toward the free edge, to
+        `curl_floor` of itself, so the free edge's corners keep a little of it."""
+        P = self.P
+        wc = P.get("edge_curl", 0.0)
+        v, x = np.asarray(v, float), np.asarray(x, float)
+        if not wc:
+            return np.zeros(np.broadcast(v, x).shape)
+        hp = self.half_plan(v, x)
+        r = np.clip((np.abs(x) - (hp - wc)) / wc, 0.0, 1.0)
+        fl = P.get("curl_floor", 0.35)
+        return P.get("edge_drop", 0.0) * r * r * (fl + (1.0 - fl) * self._fold_share(v))
+
+    def plate_vis(self, v, x):
+        """The plate's visible top, which with `continuous` is the skin's own surface: the fitted plate less
+        its curl into the lateral grooves."""
+        return self.plate_top(v, x) - self.curl(v, x)
+
+    def fe_thick(self, v=None):
+        """The free edge's thickness at the cut (mm)."""
+        return self.P.get("fe_thick", self.P["thick_edge"])
+
+    def _target_continuous(self, v, x, h):
+        """The skin's height at (v, x) when it is the plate's top itself (`continuous`). Every regime meets the
+        next at the same height:
+
+          * inside the visible outline, over the bed: the plate's visible surface (plate_vis);
+          * inside, from just behind the bed's end (`descend`): down under the free-edge sliver to the
+            hyponychium, `fe_thick` + `bed_gap` + `undercut` below the plate's top, never above the toe's own
+            skin (the sliver emerges from the skin over the same stretch, so the plate's top runs on unbroken);
+          * outside, where the plate rests on the bed: the fold, the toe's own skin rolling down onto the plate
+            over its last `rise` mm (1 - (1 - s / rise)^k: steep at the plate, level with the toe's skin at its
+            crest), each lateral fold its own width along the nail (`lat_width_wobble`, a slow wave per side),
+            so the line where skin meets plate is a tuck of varying depth, not a gutter of one width;
+          * outside, along the free sides: under the sliver's edge, opening out to the toe's own skin;
+          * beyond the free edge the nail lets go of the skin over 1.5 mm.
+
+        Returns (target, s)."""
+        P = self.P
+        s, nv, nx, p = self.outline(v, x)
+        top = self.plate_vis(v, x)
+        e = self.plate_vis(nv, nx)
+        Lb, Lb_n = self.L_bed_x(x), self.L_bed_x(nx)
+        a0, a1 = P.get("descend", (0.3, 0.9))
+        past = T.smoothstep(v, Lb - a0, Lb + a1)
+        past_n = T.smoothstep(nv, Lb_n - a0, Lb_n + a1)
+        gap = self.fe_thick() + P.get("bed_gap", 0.03) + P.get("undercut", 0.45)
+        inside = top + (np.minimum(h, top - gap) - top) * past
+        land = e + (np.minimum(h, e - gap) - e) * past_n           # = inside at s = 0
+        sd = np.where(np.asarray(x, float) < 0.0, -1.0, 1.0)
+        wob = P.get("lat_width_wobble", 0.0)
+        lat_w = P["lat_width"] * (1.0 + wob * np.where(sd < 0, self._slow_wave(nv, 8), self._slow_wave(nv, 9)))
+        rise = p * P.get("epo_w", 0.45) + (1.0 - p) * lat_w
+        xr = np.clip(s / np.maximum(rise, 1e-6), 0.0, 1.0)
+        rk = p * P.get("roll_k_prox", P.get("roll_k", 2.0)) + (1.0 - p) * P.get("roll_k", 2.0)
+        # the lip: `lip_roll` of a quarter ellipse (vertical where it lies on the plate, a broad round top: a
+        # fold rolled over the plate, whose face the eye does not see from above) and the rest the power curve
+        lr = p * P.get("lip_roll_prox", P.get("lip_roll", 0.0)) + (1.0 - p) * P.get("lip_roll", 0.0)
+        g = (1.0 - lr) * (1.0 - (1.0 - xr) ** rk) + lr * np.sqrt(np.clip(1.0 - (1.0 - xr) ** 2, 0.0, 1.0))
+        t_bed = land + (h - land) * g
+        reach = land + P.get("open", 1.0) * np.maximum(s, 0.0)
+        t_free = np.minimum(h, reach) - 0.15 * np.log1p(np.exp(-np.abs(h - reach) / 0.15)) \
+            * T.smoothstep(s, 0.0, 0.3)
+        outside = t_bed * (1.0 - past_n) + t_free * past_n
+        sig = T.smoothstep(s, -P.get("tuck", 0.06), P.get("tuck", 0.06))
+        target = inside * (1.0 - sig) + outside * sig
+        Le = self.L_x(x)
+        beyond = T.smoothstep(v, Le + 0.2, Le + 1.7)
+        return target + (h - target) * beyond, s
+
+    def nail_fields(self, v, x, s, p):
+        """What the skin material reads to shade the plate on the skin (`continuous`; look.py): (s, p, lunula)
+        and (x, v, w), mm: the signed distance to the visible outline, the proximal fold's share there, the
+        lunula's field (negative inside its crescent: v less its arc over its own half-width), across, along
+        from the visible proximal fold, past the bed's end."""
+        P = self.P
+        lh = max(P.get("lunula_half", 0.5 * P["width"]), 0.1)
+        arc = np.sqrt(np.clip(1.0 - (np.asarray(x, float) / lh) ** 2, 0.0, 1.0))
+        lun = v - P.get("lunula_mm", 0.0) * arc
+        w = v - self.L_bed_x(x)
+        return np.stack([s, p, lun], 1), np.stack([x, v, w], 1)
+
+    def free_edge_mesh(self, dv=0.08, dx=0.12, rim_rows=4):
+        """The free edge alone (`continuous`): a thin keratin sliver from `fe_back` mm behind the bed's (uneven)
+        end, where it emerges from the skin's plate surface (its top `fe_emerge` mm under it, its thickness
+        feathered from nothing over 0.45 mm), to the (uneven) cut, its corners rounded and thinner toward the
+        sides (`fe_side_thin`). Its top is the plate's visible surface, so the plate runs on unbroken into it.
+        Returns (vertices F mm, quads, uvw: u across, v from the proximal fold, w past the bed)."""
+        P = self.P
+        L, Lb, back = self.L, self.L_bed, P.get("fe_back", 0.5)
+        v_lo = Lb - back - P.get("bed_arc", 0.0) - P.get("bed_wave", 0.0)
+        nv = int(math.ceil((L - v_lo) / dv)) + 1
+        tt = np.linspace(0.0, 1.0, nv)
+        vn = v_lo + tt * (L - v_lo)                      # nominal stations, for the half-widths
+        half = []
+        for sgn, key in ((-1.0, "corner_m"), (1.0, "corner_l")):
+            cf = P.get(key, P["corner"])
+            e1 = np.clip(vn - (L - cf), 0.0, cf)
+            half.append(np.maximum(self.half_vis(vn, sgn) - (cf - np.sqrt(cf * cf - e1 * e1)), 0.3))
+        half_m, half_l = half
+        nx = int(math.ceil(2.0 * 0.5 * P["width"] / dx)) + 1
+        ss = np.linspace(-1.0, 1.0, nx)
+        X = np.where(ss[None, :] < 0.0, half_m[:, None], half_l[:, None]) * ss[None, :]
+        Tg = np.repeat(tt[:, None], nx, axis=1)
+        v0 = self.L_bed_x(X) - back
+        V = v0 + Tg * (self.L_x(X) - v0)
+        from_start = V - v0
+        top = self.plate_vis(V, X) - P.get("fe_emerge", 0.025) * (1.0 - T.smoothstep(from_start, 0.0, 0.3))
+        th = self.fe_thick() * (0.04 + 0.96 * T.smoothstep(from_start, 0.0, 0.45)) \
+            * (1.0 - P.get("fe_side_thin", 0.35) * np.abs(ss[None, :]) ** 4)
+        flat_top = self.to_world(V, X, top).reshape(-1, 3)
+        flat_bot = self.to_world(V, X, top - th).reshape(-1, 3)
+        idx = np.arange(nv * nx).reshape(nv, nx)
+        ring = np.concatenate([idx[0, :], idx[1:, -1], idx[-1, -2::-1], idx[-2:0:-1, 0]])
+        uvw0 = np.stack([X.ravel(), V.ravel(), (V - self.L_bed_x(X)).ravel()], axis=1)
+        jg, ig = np.meshgrid(np.arange(nv - 1), np.arange(nx - 1), indexing="ij")
+        a, b = idx[jg, ig].ravel(), idx[jg, ig + 1].ravel()
+        c, d = idx[jg + 1, ig + 1].ravel(), idx[jg + 1, ig].ravel()
+        verts, uvws = [flat_top, flat_bot], [uvw0, uvw0]
+        quads = [np.stack([a, d, c, b], 1), np.stack([a, b, c, d], 1) + nv * nx]
+        tp, bp = flat_top[ring], flat_bot[ring]
+        rows = [ring]
+        base = 2 * nv * nx
+        for r in range(1, rim_rows):
+            f = 0.5 - 0.5 * math.cos(math.pi * r / rim_rows)
+            verts.append(tp * (1.0 - f) + bp * f)
+            uvws.append(uvw0[ring])
+            rows.append(base + np.arange(len(ring)))
+            base += len(ring)
+        rows.append(ring + nv * nx)
+        m = len(ring)
+        nxt = (np.arange(m) + 1) % m
+        for r0, r1 in zip(rows[:-1], rows[1:]):
+            quads.append(np.stack([r0, r0[nxt], r1[nxt], r1], 1))
+        return np.vstack(verts), np.vstack(quads), np.vstack(uvws)
+
     def skin_target(self, v, x, h):
         """The skin's height at (v, x) given its reference height h. Every regime meets the next at the same
         height (round 1 switched between them at the outline and at the bed's end, which the 0.17 mm vertices
@@ -467,8 +643,11 @@ class Nail:
           * beyond the free edge the nail lets go of the skin over 1.5 mm.
 
         Where the plate runs on under the skin (its hidden margins and root) the skin stays `cover` above it.
-        Returns (target, s)."""
+        Returns (target, s). With `continuous` (round 5) the skin is the plate's top itself
+        (_target_continuous)."""
         P = self.P
+        if P.get("continuous"):
+            return self._target_continuous(v, x, h)
         s, nv, nx, p = self.outline(v, x)
         top = self.plate_top(v, x)
         e = self.plate_top(nv, nx)                                   # the plate's top at the outline point
@@ -525,9 +704,13 @@ class Nail:
                              nv=nv, nx=nx, beyond=beyond)
         return target, s
 
-    def apply(self, q, nrm, region):
+    def apply(self, q, nrm, region, adj=None):
         """Rebuild this toe's dorsal skin near the nail: the blurred dorsum, then the nail's target, along the
-        nail's normal (region: bool, the candidates). Returns the new positions and the bed mask."""
+        nail's normal (region: bool, the candidates). Returns the new positions and the bed mask. With
+        `continuous` and `relax_iters` (and adj, the skin's CSR adjacency) the vertices near the outline are
+        then spread within the nail's plane and set back on the target, a few times over (relax and reproject):
+        moved only along the normal, a fold's steep lip got one stretched, twisted face across it, which drew
+        a sawtooth along the proximal fold in clay (round 5's first build)."""
         P = self.P
         v, x, h = self.vx(q)
         W2 = 0.5 * P["width"]
@@ -574,6 +757,64 @@ class Nail:
         q[idx] += ((tgt - hi) * on_top * edge)[:, None] * self.n[None, :]
         bed = np.zeros(len(q))
         lb = self.L_bed_x(xi)
+        if P.get("continuous"):
+            n_it = int(P.get("relax_iters", 0))
+            if n_it and adj is not None:
+                # the zone: the top skin within reach of the outline (the lip, the tuck, the plate's margin)
+                reach = P.get("relax_reach", 2.5)
+                zone = on_top * edge * (1.0 - T.smoothstep(np.abs(s), reach, reach + 1.0))
+                w_all = np.zeros(len(q))
+                w_all[idx] = zone
+                act = zone > 1e-4
+
+                def ref(vv, xx):
+                    raw_ = np.nan_to_num(self.skin_vx(vv, xx, blurred=False), nan=0.0)
+                    hs_ = np.nan_to_num(self.skin_vx(vv, xx), nan=0.0)
+                    return raw_ + (hs_ - raw_) * wd
+                ref0 = ref(vi, xi)
+                for _ in range(n_it):
+                    q = _relax_springs(q, adj, self.n, 0.9 * w_all, iterations=int(P.get("relax_steps", 3)),
+                                       lam=P.get("relax_lam", 0.35), alpha=P.get("relax_alpha", 1.5))
+                    v2, x2, h2 = self.vx(q[idx])
+                    # the reference height moves with the vertex: its own height plus the map's change
+                    href2 = href + (ref(v2, x2) - ref0)
+                    tgt2, _ = self.skin_target(v2, x2, href2)
+                    q[idx] += ((tgt2 - h2) * act)[:, None] * self.n[None, :]
+                # the tuck faired: a crease narrower than the vertices zigzags wherever it runs across the grid
+                # (the hatching along the proximal fold in clay); Taubin passes over the band either side of the
+                # outline take the vertex-scale zigzag out and keep the crease (the contact line itself is
+                # drawn by the shader, from s)
+                n_fair = int(P.get("tuck_fair", 0))
+                if n_fair:
+                    import macro as M
+                    band = P.get("tuck_band", 0.35)
+                    w_t = np.zeros(len(q))
+                    w_t[idx] = on_top * edge * (1.0 - T.smoothstep(np.abs(s), band, band + 0.3))
+                    q = M.taubin(q, adj, 0.8 * w_t, iterations=n_fair)
+                # the hollow under the free edge and its rim on the pulp faired as well: where the skin rises back
+                # from under the free edge to the pulp, vertices only partly on top (the nose's front) kept their
+                # height beside ones that moved, a tiny fold (a white fleck in clay, a dark slit in Cycles: round
+                # 4's m19, round 5's first full build)
+                n_front = int(P.get("front_fair", 0))
+                if n_front:
+                    import macro as M
+                    w_f = np.zeros(len(q))
+                    w_f[idx] = edge * T.window(vi, self.L - 1.2, self.L - 0.6, self.L + 2.2, self.L + 3.0) \
+                        * (1.0 - T.smoothstep(np.abs(xi), 0.5 * P["width"] + 0.5, 0.5 * P["width"] + 2.0))
+                    q = M.taubin(q, adj, 0.8 * w_f, iterations=n_front)
+                vi, xi, _ = self.vx(q[idx])
+            # round 5: the plate is shaded on the skin itself (look.py reads these): only the vertices that
+            # became the top surface carry the outline's distance; the rest read as far outside
+            s, _, _, pp = self.outline(vi, xi)
+            A, B = self.nail_fields(vi, xi, s, pp)
+            A[:, 0] = np.where(on_top * edge > 0.5, A[:, 0], 9.0)
+            self.shade = {"idx": idx, "A": A, "B": B}
+            # the folds' and the plate's skin keep the bed group's soft margin only (below the recipe's bed
+            # edge: no bed pink, the line network faded on the folds, as round 4)
+            halo = P.get("fold_halo", 0.0) * (1.0 - T.smoothstep(s, 0.0, P.get("fold_halo_mm", 1.8))) \
+                * (1.0 - T.smoothstep(vi, self.L, self.L + 1.0))
+            bed[idx] = halo
+            return q, bed
         bed[idx] = (1.0 - T.smoothstep(s, -0.4, 0.05)) * (1.0 - T.smoothstep(vi, lb - 0.1, lb + 0.5))
         # round 4: the folds as the bed group's soft margin (below 0.5, so no face counts as bed and no pink
         # spreads): the skin recipe fades its line network there (spec 16's Skin.Foot, LINES["fold_mask"]),

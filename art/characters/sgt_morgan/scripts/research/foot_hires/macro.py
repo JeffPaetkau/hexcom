@@ -283,6 +283,44 @@ def pulps(q, nrm, segs, groups, P, report):
     return out
 
 
+def deepen(q, segs, groups, P, report=None):
+    """Round 5 (critic round 4 m5: the hallux about 29-31 mm wide but only 21-22 deep at the IP and 18.5 at the
+    nail root, a broad flat paddle; Jeff's direction pairs the 30 mm width with about 25 mm of depth at the IP,
+    and his photographs show a round, full big toe): the hallux made deeper in its own plan frame (Plan, so a
+    station is a vertical plane). The upper part of each section (by its height in the section) rises by
+    `deepen1_up` from 6 mm past the MTP to the IP, fully over the distal phalanx, easing to `deepen1_tip` of
+    itself at the tip; the lower part under the IP and the proximal pad sinks by `deepen1_down`, never nearer
+    the floor than `deepen1_floor`. Moves are vertical and change slower than 1:1 with height, so nothing
+    folds; the web's closing (after) blends the toe's lateral side into the web again. Returns positions."""
+    up, down = P.get("deepen1_up", 0.0), P.get("deepen1_down", 0.0)
+    if not (up or down):
+        return q
+    h1, h2 = segs["h1"], segs["h2"]
+    w1 = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"], 0.0, 1.0)
+    pl = Plan(q, w1 > 0.5, h1.o, h2.point(h2.length, 0.0, 0.0))
+    s, u, h = pl.local(q)
+    umid, half, hlo, hhi = pl.section(s)
+    rel = (h - hlo) / np.maximum(hhi - hlo, 1.0)
+    s_ip = pl.station(h2.o) + P.get("ip_shift", 0.0)
+    s_tip = pl.s_max
+    tip = P.get("deepen1_tip", 0.45)
+    prof_up = T.smoothstep(s, 6.0, s_ip - 2.0) * (1.0 - (1.0 - tip) * T.smoothstep(s, s_tip - 9.0, s_tip))
+    dz = up * prof_up * T.smoothstep(rel, 0.3, 0.85)
+    prof_dn = T.window(s, 8.0, s_ip - 8.0, s_ip + 3.0, s_ip + 9.0)
+    floor = float(q[:, 2].min())
+    want = down * prof_dn * (1.0 - T.smoothstep(rel, 0.1, 0.45))
+    room = np.maximum(q[:, 2] - (floor + P.get("deepen1_floor", 0.6)), 0.0)
+    k = 0.15
+    dn = -np.clip(-k * np.logaddexp(-want / k, -room / k), 0.0, None)     # down by softmin(want, room)
+    fade = T.smoothstep(w1, 0.25, 0.85)
+    out = q.copy()
+    out[:, 2] += (dz + dn) * fade
+    if report is not None:
+        report["deepen"] = {"up_max": round(float((dz * fade).max()), 2), "down_max": round(float((-dn * fade).max()), 2),
+                            "s_ip": round(float(s_ip), 2), "s_tip": round(float(s_tip), 2)}
+    return out
+
+
 def apply(q, nrm, segs, groups, adj, P, report):
     """The large forms of the region (method a). groups: {name: weights} of the dense skin; returns the
     new positions and the crease weight."""
@@ -487,7 +525,10 @@ def close_folds(q, segs, groups, P, adj=None, report=None):
     H[~np.isfinite(H)] = np.nan
     Hs = D._fill(D._blur2d(D._fill(H), 0.5 / cell))
     Hb = _blur_rows(Hs, sig / cell)
-    k = 0.06
+    # round 5 (critic round 4 m4: a crisp seam with a glinting ridge still rings toe 2's underside): the soft
+    # minimum's knee was 0.06 mm, so the closed surface creased where the blur crossed the raw underside, a line
+    # either side of the closed fold; `fold_close_k` rounds the crossing over a few tenths of a millimetre
+    k = P.get("fold_close_k", 0.06)
     Hc = Hb - k * np.logaddexp(0.0, (Hb - Hs) / k)          # smin(Hs, Hb): the closed underside
     fine = 5
     Sf, Cf = _resample(Hs, fine), _resample(Hc, fine)
@@ -512,7 +553,8 @@ def close_folds(q, segs, groups, P, adj=None, report=None):
     umid, half, _, _ = pl.section(ss)
     side = 1.0 - T.smoothstep(np.abs(uu - umid) / np.maximum(half, 1.0), P.get("fold_close_side", 0.55), 1.0)
     s_dip = pl.station(t2d.o)
-    win = np.maximum(T.window(ss, -4.5, -2.5, 5.5, 7.5), T.window(ss, s_dip - 3.0, s_dip - 1.5, s_dip + 1.5, s_dip + 3.0))
+    w0, w1, w2, w3 = P.get("fold_close_win", (-4.5, -2.5, 5.5, 7.5))
+    win = np.maximum(T.window(ss, w0, w1, w2, w3), T.window(ss, s_dip - 3.0, s_dip - 1.5, s_dip + 1.5, s_dip + 3.0))
     omega = lowest * side * win * own[sel]
     # spread the band: relax the plan coordinates (s, u) where omega is full, the rest held
     s2, u2 = ss, uu
@@ -587,11 +629,16 @@ def toe2_outline(q, nrm, segs, groups, P, report):
     ]
     g = np.zeros(len(q))
     up = np.zeros(len(q))
-    for amt, sc, sig, sh in jobs:
+    # round 5 (critic round 4 m4: from below the outline stepped in at the PIP, the toe's end a cap fitted on):
+    # the knuckle's condyles stand out on the upper sides; on the lower sides, the outline seen from below, only
+    # `t2_knuckle_low` of it
+    upper = T.smoothstep((h - hlo) / np.maximum(hhi - hlo, 1.0), 0.3, 0.7)
+    low = P.get("t2_knuckle_low", 1.0)
+    for i, (amt, sc, sig, sh) in enumerate(jobs):
         if not amt:
             continue
         gs = T.gauss(s - sc, sig)
-        g += amt * gs * side
+        g += amt * gs * side * ((low + (1.0 - low) * upper) if i == 0 else 1.0)
         up += sh * max(amt, 0.0) * gs * top
     g, up = g * w2, up * w2
     pos = np.maximum(g, 0.0) + up
@@ -675,7 +722,8 @@ def creases(q, nrm, segs, P, groups=None):
         # the plantar flexion creases, soft dips in plan frames from their joints (P: crease1_s, crease2p_s,
         # crease2d_s; sigma `width`); toe 2's PIP crease lies in the fold close_folds rounded
         ("plan_h2", P.get("crease1_s", 1.0), 0.3, 1.0, -1.0, -1.5, 8.0, 0.8, 0.35),
-        ("plan_t2m", P.get("crease2p_s", 1.5), 0.22, 0.7, -1.0, -0.6, 5.0, 0.8, 0.35),
+        ("plan_t2m", P.get("crease2p_s", 1.5), P.get("crease2p_d", 0.22), P.get("crease2p_w", 0.7), -1.0, -0.6, 5.0, 0.8,
+         0.35),
         ("plan_t2d", P.get("crease2d_s", 0.8), 0.2, 0.6, -1.0, -0.5, 4.5, 0.8, 0.35),
     ]
     plans = {}

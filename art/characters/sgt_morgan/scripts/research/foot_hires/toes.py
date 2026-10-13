@@ -19,7 +19,10 @@ PARAMS = {
     # `sink` below its underside), so round 1's inflations (pulp, tip) and the spade are off
     "pulp1": 0.0, "pulp2": 0.0,          # round 1's pulp inflations (2.4, 1.4)
     "tip1": 0.0, "tip2": 0.0,            # round 1's noses carried forward (2.0, 1.0)
-    "pulp1_e": {"frame": "floor", "back": 14.3, "radii": [14.0, 14.8, 6.8], "lift": 0.15, "k": 2.5},
+    # round 5 (critic round 4 m5: broad and flat): the hallux's pad a little narrower across (14.8 -> 14.2) and
+    # taller (6.8 -> 7.4), the toe deeper by `deepen1_*` (macro.deepen)
+    "pulp1_e": {"frame": "floor", "back": 14.3, "radii": [14.0, 14.2, 7.4], "lift": 0.15, "k": 2.5},
+    "deepen1_up": 2.2, "deepen1_down": 0.6, "deepen1_tip": 0.45, "deepen1_floor": 0.6,
     "pulp2_e": {"frame": "seg", "back": 7.0, "radii": [7.5, 7.9, 4.6], "sink": 0.5, "k": 1.5},
     "lift1": 2.4, "lift2": 0.0,          # the distal dorsum raised toward the tip (the hallux's wedge)
     "crown1": 0.8, "crown2": 0.4,        # the dorsum over the nail raised along its midline
@@ -27,12 +30,20 @@ PARAMS = {
                                          # on the plantar face too: the hallux's V-notch)
     # round 4: the plantar flexion creases' stations in the toes' plan frames (macro.Plan: mm from the joint,
     # horizontally), so each lies under its joint: the hallux IP, toe 2's PIP and DIP
-    "crease1_s": 1.0, "crease2p_s": 1.5, "crease2d_s": 0.8,
+    "crease1_s": 1.0, "crease2p_s": 1.8, "crease2d_s": 0.8,
     # round 4: toe 2's plantar PIP fold (part 01's curl leaves a sharp kink of squeezed faces) rounded by a
     # closing of the underside along the toe, a Gaussian of this sigma (mm; macro.close_folds; 0 = off), the
     # squeezed band spread by `fold_close_relax` Laplacian passes, over the middle `fold_close_side` of the
     # toe's half-width, fading to its sides (sigma 2.0 with 900 passes left a faint rectangle at the edges)
-    "fold_close_sigma": 1.6, "fold_close_relax": 400, "fold_close_side": 0.6,
+    "fold_close_sigma": 2.6, "fold_close_relax": 400, "fold_close_side": 0.6,
+    # round 5 (critic round 4 m4: a crisp seam still rings toe 2's underside). Sliced, the curled toe's steep distal
+    # face met the proximal pad at an apex rounded over only 0.3-0.4 mm: the cuff's edge. The closing now blurs
+    # 2.6 mm along the toe (1.6) over a wider window (`fold_close_win`, stations from the PIP), its soft-minimum knee
+    # 0.3 mm (0.06 creased the crossing), and the plantar PIP crease lies just before the bend (1.8 mm past the joint
+    # in plan; the apex is about 2 mm past it, as sliced), wider and shallower: at 0.18 mm on the bend it notched the
+    # apex, a soft fold now rather than a groove beside an edge
+    "fold_close_k": 0.3, "fold_close_win": (-6.0, -3.0, 6.5, 9.0),
+    "crease2p_d": 0.1, "crease2p_w": 1.1,
     "droop1": 3.0, "droop2": 1.2,        # the tips' dorsum turned down toward the nose ...
     "droop_reach1": 4.5, "droop_reach2": 3.5,   # ... over the stretch ahead of the free edge only (round 1: 9, 5.5)
     "square1": -0.15, "square2": -0.15,  # the distal sections' upper corners (share of their radius): round 1
@@ -70,29 +81,57 @@ PARAMS = {
     # `lat_width`: a crevice, not a gutter); the proximal fold a broad soft roll lying low on the plate
     # (`roll_k_prox`, `epo_w`), the cuticle drawn on the plate by the recipe; a thinner free edge, cut a little
     # less evenly; the folds marked as the bed group's soft margin (`fold_halo`), where the skin is smooth
-    "nail1": {"width": 18.5, "length": 17.5, "free_edge": 1.0, "thick_root": 0.5, "thick_edge": 0.5,
+    # round 5 (critic round 4 m2, m3, m15, m17, m18, m20, m25: four rounds at 4, every critic seeing a tile in an
+    # even gutter with exposed, bevelled edges and a French tip whatever the shading): `continuous`, the nail and
+    # its folds one surface (detail.py): the plate's visible top is the skin, turning down into the lateral
+    # grooves over its last `edge_curl` mm by `edge_drop`; the lateral folds roll over it with a width that
+    # varies along the nail (`lat_width_wobble`) and persist toward the bed's end (`lat_fade`); the proximal fold
+    # a broader roll a little higher over the root; the free edge a separate sliver only (`fe_*`: thinner, its
+    # start buried `fe_back` mm behind the bed's end, its sides thinner), narrower, its line and the bed's end
+    # less even; the lunula (`lunula_mm` visible at the centre over `lunula_half`, strength `lunula_k`) and the
+    # cuticle are shading zones (look.NAIL_LOOK); toe 2's free edge a little further back from its nose
+    "nail1": {"width": 18.5, "length": 17.5, "free_edge": 0.7, "thick_root": 0.5, "thick_edge": 0.5,
               "radius": 11.0, "hidden_side": 1.1, "root": 4.5, "tip_margin": 3.0, "roll_deg": -5.0,
-              "fold_prox": 0.22, "fold_lat": 0.55, "prox_width": 2.6, "lat_width": 0.9, "corner": 1.2,
-              "level": 4.6, "cuticle": 1.9, "corner_prox": 3.8, "lift_root": -0.32, "lift_reach": 3.0,
-              "epo_w": 0.9, "roll_k": 2.6, "roll_k_prox": 1.5, "fold_asym": 0.2, "fold_wobble": 0.35,
+              "fold_prox": 0.22, "fold_lat": 0.45, "prox_width": 2.6, "lat_width": 1.6, "corner": 1.2,
+              "level": 4.6, "cuticle": 1.9, "corner_prox": 3.8, "lift_root": -0.38, "lift_reach": 3.0,
+              "epo_w": 1.4, "roll_k": 2.6, "roll_k_prox": 1.8, "fold_asym": 0.2, "fold_wobble": 0.35,
               "cover_wobble": 0.35, "open_bed": 1, "fold_halo": 0.42, "fold_halo_mm": 1.8,
               "plan": [[0.0, 0.92], [0.35, 0.97], [0.7, 1.0], [1.0, 1.0]], "asym": 0.04,
-              "corner_m": 1.6, "corner_l": 1.3, "clip": [0.6, 6.0, 9.0], "bed_arc": 0.8,
-              "lat_fade": (0.55, 0.92), "bed_wave": 0.1, "edge_wave": 0.05},
-    "nail2": {"width": 10.5, "length": 10.0, "free_edge": 0.75, "thick_root": 0.36, "thick_edge": 0.36,
-              "radius": 6.0, "hidden_side": 0.7, "root": 2.8, "tip_margin": 1.8, "roll_deg": 0.0,
-              "fold_prox": 0.16, "fold_lat": 0.36, "prox_width": 1.6, "lat_width": 0.7, "corner": 1.7,
-              "level": 3.0, "cuticle": 1.8, "corner_prox": 2.6, "lift_root": -0.22, "lift_reach": 2.0,
-              "epo_w": 0.6, "roll_k": 2.4, "roll_k_prox": 1.5, "fold_asym": -0.1, "fold_wobble": 0.3,
+              "corner_m": 1.6, "corner_l": 1.3, "clip": [0.6, 6.0, 9.0], "bed_arc": 0.55,
+              "lat_fade": (0.6, 1.1), "bed_wave": 0.15, "edge_wave": 0.07,
+              "continuous": 1, "edge_curl": 1.4, "edge_drop": 0.22, "curl_floor": 0.2, "lat_width_wobble": 0.35,
+              "tuck": 0.15, "lip_roll": 0.2, "lip_roll_prox": 0.1,
+              "relax_iters": 3, "tuck_fair": 12, "front_fair": 20, "undercut": 0.3, "fe_thick": 0.4, "fe_back": 0.5, "fe_emerge": 0.012, "descend": (0.15, 0.9), "fe_side_thin": 0.4,
+              "lunula_mm": 2.0, "lunula_half": 5.5, "lunula_k": 0.6, "root_dive": 0.0},
+    "nail2": {"width": 10.5, "length": 10.0, "free_edge": 0.6, "thick_root": 0.36, "thick_edge": 0.36,
+              "radius": 6.0, "hidden_side": 0.7, "root": 2.8, "tip_margin": 2.2, "roll_deg": 0.0,
+              "fold_prox": 0.16, "fold_lat": 0.32, "prox_width": 1.6, "lat_width": 1.1, "corner": 1.7,
+              "level": 3.0, "cuticle": 1.8, "corner_prox": 2.6, "lift_root": -0.26, "lift_reach": 2.0,
+              "epo_w": 1.0, "roll_k": 2.4, "roll_k_prox": 1.8, "fold_asym": -0.1, "fold_wobble": 0.3,
               "cover_wobble": 0.22, "open_bed": 1, "fold_halo": 0.42, "fold_halo_mm": 1.2,
               "plan": [[0.0, 0.9], [0.3, 0.98], [0.6, 1.0], [1.0, 0.93]], "asym": -0.03,
-              "corner_m": 1.9, "corner_l": 1.5, "clip": [0.5, 5.0, 9.0], "bed_arc": 0.45,
-              "lat_fade": (0.55, 0.9), "bed_wave": 0.08, "edge_wave": 0.04},
+              "corner_m": 1.9, "corner_l": 1.5, "clip": [0.5, 5.0, 9.0], "bed_arc": 0.35,
+              "lat_fade": (0.6, 1.1), "bed_wave": 0.12, "edge_wave": 0.06,
+              "continuous": 1, "edge_curl": 0.9, "edge_drop": 0.14, "curl_floor": 0.2, "lat_width_wobble": 0.3,
+              "tuck": 0.12, "lip_roll": 0.2, "lip_roll_prox": 0.1,
+              "relax_iters": 3, "tuck_fair": 12, "front_fair": 20, "undercut": 0.25, "fe_thick": 0.3, "fe_back": 0.4, "fe_emerge": 0.01, "descend": (0.12, 0.8), "fe_side_thin": 0.4,
+              "lunula_mm": 0.5, "lunula_half": 2.8, "lunula_k": 0.25, "root_dive": 0.0},
+    # round 5 (critic round 4 m26, m1): spec 01 §3.4's skin tints (method_fields.tint_masks, look.TINT) and the
+    # toes' hair (hair.py)
+    "tint": 1, "hair": 1,
+    # round 5 (critic round 4 m4): Foot.Sole on toes 1-2 from the dense normals, diffused (method_fields.soften_sole)
+    "toe_sole": 1, "toe_sole_smooth": 40,
+    # round 5: folds of a few faces on toes 1-2 laid flat after the nails and creases (method_fields.untangle:
+    # Laplacian passes over the folded faces and `untangle_rings` rings round them; round 4's m19 fleck)
+    "untangle": 30, "untangle_rings": 4,
     # toe 2's outline in plan (round 3, critic round 2 m5: an even tube): the PIP knuckle, the middle phalanx's
     # waist, the DIP and the pulp's flare (mm sideways on the toe's sides; macro.toe2_outline). Round 4: in the
     # toe's plan frame (stations in mm from the PIP; the waist midway to the DIP by default), sideways, not
     # along the normals (round 3's waist folded the plantar skin under the PIP: the sleeve cuff)
-    "t2_knuckle": 1.6, "t2_waist": -1.2, "t2_dip": 0.0, "t2_flare": 0.6, "t2_gap": 0.35,
+    "t2_knuckle": 1.6, "t2_waist": -1.0, "t2_dip": 0.0, "t2_flare": 0.6, "t2_gap": 0.35,
+    # round 5 (critic round 4 m4): the knuckle's share on toe 2's lower sides (seen from below the outline stepped
+    # in at the PIP)
+    "t2_knuckle_low": 0.3,
 }
 
 

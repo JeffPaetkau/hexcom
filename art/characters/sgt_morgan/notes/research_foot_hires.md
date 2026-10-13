@@ -272,3 +272,95 @@ its scale, round 3 beside round 4: `renders/research/foot_hires/fields_r4/sbs/` 
 Still open: the PIP fold's line on toe 2; the clay outline groove round the plates; the free edge's squared lateral
 corner (m23); the dorsal knuckle wrinkles and toe 2's DIP crease (m8, m14: the shader's crease groove on narrow
 masks); the base sulcus, tendons, veins, hair, pulps, web shelf and friction ridges (m6, m7, m9-m13); toes 3-5.
+
+## Round 4 fixes (2026-10-12)
+
+Critic round 4 (`notes/critic/foot_hires_r4/tally.md`): 4 / 4 / 4, the fourth round at 4, one blocking (no hair).
+Fixed in run `fields_r5` (parameters in `toes.PARAMS`, marked "round 5"); round 5's packet is
+`renders/research/foot_hires/critic/r5/`. Every image of round 4's packet beside the same view of round 5 at the
+packet's scale: `renders/research/foot_hires/fields_r5/sbs/sbs_<packet file>.png`.
+
+* **The nail and its folds as one surface (m2, m3, m15, m17, m18, m20, m25).** Why four rounds stalled: the plate
+  was a separate shell and the skin was fitted round it, so wherever they met the shell's thickness showed as a
+  bevel, the skin met it in an intersection crease of one width all round (the gutter), and every zone was a
+  colour on a refracting slab (the French tip, the white stripe, the white crescent). Now (`continuous`,
+  `detail.Nail._target_continuous`) the plate's visible top is the skin's own surface: the fitted dome, turning
+  down 0.22 mm (toe 2 0.14) into each lateral groove over its last 1.4 mm (0.9; `edge_curl`, `edge_drop`). The
+  folds are the same skin rolling down onto it: the lateral folds 1.6 mm wide (toe 2 1.1), each varying by a
+  third along the nail on its own slow wave (`lat_width_wobble`) and kept to the bed's end (`lat_fade`), the
+  proximal fold a 1.4 mm roll (1.0) 0.38 mm over the plate's root. The skin meets the plate in a tuck faired by
+  Taubin passes (`tuck_fair`): a tuck narrower than the 0.17 mm vertices zigzagged across the mesh grid, a
+  hatching along the proximal fold in clay. Before that a length-weighted spring relaxation in the nail's plane,
+  reprojected each pass (`relax_iters`, `_relax_springs`; a plain Laplacian is separable by axis and never moves a
+  vertex sideways toward a step), gives the lips vertices of their own. The thin contact line is drawn by the
+  shader from the interpolated distance to the outline, which stays smooth between vertices.
+  The skin material shades the plate (`look.nail_on_skin`: a Principled nail mixed over Skin.Foot where
+  `Hires.NailA`'s distance s < 0 and `Hires.NailB`'s w < 0, fields written by `method_fields.write_nail_fields`):
+  a pink-beige a little lighter than the toe, satin, faint longitudinal streaks and ridges; the lunula a soft milky
+  crescent, 2 mm at the centre over the middle 11 mm at strength 0.6, its border softened over 0.9 mm and half
+  under the fold (toe 2 0.5 mm at 0.25); the cuticle the fold's skin running 0.35 mm onto the plate with a ragged
+  edge; a narrow pink-brown onychodermal band (round 4's was paler than the plate: the white stripe); a faint
+  yellow cast. The free edge is the only separate mesh (`free_edge_mesh`): a sliver 0.4 mm thick (toe 2 0.3), from
+  0.5 mm behind the bed's uneven end, where it emerges from the skin's plate surface with its thickness feathered
+  from nothing, to the cut, its sides thinner and its corners rounded; faint yellow-grey keratin with a trace of
+  grime seen through it (`look.dress_free_edge`), 0.7 mm wide on the hallux (was 1.0) and 0.6 on toe 2, its line
+  and the bed's end uneven. The hollow under it is shallower (`undercut` 0.3 / 0.25, was 0.45) and faired
+  (`front_fair`).
+  Three causes found on the way. The plate's root dive behind the proximal fold, smeared forward by the fit's 1.5
+  mm smoothing, sloped the first millimetre of the visible plate down into the fold, so the fold seemed to start
+  1 mm in and the lunula's colour lay on that slope as a pale strip (round 4's white sliver against the fold);
+  with the plate on the skin nothing is hidden at the root, so `root_dive` is 0 (found by striping v, x and the
+  lunula's field in the shader). A closed shell's area-weighted normal sums to zero, so `orient_plate` turned the
+  first sliver inside out; closed shells are oriented by signed volume (`method_fields.orient_closed`). And the
+  fleck under the hallux's free edge (m19, which the critics took for the plate piercing the hyponychium) is a
+  fold: 32 pairs of faces turned over at the front of the pulp's ellipsoid, where `macro.pulps` grows the skin
+  along normals that turn faster than the growth. `method_fields.untangle` finds faces turned more than 120
+  degrees from a neighbour on toes 1-2 after the nails and creases and lays them flat with Laplacian passes over
+  them and four rings round them; the fleck is gone in clay and the slit in Cycles.
+  At the packet's scale the plates now read as nails set in the toes, with no white crescent, stripe or French
+  tip; in clay the plate runs into soft rolled folds with no rim or bevel, the free edge's cut the only edge; a
+  thin, fairly even tuck line still outlines the plate in clay.
+* **The hallux's depth (m5).** `macro.deepen`, in the hallux's plan frame: the upper part of each section rises 2.2
+  mm from 6 mm past the MTP, fully from the IP over the distal phalanx, easing to 45 % at the tip; the lower part
+  under the IP and the proximal pad sinks 0.6 mm (never nearer the floor than 0.6); the pulp's ellipsoid 14.2 mm
+  across (14.8) and 7.4 tall (6.8). Measured (`report["measure"]`, vertical extent at round 4's stations): 25.1 mm
+  deep at the IP (round 4 22.3), 20.7 at the nail root (18.7), 9.8 at the free edge (8.2); widest 28.4 mm, at the
+  pulp (29.4); at the nail root 28.3 wide by 20.8 deep, 0.73 (0.64). Jeff's photographs show a round, full big toe,
+  so the depth went up rather than the width down; the width fell a little with the narrower pad. In the medial
+  clay the dorsum stands higher from the IP to the nose and the pad hangs a little lower under the IP.
+* **Toe 2's plantar seam (m4).** Two halves. Colour and texture: part 01's `Foot.Sole` is made on the 5 mm cage, so
+  under the curled PIP, where the cage's faces are squeezed into the fold, it stepped from smooth skin to ridged
+  sole skin within a fraction of a millimetre; on toes 1-2 it is now also taken from the dense normals and
+  diffused over about 2 mm (`method_fields.soften_sole`). Form: sliced, the curled toe's steep distal face met the
+  proximal pad at an apex rounded over only 0.3-0.4 mm, the cuff's edge; the closing now blurs 2.6 mm along the
+  toe (1.6) over a wider window (`fold_close_win`), its soft-minimum knee 0.3 mm (0.06 creased the crossing), the
+  knuckle's sideways growth kept to the upper sides (30 % below, `t2_knuckle_low`) and the waist eased (-1.0, was
+  -1.2), and the plantar PIP crease is wider and shallower, just before the bend (1.8 mm past the joint, sigma
+  1.1, 0.1 deep: at 0.18 on the bend it notched the apex). At the packet's scale the ridges run on across the
+  crease, the flecked patch above it is gone and the outline barely steps (`sbs_pair_hr.plantar_eval.png`); in
+  clay a thin, softer line remains at the PIP, and at 1.6x a faint banding shows at the closing window's sides.
+* **Colour (m26).** Through the trial's own copy of Skin.Foot (`look.tint_skin`, base colour only) from
+  `Hires.Tint` (`method_fields.tint_masks`): capillary redness (#b4645a at up to 30 %) over the dorsal knuckles
+  (hallux IP, toe 2 PIP and DIP, the first MTP faintly) and all round the toes' last 6-9 mm; spec 01 §3.4's
+  blue-grey #a89a95 at up to 12 % over the hallux's dorsum; the creases 10 % darker. At the packet's scale the
+  knuckles and tips are a little pinker and the creases a little darker; the cool cast is faint, as spec 01 asks.
+* **Hair (m1, blocking).** `hair.py`: Blender hair curves, `Hires.L.Hair`, 10 hairs of 4-7 mm on a 12 x 10 mm patch
+  of the hallux's proximal phalanx and 3 of 3-5 mm on toe 2's, 0.035 mm radius at the root and 0.014 at the tip,
+  grown along the skin (leaving the follicle at 30 degrees and lying down within a millimetre), heading distally
+  with 12 degrees of random yaw and a random bend of about 25 degrees over each hair (straight strands read as
+  scratches in the first render); Principled Hair by melanin (0.82, redness 0.45; spec 16's Hair.Body is planned,
+  not built), Cycles curves as 3D tubes; hidden in the clay tier. At the packet's scale the tuft reads as fine
+  dark hairs lying along the hallux's proximal phalanx (front and medial views).
+
+No library changes: everything is in `scripts/research/foot_hires/` (the nail's and the tints' shading are the
+trial's own nodes added to its copy of Skin.Foot; `bl.py selftest --lib` passes). For the library later: Skin.Foot
+to take the nail as a layer read from per-vertex nail fields (s, p, lunula, v, w) with the contact line, the free
+edge a mesh of its own, replacing Nail.Plate's refracting shell; the tints as masks part 01 publishes; Hair.Body.
+
+Cost: build 195 s from scratch (34 s with the stage cached, the nails about 9 of it), render 95 s a view at 2048 px
+eval.
+
+Still open: from below the free edges' corners show as dark specks past the pulps (m14); at the 89 px/mm zoom the
+free edge is still a fairly even band; round 4's other majors (the web's shelf m6, the hallux's plantar sulcus and
+pads m7, the stamped knuckle wrinkles m8, the tendons m9, the friction ridges m10, the MTP scar line m11, toe 2's
+DIP crease m12, the micro-relief m13, toe 2's distal segment m16); toes 3-5 keep part 01's old nails (declared).

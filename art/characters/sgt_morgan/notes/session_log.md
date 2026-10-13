@@ -160,7 +160,19 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    plate edge to see), soften the lunula's edge and drop the white stripe; give the big toe
    its depth (21 mm at the IP for a 31 mm width reads flat); the seam under toe 2; capillary
    colour on knuckles and tips; the toe hair (spec 01 §6.1); then round 5, the last before
-   spec 18's escalation rule sends the region to Jeff,
+   spec 18's escalation rule sends the region to Jeff. **Round 5 (Monday night)**: the nail
+   is now the skin's own surface shaded by masks, with only the free edge a separate sliver; the
+   big toe 25.1 mm deep at the IP (was 22.3); toe 2's seam softened; capillary colour; toe hair
+   (10 curves on the big toe, 3 on toe 2). Scores 5, 5, 4: the first rise above 4; still FAIL,
+   2 blocking (no extensor tendon on the big toe; no lunula reads), 31 merged items
+   (`notes/critic/foot_hires_r5/`). **Escalated to Jeff** (spec 18 §8.1.5: five rounds): nobody
+   iterates on this region until he answers. The question: accept the method at this level
+   (median 5, the structural faults gone) and take it to the whole foot, where the open items
+   (a thin, even outline still read round the nail, the cream free-edge band, a lunula that does
+   not read, stamped knuckle creases, friction ridges as straight stripes instead of whorls,
+   the extensor tendons) are worked as part of the whole-foot pass with its own round count;
+   or keep iterating on the region; or step back to the foot's purpose (practice for the head)
+   and move on. Recommended: the first.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

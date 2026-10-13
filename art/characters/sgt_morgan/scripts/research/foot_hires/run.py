@@ -97,6 +97,10 @@ def main(argv):
                 o.hide_render = True
         dressed = False
         for tier in a.tier.split(","):
+            # round 5: the toes' hair (hair.py) renders in Cycles only; the clay judges form
+            hair = bpy.data.objects.get("Hires.L.Hair")
+            if hair is not None:
+                hair.hide_render = tier == "form"
             t = time.time()
             if tier != "form" and not dressed:
                 import look
