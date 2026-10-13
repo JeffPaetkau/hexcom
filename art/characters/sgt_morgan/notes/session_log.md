@@ -146,7 +146,21 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    have stalled at 4, so the next attempt should rebuild the nail from its anatomy (matrix
    under the proximal fold, the bed, the onychodermal band, the lateral grooves) against close
    photographs, not adjust the current one. Order for the next run: the toe 2 ledge, the skin
-   micro-relief in the library, the nail rebuild, then round 4,
+   micro-relief in the library, the nail rebuild, then round 4. **Round 4 (Monday evening)**:
+   toe 2's cuff fixed at its cause (features placed along tilted bone axes landed 3 to 8 mm
+   toward the heel on the underside), `MG.Skin.Micro` rebuilt in the library (soft directional
+   grooves, depth by region; the crackle is gone), the nail rebuilt (plate bonded to the bed,
+   lunula, onychodermal band, ivory edge). Changes now read at packet scale. Scores 4, 4, 4,
+   FAIL; blocking 1 (bald toes: no hair built); merged items 36 to 30; 9 or 10 of round 3's 30
+   claims confirmed fixed (`notes/critic/foot_hires_r4/`). The plateau at 4 across four rounds,
+   while the defects fall, points at the nail's construction: every round the critics see a
+   tile in an even gutter with exposed edges and a French-manicure tip, whatever the shading.
+   Next: model the nail and its folds as one continuous surface (the lateral folds as real
+   overhanging lips over the plate's margins, the proximal fold over the root, no separate
+   plate edge to see), soften the lunula's edge and drop the white stripe; give the big toe
+   its depth (21 mm at the IP for a 31 mm width reads flat); the seam under toe 2; capillary
+   colour on knuckles and tips; the toe hair (spec 01 §6.1); then round 5, the last before
+   spec 18's escalation rule sends the region to Jeff,
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

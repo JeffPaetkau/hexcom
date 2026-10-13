@@ -55,6 +55,11 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
             bpy.data.objects.remove(old)
         nob = D.mesh_object(f"Hires.L.Nail.{k}", fr.to_w(verts), quads,
                             coll=ctx.skin.users_collection[0] if ctx.skin.users_collection else None)
+        orient_plate(nob, fr.vec_to_w(nail.n))
+        # what the nail recipe's zones read beyond nail_coords (look.dress_plate): the proximal fold's line
+        # rises `cuticle` mm toward the visible edges, which lie half_plan(0) from the centre line
+        nob["hires_cuticle_mm"] = float(nail.P.get("cuticle", 0.0))
+        nob["hires_half_vis0"] = float(nail.half_plan(0.0))
         ctx.plates[k] = (nob, uvw)
         made[k] = nail
         ctx.report.setdefault("nails", {})[k] = {
@@ -62,8 +67,22 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
             "free_edge_F": nail.to_world(nail.L, 0.0, nail.plate_top(nail.L, 0.0)).round(2).tolist(),
             "fold_F": nail.to_world(0.0, 0.0, nail.plate_top(0.0, 0.0)).round(2).tolist(),
             "plate_vertices": len(verts), "burial": nail.burial()}
-    dq, cw = M.creases(q, nrm, segs, P)
+    dq, cw = M.creases(q, nrm, segs, P, groups)
     return q + dq, beds, cw, made
+
+
+def orient_plate(nob, up_w):
+    """Face normals outward: with its underside open over the bed (detail.Nail.plate_mesh, `open_bed`) the
+    plate is no longer closed, and bmesh's recalculation may turn the whole shell inside out; its top must face
+    the nail's up (a refracting surface's side decides entering from leaving)."""
+    me = nob.data
+    n = np.empty(len(me.polygons) * 3)
+    me.polygons.foreach_get("normal", n)
+    a = np.empty(len(me.polygons))
+    me.polygons.foreach_get("area", a)
+    if (n.reshape(-1, 3) @ np.asarray(up_w, float) * a).sum() < 0.0:
+        me.flip_normals()
+        me.update()
 
 
 def dump_sections(ctx, k, nail, before, after, region):
@@ -225,6 +244,7 @@ def build(ctx):
         t1 = time.time()
         edges, _ = C.edge_lengths(skin)
         adj = M.adjacency(edges, len(q))
+        q = M.close_folds(q, segs, groups, P, adj, ctx.report)
         q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
         q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
         ctx.report["t_macro"] = round(time.time() - t1, 2)
@@ -234,7 +254,8 @@ def build(ctx):
             ctx.report["t_web_sdf"] = round(time.time() - t1, 2)
         if path:
             os.makedirs(C.CACHE, exist_ok=True)
-            keep = {k: ctx.report[k] for k in ("anchors", "pulps", "web", "toe2_outline", "t_macro", "t_web_sdf")
+            keep = {k: ctx.report[k] for k in ("anchors", "pulps", "web", "toe2_outline", "fold_close", "t_macro",
+                                               "t_web_sdf")
                     if k in ctx.report}
             np.savez(path, q=q, report=json.dumps(keep))
     t1 = time.time()

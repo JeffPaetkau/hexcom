@@ -196,7 +196,7 @@ class Nail:
         f = self._fold_share(v)
         sd = np.sign(np.asarray(side, float))
         wob = P.get("fold_wobble", 0.0)
-        uneven = 1.0 + wob * np.where(sd > 0, self._wave(v, 5), np.where(sd < 0, self._wave(v, 4), 0.0))
+        uneven = 1.0 + wob * np.where(sd > 0, self._slow_wave(v, 5), np.where(sd < 0, self._slow_wave(v, 4), 0.0))
         h = P["fold_lat"] * (1.0 + P.get("fold_asym", 0.0) * sd) * uneven
         return h * f - P.get("edge_rest", 0.08) * (1.0 - f)
 
@@ -214,7 +214,7 @@ class Nail:
     def _plate_raw(self, v, x, margin):
         """The plate's top at (v, x) during the fit, before its hidden margins are settled."""
         c, al, be = self._coef(v)
-        side = max(abs(float(x)) - float(self.half_vis(v, x)), 0.0)
+        side = max(abs(float(x)) - float(self.half_plan(v, x)), 0.0)
         return float(c + al * x + be * x * x) - self._side_dive(side)
 
     def _side_dive(self, side):
@@ -247,7 +247,18 @@ class Nail:
         base = 0.5 * P["width"] * self._plan(vs)
         a = P.get("asym", 0.0)
         hm, hl = base * (1.0 - max(-a, 0.0)), base * (1.0 - max(a, 0.0))
+        # the plate's own half-widths (smooth: a nail's sides are smooth curves) and the folds' coverage of them
+        # (round 4, critic round 3 m3: round 3's folds covered the margins evenly, a gutter of one width all
+        # round): each lateral fold swallows the margin unevenly, by `cover_wobble` mm along the nail, its own
+        # wave per side, fading toward the free edge with the folds themselves
+        self.fit_plan_m, self.fit_plan_l = hm, hl
+        # one-sided (the fold covers more in places, never less than the plan, so it never uncovers the plate's
+        # edge) and slow (a first try with the free edge's wobble, down to 1.7 mm, kinked the medial outline)
+        cw = P.get("cover_wobble", 0.0) * self._fold_share(vs)
+        hm = hm - cw * (0.5 + 0.5 * self._slow_wave(vs, 6))
+        hl = hl - cw * (0.5 + 0.5 * self._slow_wave(vs, 7))
         self.fit_half_m, self.fit_half_l, self.fit_half = hm, hl, 0.5 * (hm + hl)
+        hm, hl = self.fit_plan_m, self.fit_plan_l
         el = self.skin_vx(vs, -hm) - self.fold_lat(vs, -1.0)
         er = self.skin_vx(vs, hl) - self.fold_lat(vs, 1.0)
         el = np.where(np.isfinite(el), el, np.where(np.isfinite(er), er, c - hm * hm / (2.0 * P["radius"])))
@@ -306,10 +317,19 @@ class Nail:
 
     def half_vis(self, v, x=None):
         """The visible half-width at v (after the bed, the bed's last) on x's side (x < 0 medial), or the two
-        sides' mean."""
+        sides' mean: where the lateral folds' edges lie (their uneven coverage included)."""
         vc = np.clip(v, self.fit_v[0], self.fit_v[-1])
         hm = np.interp(vc, self.fit_v, self.fit_half_m)
         hl = np.interp(vc, self.fit_v, self.fit_half_l)
+        if x is None:
+            return 0.5 * (hm + hl)
+        return np.where(np.asarray(x, float) < 0.0, hm, hl)
+
+    def half_plan(self, v, x=None):
+        """The plate's own half-width at v (its plan, without the folds' uneven coverage) on x's side."""
+        vc = np.clip(v, self.fit_v[0], self.fit_v[-1])
+        hm = np.interp(vc, self.fit_v, self.fit_plan_m)
+        hl = np.interp(vc, self.fit_v, self.fit_plan_l)
         if x is None:
             return 0.5 * (hm + hl)
         return np.where(np.asarray(x, float) < 0.0, hm, hl)
@@ -339,7 +359,7 @@ class Nail:
         cr, root, L = P.get("corner_root", 3.0), P["root"], self.L
         e1 = np.clip(v - (L - cf), 0.0, cf)
         e2 = np.clip((-root + cr) - v, 0.0, cr)
-        half = self.half_vis(v, side) + self.hidden(v) - (cf - np.sqrt(cf * cf - e1 * e1)) \
+        half = self.half_plan(v, side) + self.hidden(v) - (cf - np.sqrt(cf * cf - e1 * e1)) \
             - (cr - np.sqrt(cr * cr - e2 * e2))
         return np.where((v < -root) | (v > L), -1.0, np.maximum(half, 0.3))
 
@@ -348,7 +368,7 @@ class Nail:
         lateral grooves."""
         c, al, be = self._coef(v)
         x = np.asarray(x, float)
-        side = np.maximum(np.abs(x) - self.half_vis(v, x), 0.0)
+        side = np.maximum(np.abs(x) - self.half_plan(v, x), 0.0)
         return c + al * x + be * x * x - self._side_dive(side)
 
     def thickness(self, v):
@@ -362,6 +382,12 @@ class Nail:
         x = np.asarray(x, float)
         return 0.55 * np.sin(2.0 * math.pi * x / 6.3 + ph[0]) + 0.3 * np.sin(2.0 * math.pi * x / 2.9 + ph[1]) \
             + 0.15 * np.sin(2.0 * math.pi * x / 1.7 + ph[2])
+
+    def _slow_wave(self, x, k):
+        """A fixed, seeded, slow wobble (-1..1, wavelengths 7.3 and 4.4 mm), one per use k."""
+        ph = np.random.default_rng(37 * self.k + k).uniform(0.0, 2.0 * math.pi, 2)
+        x = np.asarray(x, float)
+        return 0.7 * np.sin(2.0 * math.pi * x / 7.3 + ph[0]) + 0.3 * np.sin(2.0 * math.pi * x / 4.4 + ph[1])
 
     def L_bed_x(self, x):
         """Where the plate leaves the bed (the onychodermal band's distal line) across the nail: an arc falling
@@ -394,7 +420,7 @@ class Nail:
         """The visible proximal fold's line (v at x): an arc rising `cuticle` mm toward the sides, so the
         root reads as a curve with no proximal corners (round 1's was straight across)."""
         x = np.asarray(x, float)
-        a = x / np.maximum(self.half_vis(0.0, x), 1e-3)
+        a = x / np.maximum(self.half_plan(0.0, x), 1e-3)
         return self.P.get("cuticle", 0.0) * a * a
 
     def outline(self, v, x):
@@ -404,7 +430,7 @@ class Nail:
         `corner_prox`, so every output is a smooth function of (v, x): no switch for the vertices to straddle."""
         P = self.P
         v, x = np.asarray(v, float), np.asarray(x, float)
-        W0 = np.maximum(self.half_vis(0.0, x), 1e-3)
+        W0 = np.maximum(self.half_plan(0.0, x), 1e-3)
         cu = P.get("cuticle", 0.0)
         slope = 2.0 * cu * x / (W0 * W0)                       # dv/dx of the cuticle
         ln = np.sqrt(1.0 + slope * slope)
@@ -467,9 +493,13 @@ class Nail:
         # Round 2 added a roll on top of the toe's skin all round and laid the eponychium flat on the plate before
         # stepping back up to the dorsum: a piped rim in an even gutter and a second ridge behind the fold. Where
         # the side falls away below the plate (near the tip) the skin wraps the edge and follows the side
+        # round 4: the proximal fold a broad, soft roll whose edge (the eponychium) lies low on the plate
+        # (`roll_k_prox`: a shallow lip, the cuticle drawn on the plate by the nail recipe), the lateral folds
+        # steeper lips that overlap the margins (`roll_k`); round 3 used one roll all round, the even rim
         rise = p * P.get("epo_w", 0.45) + (1.0 - p) * P["lat_width"]
         xr = np.clip(s / np.maximum(rise, 1e-6), 0.0, 1.0)
-        t_bed = land + (h - land) * (1.0 - (1.0 - xr) ** P.get("roll_k", 2.0))
+        rk = p * P.get("roll_k_prox", P.get("roll_k", 2.0)) + (1.0 - p) * P.get("roll_k", 2.0)
+        t_bed = land + (h - land) * (1.0 - (1.0 - xr) ** rk)
         # along the free sides: under the plate's edge, opening out at `open` (a slope) to the skin's own
         reach = land + P.get("open", 1.0) * np.maximum(s, 0.0)
         t_free = np.minimum(h, reach) - 0.15 * np.log1p(np.exp(-np.abs(h - reach) / 0.15)) \
@@ -545,6 +575,13 @@ class Nail:
         bed = np.zeros(len(q))
         lb = self.L_bed_x(xi)
         bed[idx] = (1.0 - T.smoothstep(s, -0.4, 0.05)) * (1.0 - T.smoothstep(vi, lb - 0.1, lb + 0.5))
+        # round 4: the folds as the bed group's soft margin (below 0.5, so no face counts as bed and no pink
+        # spreads): the skin recipe fades its line network there (spec 16's Skin.Foot, LINES["fold_mask"]),
+        # as a real nail fold's skin is smooth; up to `fold_halo_mm` past the visible outline, not ahead of the
+        # free edge
+        halo = P.get("fold_halo", 0.0) * (1.0 - T.smoothstep(s, 0.0, P.get("fold_halo_mm", 1.8))) \
+            * (1.0 - T.smoothstep(vi, self.L, self.L + 1.0))
+        bed[idx] = np.maximum(bed[idx], halo)
         return q, bed
 
     def plate_mesh(self, dv=0.15, dx=0.15, rim_rows=5, bulge=0.0):
@@ -590,7 +627,16 @@ class Nail:
         jg, ig = np.meshgrid(np.arange(nv - 1), np.arange(nx - 1), indexing="ij")
         a, b = idx[jg, ig].ravel(), idx[jg, ig + 1].ravel()
         c, d = idx[jg + 1, ig + 1].ravel(), idx[jg + 1, ig].ravel()
-        quads = [np.stack([a, d, c, b], 1), np.stack([a, b, c, d], 1) + nv * nx]
+        bottom = np.stack([a, b, c, d], 1)
+        if P.get("open_bed", 0):
+            # round 4: a real plate is bonded to its bed (no air between them, so no second interface): the
+            # underside over the bed is left open and the light passes from the keratin into the bed's skin.
+            # Round 3's closed shell had an air gap under the plate, so each ray met two glass surfaces and
+            # light piped along the plate by total internal reflection: the glassy slab with a bright rim.
+            # The free edge, over air, keeps its underside.
+            w_c = uvw0[:, 2][bottom].mean(axis=1)
+            bottom = bottom[w_c > -0.05]
+        quads = [np.stack([a, d, c, b], 1), bottom + nv * nx]
         tp, bp, thr = flat_top[ring], flat_bot[ring], th.ravel()[ring]
         rows = [ring]
         base = 2 * nv * nx

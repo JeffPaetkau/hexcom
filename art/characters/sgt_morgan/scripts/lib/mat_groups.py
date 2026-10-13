@@ -72,11 +72,24 @@ def build_skin_micro(ng):
     sizes), follicle pits (Voronoi F1 under a threshold), friction ridges (Wave bands with a noise
     distortion), pores (smooth F1) and an orange-peel noise. A layer with depth 0 costs nothing: Cycles
     folds the product with zero away. Per-layer heights are outputs too, so a material can blend two cell
-    sizes by a mask without warping the cells (a varying Voronoi scale would)."""
+    sizes by a mask without warping the cells (a varying Voronoi scale would).
+
+    The skin lines (2026-10-12, critic round 3 m5: one crisp, dark-outlined Voronoi crackle on every skin
+    surface, read as crazed porcelain): a raw Voronoi edge network is a tiling of convex cells with V-grooves
+    of one depth, and real skin's furrows are none of that. So the lines' domain is stretched along the
+    tension (Langer) direction (§4.1's 1.6, `Line Stretch`, `Langer Direction` in the Vector's space: cells
+    elongated along it, so the furrows run mostly that way) and warped by a noise of about two cells
+    (`Line Warp`, a share of the cell: the edges bend); each groove is soft (a Gaussian section whose full
+    width at half depth is `Line Width mm`, shallow-sloped, in place of round 3's hard smoothstep V), and its
+    depth varies along the line (`Line Breakup`: from 1 - breakup to 1, so some edges fade out and the
+    network reads as furrows, not cells). The fine network gets the same treatment at its own cell, its
+    groove the same share of its cell."""
     K.group_interface(ng, inputs=[
         ("Vector", "Vector", (0.0, 0.0, 0.0)),
         ("Line Cell mm", "Float", 0.5), ("Line Width mm", "Float", 0.04), ("Line Depth mm", "Float", 0.0),
         ("Line Mask", "Float", 1.0, 0.0, 1.0),
+        ("Langer Direction", "Vector", (1.0, 0.0, 0.0)), ("Line Stretch", "Float", 1.6, 1.0, 4.0),
+        ("Line Warp", "Float", 0.35, 0.0, 1.0), ("Line Breakup", "Float", 0.5, 0.0, 1.0),
         ("Fine Cell mm", "Float", 0.15), ("Fine Depth mm", "Float", 0.0),
         ("Pit Cell mm", "Float", 0.45), ("Pit Threshold", "Float", 0.09), ("Pit Depth mm", "Float", 0.0),
         ("Pit Mask", "Float", 1.0, 0.0, 1.0),
@@ -95,12 +108,33 @@ def build_skin_micro(ng):
     def per_m(mm):   # cells per metre for a feature size in mm
         return nb.math("DIVIDE", 1000.0, mm)
 
+    # the lines' domain: squashed along the Langer direction by 1 / stretch (cells that much longer that way)
+    ldir = nb.vmath("NORMALIZE", i("Langer Direction"))
+    squash = nb.math("SUBTRACT", 1.0, nb.math("DIVIDE", 1.0, nb.math("MAXIMUM", i("Line Stretch"), 1.0)))
+    vl = nb.vmath("SUBTRACT", v, nb.vmath("SCALE", ldir, scale=nb.math("MULTIPLY", nb.vmath("DOT_PRODUCT", v, ldir),
+                                                                         squash)))
+    # the share of the cell a groove's half width takes (Line Width mm is the primary network's full width at
+    # half depth; the fine network's groove is the same share of its own cell)
+    share = nb.math("DIVIDE", nb.math("MULTIPLY", i("Line Width mm"), 0.5), i("Line Cell mm"))
+
     def lines(cell, depth):
-        d = nb.voronoi(v, per_m(cell), feature="DISTANCE_TO_EDGE", randomness=0.9)
-        # the groove's full width, as a share of the cell: distance to the edge runs from both sides
-        w = nb.math("DIVIDE", nb.math("MULTIPLY", i("Line Width mm"), 0.5), cell)
-        groove = nb.math("SUBTRACT", 1.0, nb.smoothstep(d, 0.0, w))
-        return nb.math("MULTIPLY", groove, nb.math("MULTIPLY", depth, -m))
+        cell_m = nb.math("MULTIPLY", cell, m)
+        # the warp: a detail-1 noise's colour about 0.5 (each channel within about +-0.19, 2nd-98th
+        # percentile), scaled so the offsets reach +-`Line Warp` cells, varying over about two cells
+        wc = nb.noise(vl, nb.math("DIVIDE", 1.0, nb.math("MULTIPLY", cell_m, 2.2)), detail=1.0, out="Color")
+        off = nb.vmath("SCALE", nb.vmath("SUBTRACT", wc, (0.5, 0.5, 0.5)),
+                       scale=nb.math("DIVIDE", nb.math("MULTIPLY", i("Line Warp"), cell_m), 0.19))
+        vw = nb.vmath("ADD", vl, off)
+        d = nb.voronoi(vw, per_m(cell), feature="DISTANCE_TO_EDGE", randomness=1.0)
+        # a soft groove: exp(-ln2 (d / half width)^2), half depth at the half width; distance to the edge
+        # runs from both sides, so the full width at half depth is Line Width mm
+        x = nb.math("DIVIDE", d, nb.math("MAXIMUM", share, 1e-4))
+        groove = nb.math("EXPONENT", nb.math("MULTIPLY", nb.math("MULTIPLY", x, x), -math.log(2.0)))
+        # the break-up: each line's depth varies along it over about 1.5 cells (a detail-1 noise's Fac keeps
+        # to 0.314-0.688; mat_core.NOISE_BAND's note), from 1 - Line Breakup to 1
+        br = nb.noise(vw, nb.math("DIVIDE", 1.0, nb.math("MULTIPLY", cell_m, 1.5)), detail=1.0)
+        keep = nb.map_range(br, 0.36, 0.64, nb.math("SUBTRACT", 1.0, i("Line Breakup")), 1.0, "SMOOTHSTEP")
+        return nb.math("MULTIPLY", nb.math("MULTIPLY", groove, keep), nb.math("MULTIPLY", depth, -m))
 
     ln = nb.math("MULTIPLY", nb.math("ADD", lines(i("Line Cell mm"), i("Line Depth mm")),
                                      lines(i("Fine Cell mm"), i("Fine Depth mm"))), i("Line Mask"))
@@ -264,7 +298,8 @@ def build_all(force=False):
 SOCKETS = {
     "MG.Skin.Core": ({"Base Color", "Roughness", "SSS Scale", "SSS Radius", "Coat Weight", "Coat Roughness", "Normal",
                       "Coat Normal", "LOD"}, {"BSDF"}),
-    "MG.Skin.Micro": ({"Vector", "Line Cell mm", "Line Width mm", "Line Depth mm", "Line Mask", "Fine Cell mm",
+    "MG.Skin.Micro": ({"Vector", "Line Cell mm", "Line Width mm", "Line Depth mm", "Line Mask", "Langer Direction",
+                       "Line Stretch", "Line Warp", "Line Breakup", "Fine Cell mm",
                        "Fine Depth mm", "Pit Cell mm", "Pit Threshold", "Pit Depth mm", "Pit Mask", "Ridge Pitch mm",
                        "Ridge Depth mm", "Ridge Distortion", "Ridge Distortion mm", "Ridge Mask", "Pore Cell mm",
                        "Pore Radius", "Pore Depth mm", "Pore Mask", "Peel mm", "Peel Depth mm", "LOD"},
@@ -297,6 +332,22 @@ def selftest():
         assert hashes[0] == hashes[1], name
         assert (ins, outs) == SOCKETS[name], (name, ins ^ SOCKETS[name][0], outs ^ SOCKETS[name][1])
         out[name] = hashes[0]
+    # the skin lines (2026-10-12): §4.1's stretch along the Langer direction by default, two networks each
+    # warped and broken up by noises, soft grooves (an exponent) rather than a smoothstep V
+    ng = bpy.data.node_groups.new("Lib.Test.MicroLines", "ShaderNodeTree")
+    try:
+        build_skin_micro(ng)
+        items = {i.name: i for i in ng.interface.items_tree if getattr(i, "in_out", "") == "INPUT"}
+        assert abs(items["Line Stretch"].default_value - 1.6) < 1e-6, items["Line Stretch"].default_value
+        assert tuple(items["Langer Direction"].default_value) == (1.0, 0.0, 0.0)
+        vor = [n for n in ng.nodes if n.bl_idname == "ShaderNodeTexVoronoi" and n.feature == "DISTANCE_TO_EDGE"]
+        assert len(vor) == 2 and all(abs(n.inputs["Randomness"].default_value - 1.0) < 1e-6 for n in vor), len(vor)
+        noises = [n for n in ng.nodes if n.bl_idname == "ShaderNodeTexNoise"]
+        ops = {n.operation for n in ng.nodes if n.bl_idname in ("ShaderNodeMath", "ShaderNodeVectorMath")}
+        assert len(noises) >= 5 and {"EXPONENT", "DOT_PRODUCT", "NORMALIZE"} <= ops, (len(noises), ops)
+        out["micro_lines"] = {"voronoi_edges": len(vor), "noises": len(noises)}
+    finally:
+        bpy.data.node_groups.remove(ng)
     try:
         build("MG.Weather.Dust")
         raise AssertionError("a planned group was built")

@@ -1,0 +1,1678 @@
+{
+ "part": "01",
+ "round": 4,
+ "attempt": 1,
+ "packet": "renders/research/foot_hires/critic/r4/",
+ "packet_sha": "9b080f3ae430b505eb5f19bca3a77de08da4f1a56f6231d66e884c33624a4e58",
+ "scope": "the left big toe, toe 2 and the 1–2 web (left is the man's own; every view shows his left foot)",
+ "critics": {
+  "C1": {
+   "lens": "fidelity",
+   "model": "claude-opus-5-5",
+   "overall": 4,
+   "pass": false,
+   "confidence": 0.6,
+   "blocking": 0,
+   "majors": 14,
+   "minors": 4
+  },
+  "C2": {
+   "lens": "reality",
+   "model": "claude-opus-5-5",
+   "overall": 4,
+   "pass": false,
+   "confidence": 0.7,
+   "blocking": 0,
+   "majors": 14,
+   "minors": 6
+  },
+  "C3": {
+   "lens": "craft",
+   "model": "claude-opus-5-5",
+   "overall": 4,
+   "pass": false,
+   "confidence": 0.7,
+   "blocking": 1,
+   "majors": 12,
+   "minors": 9
+  }
+ },
+ "median": 4,
+ "spread": 0,
+ "blocking": 1,
+ "metrics": null,
+ "failing_metrics": [],
+ "pass": false,
+ "decision": "revise",
+ "questions": {
+  "Q2": {
+   "C1": 5,
+   "C2": 5,
+   "C3": 5
+  },
+  "Q3": {
+   "C1": 4,
+   "C2": 4,
+   "C3": 4
+  },
+  "Q6": {
+   "C1": 3,
+   "C2": 2,
+   "C3": 3
+  },
+  "Q9": {
+   "C1": 4,
+   "C2": 5,
+   "C3": 4
+  }
+ },
+ "claims": {
+  "r3.m1": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m2": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m3": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m4": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m5": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m6": {
+   "C1": false,
+   "C2": true,
+   "C3": false
+  },
+  "r3.m7": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m8": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m9": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m10": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m11": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m12": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m13": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m14": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m15": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m16": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m17": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m18": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m19": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m20": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m21": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m22": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m23": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m24": {
+   "C1": false,
+   "C2": false,
+   "C3": true
+  },
+  "r3.m25": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m26": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m27": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m28": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m29": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m30": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  }
+ },
+ "merged": [
+  {
+   "id": "m1",
+   "severity": "blocking",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The hallux and toe 2 are bald; a 40-year-old man's big toe carries a small tuft of dark hairs on its proximal phalanx, and toe 2 often a few, as several anchor feet show.",
+   "also": [
+    "The hallux and toe 2 are bald: no dark hairs on either proximal phalanx, where a 40-year-old man's big toe carries a small tuft, as the anchor feet show.",
+    "The hallux and toe 2 are bald; most men's big toes carry a small tuft of dark hairs on the proximal phalanx, as §3.4 asks and the anchor feet show.",
+    "The hallux's proximal phalanx, like toe 2, carries no hair at all, where §3.4 asks for an 8–12 hair tuft on the hallux and 2–4 hairs on toe 2, as most men's toes and the anchor feet show.",
+    "The hallux and toe 2 are bald in every view: no tuft of dark hairs on the hallux's proximal phalanx, nothing on toe 2; with the clean skin this is the mannequin read.",
+    "The hallux and toe 2 are bald in every view: no tuft of dark hairs on the hallux's proximal phalanx and none on toe 2."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      455,
+      310,
+      1449,
+      797
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      485,
+      290,
+      995,
+      715
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "blocking",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      465,
+      300,
+      1450,
+      745
+     ]
+    }
+   ],
+   "fixes": [
+    "8–12 fine dark hairs, 5–8 mm long, lying flat distally on the hallux's proximal phalanx, and 2–4 shorter ones on toe 2's.",
+    "8–12 dark hairs 5–8 mm long lying flat distally on a 12 × 10 mm patch of the hallux proximal phalanx; 2–4 of 3–6 mm on toe 2.",
+    "8–12 dark brown hairs, 5–8 mm, lying flat distally on the hallux's proximal dorsum; 2–4 hairs of 3–6 mm on toe 2's proximal phalanx."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 8,
+    "C2": 11,
+    "C3": 11
+   }
+  },
+  {
+   "id": "m2",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "Both nails read as a gel French manicure: a crisp white crescent at the root, a wavy white stripe and a constant-width cream edge. A man's toenail shows a soft, half-hidden lunula, a narrow pink-brown onychodermal band and a translucent, faintly yellow, uneven free edge.",
+   "also": [
+    "Both nails read as a gel French manicure: a crisp white crescent hugging the root, a wavy white stripe above the edge and a constant-width opaque cream free edge, alike on the hallux and toe 2.",
+    "Both free edges are constant-width opaque white bands with a smooth grey cut face and no grime: an acrylic French tip. A clipped toenail edge is uneven, faintly yellow-grey, a little faceted by the clippers, with a thin dark line under it.",
+    "Both free edges, hallux and toe 2, are constant-width opaque white bands with a smooth grey cut face and no grime line beneath: an acrylic French tip, not a clipped toenail.",
+    "Both free edges are constant-width opaque ivory bands with a crisp bevelled rim and a wavy white stripe inside: an acrylic French tip. A clipped toenail's edge is narrow, uneven, faintly yellow-grey, with a grime line under it.",
+    "Both free edges are constant-width opaque ivory bands with a crisp bevelled rim and a wavy white stripe inside, the same on the hallux and toe 2: an acrylic French tip."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      668,
+      947,
+      1501,
+      1289
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      690,
+      1150,
+      1500,
+      1295
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      695,
+      1140,
+      1500,
+      1290
+     ]
+    }
+   ],
+   "fixes": [
+    "A soft-edged pale lunula partly under the fold (clear on the hallux, faint on toe 2), a narrow pink-brown onychodermal band, and a translucent, faintly yellow free edge of slightly uneven width with a trace of grime under it.",
+    "A clipped edge varies in width, is faintly yellow-grey and opaque, shows small clipper facets at the corners and a thin dark under-edge grime line (#6d5a4a at 25 %).",
+    "A clipped toenail's free edge is a narrow, slightly uneven band, faintly yellow-grey and translucent at the rim, varying in width along the cut, with a faint grime line beneath."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 1,
+    "C2": 2,
+    "C3": 2
+   }
+  },
+  {
+   "id": "m3",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The hallux nail, the focus of most views, is a press-on: a flat rounded-rectangle tile in an even gutter with one thin rim on three sides, every edge exposed; real lateral folds roll over the plate's sides and the plate curves down under them.",
+   "also": [
+    "The hallux plate, like toe 2's, is a press-on: a flat rounded-rectangle tile in an even gutter, its sides and root exposed and proud. A real plate curves across its width and slips under the lateral folds and a cuticle-capped proximal fold.",
+    "The hallux plate, like toe 2's, is a flat rounded-rectangle tile lying in an even gutter inside a uniform raised rim, its sides and root exposed and standing proud: a press-on, not a plate growing out from under its folds.",
+    "The hallux plate is a flat rounded-rectangle tile set in an even, narrow gutter with one thin uniform rim on its medial, proximal and lateral sides; every edge is exposed, so it reads as a press-on nail.",
+    "The hallux nail, the focus of most views, is a press-on: a rounded-rectangle tile in an even gutter inside one uniform raised rim, its side edges standing proud as bevels with no fold rolling over them; toe 2's nail is the same tile in miniature.",
+    "The hallux plate is a rounded-rectangle tile set in an even gutter inside one uniform raised rim, its side edges standing proud as bevels with no lateral fold rolling over them: a press-on nail; toe 2's is the same tile."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      760,
+      720,
+      1645,
+      1425
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      760,
+      715,
+      1645,
+      1430
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      760,
+      715,
+      1650,
+      1430
+     ]
+    }
+   ],
+   "fixes": [
+    "Curve the plate across its width (about 11 mm radius), tuck its sides under lateral folds that roll over them and its root under a proximal fold with a thin cuticle, so no gutter or plate edge shows except at the free edge.",
+    "Roll the lateral folds about 1 mm over the plate's sides so they hide its edges, make the proximal fold a 1.5 mm cushion with a 0.4 mm eponychium, and let the plate curve down into the lateral grooves.",
+    "Real lateral folds rise over and hide the plate's edges and the proximal fold is a soft roll of varying width with a thin cuticle; let the plate sink under the folds and vary the rim."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 2,
+    "C2": 1,
+    "C3": 1
+   }
+  },
+  {
+   "id": "m4",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "From below a crisp seam with a glinting ridge rings toe 2 and the outline steps in under it, so the toe's end reads as a cap fitted on, like the old toes 3–4; a plantar flexion crease is a soft fold with the pads bulging either side.",
+   "also": [
+    "From below, a crisp straight seam with a glinting ridge rings toe 2 at the PIP and the outline steps in under it, so the toe's end reads as a cap fitted on, like the old toes 3–4.",
+    "Under toe 2 a straight crisp ledge with a white glint rings the toe at the PIP, smooth and flared above, narrower and ridged below: a sleeve cuff that skin cannot make.",
+    "Under toe 2 a straight, crisp ledge with a white glint rings the toe at the PIP; the proximal segment flares at its ends and is smooth, the distal one narrower and ridged, like a sleeve cuff.",
+    "Under toe 2 a crisp ledge with a white seam rings the toe at the PIP crease, smooth and pinker above, ridged below, the outline stepping out at both ends: the distal part looks like a thimble pushed on.",
+    "Under toe 2 a crisp ledge with a white seam rings the toe at the PIP crease, smooth and pinker above, ridged below, the outline stepping out with flaps at both ends: a thimble pushed on."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      616,
+      968,
+      957,
+      1123
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      610,
+      960,
+      955,
+      1040
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      615,
+      930,
+      960,
+      1045
+     ]
+    }
+   ],
+   "fixes": [
+    "One or two short, slightly curved plantar flexion creases, soft-edged, with the proximal and middle pads bulging either side, the ridges continuing across them and no step in the outline.",
+    "A plantar PIP crease is a soft fold about 0.5 mm deep with the same skin level and ridging on both sides, the ridges turning to run along it.",
+    "A plantar flexion crease is a soft transverse fold across continuous skin, the same colour and ridges on both sides, the outline only dimpling where it ends."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 3,
+    "C2": 6,
+    "C3": 5
+   }
+  },
+  {
+   "id": "m5",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The hallux is about 31 mm wide but only about 21 mm deep at the IP and 18.5 at the nail root: widened without the matching depth, so it reads broad and flat rather than round.",
+   "also": [
+    "In profile the hallux is about 21 mm deep at the IP against the 25 or so of Jeff's direction, so the broad toe reads flat and spatulate rather than a deep, round pad.",
+    "In profile the hallux is about 21 mm deep at the IP and 18 at the nail root, against about 25 in Jeff's direction, so the 30 mm-wide toe reads flat and spatulate rather than a deep, round pad.",
+    "In profile the hallux is ~21 mm deep at the IP and ~18.5 mm at the nail root (17.9 px/mm) yet ~31 mm wide in the front view (21.7 px/mm): a 1.5:1 flattened section, broadened without the depth Jeff's direction pairs with it (~25 mm).",
+    "In profile the hallux is long, shallow and flat, under 18 mm deep at the nail root and tapering to a tongue with the nail riding on it like a cap: a paddle, not the blunt, deep big toe of a grown man.",
+    "In profile the hallux is long, shallow and flat, under 18 mm deep at the nail root and tapering to a tongue with the nail riding on it like a cap: a paddle rather than a blunt, deep big toe."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.medial_form.png",
+     "box_px": [
+      1232,
+      849,
+      1874,
+      1284
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.medial_form.png",
+     "box_px": [
+      1190,
+      845,
+      1875,
+      1285
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.medial_form.png",
+     "box_px": [
+      1190,
+      840,
+      1875,
+      1285
+     ]
+    }
+   ],
+   "fixes": [
+    "Deepen the hallux toward 25 mm at the IP, mostly in the plantar pad, so the pulp stays round in profile.",
+    "Add 3–4 mm of depth, mostly as plantar pulp volume under the distal phalanx, so the section stays near round as the toe was widened.",
+    "Keep the dorsum high to the nail root and let the pulp hang as a rounded bulb under the nail; Jeff's direction puts the depth at about 25 mm at the IP."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 15,
+    "C2": 3,
+    "C3": 10
+   }
+  },
+  {
+   "id": "m6",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The 1–2 web ends in a ruler-straight horizontal margin, a shelf between the hallux and toe 2 in three views; a real web's margin is a soft U, deepest midway, rolling into each toe.",
+   "also": [
+    "The 1–2 web ends in a ruler-straight horizontal margin about 6 mm long that meets the hallux and toe 2 walls at corners: a shelf between the toes, seen also in both hallux views.",
+    "The 1–2 web ends in a straight horizontal margin meeting toe 2's wall at a near-right angle, a shelf between the toes; a real commissure is a soft U rising in concave fillets up each toe.",
+    "The 1–2 web ends in a straight horizontal margin meeting toe 2's medial wall at a near-right angle: a shelf spanning the toes.",
+    "The 1–2 web ends in a ruler-straight horizontal margin meeting toe 2's wall almost square, a shelf between the toes; a real web is a soft U with a shadowed fold and fine wrinkles.",
+    "The 1–2 web ends in a ruler-straight horizontal margin that meets toe 2's medial wall almost square: a shelf between the toes, also seen in the hallux view."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      274,
+      512,
+      631,
+      637
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      195,
+      475,
+      645,
+      655
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      265,
+      505,
+      640,
+      645
+     ]
+    }
+   ],
+   "fixes": [
+    "Give the web's free margin a soft U between the toes, deepest midway, rolling into each toe's side through a smooth fillet.",
+    "The commissure is a soft U, lowest mid-cleft, rising in concave fillets up each toe's side, its skin finely wrinkled.",
+    "Seen from the front a web margin is a soft U, curving from the hallux's side into toe 2's, with a shadowed fold and fine wrinkles."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 4,
+    "C2": 10,
+    "C3": 9
+   }
+  },
+  {
+   "id": "m7",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "From below the hallux is a straight-sided rounded box that grows straight out of the ball: no toe-base sulcus, barely an IP crease, no oval pulp dome wider than the shaft; it reads as a glove's thumb, not a weight-bearing toe.",
+   "also": [
+    "From below the hallux is a straight-sided capsule running out of the ball, with no sulcus at its base and a faint IP crease; a real big toe folds deeply into the ball and its pulp bulges past a marked crease as an oval dome.",
+    "From below, the hallux is a straight-sided capsule running out of the ball with no sulcus at its base and only a faint IP crease, so its pulp is not a separate oval dome.",
+    "From below, the hallux and toe 2 grow straight out of the ball with no digito-plantar crease, so they have no root; a real sole folds deeply where each toe pad meets the ball.",
+    "From below the hallux, and toe 2 beside it, grow straight out of the ball with no digito-plantar crease at their base, so the toes have no root.",
+    "From below the hallux is a straight-sided rounded box growing straight out of the ball: no toe-base sulcus, barely an IP crease, no oval pulp dome wider than the shaft."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      916,
+      466,
+      1615,
+      1770
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      1065,
+      465,
+      1665,
+      995
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      915,
+      465,
+      1725,
+      1765
+     ]
+    }
+   ],
+   "fixes": [
+    "A deep curved sulcus where the hallux pad meets the ball, a marked IP flexion crease, and a pulp bulging past it as an oval dome wider than the proximal pad, as in the anchor's soles.",
+    "A deep curved fold separates each toe pad from the ball under the MTP heads, deepest under the hallux, with the toe's proximal pad bulging distal to it.",
+    "The underside folds deeply where the toe leaves the ball, the proximal pad and the pulp are separate swellings across a clear IP flexion crease, and the pulp is an oval dome wider than the shaft."
+   ],
+   "spec_refs": [
+    "§3.4",
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 5,
+    "C2": 9,
+    "C3": 4
+   }
+  },
+  {
+   "id": "m8",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The hallux IP and toe 2 PIP wear one stamp: three or four long, evenly spaced, parallel glossy grooves spanning the joint and denting the profile like bellows; real knuckle skin has short, broken, branching wrinkles of mixed depth.",
+   "also": [
+    "The hallux IP and toe 2 PIP wrinkles are one stamp, three or four parallel, evenly spaced, equally crisp arcs; in profile they become comb-like ticks rippling toe 2's knuckle. Real knuckle wrinkles are irregular, branching and of mixed depth.",
+    "The hallux IP and toe 2 PIP wrinkles are one stamp: three or four parallel, evenly spaced, equally crisp arcs; edge-on in the medial view they are comb-like ticks that ripple toe 2's knuckle outline.",
+    "The hallux IP and toe 2 PIP carry the same 3–4 long, evenly spaced, parallel glossy grooves spanning the joint, which dent the dorsal profile like bellows in the medial view.",
+    "The hallux IP and toe 2 PIP wrinkles are one stamp: three or four identical, evenly spaced, full-width glossy grooves that notch the profile like comb cuts. Knuckle skin bunches into short, broken creases of unequal depth.",
+    "The hallux IP and toe 2 PIP wrinkles are one stamp: three or four identical, evenly spaced, full-width glossy grooves with bright lips that notch the profile like comb cuts (clearest in the medial view)."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      554,
+      497,
+      1392,
+      797
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      545,
+      485,
+      1420,
+      840
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      555,
+      485,
+      1395,
+      830
+     ]
+    }
+   ],
+   "fixes": [
+    "Irregular knuckle wrinkles: one or two deeper lines at the joint and finer broken ones around them, of mixed length and depth, different on each toe, barely touching the outline.",
+    "Knuckle skin shows a loose oval cluster of short, broken, branching wrinkles of mixed depth (about 0.2 mm, 1 mm pitch) with finer lines between; none spans the toe or dents the silhouette.",
+    "Knuckle skin bunches into short, broken creases of unequal depth, length and spacing, densest over the joint centre and fading at the sides, different on each toe."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 6,
+    "C2": 4,
+    "C3": 7
+   }
+  },
+  {
+   "id": "m9",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "No EHL cord over the first MTP onto the hallux and no extensor slip to toe 2: a lean 40-year-old's forefoot shows them as soft ridges catching the light, as the anchor feet do; here it is a smooth dome.",
+   "also": [
+    "The dorsum over the first MTP and the two toes is a smooth, oily mannequin surface: no EHL cord onto the hallux, no extensor slip to toe 2, no veins, where the anchor feet show raised cords and soft veins even at rest.",
+    "The dorsum over the first MTP and both toes is a smooth, oily surface: no EHL cord running onto the hallux, no extensor slip to toe 2, no veins.",
+    "No EHL cord runs over the first MTP onto the hallux and no extensor slip reaches toe 2; the dorsum in frame is a smooth dome with an oily sheen and no veins.",
+    "The dorsum above both toes is smooth and oily: no EHL cord onto the hallux, no extensor slip to toe 2, no veins, so the forefoot shows no structure under its skin.",
+    "The dorsum above the hallux and toe 2 is a smooth, oily surface: no EHL cord running onto the hallux, no extensor slip to toe 2, no dorsal veins."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      580,
+      0,
+      1190,
+      538
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      445,
+      0,
+      1345,
+      725
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      620,
+      0,
+      1190,
+      540
+     ]
+    }
+   ],
+   "fixes": [
+    "Low relief, 0.5–1.5 mm, of the EHL tendon over the first MTP onto the hallux's proximal phalanx and of the extensor slip to toe 2, with soft dorsal veins between, catching the rim light.",
+    "Raise the EHL as a 1–1.5 mm cord along the first ray onto the hallux and soft EDL/EDB slips to toe 2 that catch the rim light, fading only over the toes.",
+    "The EHL stands as a cord over the first MTP onto the proximal phalanx and catches the rim light; the slip to toe 2 is a fainter ridge; veins are low relief."
+   ],
+   "spec_refs": [
+    "§3.4",
+    "§1.4"
+   ],
+   "ranks": {
+    "C1": 7,
+    "C2": 5,
+    "C3": 12
+   }
+  },
+  {
+   "id": "m10",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The plantar ridges are straight parallel stripes at one angle over the ball, both pads and the phalanges, crossing the creases; at native size they read as corduroy moiré. Real pads carry whorls or loops and arcs, broken by the creases.",
+   "also": [
+    "The plantar friction ridges are straight parallel stripes at one angle over the ball, the hallux pad and toe 2, running through the creases like corduroy; pads carry whorls or loops centred on the pulp, broken at each crease.",
+    "The plantar friction ridges are straight parallel stripes at one angle across the ball, the hallux pad and toe 2, running through the creases like corduroy.",
+    "Plantar ridges are straight parallel stripes at one angle over the ball, both pads and up the medial side, running through creases like corduroy; the hallux pad should carry a whorl or loop, and ridges break at creases.",
+    "Friction ridges are straight parallel stripes at one angle across the ball, the hallux pad and toe 2 and up the medial side, running straight through the creases like corduroy; no whorl or loop on the hallux pad.",
+    "The friction ridges are straight parallel stripes at one diagonal angle over the ball, the hallux pad and toe 2, crossing the creases unbroken; at native size they read as corduroy moiré."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      921,
+      1014,
+      1542,
+      1760
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      555,
+      980,
+      1555,
+      1760
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      560,
+      980,
+      1545,
+      1765
+     ]
+    }
+   ],
+   "fixes": [
+    "Whorl or loop ridges centred on each pulp, a separate pattern on the ball, broken at each flexion crease and curving round the tips.",
+    "Ridges follow each pad's dome in a whorl or loop, run transversely across the ball, break and turn at every flexion crease, and fade up the sides.",
+    "Ridges form whorls or loops centred on each pulp, arcs across the toe bases and transverse flows on the ball, and stop at the flexion creases."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 12,
+    "C2": 8,
+    "C3": 6
+   }
+  },
+  {
+   "id": "m11",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "A thin raised glossy arc crosses the first MTP dorsum and notches the medial profile; a podiatrist reads a healed bunionectomy scar.",
+   "also": [
+    "A thin raised glossy line arcs across the first MTP dorsum, two knife-cut ticks in profile: a podiatrist reads a healed incision, not a crease.",
+    "A thin raised glossy line arcs across the first MTP dorsum and shows edge-on in the medial view as two knife-cut ticks: it reads as a healed surgical scar, not a skin crease.",
+    "A thin raised glossy arc crosses the first MTP dorsum and notches the medial profile, reading as a healed bunionectomy scar.",
+    "A thin raised glossy line arcs across the first MTP dorsum at the hallux's base and cuts two notches into the medial profile; a podiatrist reads a healed incision, not a crease.",
+    "A thin raised glossy line arcs across the first MTP dorsum at the hallux's base and cuts two notches into the medial profile: it reads as a healed incision."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      424,
+      236,
+      761,
+      329
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      425,
+      230,
+      775,
+      325
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.front_eval.png",
+     "box_px": [
+      420,
+      230,
+      765,
+      330
+     ]
+    }
+   ],
+   "fixes": [
+    "A few soft, short, irregular wrinkles over the MTP dorsum, or none; no raised ridge.",
+    "Over the first MTP only faint, broken transverse wrinkles show; no continuous raised line.",
+    "If it is meant as the MTP's dorsal crease, make it broad, shallow, interrupted and matte, without a raised lip; otherwise remove it."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 9,
+    "C2": 7,
+    "C3": 13
+   }
+  },
+  {
+   "id": "m12",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "Toe 2's DIP crease is one long, even, bright-lipped groove across most of the toe, a knife cut rather than two or three short, soft, broken creases.",
+   "also": [
+    "Toe 2's DIP crease is one long, even groove with a bright lip across most of the toe's width, a knife cut.",
+    "Toe 2's DIP crease is one long even groove with a lit lip across two-thirds of the toe, a knife cut rather than two or three short soft creases.",
+    "Toe 2's DIP crease is one long even groove with a lit lip across about two-thirds of the toe: a knife cut.",
+    "Toe 2's DIP crease is one long, even groove with a bright lip across two thirds of the toe, a knife cut, where real skin shows two or three short soft creases fading at the sides.",
+    "Toe 2's DIP crease is one long even groove with a bright lip across two thirds of the toe, a knife cut, its end breaking into white flecks."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      802,
+      647,
+      1216,
+      730
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      805,
+      650,
+      1220,
+      730
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      800,
+      650,
+      1220,
+      730
+     ]
+    }
+   ],
+   "fixes": [
+    "Two or three short, soft, broken creases over the joint, shallower toward the sides.",
+    "Two or three short, soft, slightly oblique creases, shallow at their ends, with fine wrinkles between.",
+    "Two or three short, shallow, soft creases of unequal length fading out at the sides."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 11,
+    "C2": 14,
+    "C3": 15
+   }
+  },
+  {
+   "id": "m13",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The dorsal micro-relief is one crumpled-cellophane crackle of sharp facets, alike on knuckle, shaft and web and glittering in highlights; real toe skin shows a soft furrow network along the creases, with follicle pits, finer toward the tip.",
+   "also": [
+    "The dorsal micro-relief is one crumpled-cellophane crackle of sharp facets, alike on knuckle, shaft and web, glittering in this highlight and visible on toe 2's dorsum at native size.",
+    "Dorsal micro-relief is one dark-outlined crackle, and in highlights it breaks into sharp facets like crumpled cellophane; skin's network is soft furrows round domed plateaus with longer directional primary lines.",
+    "In highlights the dorsal micro-relief breaks into sharp angular facets like crumpled cellophane, and the same dark-outlined crackle covers the toe and web dorsum evenly.",
+    "Up close the micro-relief is a crumpled-cellophane crackle of sharp angular facets, crisp and alike on every dorsal surface; in a highlight it glints like foil instead of spreading into a fine, even sheen.",
+    "In the highlight the micro-relief breaks into sharp, angular, randomly oriented facets like crumpled cellophane, the same crackle crisp on every dorsal surface."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "zoom_hr.toe2_eval_web.png",
+     "box_px": [
+      355,
+      0,
+      530,
+      510
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "zoom_hr.toe2_eval_web.png",
+     "box_px": [
+      350,
+      0,
+      540,
+      500
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "zoom_hr.toe2_eval_web.png",
+     "box_px": [
+      350,
+      0,
+      540,
+      500
+     ]
+    }
+   ],
+   "fixes": [
+    "A soft furrow network of fine lines aligned with the creases and the toe's axis, with follicle pits, finer and fainter toward the tip, and no sharp facets in a highlight.",
+    "Skin's network is soft furrows round slightly domed plateaus, longer directional primary lines with finer secondary ones; highlights break along furrows, never into facets.",
+    "Skin micro-relief is fine furrows in two or three dominant directions bounding soft rhomboid plateaus; it breaks a highlight into a fine, even sheen, not foil-like glints."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C1": 13,
+    "C2": 17,
+    "C3": 16
+   }
+  },
+  {
+   "id": "m14",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "From below, toe 2's free edge shows past the pulp as a clear glassy rim with a bright corner, and the hallux's corners glint past its pulp; the pulp should hide a trimmed edge.",
+   "also": [
+    "From below, toe 2's free edge shows as a glassy sliver past its pulp and the hallux's corners glint past its tip; trimmed toenails stay hidden behind the pulps from this view.",
+    "From below, toe 2's free edge shows as a glassy sliver past its pulp, and the hallux's free-edge corners glint past its tip.",
+    "From below, toe 2's free edge shows past its pulp as a clear glassy rim with a bright corner, and the hallux's free-edge corners glint past its pulp.",
+    "From below, toe 2's free edge shows past its pulp as a glassy sliver with a puckered rim, and the hallux's free-edge corners glint past its pulp."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      598,
+      1439,
+      818,
+      1553
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      595,
+      1435,
+      820,
+      1555
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_hr.plantar_eval.png",
+     "box_px": [
+      590,
+      1440,
+      830,
+      1555
+     ]
+    }
+   ],
+   "fixes": [
+    "Trim so the free edges sit behind the pulps when seen from below, the pulps rounding past them.",
+    "From below the pulp hides a trimmed free edge; at most a dull opaque edge shows at the tip of a curled toe.",
+    "With nails trimmed short the pulp hides the free edge from below, or shows it only as a thin opaque line."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 17,
+    "C2": 13,
+    "C3": 21
+   }
+  },
+  {
+   "id": "m15",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "The lunula is a crisp, bright white sliver pressed against the proximal fold, and toe 2 has the same white arc: a reverse French manicure rather than a dull milky half-moon with a soft border, faint or hidden on toe 2.",
+   "also": [
+    "The lunula is a crisp-edged bright white sliver pressed against the proximal fold, and toe 2 carries the same white arc: a reverse French stripe or an exposed plate edge, not a soft pale half-moon."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hr.hallux_eval.png",
+     "box_px": [
+      815,
+      720,
+      1260,
+      840
+     ]
+    }
+   ],
+   "fixes": [
+    "The hallux lunula is a dull, milky crescent about 3.5 mm deep with a soft, slightly irregular distal border, partly under the fold; on toe 2 it is faint or hidden."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C3": 8
+   }
+  },
+  {
+   "id": "m16",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "Toe 2's distal segment reads finger-long: some 8–9 mm of bare skin between its DIP crease and the nail fold, where a second toe's nail starts just past the crease and covers most of a short, bulbous tip.",
+   "also": [
+    "Toe 2's distal segment reads finger-long: about 8–9 mm of bare skin lies between its DIP crease and its nail fold, where a second toe's nail starts 3–4 mm past the crease."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hr.toe2_eval.png",
+     "box_px": [
+      673,
+      652,
+      1346,
+      1097
+     ]
+    }
+   ],
+   "fixes": [
+    "Put the crease over the DIP joint with the nail root just distal to it, so the nail covers most of a short, bulbous distal segment, as in the anchor close-up of toes."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 10
+   }
+  },
+  {
+   "id": "m17",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "The hallux lunula is a white wedge with a straight distal border, thickest at the medial corner, not a centred half-moon with a soft convex edge.",
+   "also": [
+    "The hallux lunula is a white wedge with a straight distal border, thickest at the medial corner and fading laterally, not a centred half-moon."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hr.hallux_eval.png",
+     "box_px": [
+      770,
+      720,
+      1255,
+      865
+     ]
+    }
+   ],
+   "fixes": [
+    "A ~3.5 mm crescent centred on the nail axis with a soft convex distal border, its sides tucked under the proximal fold."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C2": 12
+   }
+  },
+  {
+   "id": "m18",
+   "severity": "minor",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "At the zoom the hallux free edge ends in squared, millimetre-thick opaque slab corners resting on the skin, where a trimmed nail's corners round off into the lateral grooves.",
+   "also": [
+    "At the zoom the hallux free edge ends at its corners in a squared, millimetre-thick opaque slab resting on the skin beside the fold.",
+    "At the zoom the free-edge corners are squared slab ends resting on the pulp with a uniform grey cut face; a trimmed corner is slightly rounded and dips into the lateral groove.",
+    "At the zoom the free edge's lateral corner is a squared slab end sitting on the pulp, its cut face a uniform grey band; the medial corner is the same.",
+    "The free edge's lateral corner is a squared, thick slab end with a flat cut face resting on the skin, where a trimmed nail's corner is slightly rounded, thinner and dips into the lateral fold.",
+    "The free edge's lateral corner is a squared, thick slab end with a flat cut face resting on the skin."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_lateral.png",
+     "box_px": [
+      360,
+      320,
+      445,
+      495
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_lateral.png",
+     "box_px": [
+      330,
+      320,
+      460,
+      500
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_lateral.png",
+     "box_px": [
+      370,
+      360,
+      455,
+      500
+     ]
+    }
+   ],
+   "fixes": [
+    "Slightly rounded corners that thin and run into the lateral nail grooves, as on a nail trimmed straight across.",
+    "A trimmed corner is slightly rounded and dips into the lateral groove, its cut face uneven and opaque like the plate.",
+    "A trimmed toenail corner is slightly rounded, thinner toward the side and dips into the lateral fold."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 16,
+    "C2": 18,
+    "C3": 19
+   }
+  },
+  {
+   "id": "m19",
+   "severity": "minor",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "In clay a tiny bright fleck under the hallux free edge suggests the plate's underside meets or pierces the hyponychium.",
+   "also": [
+    "In clay a tiny bright fleck sits in the pocket under the hallux free edge, as if the plate pokes through the hyponychium.",
+    "In clay a tiny bright fleck sits in the pocket under the hallux free edge, as if the plate's underside pokes through the hyponychium.",
+    "In clay a tiny bright fleck under the hallux free edge suggests the plate's underside pokes through the hyponychium."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      1230,
+      1390,
+      1290,
+      1425
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      1230,
+      1390,
+      1290,
+      1425
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      1235,
+      1395,
+      1290,
+      1425
+     ]
+    }
+   ],
+   "fixes": [
+    "Keep the plate's underside clear of the hyponychium, with a thin shadowed gap under the free edge.",
+    "The hyponychium seals under the free edge; no part of the plate shows through skin.",
+    "Keep the plate's underside clear of the hyponychium surface under the free edge."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 18,
+    "C2": 21,
+    "C3": 24
+   }
+  },
+  {
+   "id": "m20",
+   "severity": "minor",
+   "critics": [
+    "C2",
+    "C3"
+   ],
+   "text": "Behind the free edge a second pale wavy band parallels it, split off by a thin red line: two lacquer layers, or onycholysis, instead of one narrow onychodermal band.",
+   "also": [
+    "Behind the free edge a second pale wavy band runs parallel to it, split off by a thin red line, so the tip reads as two lacquer layers or distal onycholysis.",
+    "Above the free edge a wavy white band, a thin pink line and the edge's own wavy border repeat the same regular wave in parallel, like stacked lacquer layers, not one soft, irregular onychodermal band.",
+    "Above the free edge a wavy white band, a thin pink line and the free edge's own wavy border repeat the same regular wave in parallel, like stacked lacquer layers."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_lateral.png",
+     "box_px": [
+      0,
+      235,
+      440,
+      420
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_lateral.png",
+     "box_px": [
+      0,
+      235,
+      425,
+      410
+     ]
+    }
+   ],
+   "fixes": [
+    "The pink bed ends at one narrow onychodermal band, slightly darker and amber-pink, then the opaque free edge.",
+    "One soft onychodermal band, a slightly darker pink-brown line with an irregular, non-periodic border, then the free edge."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C2": 15,
+    "C3": 20
+   }
+  },
+  {
+   "id": "m21",
+   "severity": "minor",
+   "critics": [
+    "C1",
+    "C2"
+   ],
+   "text": "In clay a hairline pinch runs down the junction of the web and toe 2's medial wall instead of a soft concave fillet.",
+   "also": [
+    "In clay a hairline pinch runs down the junction of the web and toe 2's medial wall.",
+    "In clay a crisp line runs down toe 2's medial wall where the web joins it, a pinched fold or seam, not a smooth fillet.",
+    "In clay a crisp line runs down toe 2's medial wall where the 1–2 web joins it, a pinched fold or seam instead of a smooth fillet."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      1295,
+      0,
+      1355,
+      355
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      1295,
+      0,
+      1360,
+      455
+     ]
+    }
+   ],
+   "fixes": [
+    "A soft concave fillet a few millimetres wide where the web turns into the toe's side.",
+    "Web skin flows into the toe's side in a smooth concave fillet with no line."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 19,
+    "C2": 20
+   }
+  },
+  {
+   "id": "m22",
+   "severity": "minor",
+   "critics": [
+    "C2",
+    "C3"
+   ],
+   "text": "In the web zoom the shadowed recess breaks into soft blotches with no micro-relief, like denoiser smear, so the web skin goes waxy where it should be finely wrinkled.",
+   "also": [
+    "In the web zoom the shadowed recess breaks into soft blotches and loses its micro-relief, like denoiser smear.",
+    "In the shadowed web recess the micro-relief vanishes and the skin breaks into soft blotches, the look of denoiser smear at 64 samples.",
+    "In the shadowed web recess the micro-relief vanishes and the skin breaks into soft blotches, like denoiser smear at 64 samples."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "zoom_hr.toe2_eval_web.png",
+     "box_px": [
+      220,
+      560,
+      700,
+      1000
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "zoom_hr.toe2_eval_web.png",
+     "box_px": [
+      220,
+      540,
+      800,
+      1000
+     ]
+    }
+   ],
+   "fixes": [
+    "Shadowed web skin keeps its fine wrinkles and furrows; render this closeup with enough samples that the denoiser does not smear them.",
+    "Enough samples, or a gentler denoise, that the relief and the web's fine creases hold into the shadow."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C2": 22,
+    "C3": 23
+   }
+  },
+  {
+   "id": "m23",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "Below the hallux free edge the pulp and hyponychium are blurred and featureless while the side wall beside them carries a crisp crackle: detail sharp in one place, waxy in the next.",
+   "also": [
+    "Below the hallux free edge the pulp and hyponychium skin are blurred and featureless while the side wall beside them carries a crisp crackle: detail sharp in one place, waxy in the next."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_medial.png",
+     "box_px": [
+      380,
+      450,
+      800,
+      800
+     ]
+    }
+   ],
+   "fixes": [
+    "The pulp carries the toe's finest, densest relief (ridges at about 0.45 mm), as sharp at this scale as the side wall."
+   ],
+   "spec_refs": [
+    "§3.4"
+   ],
+   "ranks": {
+    "C3": 17
+   }
+  },
+  {
+   "id": "m24",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "The highlight washes half the hallux plate to near-white with soft vertical combing, like polished acrylic; keratin shows a smaller, softer sheen broken by faint uneven ridges, with the bed's pink around it.",
+   "also": [
+    "The plate's highlight washes half the hallux nail to near-white with soft vertical combing, so the plate reads as polished white acrylic."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "zoom_hr.hallux_eval_nail_medial.png",
+     "box_px": [
+      330,
+      0,
+      800,
+      360
+     ]
+    }
+   ],
+   "fixes": [
+    "Keratin shows a smaller, softer sheen broken by faint, uneven longitudinal ridges, with the bed's pink still visible around and through it."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 18
+   }
+  },
+  {
+   "id": "m25",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "In clay the hallux free edge sits over a crescent pocket with a crisp rim concentric with the edge, as if the plate were seated in a carved cup rather than meeting the pulp in a soft distal groove.",
+   "also": [
+    "In clay the hallux free edge sits over a crescent pocket with a crisp rim concentric with the edge, as if the plate were seated in a carved cup."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_hr.hallux_form.png",
+     "box_px": [
+      1125,
+      1275,
+      1525,
+      1430
+     ]
+    }
+   ],
+   "fixes": [
+    "The hyponychium meets the free edge in a shallow, soft distal groove, the pulp swelling up to it unevenly."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 22
+   }
+  },
+  {
+   "id": "m26",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "The skin is one clean, even salmon from dorsum to tip, with no capillary redness on knuckles and tips, no darker creases, no blue-grey cast on the hallux dorsum, and an oily sheen on the dorsum and web: it reads as a silicone prosthetic.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 3
+   }
+  },
+  {
+   "id": "m27",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "Taken together the toes read young and pedicured, a foot model's or a silicone prosthetic's, not a boot-wearing 40-year-old soldier's: every surface clean and even, both nails glossy and symmetrical, no sign of wear anywhere in the scope.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 14
+   }
+  },
+  {
+   "id": "m28",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "Nothing ages the hallux: no pinch callus or dry patch on its medial side, no thickened or yellowed nail, no scuffs. A boot-wearing 40-year-old's big toe looks worn; this one looks freshly cast.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 14
+   }
+  },
+  {
+   "id": "m29",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "The toes read young and pedicured rather than a 40-year-old boot-wearer's: unlined skin between stamped creases, manicured nails with no thickening, ridging, yellowing or grime.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 16
+   }
+  },
+  {
+   "id": "m30",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "The first-pass skin's oily sheen on the forefoot and toe 2's knuckle reads as vinyl and would flatten the low relief tendons need (declared, noted only for what it hides).",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 19
+   }
+  }
+ ]
+}

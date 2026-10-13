@@ -225,3 +225,50 @@ shelf, the friction ridges, the skin's crackle, the hallux's depth); the ridges 
 (the library's noise, above); a pinch on toe 2's medial side just past the DIP (the trial's `neck2`); toes 3-5 keep
 part 01's nails, whose combed streaks and white tips now stand out beside the new ones. Cost: build 161 s from
 scratch (16 s with the stage cached), render 63 s a view at 2048 px eval.
+
+## Round 3 fixes (2026-10-12)
+
+Critic round 3 (`notes/critic/foot_hires_r3/tally.md`): 4 / 4 / 4, two blocking; its fix agent had claimed changes
+the packet did not show. Fixed in run `fields_r4` (parameters in `toes.PARAMS`, marked "round 4"); round 4's packet
+is `renders/research/foot_hires/critic/r4/` (sha 9b080f3ae430). Every change was judged in the packet's own views at
+its scale, round 3 beside round 4: `renders/research/foot_hires/fields_r4/sbs/` (`item1_*`, `item2_*`, `item3_*`).
+
+* **Toe 2's sleeve cuff (m1) and the hallux's V-notch (m4).** The base has no fold; round 3's waist alone folded 35
+  faces. Its station was t along the middle phalanx's axis, which dips 31 degrees, so on the plantar skin, 13 mm below
+  the joint, t 8 fell under the PIP, on the flexion fold part 01's curl leaves there (faces squeezed to 0.003-0.015 mm,
+  a 45 degree kink), and pulled in along normals that turn sharply in it the skin folded over itself. The same tilt
+  put every plantar crease 3-8 mm proximal of its joint: toe 2's PIP crease under its proximal phalanx (the "slot at
+  the toe's base", m21), the hallux's 6 mm behind its IP, stacked on the neck's 0.85 mm pinch (the notch). Now
+  `macro.Plan` gives each toe a plan frame (stations are vertical planes from a joint); toe 2's knuckle, waist and
+  flare move the skin sideways by its share of the side, not along normals (`toe2_outline`); the plantar creases are
+  soft Gaussian dips cut straight up under their joints, on the underside only, fading before the sides
+  (`plan_crease`: a move along one direction cannot fold the skin while it changes slower than 1:1 along it); the
+  necks pinch the lower sides only (0.35 / 0.3 mm); and toe 2's PIP fold is rounded (`close_folds`: the underside's
+  height map in the plan frame closed from below along the toe, sigma 1.6 mm, the squeezed band spread by 400
+  Laplacian passes in plan coordinates and set on the closed surface). Toe 2's underside, edges with a dihedral
+  cosine under 0.7: 140 (53 folded) in round 3, none now. At the packet's scale the flaps and the step are gone and
+  the hallux's profile arches with a shallow dip; the PIP fold still shows as a thin infold line across toe 2.
+  Dead ends: Taubin fairing of the band (more folds), a smoothed correction added to the kink (lowered it 0.4 mm,
+  kept its corner), 0.2 mm map cells (spikes), sigma 2.0 with 900 passes (a faint rectangle at the window's edges).
+* **The skin's crackle (m5), in the library** (spec 16 §9, 2026-10-12): `MG.Skin.Micro`'s lines stretched 1.6 along
+  a Langer direction, warped, broken up along their length, soft Gaussian grooves; `Skin.Foot` scales them by region
+  (dorsum 0.6, toes 0.5, joints 1.0, nail folds 0.1, bed 0) and keeps 0.4 of their darkening. The folds are the
+  `toenails` group's soft margin: `detail.Nail.apply` now writes a halo of 0.42 up to 1.8 / 1.2 mm past the outline
+  (`fold_halo`). `look.BED_OVERRIDES` keeps only the bed's lower undulation.
+* **The nail rebuilt from its parts (m2, m3, m16, m20).** The plate is bonded to its bed: its underside over the bed
+  is open (`open_bed`; round 3's closed shell had an air gap under it, two glass interfaces a pass and light piped
+  round to a bright rim). The lateral folds swallow the margin unevenly (`cover_wobble` 0.35 / 0.22 mm, slow waves,
+  one-sided, fading toward the tip) over a plate whose own edge stays smooth (`half_plan` beside `half_vis`), with
+  more uneven heights and steeper lips; the proximal fold is a broad soft roll (`roll_k_prox` 1.5, `epo_w` 0.9 /
+  0.6); the free edge is thinner (0.5 / 0.36 mm). The zones are the library's (`mat_skin.build_nail`): a lunula over
+  its own half-width (2.4 mm deep, half-width 6 on the hallux; 0.6 / 3.2 on toe 2), opaque (transmission 0.22); the
+  body satin (transmission 0.9, roughness 0.22, coat 0.25 / 0.3) with faint longitudinal streaks; an onychodermal
+  band over the bed's last 0.9 mm; an ivory free edge (#ebdfca, transmission 0.15, roughness 0.42) with its grime
+  line; ridges 0.0012 mm, varying along each ridge to 0; a cuticle band along the fold's line. At the packet's scale
+  the lunula, the pink bed, the band, the ivory edge and the uneven medial fold read; the cuticle merges with the
+  lunula's edge; in clay the plate still sits in a continuous outline groove, narrower and uneven but not gone.
+* Cost: build 166 s from scratch, render 63 s a view at 2048 px eval.
+
+Still open: the PIP fold's line on toe 2; the clay outline groove round the plates; the free edge's squared lateral
+corner (m23); the dorsal knuckle wrinkles and toe 2's DIP crease (m8, m14: the shader's crease groove on narrow
+masks); the base sulcus, tendons, veins, hair, pulps, web shelf and friction ridges (m6, m7, m9-m13); toes 3-5.

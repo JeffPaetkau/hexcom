@@ -135,6 +135,57 @@ def taubin(q, adj, weight, iterations=60, lam=0.5, mu=-0.53):
     return q
 
 
+class Plan:
+    """A toe's plan frame (round 4): stations along the toe's direction in the ground plane from a joint, so
+    a station is a vertical plane; u across (lateral +), h up; and the toe's section at each station from its
+    own skin (midline u, half-width, lowest and highest h), smoothed over a few stations.
+
+    Why not the segment frames: their stations are planes square to the bones, and the curled toes' bones dip
+    21 to 36 degrees, so on the plantar skin, 8 to 13 mm below the joint centres, a segment's station lands 3
+    to 8 mm proximal of where it lands on the dorsum. Round 3's waist (t 8 on toe 2's middle phalanx) fell on
+    the plantar flexion fold under the PIP, and, pulled in along normals that turn sharply in that fold, it
+    folded the skin over itself (35 inverted faces: the critics' 'sleeve cuff' with flaps past the outline);
+    the plantar creases sat under the phalanges rather than the joints (the hallux's 6 mm proximal of its IP,
+    on top of the neck: the V-notch in profile)."""
+
+    def __init__(self, q, mine, origin, toward, step=1.0):
+        a = np.asarray(toward, float) - np.asarray(origin, float)
+        a[2] = 0.0
+        self.a = a / np.linalg.norm(a)
+        self.n = np.array([0.0, 0.0, 1.0])
+        self.b = np.cross(self.n, self.a)
+        if self.b[0] < 0.0:
+            raise ValueError("plan frame: b is not lateral (+x); the frame assumes the left foot")
+        self.o = np.asarray(origin, float)
+        s, u, h = self.local(q[mine])
+        st = np.arange(np.floor(s.min()), np.ceil(s.max()) + step, step)
+        rows = []
+        for s0 in st:
+            m = np.abs(s - s0) < 0.75 * step
+            if m.sum() < 8:
+                rows.append([np.nan] * 4)
+                continue
+            rows.append([0.5 * (u[m].min() + u[m].max()), 0.5 * (u[m].max() - u[m].min()), h[m].min(), h[m].max()])
+        R = np.asarray(rows, float)
+        for k in range(4):
+            ok = np.isfinite(R[:, k])
+            col = np.interp(st, st[ok], R[ok, k])
+            R[:, k] = np.convolve(np.pad(col, 2, mode="edge"), np.ones(5) / 5.0, mode="valid")
+        self.st, self.R = st, R
+        self.s_max = float(s.max())
+
+    def local(self, q):
+        d = np.asarray(q, float) - self.o
+        return d @ self.a, d @ self.b, d @ self.n
+
+    def section(self, s):
+        """(midline u, half-width, lowest h, highest h) at stations s."""
+        return tuple(np.interp(s, self.st, self.R[:, k]) for k in range(4))
+
+    def station(self, p):
+        return float(self.local(np.asarray(p, float)[None, :])[0][0])
+
+
 def sections(seg, qm, step=1.0):
     """A distal segment's section extents along it, from its own vertices qm (F): functions of t giving the
     section's lowest and highest h and its midline u (each smoothed over a few stations)."""
@@ -284,19 +335,24 @@ def apply(q, nrm, segs, groups, adj, P, report):
         r2 = ((t - tc) / (0.5 * nl + 5.0)) ** 2 + ((u - umid(t)) / ru) ** 2
         wc = np.clip(1.0 - r2, 0.0, 1.0) ** 2 * T.smoothstep(hh - htop(t), -0.45 * (htop(t) - hbot(t)), -0.1 * (htop(t) - hbot(t)))
         dq += (amt * wc * T.smoothstep(nrm @ seg.n, 0.2, 0.6) * np.clip(groups[g], 0.0, 1.0))[:, None] * nrm
-    # the neck: the pad pinched in a little at the flexion crease (the IP on the hallux, the DIP on toe 2)
-    for seg, g, amt, t_c in ((h2, "toe1-2.L", P.get("neck1", 0.0), 1.2 + P.get("ip_shift", 0.0)),
-                             (t2d, "toe2-3.L", P.get("neck2", 0.0), 0.8)):
+    # the neck: the pad's sides pinched in a little at the flexion crease (the IP on the hallux, the DIP on
+    # toe 2). Round 4: in the toe's plan frame (a vertical plane at the crease, Plan) and sideways on the lower
+    # sides only; round 3 pulled along the normals on the plantar face too, in the segment's tilted plane, so
+    # it raised the hallux's plantar outline 0.7 mm 6 mm behind its IP, and with the crease on it read as a
+    # V-notch in profile
+    for seg, g, g_prox, amt, s_c in ((h2, "toe1-2.L", "toe1-1.L", P.get("neck1", 0.0), P.get("crease1_s", 1.0)),
+                                     (t2d, "toe2-3.L", "toe2-2.L", P.get("neck2", 0.0), P.get("crease2d_s", 0.6))):
         if not amt:
             continue
-        mine = groups[g] > 0.5
-        hbot, htop, umid, t_tip = sections(seg, q[mine])
-        t, u, hh = seg.local(q)
-        depth = np.maximum(htop(t) - hbot(t), 1.0)
-        wn = np.clip(1.0 - ((t - t_c) / 4.0) ** 2, 0.0, 1.0) ** 2 * (1.0 - T.smoothstep((hh - hbot(t)) / depth, 0.35, 0.75))
-        side = T.smoothstep(-(nrm @ seg.n), -0.75, 0.1)
-        g_all = np.clip(groups[g] + groups[g.replace("-3.L", "-2.L").replace("1-2.L", "1-1.L")], 0.0, 1.0)
-        dq += (-amt * wn * side * g_all)[:, None] * nrm
+        g_all = np.clip(groups[g] + groups[g_prox], 0.0, 1.0)
+        pl = Plan(q, g_all > 0.5, seg.o, seg.point(seg.length, 0.0, 0.0))
+        s, u, hh = pl.local(q)
+        umid, half, hlo, hhi = pl.section(s)
+        du = u - umid
+        win = np.clip(1.0 - ((s - s_c) / 3.5) ** 2, 0.0, 1.0) ** 2
+        side = T.smoothstep(np.abs(du) / np.maximum(half, 1.0), 0.45, 0.95)
+        low = 1.0 - T.smoothstep((hh - hlo) / np.maximum(hhi - hlo, 1.0), 0.3, 0.65)
+        dq += (-amt * win * side * low * g_all * np.sign(du))[:, None] * pl.b[None, :]
     dq += toe2_outline(q, nrm, segs, groups, P, report)
     # the first MTP prominence on the inner border, and the metatarsal head's dorsal knuckle
     mtp = segs["h1"].o
@@ -377,6 +433,110 @@ def apply(q, nrm, segs, groups, adj, P, report):
     return q
 
 
+def _blur_rows(H, sigma_cells):
+    """A Gaussian blur of a map along its first axis only, normalised by the coverage (NaN holes)."""
+    r = max(1, int(3.0 * sigma_cells))
+    k = np.exp(-0.5 * (np.arange(-r, r + 1) / sigma_cells) ** 2)
+    k /= k.sum()
+    ok = np.isfinite(H)
+    A = np.apply_along_axis(lambda m: np.convolve(m, k, mode="same"), 0, np.where(ok, H, 0.0))
+    M = np.apply_along_axis(lambda m: np.convolve(m, k, mode="same"), 0, ok.astype(float))
+    return np.where(ok & (M > 0.3), A / np.maximum(M, 1e-9), np.nan)
+
+
+def _resample(M, f):
+    """A smooth map at f times its resolution (separable linear interpolation), its interpolation creases
+    blurred away over about two coarse cells' tenth: bilinear samples of the coarse map itself faceted the
+    surface they shaped (a 0.5 mm grid of facets in clay)."""
+    n0, n1 = M.shape
+    x0, x1 = np.arange(n0), np.arange(n1)
+    g0, g1 = np.linspace(0.0, n0 - 1.0, (n0 - 1) * f + 1), np.linspace(0.0, n1 - 1.0, (n1 - 1) * f + 1)
+    A = np.stack([np.interp(g0, x0, M[:, j]) for j in range(n1)], axis=1)
+    A = np.stack([np.interp(g1, x1, A[i, :]) for i in range(len(g0))], axis=0)
+    return D._blur2d(A, 0.5 * f)
+
+
+def close_folds(q, segs, groups, P, adj=None, report=None):
+    """Round 4 (critic round 3, m1): toe 2's plantar flexion fold under the curled PIP rounded into a soft
+    infold. Part 01's curl (PIP 25 degrees) leaves the underside a sharp concave kink there, its faces squeezed
+    to 0.003-0.015 mm across: in clay a crisp straight line ringing the toe's underside, on which round 3's
+    waist built its cuff.
+
+    The underside is sampled as a height map over the toe's plan frame (the lowest skin per 0.5 mm cell,
+    holes filled, smoothed over 0.5 mm; at 0.2 mm cells half were empty and the map pulled the skin into
+    spikes), each column smoothed along the toe (a Gaussian of `fold_close_sigma` mm), and the closed surface
+    is the smooth minimum of the two: the kink's corner cut away, the convex pads (below their own blur) left
+    alone. The squeezed band's vertices are first spread over the surface (a Laplacian relaxation of their plan
+    coordinates, `fold_close_relax` passes; moved straight down onto the surface they stacked into degenerate
+    faces whose normals drew the line again), then set on the closed surface. Only near the PIP and the DIP,
+    on toe 2's own underside, fading at its sides and up its walls. Returns positions."""
+    sig = float(P.get("fold_close_sigma", 0.0))
+    if not sig:
+        return q
+    t2m, t2d = segs["t2m"], segs["t2d"]
+    w2 = np.clip(groups["toe2-1.L"] + groups["toe2-2.L"] + groups["toe2-3.L"], 0.0, 1.0)
+    mine = w2 > 0.5
+    pl = Plan(q, mine, t2m.o, t2d.point(t2d.length, 0.0, 0.0))
+    s, u, h = pl.local(q)
+    cell = 0.5
+    s0, u0 = s[mine].min() - 1.0, u[mine].min() - 1.0
+    ns, nu = int((s[mine].max() + 1.0 - s0) / cell) + 2, int((u[mine].max() + 1.0 - u0) / cell) + 2
+    i, j = ((s[mine] - s0) / cell).astype(int), ((u[mine] - u0) / cell).astype(int)
+    H = np.full((ns, nu), np.inf)
+    np.minimum.at(H, (i, j), h[mine])
+    H[~np.isfinite(H)] = np.nan
+    Hs = D._fill(D._blur2d(D._fill(H), 0.5 / cell))
+    Hb = _blur_rows(Hs, sig / cell)
+    k = 0.06
+    Hc = Hb - k * np.logaddexp(0.0, (Hb - Hs) / k)          # smin(Hs, Hb): the closed underside
+    fine = 5
+    Sf, Cf = _resample(Hs, fine), _resample(Hc, fine)
+    c2 = cell / fine
+    nf0, nf1 = Sf.shape
+
+    def sample(M, ss, uu):
+        # the coarse map's cell i is centred on s0 + (i + 0.5) cell; the fine map's node m on the same
+        # origin + m c2
+        fs, fu = (ss - s0) / c2 - 0.5 * fine, (uu - u0) / c2 - 0.5 * fine
+        a0 = np.clip(np.floor(fs).astype(int), 0, nf0 - 2)
+        b0 = np.clip(np.floor(fu).astype(int), 0, nf1 - 2)
+        a, b = np.clip(fs - a0, 0.0, 1.0), np.clip(fu - b0, 0.0, 1.0)
+        return (M[a0, b0] * (1 - a) * (1 - b) + M[a0 + 1, b0] * a * (1 - b) + M[a0, b0 + 1] * (1 - a) * b
+                + M[a0 + 1, b0 + 1] * a * b)
+
+    own = T.smoothstep(w2, 0.4, 0.8)                         # toe 2's own skin, not the webs beside it
+    sel = np.nonzero(own > 1e-4)[0]
+    ss, uu, hh = s[sel], u[sel], h[sel]
+    surf = sample(Sf, ss, uu)
+    lowest = 1.0 - T.smoothstep(hh - surf, 0.4, 2.0)        # the underside's own skin, not the dorsum above
+    umid, half, _, _ = pl.section(ss)
+    side = 1.0 - T.smoothstep(np.abs(uu - umid) / np.maximum(half, 1.0), P.get("fold_close_side", 0.55), 1.0)
+    s_dip = pl.station(t2d.o)
+    win = np.maximum(T.window(ss, -4.5, -2.5, 5.5, 7.5), T.window(ss, s_dip - 3.0, s_dip - 1.5, s_dip + 1.5, s_dip + 3.0))
+    omega = lowest * side * win * own[sel]
+    # spread the band: relax the plan coordinates (s, u) where omega is full, the rest held
+    s2, u2 = ss, uu
+    n_rel = int(P.get("fold_close_relax", 0))
+    if n_rel and adj is not None:
+        w_all = np.zeros(len(q))
+        w_all[sel] = T.smoothstep(omega, 0.5, 0.95)
+        P2 = np.zeros((len(q), 3))
+        P2[:, 0], P2[:, 1] = s, u
+        P2 = taubin(P2, adj, 0.9 * w_all, iterations=n_rel, lam=0.5, mu=0.0)
+        s2, u2 = P2[sel, 0], P2[sel, 1]
+    # on the surface at the new plan position, then down onto the closed surface by omega
+    h2 = hh + (sample(Sf, s2, u2) - surf)
+    closed = sample(Cf, s2, u2)
+    h2 = h2 + omega * np.minimum(closed - h2, 0.0)
+    out = q.copy()
+    out[sel] = pl.o + np.outer(s2, pl.a) + np.outer(u2, pl.b) + np.outer(h2, pl.n)
+    if report is not None:
+        moved = np.linalg.norm(out[sel] - q[sel], axis=1)
+        report["fold_close"] = {"sigma": sig, "relax": n_rel, "moved_max": round(float(moved.max()), 3),
+                                "moved_n": int((moved > 0.01).sum())}
+    return out
+
+
 def room(q, mine, others, gap):
     """How far each of `mine`'s vertices may move out before it comes within `gap` of the `others` (bool
     masks; a k-d tree's nearest distance, conservative for growth along the normal). 0 elsewhere."""
@@ -400,37 +560,54 @@ def toe2_outline(q, nrm, segs, groups, P, report):
     middle phalanx, a slight swelling at the DIP and the pulp flaring under the nail. Each is a Gaussian along
     its segment on the toe's sides (|n . b|^1.5), moved along the normals; what grows stays `t2_gap` from any
     other toe's skin (toes 2 and 3 touch, so the knuckle and the flare grow on the free sides and on top), by a
-    soft minimum so the limit leaves no crease. Returns the displacement."""
+    soft minimum so the limit leaves no crease. Returns the displacement.
+
+    Round 4 (critic round 3, m1: a crisp ledge ringing toe 2's underside like a sleeve cuff): the stations and
+    the directions are the toe's plan frame's (Plan), not the segments' planes and the vertex normals. Round 3's
+    waist, centred at t 8 on the middle phalanx's tilted axis, landed on the plantar flexion fold under the PIP,
+    where the normals turn sharply, and pulling in along them folded the skin over itself. Now each Gaussian
+    moves the skin sideways (horizontally, away from the section's midline) by its share of the side
+    (|u - midline| / half-width: nothing at the plantar and dorsal midlines), and the knuckle also up on the top,
+    so the field is a smooth function of position whatever the normals do; its gradient stays under 0.5."""
     t2m, t2d = segs["t2m"], segs["t2d"]
     w2 = np.clip(groups["toe2-1.L"] + groups["toe2-2.L"] + groups["toe2-3.L"], 0.0, 1.0)
-    mine = groups["toe2-3.L"] > 0.5
-    t_tip = float(t2d.local(q[mine])[0].max())
-    jobs = [  # amount, segment, centre t (mm), sigma (mm), share on top
-        (P.get("t2_knuckle", 0.0), t2m, P.get("t2_knuckle_t", -0.8), 2.4, 0.45),
-        (P.get("t2_waist", 0.0), t2m, P.get("t2_waist_t", 0.5 * t2m.length), 2.6, 0.0),
-        (P.get("t2_dip", 0.0), t2d, 0.3, 1.5, 0.0),
-        (P.get("t2_flare", 0.0), t2d, t_tip - P.get("t2_flare_back", 6.5), 2.3, 0.0),
+    pl = Plan(q, w2 > 0.5, t2m.o, t2d.point(t2d.length, 0.0, 0.0))
+    s, u, h = pl.local(q)
+    umid, half, hlo, hhi = pl.section(s)
+    du = u - umid
+    side = T.smoothstep(np.abs(du) / np.maximum(half, 1.0), 0.2, 0.95)
+    top = T.smoothstep((h - 0.5 * (hlo + hhi)) / np.maximum(0.5 * (hhi - hlo), 1.0), 0.15, 0.75)
+    s_dip = pl.station(t2d.o)
+    s_tip = float(s[groups["toe2-3.L"] > 0.5].max())
+    jobs = [  # amount, centre station (mm from the PIP in plan), sigma (mm), share on top
+        (P.get("t2_knuckle", 0.0), P.get("t2_knuckle_s", -0.8), 2.4, 0.45),
+        (P.get("t2_waist", 0.0), P.get("t2_waist_s", 0.5 * s_dip), 2.4, 0.0),
+        (P.get("t2_dip", 0.0), s_dip + 0.3, 1.5, 0.0),
+        (P.get("t2_flare", 0.0), s_tip - P.get("t2_flare_back", 6.5), 2.3, 0.0),
     ]
     g = np.zeros(len(q))
-    for amt, seg, tc, sig, top in jobs:
+    up = np.zeros(len(q))
+    for amt, sc, sig, sh in jobs:
         if not amt:
             continue
-        t = seg.local(q)[0]
-        shape = np.abs(nrm @ seg.b) ** 1.5 + top * np.clip(nrm @ seg.n, 0.0, 1.0) ** 2
-        g += amt * T.gauss(t - tc, sig) * np.clip(shape, 0.0, 1.0)
-    g *= w2
-    pos = np.maximum(g, 0.0)
+        gs = T.gauss(s - sc, sig)
+        g += amt * gs * side
+        up += sh * max(amt, 0.0) * gs * top
+    g, up = g * w2, up * w2
+    pos = np.maximum(g, 0.0) + up
     grow = pos > 1e-3
+    scale = np.ones(len(q))
     if grow.any():
         lo, hi = q[grow].min(axis=0) - 5.0, q[grow].max(axis=0) + 5.0
         near = np.all((q > lo) & (q < hi), axis=1) & (w2 < 0.05)
         r = room(q, grow, near, P.get("t2_gap", 0.35))
         k = 0.08
-        lim = -k * np.logaddexp(-pos[grow] / k, -r[grow] / k)
+        lim = np.clip(-k * np.logaddexp(-pos[grow] / k, -r[grow] / k), 0.0, None)
+        scale[grow] = lim / pos[grow]
         report["toe2_outline"] = {"grow_max": round(float(pos.max()), 2), "limited_n": int((r[grow] < pos[grow]).sum()),
-                                  "grown_n": int(grow.sum())}
-        pos[grow] = np.clip(lim, 0.0, None)
-    return (pos + np.minimum(g, 0.0))[:, None] * nrm
+                                  "grown_n": int(grow.sum()), "s_dip": round(s_dip, 2), "s_tip": round(s_tip, 2)}
+    sideways = np.where(g > 0.0, g * scale, g) * np.sign(du)
+    return sideways[:, None] * pl.b[None, :] + (up * scale)[:, None] * pl.n[None, :]
 
 
 def web_zone(q, segs, P):
@@ -444,29 +621,84 @@ def web_zone(q, segs, P):
     return zone
 
 
-def creases(q, nrm, segs, P):
+def plan_crease(q, pl, t0, depth, width, bow=0.0, half=8.0, seed=0, wobble=0.2, under=(0.12, 0.4), shoulders=False):
+    """A plantar flexion crease in a toe's plan frame (round 4): a soft dip (a Gaussian section of sigma
+    `width`; with `shoulders`, detail.crease's groove with low raised shoulders, which in profile put a bump on
+    each side of the dip) with detail.crease's seeded wobble, centred under the joint (station t0 of the plan
+    frame pl), cut straight up into the toe, confined to the underside by position (the section's lowest part,
+    `under` as shares of its height) and fading toward its ends at |u - midline| = half.
+
+    Not along the normals: under the curled toe's PIP part 01's curl squeezed the plantar skin into a band of
+    faces 0.003-0.015 mm across whose normals turn 45 degrees across it, and a groove cut along them flipped
+    35 faces there. A displacement f(p) along one fixed direction e maps space with determinant 1 + df/de, so
+    it cannot fold anything while f falls slower than 1:1 along e; here df/dz comes only from the `under`
+    fade (about 0.3 at most). Returns (displacement, crease weight)."""
+    s, u, h = pl.local(q)
+    _, _, hlo, hhi = pl.section(s)
+    u0 = float(pl.section(np.array([t0]))[0][0])
+    across = (u - u0) / half
+    rng = np.random.default_rng(seed)
+    ph = rng.uniform(0.0, 2.0 * np.pi, 4)
+    vary = 1.0 + wobble * (np.sin(2.1 * across + ph[0]) + 0.6 * np.sin(4.7 * across + ph[1]))
+    shift = 0.35 * width * (np.sin(1.7 * across + ph[2]) + 0.5 * np.sin(3.9 * across + ph[3]))
+    d = (s - (t0 + bow * across ** 2 + shift)) / width
+    prof = ((1.0 - d * d) if shoulders else 1.0) * np.exp(-0.5 * d * d)
+    low = 1.0 - T.smoothstep((h - hlo) / np.maximum(hhi - hlo, 1.0), under[0], under[1])
+    ends = (1.0 - T.smoothstep(np.abs(across), 0.5, 1.0)) * low
+    w = np.clip(prof, 0.0, 1.0) * ends
+    return (depth * np.clip(vary, 0.4, 1.5) * prof * ends)[:, None] * pl.n[None, :], w
+
+
+def creases(q, nrm, segs, P, groups=None):
     """The joints' skin creases (detail.crease): dorsal and plantar at the hallux IP, toe 2's PIP and DIP,
-    and the faint lines at the hallux's base. Returns (displacement, crease weight)."""
+    and the faint lines at the hallux's base. Returns (displacement, crease weight).
+
+    Round 4 (critic round 3, m1, m4, m21): the plantar flexion creases are placed in the toes' plan frames
+    (Plan: a vertical plane through the joint), so each lies under its joint; in the segments' tilted frames
+    they sat 3 to 8 mm proximal (toe 2's PIP crease under its proximal phalanx, read as a slot at the toe's
+    base; its DIP crease under the middle phalanx). They are soft infolds (wider, shallower) cut straight up
+    on the underside only (plan_crease), fading before the sides, and they shade the skin less (`shade`, the
+    share written to Foot.Crease), so the shader's crease groove does not cut them."""
     dq = np.zeros_like(q)
     cw = np.zeros(len(q))
     k = P.get("crease_scale", 1.0)
-    jobs = [
-        # hallux IP: dorsal wrinkles (curved distally at the centre) and the deep plantar flexion crease
+    jobs = [  # segment, t0, depth, width, side, bow, half[, wrap, shade]
+        # hallux IP: dorsal wrinkles (curved distally at the centre)
         ("h2", -1.4, 0.035, 0.5, 1.0, 1.2, 8.0), ("h2", 0.7, 0.055, 0.55, 1.0, 1.4, 9.0),
-        ("h2", 2.8, 0.03, 0.45, 1.0, 1.4, 7.0), ("h2", 1.2, 0.5, 1.0, -1.0, -1.0, 12.0),
+        ("h2", 2.8, 0.03, 0.45, 1.0, 1.4, 7.0),
         # hallux base (MTP), dorsal, faint
         ("h1", 4.0, 0.06, 0.45, 1.0, 0.0, 9.0),
-        # toe 2: PIP knuckle wrinkles, DIP crease, plantar flexion creases
+        # toe 2: PIP knuckle wrinkles, DIP crease
         ("t2m", -1.8, 0.05, 0.32, 1.0, 0.8, 6.0), ("t2m", -0.4, 0.07, 0.34, 1.0, 0.8, 6.5),
         ("t2m", 1.0, 0.06, 0.32, 1.0, 0.8, 6.0), ("t2m", 2.3, 0.04, 0.3, 1.0, 0.8, 5.0),
-        ("t2d", 0.6, 0.05, 0.34, 1.0, 0.6, 5.0), ("t2m", 0.4, 0.38, 0.6, -1.0, -0.5, 7.0),
-        ("t2d", 0.8, 0.3, 0.5, -1.0, -0.5, 6.0),
+        ("t2d", 0.6, 0.05, 0.34, 1.0, 0.6, 5.0),
+        # the plantar flexion creases, soft dips in plan frames from their joints (P: crease1_s, crease2p_s,
+        # crease2d_s; sigma `width`); toe 2's PIP crease lies in the fold close_folds rounded
+        ("plan_h2", P.get("crease1_s", 1.0), 0.3, 1.0, -1.0, -1.5, 8.0, 0.8, 0.35),
+        ("plan_t2m", P.get("crease2p_s", 1.5), 0.22, 0.7, -1.0, -0.6, 5.0, 0.8, 0.35),
+        ("plan_t2d", P.get("crease2d_s", 0.8), 0.2, 0.6, -1.0, -0.5, 4.5, 0.8, 0.35),
     ]
-    for i, (name, t0, depth, width, side, bow, half) in enumerate(jobs):
-        seg = segs[name]
-        if name == "h2":
-            t0 += P.get("ip_shift", 0.0)
-        d, w = D.crease(q, nrm, seg, t0, k * depth, width, side=side, bow=bow, half=half, seed=17 + i)
+    plans = {}
+    if groups is not None:
+        h2, t2m, t2d = segs["h2"], segs["t2m"], segs["t2d"]
+        w1 = np.clip(groups["toe1-1.L"] + groups["toe1-2.L"], 0.0, 1.0) > 0.5
+        w2 = np.clip(groups["toe2-1.L"] + groups["toe2-2.L"] + groups["toe2-3.L"], 0.0, 1.0) > 0.5
+        tip2 = t2d.point(t2d.length, 0.0, 0.0)
+        plans = {"plan_h2": Plan(q, w1, h2.o, h2.point(h2.length, 0.0, 0.0)),
+                 "plan_t2m": Plan(q, w2, t2m.o, tip2), "plan_t2d": Plan(q, w2, t2d.o, tip2)}
+    seeds = (0, 1, 2, 4, 5, 6, 7, 8, 9, 3, 10, 11)   # round 3's order, so the dorsal creases keep their wobble
+    for i, job in zip(seeds, jobs):
+        name, t0, depth, width, side, bow, half = job[:7]
+        wrap, shade = (job[7], job[8]) if len(job) > 7 else (0.35, 1.0)
+        if name.startswith("plan_"):
+            if name not in plans:
+                continue
+            d, w = plan_crease(q, plans[name], t0, k * depth, width, bow=bow, half=half, seed=17 + i)
+        else:
+            seg = segs[name]
+            if name == "h2":
+                t0 += P.get("ip_shift", 0.0)
+            d, w = D.crease(q, nrm, seg, t0, k * depth, width, side=side, bow=bow, half=half, wrap=wrap, seed=17 + i)
         dq += d
-        cw = np.maximum(cw, w)
+        cw = np.maximum(cw, shade * w)
     return dq, cw

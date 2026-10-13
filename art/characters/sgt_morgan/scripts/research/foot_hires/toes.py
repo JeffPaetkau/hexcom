@@ -23,7 +23,16 @@ PARAMS = {
     "pulp2_e": {"frame": "seg", "back": 7.0, "radii": [7.5, 7.9, 4.6], "sink": 0.5, "k": 1.5},
     "lift1": 2.4, "lift2": 0.0,          # the distal dorsum raised toward the tip (the hallux's wedge)
     "crown1": 0.8, "crown2": 0.4,        # the dorsum over the nail raised along its midline
-    "neck1": 0.8, "neck2": 0.5,          # the pad pinched in at the flexion crease
+    "neck1": 0.35, "neck2": 0.3,         # the pad's sides pinched in at the flexion crease (round 3: 0.8, 0.5,
+                                         # on the plantar face too: the hallux's V-notch)
+    # round 4: the plantar flexion creases' stations in the toes' plan frames (macro.Plan: mm from the joint,
+    # horizontally), so each lies under its joint: the hallux IP, toe 2's PIP and DIP
+    "crease1_s": 1.0, "crease2p_s": 1.5, "crease2d_s": 0.8,
+    # round 4: toe 2's plantar PIP fold (part 01's curl leaves a sharp kink of squeezed faces) rounded by a
+    # closing of the underside along the toe, a Gaussian of this sigma (mm; macro.close_folds; 0 = off), the
+    # squeezed band spread by `fold_close_relax` Laplacian passes, over the middle `fold_close_side` of the
+    # toe's half-width, fading to its sides (sigma 2.0 with 900 passes left a faint rectangle at the edges)
+    "fold_close_sigma": 1.6, "fold_close_relax": 400, "fold_close_side": 0.6,
     "droop1": 3.0, "droop2": 1.2,        # the tips' dorsum turned down toward the nose ...
     "droop_reach1": 4.5, "droop_reach2": 3.5,   # ... over the stretch ahead of the free edge only (round 1: 9, 5.5)
     "square1": -0.15, "square2": -0.15,  # the distal sections' upper corners (share of their radius): round 1
@@ -53,25 +62,37 @@ PARAMS = {
     # half-width, the medial and lateral slants in degrees), the bed's end an arc (`bed_arc`) under a thinner,
     # flat-cut free edge. The hallux's is a broad shovel, narrower at the root, the lateral side tucked under a
     # higher fold; toe 2's a short rounded D, its root a deep arc, its sides converging toward the cut
-    "nail1": {"width": 18.5, "length": 17.5, "free_edge": 1.0, "thick_root": 0.5, "thick_edge": 0.6,
+    # round 4 (critic round 3 m3, m16: still a press-on, a tile in an even gutter, its free edge acrylic; the nail
+    # rebuilt as its anatomy has it): the plate bonded to its bed (`open_bed`: no underside over the bed, so no
+    # second glass surface and no light piped to a bright rim); each lateral fold swallows the margin unevenly
+    # (`cover_wobble` mm, its own wave per side, fading toward the tip with the folds) over a plate whose own edge
+    # stays smooth (detail.Nail.half_plan), its height more uneven (`fold_wobble`), a steeper lip (`roll_k`,
+    # `lat_width`: a crevice, not a gutter); the proximal fold a broad soft roll lying low on the plate
+    # (`roll_k_prox`, `epo_w`), the cuticle drawn on the plate by the recipe; a thinner free edge, cut a little
+    # less evenly; the folds marked as the bed group's soft margin (`fold_halo`), where the skin is smooth
+    "nail1": {"width": 18.5, "length": 17.5, "free_edge": 1.0, "thick_root": 0.5, "thick_edge": 0.5,
               "radius": 11.0, "hidden_side": 1.1, "root": 4.5, "tip_margin": 3.0, "roll_deg": -5.0,
-              "fold_prox": 0.22, "fold_lat": 0.55, "prox_width": 2.6, "lat_width": 1.1, "corner": 1.2,
+              "fold_prox": 0.22, "fold_lat": 0.55, "prox_width": 2.6, "lat_width": 0.9, "corner": 1.2,
               "level": 4.6, "cuticle": 1.9, "corner_prox": 3.8, "lift_root": -0.32, "lift_reach": 3.0,
-              "epo_w": 0.5, "roll_k": 2.2, "fold_asym": 0.2, "fold_wobble": 0.15,
+              "epo_w": 0.9, "roll_k": 2.6, "roll_k_prox": 1.5, "fold_asym": 0.2, "fold_wobble": 0.35,
+              "cover_wobble": 0.35, "open_bed": 1, "fold_halo": 0.42, "fold_halo_mm": 1.8,
               "plan": [[0.0, 0.92], [0.35, 0.97], [0.7, 1.0], [1.0, 1.0]], "asym": 0.04,
               "corner_m": 1.6, "corner_l": 1.3, "clip": [0.6, 6.0, 9.0], "bed_arc": 0.8,
-              "lat_fade": (0.55, 0.92), "bed_wave": 0.1, "edge_wave": 0.03},
-    "nail2": {"width": 10.5, "length": 10.0, "free_edge": 0.75, "thick_root": 0.36, "thick_edge": 0.42,
+              "lat_fade": (0.55, 0.92), "bed_wave": 0.1, "edge_wave": 0.05},
+    "nail2": {"width": 10.5, "length": 10.0, "free_edge": 0.75, "thick_root": 0.36, "thick_edge": 0.36,
               "radius": 6.0, "hidden_side": 0.7, "root": 2.8, "tip_margin": 1.8, "roll_deg": 0.0,
-              "fold_prox": 0.16, "fold_lat": 0.36, "prox_width": 1.6, "lat_width": 0.8, "corner": 1.7,
+              "fold_prox": 0.16, "fold_lat": 0.36, "prox_width": 1.6, "lat_width": 0.7, "corner": 1.7,
               "level": 3.0, "cuticle": 1.8, "corner_prox": 2.6, "lift_root": -0.22, "lift_reach": 2.0,
-              "epo_w": 0.38, "roll_k": 2.0, "fold_asym": -0.1, "fold_wobble": 0.12,
+              "epo_w": 0.6, "roll_k": 2.4, "roll_k_prox": 1.5, "fold_asym": -0.1, "fold_wobble": 0.3,
+              "cover_wobble": 0.22, "open_bed": 1, "fold_halo": 0.42, "fold_halo_mm": 1.2,
               "plan": [[0.0, 0.9], [0.3, 0.98], [0.6, 1.0], [1.0, 0.93]], "asym": -0.03,
               "corner_m": 1.9, "corner_l": 1.5, "clip": [0.5, 5.0, 9.0], "bed_arc": 0.45,
-              "lat_fade": (0.55, 0.9), "bed_wave": 0.08, "edge_wave": 0.03},
+              "lat_fade": (0.55, 0.9), "bed_wave": 0.08, "edge_wave": 0.04},
     # toe 2's outline in plan (round 3, critic round 2 m5: an even tube): the PIP knuckle, the middle phalanx's
-    # waist, the DIP and the pulp's flare (mm along the normals on the toe's sides; macro.toe2_outline)
-    "t2_knuckle": 1.6, "t2_waist": -1.2, "t2_waist_t": 8.0, "t2_dip": 0.0, "t2_flare": 0.45, "t2_gap": 0.35,
+    # waist, the DIP and the pulp's flare (mm sideways on the toe's sides; macro.toe2_outline). Round 4: in the
+    # toe's plan frame (stations in mm from the PIP; the waist midway to the DIP by default), sideways, not
+    # along the normals (round 3's waist folded the plantar skin under the PIP: the sleeve cuff)
+    "t2_knuckle": 1.6, "t2_waist": -1.2, "t2_dip": 0.0, "t2_flare": 0.6, "t2_gap": 0.35,
 }
 
 
