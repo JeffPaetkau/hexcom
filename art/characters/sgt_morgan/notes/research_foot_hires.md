@@ -475,3 +475,33 @@ hr.hallux 112, hr.plantar 92, hr.lesser 108. Packet sha d3a749626a19.
 Still open: the extensor tendons are still thin, even lines (round 1's m9, m29); the lateral malleolus soft (m25) and
 no 5th metatarsal styloid (m10); the nails' French-tip edge and copied lesser nails (m15-m17, m20, m21); the whorls'
 seam (m30); toe 5 not tucked under toe 4 (m31, m40); the tone's regional logic is broad, not yet per region (m26).
+
+## Shape pass (2026-10-14)
+
+Jeff: "focus on the overall foot shape", then "from the top it somehow looks too long AND too 'round' at the same
+time. The side view looks fine." Measured first (`shape.py` on skins saved by `run.py --save`, which now carries the
+toes' weights and the joints; the tables and plots in `renders/research/foot_hires/shape/`), with a true top view,
+`hr.plan` (orthographic straight down, toes up, 6.4 px/mm; `run.py` renders it on a copy of the skin cut level at z
+125 and capped, so the leg does not hide the heel).
+
+* **The plan was a lemon, made in part 01, not here.** Widest at 53 % L (103 mm), the midfoot 0.98 of the ball, the
+  lateral border bulging 7.9 mm off its heel-to-5th-head chord, no corner at the 5th head, the medial border
+  straight: long and round at once. Part 01's fit had widened the midfoot to reach spec 01's estimated instep girth
+  (263) and read the ball on that bulge. Fixed there (spec 01 §3.1, §4.2, §8.2 notes of 2026-10-14): new plan fields,
+  the plan in the fit and in `measure()`, the instep girth 246 (E). On this skin now: widest at 65 % L, the midfoot
+  0.89 of the ball, the lateral border straight to within the styloid's 2.5 mm, a ~20 degree corner at the 5th head,
+  the medial border dipping 4.1 mm at 47 % L. The side profile is unchanged (V2o matches).
+* **The styloid** (round 2's m3): `whole.arch` adds the knob on the dense skin, drawn out 16 mm along the border and
+  1.8 mm high on part 01's 4.5 mm cage swelling (a round dome r 9 read in clay as a knob stuck on): 2.5 mm on the
+  plan outline, 2.3 on the lateral wall at y -151.
+* Part 01's lift of the forefoot's lateral column is held to 4 mm: at 10 mm, which the ball girth asked for, V3 showed
+  a cushion along the lateral border. Through the 5th head the forefoot tapes 246-248 against ANSUR's 259 (open,
+  spec 01 §3.1).
+* Measured and left (Jeff likes the side): the medial malleolus 10 mm too far back (63 ahead of the pternion against
+  73), the lateral one 13 mm proud of the leg above it against about 5. The leg does narrow above the malleoli (75.5
+  to 57.8 at z 130); the toes are Jeff's lock (from their MTP joints 4-14 mm short of spec 01 §3.3 in plan), which
+  with the curl and the closed clefts leaves a short toe zone, still the likeliest reason the foot reads long.
+
+Renders: `fields_shape_before/` (= `fields_shape_w2` plus V5f and hr.plan) and `fields_shape_after/`, side by side in
+`shape/sbs/`; packet `critic/shape_r1/` (a new series, shape only). Cost: the stage from scratch 281-299 s, cached 83
+s; the form set 8-12 s; a part 01 fit 50-90 s (`fit_sculpt.py --only`), a part 01 build 8 s.

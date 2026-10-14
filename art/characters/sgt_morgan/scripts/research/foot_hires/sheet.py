@@ -95,9 +95,48 @@ def critic(run, tier, out, views=None, ref=True, cell=900, title=None):
     return out
 
 
+def pairs(before, after, views, tier, out_dir, cell=1024, labels=("before", "after"), title=None):
+    """The shape pass (2026-10-14): each view's before and after side by side at the same scale (both renders of
+    one preset at one resolution, scaled alike), one image a view, and one overview of them all (a row a view)."""
+    f, big = font(24), font(30)
+    os.makedirs(out_dir, exist_ok=True)
+    made = []
+    for view in views:
+        ims = [load(run, view, tier) for run in (before, after)]
+        if any(im is None for im in ims):
+            continue
+        sheet = Image.new("RGB", (2 * cell + 10, cell + 44), (20, 20, 20))
+        d = ImageDraw.Draw(sheet)
+        for i, im in enumerate(ims):
+            sheet.paste(im.resize((cell, cell), Image.LANCZOS), (i * (cell + 10), 0))
+            d.text((i * (cell + 10) + 10, cell + 8), f"{labels[i]} | {view} ({tier})", fill=(230, 230, 230), font=f)
+        path = os.path.join(out_dir, f"sbs_{view}_{tier}.png")
+        sheet.save(path)
+        made.append((view, path))
+    small = cell // 2
+    ov = Image.new("RGB", (2 * small + 10, len(made) * (small + 6) + 50), (20, 20, 20))
+    d = ImageDraw.Draw(ov)
+    d.text((10, 10), title or f"{labels[0]} (left) | {labels[1]} (right)", fill=(240, 240, 240), font=big)
+    for r, (view, path) in enumerate(made):
+        im = Image.open(path).convert("RGB")
+        ov.paste(im.resize((2 * small + 10, int((2 * small + 10) * im.size[1] / im.size[0])), Image.LANCZOS),
+                 (0, 50 + r * (small + 6)))
+    path = os.path.join(out_dir, f"sbs_overview_{tier}.png")
+    ov.save(path)
+    return [p for _, p in made] + [path]
+
+
 def main(argv):
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
+    pr = sub.add_parser("pairs")
+    pr.add_argument("--before", required=True)
+    pr.add_argument("--after", required=True)
+    pr.add_argument("--views", required=True)
+    pr.add_argument("--tier", default="form")
+    pr.add_argument("--out", required=True, help="a folder")
+    pr.add_argument("--labels", nargs=2, default=["before", "after"])
+    pr.add_argument("--cell", type=int, default=1024)
     g = sub.add_parser("grid")
     g.add_argument("--runs", nargs="+", required=True)
     g.add_argument("--labels", nargs="+")
@@ -113,6 +152,10 @@ def main(argv):
     c.add_argument("--no-ref", action="store_true")
     c.add_argument("--title")
     a = ap.parse_args(argv)
+    if a.cmd == "pairs":
+        for p in pairs(a.before, a.after, a.views.split(","), a.tier, a.out, a.cell, tuple(a.labels)):
+            print(p)
+        return
     if a.cmd == "grid":
         crop = tuple(int(v) for v in a.crop.split(",")) if a.crop else None
         print(grid(a.runs, a.views.split(","), a.tier, a.out, a.cell, crop, a.labels))

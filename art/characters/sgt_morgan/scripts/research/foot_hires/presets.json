@@ -282,6 +282,47 @@
    ],
    "compare": [],
    "note": "whole foot, pass 1 (2026-10-13): toes 3-5, their nails, webs and knuckles from the front, above and a little lateral, a 62 mm field"
+  },
+  {
+   "id": "hr.plan",
+   "label": "plan_top_ortho",
+   "scene": "lookdev",
+   "camera": {
+    "type": "ortho",
+    "frame": "Frame.Foot.L",
+    "pos_mm": [
+     6.0,
+     -141.0,
+     700.0
+    ],
+    "target_mm": [
+     6.0,
+     -141.0,
+     0.0
+    ],
+    "up": [
+     0,
+     -1,
+     0
+    ],
+    "ortho_scale_mm": 320
+   },
+   "render": {
+    "res": [
+     2048,
+     2048
+    ],
+    "tier": "form"
+   },
+   "hide": [
+    "Body.Mesh",
+    "Foot.R.*",
+    "Sock.*",
+    "Scene.Floor*",
+    "Hires.L.Skin"
+   ],
+   "compare": [],
+   "note": "the shape pass (2026-10-14): the foot in plan, a true top orthographic view straight down along -Z, toes up, the medial side on the right, 0.32 m wide at 2048 px (6.4 px/mm, as V1o-V4o); run.py renders it on a copy of the skin cut level at z 125 and capped (run.PLAN_VIEWS), so the leg above the malleoli does not hide the heel"
   }
  ]
 }

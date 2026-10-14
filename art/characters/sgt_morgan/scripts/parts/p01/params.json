@@ -1,5 +1,5 @@
 {
- "doc": "2026-10-10, Jeff's lock from the variant sheets: toes X3 (the hallux 30 mm wide and set 4.5 mm apart, toe 2 slimmed to 16, the lesser toes of variant E curled 25 degrees, the fifth 32) and heel H1. 'sculpt' are pass A's amounts (fit_sculpt.py; the heel's and toe2_w set by the variant sheets), 'fixed' pass B's operations over fields.FIXED, 'targets' the MPFB foot targets S1 loads.",
+ "doc": "2026-10-10, Jeff's lock from the variant sheets: toes X3 (the hallux 30 mm wide and set 4.5 mm apart, toe 2 slimmed to 16, the lesser toes of variant E curled 25 degrees, the fifth 32) and heel H1. 2026-10-14, the shape pass (Jeff: 'from the top it looks too long and too round'; spec 01 \u00a73.1 note): the midfoot and forefoot amounts refitted for the plan outline (fit_sculpt.py --only mid_widen,mid_fill,fore_w,lat_mid_in,med_mid_in,head5_out,mid_lat_up,fore_lat_up,fore_low_fill,arch_drop,dorsum_50,dorsum_60,dorsum_70), the heel and the toes held. 'sculpt' are pass A's amounts (fit_sculpt.py; the heel's and toe2_w set by the variant sheets), 'fixed' pass B's operations over fields.FIXED, 'targets' the MPFB foot targets S1 loads.",
  "fixed": {
   "hallux_ip_deg": 5.0,
   "hallux_valgus_deg": {
@@ -40,11 +40,14 @@
   }
  },
  "sculpt": {
-  "arch_drop": 5.925,
-  "dorsum_50": -2.6237,
-  "dorsum_60": 4.4841,
-  "dorsum_70": -0.4973,
-  "fore_w": -2.2076,
+  "arch_drop": 6.2056,
+  "dorsum_50": -1.8833,
+  "dorsum_60": 4.1534,
+  "dorsum_70": -0.5623,
+  "fore_lat_up": 3.7053,
+  "fore_low_fill": 0.8738,
+  "fore_w": -1.969,
+  "head5_out": 1.1662,
   "heel_back_high": 0.681,
   "heel_back_low": 1.0799,
   "heel_back_w": 20.8327,
@@ -53,10 +56,13 @@
   "heel_low_w": 0.7107,
   "heel_mid_w": 16.9746,
   "heel_top_w": 0.1942,
+  "lat_mid_in": 5.056,
   "mall_lat": 12.0,
   "mall_med": 12.0,
-  "mid_fill": 6.4004,
-  "mid_widen": 3.652,
+  "med_mid_in": -0.8811,
+  "mid_fill": 2.7425,
+  "mid_lat_up": -2.5882,
+  "mid_widen": 2.0959,
   "mt_back_1": 3.3603,
   "mt_back_5": 11.1595,
   "toe1_ext": 6.8332,

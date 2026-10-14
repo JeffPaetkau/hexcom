@@ -11,6 +11,7 @@ vertex-scale noise of extreme-based dimensions. The left foot is solved; the rig
 (its asymmetries are fields.FIXED). --dry measures the current amounts without fitting.
 """
 import argparse
+import json
 import os
 import sys
 import time
@@ -34,14 +35,22 @@ TIP_SHARE = {1: 1.0, 2: 0.9658, 3: 0.9300, 4: 0.8870, 5: 0.8242}
 TOE_W = {1: 30.0, 2: 16.0, 3: 16.0, 4: 15.0, 5: 14.5}
 TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
 # (metric, target, weight tolerance): spec 01 §3.1 and §3.3 (tight where ANSUR measured, looser where the
-# spec estimated); the §8.2 tolerances are what measure() checks; the heel is H1 (Jeff, 2026-10-10)
-RESIDUALS = [("foot_length", 282.0, 0.5), ("ball_length", 210.0, 1.0), ("ball_breadth", 105.0, 0.7),
+# spec estimated); the §8.2 tolerances are what measure() checks; the heel is H1 (Jeff, 2026-10-10). The shape
+# pass (2026-10-14): the ball's breadth aimed 0.8 mm under spec 01's 105 because the build's toe separation (left out
+# of the prediction) adds about 1 mm to it; the instep girth 246 (spec 01 §3.1 note)
+RESIDUALS = [("foot_length", 282.0, 0.5), ("ball_length", 210.0, 1.0), ("ball_breadth", 104.2, 0.4),
              ("heel_breadth", 76.0, 0.7), ("heel_width_z10", 69.0, 1.0), ("heel_width_z20", 72.0, 1.0),
              ("heel_width_z30", 73.0, 1.0), ("bimalleolar", 76.0, 0.7), ("pternion_z", 30.0, 1.0),
-             ("heel_ankle_circ", 353.0, 6.0), ("instep_circ", 263.0, 3.0), ("ball_circ", 259.0, 2.5),
+             ("heel_ankle_circ", 353.0, 6.0), ("instep_circ", 246.0, 3.0), ("ball_circ", 259.0, 2.5),
              ("ankle_circ_min", 229.0, 2.0), ("dorsum_h50", 66.0, 1.0), ("dorsum_h60", 56.0, 1.0),
              ("dorsum_h70", 40.0, 1.0), ("arch_medial_45", 13.0, 1.0), ("lateral_clear_50", 4.0, 1.0)]
 RESIDUALS += [("malleolus_lateral_z", 76.0, 1.0), ("malleolus_medial_z", 89.0, 1.0)]
+# the plan outline (the shape pass, 2026-10-14, spec 01 §3.1 note), read on the subdivided surface (the probe): the
+# midfoot's breadth at 50 % L 0.86 of the ball's, the 5th metatarsal head's corner where spec 01 puts the head
+# (185 mm, 65.6 % L); the lateral border's bulge past its heel-to-head chord and the medial border's dip inside its
+# chord are one-sided (PLAN_SIDED)
+RESIDUALS += [("plan_b50", 90.0, 1.5), ("plan_head5_pct", 65.6, 2.0)]
+PLAN_SIDED = (("plan_lat_bulge", None, 2.5, 0.7), ("plan_med_dip", 3.0, 6.0, 0.8))   # (metric, least, most, tol)
 RESIDUALS += [(f"toe{k}_tip_y", -L_TARGET * s, 0.7) for k, s in TIP_SHARE.items()]
 RESIDUALS += [(f"toe{k}_width", v, 0.7) for k, v in TOE_W.items()]
 RESIDUALS += [(f"toe{k}_height", v, 0.7) for k, v in TOE_H.items()]
@@ -83,12 +92,30 @@ class AnkleProbe:
         bpy.data.meshes.remove(me)
 
 
-def evaluate(body, a, side="L", gaps=True, probe=None, opts=None):
-    """The sculpted foot's metrics (and toe gaps) for amounts a, measured on the prediction; the malleoli on
-    its subdivided surface when a probe is given."""
+def predicted(body, a, side="L", opts=None):
+    """World mm of every body vertex with the sculpt of amounts a on one foot (pass B without the toes'
+    separation, as the fit sees it)."""
     co = body.co.copy()
     foot = body.feet[side]
     co[foot.R] = foot.frame.to_w(body.sculpt_side(side, a, opts, separate=False))  # pass B as params.json sets it
+    return co
+
+
+def dump(path, body, a, probe, side="L", opts=None):
+    """The prediction's subdivided surface (the probe's read) in frame F, mm, with its polygons, for sections and
+    plan plots outside Blender (the shape pass, 2026-10-14)."""
+    co = predicted(body, a, side, opts)
+    fine = probe.read(co)
+    f = fm.frame(fm.with_positions(body.m0, co), body.ix, side)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    np.savez_compressed(path, q=f.to_f(fine.co * 1000.0).astype(np.float32), loop_start=fine.loop_start,
+                        loop_total=fine.loop_total, loop_vert=fine.loop_vert)
+
+
+def evaluate(body, a, side="L", gaps=True, probe=None, opts=None):
+    """The sculpted foot's metrics (and toe gaps) for amounts a, measured on the prediction; the malleoli on
+    its subdivided surface when a probe is given."""
+    co = predicted(body, a, side, opts)
     m = fm.with_positions(body.m0, co)
     v = fm.foot(m, body.ix, side)
     f = v.pop("_frame", None)
@@ -96,6 +123,7 @@ def evaluate(body, a, side="L", gaps=True, probe=None, opts=None):
         fine = probe.read(co)
         v.update(fm.ankle(fine, f))
         v.update(fm.heel_back(fine, f))
+        v.update(fm.plan(fine, f, v["foot_length"]))
     if gaps:
         v["gaps"] = fm.toe_gaps(m, body.ix, side)
     return v
@@ -113,26 +141,36 @@ def residuals(v):
     for k in ("malleolus_lateral_prom", "malleolus_medial_prom", "heel_prom"):  # one-sided
         x = v.get(k)
         r.append(0.0 if x is None else min(x - PROMINENCE_MM, 0.0) / PROMINENCE_TOL)
+    for k, least, most, tol in PLAN_SIDED:
+        x = v.get(k)
+        if x is None:
+            r.append(0.0)
+            continue
+        under = min(x - least, 0.0) if least is not None else 0.0
+        over = max(x - most, 0.0) if most is not None else 0.0
+        r.append((under + over) / tol)
     return np.array(r)  # (toe gaps are kept by pass B's separation, not fitted: they are not smooth)
 
 
 PRIOR = 0.03  # weight of the pull toward fields.py's start values, per unit (mm or %)
 
 
-def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None, opts=None):
+def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None, opts=None, free=None):
     """Levenberg-Marquardt-style Gauss-Newton: the step solves the linearised residuals plus a weak prior
     toward the start values, damped toward the current amounts, inside the bounds, then halves until the
-    true cost falls."""
-    names = list(fields.FIELD_NAMES)
+    true cost falls. `free` names the amounts to solve (default all); the others stay at a0's (the shape pass
+    refits the midfoot and keeps Jeff's locked heel and toes, 2026-10-14)."""
+    names = [k for k in fields.FIELD_NAMES if free is None or k in free]
     lo = np.array([fields.FIELDS[k][1] for k in names])
     hi = np.array([fields.FIELDS[k][2] for k in names])
     start = np.array([fields.FIELDS[k][3] for k in names])
     x = np.clip(np.array([a0[k] for k in names]), lo, hi)
     sq = np.sqrt(PRIOR)
+    held = {k: v for k, v in a0.items() if k not in names}
 
     def at(vec):
         try:
-            v = evaluate(body, dict(zip(names, vec)), probe=probe, opts=opts)
+            v = evaluate(body, dict(held, **dict(zip(names, vec))), probe=probe, opts=opts)
             r = np.concatenate([residuals(v), sq * (vec - start)])
             return v, r, float(r @ r)
         except (LookupError, ValueError, IndexError) as e:  # a shape the measurements cannot read
@@ -169,13 +207,20 @@ def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None, opts=No
             f"{[names[i] for i in optim.at_bound(x, lo, hi)]}")
         if np.max(np.abs(d)) < 0.05:
             break
-    return dict(zip(names, x)), v, trail
+    return dict(held, **dict(zip(names, x))), v, trail
 
 
 def table(v, say=print):
     for k, t, tol in RESIDUALS:
         x = v.get(k)
         say(f"  {k:18s} {'-' if x is None else round(x, 2):>8}  target {t:8.2f}  {'' if x is None else round(x - t, 2)}")
+    for k, least, most, tol in PLAN_SIDED:
+        x = v.get(k)
+        say(f"  {k:18s} {'-' if x is None else round(x, 2):>8}  band   {least} .. {most}")
+    for k in ("plan_b40", "plan_b60", "plan_ball", "plan_head5_x", "plan_head1_pct", "plan_head1_x", "plan_widest_pct",
+              "plan_widest", "plan_mid_ratio", "ball_length_lateral"):
+        x = v.get(k)
+        say(f"  {k:18s} {'-' if x is None else round(x, 2):>8}")
     say(f"  gaps {v.get('gaps')}")
 
 
@@ -186,6 +231,9 @@ def main(argv):
     ap.add_argument("--dry", action="store_true", help="measure the current amounts, fit nothing")
     ap.add_argument("--start", action="store_true", help="start from fields.py's start values, not params.json")
     ap.add_argument("--iters", type=int, default=6)
+    ap.add_argument("--only", help="comma-separated amounts to solve, the rest held at params.json's")
+    ap.add_argument("--set", help="JSON amounts merged over params.json's before the fit (or the dry read)")
+    ap.add_argument("--dump", help="write the result's subdivided surface (frame F, mm) to this .npz")
     a = ap.parse_args(argv)
     ob = bpy.data.objects.get(BODY)
     if ob is None:
@@ -198,6 +246,8 @@ def main(argv):
     say(f"read the body in {time.perf_counter() - t0:.2f} s")
     params = cache.read_json(PARAMS) or {}
     a0 = fields.amounts({} if a.start else params)
+    if a.set:
+        a0.update({k: float(v) for k, v in json.loads(a.set).items()})
     opts = fields.options(params)
     out = {}
     probe = AnkleProbe(body, "L")
@@ -206,8 +256,14 @@ def main(argv):
             v = evaluate(body, a0, probe=probe, opts=opts)
             amounts = a0
         else:
-            amounts, v, trail = fit(body, a0, a.iters, say=say, probe=probe, opts=opts)
+            free = set(a.only.split(",")) if a.only else None
+            unknown = sorted((free or set()) - set(fields.FIELD_NAMES))
+            if unknown:
+                raise SystemExit(f"[fit_sculpt] --only names unknown amounts {unknown}")
+            amounts, v, trail = fit(body, a0, a.iters, say=say, probe=probe, opts=opts, free=free)
             out["trail"] = trail
+        if a.dump:
+            dump(a.dump, body, amounts, probe, opts=opts)
     finally:
         probe.remove()
     table(v, say)

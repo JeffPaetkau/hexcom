@@ -334,7 +334,10 @@ def foot(m, ix, side, toes=True):
     bb, med, _ = breadth(m, f, fore, np.arange(6.0, 41.0, 3.0))
     out["ball_breadth"] = bb
     out["ball_length"] = -float(med[1]) if med is not None else None
-    # the 5th head's lateral bulge, looked for where the heads are (60-78 % L), not in the midfoot
+    # the 5th head's lateral bulge, looked for where the heads are (60-78 % L), not in the midfoot. (The shape
+    # pass, 2026-10-14: with the lateral border now straight from the heel to the head, the extreme falls on its
+    # last centimetre, 13-16 mm behind the head itself, and the ball's tape with it: 258 there, 246-248 over the
+    # head, against ANSUR's 259; spec 01 §3.1 note)
     _, _, lat = breadth(m, f, (-0.78 * L, -0.60 * L), np.arange(6.0, 31.0, 3.0))
     out["ball_length_lateral"] = -float(lat[1]) if lat is not None else None
 
@@ -405,6 +408,63 @@ def foot(m, ix, side, toes=True):
     if toes:
         out.update(toe_dims(m, ix, f, side))
     out["_frame"] = f
+    return out
+
+
+PLAN_Z_CUT = 125.0   # the plan outline is the foot's below this height (the leg above the malleoli left out)
+HEAD5_PCT = 100.0 * 185.0 / 282.0   # spec 01 §3.1: the 5th metatarsal head 185 mm from the pternion
+
+
+def _peak(pcts, vals, lo, hi, sign=1.0):
+    """The extreme (max of sign * vals) within pcts [lo, hi], refined by a parabola: (pct, value)."""
+    sel = np.nonzero((pcts >= lo) & (pcts <= hi) & np.isfinite(vals))[0]
+    i = sel[np.argmax(sign * vals[sel])]
+    if 0 < i < len(vals) - 1 and np.isfinite(vals[i - 1:i + 2]).all():
+        a, b, c = sign * vals[i - 1], sign * vals[i], sign * vals[i + 1]
+        den = a - 2.0 * b + c
+        t = float(np.clip(0.5 * (a - c) / den, -0.5, 0.5)) if den else 0.0
+        return float(pcts[i] + t * (pcts[1] - pcts[0])), float(sign * (b - 0.25 * (a - c) * t))
+    return float(pcts[i]), float(vals[i])
+
+
+def plan(m, f, L, z_cut=PLAN_Z_CUT, step=2.5):
+    """The foot's outline seen from above (the shape pass, 2026-10-14, spec 01 §3.1 note): the medial and lateral
+    extremes of the sections across the foot every `step` % of the length, below z_cut. Returns the breadth at 40,
+    50 and 60 % L; the 5th metatarsal head's corner (the lateral extreme at 58-75 % L) and the 1st head's (the
+    medial extreme at 66-82 % L) and the breadth between them; `plan_lat_bulge`, how far the lateral border stands
+    outside the straight chord from the heel (its lateral extreme below z 45 at 15 % L) to the 5th head's corner,
+    between 30 % L and the corner (a real lateral border runs straight there, the styloid a small bump on it);
+    `plan_med_dip`, how far the medial border lies inside the chord from the heel to the 1st head's corner, between
+    40 % L and the corner (seen from above it dips along the first metatarsal); and the widest station."""
+    pcts = np.arange(10.0, 87.5 + 1e-6, step)
+    med, lat = np.full(len(pcts), np.nan), np.full(len(pcts), np.nan)
+    for i, p in enumerate(pcts):
+        v = vertical(m, f, -p / 100.0 * L, z=(-5.0, z_cut))
+        if len(v):
+            med[i], lat[i] = v[:, 0].min(), v[:, 0].max()
+    heel = vertical(m, f, -0.15 * L, z=(-5.0, 45.0))
+    out = {}
+    br = lat - med
+    for p in (40, 50, 60):
+        out[f"plan_b{p}"] = float(np.interp(p, pcts, br))
+    p5, x5 = _peak(pcts, lat, 58.0, 75.0, 1.0)
+    p1, x1 = _peak(pcts, med, 66.0, 82.0, -1.0)
+    out.update(plan_head5_pct=p5, plan_head5_x=x5, plan_head1_pct=p1, plan_head1_x=x1, plan_ball=x5 - x1)
+    if len(heel):
+        h_lat, h_med = float(heel[:, 0].max()), float(heel[:, 0].min())
+        # the lateral chord ends at the 5th head where spec 01 has it (185 mm, 65.6 % L), so a border widest
+        # before the head counts as a bulge, whatever its own extreme
+        ph = HEAD5_PCT
+        xh = float(np.interp(ph, pcts, lat))
+        span = (pcts >= 30.0) & (pcts <= ph - 2.0)
+        chord = h_lat + (pcts - 15.0) * (xh - h_lat) / (ph - 15.0)
+        out["plan_lat_bulge"] = float(np.nanmax(np.where(span, lat - chord, np.nan)))
+        span = (pcts >= 40.0) & (pcts <= p1 - 2.0)
+        chord = h_med + (pcts - 15.0) * (x1 - h_med) / (p1 - 15.0)
+        out["plan_med_dip"] = float(np.nanmax(np.where(span, med - chord, np.nan)))
+    body = (pcts >= 30.0) & (pcts <= 85.0)
+    out["plan_widest_pct"], out["plan_widest"] = _peak(pcts, np.where(body, br, np.nan), 30.0, 85.0, 1.0)
+    out["plan_mid_ratio"] = out["plan_b50"] / out["plan_ball"]
     return out
 
 

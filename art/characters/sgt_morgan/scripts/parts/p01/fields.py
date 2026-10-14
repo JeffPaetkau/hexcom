@@ -2,11 +2,13 @@
 
 Pass A is a set of fields, each the displacement of the foot's vertices for a unit amount (a millimetre, a
 per cent of a width): the heel's width and back, the malleoli, the dorsum, the midfoot's girth, the arch,
-the metatarsal-head line, and each toe's length, width and thickness. A sculpt of fields is linear in its
-amounts, so fit_sculpt.py solves them by least squares against the dimensions of spec 01 §3.1 and §3.3,
-exactly as fit_targets.py solves MPFB's targets, and params.json ("sculpt") keeps the result; the build
-only applies it. The brush positions are the landmarks of §3.2, anchored on this body's surface (MPFB's
-foot sits a few millimetres off the spec's idealised frame, so a landmark is taken where the skin is).
+the metatarsal-head line, the plan outline seen from above (the lateral and medial borders, the 5th head's
+corner and the sections' fullness, 2026-10-14), and each toe's length, width and thickness. A sculpt of
+fields is linear in its amounts, so fit_sculpt.py solves them by least squares against the dimensions of
+spec 01 §3.1 and §3.3, exactly as fit_targets.py solves MPFB's targets, and params.json ("sculpt") keeps the
+result; the build only applies it. The brush positions are the landmarks of §3.2, anchored on this body's
+surface (MPFB's foot sits a few millimetres off the spec's idealised frame, so a landmark is taken where the
+skin is).
 
 Pass B is fixed: the toe axes (hallux valgus, the 4th and 5th toes' roll, §4.3 step 5), a light smoothing,
 the knuckles and pulps (§4.3 steps 3-4), the small bony landmarks (§4.2 steps 2, 5, 6, 8) and the nail beds
@@ -50,6 +52,17 @@ FIELDS = {
     "arch_drop": ("mm", -3.0, 9.0, 4.0),       # the medial arch's plantar surface lowered
     "mt_back_1": ("mm", -3.0, 12.0, 3.0),      # the metatarsal-head line moved back, medial end
     "mt_back_5": ("mm", -3.0, 22.0, 12.0),     # and lateral end (the line turns oblique)
+    # the plan outline (the shape pass, 2026-10-14, spec 01 §3.1 note; Jeff: "from the top it looks too long and too
+    # round"): the lateral midfoot drawn in, so the border runs straight from the heel to the 5th metatarsal head and
+    # the ball is the widest part; the medial border drawn in ahead of the navicular (the dip along the first
+    # metatarsal seen from above); the 5th head's corner pushed out. 0 is the build before the pass
+    "lat_mid_in": ("mm", -2.0, 16.0, 0.0),
+    "med_mid_in": ("mm", -2.0, 8.0, 0.0),
+    "head5_out": ("mm", -2.0, 6.0, 0.0),
+    "mid_lat_up": ("mm", -3.0, 4.0, 0.0),     # the midfoot's lateral column raised (the instep's fullness)
+    "fore_lat_up": ("mm", -3.0, 4.0, 0.0),    # the forefoot's lateral column raised (the ball's); more than
+                                              # about 4 reads as a cushion along the lateral border in V3
+    "fore_low_fill": ("mm", -2.0, 4.0, 0.0),  # the forefoot's sides below the heads' bulges filled out
 }
 for _k in TOES:
     FIELDS[f"toe{_k}_ext"] = ("mm", -10.0, 16.0, 2.0)   # length, at the tip
@@ -118,13 +131,15 @@ class Foot:
         self.L = float(low[:, 1].max() - low[:, 1].min())
         # the centre line of the foot in plan, slice by slice (for widening about it)
         ys = np.arange(-330.0, 40.0, 8.0)
-        mids = []
+        mids, halves = [], []
         for y in ys:
             sl = b[(np.abs(b[:, 1] - y) < 6.0) & (b[:, 2] < 70.0)]
             mids.append((sl[:, 0].min() + sl[:, 0].max()) / 2.0 if len(sl) > 3 else np.nan)
-        mids = np.array(mids)
+            halves.append((sl[:, 0].max() - sl[:, 0].min()) / 2.0 if len(sl) > 3 else np.nan)
+        mids, halves = np.array(mids), np.array(halves)
         ok = np.isfinite(mids)
         self._xc = (ys[ok], mids[ok])
+        self._hw = (ys[ok], halves[ok])   # the half-breadth below z 70 (the plan fields' side weights)
         # toes: membership, joints and axes
         sl = "l" if side == "L" else "r"
         self.w = {k: sum(groups.get(g, np.zeros(n)) for g in fm.toe_bones(k, side))[self.R] for k in TOES}
@@ -138,6 +153,9 @@ class Foot:
 
     def xc(self, y):
         return np.interp(y, *self._xc)
+
+    def hw(self, y):
+        return np.interp(y, *self._hw)
 
     def _toe(self, k):
         """A toe's frame: MTP (the joint cube), plan axis toward the tip, plan normal, length, and its
@@ -283,6 +301,39 @@ def fields(foot):
     plantar = S.smoothstep(-nq[:, 2], 0.15, 0.55)
     F["arch_drop"] = dz(-_gauss(y, -0.45 * L, 30.0) * medial * plantar * (1.0 - S.smoothstep(z, 30.0, 48.0)))
 
+    # the plan outline (the shape pass, 2026-10-14): moves across the foot, by side (the share of the half-breadth
+    # out from the centre line), so the side profiles stay. The lateral side drawn in over the midfoot, fully at
+    # the bottom where MPFB's lateral border bulges and by 40 % at the top, nothing at the heel or the 5th head;
+    # the medial wall drawn in ahead of the navicular, between the arch's underside and the dorsum; the 5th head's
+    # lateral surface inflated where it sits (7 mm behind the MTP joint cube, which part 01 moves with the foot)
+    rel = (x - xcy) / np.maximum(foot.hw(y), 10.0)
+    win_lat = _gauss(y, -0.49 * L, 0.095 * L) * (1.0 - S.smoothstep(y, -0.60 * L, -0.66 * L))
+    F["lat_mid_in"] = dx(-S.smoothstep(rel, 0.2, 0.9) * win_lat * (1.0 - 0.6 * S.smoothstep(z, 25.0, 55.0)))
+    win_med = _gauss(y, -0.57 * L, 0.06 * L) * S.smoothstep(y, -0.42 * L, -0.48 * L) \
+        * (1.0 - S.smoothstep(y, -0.66 * L, -0.72 * L))
+    F["med_mid_in"] = dx(S.smoothstep(-rel, 0.2, 0.9) * win_med * _plateau(z, 4.0, 14.0, 44.0, 62.0))
+    y5 = float(foot.joint["toe-5-1"][1]) + 7.0
+    c5 = foot.surface(q, (float(foot.xc(y5)), y5, 16.0), (1.0, 0.0, 0.0), window=8.0)
+    F["head5_out"] = S.inflate_field(q, nq, c5, 18.0, "smooth", foot.body.astype(float))
+    # the sections' fullness, where it moves neither the plan's extremes (they lie low and are moved across the foot
+    # only) nor the side profiles (the crest, on the 2nd metatarsal's line, stays the highest skin of every
+    # section): the lateral column raised above the sole, more toward the lateral border, so its wall is taller and
+    # the slope from the crest to the border flatter; MPFB's lateral column tapers thin. A real forefoot's section
+    # through the 1st and 5th heads is near a 105 x 40 rounded box (ANSUR: ball girth 259 for a breadth of 104.5)
+    lateral = S.smoothstep(rel, 0.1, 0.8)
+    above_sole = S.smoothstep(z, 2.0, 40.0)   # the column stretched over its height (a ramp to z 20 stood an edge)
+    no_toe = 1.0 - np.clip(sum(foot.w[k] for k in TOES), 0.0, 1.0)
+    F["mid_lat_up"] = dz(lateral * above_sole * _plateau(y, -0.33 * L, -0.40 * L, -0.56 * L, -0.63 * L))
+    F["fore_lat_up"] = dz(lateral * above_sole * no_toe * _plateau(y, -0.56 * L, -0.61 * L, -0.74 * L, -0.80 * L))
+    # and the forefoot's sides below the heads' bulges (z 2-15) filled out along the skin's horizontal normal: a
+    # standing forefoot's section is near a box down to the sole, not rounded off under the heads
+    nh = nq.copy()
+    nh[:, 2] = 0.0
+    side_w = S.smoothstep(np.linalg.norm(nh, axis=1), 0.45, 0.8)
+    nh /= np.maximum(np.linalg.norm(nh, axis=1), 1e-9)[:, None]
+    F["fore_low_fill"] = nh * (side_w * no_toe * _plateau(y, -0.58 * L, -0.63 * L, -0.74 * L, -0.80 * L)
+                               * _plateau(z, 1.5, 4.0, 10.0, 15.0))[:, None]
+
     # the metatarsal-head line moved back, more laterally than medially, the toes travelling with their
     # heads (§4.2 step 8: MPFB's heads sit too far forward and its head line is too square)
     x1, x5 = foot.joint["toe-1-1"][0], foot.joint["toe-5-1"][0]
@@ -420,7 +471,7 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
     # (radii about 1.7 x the local vertex spacing, 8-10 mm on the midfoot and heel, or a bump is one vertex
     # and subdivides to a pimple)
     bumps = (("navicular", -120.0, 42.0, (-1.0, 0.0, 0.0), 15.0, 3.0, "smooth"),
-             ("mt5_base", -150.0, 18.0, (1.0, 0.0, 0.0), 14.0, 3.0, "smooth"),
+             ("mt5_base", -150.0, 17.0, (1.0, 0.0, 0.0), 16.0, 4.5, "smooth"),
              ("peroneal", -60.0, 22.0, (1.0, 0.0, 0.0), 11.0, 1.0, "smooth"),
              ("tuberosity", -6.0, 52.0, (0.0, 1.0, 0.0), 15.0, 1.5, "smooth"),
              ("mt1_head", -0.745 * L, 22.0, (-1.0, 0.0, 0.0), 14.0, 1.5, "smooth"))

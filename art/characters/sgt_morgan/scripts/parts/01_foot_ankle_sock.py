@@ -255,11 +255,25 @@ TARGETS = {
     "heel_width_z30": (73.0, 2.0, "§4.2 step 3, heel H1"), "bimalleolar": (76.0, 2.0, "§3.1 ANSUR"),
     "malleolus_lateral_z": (76.0, 2.0, "§3.1 ANSUR"), "malleolus_medial_z": (89.0, 2.0, "§3.1 (E)"),
     "ankle_circ_min": (229.0, 6.0, "§3.1 ANSUR"), "heel_ankle_circ": (353.0, 6.0, "§3.1 ANSUR"),
-    "ball_circ": (259.0, 6.0, "§3.1 ANSUR"), "instep_circ": (263.0, 6.0, "§3.1 (E)"),
+    # the instep's 263 (E) assumed a midfoot about 100 wide, the paddle Jeff saw from above; a midfoot of the plan
+    # outline's breadth tapes 240-250 in this vertical plane (§3.1 note 2026-10-14)
+    "ball_circ": (259.0, 6.0, "§3.1 ANSUR"), "instep_circ": (246.0, 6.0, "§3.1 (E, 2026-10-14)"),
     "dorsum_h50": (66.0, 2.0, "§3.1 (E)"), "dorsum_h60": (56.0, 2.0, "§3.1 (E)"), "dorsum_h70": (40.0, 2.0, "§3.1 (E)"),
     "arch_medial_45": (13.0, 2.0, "§3.1 (E)"), "lateral_clear_50": (4.0, 2.0, "§3.1 (E)"),
     "pternion_z": (30.0, 2.0, "§3.1 (E)"),
 }
+# the plan outline seen from above (the shape pass, 2026-10-14, §3.1 note; footmetrics.plan on the subdivided
+# surface): the midfoot 0.86 of the ball's breadth, the foot widest across the metatarsal heads, the lateral border
+# straight from the heel to the 5th head, the medial border dipping in along the first metatarsal. (target, band or
+# tolerance, source); a band is [least, most]
+PLAN_TARGETS = {
+    "plan_b50": (90.0, 3.0, "§3.1 (D, 2026-10-14: §3.2's navicular and styloid)"),
+    "plan_mid_ratio": ([0.82, 0.92], None, "§3.1 (D, 2026-10-14: the midfoot's breadth over the heads')"),
+    "plan_widest_pct": ([60.0, 76.0], None, "§3.1 (D, 2026-10-14: widest across the heads)"),
+    "plan_lat_bulge": ([-2.0, 3.0], None, "§3.1 (D, 2026-10-14: the lateral border off its heel-to-head chord)"),
+    "plan_med_dip": ([2.0, 7.0], None, "§3.1 (D, 2026-10-14: the medial border inside its heel-to-head chord)"),
+}
+PLAN_REPORTED = ("plan_b40", "plan_b60", "plan_ball", "plan_head5_pct", "plan_head1_pct", "plan_widest")
 for _k, _s in TIP_SHARE.items():
     TARGETS[f"toe{_k}_tip_y"] = (-L_TARGET * _s, 2.0, "§3.3")
     TARGETS[f"toe{_k}_width"] = (TOE_W[_k], 2.0, "§3.3")
@@ -310,6 +324,7 @@ def measure(ctx, args):
             add(f"bimalleolar_cage.{side}", round(v["bimalleolar"], 2), unit="mm")
             v.update(fm.ankle(fine, f))       # the malleoli and the heel's apex on the rendered surface: the
             v.update(fm.heel_back(fine, f))   # cage's 13 mm rows would quantise them (fm.subdivided)
+            v.update(fm.plan(fine, f, v["foot_length"]))   # the plan outline, on the rendered surface too
             add(f"heel_prom.{side}", round(v["heel_prom"], 2), [3.0, 15.0], None,
                 "§3.2 (the calcaneus behind the Achilles insertion)")
             rest[side] = v
@@ -317,6 +332,14 @@ def measure(ctx, args):
                 if k == "toe2_tip_y" and side == "R":
                     t = t + 1.5  # the right 2nd toe is 1.5 mm shorter (§3.3)
                 add(f"{k}.{side}", None if v.get(k) is None else round(v[k], 2), t, tol, src)
+            for k, (t, tol, src) in PLAN_TARGETS.items():
+                add(f"{k}.{side}", None if v.get(k) is None else round(v[k], 3), t, tol, src,
+                    unit="" if k == "plan_mid_ratio" else ("%" if k.endswith("_pct") else "mm"))
+            for k in PLAN_REPORTED:
+                add(f"{k}.{side}", None if v.get(k) is None else round(v[k], 2),
+                    unit="%" if k.endswith("_pct") else "mm")
+            add(f"ball_length_lateral.{side}", None if v.get("ball_length_lateral") is None
+                else round(v["ball_length_lateral"], 2), unit="mm")
             for pair, g in fm.toe_gaps(m, ix, side).items():
                 # Jeff, 2026-10-10: the lesser toes touch but never cross; the hallux stands about 4.5 mm off toe 2
                 band, why = ([3.0, 6.5], "§4.3 (the hallux apart: about 4.5)") if pair == "1-2" else \

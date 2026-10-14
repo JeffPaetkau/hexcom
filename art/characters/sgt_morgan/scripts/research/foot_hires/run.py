@@ -112,7 +112,14 @@ def main(argv):
                 dressed = True
                 timings["dress"] = round(time.time() - t, 2)
             t = time.time()
-            sides = C.render([v for v in a.views.split(",") if v], tier, out_dir, samples=a.samples)
+            ids = [v for v in a.views.split(",") if v]
+            plans = [v for v in ids if v in PLAN_VIEWS]
+            sides = C.render([v for v in ids if v not in PLAN_VIEWS], tier, out_dir, samples=a.samples,
+                             hide=("Hires.L.SkinPlan",))
+            for v in plans:   # the cut copy shows, the full skin is hidden (the preset's own hide list)
+                cut = plan_copy(skin, PLAN_VIEWS[v])
+                sides.update(C.render([v], tier, out_dir, samples=a.samples))
+                cut.hide_render = True
             timings[f"render_{tier}"] = round(time.time() - t, 2)
             ctx.report.setdefault("renders", {}).update({f"{k}_{tier}": s["outputs"]["png"] for k, s in sides.items()})
             ctx.report.setdefault("render_seconds", {}).update({f"{k}_{tier}": s["seconds"] for k, s in sides.items()})
@@ -125,8 +132,11 @@ def main(argv):
 
 
 def save_region(ctx, out_dir):
-    """The region's skin and plates as numpy arrays (world mm, faces), for the bake and export checks."""
+    """The region's skin and plates as numpy arrays (world mm, faces), for the bake and export checks; with the
+    toes' weights (toe_w, one column a toe) and the joints (F mm, JSON) for shape.py's measures."""
     import numpy as np
+    import method_fields
+    import toes as T
     path = os.path.join(C.CACHE, f"{ctx.args.method}{('_' + ctx.args.tag) if ctx.args.tag else ''}.npz")
     os.makedirs(C.CACHE, exist_ok=True)
     data = {}
@@ -136,8 +146,47 @@ def save_region(ctx, out_dir):
         data[name + "_co"] = co.astype(np.float32)
         data[name + "_faces"] = np.array([list(p.vertices) + [-1] * (4 - len(p.vertices)) for p in me.polygons], np.int32)
     data["F_R"], data["F_o"] = ctx.frame.R, ctx.frame.o      # frame F: q = (p - F_o) @ F_R
+    groups = method_fields.read_groups(ctx.skin)
+    data["toe_w"] = np.stack([T.toe_weight(groups, k) for k in (1, 2, 3, 4, 5)], 1).astype(np.float16)
+    data["joints"] = json.dumps({k: np.asarray(v).tolist() for k, v in ctx.joints.items()})
     np.savez_compressed(path, **data)
     return os.path.relpath(path, C.env.PROJECT_DIR)
+
+
+# the plan views: a true top orthographic camera sees the leg's section at z 300 over the heel, so these render a
+# copy of the skin cut level just above the malleoli and capped (plan_copy), the full skin hidden (the shape pass,
+# 2026-10-14)
+PLAN_VIEWS = {"hr.plan": 125.0}
+
+
+def plan_copy(skin, z_cut_mm, name="Hires.L.SkinPlan"):
+    """The skin cut by the plane z = z_cut (F and world z agree: frame F is a rotation about Z on the floor) and the
+    cut capped, in the skin's collections, the same material slots: the foot's plan without the leg above."""
+    import bmesh
+    import bpy
+    old = bpy.data.objects.get(name)
+    if old is not None:
+        me_old = old.data
+        bpy.data.objects.remove(old)
+        bpy.data.meshes.remove(me_old)
+    me = skin.data.copy()
+    me.name = name
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    z = z_cut_mm / C.MM
+    res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], dist=1e-7,
+                                 plane_co=(0.0, 0.0, z), plane_no=(0.0, 0.0, 1.0), clear_outer=True)
+    cut = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge)]
+    if cut:
+        bmesh.ops.holes_fill(bm, edges=cut, sides=0)
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(name, me)
+    for g in skin.vertex_groups:   # the weights came with the mesh; the names (in order) are the object's
+        ob.vertex_groups.new(name=g.name)
+    for coll in skin.users_collection:
+        coll.objects.link(ob)
+    return ob
 
 
 if __name__ == "__main__":

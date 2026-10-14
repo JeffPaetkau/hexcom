@@ -522,6 +522,13 @@ ARCH = {
     "floor_gap": 0.8, "height": [18.0, 40.0],
     # (r 9, amp 2: a knob stuck on, in clay; 1.5 pushed the medial extreme out and with it spec 01's clearance window)
     "navicular": {"y": -120.0, "z": 42.0, "r": 14.0, "amp": 1.2},
+    # the shape pass (2026-10-14; round 2's m3, all three critics: no 5th metatarsal styloid): part 01 now draws the
+    # lateral border straight from the heel to the 5th head and puts a 4.5 mm bump on its 5 mm cage at the styloid,
+    # which the cage's subdivision rounds into a swelling; here the dense skin gets the knob itself, spec 01 §3.2's
+    # (+50, -150, 18), 8 mm across and 2.5 mm proud, on the border's lateral extreme at that station; drawn out
+    # along the border (`r` across, `ry` along: a round dome, r 9, read in clay as a knob stuck on), where the 5th
+    # metatarsal's base flares and the peroneus brevis runs into it
+    "styloid": {"y": -150.0, "z": 17.0, "r": 9.0, "ry": 16.0, "amp": 1.8},
     "instep": {"y": -158.0, "half": 40.0, "amp": 2.5, "up": [0.3, 0.75]},
 }
 
@@ -589,6 +596,14 @@ def arch(q, nrm, P, report=None):
         c = M.medial_point(out, nav["y"], floor + nav["z"], window_mm=2.0)
         out = out + (nav["amp"] * M.sphere(out, c, nav["r"]))[:, None] * nrm
         rep["navicular"] = np.round(c, 1).tolist()
+    sty = cfg.get("styloid")
+    if sty and sty.get("amp"):
+        near = (np.abs(out[:, 1] - sty["y"]) < 2.0) & (np.abs(out[:, 2] - (floor + sty["z"])) < 2.0)
+        c = out[near][np.argmax(out[near][:, 0])]
+        d = (out - c) / np.array([sty["r"], sty.get("ry", sty["r"]), sty["r"]])
+        win = np.clip(1.0 - np.sum(d * d, axis=1), 0.0, 1.0) ** 3
+        out = out + (sty["amp"] * win)[:, None] * nrm
+        rep["styloid"] = np.round(c, 1).tolist()
     ins = cfg.get("instep")
     if ins and ins.get("amp"):
         by = np.clip(1.0 - ((out[:, 1] - ins["y"]) / ins["half"]) ** 2, 0.0, 1.0) ** 2

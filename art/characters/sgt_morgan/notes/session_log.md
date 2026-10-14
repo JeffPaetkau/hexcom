@@ -202,6 +202,20 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    (the big toe's white crescent band; toes 3-5 one outline scaled). Next, pass 3: veins dark
    and fewer, dorsal hair, the malleolus position (measure first), the callus map of spec 01
    §3.4, the styloid, the nails' white band and per-toe outlines; then round 3.
+   **Shape pass (Wednesday 14 October)**, at Jeff's direction ("focus on the overall foot
+   shape"; "from the top it looks too long AND too round; the side view looks fine"): the plan
+   outline was a lemon, widest at 53 % of the length, the lateral border bowing 7.9 mm. The
+   cause was part 01's fit chasing spec 01's estimated instep girth of 263 mm, reachable only
+   with a ~100 mm wide midfoot. Fixed in part 01 (six fitted plan fields; the instep girth
+   target 246 +-6, with a dated note in spec 01): widest at 65 % across the heads, the lateral
+   border straight (3.1 mm, the styloid 2.5), the medial border dipping at the arch; the side
+   profile unchanged. Part 01 passes 148 of 150 (the heel-ankle girth is spec 03's), rebuilds
+   identically. New true top view `hr.plan`; measurements and plots in
+   `renders/research/foot_hires/shape/`. Open for Jeff: the ball girth through the 5th head
+   (246-248 against ANSUR 259; a fuller forefoot is a side change); whether the short, curled
+   toes still make it read long from above; the medial malleolus 10 mm too far back and the
+   lateral one standing 13 mm proud of the leg (side and back changes). Critic series
+   `shape`, round 1 next.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
