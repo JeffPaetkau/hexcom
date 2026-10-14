@@ -187,6 +187,21 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    round 5), cause not found; toe hair reads as scratches. Next: the veins, the seams and the
    folded faces at their cause, the arch, wear and age; then round 2; then the right foot and
    bringing the method into part 01 (spec 01) so the sock and the last can follow.
+   **Whole foot, pass 2 (Tuesday afternoon)**: veins (the dorsal arch, tributaries, the great
+   saphenous), the Achilles as a cord with hollows, a standing arch, a feathered heel callus,
+   pressure redness, finer toe hair; the folded faces found at their cause (the lesser-web
+   closing filled the slit between touching toes and crumpled both walls: off, replaced by
+   `whole.toe_contact`; the curled toes' Z-overlap under the PIP solved exactly): 10,855 -> 71
+   before repair, 0 after. Round 2: 5, 4, 5, FAIL, 5 blocking, 32 merged items
+   (`notes/critic/foot_whole_r2/`). The veins are now the loudest tell: paler than the skin,
+   like piping or scars, where real veins read darker and blue-grey, wider and softer, fewer.
+   Blocking: no dorsal hair (spec 01 asks 90 to 160 terminal hairs on the instep and dorsum);
+   the ankle too far back (medial malleolus ~60 mm ahead of the pternion against 73, by eye);
+   callus only at the heel rim (none under MT 1-2, at the 5th MTP or the hallux IP; no corn);
+   no 5th metatarsal styloid bump. The nails still draw 'acrylic tile' and 'French pedicure'
+   (the big toe's white crescent band; toes 3-5 one outline scaled). Next, pass 3: veins dark
+   and fewer, dorsal hair, the malleolus position (measure first), the callus map of spec 01
+   §3.4, the styloid, the nails' white band and per-toe outlines; then round 3.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

@@ -106,6 +106,52 @@ def relax_tangent(q, adj, nrm, weight, iterations=10, lam=0.5):
     return q
 
 
+def harmonic(X, adj, active, iterations=800, tol=1e-7):
+    """The harmonic extension of X (n x d) over the `active` vertices (bool), the rest held: (D - A) x = A x_held on
+    the active set, by conjugate gradients. It is the state uniform Laplacian relaxation converges to (thousands of
+    Jacobi passes), reached in a few hundred iterations; on a disc-like region whose held rim is near convex it is a
+    Tutte embedding, so a fold in the plan coordinates comes out unfolded (whole foot, pass 2: close_folds)."""
+    ptr, nb = adj
+    act = np.nonzero(active)[0]
+    m = len(act)
+    out = np.array(X, float, copy=True)
+    if not m:
+        return out
+    loc = np.full(len(X), -1, np.int64)
+    loc[act] = np.arange(m)
+    deg = np.diff(ptr)[act].astype(float)
+    counts = np.diff(ptr)[act]
+    offs = np.repeat(ptr[act] - np.concatenate([[0], np.cumsum(counts)[:-1]]), counts) + np.arange(counts.sum())
+    nbr = nb[offs]
+    row = np.repeat(np.arange(m), counts)
+    nl = loc[nbr]
+    inner = nl >= 0
+    r_in, c_in = row[inner], nl[inner]
+
+    def A(x):
+        return deg * x - np.bincount(r_in, x[c_in], minlength=m)
+
+    for d in range(out.shape[1]):
+        b = np.bincount(row[~inner], out[nbr[~inner], d], minlength=m)
+        x = out[act, d].copy()
+        r = b - A(x)
+        p = r.copy()
+        rr = float(r @ r)
+        stop = tol * tol * max(float(b @ b), 1e-12)
+        for _ in range(iterations):
+            if rr <= stop:
+                break
+            Ap = A(p)
+            alpha = rr / float(p @ Ap)
+            x += alpha * p
+            r -= alpha * Ap
+            rr2 = float(r @ r)
+            p = r + (rr2 / rr) * p
+            rr = rr2
+        out[act, d] = x
+    return out
+
+
 def taubin(q, adj, weight, iterations=60, lam=0.5, mu=-0.53):
     """Taubin's lambda|mu fairing where weight > 0 (the weight scales each step): a narrow concavity (a slot
     between two toes) rounds out and fills without the rest shrinking. Runs on the weighted vertices'
@@ -570,22 +616,55 @@ def _close_fold(q, segs, groups, P, k, sig, adj):
     sel = np.nonzero(own > 1e-4)[0]
     ss, uu, hh = s[sel], u[sel], h[sel]
     surf = sample(Sf, ss, uu)
-    lowest = 1.0 - T.smoothstep(hh - surf, 0.4, 2.0)        # the underside's own skin, not the dorsum above
-    umid, half, _, _ = pl.section(ss)
-    side = 1.0 - T.smoothstep(np.abs(uu - umid) / np.maximum(half, 1.0), P.get("fold_close_side", 0.55), 1.0)
+    umid, half, hlo, hhi = pl.section(ss)
+    if P.get("fold_close_under"):
+        # whole foot, pass 2 (critic series foot_whole round 1, m7: a ruler-straight hairline cut across toes 3 and
+        # 4). Under each curled lesser toe's PIP part 01's curl leaves the plantar skin overlapping itself, a Z about
+        # 1 mm deep (sliced: the proximal pad runs on 0.9 mm past where the distal pad's skin turns back under it),
+        # too gradual for a census of flipped neighbours. The old gate (height over the lowest skin in the map's
+        # cell) took every layer of the Z but the bottom one for the dorsum: left out of the relaxation and the
+        # closing, they stood as a slit 2 mm deep and 0.3 mm wide while the skin round them was lowered (toe 3). The
+        # underside is now the lower part of the toe's own section, so the whole Z is spread along the toe (the
+        # relaxation makes s monotone along the mesh) and laid on the closed surface
+        a0, a1 = P["fold_close_under"]
+        lowest = 1.0 - T.smoothstep((hh - hlo) / np.maximum(hhi - hlo, 1.0), a0, a1)
+    else:
+        lowest = 1.0 - T.smoothstep(hh - surf, 0.4, 2.0)    # the underside's own skin, not the dorsum above
+    # (pass 2: the fade may end short of the toe's edge, `fold_close_side_end`: at 0.88 of toe 4's half-width, where
+    # its medial corner meets toe 3, a fifth of the closing raised a teardrop knob 1.5 mm across)
+    side = 1.0 - T.smoothstep(np.abs(uu - umid) / np.maximum(half, 1.0), P.get("fold_close_side", 0.55),
+                              P.get("fold_close_side_end", 1.0))
     s_dip = pl.station(t2d.o)
     w0, w1, w2, w3 = P.get("fold_close_win", (-4.5, -2.5, 5.5, 7.5))
     win = np.maximum(T.window(ss, w0, w1, w2, w3), T.window(ss, s_dip - 3.0, s_dip - 1.5, s_dip + 1.5, s_dip + 3.0))
     omega = lowest * side * win * own[sel]
-    # spread the band: relax the plan coordinates (s, u) where omega is full, the rest held
+    # spread the band: relax the plan coordinates (s, u) where omega is full, the rest held (pass 2: across the toe's
+    # whole width, `fold_close_relax_side` 0, so the Z unfolds at its sides too, where toe 4's folded faces were)
     s2, u2 = ss, uu
     n_rel = int(P.get("fold_close_relax", 0))
     if n_rel and adj is not None:
         w_all = np.zeros(len(q))
-        w_all[sel] = T.smoothstep(omega, 0.5, 0.95)
+        omega_rel = omega if P.get("fold_close_relax_side", 1) else lowest * win * own[sel]
+        w_all[sel] = T.smoothstep(omega_rel, 0.5, 0.95)
         P2 = np.zeros((len(q), 3))
         P2[:, 0], P2[:, 1] = s, u
-        P2 = taubin(P2, adj, 0.9 * w_all, iterations=n_rel, lam=0.5, mu=0.0)
+        hm = P.get("fold_close_harmonic")
+        if hm:
+            # pass 2: relaxed to convergence (the Z under the curled toes' PIP unfolds only there: 400 Jacobi passes
+            # left its layers packed into 0.7 mm, laid on the closed surface they overlapped, 249 flipped pairs on
+            # toe 3; 4000 passes, 0, at 43 s a toe; this solves the same fixed point directly). With `hm` "s" only the
+            # coordinate along the toe (the Z is a fold along it): u relaxed too moved the lower side walls sideways
+            # and flipped faces on toes 4 and 5
+            # confined to the PIP's window and the toe's inner width (`fold_close_harm_side`, share of the half-width):
+            # solved over the DIP's window and the lower side walls as well it flipped faces on toes 4 and 5 at the
+            # solve's rim
+            cols = [0] if hm == "s" else [0, 1]
+            act = np.zeros(len(q), bool)
+            act[sel] = (w_all[sel] > 1e-3) & (T.window(ss, w0, w1, w2, w3) > 0.5) \
+                & (np.abs(uu - umid) / np.maximum(half, 1.0) < P.get("fold_close_harm_side", 1.0))
+            P2[:, cols] = harmonic(P2[:, cols], adj, act)
+        else:
+            P2 = taubin(P2, adj, 0.9 * w_all, iterations=n_rel, lam=0.5, mu=0.0)
         s2, u2 = P2[sel, 0], P2[sel, 1]
     # on the surface at the new plan position, then down onto the closed surface by omega
     h2 = hh + (sample(Sf, s2, u2) - surf)
@@ -593,6 +672,16 @@ def _close_fold(q, segs, groups, P, k, sig, adj):
     h2 = h2 + omega * np.minimum(closed - h2, 0.0)
     out = q.copy()
     out[sel] = pl.o + np.outer(s2, pl.a) + np.outer(u2, pl.b) + np.outer(h2, pl.n)
+    n_fair = int(P.get("fold_close_edge_fair", 0))
+    if n_fair and adj is not None:
+        # pass 2: where the closing gives way to the toe's held sides, the lowered underside met the lower corner of a
+        # contact face (toe 4's medial side against toe 3, a bulge already in the dense skin) and sharpened it into a
+        # teardrop knob 1.5 mm across (round 1's lesser-web closing had covered it); that band is faired, Taubin's
+        # volume-keeping passes, so the lowering rounds into the side instead of standing it up
+        rel_u = np.abs(uu - umid) / np.maximum(half, 1.0)
+        w_e = np.zeros(len(q))
+        w_e[sel] = T.window(rel_u, *P.get("fold_close_edge_band", (0.55, 0.68, 0.9, 1.0))) * win * own[sel] * lowest
+        out = taubin(out, adj, 0.8 * w_e, iterations=n_fair)
     moved = np.linalg.norm(out[sel] - q[sel], axis=1)
     return out, {"sigma": sig, "relax": n_rel, "moved_max": round(float(moved.max()), 3),
                  "moved_n": int((moved > 0.01).sum())}

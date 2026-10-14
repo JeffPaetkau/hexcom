@@ -85,6 +85,9 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
         nob["hires_half_vis0"] = float(nail.half_plan(0.0))
         ctx.plates[k] = (nob, uvw)
         made[k] = nail
+        census = getattr(ctx, "census", None)
+        if census is not None:
+            census(f"nail{k}", q)
         ctx.report.setdefault("nails", {})[k] = {
             "t_fold": round(nail.t0, 2), "t_free_edge": round(nail.t_fe, 2),
             "free_edge_F": nail.to_world(nail.L, 0.0, nail.plate_top(nail.L, 0.0)).round(2).tolist(),
@@ -93,9 +96,65 @@ def nails_and_creases(ctx, q, topo, groups, segs, P, region_extra=None):
     import whole
     dq, cw = whole.creases(q, nrm, segs, P, groups, ctx.report)
     q = q + dq
+    census = getattr(ctx, "census", None)
+    if census is not None:
+        census("creases", q)
     if P.get("untangle", 0):
         q, ctx.report["untangle"] = untangle(q, topo, groups, adj if adj is not None else None, ctx, P)
     return q, beds, cw, made
+
+
+class FoldCensus:
+    """Whole foot, pass 2: adjacent faces turned over (normals more than 120 degrees apart, untangle's test) over
+    the whole dense skin, counted after each step of the build (`debug_folds`), so the step that makes them is
+    found instead of their being laid flat afterwards. Each pair is put on the toe whose groups hold its first
+    face (0: the rest of the foot)."""
+
+    def __init__(self, topo, groups, n_verts):
+        ls, lt, lv = topo
+        if not np.all(lt == 4):
+            raise ValueError("FoldCensus: quads only")
+        self.F = lv.reshape(-1, 4)
+        F = self.F
+        e = np.concatenate([np.stack([F[:, a], F[:, b]], 1) for a, b in ((0, 1), (1, 2), (2, 3), (3, 0))])
+        fid = np.tile(np.arange(len(F)), 4)
+        key = np.minimum(e[:, 0], e[:, 1]) * (n_verts + 1) + np.maximum(e[:, 0], e[:, 1])
+        order = np.argsort(key, kind="stable")
+        ks, fs = key[order], fid[order]
+        same = ks[1:] == ks[:-1]
+        self.a, self.b = fs[:-1][same], fs[1:][same]
+        W = np.stack([T.toe_weight(groups, k) for k in (1, 2, 3, 4, 5)], 1)
+        wv = W[F[:, 0]]
+        self.owner = np.where(wv.max(axis=1) > 0.5, wv.argmax(axis=1) + 1, 0)
+        self.steps = {}
+
+    def __call__(self, name, q):
+        if name in getattr(self, "keep_steps", ()):
+            self.kept[name] = np.asarray(q, np.float32).copy()
+        F = self.F
+        P_ = q[F]
+        n = np.cross(P_[:, 2] - P_[:, 0], P_[:, 3] - P_[:, 1])
+        n /= np.maximum(np.linalg.norm(n, axis=1), 1e-12)[:, None]
+        bad = np.einsum("ij,ij->i", n[self.a], n[self.b]) < -0.5
+        fa = self.a[bad]
+        own = self.owner[fa]
+        c = q[F[fa]].mean(axis=1)
+        out = {"pairs": int(bad.sum()), "by_toe": {str(k): int((own == k).sum()) for k in range(6) if (own == k).any()}}
+        if len(fa):
+            out["y_range"] = [round(float(c[:, 1].min()), 1), round(float(c[:, 1].max()), 1)]
+            out["z_range"] = [round(float(c[:, 2].min()), 1), round(float(c[:, 2].max()), 1)]
+            # a few places, spread over the pairs (F mm)
+            pick = np.linspace(0, len(fa) - 1, min(len(fa), 6)).astype(int)
+            out["at"] = np.round(c[np.argsort(c[:, 1])][pick], 1).tolist()
+        self.steps[name] = (out, np.unique(np.concatenate([self.a[bad], self.b[bad]])))
+        print(f"[folds] {name}: {out}", flush=True)
+        return out
+
+    def save(self, path):
+        import os
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        np.savez_compressed(path, **{f"faces_{k}": v[1] for k, v in self.steps.items()})
+        return {k: v[0] for k, v in self.steps.items()}
 
 
 def untangle(q, topo, groups, adj, ctx, P):
@@ -472,7 +531,9 @@ def c_pad(clefts, full_w, fade_w):
 DETAIL_KEYS = ("nail1", "nail2", "crease_scale", "debug_sections", "stage_cache", "tint", "hair", "toe_sole",
                "toe_sole_smooth", "untangle", "untangle_rings", "crease2p_s", "crease2p_d", "crease2p_w",
                # whole foot, pass 1: everything whole.py and the lesser nails read acts after the stage
-               "nail3", "nail4", "nail5", "tendons", "knuckles", "plantar_lesser", "ridges", "sheen", "corn")
+               "nail3", "nail4", "nail5", "tendons", "knuckles", "plantar_lesser", "ridges", "sheen", "corn",
+               # whole foot, pass 2: the census, and whole.py's new forms and masks (all after the stage)
+               "debug_folds", "contact", "arch", "achilles", "veins", "wear", "forms")
 
 
 def stage_key(q, P):
@@ -502,6 +563,13 @@ def build(ctx):
     groups = read_groups(skin)
     segs = T.segments(ctx.joints)
     ctx.report["t_dense"] = round(time.time() - t0, 2)
+    # whole foot, pass 2: `debug_folds` counts the folded face pairs after every step (FoldCensus)
+    census = FoldCensus(topo, groups, len(q)) if P.get("debug_folds") else (lambda name, q_: None)
+    if P.get("debug_folds") and P.get("debug_keep"):
+        # the skin at the named steps, the toes' weights and the faces, for sections offline (dbg_steps.npz)
+        census.keep_steps, census.kept = tuple(P["debug_keep"]), {}
+    ctx.census = census
+    census("dense", q)
     # the large forms and the web take about 150 s, the nails 6: with `stage_cache` (default on) the skin
     # after them is kept in cache/research/foot_hires/stage_<key>.npz, so a nail-only change rebuilds in seconds
     path = os.path.join(C.CACHE, f"stage_{stage_key(q, P)}.npz") if P.get("stage_cache", 1) else None
@@ -510,24 +578,32 @@ def build(ctx):
             q = z["q"]
             ctx.report.update(json.loads(str(z["report"])))
         ctx.report["stage_cache"] = os.path.basename(path)
+        census("stage_cached", q)
     else:
         t1 = time.time()
         edges, _ = C.edge_lengths(skin)
         adj = M.adjacency(edges, len(q))
         q = M.close_folds(q, segs, groups, P, adj, ctx.report)
+        census("close_folds", q)
         q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
+        census("macro_apply", q)
         q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
+        census("pulps", q)
         q = M.deepen(q, segs, groups, P, ctx.report)
+        census("deepen", q)
         q = M.toe5_form(q, segs, groups, P, ctx.report)
+        census("toe5_form", q)
         ctx.report["t_macro"] = round(time.time() - t1, 2)
         if P.get("web_sdf"):
             t1 = time.time()
             q = web_by_closing(q, topo, segs, P, adj, groups, ctx.report)
             ctx.report["t_web_sdf"] = round(time.time() - t1, 2)
+            census("web_1_2", q)
         if P.get("webs_lesser"):
             t1 = time.time()
             q = webs_lesser(q, topo, segs, P, adj, groups, ctx.report)
             ctx.report["t_webs_lesser"] = round(time.time() - t1, 2)
+            census("webs_lesser", q)
         if path:
             os.makedirs(C.CACHE, exist_ok=True)
             keep = {k: ctx.report[k] for k in ("anchors", "pulps", "web", "toe2_outline", "fold_close", "deepen", "t_macro",
@@ -536,12 +612,33 @@ def build(ctx):
             np.savez(path, q=q, report=json.dumps(keep))
     # whole foot, pass 1: the long extensors after the webs (whole.tendons), so a tendon change keeps the stage
     import whole
+    # pass 2: the touching toes' contact, the arch, the Achilles (whole.forms), and the veins after the tendons
+    t1 = time.time()
+    ctx.q_stage = q
+    if P.get("forms", 1):
+        q = whole.forms(ctx, q, topo, groups, segs, P)
+    ctx.q_forms = q
+    ctx.report["t_forms"] = round(time.time() - t1, 2)
+    census("forms", q)
     t1 = time.time()
     q, ctx.tendon_mask = whole.tendons(q, C.vertex_normals(q, topo), segs, groups, ctx.joints, P, ctx.report)
     ctx.report["t_tendons"] = round(time.time() - t1, 2)
+    census("tendons", q)
+    t1 = time.time()
+    q, ctx.vein_mask = whole.veins(q, C.vertex_normals(q, topo), P, ctx.report)
+    ctx.report["t_veins"] = round(time.time() - t1, 2)
+    census("veins", q)
     t1 = time.time()
     q, beds, cw, _ = nails_and_creases(ctx, q, topo, groups, segs, P)
     ctx.report["t_detail"] = round(time.time() - t1, 2)
+    census("final", q)
+    if P.get("debug_folds"):
+        ctx.report["folds"] = census.save(os.path.join(C.CACHE, "folds_census.npz"))
+        if getattr(census, "kept", None):
+            W = np.stack([T.toe_weight(groups, k) for k in (1, 2, 3, 4, 5)], 1).astype(np.float32)
+            np.savez(os.path.join(C.CACHE, "dbg_steps.npz"), faces=census.F.astype(np.int32), toe_w=W,
+                     joints=json.dumps({k: np.asarray(v).tolist() for k, v in ctx.joints.items()}),
+                     **{f"q_{k}": v for k, v in census.kept.items()})
     finish(ctx, q, beds, cw, groups)
     if P.get("hair", 0):
         import hair

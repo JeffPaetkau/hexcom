@@ -42,7 +42,7 @@ PARAMS = {
     # 0.3 mm (0.06 creased the crossing), and the plantar PIP crease lies just before the bend (1.8 mm past the joint
     # in plan; the apex is about 2 mm past it, as sliced), wider and shallower: at 0.18 mm on the bend it notched the
     # apex, a soft fold now rather than a groove beside an edge
-    "fold_close_k": 0.3, "fold_close_win": (-6.0, -3.0, 6.5, 9.0),
+    "fold_close_k": 0.3, "fold_close_win": (-8.0, -5.0, 6.5, 9.0),   # (pass 2: from -6, -3)
     "crease2p_d": 0.1, "crease2p_w": 1.1,
     "droop1": 3.0, "droop2": 1.2,        # the tips' dorsum turned down toward the nose ...
     "droop_reach1": 4.5, "droop_reach2": 3.5,   # ... over the stretch ahead of the free edge only (round 1: 9, 5.5)
@@ -193,13 +193,33 @@ PARAMS.update({
     "toe5_short": 1.4, "toe5_girth": 0.6,
     # toe 2's plantar fold closing (macro.close_folds) on every curled lesser toe
     "fold_close_toes": [2, 3, 4, 5],
+    # whole foot, pass 2: the underside the closing acts on is the lower part of each toe's section (shares of its
+    # height), not the skin within 0.4-2 mm of the lowest in its cell, and the relaxation spans the toe's width: the
+    # plantar PIP fold of the curled toes is a Z of overlapping skin, and the old gate left its upper layers standing
+    # as a slit (the hairline cut across toes 3 and 4) and folded 41 face pairs on toe 4 (macro._close_fold)
+    "fold_close_under": [0.3, 0.5], "fold_close_relax_side": 0,
+    # ... and the relaxation solved to convergence (macro.harmonic) over the PIP's window and the toe's inner 0.8, the
+    # window reaching 8 mm behind the joint: 400 Jacobi passes left the Z's layers packed into 0.7 mm, where laid on
+    # the closed surface they overlapped (249 flipped pairs on toe 3); solved, toes 2-5 have none and no edge sharper
+    # than 60 degrees but 9 on toe 4 (offline, scratch fold_lab on the stage's dense skin)
+    "fold_close_harmonic": 1, "fold_close_harm_side": 0.8,
+    # ... and the band where the closing gives way to the held sides faired (40 Taubin passes over 0.3-1.0 of the
+    # half-width): at toe 4's medial base, where the Z stands 3 mm tall against toe 3, its partly laid layers stood up as
+    # a knob 2 mm across (peak curvature 0.011, the dense skin's 0.003; faired 0.004); toes 2-5 have no flipped face and
+    # no edge sharper than 60 degrees
+    "fold_close_edge_fair": 40, "fold_close_edge_band": [0.3, 0.45, 0.9, 1.0],
     # the 2-3, 3-4 and 4-5 webs by one closing (method_fields.webs_lesser): the commissures where part 01 left
     # them (spec 01 §3.3, Jeff's direction: y -235, -231.1, -218), a smaller radius than the 1-2 web's (the
     # lesser toes touch), low on the toes, so the dorsal grooves between the proximal phalanges stay
     # (version 2: the first build's mask, 1.6 mm full and 3 mm of fade either side of each cleft, reached most of
     # each toe's underside, filled the plantar sulcus at the toes' bases and ended in seams across them)
-    "webs_lesser": {"version": 2, "y": [-235.0, -231.1, -218.0], "r": 1.6, "band": 0.7, "fade": 1.8,
-                    "z": [13.0, 18.0], "voxel": 0.15},
+    # whole foot, pass 2: OFF. The census (method_fields.FoldCensus, `debug_folds`) found this closing makes 10,731
+    # of the 10,855 folded face pairs: between toes that touch (0.2-0.35 mm apart) a closing fills the slit itself,
+    # its mask's fade along the toe caps the slit across (the critics' "ruler-straight hairline cut" across toes 3
+    # and 4), and the projection lands both facing walls on the one filled surface, where they crumple (the dark
+    # seams along the touching sides). The touching walls are now brought into contact instead (whole.toe_contact)
+    # and the commissures are part 01's
+    "webs_lesser": 0,
     # the long extensors moved out of the stage (whole.tendons, after the webs)
     "ehl": 0.0, "edl": 0.0,
 })
@@ -210,6 +230,9 @@ PARAMS.update({
 # half-moon over the middle 60 % of the root)
 PARAMS["nail1"].update(lunula_mm=3.4, lunula_half=5.4, lunula_k=0.85, lunula_hide=1.6)
 PARAMS["nail2"].update(lunula_mm=0.7, lunula_half=3.0, lunula_k=0.35, lunula_hide=0.8)
+# whole foot, pass 2: with the PIP fold closed (fold_close_harmonic) toe 2's plantar crease is a soft fold, as the
+# lesser toes' (whole.PLANTAR_LESSER), a little before its old kink (round 5: 1.8 mm, 0.1 deep, sigma 1.1)
+PARAMS.update({"crease2p_s": 1.2, "crease2p_d": 0.26, "crease2p_w": 0.7})
 
 
 def toe_weight(groups, k):

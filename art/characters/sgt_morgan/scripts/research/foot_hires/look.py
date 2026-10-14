@@ -75,9 +75,25 @@ TINT = {"cap_hex": "#b4645a", "cap_share": 0.30, "cool_hex": "#a89a95", "cool_sh
 # the recipe's dorsum is 0.42 with a 0.08 coat, and in LookDev its broad highlight read as grease
 MATTE = {"rough_add": 0.18, "coat_keep": 0.25}
 # the trial's overrides of Skin.Foot (spec 16's recipe; dotted paths, materials._overridden)
-SKIN_OVERRIDES = {"micro__I_toe_wrinkles__depth_mm": 0.0}
+# whole foot, pass 2: the veins' relief is geometry (whole.veins), so the recipe's vein bump is off and Foot.Vein only
+# tints; the recipe's 5.5 mm blotch at one size and contrast everywhere read as a procedural overlay (round 1's m19,
+# m26, m38), so it is lower and the 1 mm mottle (capillary and freckle scale) a little stronger, the regional
+# unevenness coming from Hires.Wear's tone instead
+SKIN_OVERRIDES = {"micro__I_toe_wrinkles__depth_mm": 0.0, "micro__G_vein_mm": 0.0,
+                  "variation__blotch_value": 0.025, "variation__blotch_sat": 0.02, "variation__mottle_value": 0.04,
+                  # spec 01 §3.4's 18 % of #7d8b86 left the raised cords paler than the skin in LookDev (their tops catch
+                  # the key, and a grey of the skin's own lightness only desaturates it: at 38 % they read as pale welts):
+                  # a vein seen through skin is a little darker and cooler than it, a muted blue-grey
+                  "regions__vein__share": 0.38, "regions__vein__hex": "#687a85"}
+# whole foot, pass 2 (round 1's m33, m34, m11, m19, m26: young, clean and unused): Hires.Wear (whole.wear_masks) as
+# pressure redness, dryness drawn as fine pale scaling (a 0.45 mm noise thresholded into flakes, rougher and without
+# the oil's coat), and the tone's regional unevenness, browner where positive, paler and yellower where negative
+WEAR_LOOK = {"red_hex": "#c0675a", "red_share": 0.34, "dry_hex": "#e9ddcc", "dry_share": 0.4, "flake_mm": 0.45,
+             "flake": (0.45, 0.62), "flake_base": 0.35, "dry_rough": 0.2, "dry_coat_keep": 0.25,
+             "tone_dark_hex": "#97694f", "tone_dark_share": 0.28, "tone_pale_hex": "#ddc4a0", "tone_pale_share": 0.38}
 # spec 01 §3.4 / spec 16 Hair.Body (#3a2a1e root -> #5a4030 tip): dark brown terminal hair, by melanin
-HAIR_LOOK = {"melanin": 0.82, "redness": 0.45, "roughness": 0.32, "radial": 0.35, "random_rough": 0.15,
+# (pass 2: melanin 0.82 -> 0.65, a brown that keeps a highlight instead of an ink line)
+HAIR_LOOK = {"melanin": 0.65, "redness": 0.45, "roughness": 0.3, "radial": 0.35, "random_rough": 0.15,
              "random_color": 0.12, "coat": 0.0, "ior": 1.55}
 
 
@@ -98,7 +114,7 @@ def dress_skin(skin, standin=True):
     att = skin.data.attributes.get("Hires.Bed")
     if att is not None and att.domain == "FACE" and skin.data.attributes.get("Hires.NailA") is None:
         M.assign(skin, "Skin.Foot", part="HiresNailBed", faces="Hires.Bed", **BED_OVERRIDES)
-    if all(skin.data.attributes.get(a) is None for a in ("Hires.NailA", "Hires.Tint", "Hires.Sheen")):
+    if all(skin.data.attributes.get(a) is None for a in ("Hires.NailA", "Hires.Tint", "Hires.Sheen", "Hires.Wear")):
         return
     # the trial's own copy (the library's material is shared and cached by its hash)
     own = mat.copy()
@@ -106,7 +122,8 @@ def dress_skin(skin, standin=True):
     skin.data.materials[0] = own
     tint_skin(own, tint=skin.data.attributes.get("Hires.Tint") is not None,
               nail=skin.data.attributes.get("Hires.NailA") is not None,
-              sheen=skin.data.attributes.get("Hires.Sheen") is not None)
+              sheen=skin.data.attributes.get("Hires.Sheen") is not None,
+              wear=skin.data.attributes.get("Hires.Wear") is not None)
     if skin.data.attributes.get("Hires.NailA") is not None:
         nail_on_skin(own)
     if skin.data.attributes.get("Foot.Ridges") is not None:
@@ -151,21 +168,38 @@ def _contact_line(nb, s, w):
     return nb.math("MULTIPLY", line, nb.math("SUBTRACT", 1.0, nb.smoothstep(w, -0.6, -0.1)))
 
 
-def tint_skin(mat, tint=True, nail=False, sheen=False):
+def tint_skin(mat, tint=True, nail=False, sheen=False, wear=False):
     """Spec 01 §3.4's colour zones on the skin's base colour, from Hires.Tint (capillary, cool, crease), and
     the nail folds' contact line (from Hires.NailA); with `sheen`, the forefoot's dorsum made matte (Hires.Sheen,
-    whole.sheen_mask; whole foot, pass 1: the dorsum's broad highlight read greasy in V5f): rougher, less coat."""
+    whole.sheen_mask; whole foot, pass 1: the dorsum's broad highlight read greasy in V5f): rougher, less coat; with
+    `wear` (pass 2), Hires.Wear's pressure redness, dry scaling and tone (WEAR_LOOK)."""
     from lib import mat_catalogue as CAT
     from lib import mat_core as K
     nb = K.NodeBuilder(mat.node_tree)
     core = _core(mat)
+    lin = CAT.hex_to_linear
+    WL = WEAR_LOOK
+    red = dry = tone = flakes = None
+    if wear:
+        red, dry, tone = nb.separate(nb.attr("Hires.Wear", out="Vector"))
+        flake = nb.smoothstep(nb.noise(nb.coords("Object"), 1000.0 / WL["flake_mm"], detail=2.0), *WL["flake"])
+        flakes = nb.math("MULTIPLY", dry, nb.math("ADD", WL["flake_base"], nb.math("MULTIPLY", flake, 1.0 - WL["flake_base"])))
+    rough_fns, coat_fns = [], []
     if sheen:
         sh = nb.attr("Hires.Sheen")
-        for key, fn in (("Roughness", lambda r: nb.math("ADD", r, nb.math("MULTIPLY", sh, MATTE["rough_add"]), clamp=True)),
-                        ("Coat Weight", lambda c: nb.math("MULTIPLY", c, nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", sh, 1.0 - MATTE["coat_keep"]))))):
-            sock = core.inputs[key]
-            src = sock.links[0].from_socket if sock.links else sock.default_value
-            nb.link(fn(src), sock)
+        rough_fns.append(lambda r: nb.math("ADD", r, nb.math("MULTIPLY", sh, MATTE["rough_add"]), clamp=True))
+        coat_fns.append(lambda c: nb.math("MULTIPLY", c, nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", sh, 1.0 - MATTE["coat_keep"]))))
+    if wear:
+        rough_fns.append(lambda r: nb.math("ADD", r, nb.math("MULTIPLY", dry, WL["dry_rough"]), clamp=True))
+        coat_fns.append(lambda c: nb.math("MULTIPLY", c, nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", dry, 1.0 - WL["dry_coat_keep"]))))
+    for key, fns in (("Roughness", rough_fns), ("Coat Weight", coat_fns)):
+        if not fns:
+            continue
+        sock = core.inputs[key]
+        src = sock.links[0].from_socket if sock.links else sock.default_value
+        for fn in fns:
+            src = fn(src)
+        nb.link(src, sock)
     sock_in = core.inputs["Base Color"]
     c = sock_in.links[0].from_socket
     if tint:
@@ -173,6 +207,13 @@ def tint_skin(mat, tint=True, nail=False, sheen=False):
         c = nb.mix(nb.math("MULTIPLY", cap, TINT["cap_share"], clamp=True), c, CAT.hex_to_linear(TINT["cap_hex"]))
         c = nb.mix(nb.math("MULTIPLY", cool, TINT["cool_share"], clamp=True), c, CAT.hex_to_linear(TINT["cool_hex"]))
         c = nb.vmath("SCALE", c, scale=nb.math("SUBTRACT", 1.0, nb.math("MULTIPLY", crease, TINT["crease_dark"]), clamp=True))
+    if wear:
+        dark = nb.math("MAXIMUM", tone, 0.0)
+        pale = nb.math("MAXIMUM", nb.math("MULTIPLY", tone, -1.0), 0.0)
+        c = nb.mix(nb.math("MULTIPLY", dark, WL["tone_dark_share"], clamp=True), c, lin(WL["tone_dark_hex"]))
+        c = nb.mix(nb.math("MULTIPLY", pale, WL["tone_pale_share"], clamp=True), c, lin(WL["tone_pale_hex"]))
+        c = nb.mix(nb.math("MULTIPLY", red, WL["red_share"], clamp=True), c, lin(WL["red_hex"]))
+        c = nb.mix(nb.math("MULTIPLY", flakes, WL["dry_share"], clamp=True), c, lin(WL["dry_hex"]))
     if nail:
         s, _, _ = nb.separate(nb.attr("Hires.NailA", out="Vector"))
         _, _, w = nb.separate(nb.attr("Hires.NailB", out="Vector"))

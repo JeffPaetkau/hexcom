@@ -16,20 +16,24 @@ import numpy as np
 import toes as T
 
 HAIR = {
-    "seed": 11, "points": 14, "radius_mm": (0.035, 0.014), "rise_deg": 30.0, "s0_mm": 0.55, "yaw_deg": 12.0,
-    "wave_mm": 0.035, "embed_mm": 0.04,
-    # each hair bends in the skin's plane by a random total angle (degrees over its length), as terminal body
-    # hair does: straight strands read as scratches (round 5's first render)
-    "curl_deg": 25.0,
+    "seed": 11, "points": 18, "radius_mm": (0.026, 0.008), "rise_deg": 22.0, "s0_mm": 0.8, "yaw_deg": 8.0,
+    "wave_mm": 0.03, "embed_mm": 0.04,
+    # each hair bends in the skin's plane by a total angle (degrees over its length), as terminal body hair does:
+    # straight strands read as scratches (round 5's first render). Whole foot, pass 2 (round 1's m14, m32: still short,
+    # straight, parallel dark dashes in a tight clump, like pen hatching): the bend is `curl_deg` = (least, most),
+    # growing toward the tip (an arc that tightens, not a kink); the hairs finer (0.052 mm at the root, tapering to
+    # 0.016), fewer, longer, spread at least `spacing` apart over a wider patch. (With the bend's side random and 22
+    # degrees of yaw they crossed in X's, scratches again: a tuft is a stream, every hair in it turning the same way,
+    # `curl_side`, its heading within 8 degrees of the others')
+    "curl_deg": (18.0, 38.0), "curl_side": 1.0,
     # per toe: the segment, the patch's centre (share of the segment from its proximal joint), its half-axes
     # (along, across, mm), the count and the lengths (mm)
     "tufts": [
-        {"seg": "h1", "centre": 0.52, "half": (6.0, 5.0), "u0": -0.8, "n": 10, "len": (4.0, 7.0), "spacing": 1.4},
-        {"seg": "t2p", "centre": 0.45, "half": (3.2, 2.2), "u0": 0.0, "n": 3, "len": (2.8, 4.8), "spacing": 1.2},
-        # whole foot, pass 1: spec 01 §3.4's 2-4 hairs on toes 3 and 4, 0-3 short ones on toe 5
-        {"seg": "t3p", "centre": 0.45, "half": (3.0, 2.0), "u0": 0.0, "n": 3, "len": (2.6, 4.4), "spacing": 1.2},
-        {"seg": "t4p", "centre": 0.45, "half": (2.8, 1.9), "u0": 0.2, "n": 2, "len": (2.4, 4.0), "spacing": 1.2},
-        {"seg": "t5p", "centre": 0.5, "half": (2.4, 1.6), "u0": 0.6, "n": 1, "len": (2.2, 3.0), "spacing": 1.2},
+        {"seg": "h1", "centre": 0.5, "half": (7.5, 5.5), "u0": -0.8, "n": 7, "len": (4.5, 7.5), "spacing": 2.0},
+        {"seg": "t2p", "centre": 0.45, "half": (3.4, 2.4), "u0": 0.0, "n": 2, "len": (3.5, 5.5), "spacing": 2.0},
+        # whole foot, pass 1: spec 01 §3.4's 2-4 hairs on toes 3 and 4, 0-3 short ones on toe 5 (pass 2: 2, 1, 0)
+        {"seg": "t3p", "centre": 0.45, "half": (3.0, 2.2), "u0": 0.0, "n": 2, "len": (3.0, 5.0), "spacing": 2.0},
+        {"seg": "t4p", "centre": 0.45, "half": (2.8, 2.0), "u0": 0.2, "n": 1, "len": (3.0, 4.5), "spacing": 2.0},
     ],
 }
 
@@ -78,14 +82,18 @@ def build(ctx, q, nrm, segs, groups, params=None):
             base = q[j].copy()
             pts = [base - H["embed_mm"] * n0]
             ph = rng.uniform(0.0, 2.0 * math.pi)
-            bend = math.radians(rng.normal(0.0, H["curl_deg"])) / (npts - 1)
+            cd = H["curl_deg"]
+            total = rng.uniform(*cd) if isinstance(cd, (list, tuple)) else rng.normal(0.0, cd)
+            side_k = H.get("curl_side") or (1.0 if rng.random() < 0.5 else -1.0)
+            total = math.radians(total) * side_k
+            norm_k = 0.5 * npts * (npts - 1)
             for k in range(1, npts):
                 s = k * step
                 base_guess = base + d * step
                 sp, sn = surface(base_guess)
                 d = sp - base          # the heading follows the skin
                 d = d - (d @ sn) * sn
-                d = T.rotate(d, sn, math.degrees(bend))
+                d = T.rotate(d, sn, math.degrees(total * k / norm_k))   # tightening toward the tip
                 if np.linalg.norm(d) < 1e-6:
                     d = seg.a - (seg.a @ sn) * sn
                 d /= np.linalg.norm(d)

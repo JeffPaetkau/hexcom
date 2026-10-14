@@ -410,3 +410,68 @@ m8); no veins; the 1-2 web's shelf and the hallux's base sulcus (round 5 m7, m9)
 
 Cost: stage from scratch 397-408 s (the 1-2 closing 137, the lesser webs 137-143, macro 74), with it cached 46 s;
 dress 11 s; eval at 2048 px: V1f 40 s, V5f 63, V2 48, V3 47, V4 19, V8 59, hr.hallux 111, hr.plantar 94, hr.lesser 109.
+
+## Whole foot, pass 2 (2026-10-13)
+
+Critic series `foot_whole` round 1 (`notes/critic/foot_whole_r1/tally.md`): 5 / 5 / 4, four blocking. Run `fields_w2`
+(`run.py --method fields --tier eval --tag w2 --save --views` as pass 1's, `--params '{"debug_folds": 1}'`); packet
+`renders/research/foot_hires/critic/whole_r2/` (`--previous` whole_r1: 32 claims); every packet image beside round 1's
+at the packet's scale in `renders/research/foot_hires/fields_w2/sbs/`. New code in `whole.py` (`toe_contact`, `arch`,
+`achilles`, `veins`, `wear_masks`), `macro.harmonic` and `_close_fold`'s new options, `method_fields.FoldCensus`.
+
+* **Folded faces, found at their cause.** `debug_folds` counts flipped neighbour pairs (untangle's test) after every
+  step. 71 through the stage, then `webs_lesser` added 10,731: a closing between toes that touch (0.2-0.35 mm apart)
+  fills the slit itself, its mask's fade along the toe capped the slit across, and the projection landed both facing
+  walls on the one filled surface, where they crumpled (round 1's dark seams along the touching sides; untangle left
+  481). It is off; `toe_contact` moves each facing wall toward its neighbour by half the gap less 0.05 mm (fully under
+  0.35 mm, fading by 1.4; the new gap a monotone function of the old, so nothing folds), the commissures part 01's.
+* **The hairline cut across toes 3 and 4** (m7) was not the webs: in clay it stayed. Sliced (scratch plots of the
+  stage's dense skin, `debug_keep`), the curled toes' plantar skin overlaps itself under the PIP in a Z about 1 mm deep
+  (part 01's curl on the 5 mm cage; too gradual for the flip census, 66 edges over 60 degrees on toe 3).
+  `close_folds` gated its relaxation and closing by height over the lowest skin in its map cell, so the Z's upper
+  layers stood as a slit 2 mm deep and 0.3 wide while the skin round them was lowered. Now: the gate is the lower part
+  of the toe's own section (`fold_close_under`); the plan relaxation solved to convergence (`macro.harmonic`, conjugate
+  gradients over the PIP window and the toe's inner 0.8; 400 Jacobi passes left the Z packed into 0.7 mm, 249 flipped
+  pairs; 4000 passes, none, at 43 s a toe), the window from 8 mm behind the joint; the band where the closing gives
+  way to the held sides faired (`fold_close_edge_fair`: toe 4's contact corner against toe 3 had stood up as a 2 mm
+  knob). Tested offline on the dense skin (1-2 s a toe): toes 2-5 have no flipped pair and no edge over 60 degrees. The
+  crease is now a soft fold (`whole.PLANTAR_LESSER`: 0.28 mm, sigma 0.7, doubled 1.3 mm proximal at 0.12).
+* **Folded pairs now**: before the repair step 71 (the hallux pulp's 32, known since round 5; nail 5's 39), after it 0
+  (round 1: 10,855 and 481).
+* **The arcs at the toes' plantar bases** (m12, m28) were the ridges' phase jumping where a toe's own weight crosses
+  0.5 while their break sat on the toes' summed weight, which a neighbour lifts there; now on each toe's weight.
+* **Veins** (blocking m1, m3; `whole.veins`): curves laid on the skin from anchors ("top" x, y; "med" / "lat" y, z),
+  Catmull-Rom, a slow meander, set on the skin's tangent planes; the skin rises along its normals by (1 - (d/r)^2)^3,
+  height and radius varying along each vein (slow wobble, faint beading), joined by a p-norm. One vein from the lateral
+  marginal (0.2-0.4 mm) across the dorsum as the arch (0.75 mm, about 3 mm across, y -166 to -182) and round up in front
+  of the medial malleolus as the great saphenous (0.95 mm, 3.4 mm), fading up the leg by z 205; three tributaries from
+  the webs (0.35-0.45 mm) and an oblique branch to the saphenous (0.45). Foot.Vein tints (look.py: the recipe's bump
+  off, 38 % of #687a85: spec 01's 18 % of #7d8b86 read as pale welts, a grey of the skin's lightness only desaturating).
+* **Achilles** (blocking m2; `whole.achilles`): along the horizontal normal of the ankle's back, the cord raised 1.4 mm
+  over 11.5 mm and a hollow either side sunk 3.2 mm (Gaussian, sigma 5, at 15.5 mm from its line), z windows C2-smooth
+  (the first hollows, sigma 3.4, read as tram lines on a ledge).
+* **Arch** (m5; `whole.arch`): the underside of the midfoot's medial two thirds raised up to 7 mm (eased to nothing
+  under the medial border), the lateral column lowered 2.2 mm (never nearer the floor than 0.8), the instep a 2.5 mm
+  bell over y, the navicular a 1.2 mm dome; smootherstep profiles (a sin^0.8 envelope creased the sole straight across;
+  smoothsteps drew curvature lines in clay). Spec 01's figures, before and after: medial clearance at 45 % L 14.4 /
+  14.8 (13), lateral border at 50 % L 3.6 / 2.1 (4), dorsum at 50 / 60 / 70 % L 65.5 / 54.2 / 39.7 and 67.2 / 56.4 /
+  39.7 (66 / 56 / 40). The medial view's lift comes from the vault's shaded underside behind the border.
+* **Wear and age** (m4, m6, m11, m19, m26, m33, m34; `whole.wear_masks`, `look.WEAR_LOOK`): Foot.Callus.Heel a band by
+  the heel's own slope (normal turned 21-72 degrees from the floor, a 15 mm band on this heel pad) over the
+  posterior-lateral sector, its edges broken and patchy, kept under 0.72 so the recipe's colour and cracks fade over the
+  inner margin; Hires.Wear's pressure redness (ball, heel pad, toe 5's outer side, lateral 5th MTP, medial first MTP and
+  hallux IP), dry scaling (a 0.45 mm flake noise, rougher, no coat) and tone (blobs 25-45 mm across, the malleoli
+  browner, the plantar margins paler: a few plane waves drew bands across the shin); the recipe's 5.5 mm blotch lower.
+* **Toe hair** (m14, m32): 0.052 to 0.016 mm, 7 hairs on the hallux, 2 / 2 / 1 on toes 2-4, none on toe 5, each a
+  tightening arc of 18-38 degrees turning the same way, headings within 8 degrees (random sides crossed in X's).
+
+No library changes: the shading is the trial's (`look.py` overrides and its copy of Skin.Foot). For the library later:
+Foot.Vein's colour and share as above, Hires.Wear's layers, the heel callus mask by slope.
+
+Cost: stage from scratch 274-287 s (no lesser-web closing; the fold closing 1-2 s a toe), cached 78-82 s with the
+forms (8 s) and veins (2 s); dress 10-12 s; eval at 2048 px 632 s: V1f 41, V5f 63, V2 52, V3 55, V4 23, V8 60,
+hr.hallux 112, hr.plantar 92, hr.lesser 108. Packet sha d3a749626a19.
+
+Still open: the extensor tendons are still thin, even lines (round 1's m9, m29); the lateral malleolus soft (m25) and
+no 5th metatarsal styloid (m10); the nails' French-tip edge and copied lesser nails (m15-m17, m20, m21); the whorls'
+seam (m30); toe 5 not tucked under toe 4 (m31, m40); the tone's regional logic is broad, not yet per region (m26).
