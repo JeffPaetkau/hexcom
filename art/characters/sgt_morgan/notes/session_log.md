@@ -238,6 +238,20 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    nails, the large-form edits reach the numbers but read too faintly at packet scale; a
    reference with real foot geometry (a permissively licensed 3D foot scan, or measured
    sections) may be needed to drive these forms, which is also the head's problem.
+   **Scan reference (Thursday evening)**: at Jeff's choice, the CC0 "Foot shape-function model
+   data" (Schuster, Kelly & Cresswell; https://zenodo.org/records/10360304) is downloaded and
+   md5-verified into the git-ignored `assets/scans/zenodo_10360304/`: README, the 281 MB
+   `treadmill_data.mat` (MATLAB v7.3; its subject table, with sex, is hard to read without
+   MATLAB) and 20 ASCII PLY scans (right feet, cut at 125 mm, ~35k vertices; mBW seated, fBW
+   standing). Men by size: 038 (278.3 x 105.8), 081 (275.9 x 115.0), 012 (275.7 x 106.4),
+   059 (265.4); the other six are 230-247 mm. A scan-driven shape pass (align and scale the
+   scans to our left foot, compare plantar height maps, sections, the heel bell and the plan,
+   then fit part 01's fields to the scans' sections) was **interrupted** when Jeff shut down; its
+   partial changes are in `git stash` ("scan-driven foot shape pass, interrupted 2026-10-15"),
+   not on master. Resume: `git stash show -p stash@{0}` to review, `git stash pop` to continue,
+   or rerun the pass from its brief (the brief's points are these five: load and align, compare,
+   fix in part 01, clay side by side with the scan, shape round 3 packet; plus a `scans` group
+   in `scripts/setup/downloads.json`).
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
