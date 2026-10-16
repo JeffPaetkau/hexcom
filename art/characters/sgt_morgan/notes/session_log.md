@@ -230,7 +230,14 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    (see-through plan gaps 13/7/7 -> 3/3/3); toe 5 rolled 55 degrees onto its side against toe
    4; the heel narrowing above the pad from behind; the sole's trough removed, a toe sulcus and
    fuller pads; the anterior ankle ~7 mm lighter, the rest of the side outline unchanged. Part
-   01 148 of 150, identical rebuilds. Critic packet `shape_r2` built.
+   01 148 of 150, identical rebuilds. **Shape round 2**: 5, 5, 5, FAIL, 0 blocking (was 4),
+   36 merged, only 5 or 6 of 29 claims confirmed fixed (`notes/critic/foot_shape_r2/`). The
+   big toe's length is no longer flagged. Still leading in all three: the sole a smooth slab
+   (no domed heel pad, lateral band, arch hollow, ball pad); the lesser toes fingers from above;
+   from below matchsticks with ball tips; the heel a box from behind, not a bell. As with the
+   nails, the large-form edits reach the numbers but read too faintly at packet scale; a
+   reference with real foot geometry (a permissively licensed 3D foot scan, or measured
+   sections) may be needed to drive these forms, which is also the head's problem.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
