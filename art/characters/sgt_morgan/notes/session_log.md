@@ -214,8 +214,16 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    `renders/research/foot_hires/shape/`. Open for Jeff: the ball girth through the 5th head
    (246-248 against ANSUR 259; a fuller forefoot is a side change); whether the short, curled
    toes still make it read long from above; the medial malleolus 10 mm too far back and the
-   lateral one standing 13 mm proud of the leg (side and back changes). Critic series
-   `shape`, round 1 next.
+   lateral one standing 13 mm proud of the leg (side and back changes). **Shape round 1
+   (Thursday 15 October)**: 5, 5, 5, FAIL, 4 blocking, 36 merged (`notes/critic/foot_shape_r1/`).
+   No critic faults the plan outline any more. All three lead with the toes: toe 2 ends ~12 mm
+   behind the hallux (spec 01: 3 to 5; partly Jeff's X3 direction, which shortened the middle
+   phalanges, partly the curl's foreshortening from above), the tips stepping down steeply; the
+   lesser toes still slender, waisted, knobbly and apart, read as fingers; toe 5 upright, not
+   rolled and tucked. Then: the heel a box from behind (should be a bulb narrowing into the
+   Achilles); the sole a blank slab (no heel pad, lateral band, ball pad or toe sulcus); the
+   anterior ankle one oversized fillet (C2). The toe line conflicts with Jeff's X3 direction, so
+   it is his call before the next shape pass.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

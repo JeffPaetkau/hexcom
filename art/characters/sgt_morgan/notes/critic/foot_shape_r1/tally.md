@@ -1,0 +1,263 @@
+# Tally: part 01, round 1
+
+Packet `renders/research/foot_hires/critic/shape_r1/`, sha 9bda80375673. Scope: the whole left foot's large forms: silhouettes, profiles, volumes and transitions, in clay.
+
+**FAIL**, decision **revise**: median 5 (C1 fidelity 5, C2 reality 5, C3 craft 5; spread 0), 4 blocking, metrics none in the packet.
+
+| Question | C1 | C2 | C3 | Min | Mean |
+|---|---|---|---|---|---|
+| Q2 | 4 | 4 | 4 | 4 | 4.0 |
+| Q7 | 5 | 5 | 5 | 5 | 5.0 |
+| Overall | 5 | 5 | 5 | 5 | 5.0 |
+
+## Blocking
+
+- **m1** [C1, C2, C3] Toe 2 stops about 12 mm short of the hallux (spec 3–5 mm), so the toe line drops steeply from an oversized-looking big toe and the forefoot looks lopsided toward the medial side in plan.
+  - at C1 blocking `pair_hr.plan_form.png` [975, 85, 1290, 240]; C2 blocking `pair_hr.plan_form.png` [960, 85, 1280, 215]; C3 blocking `pair_hr.plan_form.png` [978, 94, 1279, 198]
+  - ranked C1 #2, C2 #2, C3 #4
+  - fix: Lengthen toe 2 by about 7–9 mm through its middle and distal phalanges so its tip sits 3–5 mm behind the hallux, then re-grade toes 3–5 from it.
+  - fix: Lengthen toe 2 or relax its curl so its tip sits 3–5 mm behind the hallux; toes 3 and 4, now ≈21 and ≈35 mm back, can come forward a few mm with it.
+  - fix: Lengthen toe 2 so its tip sits 3-5 mm behind the hallux tip, toes 3-5 following in a curve.
+  - spec §1.4 item 2, §1.4
+  - also: Toe 2 ends about 12 mm behind the hallux tip in plan (about 75 px at 6.2 px/mm; V4o agrees), against the spec's 3–5 mm, so the toe line steps back steeply from a dominant big toe.
+  - also: The 2nd toe stops ≈12–13 mm short of the hallux (spec 3–5), and toes 3–4 trail as well (≈21 and ≈35 mm), so the toe line drops steeply from a dominant hallux instead of the gentle Egyptian slope.
+  - also: 2nd toe tip stops 12–13 mm behind the hallux tip (≈81 px in plan, ≈72 px in V4o, at 6.2 px/mm) against the 3–5 mm the spec allows; the toe line falls away steeply from a dominant hallux.
+  - also: Toe 2 stops about 12 mm short of the hallux, not 3-5 mm, and the toe tips step down in a steep even staircase, which reads diagrammatic.
+  - also: Toe 2 ends about 12 mm short of the hallux tip (read in the plan ortho and V4o), against 3-5 mm in the spec; the toe tips fall in a steep, even staircase.
+- **m2** [C1] The lesser toes are split apart: gaps run the length of toes 2–5 and the 3–4 and 4–5 clefts reach deep into the ball, so the forefoot reads as separate fingers and looks long in plan. A booted man's toes lie packed and webbed, the hallux leaning in toward toe 2.
+  - at C1 blocking `pair_p01.V4o.L_form.png` [670, 1395, 1110, 1830]
+  - ranked C1 #1
+  - fix: Bring the 3–4 and 4–5 commissures forward so the web line curves gently with the metatarsal heads, and close the lesser toes up side by side, touching along their middle and distal phalanges as a booted foot's do.
+  - spec §3.2 toe webs
+  - also: Toes 2–5 stand apart with see-through gaps along their free length, and the 3–4 and 4–5 clefts reach about 65 and 78 mm behind the hallux tip (spec §3.2: about 51 and 59), so toes 3–5 read as long separate fingers.
+
+## Major
+
+- **m3** [C1, C2, C3] The heel from behind is a box with a flat back, vertical sides and a flat squared bottom, a shoe last rather than a calcaneus in a rounded fat pad.
+  - at C1 major `pair_p01.V8.L_form.png` [595, 1020, 1366, 1589]; C2 major `pair_p01.V8.L_form.png` [611, 1025, 1361, 1599]; C3 major `pair_p01.V8.L_form.png` [624, 1040, 1362, 1591]
+  - ranked C1 #5, C2 #3, C3 #2
+  - fix: A real heel narrows upward from the spread pad to the ~25 mm tuberosity under the Achilles, with a smooth hollow under each malleolus, so from behind it reads as a rounded bulb, not a block.
+  - fix: A real heel is a rounded bulb: its back face narrows upward to the ≈25–30 mm tuberosity at the insertion and rolls into the plantar pad, so its outline from behind is a broad U, not a rectangle.
+  - fix: A real heel from behind is a rounded inverted U: the tuberosity domes backward, the sides curve in above and swell slightly low where the pad spreads, the plantar edge fully rounded.
+  - spec §3.2 calcaneus, §3.2
+  - also: From behind the heel is a rounded box with vertical walls and a square shoulder under the lateral malleolus; a real heel tapers upward from the pad into the Achilles insertion like a bulb, with soft hollows under both malleoli.
+  - also: From behind the heel is a rounded box: near-vertical side walls from the floor to about 50 mm, a broad flat back face and a square shoulder under the lateral malleolus, as wide at its top as at the floor.
+  - also: From behind the heel is a rectangle with square shoulders and parallel sides; a real heel is a rounded bulb that narrows up into the Achilles.
+  - also: From behind the heel is a box: vertical, parallel sides ≈71 mm apart from z≈13 to z≈54, square shoulders where it meets the Achilles, tight lower corners and a flat back face.
+  - also: The heel from behind is a box: a flat broad posterior face, near-vertical straight sides and a flat bottom with squared corners, like a shoe last rather than a calcaneus wrapped in a fat pad.
+- **m4** [C1, C2, C3] From below the toes are matchstick stalks with ring bands and ball tips; real plantar toes are a row of plump pads behind a deep sulcus.
+  - at C1 major `pair_p01.V4.L_form.png` [750, 1280, 1040, 1620]; C2 major `pair_p01.V4.L_form.png` [766, 1283, 1035, 1615]; C3 major `pair_p01.V4.L_form.png` [770, 1310, 1040, 1591]
+  - ranked C1 #7, C2 #5, C3 #6
+  - fix: Give each lesser toe's sole two or three fat pads with creases cut between them at the joints and a broad round pulp at the tip, the toes packed together.
+  - fix: Real plantar toes are short, plump pads in a row just ahead of a deep sulcus that parts them from the metatarsal pad; their creases are folds in the pad, not bands.
+  - fix: The plantar toe is one soft pad per segment, the distal pulp the fullest and widest part; flexion creases are short shallow lines on the plantar side only, never rings.
+  - spec §3.2
+  - also: From below the lesser toes look like banded sausages: thin tubes with raised parallel rings and knob tips, instead of round fleshy pads split by a few deep creases.
+  - also: From below toes 2–5 are thin tubes wrapped in raised parallel rings with small knob pulps, like banded sausages, separated by gaps; real toes show round fleshy pads split by a few deep creases.
+  - also: From below, toes 2–5 are thin stalks with flat ring-like bands at their creases and ball-shaped tips, separated by deep gaps; no row of toe pads sits against the ball and there is no sulcus.
+  - also: From below, toes 2-5 are ribbed tubes with hard ring creases and small round pulps on stalks; real plantar toes are soft pads with the pulp the fullest part.
+  - also: From below, toes 2-5 are banded tubes: hard, evenly spaced ring creases around each phalanx and a small round pulp on a narrower stalk at each tip, like lollipops or ribbed hose.
+- **m5** [C1, C2, C3] The styloid reads as a round marble under the skin rather than a low, elongated tuberosity.
+  - at C1 minor `pair_p01.V1f.L_form.png` [1227, 1133, 1294, 1227]; C2 major `pair_p01.V1f.L_form.png` [1221, 1128, 1294, 1226]; C3 minor `pair_p01.V1f.L_form.png` [1232, 1154, 1284, 1232]
+  - ranked C1 #14, C2 #14, C3 #20
+  - fix: Make it a ridge-like prominence that rises out of the lateral border and fades forward along the shaft.
+  - fix: Make it a low tuberosity elongated along the border, merging backward into the line of peroneus brevis toward the lateral malleolus.
+  - fix: Let the styloid rise from the 5th shaft as a tapered bony point, merging behind into the cuboid fullness.
+  - spec §3.2 metatarsals, §3.2
+  - also: The 5th metatarsal styloid is a small isolated bead on the lateral border (V1f), like a pea under the skin, rather than a ridge rising out of the border.
+  - also: The 5th metatarsal styloid shows as a small isolated bead on the lateral border, like a pea under the skin.
+  - also: The 5th metatarsal styloid is a small round marble on the lateral border, sharply ringed by shadow, reading more like a ganglion than bone.
+  - also: The 5th metatarsal styloid is an isolated pea-sized blob rather than a bony point flowing into the shaft.
+  - also: The 5th metatarsal styloid shows as an isolated pea-sized blob on the lateral border rather than a bony prominence flowing into the shaft.
+- **m6** [C1, C2, C3] A thin vertical seam line runs below the medial malleolus in V2.
+  - at C1 minor `pair_p01.V2.L_form.png` [490, 870, 535, 995]; C2 minor `pair_p01.V2.L_form.png` [495, 845, 530, 985]; C3 major `pair_p01.V2.L_form.png` [504, 848, 530, 983]
+  - ranked C1 #15, C2 #17, C3 #15
+  - fix: Remove the crease so the skin below the malleolus is continuous.
+  - fix: Remove it; the skin there is continuous.
+  - fix: Remove it; the skin over the deltoid region is continuous.
+  - also: A hairline vertical seam about 15 mm long runs down the skin under the medial malleolus (V2).
+  - also: A hairline vertical seam about 15 mm long runs down the skin below the medial malleolus, a mesh crease no real ankle has.
+  - also: A thin seam line runs down the skin below the medial malleolus.
+  - also: A thin straight vertical line runs down the skin below the medial malleolus, like a mesh seam or cut.
+  - also: A thin straight vertical line below the medial malleolus, a mesh seam or crease artefact cutting otherwise smooth skin.
+- **m7** [C1, C2, C3] A Y-shaped pinch crease on the lateral sole in V4, a mesh artefact.
+  - at C1 minor `pair_p01.V4.L_form.png` [800, 1075, 880, 1150]; C2 minor `pair_p01.V4.L_form.png` [805, 1070, 890, 1140]; C3 major `pair_p01.V4.L_form.png` [811, 1071, 884, 1139]
+  - ranked C1 #16, C2 #18, C3 #16
+  - fix: Smooth the sole there into the continuous surface of the lateral band.
+  - fix: Smooth it into the continuous pad of the lateral column.
+  - fix: Smooth it out; the lateral sole there is a flat, even weight-bearing band.
+  - also: A small pinched Y-shaped fold sits on the sole under the lateral midfoot (V4).
+  - also: A small pinched Y-shaped fold sits on the sole under the lateral midfoot near the styloid, a crease no unloaded sole has there.
+  - also: A small pinched fold mars the lateral sole near the 5th metatarsal base.
+  - also: A small, sharp pinched fold sits on the lateral sole near the 5th metatarsal base.
+  - also: A small Y-shaped pinch crease on the lateral sole near mid-length, a mesh pinch rather than a skin fold.
+- **m8** [C1, C3] The sole is a blank slab with a central trough: no heel pad, lateral band, arch hollow, ball pad or toe sulcus. It is the mannequin view of the foot.
+  - at C1 major `pair_p01.V4.L_form.png` [745, 1139, 1211, 1346]; C3 major `pair_p01.V4.L_form.png` [749, 395, 1217, 1310]
+  - ranked C1 #8, C3 #3
+  - fix: Real soles show the metatarsal pad as a broad oblique cushion that ends in a deep crease at the toe bases.
+  - fix: Model the plantar landscape: round heel pad, narrow lateral band to the 5th head, concave medial arch, a full ball pad across the heads and a sulcus fold before the toes.
+  - spec §3.2
+  - also: The sole has no distinct ball cushion or toe-base crease; it runs smooth from the arch into the webs, so the plantar view reads as a mannequin paddle with toes attached.
+  - also: From below the ball is not a separate transverse cushion: the sole runs smooth into the toe webs with no sulcus, so the toes look attached to a paddle instead of rising from behind a pad.
+  - also: The sole is a smooth slab with one long trough down its middle: no round heel pad, no lateral weight band, no medial arch hollow, no transverse ball pad or toe sulcus; it reads as a mannequin's sole.
+- **m9** [C1, C2] The 5th toe stands straight and upright beside the 4th with a gap, nail up; an adult's 5th toe is rotated outward, curled and tucked against or under the 4th.
+  - at C1 major `pair_hr.plan_form.png` [719, 424, 828, 611]; C2 major `pair_hr.plan_form.png` [714, 424, 823, 621]
+  - ranked C1 #4, C2 #8
+  - fix: Rotate the 5th toe into varus so its nail faces out and up, flex it slightly and nestle its pulp under the lateral side of the 4th toe.
+  - fix: Adduct and flex the 5th toe so its tip lies partly under the 4th's middle phalanx, the nail turned 30–45° to face laterally.
+  - spec §1.4 item 2, §1.4
+  - also: The 5th toe points straight ahead beside the 4th, nail up, with a clear gap between them; it is neither rotated 30–45° nor tucked under the 4th, so the toe row ends in a full upright toe.
+  - also: The 5th toe stands free beside the 4th rather than curled and tucked under it.
+  - also: The 5th toe stands apart from the 4th with a visible gap, points straight ahead and sits level beside it; it is not curled or tucked under the 4th.
+- **m10** [C1, C2] The 1st MTP knob has a neck in front of it and reads as a bunion; the real medial eminence is a broad, smooth swell.
+  - at C1 minor `pair_p01.V5f.L_form.png` [357, 487, 471, 745]; C2 major `pair_p01.V5f.L_form.png` [350, 505, 470, 725]
+  - ranked C1 #12, C2 #6
+  - fix: Blend the head into a broad convex medial border (radius about 14 mm) continuous with the hallux and the shaft.
+  - fix: Make it a broad, smooth convexity (radius ≈14 mm) that flows straight into the hallux's medial side with no neck between them.
+  - spec §3.2 metatarsals, §3.2
+  - also: The first metatarsal head is a separate round knob with pinched contours above and below, reading as a small bunion rather than a broad medial swell flowing into the hallux.
+  - also: The first metatarsal head is a separate round knob with pinched contours above and below it, like a small bunion, rather than a broad medial swell running smoothly into the hallux.
+  - also: The 1st MTP medial eminence is a small, sharply bounded knob (≈6×9 mm here) with a concave neck in front of it, reading as a bunion or exostosis; it is as clear in V1f and the plan.
+- **m11** [C1, C3] The lateral malleolus is a broad soft mound fading into the heel; on a lean man it is a narrower, pointed bony knob whose tip stands clear above the hollow beneath it.
+  - at C1 major `pair_p01.V3.L_form.png` [1366, 642, 1656, 994]; C3 major `pair_p01.V3.L_form.png` [1435, 728, 1622, 957]
+  - ranked C1 #9, C3 #9
+  - fix: Narrow it to a ~24 mm dome with a defined, downward-pointing tip and firm edges where bone lies under thin skin, with the peroneal groove behind and below it.
+  - fix: A narrower dome of about 24 mm with a defined tip and a crisp hollow behind and below it.
+  - spec §3.2 lateral malleolus, §3.2
+  - also: The lateral malleolus is a broad soft mound about 40 mm tall that fades into the heel, not the narrower pointed bony knob whose lower tip stands clear above the hollow behind and below it.
+  - also: The lateral malleolus is a soft blurred mound with no apex; it should be the more pointed of the two, with a crisp hollow behind it.
+  - also: The lateral malleolus is a broad, soft, blurred mound with no apex; the fibula's tip should be the sharper, more pointed of the two malleoli.
+- **m12** [C1, C3] The ankle profile has no Achilles waist: the back of the leg runs straight into the heel bulge, so the tendon never reads as a cord in side view.
+  - at C1 minor `pair_p01.V2o.L_form.png` [129, 600, 250, 1180]; C3 major `pair_p01.V2o.L_form.png` [135, 728, 239, 1196]
+  - ranked C1 #10, C3 #10
+  - fix: Let the Achilles come down nearly vertical to its insertion at about 52 mm, then turn through a short concave fillet into the convex tuberosity.
+  - fix: Pull the contour in above the tuberosity (insertion near z 52) so the tendon reads as a narrow cord and the heel projects behind it.
+  - spec §3.2 calcaneus, §3.2
+  - also: In profile the back of the heel ramps straight up into the Achilles with no concave notch above the tuberosity, so the heel looks soft and swollen rather than bony.
+  - also: In profile the back of the heel ramps straight up into the Achilles: the contour slopes back about 10 mm from 100 down to 52 mm height with no concave notch above the calcaneal tuberosity, so the heel reads soft and swollen.
+  - also: In profile the back of the ankle runs straight down into a heel that bulges from about z 85, with no concave waist where the Achilles stands in front of the heel's back.
+- **m13** [C2, C3] The medial midfoot is a flat wall with a stray pit: no navicular tuberosity and almost no readable arch in the medial view.
+  - at C2 major `pair_p01.V2.L_form.png` [818, 994, 994, 1185]; C3 major `pair_p01.V2.L_form.png` [832, 1113, 926, 1186]
+  - ranked C2 #11, C3 #12
+  - fix: Raise the tuberosity as a low dome and let the arch read as a long, shallow hollow below it, edged by the soft roll of abductor hallucis; remove the pit.
+  - fix: A 12 mm dome about 2 mm proud with a soft hollow below and behind it into the arch.
+  - spec §3.2
+  - also: The medial midfoot is a flat wall with an isolated dark pit at about z 25; no navicular tuberosity reads where the spec puts it (z 42, 12 mm dome, 2 mm proud), and the arch hardly reads.
+  - also: A dark pit sits on the medial midfoot where the navicular tuberosity should be a low dome.
+  - also: A small dark pit on the medial midfoot near the navicular: a dent with no anatomical cause where the navicular tuberosity should stand as a low dome.
+- **m14** [C2] From above the lesser toes read as slender, knobbly fingers set apart with dark clefts between them; a boot-wearing man's toes are plumper, pressed side by side and short-looking. It is the plan view's biggest giveaway.
+  - at C2 major `pair_hr.plan_form.png` [714, 93, 1283, 642]
+  - ranked C2 #1
+  - fix: A boot-wearing man's lesser toes are plumper and lie side by side, touching at pulps and knuckles; the PIP shows as a dorsal knuckle, not a ring swelling. Fill the toe widths and close the gaps.
+  - also: From above, toes 2–5 are slender (≈13–15 mm across), knobbly fingers with bead-like swellings on both sides of the PIP joints, set ≈2–3 mm apart and ≈6 mm from the hallux, with dark clefts between them.
+- **m15** [C3] The toes are splayed like fingers: even gaps between all five, each on a pinched neck behind a deep cleft. Real toes press together, broadest at the web; this alone makes the forefoot read as a 3D model.
+  - at C3 major `pair_hr.plan_form.png` [718, 104, 1290, 624]
+  - ranked C3 #1
+  - fix: Close the gaps so neighbouring toes touch along their sides; make each toe widest at its base with shallow webs, tapering to the pulp, toes 3-5 converging slightly.
+  - spec §3.2
+  - also: Toes 2-5 stand apart like fingers: an even dark gap between every toe, each toe joining the forefoot on a pinched neck behind a deep cleft, so the forefoot reads as a hand; real toes lie pressed together and are broadest at the web.
+- **m16** [C1] Toes 2–4 are long, straight and slender with waisted shafts and bead knuckles, like fingers; real toes are short and fleshy, the knuckle a little raised and the tip angled down onto a broad pulp. Toes 3 and 4 are near copies.
+  - at C1 major `pair_hr.plan_form.png` [807, 166, 1092, 528]
+  - ranked C1 #3
+  - fix: Real lesser toes are short and fleshy: the proximal segment as full as the joint, the PIP slightly raised, the distal segment angled down so a broad pulp spreads on the floor, each toe distinct in width and tilt.
+  - also: Toes 2–4 are slender, straight and finger-like: waisted proximal segments, bead-like PIP knuckles (toe 2's bulges sideways), pulps no wider than the shafts; toes 3 and 4 are near copies, and none flexes to press its pulp to the floor.
+- **m17** [C2] The front of the ankle is one soft, oversized fillet from z≈140 into the dorsum, so the ankle reads like a sock or a cast; there is no crease, and the instep next to the ankle is overfilled (≈98 mm high at 40% L).
+  - at C2 major `pair_p01.V2o.L_form.png` [745, 445, 1045, 942]
+  - ranked C2 #4
+  - fix: Keep the shin line nearly straight down to z≈90–100, then turn into the dorsum in a much tighter bend at the crease height (z 80–84), the instep falling away from there.
+  - spec §3.2
+  - also: The front of the ankle is one large concave sweep (radius ≈85 mm) from z≈140 into the dorsum, met only at ≈50% L; the outline still stands ≈98 mm high at 40% L, and there is no anterior ankle crease at z 80–84.
+- **m18** [C3] The 5th toe stands upright and separate with its nail up, as if a small copy of the 4th; a boot-wearing man's 5th toe is rotated onto its side and curled under the 4th.
+  - at C3 major `pair_p01.V5f.L_form.png` [1560, 541, 1799, 894]
+  - ranked C3 #5
+  - fix: Rotate it 30-45 degrees onto its lateral side, curl it and tuck it against and partly under the 4th, nail facing outward.
+  - spec §1.4
+  - also: The 5th toe stands upright and apart from the 4th with its nail facing up, nearly as thick as the 4th; it is neither rotated nor curled under.
+- **m19** [C1] The medial malleolus hardly shows (V8, V1f), so the ankle reads one-sided with only the lateral bump; a real medial malleolus is a broad round bony dome, about as prominent as the lateral, higher and further forward.
+  - at C1 major `pair_p01.V8.L_form.png` [1221, 559, 1356, 932]
+  - ranked C1 #6
+  - fix: Build it as a broad round bony dome about 30 mm across and 5 mm proud of the shin line, higher and further forward than the lateral malleolus.
+  - spec §3.2 medial malleolus
+  - also: The medial malleolus barely swells the inner contour (about 2–3 mm against about 11 mm for the lateral) and does not break the medial contour in V1f either, so the ankle reads one-sided.
+- **m20** [C2] The lateral malleolus is a long, soft swelling with no tip; a specialist looks for the pointed, lower fibular tip with a hollow beneath it.
+  - at C2 major `pair_p01.V8.L_form.png` [554, 574, 693, 1035]
+  - ranked C2 #7
+  - fix: Build the pointed, lower, posterior prominence (24 mm dome, 5 mm proud): fullest low, ending in a defined tip with a hollow beneath it and the peroneal groove behind.
+  - spec §3.2
+  - also: The lateral malleolus is a symmetric soft swelling ≈44 mm tall, fullest at mid-height and tapering gently both ways with no tip; in V3 it barely reads at all.
+- **m21** [C3] The heel looks stuck on: a ledge and notch where it meets the lateral malleolus (V8, also V1f), instead of one continuous form running through the peroneal hollow.
+  - at C3 major `pair_p01.V8.L_form.png` [582, 936, 666, 1144]
+  - ranked C3 #7
+  - fix: Blend malleolus into calcaneus through one continuous soft hollow (the peroneal groove), with no step in the silhouette.
+  - spec §3.2
+  - also: On the lateral side the heel block starts with a ledge and a pinched notch below the lateral malleolus (also V1f near 1440,655-1477,718), so the heel reads as a separate piece stuck under the ankle.
+- **m22** [C3] The 1st metatarsal head is a small knob jutting from the medial border, bunion-like, rather than the broad low bulge of the ball.
+  - at C3 major `pair_hr.plan_form.png` [1279, 499, 1352, 624]
+  - ranked C3 #8
+  - fix: Spread the medial bulge over the head's ~14 mm radius and run it smoothly into the shaft and the hallux base.
+  - spec §3.2
+  - also: The 1st metatarsal head is a small isolated knob jutting from the medial border (also in V1f and V5f), a bunion-like bump stuck on rather than the broad low bulge of the ball.
+- **m23** [C2] Tendons appear only on the forefoot and vanish at the ankle; the tibialis anterior, the strongest landmark at the front of a lean man's ankle, is missing.
+  - at C2 major `pair_p01.V1f.L_form.png` [994, 580, 1314, 911]
+  - ranked C2 #9
+  - fix: Run them continuously from the shin under the retinaculum: tibialis anterior as a 9 mm cord medial at the crease, EHL and the EDL fan lateral to it.
+  - spec §3.2
+  - also: The extensor tendons show only on the forefoot and fade out mid-dorsum; across the front of the ankle there is no tibialis anterior, EHL or EDL relief at all.
+- **m24** [C3] The toes from the side are crimped and crumpled at the tips, with a notched 5th-toe nub, like wrinkled plastic.
+  - at C3 major `pair_p01.V3.L_form.png` [166, 1186, 510, 1352]
+  - ranked C3 #11
+  - fix: From the side each toe shows a rounded pulp, a dorsal knuckle and a smooth curve down to the floor, with only a few soft creases at the joints.
+  - also: Seen from the side the toes are a crumpled cluster: crimped tips with many small hard creases and a notched 5th-toe nub, reading as wrinkled plastic rather than fleshy toes.
+- **m25** [C3] The extensor tendons are thin, evenly spaced, sharp-edged strings, the crispest relief on the foot, so the dorsum reads engraved instead of domed.
+  - at C3 major `pair_p01.V3.L_form.png` [572, 1030, 946, 1154]
+  - ranked C3 #13
+  - fix: One broader EHL cord and four lower, softer EDL branches that rise out of and fade back into the dorsum.
+  - spec §3.2
+  - also: The extensor tendons are a fan of thin, evenly spaced, sharp-edged strings laid on the dorsum, crisper than anything else on the foot, so the dorsum reads engraved rather than domed over tendons.
+
+## Minor
+
+- **m26** [C1, C3] No anterior ankle crease: the front of the ankle is one smooth sweep from shin to dorsum, where a real ankle shows a fold at the talar neck with fainter lines above it.
+  - at C1 minor `pair_p01.V1f.L_form.png` [1014, 662, 1387, 849]; C3 minor `pair_p01.V1f.L_form.png` [1019, 676, 1310, 832]
+  - ranked C1 #11, C3 #17
+  - fix: Add one horizontal fold across the front of the ankle, bowed slightly toward the toes, with two or three fainter parallel lines above it.
+  - fix: One shallow horizontal fold at the dorsiflexion line near z 80-84, bowed slightly toward the toes.
+  - spec §3.2 anterior ankle crease, §3.2
+  - also: No anterior ankle crease: the front of the ankle sweeps smoothly from the shin into the dorsum with no dorsiflexion fold at about 80–84 mm height (none in V3 either).
+  - also: No anterior ankle crease in any view; the shin flows into the dorsum unbroken.
+  - also: No anterior ankle crease is visible at the front of the ankle in any view; the shin flows into the dorsum unbroken.
+- **m27** [C2, C3] The hallux IP crease is a single hard ring-step; real skin there folds in a few soft wrinkles.
+  - at C2 minor `pair_p01.V5f.L_form.png` [545, 750, 920, 840]; C3 minor `pair_p01.V5f.L_form.png` [562, 770, 905, 842]
+  - ranked C2 #16, C3 #18
+  - fix: Real skin over the hallux IP joint folds in 2–4 soft, shallow transverse wrinkles that fade toward the sides.
+  - fix: The dorsal IP crease is a few short shallow wrinkles over the knuckle, fading out at the sides.
+  - also: The hallux IP crease is one hard ridge-and-step across the dorsum, like a ring or seam; it also shows as a collar in the plan.
+  - also: A hard groove rings the hallux at the IP joint, making the big toe look like two pieces joined.
+  - also: A hard groove rings the hallux across its dorsum at the IP joint, so the big toe reads as two pieces joined at a seam.
+- **m28** [C1] A small round dimple on the medial midfoot (V2) reads as a dent; the real arch is one long smooth vault with the abductor hallucis full above its plantar edge.
+  - at C1 minor `pair_p01.V2.L_form.png` [815, 1100, 945, 1185]
+  - ranked C1 #13
+  - fix: Let the medial arch be one long smooth vault from heel pad to ball, the abductor hallucis full above its plantar edge, with no local pit.
+  - also: An isolated round dimple about 14 × 7 mm sits on the medial midfoot about 25 mm above the floor, reading as a dent rather than part of the arch.
+- **m29** [C3] A jagged sawtooth patch of ripples at the base of toe 3 by the 2-3 cleft (V5f).
+  - at C3 minor `pair_p01.V5f.L_form.png` [1134, 489, 1196, 582]
+  - ranked C3 #19
+  - fix: One or two soft dorsal skin folds at the MTP, smooth in between.
+  - also: Jagged rippling folds at the base of toe 3 by the 2-3 cleft, a sawtooth patch where the toe joins the forefoot.
+
+## Unrated: free-form, no located defect
+
+- **m30** [C2] From behind, the Achilles stands off its hollows only below z≈90 and fades into a broad rounded back of the ankle above; on a lean man the cord and its hollows carry on well up toward the calf.
+  - ranked C2 #10
+- **m31** [C2] The sole is one smooth slab: no metatarsal pad swelling under the heads, no lateral column pad, and from below the arch is a narrow straight trough with a hard rim from heel to ball, more moulded insole than foot.
+  - ranked C2 #12
+- **m32** [C2] In front of the lateral malleolus the dorsum is an empty slope: no extensor digitorum brevis belly and no sinus tarsi hollow, both normal landmarks on a lean man's foot (V3, V1f).
+  - ranked C2 #13
+- **m33** [C3] Detail is sharp on the dorsum and toes and absent everywhere else: the heel, ankle and sole are airbrushed and inflated, so the rearfoot reads younger and softer than a 40-year-old soldier's.
+  - ranked C3 #14
+- **m34** [C2] Declared and not scored, but it distorts the judgement: the vein relief is rope-like and crosses the dorsum and medial ankle in hard ridges, hiding the dorsum's dome and the medial malleolus's outline.
+  - ranked C2 #15
+- **m35** [C1] The declared vein relief is heavy enough to hide the dorsum's large form in V1f, V5f and the plan: the piped network cuts the instep into strips, so its transverse doming can be judged only in profile.
+  - ranked C1 #17
+- **m36** [C3] Declared but distorting: the out-of-scope veins are heavy enough to kink the dorsal profile in V2o and the medial border in V4o, which hides the true profile there; not scored.
+  - ranked C3 #21
