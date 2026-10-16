@@ -1,23 +1,85 @@
 {
- "doc": "2026-10-10, Jeff's lock from the variant sheets: toes X3 (the hallux 30 mm wide and set 4.5 mm apart, toe 2 slimmed to 16, the lesser toes of variant E curled 25 degrees, the fifth 32) and heel H1. 2026-10-14, the shape pass (Jeff: 'from the top it looks too long and too round'; spec 01 \u00a73.1 note): the midfoot and forefoot amounts refitted for the plan outline (fit_sculpt.py --only mid_widen,mid_fill,fore_w,lat_mid_in,med_mid_in,head5_out,mid_lat_up,fore_lat_up,fore_low_fill,arch_drop,dorsum_50,dorsum_60,dorsum_70), the heel and the toes held. 'sculpt' are pass A's amounts (fit_sculpt.py; the heel's and toe2_w set by the variant sheets), 'fixed' pass B's operations over fields.FIXED, 'targets' the MPFB foot targets S1 loads.",
+ "doc": "2026-10-10, Jeff's lock from the variant sheets: toes X3 (the hallux 30 mm wide and set 4.5 mm apart, toe 2 slimmed to 16, the lesser toes of variant E curled 25 degrees, the fifth 32) and heel H1. 2026-10-14, the shape pass (Jeff: 'from the top it looks too long and too round'; spec 01 \u00a73.1 note): the midfoot and forefoot amounts refitted for the plan outline (fit_sculpt.py --only mid_widen,mid_fill,fore_w,lat_mid_in,med_mid_in,head5_out,mid_lat_up,fore_lat_up,fore_low_fill,arch_drop,dorsum_50,dorsum_60,dorsum_70), the heel and the toes held. 'sculpt' are pass A's amounts (fit_sculpt.py; the heel's and toe2_w set by the variant sheets), 'fixed' pass B's operations over fields.FIXED, 'targets' the MPFB foot targets S1 loads. 2026-10-15, shape pass 2 (Jeff: 'I think toe 2 looks right; it is the big toe that is too long'; critic series foot_shape round 1; spec 01 \u00a70, \u00a73.1, \u00a73.3 notes): the hallux shortened 1.5 mm in its proximal phalanx and 6 in its distal segment (hallux_short_mm; the foot 282 -> 274.7), the lesser toes' knuckles lowered, toe 5 rolled 55 degrees (right 50), turned 10 in and curled 38 / 14, the heel tapered above its pad (heel_taper) and the front of the ankle's fillet tightened at the crease (ankle_front); the fitted amounts held.",
  "fixed": {
+  "ankle_front": {
+   "corner": [
+    -106.9,
+    84.7
+   ],
+   "dorsum": [
+    -141.0,
+    66.1
+   ],
+   "k": 2.2,
+   "r": 22.0,
+   "shin": [
+    -103.1,
+    150.0
+   ],
+   "x": -4.0,
+   "x_half": [
+    22.0,
+    40.0
+   ],
+   "y_from": [
+    -134.0,
+    -124.0
+   ]
+  },
   "hallux_ip_deg": 5.0,
+  "hallux_short_mm": [
+   1.5,
+   6.0
+  ],
   "hallux_valgus_deg": {
    "L": 7.5,
    "R": 5.5
   },
   "hallux_width_mm": 30.0,
+  "heel_taper": {
+   "back_round": 2.5,
+   "low_pct": 10.0,
+   "low_z": [
+    2.0,
+    13.0
+   ],
+   "pct": 18.0,
+   "y": [
+    12.0,
+    2.0,
+    -58.0,
+    -82.0
+   ],
+   "z": [
+    32.0,
+    46.0,
+    54.0,
+    66.0
+   ]
+  },
+  "lesser_knuckle_mm": [
+   0.35,
+   0.15
+  ],
+  "toe5_roll_deg": {
+   "L": 55.0,
+   "R": 50.0
+  },
+  "toe5_yaw_deg": {
+   "L": -10.0,
+   "R": -10.0
+  },
   "toe_curl_deg": {
    "2": 25.0,
    "3": 25.0,
    "4": 25.0,
-   "5": 32.0
+   "5": 38.0
   },
   "toe_dip_deg": {
    "2": 8.0,
    "3": 8.0,
    "4": 8.0,
-   "5": 10.0
+   "5": 14.0
   },
   "toe_gap_mm": 0.3,
   "toe_gap_pairs": {

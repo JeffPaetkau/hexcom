@@ -27,18 +27,20 @@ from parts.p01 import fields, footmetrics as fm  # noqa: E402
 
 PARAMS = os.path.join(HERE, "params.json")
 BODY = "Body.Mesh"
-L_TARGET = 282.0
+L_TARGET = 274.7
 # §3.3 as Jeff locked it on 2026-10-10 (from reference photos): the tips of the curled, shortened lesser toes,
 # the 30 mm hallux (pass B widens it to that whatever toe1_w is) and the 16 mm toe 2; toes 3-5 keep their
-# table widths here, since the closed webs that widen their bases in the build come after the fit's prediction
-TIP_SHARE = {1: 1.0, 2: 0.9658, 3: 0.9300, 4: 0.8870, 5: 0.8242}
+# table widths here, since the closed webs that widen their bases in the build come after the fit's prediction.
+# Jeff, 2026-10-15: the hallux 7 mm shorter (pass B's hallux_short_mm, so toe1_ext is not asked to do it), the
+# foot 274.7 to its longest toe, the lesser toes' tips where they were (absolute)
+TIP_Y = {1: -274.7, 2: -272.3556, 3: -262.26, 4: -250.134, 5: -232.4244}
 TOE_W = {1: 30.0, 2: 16.0, 3: 16.0, 4: 15.0, 5: 14.5}
 TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
 # (metric, target, weight tolerance): spec 01 §3.1 and §3.3 (tight where ANSUR measured, looser where the
 # spec estimated); the §8.2 tolerances are what measure() checks; the heel is H1 (Jeff, 2026-10-10). The shape
 # pass (2026-10-14): the ball's breadth aimed 0.8 mm under spec 01's 105 because the build's toe separation (left out
 # of the prediction) adds about 1 mm to it; the instep girth 246 (spec 01 §3.1 note)
-RESIDUALS = [("foot_length", 282.0, 0.5), ("ball_length", 210.0, 1.0), ("ball_breadth", 104.2, 0.4),
+RESIDUALS = [("foot_length", L_TARGET, 0.5), ("ball_length", 210.0, 1.0), ("ball_breadth", 104.2, 0.4),
              ("heel_breadth", 76.0, 0.7), ("heel_width_z10", 69.0, 1.0), ("heel_width_z20", 72.0, 1.0),
              ("heel_width_z30", 73.0, 1.0), ("bimalleolar", 76.0, 0.7), ("pternion_z", 30.0, 1.0),
              ("heel_ankle_circ", 353.0, 6.0), ("instep_circ", 246.0, 3.0), ("ball_circ", 259.0, 2.5),
@@ -51,7 +53,7 @@ RESIDUALS += [("malleolus_lateral_z", 76.0, 1.0), ("malleolus_medial_z", 89.0, 1
 # chord are one-sided (PLAN_SIDED)
 RESIDUALS += [("plan_b50", 90.0, 1.5), ("plan_head5_pct", 65.6, 2.0)]
 PLAN_SIDED = (("plan_lat_bulge", None, 2.5, 0.7), ("plan_med_dip", 3.0, 6.0, 0.8))   # (metric, least, most, tol)
-RESIDUALS += [(f"toe{k}_tip_y", -L_TARGET * s, 0.7) for k, s in TIP_SHARE.items()]
+RESIDUALS += [(f"toe{k}_tip_y", y, 0.7) for k, y in TIP_Y.items()]
 RESIDUALS += [(f"toe{k}_width", v, 0.7) for k, v in TOE_W.items()]
 RESIDUALS += [(f"toe{k}_height", v, 0.7) for k, v in TOE_H.items()]
 
@@ -123,7 +125,7 @@ def evaluate(body, a, side="L", gaps=True, probe=None, opts=None):
         fine = probe.read(co)
         v.update(fm.ankle(fine, f))
         v.update(fm.heel_back(fine, f))
-        v.update(fm.plan(fine, f, v["foot_length"]))
+        v.update(fm.plan(fine, f, v["station_length"]))
     if gaps:
         v["gaps"] = fm.toe_gaps(m, body.ix, side)
     return v

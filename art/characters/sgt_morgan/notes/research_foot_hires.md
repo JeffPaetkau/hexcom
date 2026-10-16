@@ -505,3 +505,45 @@ toes' weights and the joints; the tables and plots in `renders/research/foot_hir
 Renders: `fields_shape_before/` (= `fields_shape_w2` plus V5f and hr.plan) and `fields_shape_after/`, side by side in
 `shape/sbs/`; packet `critic/shape_r1/` (a new series, shape only). Cost: the stage from scratch 281-299 s, cached 83
 s; the form set 8-12 s; a part 01 fit 50-90 s (`fit_sculpt.py --only`), a part 01 build 8 s.
+
+## Shape pass 2 (2026-10-15)
+
+Shape round 1 (`notes/critic/foot_shape_r1/tally.md`): 5 / 5 / 5, toe 2 ~12 mm behind the hallux. Jeff: "I think toe 2
+looks right; it is the big toe that is too long." Measured first (`probe` scratch on part 01's prediction and its level-2
+surface, 2-10 s a variant; `shape.load` on the saved skins), then one stage rebuild per part 01 change. Final run
+`fields_shape2c` (`run.py --method fields --tier form --tag shape2c --save --views` shape_r1's nine); drafts
+`fields_shape2` and `fields_shape2b`; side by side with shape_r1 at the same scale in `shape2/sbs/`; packet
+`critic/shape_r2/` (sha 8213bb90fd2d, `--previous` shape_r1: 29 claims; one more declared difference, the shorter
+hallux at Jeff's direction).
+
+* **The hallux** (part 01, `fields.shorten_hallux`, spec 01 §0, §3.1, §3.3 notes): 1.5 mm off the proximal phalanx, 6
+  off the distal segment (compressed between the IP and the pulp's last 6 mm, so the pulp keeps its round end), width
+  and depth kept, the nail 18.35 -> 15.3 (here `nail1` 17.5 -> 14.6, the pulp ellipsoid 14.3 / 14.0 -> 12.6 / 12.5).
+  Tips on this skin: hallux -277.1, toe 2 -272.6, so **4.5 mm** (was 11.6); the foot 274.3 (part 01's cage 274.1,
+  where the hallux leads by 1.7: the pulp here carries it 2.8 further). §3.1's stations are now shares of the ball
+  length over 74.5 % (`footmetrics.station_length`), so the midfoot's targets did not move with the toe.
+* **Lesser toes** (m2, m14-m16): part 01's knuckles 0.8 / 0.4 -> 0.35 / 0.15; here toe 2's knuckle 1.6 -> 0.5 and its
+  waist off, `whole.toe_fill` (each side filled to the widest section distal of it, half the room to a neighbour),
+  `CONTACT` closing gaps to 1.0 (was 0.35) fading by 2.4, the lesser pulps 0.7-1.3 mm broader across and the tips'
+  droop up a little. Plan stations with a see-through gap: 2-3 13 -> 3 of 21, 3-4 7 -> 3 of 18, 4-5 7 -> 3 of 14.
+* **Toe 5** (m9, m18): part 01 rolls it 55 (was 40), turns it 10 in (5), curls it 38 / 14 (32 / 10); its bed leans 58
+  degrees out (42); `nail5` roll -54, the fill at 0.45 on it (fully, its free side swelled into a lump).
+* **Heel** (m3; part 01 `heel_taper`, the widths spec 01 holds at z 10-30 kept within 1.5 mm): from behind on the
+  level-2 surface 71.4 -> 66.8 at z 40, 69.5 -> 61.8 at z 50, 68.9 -> 62.7 at z 56, 38 -> 34.7 at z 3, the back face's
+  sides 2.5 mm forward.
+* **Sole** (m4, m8, m31): `ARCH` rose 7 mm mid-breadth and eased to nothing under the medial border, the central trough;
+  now 3.5 rising toward the border. Underside at 45 % L, lateral to medial, [8.7 3.9 2.8 4.1 7.8 12.7 15.4 10.8 11.6
+  17.6] -> [8.5 3.6 2.7 4.1 7.8 11.1 12.7 12.9 14.6 18.5]; medial clearance 14.8 -> 16.0 here (part 01's 12.8). New
+  `whole.sole`: the toe sulcus (1 mm, 11 mm ahead of the MTP joints), the ball's back edge (0.7 mm, 26 mm behind them,
+  off over the lateral band), 40 Taubin passes over the lesser toes' plantar skin, their proximal pads 0.7 mm fuller.
+  A steeper vault (s 0.22-0.55, a 20 mm heel end) drew a sharp-edged pocket and, with the lateral drop reaching y -55,
+  12 edges over 25 degrees on the lateral heel wall at y -60 (`shape2b`); both reverted, none now.
+* **Ankle front** (C2's m17, m26; part 01 `ankle_front`): the front at z 90 -116.7 -> -109.9, the instep at 40 % L 101.7
+  -> 86.8; `whole.ankle_crease` 0.2 mm (0.4 read as a sock's top in V1f).
+
+Visible in the side by side: the shorter hallux and nail; toes 2-4 pressed together, no beads; toe 5 on its side against
+toe 4; the heel narrowing above the pad; no trough under the arch, a sulcus line; the straighter shin and tighter bend at
+the crease. Still: the lesser toes from below keep ring bands; the heel's pad is still broad and flat-bottomed from
+behind (H1's widths); toe 5's base shows as a bump in V3; the crease still reads as a line in V1f.
+
+Cost: stage from scratch 295-303 s, cached 115 s; clay render 9-10 s; part 01 build 7 s.

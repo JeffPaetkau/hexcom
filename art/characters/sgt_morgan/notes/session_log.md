@@ -223,7 +223,14 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    rolled and tucked. Then: the heel a box from behind (should be a bulb narrowing into the
    Achilles); the sole a blank slab (no heel pad, lateral band, ball pad or toe sulcus); the
    anterior ankle one oversized fillet (C2). The toe line conflicts with Jeff's X3 direction, so
-   it is his call before the next shape pass.
+   it is his call before the next shape pass. Jeff: "toe 2 looks right; it is the big toe that
+   is too long." **Shape pass 2**: the big toe shortened (proximal phalanx 1.5 mm, distal 6 mm,
+   pulp kept round; nail 19.5 x 15.3), ending 4.5 mm ahead of toe 2 (was 11.6); foot length
+   274.3 (was 282; spec 01 and 02 notes, CLAUDE.md). Lesser toes plumper and pressed together
+   (see-through plan gaps 13/7/7 -> 3/3/3); toe 5 rolled 55 degrees onto its side against toe
+   4; the heel narrowing above the pad from behind; the sole's trough removed, a toe sulcus and
+   fuller pads; the anterior ankle ~7 mm lighter, the rest of the side outline unchanged. Part
+   01 148 of 150, identical rebuilds. Critic packet `shape_r2` built.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

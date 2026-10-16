@@ -334,6 +334,11 @@ def foot(m, ix, side, toes=True):
     bb, med, _ = breadth(m, f, fore, np.arange(6.0, 41.0, 3.0))
     out["ball_breadth"] = bb
     out["ball_length"] = -float(med[1]) if med is not None else None
+    # the stations along the foot (15 % L, 45-70 % L, the plan's) are shares of the length the skeleton gives, the
+    # ball length over spec 01 §3.1's 74.5 %: Jeff's shorter hallux (2026-10-15) shortened the foot to its longest
+    # toe by 7 mm and must not move the midfoot's stations with it (spec 01 §3.1 note)
+    L = station_length(out["ball_length"], L)
+    out["station_length"] = L
     # the 5th head's lateral bulge, looked for where the heads are (60-78 % L), not in the midfoot. (The shape
     # pass, 2026-10-14: with the lateral border now straight from the heel to the head, the extreme falls on its
     # last centimetre, 13-16 mm behind the head itself, and the ball's tape with it: 258 there, 246-248 over the
@@ -409,6 +414,15 @@ def foot(m, ix, side, toes=True):
         out.update(toe_dims(m, ix, f, side))
     out["_frame"] = f
     return out
+
+
+BALL_SHARE = 210.0 / 282.0   # spec 01 §3.1: the ball length 74.5 % of the foot's length (ANSUR)
+
+
+def station_length(ball_length, foot_length):
+    """The length the foot's stations are shares of: the ball length over BALL_SHARE (the skeleton's foot, whatever
+    the toes do), or the foot's own length when the ball is not found."""
+    return float(ball_length) / BALL_SHARE if ball_length else float(foot_length)
 
 
 PLAN_Z_CUT = 125.0   # the plan outline is the foot's below this height (the leg above the malleoli left out)

@@ -51,8 +51,8 @@ KNUCKLES = [
     ("t3d", 1.0, 0.8, 3.8, 2, 0.011, 0.5, 0.0, 106),
     ("t4m", 0.4, 1.4, 4.6, 4, 0.016, 0.7, -9.0, 107),
     ("t4d", 0.9, 0.8, 3.5, 2, 0.011, 0.45, -9.0, 108),
-    ("t5m", 0.3, 1.2, 4.2, 3, 0.015, 0.65, -30.0, 109),
-    ("t5d", 0.7, 0.7, 3.0, 2, 0.010, 0.4, -38.0, 110),
+    ("t5m", 0.3, 1.2, 4.2, 3, 0.015, 0.65, -46.0, 109),   # (toe 5's roll: -30 / -38 before shape pass 2)
+    ("t5d", 0.7, 0.7, 3.0, 2, 0.010, 0.4, -54.0, 110),
 ]
 
 # the friction ridges' patterns on the pulps: a whorl (concentric, a one-ridge spiral) or a loop opening to a
@@ -185,7 +185,8 @@ def _knuckle(q, nrm, seg, t_c, spread, half, n, depth, weight, rng):
 # fold of the curled toes is closed now (macro.close_folds lays its Z on a rounded surface, where round 1's slit drew
 # a ruler-straight cut), so the crease is this soft fold, at the old kink (0.2 mm past the joint), 0.28 mm deep and
 # about 1.6 mm across, with a fainter second one 1.3 mm proximal (`pip2_*`; toe 2's from crease2p_s)
-PLANTAR_LESSER = {"pip_s": 0.2, "pip_d": 0.28, "pip_w": 0.7, "pip2_ds": -1.3, "pip2_d": 0.12, "pip2_w": 0.55,
+# (shape pass 2: 0.28 and 0.12 deep before; from below the creases read as rings round banded stalks, round 1's m4)
+PLANTAR_LESSER = {"pip_s": 0.2, "pip_d": 0.16, "pip_w": 0.7, "pip2_ds": -1.3, "pip2_d": 0.06, "pip2_w": 0.55,
                   "dip_s": 0.8, "dip_d": 0.07, "dip_w": 0.85}
 
 
@@ -453,7 +454,9 @@ def _nearest(kd, pts):
 # the old, so nothing folds. Along the other wall's normal at the nearest vertex (the signed gap, so a slight overlap
 # is pushed apart too), the displacement smoothed over `smooth` Laplacian passes (nearest-vertex normals jitter at
 # the vertices' scale), each toe's own skin only (weights over `own`: the commissures stay part 01's)
-CONTACT = {"pairs": [[2, 3], [3, 4], [4, 5]], "gap": 0.05, "full": 0.35, "reach": 1.4, "own": [0.55, 0.85],
+# (shape pass 2: closed fully under 1.0 mm and fading by 2.4, was 0.35 and 1.4; round 1's m2, m14, m15: see-through
+# gaps along the lesser toes in plan)
+CONTACT = {"pairs": [[2, 3], [3, 4], [4, 5]], "gap": 0.05, "full": 1.0, "reach": 2.4, "own": [0.55, 0.85],
            "smooth": 8}
 
 
@@ -516,9 +519,15 @@ ARCH = {
     # wall, while the border's clearance stays near spec 01's 13 mm. Every profile is a smootherstep, C2: a sin^0.8
     # envelope creased the sole straight across at its onset, and plain smoothsteps' curvature steps drew faint lines
     # along the sole in clay. `y` is the envelope's (heel's contact, plateau, plateau, ball's contact))
-    "y": [-192.0, -158.0, -92.0, -48.0],
-    "mid": 7.0, "mid_s": [0.36, 0.74], "edge_ease": [0.6, 0.85, 1.0],
-    "lat": 2.2, "lat_s": [0.18, 0.52], "lat_y": [-170.0, -130.0, -85.0, -55.0],
+    # (shape pass 2, round 1's m8 and m31: the vault rose 7 mm over the middle of the breadth and eased back to nothing
+    # under the medial border, which from below read as one long central trough with a hard rim from heel to ball. It
+    # now rises toward the medial border, eased to a quarter of itself only at the border's last fifth, and lower (the
+    # medial clearance at 45 % L read 17 at 4.5 mm). A steeper rise beside the band (s 0.22-0.55) and a 20 mm heel
+    # end drew a sharp-edged rectangular pocket in clay; the lateral column's drop stops short of the heel (lat_y), as
+    # under part 01's tapered heel it creased the lateral heel wall at y -60)
+    "y": [-190.0, -160.0, -86.0, -58.0],
+    "mid": 3.5, "mid_s": [0.25, 0.8], "edge_ease": [0.8, 1.0, 0.75],
+    "lat": 2.2, "lat_s": [0.18, 0.52], "lat_y": [-170.0, -130.0, -95.0, -75.0],
     "floor_gap": 0.8, "height": [18.0, 40.0],
     # (r 9, amp 2: a knob stuck on, in clay; 1.5 pushed the medial extreme out and with it spec 01's clearance window)
     "navicular": {"y": -120.0, "z": 42.0, "r": 14.0, "amp": 1.2},
@@ -682,14 +691,203 @@ def achilles(q, nrm, P, report=None):
 
 
 def forms(ctx, q, topo, groups, segs, P):
-    """Pass 2's large forms after the stage, in order: the toes' contact, the arch, the Achilles. Returns positions."""
+    """Pass 2's large forms after the stage, in order: the lesser toes' waists filled (shape pass 2), the toes'
+    contact, the arch, the Achilles, the sole's landscape and the ankle crease (shape pass 2). Returns positions."""
     import macro as M
     edges, _ = C.edge_lengths(ctx.skin)
     adj = M.adjacency(edges, len(q))
+    q = toe_fill(q, groups, segs, ctx.joints, P, ctx.report)
     q = toe_contact(q, C.vertex_normals(q, topo), groups, adj, P, ctx.report)
     q = arch(q, C.vertex_normals(q, topo), P, ctx.report)
     q = achilles(q, C.vertex_normals(q, topo), P, ctx.report)
+    q = sole(q, C.vertex_normals(q, topo), groups, segs, ctx.joints, P, adj, ctx.report)
+    q = ankle_crease(q, C.vertex_normals(q, topo), P, ctx.report)
     return q
+
+
+# --------------------------------------------------------------------------- shape pass 2 (2026-10-15)
+
+# Critic series foot_shape, round 1 (notes/critic/foot_shape_r1/tally.md): the lesser toes read as slender, waisted,
+# knobbly fingers standing apart (m2, m14-m16). Each lesser toe's plan outline is filled out side by side to the
+# widest section distal of each station (in the toe's plan frame, macro.Plan: stations are vertical planes from the
+# MTP joint toward the tip), so no section is narrower than one nearer the tip and the toe is broadest at its base;
+# each side moves by its own shortfall (capped at `max`), over the side's share of the section (`side`), from `base`
+# mm past the MTP to `end` mm short of the tip, never nearer another toe than `gap` (half the room: both neighbours
+# fill). Then toe_contact (CONTACT, reach widened) brings the facing walls together along the toes' length.
+# (toe 5 at half: its free lateral side, filled fully, swelled into a lump)
+TOE_FILL = {"toes": [2, 3, 4, 5], "share": 1.0, "share_toe": {"5": 0.45}, "max": 2.2, "gap": 0.08, "side": [0.25, 0.9],
+            "base": [2.0, 7.0], "end": [6.0, 3.0]}
+
+
+def toe_fill(q, groups, segs, J, P, report=None):
+    """The lesser toes' waists filled (TOE_FILL). Returns positions."""
+    cfg = _cfg(P, "toe_fill", TOE_FILL)
+    if not cfg.get("share"):
+        return q
+    out = q.copy()
+    rep = {}
+    every = T.toes_weight(groups)
+    for k in cfg["toes"]:
+        wk = T.toe_weight(groups, k)
+        mine = wk > 0.5
+        seg = segs[f"t{k}d"]
+        pl = M.Plan(q, mine, J[f"toe-{k}-1"], seg.point(seg.length, 0.0, 0.0))
+        s, u, h = pl.local(q)
+        sm, um = s[mine], u[mine]
+        st = np.arange(np.floor(sm.min()), np.ceil(sm.max()) + 1.0, 1.0)
+        i = np.clip(np.round(sm - st[0]).astype(int), 0, len(st) - 1)
+        lo, hi = np.full(len(st), np.inf), np.full(len(st), -np.inf)
+        np.minimum.at(lo, i, um)
+        np.maximum.at(hi, i, um)
+        ok = np.bincount(i, minlength=len(st)) >= 8
+        k5 = np.ones(5) / 5.0
+        lo = np.convolve(np.pad(np.interp(st, st[ok], lo[ok]), 2, mode="edge"), k5, mode="valid")
+        hi = np.convolve(np.pad(np.interp(st, st[ok], hi[ok]), 2, mode="edge"), k5, mode="valid")
+        need_hi = np.maximum.accumulate(hi[::-1])[::-1] - hi
+        need_lo = lo - np.minimum.accumulate(lo[::-1])[::-1]
+        need_hi = np.minimum(np.convolve(np.pad(need_hi, 2, mode="edge"), k5, mode="valid"), cfg["max"])
+        need_lo = np.minimum(np.convolve(np.pad(need_lo, 2, mode="edge"), k5, mode="valid"), cfg["max"])
+        s_tip = float(sm.max())
+        mid = np.interp(s, st, 0.5 * (lo + hi))
+        half = np.maximum(np.interp(s, st, 0.5 * (hi - lo)), 1.0)
+        rel = (u - mid) / half
+        a0, a1 = cfg["side"]
+        b0, b1 = cfg["base"]
+        e0, e1 = cfg["end"]
+        along = T.smoothstep(s, b0, b1) * (1.0 - T.smoothstep(s, s_tip - e0, s_tip - e1))
+        fade = T.smoothstep(wk, 0.3, 0.8)
+        share = float((cfg.get("share_toe") or {}).get(str(k), cfg["share"]))
+        d = share * along * fade * (np.interp(s, st, need_hi) * T.smoothstep(rel, a0, a1)
+                                           - np.interp(s, st, need_lo) * T.smoothstep(-rel, a0, a1))
+        grow = np.abs(d) > 1e-3
+        if grow.any():
+            lo3, hi3 = q[grow].min(axis=0) - 5.0, q[grow].max(axis=0) + 5.0
+            near = np.all((q > lo3) & (q < hi3), axis=1) & (wk < 0.05) & (every > 0.3)
+            r = 0.5 * M.room(q, grow, near, cfg["gap"])
+            kk = 0.08
+            mag = np.abs(d[grow])
+            lim = np.clip(-kk * np.logaddexp(-mag / kk, -r[grow] / kk), 0.0, None)
+            d[grow] = np.sign(d[grow]) * lim
+        out += d[:, None] * pl.b[None, :]
+        rep[str(k)] = {"need_max": round(float(max(need_hi.max(), need_lo.max())), 2),
+                       "moved_max": round(float(np.abs(d).max()), 2)}
+    if report is not None:
+        report["toe_fill"] = rep
+    return out
+
+
+# The sole (round 1's m4, m8, m31: a blank slab with a central trough, the toes banded stalks from below). The arch's
+# vault now rises toward the medial border instead of easing back to the floor under it (ARCH below, the trough's
+# cause), and here: the toe sulcus, a soft groove across the plantar toe bases `ahead` mm in front of the MTP joints,
+# parting the ball's cushion from the toes; the ball's back edge, a broad shallow groove `behind` mm behind the MTP
+# joints' line, fading out over the lateral band (`lat_x`), so the ball reads as a transverse cushion; each lesser
+# toe's plantar skin faired (`fair`: Taubin passes, the curled toes' closed folds stood as hard ring bands from below)
+# and its proximal pad filled out below its phalanx (`pads`: along the plantar normal, a Gaussian along the proximal
+# segment), so the toes read as a row of plump pads.
+SOLE = {
+    "sulcus": {"depth": 1.0, "sigma": 1.9, "ahead": 11.0, "pad_x": 8.0, "below": 16.0, "plantar": [0.15, 0.55]},
+    "ball_back": {"depth": 0.7, "sigma": 5.0, "behind": 26.0, "below": 14.0, "lat_x": [34.0, 52.0], "plantar": [0.3, 0.7]},
+    "fair": {"iterations": 40, "plantar": [0.1, 0.5], "toes": [2, 3, 4, 5]},
+    "pads": {"amp": 0.7, "at": 0.55, "sigma": 0.28, "plantar": [0.2, 0.6], "toes": [2, 3, 4, 5]},
+}
+
+
+def sole(q, nrm, groups, segs, J, P, adj=None, report=None):
+    """The sole's landscape (SOLE). Returns positions."""
+    cfg = _cfg(P, "sole", SOLE)
+    out = q.copy()
+    fr = cfg.get("fair") or {}
+    if fr.get("iterations") and adj is not None:
+        w = np.clip(sum(T.toe_weight(groups, k) for k in fr["toes"]), 0.0, 1.0) * T.smoothstep(-nrm[:, 2], *fr["plantar"])
+        out = M.taubin(out, adj, 0.9 * w, iterations=int(fr["iterations"]))
+        rep_fair = int((w > 0.05).sum())
+    else:
+        rep_fair = 0
+    rep = {}
+    floor = float(q[:, 2].min())
+    sc = cfg.get("sulcus") or {}
+    if sc.get("depth"):
+        pts = []
+        for k in (1, 2, 3, 4, 5):
+            m = np.asarray(J[f"toe-{k}-1"], float)
+            seg = segs["h1"] if k == 1 else segs[f"t{k}p"]
+            a = np.array([seg.a[0], seg.a[1], 0.0])
+            a /= np.linalg.norm(a)
+            pts.append(m + sc["ahead"] * a)
+        pts = sorted(pts, key=lambda p: p[0])
+        ext = sc.get("pad_x", 8.0)
+        d01 = (pts[1] - pts[0]) / np.linalg.norm(pts[1] - pts[0])
+        d43 = (pts[-1] - pts[-2]) / np.linalg.norm(pts[-1] - pts[-2])
+        line = [pts[0] - ext * d01] + pts + [pts[-1] + ext * d43]
+        dist, _ = polyline_plan(q, catmull_rom(line, n=12))
+        plantar = T.smoothstep(-nrm[:, 2], *sc["plantar"]) * (1.0 - T.smoothstep(q[:, 2] - floor, sc["below"] - 4.0,
+                                                                                 sc["below"]))
+        g = sc["depth"] * np.exp(-0.5 * (dist / sc["sigma"]) ** 2) * plantar
+        out -= g[:, None] * nrm
+        rep["sulcus"] = {"line": [np.round(p[:2], 1).tolist() for p in pts], "max": round(float(g.max()), 2)}
+    bb = cfg.get("ball_back") or {}
+    if bb.get("depth"):
+        heads = sorted((np.asarray(J[f"toe-{k}-1"], float) for k in (1, 2, 3, 4, 5)), key=lambda p: p[0])
+        line = [h + np.array([0.0, bb["behind"], 0.0]) for h in heads]
+        d01 = (line[1] - line[0]) / np.linalg.norm(line[1] - line[0])
+        d43 = (line[-1] - line[-2]) / np.linalg.norm(line[-1] - line[-2])
+        line = [line[0] - 20.0 * d01] + line + [line[-1] + 20.0 * d43]
+        dist, _ = polyline_plan(q, catmull_rom(line, n=12))
+        plantar = T.smoothstep(-nrm[:, 2], *bb["plantar"]) * (1.0 - T.smoothstep(q[:, 2] - floor, bb["below"] - 4.0,
+                                                                                 bb["below"]))
+        g = bb["depth"] * np.exp(-0.5 * (dist / bb["sigma"]) ** 2) * plantar * (1.0 - T.smoothstep(q[:, 0], *bb["lat_x"]))
+        out -= g[:, None] * nrm
+        rep["ball_back"] = {"max": round(float(g.max()), 2)}
+    rep["faired_n"] = rep_fair
+    pd = cfg.get("pads") or {}
+    if pd.get("amp"):
+        add = np.zeros(len(q))
+        plantar = T.smoothstep(-nrm[:, 2], *pd["plantar"])
+        for k in pd["toes"]:
+            seg = segs[f"t{k}p"]
+            t, u, h = seg.local(q)
+            g = T.gauss(t - pd["at"] * seg.length, pd["sigma"] * seg.length)
+            add = np.maximum(add, pd["amp"] * g * T.toe_weight(groups, k))
+        add *= plantar
+        out += add[:, None] * nrm
+        rep["pads_max"] = round(float(add.max()), 2)
+    if report is not None:
+        report["sole"] = rep
+    return out
+
+
+# The anterior ankle crease (round 1's m26; spec 01 §3.2: one horizontal fold at the dorsiflexion line from (-30, -80,
+# 84) to (+32, -76, 80), bowed 3 mm toward the toes, 0.4 mm deep and 1.2 wide, two or three fine lines 3-4 mm above
+# it), on the front of the ankle where part 01's fillet now turns into the dorsum: a groove by height on the skin
+# facing forward, its height falling `drop` mm at the middle of its span (the bow down the sloping front), the
+# fainter lines above it shorter
+# (the first build's 0.4 mm groove over x -30..32, sigma 0.55, read in clay as a hard ring round the ankle, a sock's
+# top: shallower, softer and shorter now)
+ANKLE_CREASE = {"z": [84.0, 80.0], "x": [-24.0, 26.0], "drop": 2.0, "depth": 0.2, "sigma": 0.8, "fade": 10.0,
+                "front": [0.4, 0.75], "lines": [[3.6, 0.07, 0.6, 0.7], [7.4, 0.045, 0.55, 0.5]]}
+
+
+def ankle_crease(q, nrm, P, report=None):
+    """The anterior ankle crease (ANKLE_CREASE). Returns positions."""
+    cfg = _cfg(P, "ankle_crease", ANKLE_CREASE)
+    if not cfg.get("depth"):
+        return q
+    floor = float(q[:, 2].min())
+    x, z = q[:, 0], q[:, 2] - floor
+    x0, x1 = cfg["x"]
+    xm, half = 0.5 * (x0 + x1), 0.5 * (x1 - x0)
+    tx = np.clip((x - x0) / (x1 - x0), 0.0, 1.0)
+    zc = cfg["z"][0] + (cfg["z"][1] - cfg["z"][0]) * tx - cfg["drop"] * np.clip(1.0 - ((x - xm) / half) ** 2, 0.0, 1.0)
+    front = T.smoothstep(-nrm[:, 1], *cfg["front"]) * (q[:, 1] < -60.0)
+    g = np.zeros(len(q))
+    for dz, depth, sigma, span in [[0.0, cfg["depth"], cfg["sigma"], 1.0]] + list(cfg["lines"]):
+        wx = smoother_window(x, xm - span * half - cfg["fade"], xm - span * half + cfg["fade"],
+                             xm + span * half - cfg["fade"], xm + span * half + cfg["fade"])
+        g = np.maximum(g, depth * np.exp(-0.5 * ((z - zc - dz) / sigma) ** 2) * wx)
+    g *= front
+    if report is not None:
+        report["ankle_crease"] = {"max": round(float(g.max()), 2), "n": int((g > 0.02).sum())}
+    return q - g[:, None] * nrm
 
 
 # --------------------------------------------------------------------------- pass 2: the veins

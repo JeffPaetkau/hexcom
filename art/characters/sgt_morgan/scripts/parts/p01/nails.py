@@ -19,8 +19,9 @@ import numpy as np
 
 from lib import sculpt as S
 
-# §3.3: width x visible length (from the proximal fold to the free edge's tip), free edge, thickness (mm)
-PLATES = {1: (19.5, 18.35, 1.5, 1.1), 2: (11.0, 10.0, 1.2, 0.8), 3: (10.0, 9.0, 1.0, 0.7),
+# §3.3: width x visible length (from the proximal fold to the free edge's tip), free edge, thickness (mm); the hallux's
+# 15.3 long since 2026-10-15 (Jeff's shorter big toe, the nail shortened with its distal segment: fields.NAILS)
+PLATES = {1: (19.5, 15.3, 1.5, 1.1), 2: (11.0, 10.0, 1.2, 0.8), 3: (10.0, 9.0, 1.0, 0.7),
           4: (9.0, 8.0, 1.0, 0.7), 5: (7.0, 6.0, 0.8, 0.9)}
 LIFT_MM = 0.35       # off the sunk bed (§4.4)
 BURY_MM = 1.3        # how deep the root and the sides go under the folds

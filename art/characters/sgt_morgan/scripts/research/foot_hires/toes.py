@@ -235,6 +235,26 @@ PARAMS["nail2"].update(lunula_mm=0.7, lunula_half=3.0, lunula_k=0.35, lunula_hid
 PARAMS.update({"crease2p_s": 1.2, "crease2p_d": 0.26, "crease2p_w": 0.7})
 
 
+# --------------------------------------------------------------------------- shape pass 2 (2026-10-15)
+# Jeff (2026-10-15): "I think toe 2 looks right; it is the big toe that is too long". Part 01 shortens the hallux by
+# 1.5 mm in its proximal phalanx and 6 in its distal segment (fields.shorten_hallux: from the IP 36.2 -> 30.2 mm), so
+# the nail shortens with the segment (x 0.834: 17.5 -> 14.6, its width kept) and the pulp's ellipsoid with it a little
+# (it reached back to the IP otherwise; its front stays at the tip, so the pad stays round). Critic series foot_shape,
+# round 1 (notes/critic/foot_shape_r1/tally.md): toe 2's knuckle beads and waist off (m14-m16: knobbly, waisted
+# fingers; whole.toe_fill fills the waists of every lesser toe), the lesser pulps broader across and the tips turned
+# down a little more (m16: tips angled down onto broad pulps), toe 5's nail rolled with part 01's 55 degree roll (m9,
+# m18; part 01's beds now lean 58 degrees out, 42 before)
+PARAMS["nail1"].update(length=14.6)
+PARAMS["pulp1_e"] = dict(PARAMS["pulp1_e"], back=12.6, radii=[12.5, 14.2, 7.4])
+PARAMS.update({"t2_knuckle": 0.5, "t2_waist": 0.0,
+               "droop2": 1.5, "droop3": 1.3, "droop4": 1.2, "droop5": 0.9})
+for _k, _across in ((2, 8.6), (3, 8.0), (4, 7.6), (5, 7.3)):
+    _e = dict(PARAMS[f"pulp{_k}_e"])
+    _e["radii"] = [_e["radii"][0], _across, _e["radii"][2]]
+    PARAMS[f"pulp{_k}_e"] = _e
+PARAMS["nail5"].update(roll_deg=-54.0)
+
+
 def toe_weight(groups, k):
     return np.clip(sum(groups[g] for g in TOES[k][3]), 0.0, 1.0)
 

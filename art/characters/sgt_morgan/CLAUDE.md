@@ -123,8 +123,9 @@ Specs written before this rule (01 to 05, 09) are revised against it in the crit
 **The man's height and build follow the drawing** (Jeff, 2026-10-10, spec 01 §10.2 Q7 to
 Q9). Rest stature **1835 mm** barefoot: in the hero pose, in boots, the skull top meets the
 drawn line 1855 mm above the floor (the footbeds add 42, the pose costs 22). The build is the
-drawing's lean V-taper, not ANSUR's 83 kg man; the mass is an outcome. The feet keep their
-ANSUR size (282 mm). Specs still citing 1855, 1877 or 83 kg are corrected when their part is
+drawing's lean V-taper, not ANSUR's 83 kg man; the mass is an outcome. The feet are 274 mm
+(ANSUR's 282 less a shorter big toe: Jeff, 2026-10-15, "toe 2 looks right; it is the big toe
+that is too long"; the boot's last follows, spec 02 note). Specs still citing 1855, 1877 or 83 kg are corrected when their part is
 built.
 
 ## Paths

@@ -92,12 +92,21 @@ FIXED = {
     "nail_size": {},          # {toe: [width, visible length]} over §3.3's (the nail scaled with its toe)
     "web_y": {},              # {"3-4": y_F}: the cleft between two toes closed back from y_F (webs forward)
     "web_gap_mm": 0.2,        # what is left of a closed cleft: the toes touch but do not intersect
+    "hallux_short_mm": [0.0, 0.0],  # [proximal phalanx, distal segment]: the hallux shortened (shorten_hallux)
+    # shape pass 2 (2026-10-15, critic series foot_shape round 1; spec 01 §4.3 note): the lesser toes' knuckles
+    # (dorsal bump, the dip past it, mm; their waists are filled on the dense skin, research/foot_hires/macro.py),
+    # the heel tapered above its pad (heel_taper) and the front of the ankle's fillet tightened (ankle_front); the
+    # first pass's knuckles and empty tables are the build before
+    "lesser_knuckle_mm": [0.8, 0.4],
+    "heel_taper": {},
+    "ankle_front": {},
 }
 SIDE_KEYED = ("hallux_valgus_deg", "toe5_yaw_deg", "toe5_roll_deg", "toe4_roll_deg", "toe2_ext_extra_mm")
 TOE_KEYED = ("toe_curl_deg", "toe_dip_deg", "toe_mid_short_mm", "nail_size")
-NAILS = {1: (19.5, 18.35, 1.5), 2: (11.0, 10.0, 1.2), 3: (10.0, 9.0, 1.0), 4: (9.0, 8.0, 1.0),
+NAILS = {1: (19.5, 15.3, 1.5), 2: (11.0, 10.0, 1.2), 3: (10.0, 9.0, 1.0), 4: (9.0, 8.0, 1.0),
          5: (7.0, 6.0, 0.8)}  # §3.3: plate width x visible length, and the free edge beyond the bed (the
-# hallux's 19.5 x 18.35 since Jeff's lock of 2026-10-10, from reference photos: 17 x 16 scaled with the toe)
+# hallux's 19.5 x 18.35 since Jeff's lock of 2026-10-10, from reference photos: 17 x 16 scaled with the toe; 15.3 long
+# since 2026-10-15, shortened with its distal segment, 36.2 -> 30.2 mm from the IP: Jeff's shorter big toe)
 NAIL_RADIUS = {1: 11.0, 2: 6.0, 3: 5.5, 4: 5.0, 5: 4.0}  # §3.3: the plate's transverse radius of curvature
 NAIL_TIP_MARGIN = {1: 2.5, 2: 1.6, 3: 1.5, 4: 1.4, 5: 1.2}  # skin left beyond the free edge, in plan
 JOINT_SHARE = {1: 0.55, 2: 0.56, 3: 0.56, 4: 0.55, 5: 0.46}  # MTP -> IP/PIP over MTP -> tip, §3.3
@@ -449,10 +458,11 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
         if not mine.any():
             continue
         knuckle = q[mine][np.argmax(q[mine][:, 2])]
-        amt, r = (1.2, 6.0) if k == 1 else (0.8, 5.0)
+        bump, dip = (1.2, 0.4) if k == 1 else (float(v) for v in o["lesser_knuckle_mm"])
+        r = 6.0 if k == 1 else 5.0
         tw = foot.w[k]
-        q += amt * S.inflate_field(q, foot.nq, knuckle, r, "smooth", tw)
-        q += S.move_field(q, knuckle + a * 4.5 - np.array([0.0, 0.0, 0.6]), 3.5, (0.0, 0.0, -0.4), "smooth", tw)
+        q += bump * S.inflate_field(q, foot.nq, knuckle, r, "smooth", tw)
+        q += S.move_field(q, knuckle + a * 4.5 - np.array([0.0, 0.0, 0.6]), 3.5, (0.0, 0.0, -dip), "smooth", tw)
     # 4. pulps: the plantar pad of each toe filled (§4.3 step 4); the hallux pad stays 2 mm off the floor
     for k in TOES:
         T = foot.toe[k]
@@ -466,6 +476,13 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
         pad = sum(foot.w[k] for k in ks) * foot.body
         lifted = floor + np.logaddexp(0.0, 3.0 * (q[:, 2] - floor)) / 3.0  # a smooth max(z, floor)
         q[:, 2] += (np.where(q[:, 2] < floor + 2.0, lifted, q[:, 2]) - q[:, 2]) * pad
+    # the hallux shortened (Jeff, 2026-10-15), after its knuckle and pulp are placed, so both travel with it; the
+    # heel tapered above its pad and the ankle's front fillet tightened (shape pass 2)
+    q = shorten_hallux(foot, q, o.get("hallux_short_mm"))
+    if o.get("heel_taper"):
+        q = heel_taper(foot, q, o["heel_taper"])
+    if o.get("ankle_front"):
+        q = ankle_front(foot, q, o["ankle_front"])
     # 5. bony landmarks (§3.2, §4.2 steps 2, 5, 6, 8), anchored on the skin as it now is
     L = foot.L
     # (radii about 1.7 x the local vertex spacing, 8-10 mm on the midfoot and heel, or a bump is one vertex
@@ -595,6 +612,98 @@ def pose_lesser_toe(foot, q, k, o):
             foot.mtp_lift = getattr(foot, "mtp_lift", {})
             foot.mtp_lift[k] = hi
     return q
+
+
+def shorten_hallux(foot, q, short):
+    """Jeff, 2026-10-15 (spec 01 §3.3 note): "toe 2 looks right; it is the big toe that is too long". The hallux
+    shortened as its anatomy would be, along its plan axis: the proximal phalanx by short[0] (a smooth ramp over its
+    middle, so the MTP stays and the IP moves back by it) and the distal segment by short[1] (compressed between 2 mm
+    past the IP and the pulp's last 6 mm, which moves back whole, so the pulp stays round and the nail bed shortens
+    with the segment; nail_beds then sizes the bed to the shorter nail). Width and depth are untouched: every move is
+    along the axis."""
+    sp, sd = (float(v) for v in (short or (0.0, 0.0)))
+    if not (sp or sd):
+        return q
+    T = foot.toe[1]
+    w = foot.w[1]
+    mine = (w > 0.5) & foot.body
+    mtp, ip = _joint_now(foot, q, 1, 1), _joint_now(foot, q, 1, 2)
+    if mtp is None or ip is None:
+        return q
+    a = T["a"]
+    t = (q - mtp) @ a
+    t_ip, t_tip = float((ip - mtp) @ a), float(t[mine].max())
+    # the distal compression's rate: a plateau from the IP to the pulp, integrated and normalised to 1 at the pulp
+    grid = np.linspace(t_ip, t_tip, 400)
+    rate = _plateau(grid, t_ip + 1.0, t_ip + 4.0, t_tip - 9.0, t_tip - 6.0)
+    cum = np.concatenate([[0.0], np.cumsum(0.5 * (rate[1:] + rate[:-1]) * np.diff(grid))])
+    ramp_d = np.interp(t, grid, cum / max(cum[-1], 1e-9))
+    ramp_p = S.smoothstep(t, 0.25 * t_ip, 0.9 * t_ip)
+    d = (sp * ramp_p + sd * ramp_d) * w
+    foot.hallux_short = {"t_ip": round(t_ip, 2), "t_tip": round(t_tip, 2), "proximal": sp, "distal": sd}
+    return q - d[:, None] * a[None, :]
+
+
+def heel_taper(foot, q, cfg):
+    """Shape pass 2 (2026-10-15; critics: from behind the heel is a box, vertical sides about 71 apart from z 13 to
+    54, square shoulders, tight lower corners). The heel drawn in about its centre line above the pad, by `pct` % of
+    each point's offset, rising from z[0] to z[1] and fading out from z[2] to z[3] under the malleoli, over y[0]..y[3]
+    (the back of the heel to the malleoli's front), so from behind it narrows from the pad into the Achilles; and its
+    lower corners rounded (`low_pct` below low_z). The widths spec 01 §3.1 holds at z 10-30 (heel H1) barely move."""
+    x, y, z = q[:, 0], q[:, 1], q[:, 2]
+    xc = foot.xc_heel
+    yw = _plateau(y, *cfg.get("y", (12.0, 2.0, -50.0, -75.0)))
+    zw = _plateau(z, *cfg.get("z", (30.0, 52.0, 60.0, 76.0)))
+    share = 0.01 * float(cfg.get("pct", 0.0)) * zw
+    lz = cfg.get("low_z", (2.0, 12.0))
+    share = share + 0.01 * float(cfg.get("low_pct", 0.0)) * (1.0 - S.smoothstep(z, lz[0], lz[1]))
+    out = q.copy()
+    out[:, 0] -= (x - xc) * share * yw * foot.body
+    # the back face domed in plan: its sides drawn forward (`back_round` mm), its middle and the pternion left, so the
+    # tuberosity reads as a rounded bulb from behind rather than a flat face
+    br = float(cfg.get("back_round", 0.0))
+    if br:
+        out[:, 1] -= (br * S.smoothstep(np.abs(x - xc), 8.0, 30.0) * _plateau(z, 8.0, 18.0, 50.0, 66.0)
+                      * S.smoothstep(y, -40.0, -14.0) * foot.body)
+    return out
+
+
+def ankle_front(foot, q, cfg):
+    """Shape pass 2 (2026-10-15; critic C2: the front of the ankle one soft oversized fillet from z 140 into the
+    dorsum, the instep about 98 mm high at 40 % L). In the side plane (y, z): the shin's front line through `shin` and
+    `corner`, the dorsum's through `corner` and `dorsum`, and a fillet of radius `r` between them; skin standing in
+    front of that fillet is moved back along its bisector by `k` of the excess (a move that keeps each point's place
+    across the bisector, so it never folds), full within x_half[0] of the instep's crest and gone by x_half[1]. The
+    corner is the crease (spec 01 §3.2: z 80-84). On the 13 mm ankle cage the subdivided surface rounds the corner
+    by more than the cage does, so `k` above 1 overshoots the cage to bring the rendered surface onto the fillet
+    (measured on the level-2 surface, as the closeups render it)."""
+    C = np.array(cfg["corner"], float)
+    u1 = np.array(cfg["shin"], float) - C
+    u2 = np.array(cfg["dorsum"], float) - C
+    u1, u2 = u1 / np.linalg.norm(u1), u2 / np.linalg.norm(u2)
+    bis = (u1 + u2) / np.linalg.norm(u1 + u2)
+    td = (u1 - u2) / np.linalg.norm(u1 - u2)
+    alpha = 0.5 * math.acos(float(np.clip(u1 @ u2, -1.0, 1.0)))
+    r, k = float(cfg.get("r", 30.0)), float(cfg.get("k", 0.85))
+    d = q[:, 1:] - C
+    b, t = d @ bis, d @ td
+    at = np.abs(t)
+    arc = at < r * math.cos(alpha)
+    bt = np.where(arc, r / math.sin(alpha) - np.sqrt(np.maximum(r * r - at * at, 0.0)), at / math.tan(alpha))
+    e = b - bt
+    knee = 1.5   # a soft max(e, 0): nothing at or behind the fillet, quadratic over the first knee mm
+    move = k * np.where(e <= 0.0, 0.0, np.where(e < knee, e * e / (2.0 * knee), e - 0.5 * knee))
+    x0 = float(cfg.get("x", -4.0))
+    xh = cfg.get("x_half", (22.0, 40.0))
+    wx = 1.0 - S.smoothstep(np.abs(q[:, 0] - x0), xh[0], xh[1])
+    yz = cfg.get("y_from", (-134.0, -124.0))   # the dorsum ahead of the fillet's tangent stays
+    zone = S.smoothstep(q[:, 2], 55.0, 65.0) * S.smoothstep(q[:, 1], yz[0], yz[1]) * (1.0 - S.smoothstep(q[:, 2], 170.0, 190.0))
+    m = move * wx * zone * foot.body
+    out = q.copy()
+    out[:, 1] -= m * bis[0]
+    out[:, 2] -= m * bis[1]
+    foot.ankle_front = {"moved_max": round(float(m.max()), 2), "alpha_deg": round(math.degrees(alpha), 1)}
+    return out
 
 
 def _plan_axis(qt):

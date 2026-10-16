@@ -209,6 +209,8 @@ Stand-in last stations (y, medial half-width −x, lateral half-width +x, dorsum
 | −90 | 36 | 40 | 72 | | −270 | 50 | 40 | 28 |
 | −130 | 40 | 46 | 62 | | −297 | 12 | 10 | 18 (tip, centred x −6) |
 
+*2026-10-15, the last's length follows the foot (to revisit when part 02 is built; nothing else here is changed yet).* Jeff shortened the big toe ("I think toe 2 looks right; it is the big toe that is too long"; spec 01 §0, §3.1, §3.3 notes of this date), so the foot is about 275 mm to its longest toe, not 282. The toe allowance stays 15 mm (spec 01 §0 item 3), so `Foot.L.Last` will come out about 289–291 long instead of 297: this table's −297 tip, the outsole's 305 (§3.1) and every length here derived from 297 follow the last spec 01 builds, and are re-derived when this part is built.
+
 ### 4.2 Step 2 — sole outline and lofts (`boot_sole.py`)
 1. **Plantar outline** = the last's insole outline (section of `Boot.L.Inner` at z = seat height, 48 points) offset outward by 3.7 (upper) + 3 (sidewall) at the sides, 5 at the toe, 3 at the heel, resampled to 96 points with 12 points on each arc (prototype §4 (c)). Fallback stations (ground-contact outline, lug tips):
 

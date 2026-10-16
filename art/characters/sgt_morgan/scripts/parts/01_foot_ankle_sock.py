@@ -237,16 +237,20 @@ def build(ctx, args):
 
 # Jeff's lock of 2026-10-10, from reference photos (§3.3, §4.3 notes): the tips of the curled, shortened lesser
 # toes (the left foot's, as built; the right 2nd toe stays 1.5 shorter), the 30 mm hallux and the slim toe 2;
-# toes 3-5 measure wider than the §3.3 table where a closed web joins them to their neighbour, and the
-# hallux deeper where it was thickened with its width
-TIP_SHARE = {1: 1.0, 2: 0.9658, 3: 0.9300, 4: 0.8870, 5: 0.8242}
-TOE_W = {1: 30.0, 2: 16.0, 3: 17.0, 4: 17.2, 5: 16.9}
+# toes 3-4 measure wider than the §3.3 table where a closed web joins them to their neighbour, and the
+# hallux deeper where it was thickened with its width. Jeff, 2026-10-15 (§3.3 note): "toe 2 looks right; it is the
+# big toe that is too long": the hallux 7 mm shorter, so the foot is 274.7 to its longest toe, the lesser toes'
+# tips where they were (absolute, no longer shares of the length); toe 5 rolled onto its side measures the §3.3
+# table's 14.5 across
+TIP_Y = {1: -274.7, 2: -272.3556, 3: -262.26, 4: -250.134, 5: -232.4244}
+TOE_W = {1: 30.0, 2: 16.0, 3: 17.0, 4: 17.2, 5: 14.5}
 TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
-L_TARGET = 282.0
+L_TARGET = 274.7
 # metric: (target, tolerance, source); spec 01 §3.1 and §3.3 targets, §8.2 tolerances (lengths 3, widths and
 # heights 2, girths 6, toe tips 2, nails 1 and 0.2); (E) marks the spec's own estimates
 TARGETS = {
-    "foot_length": (282.0, 3.0, "§3.1 ANSUR"), "ball_length": (210.0, 3.0, "§3.1 ANSUR"),
+    "foot_length": (L_TARGET, 3.0, "§3.1 ANSUR, §3.3 (Jeff 2026-10-15: the shorter hallux)"),
+    "ball_length": (210.0, 3.0, "§3.1 ANSUR"),
     "ball_breadth": (105.0, 2.0, "§3.1 ANSUR"),
     # heel H1 (Jeff, 2026-10-10): round at the back, widest at 18 % L; the calliper breadth reads 2 mm over
     # the widest section (74) because the heel's inner side is fullest further back than its outer side
@@ -274,8 +278,8 @@ PLAN_TARGETS = {
     "plan_med_dip": ([2.0, 7.0], None, "§3.1 (D, 2026-10-14: the medial border inside its heel-to-head chord)"),
 }
 PLAN_REPORTED = ("plan_b40", "plan_b60", "plan_ball", "plan_head5_pct", "plan_head1_pct", "plan_widest")
-for _k, _s in TIP_SHARE.items():
-    TARGETS[f"toe{_k}_tip_y"] = (-L_TARGET * _s, 2.0, "§3.3")
+for _k, _y in TIP_Y.items():
+    TARGETS[f"toe{_k}_tip_y"] = (_y, 2.0, "§3.3")
     TARGETS[f"toe{_k}_width"] = (TOE_W[_k], 2.0, "§3.3")
     TARGETS[f"toe{_k}_height"] = (TOE_H[_k], 2.0, "§3.3 (thickness at the IP/PIP)")
 
@@ -324,7 +328,7 @@ def measure(ctx, args):
             add(f"bimalleolar_cage.{side}", round(v["bimalleolar"], 2), unit="mm")
             v.update(fm.ankle(fine, f))       # the malleoli and the heel's apex on the rendered surface: the
             v.update(fm.heel_back(fine, f))   # cage's 13 mm rows would quantise them (fm.subdivided)
-            v.update(fm.plan(fine, f, v["foot_length"]))   # the plan outline, on the rendered surface too
+            v.update(fm.plan(fine, f, v["station_length"]))   # the plan outline, on the rendered surface too
             add(f"heel_prom.{side}", round(v["heel_prom"], 2), [3.0, 15.0], None,
                 "§3.2 (the calcaneus behind the Achilles insertion)")
             rest[side] = v

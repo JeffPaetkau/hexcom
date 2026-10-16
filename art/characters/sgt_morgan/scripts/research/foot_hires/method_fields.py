@@ -533,7 +533,9 @@ DETAIL_KEYS = ("nail1", "nail2", "crease_scale", "debug_sections", "stage_cache"
                # whole foot, pass 1: everything whole.py and the lesser nails read acts after the stage
                "nail3", "nail4", "nail5", "tendons", "knuckles", "plantar_lesser", "ridges", "sheen", "corn",
                # whole foot, pass 2: the census, and whole.py's new forms and masks (all after the stage)
-               "debug_folds", "contact", "arch", "achilles", "veins", "wear", "forms")
+               "debug_folds", "contact", "arch", "achilles", "veins", "wear", "forms",
+               # shape pass 2: whole.py's toe fill, sole and ankle crease (after the stage)
+               "toe_fill", "sole", "ankle_crease")
 
 
 def stage_key(q, P):
