@@ -23,7 +23,7 @@ SCRIPTS = os.path.dirname(os.path.dirname(HERE))
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
 from lib import cache, log, measure, optim  # noqa: E402
-from parts.p01 import fields, footmetrics as fm  # noqa: E402
+from parts.p01 import fields, footmetrics as fm, scanfit  # noqa: E402
 
 PARAMS = os.path.join(HERE, "params.json")
 BODY = "Body.Mesh"
@@ -33,26 +33,33 @@ L_TARGET = 274.7
 # table widths here, since the closed webs that widen their bases in the build come after the fit's prediction.
 # Jeff, 2026-10-15: the hallux 7 mm shorter (pass B's hallux_short_mm, so toe1_ext is not asked to do it), the
 # foot 274.7 to its longest toe, the lesser toes' tips where they were (absolute)
-TIP_Y = {1: -274.7, 2: -272.3556, 3: -262.26, 4: -250.134, 5: -232.4244}
-TOE_W = {1: 30.0, 2: 16.0, 3: 16.0, 4: 15.0, 5: 14.5}
-TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
+# The scan-driven pass (2026-10-16, spec 01 §3.3 note): three men's unloaded feet scaled to this length put toes 3, 4
+# and 5 4, 14 and 33 mm behind toe 2 (here 10, 22 and 40) and their lesser toes 16-18 mm across and 17-20 thick where
+# ours read 13-17 and 14-17 (scan.py compare): toes 3-5 brought most of the way to the scans' cascade (X3 is an
+# indication, not a law; toe 2 and the hallux stay), toes 2-4 plumper
+TIP_Y = {1: -274.7, 2: -272.3556, 3: -265.5, 4: -255.5, 5: -235.5}
+TOE_W = {1: 30.0, 2: 17.3, 3: 17.3, 4: 16.5, 5: 15.0}
+TOE_H = {1: 24.8, 2: 19.0, 3: 18.0, 4: 17.0, 5: 15.4}
 # (metric, target, weight tolerance): spec 01 §3.1 and §3.3 (tight where ANSUR measured, looser where the
 # spec estimated); the §8.2 tolerances are what measure() checks; the heel is H1 (Jeff, 2026-10-10). The shape
 # pass (2026-10-14): the ball's breadth aimed 0.8 mm under spec 01's 105 because the build's toe separation (left out
 # of the prediction) adds about 1 mm to it; the instep girth 246 (spec 01 §3.1 note)
 RESIDUALS = [("foot_length", L_TARGET, 0.5), ("ball_length", 210.0, 1.0), ("ball_breadth", 104.2, 0.4),
-             ("heel_breadth", 76.0, 0.7), ("heel_width_z10", 69.0, 1.0), ("heel_width_z20", 72.0, 1.0),
-             ("heel_width_z30", 73.0, 1.0), ("bimalleolar", 76.0, 0.7), ("pternion_z", 30.0, 1.0),
-             ("heel_ankle_circ", 353.0, 6.0), ("instep_circ", 246.0, 3.0), ("ball_circ", 259.0, 2.5),
+             ("bimalleolar", 76.0, 0.7), ("pternion_z", 30.0, 1.0),
+             ("heel_ankle_circ", 353.0, 6.0), ("instep_circ", 246.0, 3.0), ("ball_circ", 259.0, 1.0),
              ("ankle_circ_min", 229.0, 2.0), ("dorsum_h50", 66.0, 1.0), ("dorsum_h60", 56.0, 1.0),
-             ("dorsum_h70", 40.0, 1.0), ("arch_medial_45", 13.0, 1.0), ("lateral_clear_50", 4.0, 1.0)]
+             ("dorsum_h70", 40.0, 1.0)]
 RESIDUALS += [("malleolus_lateral_z", 76.0, 1.0), ("malleolus_medial_z", 89.0, 1.0)]
 # the plan outline (the shape pass, 2026-10-14, spec 01 §3.1 note), read on the subdivided surface (the probe): the
-# midfoot's breadth at 50 % L 0.86 of the ball's, the 5th metatarsal head's corner where spec 01 puts the head
-# (185 mm, 65.6 % L); the lateral border's bulge past its heel-to-head chord and the medial border's dip inside its
-# chord are one-sided (PLAN_SIDED)
-RESIDUALS += [("plan_b50", 90.0, 1.5), ("plan_head5_pct", 65.6, 2.0)]
-PLAN_SIDED = (("plan_lat_bulge", None, 2.5, 0.7), ("plan_med_dip", 3.0, 6.0, 0.8))   # (metric, least, most, tol)
+# 5th metatarsal head's corner where spec 01 puts the head (185 mm, 65.6 % L); the lateral border's bulge past its
+# heel-to-head chord and the medial border's dip inside its chord are one-sided (PLAN_SIDED). The scan-driven pass
+# (2026-10-16, spec 01 §3.1 note): the heel's breadth and its widths at 15 % L (heel H1), the arch's and the lateral
+# border's clearances and the midfoot's plan breadth (all estimates or H1's) give way to the sections of three real
+# men's feet (scanfit.py, scan_targets.json: the plan below z 50, the heel's coronal sections, the sole's heights)
+RESIDUALS += [("plan_head5_pct", 65.6, 2.0)]
+PLAN_SIDED = (("plan_lat_bulge", None, 5.5, 0.7), ("plan_med_dip", 3.0, 6.0, 0.8))   # (metric, least, most, tol);
+# the lateral bulge's most 2.5 -> 5.5 in the scan-driven pass: the three men's read 1.1, 4.6 and 5.3
+SCAN_WEIGHT = {"plan": 1.0, "heel": 1.0, "sole": 1.0}   # each family's weight in the fit (scanfit.TOL its unit)
 RESIDUALS += [(f"toe{k}_tip_y", y, 0.7) for k, y in TIP_Y.items()]
 RESIDUALS += [(f"toe{k}_width", v, 0.7) for k, v in TOE_W.items()]
 RESIDUALS += [(f"toe{k}_height", v, 0.7) for k, v in TOE_H.items()]
@@ -126,9 +133,42 @@ def evaluate(body, a, side="L", gaps=True, probe=None, opts=None):
         v.update(fm.ankle(fine, f))
         v.update(fm.heel_back(fine, f))
         v.update(fm.plan(fine, f, v["station_length"]))
+        v["scan"] = scan_measures(fine, f, m, body.ix, side)
     if gaps:
         v["gaps"] = fm.toe_gaps(m, body.ix, side)
     return v
+
+
+TIP_OFFSET = np.zeros(3)   # world mm: toe 2's tip moved by pass B's toe separation, which the prediction leaves out
+                           # (main() sets it once from the start amounts); the scans' axis runs to the built tip
+
+
+def toe2_tip_world(m, ix, side):
+    co = m.co[ix.toe_distal[side][2]] * 1000.0
+    f = fm.frame(m, ix, side)
+    return co[np.argmin(f.to_f(co)[:, 1])]
+
+
+def separation_offset(body, a, opts, side="L"):
+    """How far pass B's toe separation (separate_toes, the closed webs, the contacts) moves toe 2's tip, world mm: the
+    scans' frame runs its axis to that tip, so a fit without the separation would read the forefoot turned."""
+    co0 = predicted(body, a, side, opts)
+    co1 = body.co.copy()
+    foot = body.feet[side]
+    co1[foot.R] = foot.frame.to_w(body.sculpt_side(side, a, opts, separate=True))
+    t0 = toe2_tip_world(fm.with_positions(body.m0, co0), body.ix, side)
+    t1 = toe2_tip_world(fm.with_positions(body.m0, co1), body.ix, side)
+    return t1 - t0
+
+
+def scan_measures(fine, f, m, ix, side):
+    """scanfit's measures on a subdivided read (the probe's), in the scans' frame: the heel's centre and the line to
+    toe 2's tip (the cage's, from the toe's distal vertices, moved by TIP_OFFSET) as the axis."""
+    q = f.to_f(fine.co * 1000.0)
+    T = scanfit.triangles(fine.loop_start, fine.loop_total, fine.loop_vert)
+    tip = f.to_f(toe2_tip_world(m, ix, side) + TIP_OFFSET)
+    qs, _ = scanfit.rezero(q, tip)
+    return scanfit.measures(qs, T)
 
 
 PROMINENCE_MM, PROMINENCE_TOL = 3.0, 0.5  # each malleolus, and the heel behind the Achilles insertion,
@@ -151,7 +191,16 @@ def residuals(v):
         under = min(x - least, 0.0) if least is not None else 0.0
         over = max(x - most, 0.0) if most is not None else 0.0
         r.append((under + over) / tol)
+    if SCAN_TARGETS is not None:
+        if "scan" in v:
+            r.extend(scanfit.residuals(v["scan"], SCAN_TARGETS, SCAN_WEIGHT).tolist())
+            r.extend(scanfit.floor_residuals(v["scan"]).tolist())
+        else:
+            r.extend([0.0] * (len(SCAN_TARGETS["values"]) + 24))
     return np.array(r)  # (toe gaps are kept by pass B's separation, not fitted: they are not smooth)
+
+
+SCAN_TARGETS = scanfit.load_targets()
 
 
 PRIOR = 0.03  # weight of the pull toward fields.py's start values, per unit (mm or %)
@@ -213,6 +262,9 @@ def fit(body, a0, iters=6, step=0.5, damping=0.3, say=print, probe=None, opts=No
 
 
 def table(v, say=print):
+    if SCAN_TARGETS is not None and "scan" in v:
+        for fam, d in scanfit.report(v["scan"], SCAN_TARGETS).items():
+            say(f"  scan {fam:13s} rms {d['rms']:6.2f}  max {d['max']:6.2f} at {d['at']} ({d['n']})")
     for k, t, tol in RESIDUALS:
         x = v.get(k)
         say(f"  {k:18s} {'-' if x is None else round(x, 2):>8}  target {t:8.2f}  {'' if x is None else round(x - t, 2)}")
@@ -252,6 +304,9 @@ def main(argv):
         a0.update({k: float(v) for k, v in json.loads(a.set).items()})
     opts = fields.options(params)
     out = {}
+    global TIP_OFFSET
+    TIP_OFFSET = separation_offset(body, a0, opts)
+    say(f"toe 2's tip moved by the separation: {np.round(TIP_OFFSET, 2).tolist()} mm (world)")
     probe = AnkleProbe(body, "L")
     try:
         if a.dry:
@@ -259,6 +314,8 @@ def main(argv):
             amounts = a0
         else:
             free = set(a.only.split(",")) if a.only else None
+            if free and "scan_bases" in free:   # the scan-driven pass's bases (fields.SCAN_BASES) by one name
+                free = (free - {"scan_bases"}) | set(fields.SCAN_BASES)
             unknown = sorted((free or set()) - set(fields.FIELD_NAMES))
             if unknown:
                 raise SystemExit(f"[fit_sculpt] --only names unknown amounts {unknown}")

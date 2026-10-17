@@ -252,6 +252,20 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    or rerun the pass from its brief (the brief's points are these five: load and align, compare,
    fix in part 01, clay side by side with the scan, shape round 3 packet; plus a `scans` group
    in `scripts/setup/downloads.json`).
+   **Scan-driven pass, resumed and finished (Friday 16 October)**: the scans of subjects 038,
+   081 and 012 (seated as the rest reference, standing for the loaded key) mirrored to a left
+   foot, aligned (pternion, floor, heel-to-toe-2 axis) and scaled (x1.00 to 1.01) to 274.3 mm;
+   the sole is truly scanned. Part 01 is now fitted to the scans' sections (`p01/scanfit.py`,
+   166 targets in `p01/scan_targets.json`, 45 general fields, a floor penalty); the trial's arch
+   lift is off and `whole.scan_sole` closes the rest. Deviation from the scans, dense skin: plan
+   4.5 -> 3.9 mm, heel sections 3.8 -> 1.9, sole heights 3.9 -> 1.5. Jeff's H1 heel replaced by
+   the scans' (6-12 mm narrower at 15 % L; reverting is a params change). Foot.Contact now matches
+   the loaded scans (heel +8.0, arch drop 6.2). Not fixed: the lesser toes still read as
+   separate segmented cylinders; the scans' toes are short, plump pads pressed together with the
+   hallux touching toe 2 (Jeff's X3 gap of 4.5 mm differs). The scans' forefoot dorsum is 6-9 mm
+   higher (Jeff's side profile; reported only). Report `renders/research/foot_hires/scan/
+   compare.md` (not committed), side by sides in `scan/sbs/`; shape round 3 packet built with
+   the scan as the left image of each pair; critics not yet run.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

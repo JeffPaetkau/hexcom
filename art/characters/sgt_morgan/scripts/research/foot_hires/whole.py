@@ -525,9 +525,12 @@ ARCH = {
     # medial clearance at 45 % L read 17 at 4.5 mm). A steeper rise beside the band (s 0.22-0.55) and a 20 mm heel
     # end drew a sharp-edged rectangular pocket in clay; the lateral column's drop stops short of the heel (lat_y), as
     # under part 01's tapered heel it creased the lateral heel wall at y -60)
+    # (the scan-driven pass, 2026-10-16: part 01's sole is now fitted to three real men's plantar sections
+    # (parts/p01/scanfit.py), the lateral band on the floor and the medial vault where theirs are, so the vault's rise
+    # and the lateral drop here are off; 3.5 and 2.2 before)
     "y": [-190.0, -160.0, -86.0, -58.0],
-    "mid": 3.5, "mid_s": [0.25, 0.8], "edge_ease": [0.8, 1.0, 0.75],
-    "lat": 2.2, "lat_s": [0.18, 0.52], "lat_y": [-170.0, -130.0, -95.0, -75.0],
+    "mid": 0.0, "mid_s": [0.25, 0.8], "edge_ease": [0.8, 1.0, 0.75],
+    "lat": 0.0, "lat_s": [0.18, 0.52], "lat_y": [-170.0, -130.0, -95.0, -75.0],
     "floor_gap": 0.8, "height": [18.0, 40.0],
     # (r 9, amp 2: a knob stuck on, in clay; 1.5 pushed the medial extreme out and with it spec 01's clearance window)
     "navicular": {"y": -120.0, "z": 42.0, "r": 14.0, "amp": 1.2},
@@ -657,7 +660,10 @@ ACHILLES = {
     # tram-line grooves standing on a ledge: broader, a little shallower, fading in over 26 mm)
     "x0": -2.0, "behind": -62.0, "back": [0.0, 0.4],
     "cord": {"amp": 1.4, "half": 11.5, "z": [42.0, 66.0, 150.0, 240.0]},
-    "hollow": {"amp": 3.2, "at": 15.5, "sigma": 5.0, "z": [44.0, 70.0, 112.0, 175.0]},
+    # (the scan-driven pass, 2026-10-16: three real heels stay 33-41 wide 20 mm in front of the pternion at z 60, ours
+    # 26: the hollows start higher, above the calcaneus, so the heel's upper part is a bell's shoulder, not a neck;
+    # z [44, 70, ...] before)
+    "hollow": {"amp": 3.2, "at": 15.5, "sigma": 5.0, "z": [54.0, 78.0, 112.0, 175.0]},
 }
 
 
@@ -701,8 +707,86 @@ def forms(ctx, q, topo, groups, segs, P):
     q = arch(q, C.vertex_normals(q, topo), P, ctx.report)
     q = achilles(q, C.vertex_normals(q, topo), P, ctx.report)
     q = sole(q, C.vertex_normals(q, topo), groups, segs, ctx.joints, P, adj, ctx.report)
+    q = scan_sole(q, C.vertex_normals(q, topo), topo, groups, P, ctx.report)
     q = ankle_crease(q, C.vertex_normals(q, topo), P, ctx.report)
     return q
+
+
+# The scan-driven pass (2026-10-16; notes/research_foot_hires.md): what part 01's fitted sole (parts/p01/scanfit.py,
+# its 2 mm cells read at 12 stations x 8 shares of the breadth) leaves of the three men's mean underside is taken off
+# here, on the dense skin: the same measure on this skin in the scans' frame (the heel's centre to toe 2's tip), each
+# sample's difference spread to the plantar skin by a normalised Gaussian (`sigma` mm across, along), a share `k` of
+# it, faded at the grid's edge, off the toes, above `height` and on skin not facing down; never nearer the floor than
+# `floor`. (Part 01's cage carries the large forms; this closes the 1-2 mm it cannot: the lateral band's gap behind
+# the 5th metatarsal's base, the ball's crescent across the middle heads.)
+SCAN_SOLE = {"k": 0.85, "sigma": [7.0, 9.0], "height": [6.0, 16.0], "plantar": [0.3, 0.7], "floor": 0.15,
+             "edge": [0.25, 0.6], "max": 4.0}
+
+
+def scan_sole(q, nrm, topo, groups, P, report=None):
+    """The sole's remaining difference from the scans' mean (SCAN_SOLE). Returns positions."""
+    cfg = _cfg(P, "scan_sole", SCAN_SOLE)
+    if not cfg.get("k"):
+        return q
+    import os
+    import sys
+    scripts = os.path.dirname(os.path.dirname(C.HERE))
+    if scripts not in sys.path:
+        sys.path.insert(0, scripts)
+    from parts.p01 import scanfit as SF
+    tg = SF.load_targets()
+    if tg is None:
+        return q
+    w2 = T.toe_weight(groups, 2) > 0.5
+    t2 = q[w2]
+    tip = t2[np.argmin(t2[:, 1])]
+    Tr = SF.triangles(*topo)
+    qs, (R, o) = SF.rezero(q, tip)
+    meas = SF.measures(qs, Tr, pts=qs)
+    # the samples: (x, y) in the scans' frame and ours - target there
+    px, py, d = [], [], []
+    under = qs[qs[:, 2] < SF.PLAN_Z]
+    for p in SF.SOLE_PCTS:
+        y = -p / 100.0 * SF.LENGTH
+        b = under[np.abs(under[:, 1] - y) < 0.75]
+        if len(b) < 4:
+            continue
+        a, bb = b[:, 0].min(), b[:, 0].max()
+        for u, z in zip(SF.SOLE_U, meas["sole"][str(p)]):
+            t = tg["values"].get(f"sole_{p}_{int(round(u * 100)):02d}")
+            if z is None or t is None:
+                continue
+            px.append(a + u * (bb - a))
+            py.append(y)
+            d.append(z - t)
+    px, py, d = np.array(px), np.array(py), np.clip(np.array(d), -cfg["max"], cfg["max"])
+    floor = float(q[:, 2].min())
+    zr = q[:, 2] - floor
+    sel = np.nonzero((zr < cfg["height"][1]) & (nrm[:, 2] < -0.1))[0]
+    out = q.copy()
+    if not len(sel) or not len(d):
+        return out
+    sx, sy = cfg["sigma"]
+    X, Y = qs[sel, 0][:, None], qs[sel, 1][:, None]
+    G = np.exp(-0.5 * (((X - px[None, :]) / sx) ** 2 + ((Y - py[None, :]) / sy) ** 2))
+    wsum = G.sum(1)
+    corr = (G @ d) / np.maximum(wsum, 1e-9)
+    w = (T.smoothstep(wsum, *cfg["edge"]) * T.smoothstep(-nrm[sel, 2], *cfg["plantar"])
+         * (1.0 - T.smoothstep(zr[sel], *cfg["height"])) * (1.0 - T.toes_weight(groups)[sel]))
+    z0 = q[sel, 2]
+    dk = cfg["k"] * corr * w
+    # lowering saturates smoothly at the room left above the floor's margin, room (1 - exp(-d / room)), the room itself
+    # a softplus: a hard clamp drew rings round the heel pad's contact and blobs on the ball in clay (the first build)
+    kk = 0.3
+    room = kk * np.logaddexp(0.0, (z0 - floor - cfg["floor"]) / kk)
+    down = np.where(dk > 0.0, room * (1.0 - np.exp(-np.maximum(dk, 0.0) / np.maximum(room, 1e-6))), dk)
+    out[sel, 2] = z0 - down
+    if report is not None:
+        moved = out[sel, 2] - q[sel, 2]
+        report["scan_sole"] = {"samples": int(len(d)), "diff_rms": round(float(np.sqrt(np.mean(d ** 2))), 2),
+                               "moved": [round(float(moved.min()), 2), round(float(moved.max()), 2)],
+                               "n": int((np.abs(moved) > 0.05).sum())}
+    return out
 
 
 # --------------------------------------------------------------------------- shape pass 2 (2026-10-15)
@@ -784,8 +868,10 @@ def toe_fill(q, groups, segs, J, P, report=None):
 # toe's plantar skin faired (`fair`: Taubin passes, the curled toes' closed folds stood as hard ring bands from below)
 # and its proximal pad filled out below its phalanx (`pads`: along the plantar normal, a Gaussian along the proximal
 # segment), so the toes read as a row of plump pads.
+# (the scan-driven pass, 2026-10-16: three men's lesser toes rise 5.6-8 mm from the pad to the sulcus, ours 2-3; the
+# groove deeper and broader, 1.0 mm and sigma 1.9 before; 1.6 and 2.8 folded toe 4 at its base)
 SOLE = {
-    "sulcus": {"depth": 1.0, "sigma": 1.9, "ahead": 11.0, "pad_x": 8.0, "below": 16.0, "plantar": [0.15, 0.55]},
+    "sulcus": {"depth": 1.3, "sigma": 2.4, "ahead": 11.0, "pad_x": 8.0, "below": 16.0, "plantar": [0.15, 0.55]},
     "ball_back": {"depth": 0.7, "sigma": 5.0, "behind": 26.0, "below": 14.0, "lat_x": [34.0, 52.0], "plantar": [0.3, 0.7]},
     "fair": {"iterations": 40, "plantar": [0.1, 0.5], "toes": [2, 3, 4, 5]},
     "pads": {"amp": 0.7, "at": 0.55, "sigma": 0.28, "plantar": [0.2, 0.6], "toes": [2, 3, 4, 5]},

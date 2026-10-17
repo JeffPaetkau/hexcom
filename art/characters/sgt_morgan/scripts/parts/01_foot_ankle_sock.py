@@ -33,7 +33,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))  # scripts/
 from lib import cache, cli, env, log, naming, replace  # noqa: E402
 from lib import sculpt as S  # noqa: E402
 from lib.cli import Part  # noqa: E402
-from parts.p01 import fields, footmetrics as fm, layers, nails  # noqa: E402
+from parts.p01 import fields, footmetrics as fm, layers, nails, scanfit  # noqa: E402
 
 PART = Part(id="01", name="foot_ankle_sock", prefixes=("Foot.", "Sock.", "Frame.Foot."), keys=("foot.", "sock."),
             needs={"08": "Morgan.Rig"},
@@ -242,9 +242,11 @@ def build(ctx, args):
 # big toe that is too long": the hallux 7 mm shorter, so the foot is 274.7 to its longest toe, the lesser toes'
 # tips where they were (absolute, no longer shares of the length); toe 5 rolled onto its side measures the §3.3
 # table's 14.5 across
-TIP_Y = {1: -274.7, 2: -272.3556, 3: -262.26, 4: -250.134, 5: -232.4244}
-TOE_W = {1: 30.0, 2: 16.0, 3: 17.0, 4: 17.2, 5: 14.5}
-TOE_H = {1: 24.8, 2: 17.5, 3: 15.4, 4: 14.3, 5: 15.4}
+# The scan-driven pass (2026-10-16, §3.3 note): toes 3-5 most of the way to three real men's cascade (scaled to this
+# length they end 4, 14 and 33 mm behind toe 2; here 10, 22 and 40 before), the lesser toes plumper (fit_sculpt.py)
+TIP_Y = {1: -274.7, 2: -272.3556, 3: -265.5, 4: -255.5, 5: -235.5}
+TOE_W = {1: 30.0, 2: 16.6, 3: 17.0, 4: 17.2, 5: 15.0}
+TOE_H = {1: 24.8, 2: 18.0, 3: 16.5, 4: 15.5, 5: 16.5}
 L_TARGET = 274.7
 # metric: (target, tolerance, source); spec 01 §3.1 and §3.3 targets, §8.2 tolerances (lengths 3, widths and
 # heights 2, girths 6, toe tips 2, nails 1 and 0.2); (E) marks the spec's own estimates
@@ -252,36 +254,68 @@ TARGETS = {
     "foot_length": (L_TARGET, 3.0, "§3.1 ANSUR, §3.3 (Jeff 2026-10-15: the shorter hallux)"),
     "ball_length": (210.0, 3.0, "§3.1 ANSUR"),
     "ball_breadth": (105.0, 2.0, "§3.1 ANSUR"),
-    # heel H1 (Jeff, 2026-10-10): round at the back, widest at 18 % L; the calliper breadth reads 2 mm over
-    # the widest section (74) because the heel's inner side is fullest further back than its outer side
-    "heel_breadth": (76.0, 2.0, "§3.1, heel H1 (Jeff 2026-10-10)"), "heel_widest": (74.0, 2.0, "§3.1, heel H1"),
-    "heel_width_z10": (69.0, 2.0, "§4.2 step 3, heel H1"), "heel_width_z20": (72.0, 2.0, "§4.2 step 3, heel H1"),
-    "heel_width_z30": (73.0, 2.0, "§4.2 step 3, heel H1"), "bimalleolar": (76.0, 2.0, "§3.1 ANSUR"),
+    # heel H1 (Jeff, 2026-10-10: round at the back, widest at 18 % L, breadth 76, 69 / 72 / 73 at z 10 / 20 / 30 at
+    # 15 % L) gave way in the scan-driven pass (2026-10-16, §3.1 note) to three real men's unloaded heels scaled to
+    # this length (scanfit.py, scan_targets.json: breadth 68.3, 58.6 / 63.6 / 60.8 at 15 % L): H1 was 6-12 mm wider
+    # there, a bulb that narrowed into a neck above the pad where real heels are a bell. Read on the cage (§8.2),
+    # which stands 1-2 mm outside the rendered surface
+    "heel_breadth": (70.0, 3.0, "§3.1 (scans 2026-10-16: 68.3, cage +1.5)"),
+    "heel_widest": (70.0, 3.0, "§3.1 (scans 2026-10-16)"),
+    "heel_width_z10": (60.0, 3.0, "§3.1 (scans 2026-10-16: 58.6)"), "heel_width_z20": (64.5, 3.0, "§3.1 (scans: 63.6)"),
+    "heel_width_z30": (62.0, 3.0, "§3.1 (scans 2026-10-16: 60.8)"), "bimalleolar": (76.0, 2.0, "§3.1 ANSUR"),
     "malleolus_lateral_z": (76.0, 2.0, "§3.1 ANSUR"), "malleolus_medial_z": (89.0, 2.0, "§3.1 (E)"),
     "ankle_circ_min": (229.0, 6.0, "§3.1 ANSUR"), "heel_ankle_circ": (353.0, 6.0, "§3.1 ANSUR"),
     # the instep's 263 (E) assumed a midfoot about 100 wide, the paddle Jeff saw from above; a midfoot of the plan
     # outline's breadth tapes 240-250 in this vertical plane (§3.1 note 2026-10-14)
     "ball_circ": (259.0, 6.0, "§3.1 ANSUR"), "instep_circ": (246.0, 6.0, "§3.1 (E, 2026-10-14)"),
     "dorsum_h50": (66.0, 2.0, "§3.1 (E)"), "dorsum_h60": (56.0, 2.0, "§3.1 (E)"), "dorsum_h70": (40.0, 2.0, "§3.1 (E)"),
-    "arch_medial_45": (13.0, 2.0, "§3.1 (E)"), "lateral_clear_50": (4.0, 2.0, "§3.1 (E)"),
+    # the scan-driven pass (2026-10-16, §3.1 note): the rest foot is the scans' unloaded one (seated, a tenth of the
+    # weight): the medial border 15.6 (9.5 loaded: §3.1's 13 was a standing estimate), the lateral border on the floor
+    # (0.9 both; the 4 was an estimate)
+    "arch_medial_45": (16.0, 3.0, "§3.1 (scans 2026-10-16: 15.6 unloaded)"),
+    "lateral_clear_50": (1.0, 1.5, "§3.1 (scans 2026-10-16: 0.9)"),
     "pternion_z": (30.0, 2.0, "§3.1 (E)"),
 }
 # the plan outline seen from above (the shape pass, 2026-10-14, §3.1 note; footmetrics.plan on the subdivided
 # surface): the midfoot 0.86 of the ball's breadth, the foot widest across the metatarsal heads, the lateral border
 # straight from the heel to the 5th head, the medial border dipping in along the first metatarsal. (target, band or
 # tolerance, source); a band is [least, most]
+# (the scan-driven pass, 2026-10-16: the midfoot's breadth at 50 % L 88.2 on the three men's scans, their lateral
+# borders 1.1, 4.6 and 5.3 off the chord, their medial 2.7-7.6 inside it)
 PLAN_TARGETS = {
-    "plan_b50": (90.0, 3.0, "§3.1 (D, 2026-10-14: §3.2's navicular and styloid)"),
+    "plan_b50": (88.0, 3.0, "§3.1 (scans 2026-10-16: 88.2)"),
     "plan_mid_ratio": ([0.82, 0.92], None, "§3.1 (D, 2026-10-14: the midfoot's breadth over the heads')"),
     "plan_widest_pct": ([60.0, 76.0], None, "§3.1 (D, 2026-10-14: widest across the heads)"),
-    "plan_lat_bulge": ([-2.0, 3.0], None, "§3.1 (D, 2026-10-14: the lateral border off its heel-to-head chord)"),
-    "plan_med_dip": ([2.0, 7.0], None, "§3.1 (D, 2026-10-14: the medial border inside its heel-to-head chord)"),
+    "plan_lat_bulge": ([-2.0, 6.0], None, "§3.1 (scans 2026-10-16: the lateral border off its heel-to-head chord)"),
+    "plan_med_dip": ([2.0, 8.0], None, "§3.1 (scans 2026-10-16: the medial border inside its heel-to-head chord)"),
 }
 PLAN_REPORTED = ("plan_b40", "plan_b60", "plan_ball", "plan_head5_pct", "plan_head1_pct", "plan_widest")
 for _k, _y in TIP_Y.items():
     TARGETS[f"toe{_k}_tip_y"] = (_y, 2.0, "§3.3")
     TARGETS[f"toe{_k}_width"] = (TOE_W[_k], 2.0, "§3.3")
     TARGETS[f"toe{_k}_height"] = (TOE_H[_k], 2.0, "§3.3 (thickness at the IP/PIP)")
+
+
+SCAN_TARGETS = scanfit.load_targets()
+SCAN_RMS = {"plan": 3.5, "heel": 3.0, "sole": 2.5}   # mm: the most each family's RMS may read (the scan-driven pass;
+# the plan's worst stations are 75-80 % L, where toes 4 and 5 sit 6-9 mm inside the scans': X3's toes and the 4.5 mm
+# gap between the hallux and toe 2, which turns toes 2-5 outward, §3.1 note)
+
+
+def _scan_measures(fine, f, m, ix, side):
+    """scanfit's measures on the body's subdivided read for one foot, in the scans' frame (fit_sculpt.scan_measures,
+    on the whole body: this foot's triangles below z 220 kept)."""
+    import numpy as np
+    q = f.to_f(fine.co * 1000.0)
+    T = scanfit.triangles(fine.loop_start, fine.loop_total, fine.loop_vert)
+    ok = (np.abs(q[:, 0]) < 90.0) & (q[:, 1] > -320.0) & (q[:, 1] < 60.0) & (q[:, 2] < 220.0)
+    T = T[ok[T].all(axis=1)]
+    used = np.unique(T)
+    remap = np.full(len(q), -1, np.int64)
+    remap[used] = np.arange(len(used))
+    t2 = f.to_f(m.co[ix.toe_distal[side][2]] * 1000.0)
+    qs, _ = scanfit.rezero(q[used], t2[np.argmin(t2[:, 1])])
+    return scanfit.measures(qs, remap[T])
 
 
 def _nail_dims(nob):
@@ -331,6 +365,13 @@ def measure(ctx, args):
             v.update(fm.plan(fine, f, v["station_length"]))   # the plan outline, on the rendered surface too
             add(f"heel_prom.{side}", round(v["heel_prom"], 2), [3.0, 15.0], None,
                 "§3.2 (the calcaneus behind the Achilles insertion)")
+            # the scan-driven pass (2026-10-16, §3.1 note): the rendered surface against three real men's unloaded feet
+            # (scanfit.py): each family's RMS deviation from their mean sections; the build before the pass read plan
+            # 2.1, heel 3.8, sole 4.0
+            if SCAN_TARGETS is not None:
+                for fam, d in scanfit.report(_scan_measures(fine, f, m, ix, side), SCAN_TARGETS).items():
+                    add(f"scan_{fam}_rms.{side}", d["rms"], [0.0, SCAN_RMS[fam]], None,
+                        f"§3.1 (scans 2026-10-16; worst {d['max']} at {d['at']})")
             rest[side] = v
             for k, (t, tol, src) in TARGETS.items():
                 if k == "toe2_tip_y" and side == "R":
@@ -373,10 +414,10 @@ def measure(ctx, args):
                 # the flattened contact patch dominates and higher up the pad does not bulge
                 w0 = fm.breadth(m, f0, (-60.0, 5.0), [10.0])[0]
                 w1 = fm.breadth(m1, f0, (-60.0, 5.0), [10.0])[0]
-                add(f"contact_heel_spread.{side}", round(w1 - w0, 2), [3.0, 8.0], None,
-                    "§1.4 item 7 (>= 3; heel width at z 10, loaded against rest)")
+                add(f"contact_heel_spread.{side}", round(w1 - w0, 2), [5.0, 11.0], None,
+                    "§1.4 item 7 (scans 2026-10-16: 5.7-10.5; heel width at z 10, loaded against rest)")
                 add(f"contact_arch_drop.{side}", round(rest[side]["arch_medial_45"] - v1["arch_medial_45"], 2),
-                    [2.0, 3.0], None, "§1.4 item 7 (2-3)")
+                    [4.5, 8.0], None, "§1.4 item 7 (scans 2026-10-16: 6.2, 5.5-8.7)")
                 co1 = m1.co[ix.region[side]] * 1000.0
                 add(f"contact_floor_min_z.{side}", round(float(co1[:, 2].min()), 3), [-0.05, 0.05], None,
                     "§1.4 item 7 (no sinking, no hovering)")

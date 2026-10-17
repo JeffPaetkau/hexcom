@@ -253,6 +253,14 @@ for _k, _across in ((2, 8.6), (3, 8.0), (4, 7.6), (5, 7.3)):
     _e["radii"] = [_e["radii"][0], _across, _e["radii"][2]]
     PARAMS[f"pulp{_k}_e"] = _e
 PARAMS["nail5"].update(roll_deg=-54.0)
+# The scan-driven pass (2026-10-16; scan.py compare, renders/research/foot_hires/scan/compare.md): three men's lesser
+# toes are 15-20 mm thick 5-10 mm behind their tips where ours were 7-15 (toe 3 7.3 at 5 mm), their pads lowest 9-20 mm
+# behind the tip where ours touch down at the tip: the tips turned down less and the pulps fuller, up and across
+for _k, _droop in ((2, 0.6), (3, 0.5), (4, 0.5), (5, 0.4)):
+    PARAMS[f"droop{_k}"] = _droop
+    _e = dict(PARAMS[f"pulp{_k}_e"])
+    _e["radii"] = [_e["radii"][0] * 1.1, _e["radii"][1] * 1.06, _e["radii"][2] * 1.2]
+    PARAMS[f"pulp{_k}_e"] = _e
 
 
 def toe_weight(groups, k):

@@ -547,3 +547,82 @@ the crease. Still: the lesser toes from below keep ring bands; the heel's pad is
 behind (H1's widths); toe 5's base shows as a bump in V3; the crease still reads as a line in V1f.
 
 Cost: stage from scratch 295-303 s, cached 115 s; clay render 9-10 s; part 01 build 7 s.
+
+## Scan-driven pass (2026-10-16)
+
+Two shape rounds (`notes/critic/foot_shape_r1/`, `foot_shape_r2/`) kept finding the same faults after edits guided by
+words: the sole a smooth slab, the lesser toes fingers from above and matchsticks from below, the heel a box from behind.
+Jeff: drive the large forms from real geometry. New code: `scan.py` (load, align, compare, targets, side by sides, and
+`run.py --method scan` to render a scan in this foot's frame), part 01's `p01/scanfit.py` and `scan_targets.json`, the
+fit's scan residuals and 45 bases (`fields.SCAN_BASES`), `whole.scan_sole`. Report and plots:
+`renders/research/foot_hires/scan/compare.md`.
+
+* **The scans.** Schuster, Kelly & Cresswell, *Foot shape-function model data* (CC0; zenodo 10360304, doi
+  10.5061/dryad.g4f4qrfwt; `scripts/setup/downloads.json` group `scans`, not in the default setup): ASCII PLY in mm (the
+  raw lengths match the published ones, the flat top lies at z 125), x along the foot (the heel at -x), y across (medial
+  +y), z up from the platform; MeshMixer meshes, closed, the top capped. The sole is scanned, not capped: its triangles
+  are the dorsum's 1.5 mm, at most 3 cm^2 lies flat at the floor with its normal straight down, the skin under 1 mm
+  varies by 0.25-0.3 mm, and pads, band, arch and toe pads stand in relief. Used: the men 038, 081 and 012 seated (mBW,
+  about a tenth of the weight: the rest reference) and standing (fBW); 059 (262 mm seated, scaled x1.050, its heel 81-90
+  wide in plan) listed, not averaged.
+* **Alignment.** Mirrored to left feet (x = -medial, y toward the heel, the triangles' winding reversed); the axis from
+  the heel's centre (the middle of its breadth below z 40 at 15 % L) to toe 2's tip, the pternion at y 0, the floor at
+  z 0 (`scan.align`). Toe 2 is found once along the scan's own axis from the toe line (the anterior outline and the pad
+  profile behind it, the clefts its maxima), then tracked while the heading iterates: finding it afresh in each frame
+  let a misread cleft swing the heading 8-12 degrees. Scaled uniformly to 274.3 (each fBW by its mBW's factor, so the
+  lengthening shows): 038 x1.0127 (270.9 raw), 081 x1.0019 (273.8), 012 x1.0117 (271.1), 059 x1.0496 (261.3). The heading
+  lies 0.3, 7.2, 1.1 and 0.0 degrees off the scans' own axis; the hallux leads toe 2 by 1.9, -5.5 (081's toe 2 is the
+  longer), 2.1 and 2.2 mm. The mean of the three is the target; the most typical, shown beside ours, is **038** (081 is
+  nearest the mean by the numbers, but its toe 2 leads its hallux, which a critic would read as our fault). This foot
+  is re-zeroed the same way for every comparison (`scan.load_ours`); pass B's toe separation moves toe 2's tip 5.8 mm
+  out, which the fit now carries (`fit_sculpt.TIP_OFFSET`).
+* **What the scans showed** (shape_r2's dense skin against the mean): the rest foot touched the floor only at the ball
+  and toes (the heel pad 2.6 up and domed, the lateral border 4.2 / 2.5 up at 40 / 50 % L, the midfoot's underside 8-11
+  up at mid-breadth); the heel 6-9 mm wider at z 10-35 and pinched above z 40 (H1's 69 / 72 / 73 at 15 % L against the
+  scans' 58.6 / 63.6 / 60.8); in plan the heel 4-5 wider and the toe zone 10-15 narrower (toes 3-5 ending 10, 22 and 40
+  behind toe 2 against 4, 14 and 33); the lesser toes 2-5 mm thinner over their distal 20 mm, their pads at the tips, the
+  sulcus 2-4 mm against 5-9; the dorsum 6-9 mm lower over the forefoot and the ankle's front further back (the side
+  profile, left for Jeff). Loaded against unloaded the scans lengthen 5.0, widen 3.6 (ball) and 7.9 (heel, z 10) and drop
+  6.7 at the medial border: about twice spec 01's estimates.
+* **Part 01, fitted to sections.** `scanfit.measures` reads, on any mesh in the scans' frame, the plan below z 50 at 10
+  and 35-80 % L, the heel's coronal sections 10-40 mm in front of the pternion at z 10-60, and the underside's height
+  across the foot (8 shares of the breadth) at 12 stations from 10 to 76 % L: 166 targets, the scans' mean, the stations
+  shares of 274.3 (the level-2 surface ends 4 mm short of the dense pulp). `fit_sculpt.py` adds them (units 1.5, 2 and
+  1.2 mm) and a one-sided floor term to its residuals, and solves 45 new bases (8 plan, 9 heel, 28 sole windows) with the
+  heel's width fields, then the toes' and the forefoot's, warm-started over five runs. Replaced in the fit and `measure()`
+  (spec 01 §0, §1.4, §3.1, §3.3, §3.5 notes): H1's heel breadth and widths (now 70 and 60 / 64.5 / 62, +-3), the arch's
+  13 (16 +-3, seated) and the lateral border's 4 (1 +-1.5), the plan's 90 at 50 % L (88) and its bands (lateral bulge
+  -2..6, medial dip 2..8: the scans read 1.1-5.3 and 2.7-7.6), the toe tips 3-5 (-265.5 / -255.5 / -235.5) and toes 2-5's
+  widths and depths, `Foot.Contact` (heel 5.4 a side, arch 6.8, midfoot top 3, forefoot 3 forward, toes 2 more; measured
+  +8.0 at the heel, -6.2 at the arch) and its bands; `heel_taper`'s narrowing off; the lesser toes' DIPs straight (toe 5
+  6 degrees). Toe 5 turned 4 degrees in rather than 10 brought the plan 0.2 closer and crossed toes 4 and 5: kept at 10.
+  New `measure()` metrics `scan_{plan,heel,sole}_rms` (bands 3.5, 3, 2.5): **2.63 / 1.94 / 1.74** (the build before:
+  2.1 / 3.8 / 4.0; the plan's worst, -8 at 75 % L, is toe 5's base). The ball girth fell to 252 with the sole's fit; the
+  forefoot's fields brought it back to 254.5 (259 +-6). Part 01: 173 of 175 pass (heel_ankle_circ L and R, spec 03's, as
+  before); two `--rebuild` runs identical.
+* **The trial layer.** `whole.ARCH`'s vault rise and lateral drop off (part 01 carries them); `whole.scan_sole` takes
+  0.85 of what remains of the scans' underside off the dense skin (the same measure; each sample spread by a normalised
+  Gaussian 7 x 9 mm, off the toes, on skin facing down, the lowering saturating at the floor: a hard clamp drew rings round
+  the heel's contact and blobs on the ball in clay, `fields_scan2`); the toe sulcus 1.3 deep, sigma 2.4 (1.0, 1.9; 1.6 and
+  2.8 folded toe 4's base); the Achilles' hollows from z 54 (44); the lesser pulps 6-20 % fuller, the tips' droop 0.4-0.6
+  (0.9-1.5). Folded pairs before the repair step 41 (32 in `fields_scan1`), all laid flat by it.
+* **On the dense skin** (`fields_scan3`; `scan.py targets --ours`): RMS against the scans plan 4.5 -> 3.9, heel 3.8 ->
+  1.9, sole 3.9 -> 1.5; the heel at 15 % L 59.6 / 63.8 / 62.7 at z 10 / 20 / 30 (scans 58.6 / 63.6 / 60.8), breadth 69.2
+  (68.3); the heel pad 0.1 off the floor and flat over 40 mm, the lateral band 1.0 / 0.1 at 40 / 50 % L, the midfoot's
+  underside 3.6-4.3 at mid-breadth with the medial border 19 up (scans 3.2-4.4 and 19).
+
+Renders: `fields_scan3/` (clay, shape_r2's nine views), the scan in the same views `scan_038/`, side by side at one scale
+in `renders/research/foot_hires/scan/sbs/` (shape_r2 | scan pass | scan 038). Visible there: from below (V4) the arch's
+hollow along the medial side, the lateral band and the ball's back edge, the heel pad flat; from the medial side (V2)
+the arch's shadow under the border, the heel and ball on the floor; from behind (V8) the pad's bulge narrower; from above
+(hr.plan) the heel narrower at its back and toes 3-5 longer. Not fixed: the lesser toes from below and above (separate
+cylinders with ring creases, pads near the tips: their resting pose, the proximal phalanx near the floor and the bend at
+the PIP, is the next step, and it moves the folds the stage closes); the forefoot's medial offset and toes 4-5 inside the
+scans' outline (X3, the 4.5 mm gap); the Achilles' insertion narrower than theirs; the side profile, for Jeff. Packet
+`critic/shape_r3/` (sha 98e7efec5fc1, `--previous` shape_r2: 31 claims): shape_r2's anchor, scope and questions, its
+declarations with one corrected (the lesser toes no longer keep their lengths) and one added, saying that each pair's
+left half is the aligned scan 038 in the same clay and camera (passed with `--ref`, packet.py's reference crop).
+
+Cost: alignment and the comparison 10-30 s; a part 01 fit with the scan residuals 40-60 s an iteration (85 amounts; the
+toes' differences are noisy, the damping climbs); part 01 build 8-10 s; the stage from scratch 326 s, after it 115 s; a
+scan's clay renders 5 s.

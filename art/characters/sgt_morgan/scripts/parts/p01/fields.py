@@ -36,7 +36,7 @@ FIELDS = {
     "heel_mid_w": ("%", -5.0, 20.0, 6.0),      # heel width at 15 % L (y_F -44)
     "heel_fore_w": ("%", -12.0, 10.0, -2.0),   # heel width under the malleoli (y_F -64): the heel's plan
                                                # is a rounded box, not a wedge widening into the midfoot
-    "heel_low_w": ("%", -5.0, 20.0, 4.0),      # the heel pad's lower bulge (z < 20)
+    "heel_low_w": ("%", -15.0, 20.0, 4.0),     # the heel pad's lower bulge (z < 20); -15 since the scan-driven pass
     "heel_top_w": ("%", -20.0, 20.0, 0.0),     # the heel above the pad (z 35-55): its breadth there, apart
                                                # from the pad's
     "heel_back_low": ("mm", -3.0, 10.0, 3.0),  # the calcaneus's back pushed back, apex near z 30
@@ -68,6 +68,27 @@ for _k in TOES:
     FIELDS[f"toe{_k}_ext"] = ("mm", -10.0, 16.0, 2.0)   # length, at the tip
     FIELDS[f"toe{_k}_w"] = ("%", -30.0, 12.0, -3.0)     # width across the toe
     FIELDS[f"toe{_k}_h"] = ("%", -35.0, 12.0, -12.0)    # thickness, about the plantar line
+# The scan-driven pass (2026-10-16, spec 01 §3.1 note; scanfit.py): generic bases the fit solves against sections of
+# real feet rather than scalar targets, so the scans' geometry drives the large forms. Plan bases move one side of the
+# outline outward (mm) over a stretch of the length; heel bases widen the heel about its centre line (%) in a window
+# of length and height (the bell from behind: pad, middle, the Achilles' insertion); sole bases raise the plantar
+# skin (mm) in a window across and along the foot (the heel pad, the lateral band, the arch's hollow, the ball). All
+# start at 0, the build before the pass
+PLAN_BASES = (0.40, 0.52, 0.64, 0.76)                  # stations, shares of the length
+HEEL_BASES_Y = (-8.0, -22.0, -38.0)                    # mm from the pternion
+HEEL_BASES_Z = ((2.0, 6.0, 14.0, 24.0), (14.0, 24.0, 34.0, 44.0), (34.0, 44.0, 56.0, 68.0))   # plateaus in z
+SOLE_BASES_U = (0.12, 0.37, 0.63, 0.88)                # shares of the breadth from the medial border
+SOLE_BASES_V = (0.08, 0.19, 0.30, 0.41, 0.52, 0.63, 0.74)
+for _s in ("med", "lat"):
+    for _v in PLAN_BASES:
+        FIELDS[f"pb_{_s}_{int(_v * 100)}"] = ("mm", -10.0, 10.0, 0.0)
+for _i, _y in enumerate(HEEL_BASES_Y):
+    for _j in range(len(HEEL_BASES_Z)):
+        FIELDS[f"hb_{_i}{_j}"] = ("%", -25.0, 25.0, 0.0)
+for _v in SOLE_BASES_V:
+    for _u in SOLE_BASES_U:
+        FIELDS[f"sb_{int(_v * 100):02d}_{int(_u * 100):02d}"] = ("mm", -12.0, 16.0, 0.0)
+SCAN_BASES = tuple(k for k in FIELDS if k.startswith(("pb_", "hb_", "sb_")))
 FIELD_NAMES = tuple(FIELDS)
 
 # Pass B and the pair's asymmetries (spec 01 §3.3): per side
@@ -350,6 +371,25 @@ def fields(foot):
     ramp = S.smoothstep(y, -0.42 * L, -0.70 * L)
     F["mt_back_1"] = dy((1.0 - u) * ramp)
     F["mt_back_5"] = dy(u * ramp)
+
+    # the scan-driven pass's bases (2026-10-16; FIELDS above, scanfit.py): plan, heel and sole
+    no_toe_all = 1.0 - np.clip(sum(foot.w[k] for k in TOES), 0.0, 1.0)
+    v = -y / L
+    rel = (x - xcy) / np.maximum(foot.hw(y), 10.0)
+    plan_h = (1.0 - 0.5 * S.smoothstep(z, 25.0, 60.0)) * (1.0 - S.smoothstep(z, 70.0, 110.0)) * no_toe_all
+    for side, sgn in (("med", -1.0), ("lat", 1.0)):
+        sw = S.smoothstep(sgn * rel, 0.2, 0.9)
+        for c in PLAN_BASES:
+            F[f"pb_{side}_{int(c * 100)}"] = dx(sgn * sw * _gauss(v, c, 0.055) * plan_h)
+    behind = 1.0 - S.smoothstep(y, -62.0, -78.0)
+    for i, yc in enumerate(HEEL_BASES_Y):
+        for j, zw in enumerate(HEEL_BASES_Z):
+            F[f"hb_{i}{j}"] = dx((x - xc) * 0.01 * _gauss(y, yc, 8.0) * behind * _plateau(z, *zw))
+    u = (x - (xcy - foot.hw(y))) / np.maximum(2.0 * foot.hw(y), 20.0)
+    sole_w = S.smoothstep(-nq[:, 2], 0.15, 0.55) * (1.0 - S.smoothstep(z, 18.0, 34.0)) * no_toe_all
+    for vc in SOLE_BASES_V:
+        for uc in SOLE_BASES_U:
+            F[f"sb_{int(vc * 100):02d}_{int(uc * 100):02d}"] = dz(_gauss(u, uc, 0.13) * _gauss(v, vc, 0.055) * sole_w)
 
     # each toe: length along its axis (the tip moves the amount, the MTP not at all), width across it and
     # thickness above its plantar line, beyond the web
@@ -1109,17 +1149,29 @@ def _sub_adjacency(adj, rows, n):
 
 # --------------------------------------------------------------------------- the loaded foot (§4.7)
 
-def contact(body, side, q):
+# The loaded foot's changes (§4.7). The scan-driven pass (2026-10-16, spec 01 §1.4 item 7 and §3.5 notes): three men's
+# feet scanned seated at a tenth of their weight and standing at full weight (Schuster, Kelly & Cresswell, zenodo
+# 10360304; 038, 081, 012, each pair at one scale) lengthen 5.0 mm (3.7-6.8), the ball widens 3.5 (3.2-3.9), the heel
+# 7.9 at z 10 (5.7-10.5), the medial border's clearance at 45 % L falls 6.2 (the outer fifth) and the dorsum 3-7 over
+# the midfoot; the spec's estimates (heel 3.5, arch 2-3, toes 2) were about half that. The amounts are the brushes'
+# peaks: measure() reads about 0.7 of heel_side a side at z 10 and 0.8 of arch_drop at the medial border
+CONTACT = {"heel_side": 5.4, "ball_side": 1.75, "arch_drop": 6.8, "midfoot_drop": 3.0, "fore_forward": 3.0,
+           "toes_forward": 2.0}
+
+
+def contact(body, side, q, cfg=None):
     """The loaded foot from the sculpted rest foot q (F, mm): the plantar contact flattened onto the floor,
-    the heel pad's rim spread 3.5 mm, the medial arch down 2.5, the ball's rim spread 1.5, the toe tips 2
-    mm further forward and the toe pads down onto the floor."""
+    the heel pad's rim spread (CONTACT: heel_side a side), the medial arch down (arch_drop) and the midfoot's top
+    with it (midfoot_drop), the ball's rim spread (ball_side), the forefoot ahead of the midfoot carried forward
+    (fore_forward), the toe tips further forward still (toes_forward) and the toe pads down onto the floor."""
+    c = dict(CONTACT, **(cfg or {}))
     foot = body.feet[side]
     L = foot.L
     q = q.copy()
     x, y, z = q[:, 0], q[:, 1], q[:, 2]
     bodyw = foot.body.astype(float)
-    # the heel pad's sides bulge 3.5 mm outward near the floor, the ball's rim 1.5 mm: along the skin's
-    # own horizontal normal, most at z 2-10 and gone by z 20
+    # the heel pad's sides bulge outward near the floor, the ball's rim less: along the skin's own horizontal
+    # normal, most at z 2-10 and gone by z 20
     nxy = foot.nq[:, :2]
     nlen = np.linalg.norm(nxy, axis=1)
     out = nxy / np.maximum(nlen, 1e-9)[:, None]
@@ -1127,15 +1179,18 @@ def contact(body, side, q):
     low = _plateau(z, -1.0, 2.0, 10.0, 20.0)
     heel = _plateau(y, 10.0, 0.0, -55.0, -75.0)
     ball = _gauss(y, -0.70 * L, 18.0) * (1.0 - sum(foot.w.values()).clip(0.0, 1.0))
-    q[:, :2] += ((1.75 * heel + 0.75 * ball) * low * sides)[:, None] * out  # §3.5's spreads are of the width
-    # the arch drops 2.5 mm medially at 35-55 % L
+    q[:, :2] += ((c["heel_side"] * heel + c["ball_side"] * ball) * low * sides)[:, None] * out
+    # the arch drops medially at 35-55 % L, and the midfoot's top comes down with it (less: the vault flattens)
     medial = S.smoothstep(foot.xc(y) - x, 0.0, 20.0)
-    q[:, 2] -= 2.5 * _gauss(y, -0.45 * L, 22.0) * medial * (1.0 - S.smoothstep(z, 40.0, 70.0)) * bodyw
-    # toes 2 mm longer; their pads settle onto the floor
+    q[:, 2] -= c["arch_drop"] * _gauss(y, -0.45 * L, 22.0) * medial * (1.0 - S.smoothstep(z, 40.0, 70.0)) * bodyw
+    q[:, 2] -= (c["midfoot_drop"] * _gauss(y, -0.52 * L, 28.0) * S.smoothstep(z, 15.0, 45.0)
+                * (1.0 - S.smoothstep(z, 90.0, 120.0)) * bodyw)
+    # the forefoot carried forward as the arch lengthens, the toes further still; their pads settle onto the floor
+    q[:, 1] -= c["fore_forward"] * S.smoothstep(y, -0.35 * L, -0.65 * L) * (1.0 - S.smoothstep(z, 60.0, 100.0)) * bodyw
     for k in TOES:
         T = foot.toe[k]
         w = foot.w[k] * S.smoothstep(T["t"], 0.0, 0.6 * T["len"])
-        q[:, :2] += 2.0 * w[:, None] * T["a"][None, :2]
+        q[:, :2] += c["toes_forward"] * w[:, None] * T["a"][None, :2]
         mine = foot.w[k] > 0.5
         low = q[mine, 2].min() if mine.any() else 0.0
         pad = foot.w[k] * (1.0 - S.smoothstep(q[:, 2] - low, 1.0, 6.0)) * S.smoothstep(T["t"], 0.4 * T["len"], 0.7 * T["len"])

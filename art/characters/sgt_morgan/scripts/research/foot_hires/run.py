@@ -2,13 +2,14 @@
 and render it (notes/research_foot_hires.md).
 
   blender -b cache/body/rigged.blend --python-exit-code 1 --python scripts/research/foot_hires/run.py --
-      --method base|fields|sdf [--level N] [--views hr.front,hr.hallux] [--tier form|eval|look]
+      --method base|fields|sdf|scan [--level N] [--views hr.front,hr.hallux] [--tier form|eval|look]
       [--tag NAME] [--params JSON] [--save]
 
 Methods: `base` is part 01's foot as built (its closeup copy at Subdivision 3 and its plates), the trial's
 before; `fields` (method a) subdivides the copy and shapes the region with displacement fields at that
 resolution (method_fields.py); `sdf` (method b) rebuilds the region as a signed distance field combined
-with anatomical primitives and polygonised by OpenVDB (method_sdf.py). Renders go to
+with anatomical primitives and polygonised by OpenVDB (method_sdf.py); `scan` puts a real foot's aligned scan in
+this foot's frame for reference renders (scan.build, the scan-driven pass of 2026-10-16; not with --save). Renders go to
 renders/research/foot_hires/<method>[_<tag>]/; --save also writes the region's mesh to
 cache/research/foot_hires/ for the export and bake checks. Nothing is saved to a .blend.
 """
@@ -28,7 +29,7 @@ VIEWS = "hr.front,hr.top34,hr.medial,hr.plantar,hr.hallux,hr.toe2,p01.V5f.L,p01.
 
 def parse(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--method", default="base", choices=("base", "fields", "sdf"))
+    ap.add_argument("--method", default="base", choices=("base", "fields", "sdf", "scan"))
     ap.add_argument("--level", type=int, default=None, help="Catmull-Clark level of the dense copy")
     ap.add_argument("--views", default=VIEWS)
     ap.add_argument("--tier", default="form", help="a tier, or several: form,eval (form first, then the Cycles ones)")
@@ -78,6 +79,9 @@ def main(argv):
     elif a.method == "fields":
         import method_fields
         method_fields.build(ctx)
+    elif a.method == "scan":   # the scan-driven pass (2026-10-16): a real foot's scan in this foot's frame, as reference
+        import scan
+        scan.build(ctx)
     else:
         import method_sdf
         method_sdf.build(ctx)
