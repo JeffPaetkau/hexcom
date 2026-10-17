@@ -512,10 +512,18 @@ def _border_clearance(v, medial):
 
 
 def toe_axis(q_toe):
-    """A toe's axis in plan (unit F vector toward the tip) from the principal direction of its vertices."""
+    """A toe's axis in plan (unit F vector toward the tip) from the principal direction of its vertices; for a toe
+    nearly as broad as it is long, whose principal direction is ill-defined (the scan transfer's hallux, 2026-10-17:
+    35 mm across, its principal axis read 21 degrees off and its thickness 4 mm), the line from the centroid of its
+    back 35 % to that of its front 15 % along the foot."""
     c = q_toe[:, :2] - q_toe[:, :2].mean(axis=0)
-    _, _, vt = np.linalg.svd(c, full_matrices=False)
+    _, sv, vt = np.linalg.svd(c, full_matrices=False)
     a = vt[0]
+    if len(sv) > 1 and sv[0] < 1.6 * sv[1]:
+        y = q_toe[:, 1]
+        span = y.max() - y.min()
+        d = q_toe[y < y.min() + 0.15 * span, :2].mean(axis=0) - q_toe[y > y.max() - 0.35 * span, :2].mean(axis=0)
+        a = d / np.linalg.norm(d)
     return a if a[1] < 0 else -a
 
 
@@ -555,9 +563,11 @@ def toe_dims(m, ix, f, side):
         up = np.array([0.0, 0.0, 1.0]) - ax[2] * ax
         up /= np.linalg.norm(up)
         ring = []
+        # (the reach grows with a broad toe: the scan transfer's hallux, 35 mm across, keeps few points within 14)
+        reach = max(14.0, 0.8 * out.get(f"toe{k}_width", 16.0))
         for r in measure.section(m, {"point": f.to_w(cj), "normal": f.vec_to_w(ax)}):
             pr = f.to_f(r["points"])
-            near = pr[np.linalg.norm(pr - cj, axis=1) < 14.0]
+            near = pr[np.linalg.norm(pr - cj, axis=1) < reach]
             if len(near) > len(ring):
                 ring = near
         if len(ring) > 3:
@@ -657,7 +667,7 @@ def toe_gaps(m, ix, side, beyond=0.4):
     from mathutils.bvhtree import BVHTree
     co = m.co * MM
     f = frame(m, ix, side)
-    tris = m.tris
+    splits = _quad_splits(m)
     out = {}
     for k in (1, 2, 3, 4):
         best = None
@@ -670,19 +680,48 @@ def toe_gaps(m, ix, side, beyond=0.4):
             A = A[ta > ta.min() + beyond * (ta.max() - ta.min())]
             inB = np.zeros(len(co), bool)
             inB[B] = True
-            tb = tris[inB[tris].all(axis=1)]
-            if not len(tb) or not len(A):
+            trees = []
+            for tris in splits:
+                tb = tris[inB[tris].all(axis=1)]
+                if len(tb):
+                    trees.append(BVHTree.FromPolygons(co.tolist(), tb.tolist(), all_triangles=True))
+            if not trees or not len(A):
                 continue
-            tree = BVHTree.FromPolygons(co.tolist(), tb.tolist(), all_triangles=True)
             for i in A.tolist():
-                hit = tree.find_nearest(Vector(co[i]))
-                if hit[0] is None:
+                # a warped quad's two triangulations differ by a few tenths, and which one Blender's evaluated mesh
+                # holds is not the same in every session (the scan transfer's pressed toes, 2026-10-17: 2-3 read
+                # -0.36 in the build and +0.21 reloaded): each vertex reads the more generous of the two
+                ds = []
+                for tree in trees:
+                    hit = tree.find_nearest(Vector(co[i]))
+                    if hit[0] is None:
+                        continue
+                    inside = hit[3] < INSIDE_MM and (Vector(co[i]) - hit[0]).dot(hit[1]) < -0.5 * hit[3]
+                    ds.append(-hit[3] if inside else hit[3])
+                if not ds:
                     continue
-                d = -hit[3] if (hit[3] < INSIDE_MM and (Vector(co[i]) - hit[0]).dot(hit[1]) < -0.5 * hit[3]) else hit[3]
+                d = max(ds)
                 if best is None or d < best:
                     best = d
         out[f"{k}-{k + 1}"] = best
     return out
+
+
+def _quad_splits(m):
+    """The read's polygons triangulated both ways (a quad by either diagonal; others as fans), world winding: two
+    (T, 3) arrays of vertex indices into m.co."""
+    ls, lt, lv = m.loop_start, m.loop_total, m.loop_vert
+    quad = lt == 4
+    s = ls[quad]
+    a = np.concatenate([np.stack([lv[s], lv[s + 1], lv[s + 2]], 1), np.stack([lv[s], lv[s + 2], lv[s + 3]], 1)])
+    b = np.concatenate([np.stack([lv[s + 1], lv[s + 2], lv[s + 3]], 1), np.stack([lv[s + 1], lv[s + 3], lv[s]], 1)])
+    rest = []
+    for k in range(1, int(lt.max()) - 1):
+        ok = (lt > k + 1) & ~quad
+        if ok.any():
+            rest.append(np.stack([lv[ls[ok]], lv[ls[ok] + k], lv[ls[ok] + k + 1]], 1))
+    extra = np.concatenate(rest) if rest else np.zeros((0, 3), np.int64)
+    return np.concatenate([a, extra]), np.concatenate([b, extra])
 
 
 def hallux_gap(m, ix, side, f=None, distal=0.6):

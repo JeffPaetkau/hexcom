@@ -121,9 +121,15 @@ FIXED = {
     "lesser_knuckle_mm": [0.8, 0.4],
     "heel_taper": {},
     "ankle_front": {},
+    "nail_radius": {},        # {toe: mm} over NAIL_RADIUS for the bed's and the plate's arc (the scan transfer's hallux)
 }
+# The scan transfer (2026-10-17, spec 01 §0 and §4.3 notes): pass B's operations that the scan replaces are off before
+# it (the heel's taper and the ankle's front fillet are large forms), the hallux no longer held 4.5 mm off toe 2 (Jeff's
+# X3; the scan's hallux touches toe 2 and leads it by 1.9 mm, and he now prefers the scan's shape: every pair gathers
+# to toe_gap_mm), and the right toe 2 as long as the left (both feet are the one man's scan)
+TRANSFER_FIXED = {"heel_taper": {}, "ankle_front": {}, "toe_gap_pairs": {}, "toe2_ext_extra_mm": {"L": 0.0, "R": 0.0}}
 SIDE_KEYED = ("hallux_valgus_deg", "toe5_yaw_deg", "toe5_roll_deg", "toe4_roll_deg", "toe2_ext_extra_mm")
-TOE_KEYED = ("toe_curl_deg", "toe_dip_deg", "toe_mid_short_mm", "nail_size")
+TOE_KEYED = ("toe_curl_deg", "toe_dip_deg", "toe_mid_short_mm", "nail_size", "nail_radius")
 NAILS = {1: (19.5, 15.3, 1.5), 2: (11.0, 10.0, 1.2), 3: (10.0, 9.0, 1.0), 4: (9.0, 8.0, 1.0),
          5: (7.0, 6.0, 0.8)}  # §3.3: plate width x visible length, and the free edge beyond the bed (the
 # hallux's 19.5 x 18.35 since Jeff's lock of 2026-10-10, from reference photos: 17 x 16 scaled with the toe; 15.3 long
@@ -449,8 +455,9 @@ def _toe_angle(T):
     return math.degrees(math.atan2(T["a"][0], -T["a"][1]))
 
 
-def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
-    """The fixed operations on pass A's result q (F, mm); returns the new positions."""
+def pass_b(foot, q, adj, opts=None, nails=True, separate=True, forms=True):
+    """The fixed operations on pass A's result q (F, mm); returns the new positions. forms=False leaves out the
+    bony landmarks (step 5), which the scan transfer replaces with a real foot's (2026-10-17)."""
     o = dict(FIXED, **(opts or {}))
     side = foot.side
     q = q.copy()
@@ -524,6 +531,23 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
     if o.get("ankle_front"):
         q = ankle_front(foot, q, o["ankle_front"])
     # 5. bony landmarks (§3.2, §4.2 steps 2, 5, 6, 8), anchored on the skin as it now is
+    if forms:
+        q = _landmarks(foot, q)
+    # 6. nail beds: each nail patch sized to §3.3, sunk 0.4 mm, its folds raised (§4.3 step 6)
+    if nails:
+        q = nail_beds(foot, q, adj, o.get("nail_size"))
+    # 7. no two toes closer than toe_gap_mm in rest (§4.3 step 5); fit_sculpt.py leaves it out (see Body);
+    #    then the clefts named in web_y closed back from there, the toes touching (webs forward)
+    if separate:
+        q = separate_toes(foot, q, gap=float(o["toe_gap_mm"]), gather=bool(o["toe_gather"]),
+                          bands=o.get("toe_gap_pairs"))
+        q = close_webs(foot, q, o)
+        q = resolve_contacts(foot, q, gap=min(float(o.get("web_gap_mm", 0.2)), float(o["toe_gap_mm"])))
+    return q
+
+
+def _landmarks(foot, q):
+    """Pass B's step 5: the small bony landmarks, the Achilles' line and the hollows beside it, the dorsal crest."""
     L = foot.L
     # (radii about 1.7 x the local vertex spacing, 8-10 mm on the midfoot and heel, or a bump is one vertex
     # and subdivides to a pimple)
@@ -543,23 +567,16 @@ def pass_b(foot, q, adj, opts=None, nails=True, separate=True):
         q -= 3.5 * S.inflate_field(q, foot.nq, c, 18.0, "smooth", foot.body.astype(float))
     crest = [_top(foot, q, x0, y0) for x0, y0 in ((-12.0, -140.0), (-6.0, -95.0))]
     q += 1.5 * foot.nq * S.line_weights(q, crest, 10.0)[:, None] * foot.body[:, None]
-    # 6. nail beds: each nail patch sized to §3.3, sunk 0.4 mm, its folds raised (§4.3 step 6)
-    if nails:
-        q = nail_beds(foot, q, adj, o.get("nail_size"))
-    # 7. no two toes closer than toe_gap_mm in rest (§4.3 step 5); fit_sculpt.py leaves it out (see Body);
-    #    then the clefts named in web_y closed back from there, the toes touching (webs forward)
-    if separate:
-        q = separate_toes(foot, q, gap=float(o["toe_gap_mm"]), gather=bool(o["toe_gather"]),
-                          bands=o.get("toe_gap_pairs"))
-        q = close_webs(foot, q, o)
-        q = resolve_contacts(foot, q, gap=min(float(o.get("web_gap_mm", 0.2)), float(o["toe_gap_mm"])))
     return q
 
 
-def resolve_contacts(foot, q, gap=0.2, rounds=4):
+def resolve_contacts(foot, q, gap=0.2, rounds=4, sets=None):
     """Toes may touch, never cross (Jeff, 2026-10-10): any vertex clearly of one toe that ends inside its
     neighbour (curled knuckles, the closed webs' tapers) is pushed out along the neighbour's nearest face
-    normal until `gap` is left. A few vertices move a millimetre or two; the subdivision smooths them."""
+    normal until `gap` is left. A few vertices move a millimetre or two; the subdivision smooths them. A vertex
+    counts as the toe's where its weight is over 0.5 and the neighbour's under 0.2, or, with `sets` ({toe: rows
+    mask}), where the set says (the scan transfer passes the strongest bone's toe, as footmetrics.toe_gaps reads
+    it: its pressed toes crossed by a few tenths along the webs' edges, which the weights' rule left out)."""
     from mathutils import Vector
     from mathutils.bvhtree import BVHTree
     q = q.copy()
@@ -568,8 +585,12 @@ def resolve_contacts(foot, q, gap=0.2, rounds=4):
         pushed = 0
         for k in (1, 2, 3, 4):
             for me, other in ((k, k + 1), (k + 1, k)):
-                rows = np.nonzero((foot.w[me] > 0.5) & (foot.w[other] < 0.2) & foot.body)[0]
-                splits = foot.toe_tris_both[other]
+                if sets is None:
+                    rows = np.nonzero((foot.w[me] > 0.5) & (foot.w[other] < 0.2) & foot.body)[0]
+                    splits = foot.toe_tris_both[other]
+                else:
+                    rows = np.nonzero(sets[me] & foot.body)[0]
+                    splits = [t[(sets[other] & foot.body)[t].all(axis=1)] for t in foot.region_tris_both]
                 if not len(rows) or not len(splits):
                     continue
                 trees = [BVHTree.FromPolygons(q.tolist(), t.tolist(), all_triangles=True) for t in splits]
@@ -986,7 +1007,9 @@ def nail_size(k, sizes=None):
     return (float(got[0]), float(got[1]), fe) if got else (w, vis, fe)
 
 
-def nail_beds(foot, q, adj, sizes=None):
+def nail_beds(foot, q, adj, sizes=None, axes=None, radii=None):
+    """axes: {toe: plan axis} where a toe no longer points along its basis axis (the scan transfer's prewarp); radii:
+    {toe: mm} over NAIL_RADIUS."""
     indptr, nb = adj
     for k in TOES:
         P = foot.nail_rows[k]
@@ -995,7 +1018,8 @@ def nail_beds(foot, q, adj, sizes=None):
         T = foot.toe[k]
         c = q[P].mean(axis=0)
         nrm = plane_normal(q[P], foot.nq[P].mean(axis=0))
-        a = T["a"] - (T["a"] @ nrm) * nrm
+        ax = np.asarray((axes or {}).get(k, T["a"]), float)
+        a = ax - (ax @ nrm) * nrm
         a /= np.linalg.norm(a)
         b = np.cross(nrm, a)
         da, db = (q[P] - c) @ a, (q[P] - c) @ b
@@ -1030,7 +1054,7 @@ def nail_beds(foot, q, adj, sizes=None):
         u, v, h = d @ b, d @ a, d @ nrm
         coef = np.linalg.lstsq(np.stack([np.ones_like(u), u, v, v * v, u * u], axis=1), h, rcond=None)[0]
         uc = 0.5 * (u.min() + u.max())
-        R = NAIL_RADIUS[k]
+        R = float((radii or {}).get(k, NAIL_RADIUS[k]))
         drop = R - np.sqrt(R * R - np.minimum(np.abs(u - uc), 0.98 * R) ** 2)
         q[P] -= np.maximum(0.0, drop + coef[4] * (u - uc) ** 2)[:, None] * nrm
         q[P] -= 0.4 * nrm
@@ -1081,34 +1105,119 @@ class Body:
             # (Blender's own may be either), so contacts are resolved against both
             alt = _region_tris(self.topo, foot.R, len(self.co), both=True)[len(tris):]
             alt = alt[(alt >= 0).all(axis=1)]
+            foot.region_tris_both = (tris, alt)
             foot.toe_tris_both = {k: [t[((foot.w[k] > 0.5) & foot.body)[t].all(axis=1)] for t in (tris, alt)]
                                   for k in TOES}
+            foot.quads = _region_quads(self.topo, foot.R, len(self.co), foot.body)
             self.feet[side] = foot
         self._fields = {}
+        self._refs = {}
 
     def fields(self, side):
         if side not in self._fields:
             self._fields[side] = fields(self.feet[side])
         return self._fields[side]
 
-    def sculpt_side(self, side, a, opts=None, separate=True):
+    def sculpt_side(self, side, a, opts=None, separate=True, transfer=None, nails=True):
         """Frame-F positions of one foot's region after both passes, for the amounts a. separate=False leaves
         out the toe separation, a threshold that would make a fit's differences meaningless (it moves the toes
-        sideways by a millimetre or two, which no fitted dimension reads)."""
+        sideways by a millimetre or two, which no fitted dimension reads). With a transfer config whose `on` is
+        set (params.json "transfer", transfer.config), the foot's large forms are a real foot's scan instead
+        (transferred_side)."""
+        if transfer and transfer.get("on"):
+            return self.transferred_side(side, a, opts, transfer, nails=nails)
         foot = self.feet[side]
         a = dict(a)
         o = dict(FIXED, **(opts or {}))
         a["toe2_ext"] = a.get("toe2_ext", 0.0) + o["toe2_ext_extra_mm"][side]
         qa = pass_a(foot, self.fields(side), a)
-        return pass_b(foot, qa, foot.adj, o, separate=separate)
+        return pass_b(foot, qa, foot.adj, o, separate=separate, nails=nails)
 
-    def positions(self, a, opts=None, sides=SIDES):
+    def positions(self, a, opts=None, sides=SIDES, transfer=None):
         """World positions (mm, every vertex) of the sculpted body."""
         out = self.co.copy()
         for side in sides:
             foot = self.feet[side]
-            out[foot.R] = foot.frame.to_w(self.sculpt_side(side, a, opts))
+            out[foot.R] = foot.frame.to_w(self.sculpt_side(side, a, opts, transfer=transfer))
         return out
+
+    # ----------------------------------------------------------------------- the scan transfer (2026-10-17)
+
+    def reference(self, cfg, cond):
+        """The transfer's reference scan for a condition (transfer.Reference, cached on the body): the rest (mBW) as
+        aligned, a loaded one laid on it (transfer.register). cfg["_paths"] may name the PLY files (lib/cache.asset's,
+        so a build's key carries their hashes)."""
+        from parts.p01 import transfer as X
+        key = (str(cfg["scan"]), cond)
+        if key not in self._refs:
+            path = (cfg.get("_paths") or {}).get(cond)
+            rest = None if cond == "mBW" else self.reference(cfg, "mBW")
+            self._refs[key] = X.load_reference(str(cfg["scan"]), cond, path=path, align_to=rest)
+        return self._refs[key]
+
+    def transferred_side(self, side, a, opts, cfg, nails=True, say=None):
+        """One foot's region (frame F, mm) with its large forms a real foot's (transfer.py): pass A with the amounts
+        `retire` names set to 0 (all of them by default: the scan replaces the fitted heel, plan, sole, dorsum and
+        toe fields) but those in `keep_fields` (none by default), pass B's toe poses and spacing without its bony landmarks and nail beds (TRANSFER_FIXED over
+        params.json's "fixed", then the transfer's own "fixed"), the transfer, the toes' contacts resolved again,
+        then the nail beds on the new toes. The record (placement, masks, residuals) is kept on the foot."""
+        from parts.p01 import transfer as X
+        foot = self.feet[side]
+        a = dict(a)
+        ret, kept = cfg.get("retire", "all"), set(cfg.get("keep_fields") or ())
+        for k in FIELD_NAMES:
+            if k not in kept and (ret == "all" or (isinstance(ret, (list, tuple)) and any(k.startswith(p) for p in ret))):
+                a[k] = 0.0
+        o = dict(FIXED, **(opts or {}))
+        o.update(TRANSFER_FIXED)
+        o.update(cfg.get("fixed") or {})
+        a["toe2_ext"] = a.get("toe2_ext", 0.0) + o["toe2_ext_extra_mm"][side]
+        qa = pass_a(foot, self.fields(side), a)
+        qb = pass_b(foot, qa, foot.adj, o, nails=False, separate=True, forms=False)
+        if getattr(foot, "cage", None) is None:
+            # frame F mirrors the right foot, and the quads' winding with it: reversed, so normals point out
+            foot.cage = X.Cage(foot.quads if foot.frame.s > 0 else foot.quads[:, ::-1], len(foot.q), foot.body)
+        q, rec = X.run(foot, qb, foot.cage, self.reference(cfg, "mBW"), cfg, say=say)
+        turn = {k: v["turn_deg"] for k, v in (rec.get("prewarp") or {}).items()}
+        foot.axis_now = {k: _turned(foot.toe[k]["a"], turn.get(k, 0.0)) for k in TOES}
+        foot.pre_transfer, foot.pre_beds, foot.transfer = qb, q.copy(), rec
+        if nails:
+            q = nail_beds(foot, q, foot.adj, o.get("nail_size"), axes=foot.axis_now, radii=o.get("nail_radius"))
+        foot.nail_radius = {k: float((o.get("nail_radius") or {}).get(k, NAIL_RADIUS[k])) for k in TOES}
+        foot.bed_delta = q - foot.pre_beds
+        foot.contact_gap = float(cfg["contact_gap"])
+        return resolve_contacts(foot, q, gap=foot.contact_gap, rounds=8, sets=self.strong_toes(side))
+
+    def loaded_side(self, side, cfg, say=None):
+        """The loaded foot (frame F, mm) when the rest is transferred: the rest before its nail beds transferred again
+        onto the standing scan (laid on the seated one: transfer.register), from the same placement with the same
+        masks, its contact pressed flat on the floor, the rest's nail beds added back and the toes' contacts resolved.
+        transferred_side must have run."""
+        from parts.p01 import transfer as X
+        foot = self.feet[side]
+        rec = foot.transfer
+        ref = self.reference(cfg, str(cfg.get("loaded", "fBW")))
+        q, rec_l = X.run(foot, foot.pre_beds, foot.cage, ref, cfg, place=(rec["R"], rec["o"]), keep=rec["keep"],
+                         say=say)
+        z0, z1 = cfg["floor_flat"]
+        q = X.floor_flat(foot.cage, q, z0, z1)
+        foot.transfer_loaded = rec_l
+        return resolve_contacts(foot, q + foot.bed_delta, gap=foot.contact_gap, rounds=8, sets=self.strong_toes(side))
+
+    def strong_toes(self, side):
+        """{toe: region rows whose strongest toe bone is the toe's, over 0.5} (footmetrics.Index's toe sets)."""
+        foot = self.feet[side]
+        if getattr(foot, "toe_strong", None) is None:
+            names = [n for k in TOES for n in fm.toe_bones(k, side)]
+            W = np.stack([self.groups.get(n, np.zeros(len(self.co)))[foot.R] for n in names], axis=1)
+            top = np.argmax(W, axis=1)
+            strong = W[np.arange(len(W)), top] > 0.5
+            col, foot.toe_strong = 0, {}
+            for k in TOES:
+                cols = list(range(col, col + len(fm.toe_bones(k, side))))
+                col += len(cols)
+                foot.toe_strong[k] = strong & np.isin(top, cols)
+        return foot.toe_strong
 
 
 def _region_tris(topo, rows, n, both=False):
@@ -1129,6 +1238,24 @@ def _region_tris(topo, rows, n, both=False):
         out.append(pos[np.stack([lv[s + 1], lv[s + 3], lv[s]], axis=1)])
     tri = np.concatenate(out)
     return tri[(tri >= 0).all(axis=1)]
+
+
+def _region_quads(topo, rows, n, body):
+    """The body's quads lying wholly in a region and on the body (not MakeHuman's helpers), as region rows (Q, 4)."""
+    ls, lt, lv = topo
+    pos = np.full(n, -1, np.int64)
+    pos[rows] = np.arange(len(rows))
+    quad = lt == 4
+    Q = pos[np.stack([lv[ls[quad] + i] for i in range(4)], axis=1)]
+    Q = Q[(Q >= 0).all(axis=1)]
+    return Q[np.asarray(body, bool)[Q].all(axis=1)]
+
+
+def _turned(a, deg):
+    """A plan axis turned about z by deg (the transfer's prewarp turns each toe about its MTP joint)."""
+    c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+    a = np.asarray(a, float)
+    return np.array([c * a[0] - s * a[1], s * a[0] + c * a[1], a[2]])
 
 
 def _sub_adjacency(adj, rows, n):
@@ -1159,11 +1286,14 @@ CONTACT = {"heel_side": 5.4, "ball_side": 1.75, "arch_drop": 6.8, "midfoot_drop"
            "toes_forward": 2.0}
 
 
-def contact(body, side, q, cfg=None):
-    """The loaded foot from the sculpted rest foot q (F, mm): the plantar contact flattened onto the floor,
+def contact(body, side, q, cfg=None, transfer=None):
+    """The loaded foot from the sculpted rest foot q (F, mm). With the scan transfer on (2026-10-17) it is the
+    standing scan's (Body.loaded_side); otherwise the fields' version: the plantar contact flattened onto the floor,
     the heel pad's rim spread (CONTACT: heel_side a side), the medial arch down (arch_drop) and the midfoot's top
     with it (midfoot_drop), the ball's rim spread (ball_side), the forefoot ahead of the midfoot carried forward
     (fore_forward), the toe tips further forward still (toes_forward) and the toe pads down onto the floor."""
+    if transfer and transfer.get("on"):
+        return body.loaded_side(side, transfer)
     c = dict(CONTACT, **(cfg or {}))
     foot = body.feet[side]
     L = foot.L

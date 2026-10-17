@@ -103,15 +103,22 @@ def strip_nail_beds(body, toes=(1, 2)):
     from parts.p01 import fields
     with open(env.path("scripts", "parts", "p01", "params.json"), encoding="utf-8") as f:
         params = _json.load(f)
+    from parts.p01 import transfer as X
     keys = ("Foot.Sculpt", "Foot.Contact")
     fb = fields.Body(body, exclude=keys)
     a = fields.amounts(params)
     o = dict(fields.FIXED, **fields.options(params))
     foot = fb.feet[SIDE]
-    a["toe2_ext"] = a.get("toe2_ext", 0.0) + o["toe2_ext_extra_mm"][SIDE]
-    qa = fields.pass_a(foot, fb.fields(SIDE), a)
-    with_beds = fields.pass_b(foot, qa, foot.adj, o, nails=True)
-    without = fields.pass_b(foot, qa, foot.adj, o, nails=False)
+    cfg = X.config(params)
+    if cfg.get("on"):
+        # the scan transfer (2026-10-17): the beds go on after it, and the sculpt keeps their displacement
+        with_beds = fb.sculpt_side(SIDE, a, fields.options(params), transfer=cfg)
+        without = with_beds - foot.bed_delta
+    else:
+        a["toe2_ext"] = a.get("toe2_ext", 0.0) + o["toe2_ext_extra_mm"][SIDE]
+        qa = fields.pass_a(foot, fb.fields(SIDE), a)
+        with_beds = fields.pass_b(foot, qa, foot.adj, o, nails=True)
+        without = fields.pass_b(foot, qa, foot.adj, o, nails=False)
     w = np.clip(sum(foot.w[k] for k in toes), 0.0, 1.0)[:, None]
     delta_w = foot.frame.vec_to_w((without - with_beds) * w) / MM
     kb = body.data.shape_keys.key_blocks["Foot.Sculpt"]

@@ -33,7 +33,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))  # scripts/
 from lib import cache, cli, env, log, naming, replace  # noqa: E402
 from lib import sculpt as S  # noqa: E402
 from lib.cli import Part  # noqa: E402
-from parts.p01 import fields, footmetrics as fm, layers, nails, scanfit  # noqa: E402
+from parts.p01 import fields, footmetrics as fm, layers, nails, scanfit, scanref  # noqa: E402
+from parts.p01 import transfer as X  # noqa: E402
 
 PART = Part(id="01", name="foot_ankle_sock", prefixes=("Foot.", "Sock.", "Frame.Foot."), keys=("foot.", "sock."),
             needs={"08": "Morgan.Rig"},
@@ -95,6 +96,27 @@ def _sculpted_world(ob):
     return S.mix(ob, exclude=("Foot.Contact",)) * 1000.0
 
 
+def _transfer_cfg(ctx):
+    """The scan transfer's settings (params.json "transfer" over transfer.DEFAULTS), with the scans' paths taken
+    through lib/cache.asset, so the build's key carries the files' hashes (Jeff, 2026-10-17: the foot's large forms
+    are a real foot's)."""
+    cfg = X.config(ctx.params)
+    if cfg.get("on"):
+        sid = str(cfg["scan"])
+        cfg["_paths"] = {c: cache.asset(scanref.ply_rel(sid, c), ctx) for c in ("mBW", str(cfg.get("loaded", "fBW")))}
+    return cfg
+
+
+def _ensure_transfer(ctx, body, st):
+    """A stage run alone (--stage nails..frames) has no transfer record on the feet: the sculpt's positions are
+    recomputed (about 2 s a foot) so the placement, the masks and the turned toe axes are the build's own."""
+    cfg = st.get("transfer_cfg") or _transfer_cfg(ctx)
+    st["transfer_cfg"] = cfg
+    if cfg.get("on") and any(getattr(body.feet[s], "transfer", None) is None for s in fields.SIDES):
+        body.positions(fields.amounts(ctx.params), fields.options(ctx.params), transfer=cfg)
+    return cfg
+
+
 # --------------------------------------------------------------------------- stages
 
 def stage_sculpt(ctx, scope, ob, st):
@@ -103,7 +125,8 @@ def stage_sculpt(ctx, scope, ob, st):
     _drop(ob, "Foot.Sculpt")
     body = _sculpt_body(ob, st)
     a = fields.amounts(ctx.params)
-    co = body.positions(a, fields.options(ctx.params))
+    cfg = st["transfer_cfg"] = _transfer_cfg(ctx)
+    co = body.positions(a, fields.options(ctx.params), transfer=cfg)
     S.key_from_positions(ob, "Foot.Sculpt", co / 1000.0, base=body.co / 1000.0)
     st["amounts"] = a
     for side in fields.SIDES:
@@ -111,6 +134,12 @@ def stage_sculpt(ctx, scope, ob, st):
         for what in ("mtp_lift", "webs_closed", "nail_shift", "contacts_resolved"):
             if getattr(foot, what, None):
                 log.info("part 01", f"{side} {what}: {getattr(foot, what)}")
+        rec = getattr(foot, "transfer", None)
+        if rec is not None:
+            last = rec["fit"][-1]
+            log.info("part 01", f"{side} transfer onto scan {cfg['scan']} mBW: {last['n']}/{last['of']} vertices on it, "
+                     f"limit residual rms {last['rms']} max {last['max']} mm; keep {int((rec['keep'] > 0.5).sum())} "
+                     f"vertices; prewarp {json.dumps(rec.get('prewarp'))}")
 
 
 def stage_nails(ctx, scope, ob, st):
@@ -123,6 +152,7 @@ def stage_nails(ctx, scope, ob, st):
         coll = scope.collection("Foot.Nails")
     rig = bpy.data.objects[RIG]
     body = _sculpt_body(ob, st)
+    _ensure_transfer(ctx, body, st)
     co = _sculpted_world(ob) / 1000.0
     made = {}
     for side in fields.SIDES:
@@ -134,10 +164,11 @@ def stage_nails(ctx, scope, ob, st):
                 ctx.warn(f"no nail bed on toe {k} of the {side} foot")
                 continue
             T = foot.toe[k]
-            axis = foot.frame.vec_to_w(T["a"])
+            axis = foot.frame.vec_to_w((getattr(foot, "axis_now", None) or {}).get(k, T["a"]))
             w, vis, fe, thick = nails.PLATES[k]
             name = naming.name("Foot", side, "Nail", str(k))
-            me, dims, frame = nails.build_plate(name, ob, co, faces[k], axis, thick, fe, fields.NAIL_RADIUS[k],
+            radius = (getattr(foot, "nail_radius", None) or fields.NAIL_RADIUS)[k]
+            me, dims, frame = nails.build_plate(name, ob, co, faces[k], axis, thick, fe, radius,
                                                 nails.CORNER_MM[k])
             nob = scope.new_object(name, me, coll)
             nails.finish(nob, thick)
@@ -153,8 +184,11 @@ def stage_masks(ctx, scope, ob, st):
     (The material masks, callus to hair density, come with the materials stage.)"""
     import numpy as np
     names = ["Foot.Region", "Foot.Sole", "Foot.PlantarContact", "Foot.ContactZone"] + [f"Foot.NailBed.{k}" for k in fields.TOES]
-    _drop(ob, *names)
+    _drop(ob, *names, "Foot.ScanKeep")
     body = _sculpt_body(ob, st)
+    cfg = _ensure_transfer(ctx, body, st)
+    if cfg.get("on"):
+        names.append("Foot.ScanKeep")   # the skin between the toes the scan transfer kept (transfer.keep_mask)
     co = _sculpted_world(ob)
     nrm = S.vertex_normals(co, *body.topo)
     n = len(co)
@@ -173,6 +207,8 @@ def stage_masks(ctx, scope, ob, st):
         rows = foot.nail_rows
         for k in fields.TOES:
             W[f"Foot.NailBed.{k}"][foot.R[rows[k]]] = 1.0
+        if "Foot.ScanKeep" in W:
+            W["Foot.ScanKeep"][foot.R] = foot.transfer["keep"]
     for nm in names:
         _set_group(ob, nm, W[nm] * bodymask)
 
@@ -182,12 +218,19 @@ def stage_contact(ctx, scope, ob, st):
     right and 0.85 on the left)."""
     _drop(ob, "Foot.Contact")
     body = _sculpt_body(ob, st)
+    cfg = _ensure_transfer(ctx, body, st)
     rest = _sculpted_world(ob)
     loaded = rest.copy()
     for side in fields.SIDES:
         foot = body.feet[side]
         q = foot.frame.to_f(rest[foot.R])
-        loaded[foot.R] = foot.frame.to_w(fields.contact(body, side, q))
+        loaded[foot.R] = foot.frame.to_w(fields.contact(body, side, q, transfer=cfg))
+        rec = getattr(foot, "transfer_loaded", None)
+        if rec is not None:
+            last = rec["fit"][-1]
+            log.info("part 01", f"{side} loaded key from scan {cfg['scan']} {cfg.get('loaded', 'fBW')}: limit residual rms "
+                     f"{last['rms']} max {last['max']} mm; laid on the seated scan by "
+                     f"{json.dumps(body.reference(cfg, str(cfg.get('loaded', 'fBW'))).info.get('registered'))}")
     S.key_from_positions(ob, "Foot.Contact", loaded / 1000.0, base=rest / 1000.0, value=0.0)
 
 
@@ -198,12 +241,32 @@ def stage_frames(ctx, scope, ob, st):
     scope.clear("Frame.Foot.R")
     m = fm.read(ob)
     ix = fm.index(ob, m)
+    body = _sculpt_body(ob, st)
+    cfg = _ensure_transfer(ctx, body, st)
     for side in fields.SIDES:
         f = fm.frame(m, ix, side)
         e = scope.new_object(naming.name("Frame", None, "Foot", side), None)
         e.empty_display_type, e.empty_display_size = "ARROWS", 0.06
         e.matrix_world = Matrix(f.matrix().tolist())
         e["p01_doc"] = "frame F (spec 01): origin at the pternion on the floor, +Z up, toes toward -Y"
+        rec = getattr(body.feet[side], "transfer", None)
+        if cfg.get("on") and rec is not None:
+            # where the reference scan lies on this foot: world mm = M @ (x, y, z, 1) of a point in the scans' frame
+            # (scanref.load's, the right foot mirrored back by frame F), for the trial's dense transfer and renders
+            e["p01_scan"] = json.dumps({"id": str(cfg["scan"]), "rest": "mBW", "loaded": str(cfg.get("loaded", "fBW")),
+                                        "M": _scan_matrix(body.feet[side], rec).round(6).tolist()})
+
+
+def _scan_matrix(foot, rec):
+    """4 x 4 (mm) taking the scans' frame onto the world for one foot: transfer.from_frame then frame F (F0, the
+    basis foot's, in which the sculpt works) to world."""
+    import numpy as np
+    P = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    W = foot.frame.to_w(X.from_frame(P, rec["R"], rec["o"]))
+    M = np.eye(4)
+    M[:3, 3] = W[0]
+    M[:3, :3] = (W[1:] - W[0]).T
+    return M
 
 
 def stage_later(name):
@@ -302,6 +365,55 @@ SCAN_RMS = {"plan": 3.5, "heel": 3.0, "sole": 2.5}   # mm: the most each family'
 # gap between the hallux and toe 2, which turns toes 2-5 outward, §3.1 note)
 
 
+# The scan transfer (Jeff, 2026-10-17, spec 01 §0, §3.1 and §3.3 notes: "the foot's large forms are transferred from a
+# CC0 scan"; transfer.py, params.json "transfer"): with it on, the targets below replace those above. They are the
+# transferred foot's own readings (§8.2's definitions on the cage, the malleoli, heel and plan on the level-2 surface),
+# 038's own where scan.py reads the same figure on the scan (scan_targets.json "scalars_unloaded" / "scalars_loaded"),
+# with §8.2's tolerances, so a later build that drifts off the scan fails; the ANSUR and estimated values they replace
+# are in the notes. Subject 038 seated, scaled to 274.3 mm
+XSRC = "§0 (Jeff, 2026-10-17: the foot's large forms are transferred from a CC0 scan, subject 038)"
+XFER_TIP_Y = {1: -275.1, 2: -275.2, 3: -264.8, 4: -251.2, 5: -224.5}   # the cage's tips (1-3 mm past the rendered
+XFER_TOE_W = {1: 34.8, 2: 19.7, 3: 20.1, 4: 21.2, 5: 20.2}             # surface's); toe 5's base carried back 12 mm
+XFER_TOE_H = {1: 30.2, 2: 17.6, 3: 17.2, 4: 19.9, 5: 18.7}
+XFER_TARGETS = {
+    "ball_length": (189.5, 3.0, XSRC + ": the medial border's widest point, 20 mm behind ANSUR's first head (210)"),
+    "heel_breadth": (67.9, 3.0, XSRC + ": 038's own 67.9 (scan.py's reading)"),
+    "heel_widest": (67.3, 3.0, XSRC),
+    "heel_width_z10": (62.9, 3.0, XSRC + ": 038's own"), "heel_width_z20": (66.1, 3.0, XSRC + ": 038's own"),
+    "heel_width_z30": (60.8, 3.0, XSRC + ": 038's own"),
+    "bimalleolar": (67.4, 2.0, XSRC + ": the scan's ankle (ANSUR 76)"),
+    "malleolus_lateral_z": (84.2, 2.0, XSRC + " (ANSUR 76)"),
+    "malleolus_medial_z": (None, None, XSRC + ": no apex on the scan's medial profile, its widest point read"),
+    "heel_ankle_circ": (361.9, 6.0, XSRC + " (ANSUR 353)"),
+    "instep_circ": (262.0, 6.0, XSRC + " (the estimate 246)"),
+    "dorsum_h50": (86.8, 2.0, XSRC + ": the scan's high instep (the estimates 66 / 56 / 40)"),
+    "dorsum_h60": (75.1, 2.0, XSRC), "dorsum_h70": (60.1, 2.0, XSRC),
+    "arch_medial_45": (18.9, 3.0, XSRC + ": 038's own"),
+    "lateral_clear_50": (1.1, 1.5, XSRC + ": 038's own"),
+    "pternion_z": (33.7, 2.0, XSRC + ": 038's own"),
+}
+for _k in XFER_TIP_Y:
+    XFER_TARGETS[f"toe{_k}_tip_y"] = (XFER_TIP_Y[_k], 2.0, XSRC + ": the scan's cascade (§3.3 note)")
+    XFER_TARGETS[f"toe{_k}_width"] = (XFER_TOE_W[_k], 2.0, XSRC)
+    XFER_TARGETS[f"toe{_k}_height"] = (XFER_TOE_H[_k], 2.0, XSRC)
+XFER_PLAN_TARGETS = {
+    "plan_b50": (82.3, 3.0, XSRC),
+    "plan_mid_ratio": ([0.78, 0.86], None, XSRC + " (0.82-0.92 before)"),
+    "plan_widest_pct": ([74.0, 86.0], None, XSRC + ": widest across the toes' bases (60-76 before)"),
+}
+# the toes pressed together as the scan's are (the hallux touches toe 2; Jeff's 4.5 mm gap gave way to the scan); a few
+# cage vertices of a pressed pair read up to 0.2 mm inside the neighbour (fields.resolve_contacts' gap)
+XFER_GAPS = {"1-2": ([-0.25, 3.0], XSRC + ": the hallux against toe 2, as the scan's"),
+             "other": ([-0.25, 60.0], XSRC + ": touching, never crossing by more than the cage's 0.2 mm")}
+XFER_CONTACT_ARCH = ([3.0, 8.0], XSRC + ": the cage reads 3.8 where the scan's own medial border drops 5.5")
+SCAN_REF_RMS = {"plan": 1.5, "heel": 1.5, "sole": 1.0}   # the rendered surface against the scan it came from (mm)
+# part 01's hallux plate on the scan's broad, flat-topped toe: built on §3.3's 19.5 x 13.8 bed it reads 20.9 x 16.7 with a
+# 9.5 mm radius (its buried sides dive further off a flat dorsum; 19.6 x 15.4 and 11.0 on MakeHuman's rounder toe). A
+# smaller bed or a wider arc tried for it (18.8 x 14.5, 14 mm) read 8.4 mm across and lost the free edge's reading. The
+# rendered nails are the trial's (research/foot_hires, toes.PARAMS "nail1": 18.5 x 14.6)
+XFER_NAIL1 = {"width": (20.9, 1.0), "length": (16.7, 1.0), "radius": (9.5, 1.5)}
+
+
 def _scan_measures(fine, f, m, ix, side):
     """scanfit's measures on the body's subdivided read for one foot, in the scans' frame (fit_sculpt.scan_measures,
     on the whole body: this foot's triangles below z 220 kept)."""
@@ -346,6 +458,7 @@ def measure(ctx, args):
     def add(name, value, target=None, tol=None, source="", unit="mm"):
         out.append(cli.metric(name, value, target, tol, unit, "spec 01 " + source if source else "", PART.id))
 
+    xcfg = X.config(ctx.params)
     sk = ob.data.shape_keys
     contact = sk.key_blocks.get("Foot.Contact") if sk else None
     old = contact.value if contact else None
@@ -363,21 +476,32 @@ def measure(ctx, args):
             v.update(fm.ankle(fine, f))       # the malleoli and the heel's apex on the rendered surface: the
             v.update(fm.heel_back(fine, f))   # cage's 13 mm rows would quantise them (fm.subdivided)
             v.update(fm.plan(fine, f, v["station_length"]))   # the plan outline, on the rendered surface too
-            add(f"heel_prom.{side}", round(v["heel_prom"], 2), [3.0, 15.0], None,
-                "§3.2 (the calcaneus behind the Achilles insertion)")
+            add(f"heel_prom.{side}", round(v["heel_prom"], 2), [0.5, 15.0] if xcfg.get("on") else [3.0, 15.0], None,
+                XSRC + ": 038's Achilles fills out to its heel (3-15 before)" if xcfg.get("on")
+                else "§3.2 (the calcaneus behind the Achilles insertion)")
             # the scan-driven pass (2026-10-16, §3.1 note): the rendered surface against three real men's unloaded feet
             # (scanfit.py): each family's RMS deviation from their mean sections; the build before the pass read plan
             # 2.1, heel 3.8, sole 4.0
             if SCAN_TARGETS is not None:
-                for fam, d in scanfit.report(_scan_measures(fine, f, m, ix, side), SCAN_TARGETS).items():
+                meas = _scan_measures(fine, f, m, ix, side)
+                for fam, d in scanfit.report(meas, SCAN_TARGETS).items():
                     add(f"scan_{fam}_rms.{side}", d["rms"], [0.0, SCAN_RMS[fam]], None,
                         f"§3.1 (scans 2026-10-16; worst {d['max']} at {d['at']})")
+                # the scan transfer (Jeff, 2026-10-17, §0 note): the rendered surface against the one scan it was
+                # transferred from, the same sections (scanfit.measures on the subject's own unloaded scan)
+                own = (SCAN_TARGETS.get("per_scan") or {}).get(str(xcfg["scan"])) if xcfg.get("on") else None
+                if own:
+                    for fam, d in scanfit.report(meas, {"values": own}).items():
+                        add(f"scan_ref_{fam}_rms.{side}", d["rms"], [0.0, SCAN_REF_RMS[fam]], None,
+                            f"§0 (Jeff 2026-10-17: transferred from scan {xcfg['scan']}; worst {d['max']} at {d['at']})")
             rest[side] = v
-            for k, (t, tol, src) in TARGETS.items():
-                if k == "toe2_tip_y" and side == "R":
-                    t = t + 1.5  # the right 2nd toe is 1.5 mm shorter (§3.3)
+            for k, (t, tol, src) in dict(TARGETS, **(XFER_TARGETS if xcfg.get("on") else {})).items():
+                if k == "toe2_tip_y" and side == "R" and not xcfg.get("on"):
+                    t = t + 1.5  # the right 2nd toe is 1.5 mm shorter (§3.3; one man's scan for both since 2026-10-17)
                 add(f"{k}.{side}", None if v.get(k) is None else round(v[k], 2), t, tol, src)
-            for k, (t, tol, src) in PLAN_TARGETS.items():
+            if xcfg.get("on"):
+                add(f"malleoli_resolved.{side}", v.get("malleoli_resolved"), unit="")
+            for k, (t, tol, src) in dict(PLAN_TARGETS, **(XFER_PLAN_TARGETS if xcfg.get("on") else {})).items():
                 add(f"{k}.{side}", None if v.get(k) is None else round(v[k], 3), t, tol, src,
                     unit="" if k == "plan_mid_ratio" else ("%" if k.endswith("_pct") else "mm"))
             for k in PLAN_REPORTED:
@@ -389,6 +513,8 @@ def measure(ctx, args):
                 # Jeff, 2026-10-10: the lesser toes touch but never cross; the hallux stands about 4.5 mm off toe 2
                 band, why = ([3.0, 6.5], "§4.3 (the hallux apart: about 4.5)") if pair == "1-2" else \
                     ([0.1, 60.0], "§4.3 (touching, never crossing)")
+                if xcfg.get("on"):
+                    band, why = XFER_GAPS.get(pair, XFER_GAPS["other"])
                 add(f"toe_gap_{pair}.{side}", None if g is None else round(g, 2), band, None, why)
             add(f"heading_deg.{side}", round(v["heading_deg"], 2), unit="deg")
         for nob in sorted((o for o in bpy.data.objects if o.name.startswith(("Foot.L.Nail.", "Foot.R.Nail."))),
@@ -397,13 +523,17 @@ def measure(ctx, args):
             w, vis, fe, thick = nails.PLATES[k]
             d = _nail_dims(nob)
             side = nob.name.split(".")[1]
-            add(f"nail{k}_width.{side}", round(d["width"], 2), w, 1.0, "§3.3")
-            add(f"nail{k}_length.{side}", round(d["length"], 2), vis, 1.0, "§3.3 (visible, with the free edge)")
+            xn = XFER_NAIL1 if (k == 1 and xcfg.get("on")) else {}
+            add(f"nail{k}_width.{side}", round(d["width"], 2), *(xn.get("width") or (w, 1.0)),
+                XSRC + ": the plate on the broad hallux" if xn else "§3.3")
+            add(f"nail{k}_length.{side}", round(d["length"], 2), *(xn.get("length") or (vis, 1.0)),
+                XSRC + ": the plate on the broad hallux" if xn else "§3.3 (visible, with the free edge)")
             add(f"nail{k}_thickness.{side}", round(d["thickness"], 2), thick, 0.2, "§3.3")
             add(f"nail{k}_edge_thickness.{side}", None if d["edge_thickness"] is None else round(d["edge_thickness"], 2),
                 thick, 0.2, "§3.3 (0.5 mm inside the free edge, on the rendered surface)")
             add(f"nail{k}_radius.{side}", None if d["radius"] is None else round(d["radius"], 2),
-                fields.NAIL_RADIUS[k], 1.5, "§3.3 (transverse, across the middle third)")
+                *(xn.get("radius") or (fields.NAIL_RADIUS[k], 1.5)),
+                XSRC + ": the plate on the broad hallux" if xn else "§3.3 (transverse, across the middle third)")
         if contact:
             contact.value = 1.0
             m1 = fm.read(ob)
@@ -416,8 +546,9 @@ def measure(ctx, args):
                 w1 = fm.breadth(m1, f0, (-60.0, 5.0), [10.0])[0]
                 add(f"contact_heel_spread.{side}", round(w1 - w0, 2), [5.0, 11.0], None,
                     "§1.4 item 7 (scans 2026-10-16: 5.7-10.5; heel width at z 10, loaded against rest)")
+                band, why = XFER_CONTACT_ARCH if xcfg.get("on") else ([4.5, 8.0], "§1.4 item 7 (scans 2026-10-16: 6.2, 5.5-8.7)")
                 add(f"contact_arch_drop.{side}", round(rest[side]["arch_medial_45"] - v1["arch_medial_45"], 2),
-                    [4.5, 8.0], None, "§1.4 item 7 (scans 2026-10-16: 6.2, 5.5-8.7)")
+                    band, None, why)
                 co1 = m1.co[ix.region[side]] * 1000.0
                 add(f"contact_floor_min_z.{side}", round(float(co1[:, 2].min()), 3), [-0.05, 0.05], None,
                     "§1.4 item 7 (no sinking, no hovering)")

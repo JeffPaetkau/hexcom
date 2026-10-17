@@ -626,3 +626,96 @@ left half is the aligned scan 038 in the same clay and camera (passed with `--re
 Cost: alignment and the comparison 10-30 s; a part 01 fit with the scan residuals 40-60 s an iteration (85 amounts; the
 toes' differences are noisy, the damping climbs); part 01 build 8-10 s; the stage from scratch 326 s, after it 115 s; a
 scan's clay renders 5 s.
+
+## Scan transfer (2026-10-17)
+
+Jeff, after the clay foot beside scan 038 (shape_r3's pairs): "The 3d scan overall shape of the foot is way better than
+ours. The only exception is between the toes which is almost certainly a resolution issue. We are better between toes
+but they are better everywhere else." So the scan's surface is transferred, not approximated with fields. New code:
+part 01's `p01/transfer.py` (the transfer) and `p01/scanref.py` (loading and alignment, moved from `scan.py`, which now
+imports them: 038 aligns to the same 0.0 mm), the trial's `scanxfer.py` (the dense skin) and `xferdev.py` (the deviation
+report); spec 01's dated notes of this date (§0, §3.1, §3.3, §3.5, §4.2, §4.3, §4.7, §8.2).
+
+* **The scan.** 038's seated scan (mBW) is the rest shape, aligned and scaled to 274.3 mm as before (x1.0127), mirrored
+  for the left foot and as scanned for the right (frame F mirrors the right foot, so one scan in F serves both: one man's
+  pair). Local flaws: about ten speck facets (31 under 0.01 mm², one flipped, ten turned against their neighbours: the
+  dots in its clay renders) and the scanner's fused, shadowed cleft between the hallux and toe 2; the transfer's facing
+  test skips the specks and the cleft is in the kept zone, so nothing was patched from 081 or 012. The cap is left out
+  of the target. Toe tips read anew (`transfer.scan_tips`: the most forward point of each toe's middle; `toe_line`'s tips
+  fell on longer neighbours' flanks, so the scan-driven pass's toe 5 at -240.5 was toe 4's): -274.3, -272.4, -262.8,
+  -248.0, -220.6; all four long men's toe 5 end 40-54 mm behind toe 2 (081 -234.6, 012 -227.4, 059 -224.8).
+* **Part 01 (the cage).** Pass A's amounts are retired (`transfer.retire` "all", kept in `params.json`; `transfer.on`
+  0 brings the fields' build back); pass B keeps the toes' poses and spacing, now with the hallux gathered to toe 2 like
+  the others (the scan's hallux touches toe 2 and leads it by 1.9 mm, so Jeff's 4.5 / 4.5 gives way), without its bony
+  landmarks, heel taper and ankle fillet. The transfer: the scan placed by scan.py's re-zeroing of this foot; each toe
+  turned about its MTP joint and scaled along its axis so its tip meets the scan's (toe 5, 20 mm longer than 038's,
+  first carried back 12 mm whole: pressed into 14 mm its rings crumpled into a slab; keeping pass A's metatarsal-head
+  line instead left toes 3-4 6-10 mm short); then the cage's displacement solved so its Catmull-Clark limit points lie on
+  the scan (nearest points facing within ~80 degrees, 16 iterations, smoothness 4 -> 0.04, CG), no data where `keep`
+  (rays in a 42 degree cone about each forefoot vertex's normal meeting another toe within 6 mm, grown a ring: the clefts'
+  floors, the webs, the walls facing a neighbour; 133 cage vertices), the data's weight fading over 95-125 and the
+  displacement easing out up the leg to 200 (held at the cut, 038's Achilles, 12 mm further back than ours there, met the
+  leg in a notch); the joint cubes follow their toe's skin; then the nail beds and the contacts (to 0.2 mm, against the
+  toes as `measure()` reads them). On the left foot 992 of 1014 limit points find the scan; where it holds fully the
+  residual is 0.27 mm RMS (max 1.8); after the beds and contacts the foot away from the toes 0.37 (sole 0.29, heel 0.44,
+  ankle 0.55), the toes 1.3 (their beds). The level-2 surface reads 038's own sections at 0.92 / 0.97 / 0.51 mm RMS
+  (plan / heel / sole; R 1.06 / 1.0 / 0.5). Cage folds (adjacent quads over 90 degrees / self-folded quads): 129 / 29
+  against the fields' 123 / 18, the extra in the curled toes. Part 01 builds in 13 s.
+* **The loaded key.** 038's standing scan at his seated scale, its footprint where it lies (both frames keep the heel's
+  centre, the pternion and the line to toe 2), the leg's posture taken out (standing, his leg sits 6.3 mm medial and 2.4
+  forward of the seated one at z 100-120: subtracted above z 95, none below 40; a hindfoot ICP instead turned the
+  footprint 3.5 degrees and slid the toes 16 mm), the rest before its beds transferred onto it with the same placement
+  and masks (limit residual 0.20), the contact within 1 mm of the floor pressed flat, the beds added back. Heel +5.4 at
+  z 10 (038: 5.7), arch drop 3.8 on the cage (his surface 5.5), 72 cage vertices on the floor.
+* **measure().** Under the transfer the targets are the transferred foot's, 038's own where scan.py reads the figure on
+  his scan (`XFER_*`, spec 01 §8.2 note), plus `scan_ref_*_rms` against his sections; 183 metrics: 160 pass, 23 reported,
+  none fail; two `--rebuild` runs: the same key (5e848c356ded...) and layer hash (fa407c86a1b6). Fixed in passing:
+  `footmetrics.toe_axis` for a toe as broad as it is long (the hallux read 21 degrees off, 4 mm thick), `toe_dims`' reach,
+  `toe_gaps` against both triangulations of a warped quad (Blender's own changed between sessions: -0.36 / +0.21).
+* **The rig** (posed in a scratch session; nothing saved): the ankle 10 degrees up and 15 down, the toes flexed 15 and
+  extended 20: the cage gains 5 folded pairs flexed and 1 extended (the fields' build: 3 and none), no tear in clay, the
+  nail plates stay 0.5-1.1 mm off their skin. With pass A retired the MTP joint cubes of toes 1-4 lie 2.1-5.4 mm from
+  their bones' heads (3.2-9.6 before); toe 5's, carried back 12 mm, 12-21 mm (spec 08's to refit). The frames are the
+  transferred mesh's (heading -1.8 degrees, was -0.3); the scan's placement is stored on them (`p01_scan`).
+* **The trial (`run.py`).** `scanxfer.apply` lays the dense skin on the same scan in the stage, right after the curled
+  toes' folds are closed: nearest points lifted onto the scan's Phong patches (the 1.5 mm facets would print), the
+  displacement smoothed over 0.9 mm (edge weights 1 / l^2, so its reach does not depend on the spacing), Foot.ScanKeep
+  (part 01's mask, interpolated by the subdivision) taking the data away between the toes, and a smootherstep share over
+  95-125 toward the cage's surface, which already eases into the leg (fading the data's weight instead creased the
+  dense skin round the ankle at the cut, xfer4). 1.057M of 1.112M vertices find the scan; fully transferred they sit
+  0.02 mm off it (RMS). Off, as duplicates of the scan: the hallux's lift and deepening, the first MTP prominence and
+  head knuckle, toe 2's outline, the sections' squaring, the tips' droop, the pulps' ellipsoids, toe 5's form, the arch
+  (vault, navicular, styloid, instep), the Achilles' cord and hollows, the sole's sulcus, ball edge and pads, `scan_sole`,
+  and the distal dorsum's fairing. Kept: the fold closing, the 1-2 web closing, the lesser toes' fill and contact, the
+  nails, crowns, necks, creases, tendons, veins, ridges, wear, ankle crease and hair. The nails' stand-in dorsum (the
+  skin's blurred height map) drew a line across each toe 8-12 mm behind its nail on the scan's skin: the map stands
+  0.03-0.4 mm over the vertices it is read at and its coverage gate switches within 0.5 mm; now its offset is taken out
+  (`blur_delta`) and the blur is 0.5 mm (1.8), the step under 0.01 (`hr.hallux`, `hr.lesser` in `fields_dbgB`-`dbgG`).
+* **Deviation from 038** (`renders/research/foot_hires/scan_transfer/deviation.json`, the finished dense skin put back in
+  the scans' frame by part 01's placement): sections plan **0.33** mm RMS (worst -1.0 at 50 % L medial), heel **0.04**,
+  sole **0.18** (worst +1.0 at 46 % L by the medial border); the skin's distance from the scan, transferred zone 0.20 RMS
+  with the detail on it (sole 0.03, heel 0.02, ankle 0.14, dorsum and sides 0.21, toes 0.23: veins, tendons, nails), the
+  blend 95-120 0.82, the kept skin between the toes (Foot.ScanKeep over 0.5) **2.4** RMS, 1.5 inside the scan on average,
+  5.3 at the 95th percentile (where the scan fuses the toes), the keep's fade 1.0. Against the three men's mean it
+  reads 1.92 / 1.90 / 1.32, 038's own 1.94 / 1.88 / 1.22. The toes by scan.py's toe line (`scan_transfer/compare/`):
+  tips -274.3 / -272.7 / -264.5 / -255.4 / -239.4 against 038's -274.3 / -272.4 / -264.3 / -256.6 / -240.5 (that reading
+  takes 4 and 5 on their neighbours' flanks, the same way on both), widths 34 / 19 / 18 / 18 / 15 (his 33 / 20 / 17 / 18
+  / 15).
+* **Folds** (`debug_folds`): 30 folded pairs before the repair step (41 in `fields_scan3`), all laid flat by it.
+
+Renders: clay `fields_xfer5/` (shape_r3's nine views and the two closeups), Cycles LookDev `fields_xfer5/p01.V1f.L_eval.png`
+and `p01.V5f.L_eval.png`, the scan in part 01's placement `scan_038x/`, side by side at one scale in `scan_transfer/sbs/`
+(scan pass | transfer | scan 038). Visible there: the plan's outline, the sole's relief (the arch's hollow along the
+medial side, the lateral band, the ball), the heel's bell from behind, the high instep and the malleoli are the scan's;
+the toes are separate, with our clefts, nails and creases, where the scan's are fused; toe 5 sits back and small at the
+end of the row; the Achilles runs into the leg without a step. Packet `critic/shape_r3b/` (sha 8d95162dad2f): shape_r3's
+views, scope, questions, anchor and previous round, its references the scan in part 01's placement, the big toe's
+declaration replaced (the scan's cascade) and two added (the large forms are the scan's, the detail is modelled; the leg
+eases in over 95-200). Critics not run.
+
+Open: toe 5's bones (12-21 mm off its new joints) and the right foot's dense build; part 01's hallux plate on the broad
+scan toe reads 20.9 x 16.7 (held there; the rendered nails are the trial's); the cage's arch drop under load 3.8 against
+the scan's 5.5; §8.3 Q1's asymmetry, now only pass B's toe axes between the feet.
+
+Cost: part 01 build 13 s (the transfer about 1 s a foot, its loaded key as much); the stage from scratch 650 s (the dense
+transfer about 300 of it), cached 100 s; clay 11 s for eleven views; Cycles V1f 50 s, V5f 77 s.

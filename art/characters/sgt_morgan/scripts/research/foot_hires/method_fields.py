@@ -548,7 +548,7 @@ def stage_key(q, P):
     import os
     h = hashlib.sha256(np.ascontiguousarray(q).tobytes())
     h.update(json.dumps({k: v for k, v in P.items() if k not in DETAIL_KEYS}, sort_keys=True, default=str).encode())
-    for f in ("macro.py", "sdf.py"):
+    for f in ("macro.py", "sdf.py", "scanxfer.py", os.path.join("..", "..", "parts", "p01", "transfer.py")):
         with open(os.path.join(C.HERE, f), "rb") as fh:
             h.update(fh.read())
     return h.hexdigest()[:16]
@@ -589,6 +589,11 @@ def build(ctx):
         adj = M.adjacency(edges, len(q))
         q = M.close_folds(q, segs, groups, P, adj, ctx.report)
         census("close_folds", q)
+        # the scan transfer (2026-10-17): the dense skin laid on the scan part 01's cage was fitted to (scanxfer.py),
+        # before the nails and the other detail; the large-form edits it supersedes are off in toes.PARAMS
+        import scanxfer
+        q = scanxfer.apply(ctx, q, topo, P, ctx.report)
+        census("scan_transfer", q)
         q = M.apply(q, C.vertex_normals(q, topo), segs, groups, adj, P, ctx.report)
         census("macro_apply", q)
         q = M.pulps(q, C.vertex_normals(q, topo), segs, groups, P, ctx.report)
@@ -611,7 +616,7 @@ def build(ctx):
         if path:
             os.makedirs(C.CACHE, exist_ok=True)
             keep = {k: ctx.report[k] for k in ("anchors", "pulps", "web", "toe2_outline", "fold_close", "deepen", "t_macro",
-                                               "t_web_sdf", "toe5_form", "webs_lesser", "t_webs_lesser")
+                                               "t_web_sdf", "toe5_form", "webs_lesser", "t_webs_lesser", "scan_transfer")
                     if k in ctx.report}
             np.savez(path, q=q, report=json.dumps(keep))
     # whole foot, pass 1: the long extensors after the webs (whole.tendons), so a tendon change keeps the stage

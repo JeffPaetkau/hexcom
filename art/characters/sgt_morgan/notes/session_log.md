@@ -266,6 +266,22 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    higher (Jeff's side profile; reported only). Report `renders/research/foot_hires/scan/
    compare.md` (not committed), side by sides in `scan/sbs/`; shape round 3 packet built with
    the scan as the left image of each pair; critics not yet run.
+   **Scan transfer (Saturday 17 October)**: Jeff, after seeing ours beside scan 038: "the 3d
+   scan overall shape of the foot is way better than ours ... we are better between toes but
+   they are better everywhere else." So part 01 now TRANSFERS subject 038's seated scan onto
+   the foot (`p01/transfer.py`, `p01/scanref.py`; mirrored for the left foot, as scanned for the
+   right; the standing scan drives Foot.Contact), keeping our geometry only between the toes
+   (mask `Foot.ScanKeep`, 133 cage vertices per foot) and easing into our leg over 95-200 mm.
+   The trial's dense skin follows (`scanxfer.py`). Deviation from 038: plan 0.33 mm RMS, heel
+   0.04, sole 0.18. Toe lengths follow the scan (its hallux touches toe 2 and leads it by 1.9
+   mm; toes 3-5 end 10, 24 and 52 mm behind toe 2), replacing Jeff's X3 gap. The pass-A fields
+   and the trial's large-form edits are off behind `params.json` `transfer.on`. Rig check: ankle
+   and toes pose cleanly; toe 5's bones sit 12-21 mm off its new joints (refit in spec 08).
+   Part 01: 183 metrics, 160 pass, 23 reported, none fail; identical rebuilds. Setup now fetches
+   the scans by default (`downloads.json` group `scans`). The Cycles renders read as a real
+   foot (`renders/research/foot_hires/fields_xfer5/`). Open: veins read as pale lines; nail
+   free edges still a little French; under load the cage's arch drops 3.8 mm against the
+   scan's 5.5. Packet `shape_r3b` built; critics not yet run.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

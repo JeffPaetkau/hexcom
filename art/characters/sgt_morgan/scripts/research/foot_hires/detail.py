@@ -201,6 +201,16 @@ class Nail:
         sig = self.P.get("blur", 1.8) / c
         b1 = _fill(_blur2d(H, sig))
         self.hs = 2.0 * b1 - _blur2d(b1, sig)
+        # the map's offset over the vertices it was built from (each cell keeps its top-most skin: 0.03-0.4 mm over a
+        # sloping dorsum), averaged per cell and blurred over a millimetre (the scan transfer's `blur_delta`)
+        if self.P.get("blur_delta"):
+            off = self._sample(self.hm, t, u) - h
+            S_ = np.zeros((nt, nu))
+            N_ = np.zeros((nt, nu))
+            np.add.at(S_, (it, iu), np.nan_to_num(off))
+            np.add.at(N_, (it, iu), np.isfinite(off).astype(float))
+            B = np.where(N_ > 0, S_ / np.maximum(N_, 1.0), np.nan)
+            self.hm_bias = _fill(_blur2d(_fill(B), 1.0 / c))
 
     def _sample(self, M, t, u):
         c = self.CELL
@@ -740,7 +750,16 @@ class Nail:
         wd = T.smoothstep(cov, 0.55, 0.95) * T.window(vi, -reach_v, -reach_v + 5.0, lb - 1.0, lb + 0.5) \
             * (1.0 - T.smoothstep(np.abs(xi), reach_x - 2.0, reach_x)) \
             * T.smoothstep(nrm[idx] @ self.n, 0.3, 0.8) * np.isfinite(hs)
-        href = hi + (np.nan_to_num(hs, nan=0.0) - hi) * wd
+        if P.get("blur_delta"):
+            # the scan transfer (2026-10-17): the blurred map less its own offset over the vertices (hm_bias): the map
+            # of the top-most skin stands 0.03-0.4 mm over the vertices it is read at, and where the map's coverage
+            # gate (wd) switches on within half a millimetre that offset drew a line across each toe (xfer2); the
+            # blur's change against the raw map alone printed the raw map's cells as ripples
+            tb = vi + self.t0
+            bias = np.nan_to_num(self._sample(self.hm_bias, tb, xi + np.polyval(self.c_u, tb)), nan=0.0)
+            href = hi + (np.nan_to_num(hs, nan=0.0) - bias - hi) * wd
+        else:
+            href = hi + (np.nan_to_num(hs, nan=0.0) - hi) * wd
         if P.get("debug_dump"):
             self._dbg = {}
         tgt, s = self.skin_target(vi, xi, href)

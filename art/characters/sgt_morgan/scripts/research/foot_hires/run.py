@@ -152,6 +152,8 @@ def save_region(ctx, out_dir):
     data["F_R"], data["F_o"] = ctx.frame.R, ctx.frame.o      # frame F: q = (p - F_o) @ F_R
     groups = method_fields.read_groups(ctx.skin)
     data["toe_w"] = np.stack([T.toe_weight(groups, k) for k in (1, 2, 3, 4, 5)], 1).astype(np.float16)
+    if ctx.skin.vertex_groups.get("Foot.ScanKeep") is not None:   # the scan transfer's kept skin between the toes
+        data["scan_keep"] = C.group(ctx.skin, "Foot.ScanKeep").astype(np.float16)
     data["joints"] = json.dumps({k: np.asarray(v).tolist() for k, v in ctx.joints.items()})
     np.savez_compressed(path, **data)
     return os.path.relpath(path, C.env.PROJECT_DIR)

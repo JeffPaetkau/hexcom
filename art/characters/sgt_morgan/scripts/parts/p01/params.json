@@ -196,5 +196,11 @@
   "r-foot-scale-depth-incr": 0.108038,
   "r-foot-scale-horiz-incr": 0.074043,
   "r-foot-scale-vert-decr": 0.446534
+ },
+ "transfer": {
+  "on": 1,
+  "scan": "038",
+  "loaded": "fBW",
+  "retire": "all"
  }
 }

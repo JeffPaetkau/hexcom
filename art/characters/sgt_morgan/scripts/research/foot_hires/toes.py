@@ -359,3 +359,37 @@ def roll(x):
     """A quarter circle from (0, 0) to (1, 1): vertical at 0, flat at 1 (a fold's lip rising from the plate)."""
     x = np.clip(np.asarray(x, float), 0.0, 1.0)
     return np.sqrt(np.maximum(1.0 - (1.0 - x) ** 2, 0.0))
+
+
+# --------------------------------------------------------------------------- the scan transfer (2026-10-17)
+# Jeff, after the clay foot beside scan 038: "The 3d scan overall shape of the foot is way better than ours. The only
+# exception is between the toes which is almost certainly a resolution issue. We are better between toes but they are
+# better everywhere else." Part 01's large forms are now subject 038's (parts/p01/transfer.py) and the stage lays the
+# dense skin on the same scan (scanxfer.py, SCAN_TRANSFER there; "scan_transfer" here overrides it). The edits of the
+# large forms it supersedes are off: the hallux's distal lift and depth, the first MTP prominence and the head's knuckle,
+# toe 2's outline, the distal sections' squaring, the tips' droop, the pulps' ellipsoids, toe 5's own form, the arch
+# (vault, navicular, styloid, instep), the Achilles' cord and hollows, the sole's sulcus, ball edge and toe pads, and the
+# scan-driven pass's sole correction. Kept: the curled toes' fold closing (a repair), the 1-2 web's closing and the
+# lesser toes' fill and contact (between the toes), the nails and their crowns and folds, the necks and creases, the
+# tendons, veins, ridges, wear, the ankle crease and the hair.
+PARAMS.update({
+    "lift1": 0.0, "lift2": 0.0, "mtp_prom": 0.0, "mt_head": 0.0,
+    "t2_knuckle": 0.0, "t2_waist": 0.0, "t2_dip": 0.0, "t2_flare": 0.0, "t2_knuckle_low": 0.0,
+    "spade1": 0.0, "deepen1_up": 0.0, "deepen1_down": 0.0, "toe5_short": 0.0, "toe5_girth": 0.0,
+    "arch": {"mid": 0.0, "lat": 0.0, "navicular": {"amp": 0.0}, "styloid": {"amp": 0.0}, "instep": {"amp": 0.0}},
+    "achilles": {"cord": {"amp": 0.0}, "hollow": {"amp": 0.0}},
+    "sole": {"sulcus": {"depth": 0.0}, "ball_back": {"depth": 0.0}, "pads": {"amp": 0.0}},
+    "scan_sole": {"k": 0.0},
+})
+for _k in (1, 2, 3, 4, 5):
+    PARAMS[f"square{_k}"] = 0.0
+    PARAMS[f"droop{_k}"] = 0.0
+    PARAMS[f"pulp{_k}_e"] = {}
+# (and the distal segments' dorsal fairing, which the scan's smooth dorsum does not need.) The nails' stand-in dorsum (the
+# skin's height map, blurred to take out MakeHuman's nail-patch ripples): less the map's own offset over the vertices
+# (detail.Nail.apply's `blur_delta`) and blurred 0.5 mm, not 1.8 (the scan's skin has no ripples): switched on within half
+# a millimetre at the map's coverage edge, the offset and the blur's lift drew a line across each toe 8-12 mm behind its
+# nail in clay (xfer2; 0.05-0.3 mm, now under 0.01)
+PARAMS["fair_dorsum"] = 0
+for _k in (1, 2, 3, 4, 5):
+    PARAMS[f"nail{_k}"].update(blur=0.5, blur_delta=1)

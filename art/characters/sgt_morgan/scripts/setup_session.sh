@@ -95,6 +95,8 @@ say "4. MPFB 2.0.17 and the MakeHuman packs (598 MB)"
 if [ "$ASSETS" = 1 ]; then
   say "5. Textures, HDRIs and reference models (assets/manifest.json, 713 MB)"
   "$PY" -I scripts/setup/fetch.py manifest --root assets --manifest assets/manifest.json --jobs 4
+  # part 01 transfers the foot's large forms from these CC0 scans (spec 01, 2026-10-17)
+  "$PY" -I scripts/setup/fetch.py list --root . --list scripts/setup/downloads.json --group scans --jobs 4
 fi
 
 AIPY=""
