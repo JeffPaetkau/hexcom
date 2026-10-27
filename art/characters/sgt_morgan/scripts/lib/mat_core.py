@@ -19,6 +19,17 @@ COLOUR_KINDS = ("color", "diffuse", "basecolor", "albedo")
 # The 2nd and 98th percentiles of a normalised 3D Noise Fac at detail 2, roughness 0.5 (Blender 4.5, 65 k
 # samples, 2026-10-10; detail 1 gives 0.314-0.688, detail 3 0.345-0.654): the band noise_signed() maps to ±1.
 NOISE_BAND = (0.336, 0.665)
+NOISE_BANDS = {1: (0.314, 0.688), 2: NOISE_BAND, 3: (0.345, 0.654)}
+
+
+def cover_threshold(cover, detail=2):
+    """The Fac above which a normalised Noise (detail 1-3) covers `cover` of a surface: the Fac is close to
+    normal about 0.5 with the 2nd-98th percentile band of NOISE_BANDS, so a spec's "6 % cover" lands on the
+    tail it means instead of on a threshold read off the 0-1 range (§9's lesson on noise remapping)."""
+    from statistics import NormalDist
+    lo, hi = NOISE_BANDS[int(round(detail))]
+    sd = (hi - lo) / (2.0 * NormalDist().inv_cdf(0.98))
+    return 0.5 + sd * NormalDist().inv_cdf(1.0 - min(max(cover, 1e-4), 1.0 - 1e-4))
 # node properties that are layout, not meaning: left out of tree_hash
 _SKIP = {"name", "label", "location", "location_absolute", "width", "width_hidden", "height", "select",
          "show_options", "show_preview", "hide", "mute", "show_texture", "color", "use_custom_color", "parent",
@@ -351,10 +362,13 @@ def texture(asset, kind):
     return img
 
 
-def image_node(nb, img, vector, interpolation=None):
-    """An Image Texture node: Linear for colour, Cubic for normals and data (§5.5), Closest never."""
+def image_node(nb, img, vector, interpolation=None, box=False):
+    """An Image Texture node: Linear for colour, Cubic for normals and data (§5.5), Closest never; `box`
+    projects it on the three object planes with spec 16's blend 0.2 (§5.1, hard parts without UV.Real)."""
     interp = interpolation or ("Linear" if img.colorspace_settings.name == "sRGB" else "Cubic")
     nd = nb.node("ShaderNodeTexImage", interpolation=interp, extension="REPEAT")
+    if box:
+        nd.projection, nd.projection_blend = "BOX", 0.2
     nd.image = img
     nb.set(nd, "Vector", vector)
     return nd

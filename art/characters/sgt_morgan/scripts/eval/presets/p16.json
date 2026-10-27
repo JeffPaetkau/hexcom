@@ -1,31 +1,309 @@
 {
- "doc": "Spec 16 (materials) views of §1.3, rendered in spec 17's LookDev (AgX Base Contrast, no grade) by materials.swatch() (python scripts/eval/lookdev.py --swatch IDS). V1 is the flat swatch LookDev.Swatch beside Cal.Card18, V2 the macro at 0.09 mm/px, V3 the wear block (Lib.Test.WearBlock is not built: it needs the weathering groups of §4.2-4.4). V7 (added 2026-10-10) puts the recipe on Lib.Test.Ball and on Lib.Test.Toe with Lib.Test.Nail (skin and nails) or on Lib.Test.Fold (fabrics): the material-ball view a flat swatch cannot give for translucent skin and nails. V4 (hero patches), V5 (camouflage) and V6 (bake round trip) wait for spec 17's light solve, MG.Camo.Blotch4 and the bakes.",
+ "doc": "Spec 16 (materials) views of §1.3, rendered in spec 17's LookDev (AgX Base Contrast, no grade) by materials.swatch() (python scripts/eval/lookdev.py --swatch IDS). V1 is the flat swatch LookDev.Swatch beside Cal.Card18, V2 the macro at 0.09 mm/px, V3 the wear block (Lib.Test.WearBlock is not built: it needs the weathering groups of §4.2-4.4). V7 (added 2026-10-10) puts the recipe on Lib.Test.Ball and on Lib.Test.Toe with Lib.Test.Nail (skin and nails) or on Lib.Test.Fold (fabrics): the material-ball view a flat swatch cannot give for translucent skin and nails. V4 (hero patches), V5 (camouflage) and V6 (bake round trip) wait for spec 17's light solve, MG.Camo.Blotch4 and the bakes. V8-V10 (added 2026-10-27) show Lib.Test.Boot, built by materials.test_boot(), wearing the boot recipes of spec 02 §0 item 7 on LookDev floor: three-quarter, lateral and toe closeup.",
  "owner": "16",
  "presets": [
-  {"id": "p16.V1", "label": "swatch", "scene": "lookdev",
-   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -600, 1000], "target_mm": [-60, 0, 1000],
-              "up": [0, 0, 1], "lens_mm": 100, "sensor_mm": 36},
-   "render": {"res": [800, 800], "tier": "look"}, "hide": ["Lib.Test.*", "Cal.Chart", "Cal.Ball*"],
-   "compare": [], "note": "0.27 mm/px; the key 45 degrees off the camera axis so no specular peak reaches it"},
-
-  {"id": "p16.V2", "label": "macro", "scene": "lookdev",
-   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -250, 1000], "target_mm": [-60, 0, 1000],
-              "up": [0, 0, 1], "lens_mm": 100, "sensor_mm": 36},
-   "dof": {"fstop": 8, "focus": "target"},
-   "render": {"res": [1024, 1024], "tier": "look"}, "hide": ["Lib.Test.*", "Cal.Chart", "Cal.Ball*"],
-   "compare": [], "note": "0.09 mm/px: the weave, knit or grain period is measured here (spec 16 M4)"},
-
-  {"id": "p16.V3", "label": "wear", "scene": "lookdev",
-   "camera": {"type": "look_at", "frame": "W", "pos_mm": [300, -420, 1180], "target_mm": [0, 0, 1000],
-              "up": [0, 0, 1], "lens_mm": 85, "sensor_mm": 36},
-   "render": {"res": [1200, 900], "tier": "look"}, "hide": ["LookDev.Swatch", "Cal.Chart", "Cal.Ball*", "Cal.Card18"],
-   "compare": ["ref/zoom_armour_rknee_x8.png"],
-   "note": "needs Lib.Test.WearBlock and MG.Weather.Dust, MG.Mask.EdgeBevel and MG.Weather.Chips (not built)"},
-
-  {"id": "p16.V7", "label": "balls", "scene": "lookdev",
-   "camera": {"type": "look_at", "frame": "W", "pos_mm": [0, -560, 1300], "target_mm": [-40, 0, 1000],
-              "up": [0, 0, 1], "lens_mm": 85, "sensor_mm": 36},
-   "render": {"res": [1024, 1024], "tier": "look"}, "hide": ["LookDev.Swatch", "Cal.Chart", "Cal.Ball*"],
-   "compare": [], "note": "Lib.Test.Ball (60 mm), Lib.Test.Toe (22 mm) with Lib.Test.Nail, or Lib.Test.Fold, beside the card; 28 degrees down"}
+  {
+   "id": "p16.V1",
+   "label": "swatch",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     0,
+     -600,
+     1000
+    ],
+    "target_mm": [
+     -60,
+     0,
+     1000
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 100,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     800,
+     800
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "Lib.Test.*",
+    "Cal.Chart",
+    "Cal.Ball*"
+   ],
+   "compare": [],
+   "note": "0.27 mm/px; the key 45 degrees off the camera axis so no specular peak reaches it"
+  },
+  {
+   "id": "p16.V2",
+   "label": "macro",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     0,
+     -250,
+     1000
+    ],
+    "target_mm": [
+     -60,
+     0,
+     1000
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 100,
+    "sensor_mm": 36
+   },
+   "dof": {
+    "fstop": 8,
+    "focus": "target"
+   },
+   "render": {
+    "res": [
+     1024,
+     1024
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "Lib.Test.*",
+    "Cal.Chart",
+    "Cal.Ball*"
+   ],
+   "compare": [],
+   "note": "0.09 mm/px: the weave, knit or grain period is measured here (spec 16 M4)"
+  },
+  {
+   "id": "p16.V3",
+   "label": "wear",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     300,
+     -420,
+     1180
+    ],
+    "target_mm": [
+     0,
+     0,
+     1000
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 85,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     1200,
+     900
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "LookDev.Swatch",
+    "Cal.Chart",
+    "Cal.Ball*",
+    "Cal.Card18"
+   ],
+   "compare": [
+    "ref/zoom_armour_rknee_x8.png"
+   ],
+   "note": "needs Lib.Test.WearBlock and MG.Weather.Dust, MG.Mask.EdgeBevel and MG.Weather.Chips (not built)"
+  },
+  {
+   "id": "p16.V7",
+   "label": "balls",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     0,
+     -560,
+     1300
+    ],
+    "target_mm": [
+     -40,
+     0,
+     1000
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 85,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     1024,
+     1024
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "LookDev.Swatch",
+    "Cal.Chart",
+    "Cal.Ball*",
+    "Lib.Test.Boot*"
+   ],
+   "compare": [],
+   "note": "Lib.Test.Ball (60 mm), Lib.Test.Toe (22 mm) with Lib.Test.Nail, or Lib.Test.Fold, beside the card; 28 degrees down"
+  },
+  {
+   "id": "p16.V8",
+   "label": "boot",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     300,
+     -600,
+     330
+    ],
+    "target_mm": [
+     5,
+     -15,
+     85
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 60,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     1200,
+     900
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "LookDev.Swatch",
+    "Cal.*",
+    "Lib.Test.Ball",
+    "Lib.Test.Toe",
+    "Lib.Test.Nail",
+    "Lib.Test.Fold"
+   ],
+   "compare": [
+    "ref/crop_boots_feet.png"
+   ],
+   "note": "Lib.Test.Boot (materials.test_boot) on LookDev floor, three-quarter front-lateral of a left boot: the boot recipes together (added 2026-10-27)"
+  },
+  {
+   "id": "p16.V9",
+   "label": "boot_lateral",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     680,
+     -140,
+     150
+    ],
+    "target_mm": [
+     0,
+     -5,
+     85
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 60,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     1200,
+     800
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "LookDev.Swatch",
+    "Cal.*",
+    "Lib.Test.Ball",
+    "Lib.Test.Toe",
+    "Lib.Test.Nail",
+    "Lib.Test.Fold"
+   ],
+   "compare": [
+    "ref/crop_boots_feet.png"
+   ],
+   "note": "Lib.Test.Boot lateral, low: quarters, counter, strap and buckle, rand, midsole stripe, outsole and lugs (added 2026-10-27)"
+  },
+  {
+   "id": "p16.V10",
+   "label": "boot_toe",
+   "scene": "lookdev",
+   "camera": {
+    "type": "look_at",
+    "frame": "W",
+    "pos_mm": [
+     90,
+     -330,
+     250
+    ],
+    "target_mm": [
+     -4,
+     -105,
+     55
+    ],
+    "up": [
+     0,
+     0,
+     1
+    ],
+    "lens_mm": 85,
+    "sensor_mm": 36
+   },
+   "render": {
+    "res": [
+     1200,
+     900
+    ],
+    "tier": "look"
+   },
+   "hide": [
+    "LookDev.Swatch",
+    "Cal.*",
+    "Lib.Test.Ball",
+    "Lib.Test.Toe",
+    "Lib.Test.Nail",
+    "Lib.Test.Fold"
+   ],
+   "compare": [
+    "ref/zoom_boots_left_toe_x8.png"
+   ],
+   "note": "Lib.Test.Boot toe closeup: grain, flex creases, dust in the creases, toe cap stitches, bumper (added 2026-10-27)"
+  }
  ]
 }
