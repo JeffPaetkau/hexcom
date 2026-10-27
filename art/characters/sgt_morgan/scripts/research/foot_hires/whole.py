@@ -39,6 +39,17 @@ TENDONS = {
     "edl": {"amp": [0.62, 0.55, 0.5, 0.4], "half": 2.6, "gutter": 0.0, "rise": (0.25, 0.6), "fade": (0.8, 1.0)},
     "mask_share": 0.3,    # Foot.Tendon on the crests (the recipe adds 1.5 mm of bump and 3 % lightening at 1)
 }
+# Round 3b's fixes (2026-10-27; critic series foot_shape round 3b m4, m7, m21, m25: the tendons the crispest relief on
+# the foot, five or six even, sharp-edged cords from the ankle onto the toes, "cables on a smooth dome", where the scan's
+# dorsum is soft; a relaxed lean foot shows one clear hallux tendon, the others low, broad and blurred into the dome).
+# The extensor hallucis longus stays the one clear cord, lower and soft-shouldered: 0.8 mm under a (1 - x^2)^3 section
+# over 6 mm (about 5.4 mm across at half height, was 3.9 at 1.1 mm); the extensor digitorum's slips are low blurred
+# ridges, 0.15-0.28 mm over 5.5 mm (about 5 mm across), rising later and gone over the metatarsal heads, before the toes
+TENDONS.update({
+    "ehl": {"amp": 0.8, "half": 6.0, "power": 3, "gutter": 0.0, "rise": (0.05, 0.35), "fade": (0.84, 1.0)},
+    "edl": {"amp": [0.28, 0.24, 0.2, 0.15], "half": 5.5, "power": 3, "gutter": 0.0, "rise": (0.3, 0.65),
+            "fade": (0.5, 0.78)},
+})
 
 # the dorsal knuckle creases: segment, centre (mm along it; "ip" = the hallux IP's shifted station), spread (mm
 # either side), half-span across (mm), count, depth (mm), crease weight, roll (degrees, as detail.Nail's), seed
@@ -132,7 +143,7 @@ def tendons(q, nrm, segs, groups, J, P, report=None):
         d[box], s[box] = polyline_plan(q[box], catmull_rom(pts))
         near = d < 2.0 * c["half"]
         x = d[near] / c["half"]
-        cord = np.clip(1.0 - x * x, 0.0, 1.0) ** 2 - c["gutter"] * np.exp(-((x - 1.35) / 0.45) ** 2)
+        cord = np.clip(1.0 - x * x, 0.0, 1.0) ** c.get("power", 2) - c["gutter"] * np.exp(-((x - 1.35) / 0.45) ** 2)
         along = T.smoothstep(s[near], *c["rise"]) * (1.0 - T.smoothstep(s[near], *c["fade"]))
         h = amp * cord * along * up[near]
         dq[near] += h
@@ -188,6 +199,15 @@ def _knuckle(q, nrm, seg, t_c, spread, half, n, depth, weight, rng):
 # (shape pass 2: 0.28 and 0.12 deep before; from below the creases read as rings round banded stalks, round 1's m4)
 PLANTAR_LESSER = {"pip_s": 0.2, "pip_d": 0.16, "pip_w": 0.7, "pip2_ds": -1.3, "pip2_d": 0.06, "pip2_w": 0.55,
                   "dip_s": 0.8, "dip_d": 0.07, "dip_w": 0.85}
+# Round 3b's fixes (2026-10-27; critic series foot_shape round 3b m1, m16: from below the toes stacked pills with crisp ring
+# creases, the scan's plump pads beside them; a straight sharp slit across the hallux's pad). The plantar toes are the
+# scan's now (part 01's smaller kept zone, scanxfer), and of the trial's creases each toe keeps one soft, short fold:
+# the lesser toes' PIP crease at 0.1 mm over 1.3 mm (sigma), across the middle 60 % of its old span; the doubled PIP and
+# the DIP creases gone; toe 2's PIP as the others' and its DIP gone; the hallux's IP crease shallower, wider, shorter and
+# curved (0.15 over 1.6, 6 mm either side, bowed 2 mm; was 0.3 over 1.0, 8 mm, 1.5)
+PLANTAR_LESSER.update({"pip_d": 0.1, "pip_w": 1.3, "pip2_d": 0.0, "dip_d": 0.0, "half_k": 0.6,
+                       "ip1_d": 0.15, "ip1_w": 1.6, "ip1_half": 6.0, "ip1_bow": -2.0,
+                       "t2_pip_d": 0.1, "t2_pip_w": 1.3, "t2_dip_d": 0.0})
 
 
 def creases(q, nrm, segs, P, groups, report=None):
@@ -220,16 +240,23 @@ def creases(q, nrm, segs, P, groups, report=None):
             pl_k[(k, "pip")] = M.Plan(q, wk, segs[f"t{k}m"].o, tip)
             pl_k[(k, "dip")] = M.Plan(q, wk, segs[f"t{k}d"].o, tip)
     pc = dict(PLANTAR_LESSER, **(P.get("plantar_lesser") or {}))
-    jobs = [((1, "ip"), P.get("crease1_s", 1.0), 0.3, 1.0, -1.5, 8.0, 17 + 3),
-            ((2, "pip"), P.get("crease2p_s", 1.5), P.get("crease2p_d", 0.22), P.get("crease2p_w", 0.7), -0.6, 5.0, 17 + 10),
-            ((2, "dip"), P.get("crease2d_s", 0.8), 0.2, 0.6, -0.5, 4.5, 17 + 11)]
+    hk = pc.get("half_k", 1.0)
+    jobs = [((1, "ip"), P.get("crease1_s", 1.0), pc.get("ip1_d", 0.3), pc.get("ip1_w", 1.0), pc.get("ip1_bow", -1.5),
+             pc.get("ip1_half", 8.0), 17 + 3),
+            ((2, "pip"), P.get("crease2p_s", 1.5), pc.get("t2_pip_d", P.get("crease2p_d", 0.22)),
+             pc.get("t2_pip_w", P.get("crease2p_w", 0.7)), -0.6, 5.0 * hk, 17 + 10)]
+    if pc.get("t2_dip_d", 0.2) > 0.0:
+        jobs.append(((2, "dip"), P.get("crease2d_s", 0.8), pc.get("t2_dip_d", 0.2), 0.6, -0.5, 4.5, 17 + 11))
     # (the first build's 0.12 / 0.16 mm with ends fading over half their span read from below as slots cut in
     # each middle phalanx: shallower, wider, longer)
     for k, hw in ((3, 5.6), (4, 5.3), (5, 5.0)):
-        jobs.append(((k, "pip"), pc["pip_s"], pc["pip_d"], pc["pip_w"], -0.5, hw, 40 + k))
-        jobs.append(((k, "dip"), pc["dip_s"], pc["dip_d"], pc["dip_w"], -0.4, hw - 0.4, 50 + k))
+        jobs.append(((k, "pip"), pc["pip_s"], pc["pip_d"], pc["pip_w"], -0.5, hw * hk, 40 + k))
+        if pc["dip_d"] > 0.0:
+            jobs.append(((k, "dip"), pc["dip_s"], pc["dip_d"], pc["dip_w"], -0.4, hw - 0.4, 50 + k))
     # pass 2: the PIP creases doubled, the second fainter and a little proximal (round 1's m7: "often doubled")
     for k, hw in ((2, 5.0), (3, 5.2), (4, 4.9), (5, 4.6)):
+        if pc["pip2_d"] <= 0.0:
+            break
         s2 = (P.get("crease2p_s", 1.5) if k == 2 else pc["pip_s"]) + pc["pip2_ds"]
         jobs.append(((k, "pip"), s2, pc["pip2_d"], pc["pip2_w"], -0.4, hw, 60 + k))
     for key, t0, depth, width, bow, half, seed in jobs:
@@ -458,6 +485,16 @@ def _nearest(kd, pts):
 # gaps along the lesser toes in plan)
 CONTACT = {"pairs": [[2, 3], [3, 4], [4, 5]], "gap": 0.05, "full": 1.0, "reach": 2.4, "own": [0.55, 0.85],
            "smooth": 8}
+# Round 3b's fixes (2026-10-27; critic series foot_shape round 3b m5, m9, m12: a see-through slit about 3 mm wide along the
+# hallux and toe 2 for 35-40 mm, the scan's lying together; m3: clefts back to the webs): the hallux and toe 2 brought
+# into contact as the lesser toes are (part 01 now lays their cage walls together, transfer.close_pairs), and every
+# pair's walls pressed together further up their sides (fully under 1.6 mm, fading by 3.2), so the dorsal grooves are
+# the scan's soft ones over a contact line rather than V-notches down to it
+CONTACT.update({"pairs": [[1, 2], [2, 3], [3, 4], [4, 5]], "full": 1.6, "reach": 3.2})
+# ... and the seams where they meet faired (Taubin, `seam_fair` passes at `seam_k` over each toe's skin within `seam_mm`
+# of another toe, grown `seam_rings`): pressed together, the walls met in hairline cuts with crisp lips in clay; a real
+# pair of pressed toes parts in a soft, rounded groove
+CONTACT.update({"seam_mm": 1.2, "seam_rings": 4, "seam_fair": 24, "seam_k": 0.7})
 
 
 def toe_contact(q, nrm, groups, adj, P, report=None):
@@ -491,10 +528,28 @@ def toe_contact(q, nrm, groups, adj, P, report=None):
         rep[f"{ka}-{kb}"] = stats
     zone = _rings(adj, (np.abs(d).sum(axis=1) > 1e-6).astype(float), 3)
     d = M.taubin(d, adj, 0.9 * zone, iterations=int(cfg["smooth"]), lam=0.5, mu=0.0)
+    out = q + d
+    seam_n = 0
+    if cfg.get("seam_fair"):
+        seam = np.zeros(len(q))
+        for ka, kb in cfg["pairs"]:
+            wa, wb = T.toe_weight(groups, ka), T.toe_weight(groups, kb)
+            A, B = np.nonzero(wa > o0)[0], np.nonzero(wb > o0)[0]
+            for src, dst in ((A, B), (B, A)):
+                lo, hi = out[dst].min(axis=0) - 2.0, out[dst].max(axis=0) + 2.0
+                cand = src[np.all((out[src] > lo) & (out[src] < hi), axis=1)]
+                if not len(cand):
+                    continue
+                _, dist = _nearest(_kdtree(out[dst]), out[cand])
+                seam[cand[dist < cfg["seam_mm"]]] = 1.0
+        seam_n = int(seam.sum())
+        band = _rings(adj, seam, int(cfg["seam_rings"])) * T.smoothstep(T.toes_weight(groups), 0.3, 0.7)
+        out = M.taubin(out, adj, cfg["seam_k"] * band, iterations=int(cfg["seam_fair"]))
     if report is not None:
         ln = np.linalg.norm(d, axis=1)
-        report["contact"] = {"pairs": rep, "moved_n": int((ln > 0.01).sum()), "moved_max": round(float(ln.max()), 3)}
-    return q + d
+        report["contact"] = {"pairs": rep, "moved_n": int((ln > 0.01).sum()), "moved_max": round(float(ln.max()), 3),
+                             "seam_vertices": seam_n}
+    return out
 
 
 # --------------------------------------------------------------------------- pass 2: the arch and the instep
@@ -1029,6 +1084,28 @@ VEINS = {
 }
 
 
+# Round 3b's fixes (2026-10-27; critic series foot_shape round 3b m20, m22, m29: the veins tall uniform raised tubes, the
+# arch across the instep a hard line like a strap seam, the saphenous over the medial ankle hiding the malleolus; in
+# LookDev pale lines): fewer (the arch with the great saphenous, the first two dorsal metatarsal veins; the third and
+# the oblique branch gone), lower (0.22 mm on the arch, 0.3 at most over the medial ankle, was 0.76-0.95; 0.12-0.15 on
+# the branches), broader and softer (radius 5-7 mm under the (1 - x^2)^3 section, about 6 mm across at half height, was
+# 3.3), the beading fainter, the tint wider and darker (look.SKIN_OVERRIDES' vein colour)
+VEINS.update({"bead": 0.03, "tint_sigma": 0.38,
+              # the tint's full strength at 0.3 mm of relief, not 0.9: the lower veins kept their colour (LookDev, the
+              # first build of these: at 0.22 mm the arch's tint fell to a quarter and the veins all but vanished); its
+              # spread 0.38 of the broader radius, about 2.7 mm on the arch (0.75 read as a bruise 12 mm wide)
+              "tint_norm": 0.3})
+VEINS["paths"] = {k: dict(v) for k, v in VEINS["paths"].items() if k in ("arch_saphenous", "t1", "t2")}
+VEINS["paths"]["arch_saphenous"].update(amp=0.22, r=7.0, mul=[0.22, 0.28, 0.36, 0.52, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05,
+                                                            1.1, 1.15, 1.2, 1.25, 1.3, 1.3, 1.25, 1.15, 1.0])
+VEINS["paths"]["t1"].update(amp=0.15, r=5.5)
+VEINS["paths"]["t2"].update(amp=0.12, r=5.0)
+# (the first build of these, 0.3 mm over 5.5 on the arch, still drew the arch across the instep as a thin soft line in
+# V1f: 0.22 over 7 mm)
+# (150 passes of the plantar lesser toes' fairing, SOLE["fair"], for the faint transverse streaks they show from below,
+# softened them a little and left 19 more folded face pairs on toes 2 and 3 after the repair: 40 stand)
+
+
 def _anchor(q, kind, a, b, floor):
     import macro as M
     if kind == "top":
@@ -1115,7 +1192,7 @@ def veins(q, nrm, P, report=None):
         # is nothing, smooth where both rise, a little fuller where a branch joins its trunk (2^(1/p))
         old = H[cand]
         H[cand] = (old ** kk + h ** kk) ** (1.0 / kk)
-        tint = np.clip(amp[j] / 0.9, 0.0, 1.0) * np.exp(-0.5 * (d / (cfg["tint_sigma"] * r[j])) ** 2)
+        tint = np.clip(amp[j] / cfg.get("tint_norm", 0.9), 0.0, 1.0) * np.exp(-0.5 * (d / (cfg["tint_sigma"] * r[j])) ** 2)
         M_[cand] = np.maximum(M_[cand], tint)
         rep[name] = {"length_mm": round(L, 1), "amp_max": round(float(amp.max()), 2), "n": int((h > 0.05).sum())}
     if report is not None:

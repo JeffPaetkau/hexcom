@@ -85,6 +85,10 @@ SKIN_OVERRIDES = {"micro__I_toe_wrinkles__depth_mm": 0.0, "micro__G_vein_mm": 0.
                   # the key, and a grey of the skin's own lightness only desaturates it: at 38 % they read as pale welts):
                   # a vein seen through skin is a little darker and cooler than it, a muted blue-grey
                   "regions__vein__share": 0.38, "regions__vein__hex": "#687a85"}
+# round 3b's fixes (2026-10-27, critic series foot_shape round 3b; the session's Cycles renders): the veins still read
+# paler than the skin under the key; with their relief lower and broader (whole.VEINS) the tint carries them: darker and
+# bluer, a vein seen through a lean man's dorsal skin (Jeff's photos: blue-grey, darker than the skin round it)
+SKIN_OVERRIDES.update({"regions__vein__share": 0.5, "regions__vein__hex": "#53667a"})
 # whole foot, pass 2 (round 1's m33, m34, m11, m19, m26: young, clean and unused): Hires.Wear (whole.wear_masks) as
 # pressure redness, dryness drawn as fine pale scaling (a 0.45 mm noise thresholded into flakes, rougher and without
 # the oil's coat), and the tone's regional unevenness, browner where positive, paler and yellower where negative

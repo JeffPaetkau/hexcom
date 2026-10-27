@@ -32,6 +32,8 @@ def parse(argv):
     ap.add_argument("--method", default="base", choices=("base", "fields", "sdf", "scan"))
     ap.add_argument("--level", type=int, default=None, help="Catmull-Clark level of the dense copy")
     ap.add_argument("--views", default=VIEWS)
+    ap.add_argument("--eval-views", default="", help="the views for the Cycles tiers, if not --views (one build, the clay "
+                    "set and a few LookDev views: round 3b's fixes, 2026-10-27)")
     ap.add_argument("--tier", default="form", help="a tier, or several: form,eval (form first, then the Cycles ones)")
     ap.add_argument("--samples", type=int)
     ap.add_argument("--tag", default="")
@@ -97,7 +99,8 @@ def main(argv):
         hide = [o.name for o in bpy.data.objects if o.name.startswith("Foot.L.Nail.")
                 and o not in [p[0] for p in ctx.plates.values()]]
         for o in bpy.data.objects:
-            if o.name.startswith("Foot.R.") or o.name in hide:
+            # (part 01's sock and last, built since 2026-10-27, cover the foot: the trial judges the skin)
+            if o.name.startswith(("Foot.R.", "Sock.", "Foot.L.SockTarget", "Foot.L.Last")) or o.name in hide:
                 o.hide_render = True
         dressed = False
         for tier in a.tier.split(","):
@@ -116,7 +119,7 @@ def main(argv):
                 dressed = True
                 timings["dress"] = round(time.time() - t, 2)
             t = time.time()
-            ids = [v for v in a.views.split(",") if v]
+            ids = [v for v in (a.eval_views if tier != "form" and a.eval_views else a.views).split(",") if v]
             plans = [v for v in ids if v in PLAN_VIEWS]
             sides = C.render([v for v in ids if v not in PLAN_VIEWS], tier, out_dir, samples=a.samples,
                              hide=("Hires.L.SkinPlan",))

@@ -12,8 +12,10 @@ last has and a foot does not:
   bottom     the insole plane, z_b, the loaded sock's sole: each section across the foot takes its points' drop onto
              it (drawn in by a fifth of their height), so the bottom is flat from the heel seat to the toe and fills
              the arch, and the sides meet it at the feather line; the heel's underside is pressed onto it.
-  toe box    the front 45 mm stretched forward along the foot so that the last's length is the foot's plus the toe
-             allowance (15 mm, §0 item 3: 274.3 + 15), the room left in front of the toes, the toes' envelope kept.
+  toe box    the front 45 mm stretched forward along the foot so that the last's tip stands the toe allowance (15 mm,
+             §0 item 3) ahead of the STANDING, SOCKED toe: the loaded foot's socked envelope (socked_front), in plan,
+             after the toe spring (Jeff, 2026-10-27, "Reality": real boots leave 15-22 mm before the standing toe; the
+             old 274.3 + 15 left about 7 ahead of the socked toe), the toes' envelope kept.
   toe spring the forefoot ahead of the ball line (the 1st and 5th metatarsal heads' points on the insole plane)
              turned up about it by 12 degrees, eased in over the first 30 mm (§4.13), so the last carries its own
              toe spring and the pose extends the toes by the same angle.
@@ -33,7 +35,8 @@ from parts.p01 import sock as SK
 COLLAR_Z = 210.0
 ALLOW = {"ball_side": 2.0, "instep": 2.0, "heel_side": 1.0}      # mm, §4.13
 FACET_MM = 0.15                     # the last's flat facets between its vertices: kept this far clear of the socked foot
-TOE_ALLOWANCE = 15.0                 # mm, §0 item 3: last length = foot length + 15
+TOE_ALLOWANCE = 15.0                 # mm, §0 item 3: the last's tip this far ahead of the standing, socked toe (Jeff,
+                                     # 2026-10-27: "Reality"; was the stated foot length + 15, 289.3)
 TOE_SPRING_DEG, SPRING_BLEND = 12.0, 30.0
 STRETCH_FROM = 45.0                  # the toe box's stretch starts this far behind the socked foot's front
 LAST_MEMBRANE = {"iters": 400, "length": 3.0}
@@ -138,11 +141,11 @@ def faces(rings, n):
     return F
 
 
-def build(V, T, kept_sts, tree, off, foot_length, b1, b5, z_b, taper_from=None):
+def build(V, T, kept_sts, tree, off, front_y, b1, b5, z_b, taper_from=None):
     """The last's grid in F (rings, n, 3) from the loaded foot's surface: the hull rings, the stiff membrane at the
     per-vertex offset `off` (a (rings, n) array, or a function of the hull grid and its normals), the bottom, the toe
-    box stretched to foot_length + TOE_ALLOWANCE (plan length, after the toe spring), the toe spring. Returns
-    (grid, info)."""
+    box stretched until its foremost point lies at y `front_y` (plan, after the toe spring: the standing socked toe's
+    front less TOE_ALLOWANCE), the toe spring. Returns (grid, info)."""
     G0, kept = SK.tube(V, T, kept_sts, bottom=0.0, taper_from=taper_from)
     N0 = SK.grid_normals(G0)
     hmin = SK.obstacle(tree, G0, N0)
@@ -153,17 +156,38 @@ def build(V, T, kept_sts, tree, off, foot_length, b1, b5, z_b, taper_from=None):
     y_back = float(G[..., 1].max())
     y_front = float(G[..., 1].min())
     y_from = y_front + STRETCH_FROM
-    want = foot_length + TOE_ALLOWANCE
     k = 1.0
-    for _ in range(6):
+    for _ in range(8):
         Gs = toe_spring(stretch(G, y_from, k), b1, b5, z_b)
-        length = float(Gs[..., 1].max() - Gs[..., 1].min())
-        err = want - length
+        err = float(Gs[..., 1].min()) - front_y       # > 0: the tip still behind where it should be
         if abs(err) < 0.02:
             break
         k += err / STRETCH_FROM
-    info = {"k": k, "stretch_from": y_from, "length": length, "y_back": y_back, "front_before": y_front}
+    length = float(Gs[..., 1].max() - Gs[..., 1].min())
+    info = {"k": k, "stretch_from": y_from, "length": length, "y_back": y_back, "front_before": y_front,
+            "front": float(Gs[..., 1].min()), "front_want": float(front_y)}
     return Gs, kept, info
+
+
+def socked_envelope(V, T, tree, toe, L, collar_z=COLLAR_Z):
+    """The loaded socked foot, the reference for the allowances: the loaded skin with its nails (V, T, F mm; tree its
+    BVH) wrapped as the sock wraps it, at the sock's inner gap and its loaded thickness (sock.py's own membrane, not
+    the last's stiffer one). Returns its points (n, 3, F mm). Its rings stop 1.6 mm short of the toes' tips (the sock's
+    toe is closed by linking), so its front is not the socked toe's: socked_toe_y is."""
+    sts, _ = SK.stations(V, top_z=collar_z, fine_from=toe["tip5"][1] + 10.0)
+    G0, _ = SK.tube(V, T, sts, taper_from=toe["tip5"][1] + 10.0)
+    N0 = SK.grid_normals(G0)
+    reg = SK.regions(G0, N0, L, toe, float(G0[..., 1].max()))
+    h = SK.membrane(G0, N0, SK.obstacle(tree, G0, N0), SK.OFFSET_MM + SK.thickness(reg, loaded=True),
+                    length=SK.toe_cap_length_weight(G0, toe))
+    return (G0 + h[..., None] * N0).reshape(-1, 3)
+
+
+def socked_toe_y(V):
+    """The standing, socked toe's front (y, F mm), where the toe allowance is measured from (Jeff, 2026-10-27): the
+    loaded skin's foremost point (V: the loaded rendered surface with its nails) ahead by the sock's inner gap and its
+    toe's thickness (the reinforced toe, 2.2 mm: the front of the toe is not under load)."""
+    return float(np.asarray(V)[:, 1].min()) - (SK.OFFSET_MM + SK.THICK["toe"])
 
 
 def insole_z():

@@ -43,9 +43,26 @@ DEFAULTS = {
     "on": 0,
     "scan": "038",            # subject: Jeff saw 038 beside ours (2026-10-17)
     "loaded": "fBW",          # the loaded key's scan condition
-    "blend_z": [95.0, 125.0],  # the scan to the leg above (its cut at 125, 126.6 once scaled) ...
-    "hold": 75.0,             # ... and the leg held from this far over the cut (the displacement eases out between)
-    "keep": {"reach": 6.0, "cone_deg": 42.0, "rays": 10, "occ": [0.12, 0.4], "rings": 1, "own": 0.3},
+    # round 3b's fixes (2026-10-27, critic series foot_shape round 3b m2, m8, m10: from behind the ankle a broad flat
+    # face and the column leaning medially, a notch in the Achilles' line at z 110): the scan's ankle is kept through
+    # z 110 and fades into the leg by the cut (was 95-125, so the medial malleolus' hollows and the Achilles' line above
+    # z 95 were half ours), and our leg is first laid on the scan's sections at the cut (leg_align: its plan centre and
+    # its breadths across and along over `leg.band`), the alignment easing out up the leg over `leg.ease` (smootherstep,
+    # so the leg's outline keeps its slope at both ends); the displacement is then held from `hold` over the cut, past
+    # the alignment's reach, so the notch where 038's Achilles (6 mm further back than ours at the cut) met our leg goes
+    "blend_z": [110.0, 124.0],  # the scan to the leg above (its cut at 125, 126.6 once scaled) ...
+    "hold": 128.0,            # ... and the leg held from this far over the cut (the displacement eases out between)
+    "leg": {"on": 1, "band": [108.0, 122.0], "below": [60.0, 100.0], "ease": [124.0, 252.0], "scale": 1},
+    # round 3b's fixes (m1, m3, m5, m9, m12, m21: the toes read as fingers, our kept walls cylinders with clefts back to
+    # the webs, a see-through slit along the hallux and toe 2): `keep` is now only the skin between the toes whose
+    # nearest point on the scan is shared, lying as near another of our toes as its own (`shared`: the margin in mm
+    # over which it fades; where the scan's 1.4 mm mesh bridges two toes, the clefts' floors and the walls pressed
+    # together under its bridges), not every wall within `reach` of another toe (133 cage vertices a foot before): a
+    # wall whose nearest scan point is its own toe's follows the scan's soft groove, and `close` then lays the hallux's
+    # wall against toe 2's along their length (the scan's hallux lies against toe 2; ours stood 1.5-3 mm off it)
+    "keep": {"reach": 6.0, "cone_deg": 42.0, "rays": 10, "occ": [0.12, 0.4], "rings": 1, "own": 0.3,
+             "shared": [0.6, 2.0]},
+    "close": {"pairs": [[1, 2]], "gap": 0.3, "full": 2.5, "reach": 4.5, "rounds": 6, "keep": [0.1, 0.5], "smooth": 3},
     "iters": 16,
     "mu": [4.0, 0.04],        # smoothness of the displacement, first and last iteration (geometric in between)
     "max_dist": [24.0, 8.0],  # the farthest nearest point accepted, first and last iteration (mm)
@@ -398,11 +415,14 @@ def prewarp(q, w, joints, ours, theirs, ramp=(-0.06, 0.1), base_share=0.6, base_
     return q, rec
 
 
-def keep_mask(q, cage, w, body, cfg, region_z=(None, 60.0)):
+def keep_mask(q, cage, w, body, cfg, region_z=(None, 60.0), surface=None):
     """The skin between the toes (DEFAULTS["keep"]): for every body vertex of the forefoot, rays in a cone about its
     normal (the normal and `rays` more at `cone_deg`); the share that meets a toe other than its own within `reach`
-    mm, mapped through smoothstep(occ), then grown `rings` rings at half strength (the blend into the transfer). A
-    vertex's toe is its strongest toe weight over `own` (0: the foot)."""
+    mm, mapped through smoothstep(occ); with `surface` (the scan) and cfg["shared"], only where the vertex's nearest
+    scan point (facing it) is shared: no further from another of our toes than from the vertex, fading out by
+    shared[1] mm more (where the scan's 1.4 mm mesh bridges two toes, that point is on the bridge; where it lies on
+    the vertex's own toe, the scan's groove is the toe's own and is followed); then grown `rings` rings at half
+    strength (the blend into the transfer). A vertex's toe is its strongest toe weight over `own` (0: the foot)."""
     from mathutils.bvhtree import BVHTree
     from mathutils import Vector
     n = len(q)
@@ -433,6 +453,31 @@ def keep_mask(q, cage, w, body, cfg, region_z=(None, 60.0)):
                 hits += 1
         occ[i] = hits / float(len(dirs))
     m = S.smoothstep(occ, *cfg["occ"])
+    if surface is not None and cfg.get("shared"):
+        # each wall's nearest scan point (facing it), and that point's distance to the nearest other toe's limit
+        # surface against its distance to the wall: shared (kept) where the other toe is as near, fading by shared[1]
+        sel = np.nonzero(m > 0.0)[0]
+        L = cage.limit(q)
+        nl = cage.normals(q)
+        Cp, N, D = surface.nearest(L[sel])
+        facing = np.einsum("ij,ij->i", nl[sel], N) > 0.15
+        trees = {}
+        for k in range(1, 6):
+            tk = T[(lab[T] == k).all(axis=1)]
+            if len(tk):
+                trees[k] = BVHTree.FromPolygons(L.tolist(), tk.tolist(), all_triangles=True)
+        other = np.full(len(sel), np.inf)
+        for j, i in enumerate(sel.tolist()):
+            p = Vector(Cp[j].tolist())
+            for k, tr in trees.items():
+                if k == lab[i]:
+                    continue
+                hit = tr.find_nearest(p, float(D[j]) + float(cfg["shared"][1]) + 1.0)
+                if hit[0] is not None:
+                    other[j] = min(other[j], hit[3])
+        own_d = np.where(facing, D, 0.0)
+        sh = 1.0 - S.smoothstep(other - own_d, *cfg["shared"])
+        m[sel] *= np.where(facing, sh, 1.0)
     # grow by rings: each ring takes half of its strongest neighbour's (the cage's next ring is the blend: 2-4 mm on
     # the toes)
     ea, eb = cage.edges[:, 0], cage.edges[:, 1]
@@ -442,6 +487,98 @@ def keep_mask(q, cage, w, body, cfg, region_z=(None, 60.0)):
         np.maximum.at(nb, eb, m[ea])
         m = np.maximum(m, 0.5 * nb * body)
     return m * body, occ
+
+
+def _extents(P):
+    return np.array([P[:, 0].min(), P[:, 0].max(), P[:, 1].min(), P[:, 1].max()])
+
+
+def leg_align(q, cage, ref, cfg):
+    """Our leg laid on the scan's at the cut (DEFAULTS["leg"], round 3b's fixes): the limit surface's horizontal
+    sections over `band` against the scan's (the foot's front left out: y over -160), their mean extents across (x)
+    and along (y); each point moved in plan by the map taking ours onto the scan's (the centre, and with `scale` the
+    breadths), by a weight rising over `below` and easing out over `ease` (smootherstep), so the leg above the cut
+    runs on from the scan's ankle and returns to its own by ease[1]. Returns (positions, record)."""
+    from parts.p01 import scanfit
+    c = cfg.get("leg") or {}
+    if not c.get("on"):
+        return q, None
+    L = cage.limit(q)
+    ours, theirs = [], []
+    for z in np.arange(c["band"][0], c["band"][1] + 0.1, 2.0):
+        a = scanfit.section_points(L, cage.tris, 2, float(z))
+        b = scanfit.section_points(ref.q, ref.T, 2, float(z))
+        a, b = a[a[:, 1] > -160.0], b[b[:, 1] > -160.0]
+        if len(a) > 20 and len(b) > 20:
+            ours.append(_extents(a))
+            theirs.append(_extents(b))
+    if not ours:
+        return q, None
+    eo, es = np.mean(ours, axis=0), np.mean(theirs, axis=0)
+    co, cs = np.array([eo[0] + eo[1], eo[2] + eo[3]]) / 2.0, np.array([es[0] + es[1], es[2] + es[3]]) / 2.0
+    sc = np.array([(es[1] - es[0]) / (eo[1] - eo[0]), (es[3] - es[2]) / (eo[3] - eo[2])]) if c.get("scale", 1) \
+        else np.ones(2)
+    z = q[:, 2]
+    w = smootherstep(z, *c["below"]) * (1.0 - smootherstep(z, *c["ease"]))
+    mapped = cs + (q[:, :2] - co) * sc
+    out = q.copy()
+    out[:, :2] += w[:, None] * (mapped - q[:, :2])
+    return out, {"ours": np.round(eo, 2).tolist(), "scan": np.round(es, 2).tolist(),
+                 "shift_mm": np.round(cs - co, 2).tolist(), "scale": np.round(sc, 4).tolist()}
+
+
+def close_pairs(cage, q, W, body, keep, cfg, say=None):
+    """Each facing pair of toe walls laid together (DEFAULTS["close"], round 3b's fixes: the hallux stood 1.5-3 mm off
+    toe 2 along its distal 35-40 mm, the scan's lying against it): on the limit surface, each wall point of toe a within
+    `reach` of toe b's surface (signed, along b's normal) moved toward it by half the gap less `gap`, fully under `full`
+    and fading by `reach`, only on the walls the transfer kept (keep over cfg["keep"]: the outer surfaces stay on the
+    scan); the move put on the cage (a limit point moves by about half its vertex's move, so `rounds` rounds) and
+    smoothed over `smooth` rings. Returns (positions, record)."""
+    from mathutils import Vector
+    from mathutils.bvhtree import BVHTree
+    lab = toe_labels(W)
+    gate = S.smoothstep(keep, *cfg["keep"]) * body
+    ea, eb = cage.edges[:, 0], cage.edges[:, 1]
+    deg = np.maximum(np.bincount(cage.edges.ravel(), minlength=cage.n), 1).astype(float)
+    q = q.copy()
+    rec = {}
+    for r in range(int(cfg["rounds"])):
+        L = cage.limit(q)
+        nrm = cage.normals(q)
+        d = np.zeros_like(q)
+        for a, b in cfg["pairs"]:
+            tb = cage.tris[(lab[cage.tris] == b).all(axis=1)]
+            ta = cage.tris[(lab[cage.tris] == a).all(axis=1)]
+            if not len(tb) or not len(ta):
+                continue
+            for src, tt in ((a, tb), (b, ta)):
+                tree = BVHTree.FromPolygons(L.tolist(), tt.tolist(), all_triangles=True)
+                idx = np.nonzero((lab == src) & (gate > 0.0))[0]
+                for i in idx.tolist():
+                    loc, n, fi, dist = tree.find_nearest(Vector(L[i].tolist()), float(cfg["reach"]) + 1.0)
+                    if loc is None:
+                        continue
+                    n = np.array(n)
+                    if float(np.dot(nrm[i], n)) > -0.3:     # not facing it
+                        continue
+                    s = float(np.dot(L[i] - np.array(loc), n))
+                    wgt = (1.0 - float(S.smoothstep(s, cfg["full"], cfg["reach"]))) * gate[i]
+                    d[i] += -0.5 * (s - cfg["gap"]) * wgt * n
+                    if r == 0:
+                        rec.setdefault(f"{a}-{b}", []).append(s)
+        for _ in range(int(cfg["smooth"])):
+            avg = np.zeros_like(d)
+            for k in range(3):
+                avg[:, k] = (np.bincount(ea, weights=d[eb, k], minlength=cage.n)
+                             + np.bincount(eb, weights=d[ea, k], minlength=cage.n)) / deg
+            moved = np.linalg.norm(d, axis=1) > 0.0
+            d = np.where(moved[:, None], 0.5 * (d + avg), 0.5 * avg * gate[:, None])
+        q += d
+    out = {k: {"n": len(v), "gap_min": round(float(min(v)), 2), "gap_max": round(float(max(v)), 2)}
+           for k, v in rec.items()}
+    if say:
+        say(f"transfer close_pairs: {out}")
+    return q, out
 
 
 def fit(cage, q0, surface, keep, blend, free, cfg, say=None, limit=True):
@@ -572,9 +709,10 @@ def placement(foot, q, cage):
     return rezero_params(q, cage.tris, t2[np.argmin(t2[:, 1])])
 
 
-def run(foot, q, cage, ref, cfg, place=None, keep=None, say=None):
+def run(foot, q, cage, ref, cfg, place=None, keep=None, say=None, align_leg=True):
     """One foot's transfer onto `ref` from positions q (frame F, mm, the region's rows). Returns (positions, record);
-    the record keeps the placement and the masks for the loaded key and the masks stage."""
+    the record keeps the placement and the masks for the loaded key and the masks stage. align_leg False (the loaded
+    key, which starts from the transferred rest, its leg already laid on the seated scan) leaves the leg as it is."""
     body = foot.body
     W = np.stack([foot.w[k] for k in TOES], 1)
     R, o = place if place is not None else placement(foot, q, cage)
@@ -586,11 +724,15 @@ def run(foot, q, cage, ref, cfg, place=None, keep=None, say=None):
         qw, rec["prewarp"] = prewarp(qs, W, js, ours, ref.tips, base_share=float(cfg.get("base_share", 0.6)))
     else:
         qw = qs
+    if align_leg:
+        qw, rec["leg"] = leg_align(qw, cage, ref, cfg)
     if keep is None:
-        keep, _ = keep_mask(qw, cage, W, body, cfg["keep"])
+        keep, _ = keep_mask(qw, cage, W, body, cfg["keep"], surface=ref.surface)
     blend = 1.0 - smootherstep(qs[:, 2], *cfg["blend_z"])
     free = body & (qs[:, 2] < cfg["blend_z"][1] + cfg["hold"] + 15.0)
     qf, rep = fit(cage, qw, ref.surface, keep, blend, free, cfg, say=say)
+    if (cfg.get("close") or {}).get("pairs"):
+        qf, rec["close"] = close_pairs(cage, qf, W, body, keep, cfg["close"], say=say)
     # the helpers (MakeHuman's joint cubes and the rest of its helper geometry) follow their toe's skin
     lab = toe_labels(W)
     helpers = np.nonzero(~body & (qs[:, 2] < cfg["blend_z"][1] + cfg["hold"] + 15.0))[0]

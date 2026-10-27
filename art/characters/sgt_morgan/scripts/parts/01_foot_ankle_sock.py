@@ -155,7 +155,8 @@ def stage_sculpt(ctx, scope, ob, st):
             last = rec["fit"][-1]
             log.info("part 01", f"{side} transfer onto scan {cfg['scan']} mBW: {last['n']}/{last['of']} vertices on it, "
                      f"limit residual rms {last['rms']} max {last['max']} mm; keep {int((rec['keep'] > 0.5).sum())} "
-                     f"vertices; prewarp {json.dumps(rec.get('prewarp'))}")
+                     f"vertices; prewarp {json.dumps(rec.get('prewarp'))}; leg {json.dumps(rec.get('leg'))}; "
+                     f"close {json.dumps(rec.get('close'))}")
 
 
 def stage_nails(ctx, scope, ob, st):
@@ -245,7 +246,7 @@ def stage_contact(ctx, scope, ob, st):
         if rec is not None:
             last = rec["fit"][-1]
             log.info("part 01", f"{side} loaded key from scan {cfg['scan']} {cfg.get('loaded', 'fBW')}: limit residual rms "
-                     f"{last['rms']} max {last['max']} mm; laid on the seated scan by "
+                     f"{last['rms']} max {last['max']} mm; leg {json.dumps(rec.get('leg'))}; laid on the seated scan by "
                      f"{json.dumps(body.reference(cfg, str(cfg.get('loaded', 'fBW'))).info.get('registered'))}")
     S.key_from_positions(ob, "Foot.Contact", loaded / 1000.0, base=rest / 1000.0, value=0.0)
 
@@ -504,10 +505,12 @@ def stage_last(ctx, scope, ob, st):
             return SK.OFFSET_MM + LS.FACET_MM + t + LS.ALLOW["ball_side"] * a["ball"] + LS.ALLOW["instep"] * a["instep"] \
                 + LS.ALLOW["heel_side"] * a["heel"]
 
-        # the length the allowance is added to: the foot as spec 01 and 02 state it, 038's scan scaled to 274.3 (the cage,
-        # which §8.2 reads, stands 0.9 mm longer; the rendered surface 3 mm shorter)
+        # the toe allowance from the standing, socked toe (Jeff, 2026-10-27: "Reality"; §0 item 3 and §4.13 notes): the
+        # loaded foot's toe with the sock's gap and toe thickness ahead of it; was the stated foot (038's scan at 274.3) + 15
         L_decl = float(scanref.LENGTH)
-        G, kept, info = LS.build(V, T, sts, tree, off, L_decl, b1, b5, z_b, taper_from=toe["tip5"][1] + 10.0)
+        sk_front = LS.socked_toe_y(V)
+        G, kept, info = LS.build(V, T, sts, tree, off, sk_front - LS.TOE_ALLOWANCE, b1, b5, z_b,
+                                 taper_from=toe["tip5"][1] + 10.0)
         name = f"Foot.{side}.Last"
         me = SK.build_mesh(name, G, f, face_list=LS.faces(G.shape[0], SK.N_AROUND), uv=False)
         lob = scope.new_object(name, me, lasts)
@@ -516,9 +519,10 @@ def stage_last(ctx, scope, ob, st):
         nails.parent_to_bone(lob, rig, f"foot.{side}")
         lob.hide_render = True
         lob["p01_doc"] = ("spec 01 §4.13: the rest foot loaded (Foot.Contact 1.0), socked at the loaded thickness, with "
-                          "the allowances; insole plane z %.2f mm (frame F); length %.1f = foot %.1f + %.0f" %
-                          (z_b, info["length"], L_decl, LS.TOE_ALLOWANCE))
+                          "the allowances; insole plane z %.2f mm (frame F); length %.1f, the tip %.0f mm ahead of the "
+                          "standing socked toe" % (z_b, info["length"], LS.TOE_ALLOWANCE))
         lob["p01_insole_z"] = float(z_b)
+        lob["p01_socked_front_y"] = sk_front
         lob["p01_ball"] = json.dumps({"b1": [float(c) for c in b1], "b5": [float(c) for c in b5]})
         lob["p01_foot_length"] = L_decl
         lob["p01_foot_length_cage"] = float(Lf)
@@ -539,9 +543,10 @@ def stage_last(ctx, scope, ob, st):
             e.matrix_world = Matrix.Translation(w.tolist())
             e["p01_frame_mm"] = [round(float(c), 4) for c in p]
         st["last"][side] = {"length": round(info["length"], 2), "k": round(info["k"], 4), "insole_z": z_b,
-                            "medial_resolved": mall["resolved"]}
-        log.info("part 01", f"{side} last: length {info['length']:.2f} (foot {L_decl:.2f} + {LS.TOE_ALLOWANCE}), toe box x"
-                 f"{info['k']:.3f} from y {info['stretch_from']:.1f}, insole z {z_b:.2f}")
+                            "medial_resolved": mall["resolved"], "socked_front_y": round(sk_front, 2)}
+        log.info("part 01", f"{side} last: length {info['length']:.2f} (the tip {LS.TOE_ALLOWANCE} ahead of the standing "
+                 f"socked toe at y {sk_front:.2f}; foot {L_decl:.2f}), toe box x{info['k']:.3f} from y "
+                 f"{info['stretch_from']:.1f}, insole z {z_b:.2f}")
 
 
 def _ball_points(m, ix, f, side, cubes_f):
@@ -750,6 +755,10 @@ XSRC = "§0 (Jeff, 2026-10-17: the foot's large forms are transferred from a CC0
 XFER_TIP_Y = {1: -275.1, 2: -275.2, 3: -264.8, 4: -251.2, 5: -224.5}   # the cage's tips (1-3 mm past the rendered
 XFER_TOE_W = {1: 34.8, 2: 19.7, 3: 20.1, 4: 21.2, 5: 20.2}             # surface's); toe 5's base carried back 12 mm
 XFER_TOE_H = {1: 30.2, 2: 17.6, 3: 17.2, 4: 19.9, 5: 18.7}
+# round 3b's fixes (2026-10-27, §4.2 note): the hallux's wall laid against toe 2's along their length (transfer.close_pairs;
+# they stood 1.5-3 mm apart at the tips), so both read wider in plan where they meet: the hallux 36.9 / 38.1 (left /
+# right; the scan's toe line, which takes their fused cleft whole, reads 33-34), toe 2 21.5 / 22.0
+XFER_TOE_W.update({1: 37.4, 2: 21.7})
 XFER_TARGETS = {
     "ball_length": (189.5, 3.0, XSRC + ": the medial border's widest point, 20 mm behind ANSUR's first head (210)"),
     "heel_breadth": (67.9, 3.0, XSRC + ": 038's own 67.9 (scan.py's reading)"),
@@ -781,6 +790,9 @@ XFER_PLAN_TARGETS = {
 XFER_GAPS = {"1-2": ([-0.25, 3.0], XSRC + ": the hallux against toe 2, as the scan's"),
              "other": ([-0.25, 60.0], XSRC + ": touching, never crossing by more than the cage's 0.2 mm")}
 XFER_CONTACT_ARCH = ([3.0, 8.0], XSRC + ": the cage reads 3.8 where the scan's own medial border drops 5.5")
+# the last's length once its tip stands 15 mm ahead of the standing, socked toe (Jeff, 2026-10-27, "Reality"; §4.13 note;
+# 289.3 before, the stated foot + 15)
+LAST_LENGTH_MM = 297.0
 SCAN_REF_RMS = {"plan": 1.5, "heel": 1.5, "sole": 1.0}   # the rendered surface against the scan it came from (mm)
 # part 01's hallux plate on the scan's broad, flat-topped toe: built on §3.3's 19.5 x 13.8 bed it reads 20.9 x 16.7 with a
 # 9.5 mm radius (its buried sides dive further off a flat dorsum; 19.6 x 15.4 and 11.0 on MakeHuman's rounder toe). A
@@ -979,9 +991,6 @@ def _measure_last(ob, lob, side, m, ix, add):
     b1, b5 = np.array(ball["b1"]), np.array(ball["b5"])
     src = "§4.13, §0 item 3"
     length = float(q[:, 1].max() - q[:, 1].min())
-    add(f"last_length.{side}", round(length, 2), round(Lf + LS.TOE_ALLOWANCE, 2), 1.0,
-        src + ": the foot's stated length (038's scan scaled to 274.3) + 15; spec 02 §0 item 1: 289.3")
-    add(f"last_toe_allowance.{side}", round(length - Lf, 2), LS.TOE_ALLOWANCE, 1.0, src)
     plates = [bpy.data.objects[n] for n in (f"Foot.{side}.Nail.{k}" for k in fields.TOES) if n in bpy.data.objects]
     rest = _sculpted_world(ob)
     kb = ob.data.shape_keys.key_blocks["Foot.Contact"]
@@ -1025,13 +1034,14 @@ def _measure_last(ob, lob, side, m, ix, add):
     co = _sculpted_world(ob)
     cubes = {k: f.to_f(pp) for k, pp in _joint_cubes(ob, side, co).items()}
     toe = _toe_line(m, ix, f, side, cubes)
-    sts, _ = SK.stations(V1, top_z=LS.COLLAR_Z, fine_from=toe["tip5"][1] + 10.0)
-    G0, kept = SK.tube(V1, T1, sts, taper_from=toe["tip5"][1] + 10.0)
-    N0 = SK.grid_normals(G0)
-    reg = SK.regions(G0, N0, Lc, toe, float(G0[..., 1].max()))
-    h = SK.membrane(G0, N0, SK.obstacle(tree1, G0, N0), SK.OFFSET_MM + SK.thickness(reg, loaded=True),
-                    length=SK.toe_cap_length_weight(G0, toe))
-    Sk = (G0 + h[..., None] * N0).reshape(-1, 3)
+    Sk = LS.socked_envelope(V1, T1, tree1, toe, Lc)
+    # the toe allowance from the standing, socked toe (Jeff, 2026-10-27: "Reality"; was the stated foot length + 15,
+    # 289.3, which left about 7 mm ahead of this toe and 9.7 ahead of the bare one)
+    sock_room = float(LS.socked_toe_y(V1) - q[:, 1].min())
+    add(f"last_toe_allowance.{side}", round(sock_room, 2), LS.TOE_ALLOWANCE, 0.5,
+        src + " (Jeff, 2026-10-27: reality): the last's tip ahead of the standing socked toe, in plan")
+    add(f"last_length.{side}", round(length, 2), LAST_LENGTH_MM, 1.0,
+        src + " (Jeff, 2026-10-27): 15 mm ahead of the standing socked toe; spec 02 §0 item 1 note")
 
     def ext(P, sel, axis):
         return float(P[sel, axis].max() - P[sel, axis].min()) if sel.any() else None

@@ -719,3 +719,89 @@ the scan's 5.5; §8.3 Q1's asymmetry, now only pass B's toe axes between the fee
 
 Cost: part 01 build 13 s (the transfer about 1 s a foot, its loaded key as much); the stage from scratch 650 s (the dense
 transfer about 300 of it), cached 100 s; clay 11 s for eleven views; Cycles V1f 50 s, V5f 77 s.
+
+## Round 3b fixes (2026-10-27)
+
+Shape round 3b (`notes/critic/foot_shape_r3b/`: 6, 6, 6, FAIL, 0 blocking) agreed on one thing: "the scanned body is
+soft and organic, the modelled parts crisp". Three items, in order, in part 01's transfer and the trial's layer; spec 01's
+dated notes of this date (§0, §4.2, §4.3, §4.13) and spec 02 §0's note (the last). Side by sides at one scale,
+r3b | after | scan 038: `renders/research/foot_hires/r3b_fixes/sbs/` (the packet's nine views); the run is
+`fields_r3bfix7` (clay, and Cycles LookDev V1f and V5f).
+
+* **The toes (m1, m3, m5, m6, m9, m12-m15).** Sliced against 038 the toes' outer envelopes were already his; what read as
+  fingers was ours between them: `Foot.ScanKeep` kept every wall within 6 mm of another toe (133 cage vertices on the left
+  foot), so the walls stayed MakeHuman's cylinders down to V-notches at the contact line, and the hallux stood 1.2-5 mm off
+  toe 2 at the tips (the prewarp turns them 2.3 degrees apart to meet the scan's tip centres). Part 01 now keeps only the
+  walls whose nearest scan point is *shared*, no further from another of our toes than from the wall (fading over 0.6-2.0
+  mm more): where the scan's 1.4 mm mesh bridges two toes that point is on the bridge and following it would fuse them;
+  elsewhere the scan's groove is the toe's own (`transfer.keep_mask`, "shared"). **87 cage vertices (left; right 82),
+  133 / 125 before**; on the closeup copy's level 3 the kept share of the toes' zone falls from 23 to 17 %, on the trial's
+  dense skin (Foot.ScanKeep over 0.5) from 191,580 to 139,654 vertices. Then `transfer.close_pairs` lays the hallux's kept
+  wall against toe 2's along their length on the limit surface (half the gap less 0.3 mm a side, fully under 2.5, fading
+  by 4.5, six rounds), and the contacts are resolved as before (the 1-2 gap reads 0.25 / 0.21 mm). A first try that let
+  every wall within reach follow the scan and closed every pair pulled the walls onto the bridges and overlapped the toes
+  (toe 2 and 3 widths 23 / 22 mm, crossing curves in the sections); the shared-point rule does not. In the trial: every
+  pair, the hallux and toe 2 included, pressed together further up their sides (`whole.CONTACT`: fully under 1.6 mm,
+  fading by 3.2; was 1.0 / 2.4 and the lesser toes only) and the seams where they meet faired (24 Taubin passes over each
+  toe's skin within 1.2 mm of another, grown four rings), so the toes part in soft grooves over a contact line, not in
+  V-notches to the webs; the plantar creases one soft short fold a toe (the lesser PIP 0.1 mm over 1.3, 60 % of its old
+  span; the doubled PIP and the DIP creases off; the hallux's IP 0.15 over 1.6, 6 mm a side, bowed; `whole.PLANTAR_LESSER`).
+  Sliced lengthwise, the plantar pads of toes 2-4 now lie on 038's own. Seen: from above and in V5f the toes are pressed
+  together and plumper, the pulps bulging past the nails, the hallux against toe 2 with no light between them (plan,
+  V4o); from below the slit is gone and the pads are broad, but faint transverse streaks remain on toes 2-4 in clay
+  (the curled toes' closed folds' rows under the scan's surface; 150 fairing passes instead of 40 softened them a little
+  and left 19 more folded pairs, so 40 stand): at packet scale toes 2-4 still read from below as separate, banded
+  stalks beside the scan's round pads, if broader; hairline seams with small pinches at the web roots (m14) remain.
+* **The dorsal relief (m4, m7, m20-m22, m25, m29).** The extensor hallucis longus is the one clear tendon, lower and
+  soft-shouldered: 0.8 mm under a (1 - x^2)^3 section over 6 mm, about 5.4 mm across at half height (was 1.1 mm over 3.9);
+  the extensor digitorum's slips 0.11-0.21 mm over 5.5 mm, rising later and gone over the metatarsal heads
+  (`whole.TENDONS`). The veins fewer (the arch with the great saphenous and the first two dorsal metatarsal veins; the third
+  and the oblique branch off), lower (0.22 mm on the arch, at most 0.34 over the medial ankle with its slow variation;
+  0.16-0.17 on the branches; was 0.76-0.95), broader (radius 5-7 mm), the beading fainter (`whole.VEINS`); in the
+  material darker and bluer
+  (`look.SKIN_OVERRIDES`: 50 % of #53667a, was 38 % of #687a85), the tint at full strength from 0.3 mm of relief (it scaled
+  with the relief and all but vanished) over about 2.7 mm (0.75 of the radius read as a bruise). Seen: in clay the dorsum
+  is the scan's soft dome with one hallux tendon and faint slips, the arch a low swell; in LookDev the veins are blue-grey,
+  darker than the skin round them, not pale welts.
+* **The ankle from behind (m2, m8, m10).** 038's Achilles stands 6-10 mm further back than our leg at the cut and his
+  ankle's breadths differ by 5-6 %; with the scan's weight fading over 95-125 the scan's own forms above 95 were half ours
+  and from behind the column above the heel was our smooth leg with a broad flat medial face. Part 01 now lays our leg on
+  the scan's sections over z 108-122 before the fit (`transfer.leg_align`: the plan centre and both breadths; on the left
+  foot 7.8 mm back, x1.06 across, x1.05 along), easing in over 60-100 and out up the leg over 124-252 (smootherstep), keeps
+  the scan's weight full to 110 (fading by 124) and holds the leg from 252 (200 before); the loaded key starts from the
+  transferred rest and is not aligned again. (In V9 a sliver of the rest foot's medial ankle, about z 110, now shows
+  through the last, which wraps the loaded foot: the standing scan's ankle is a little narrower there. The loaded socked
+  foot stays inside it, `last_contains_sock` -0.035.)
+  On the closeup copy (level 3) the back of the ankle at z 100-120 stands 0.3-2.2 mm inside 038's line (2.8-6.1 before)
+  and runs on into the leg without the notch; spec 03's leg moves 2.1 mm at z 200, 0.7 at 220, none above 252 (spec 01
+  §0 note). In the trial the dense skin carries 038's sections up the leg (`scanxfer.section_lift`: at each height over
+  100-115 his section against the cage's, as radii in 120 sectors smoothed over 7 degrees and across heights; above the
+  band the top one runs on at its slope, damped over 15 mm, and eases out by 252), so the Achilles' cord and the hollows
+  beside it run on and fade into the leg as a real Achilles does; the dense blend is 100-118, clear of the scan's last 8
+  mm under its cut, where its walls turn in toward the cap. Each of these left a horizontal line round the ankle in clay
+  and was dropped: a section averaged over the band (a line where the blend began), the blend to 124 (a line at the cut,
+  the scan's rim), the top section held without its slope (a crease at 116, where the scan rises straight back-medially
+  and the cage flares), a smoothness 16 times stronger over the band (a flat bright facet with an edge at each end).
+  Seen: in V8 the column narrows into the Achilles over the heel with the scan's medial hollow and malleolus, no broad
+  face beyond the heel's medial edge; V2o's notch is gone; in V2 and V3 the leg runs on from the scan's ankle with no line
+  at the packet's scale.
+
+**The last's toe room (Jeff, 2026-10-27: "Reality").** The 15 mm allowance is measured from the standing, socked toe (the
+loaded rendered toe with the sock's 0.3 mm gap and 2.2 mm toe ahead of it, `last.socked_toe_y`; the toe box stretched
+until the tip lies there): the last is **297.1 mm** (left; right 297.0), 17.5 ahead of the bare standing toe; the other
+allowances and the 12 degree toe spring stand. `measure()`: `last_toe_allowance` the socked room (15 +- 0.5),
+`last_length` 297 +- 1.
+
+Part 01: 255 metrics, 215 pass, 40 reported, none fail. Three `--rebuild` runs: the same object hashes (30 objects) and
+the same layer arrays; the build key differed only by `lib/materials.py`'s source hash and the lint warning count, which
+another session was changing between the runs. The trial's fold census (`debug_folds`, adjacent faces turned over by
+more than 120 degrees, at the end of the build, after the repair step): 29 pairs (r3b's build 30), 58 right after the
+scan transfer (32), 90 found and smoothed by the repair (67). Packet `critic/shape_r4/` (sha 8ae8439c2db9): shape_r3b's
+views, scope, questions and anchor, its declarations with the blend's range updated to 100-250, 18 claims from round 3b.
+Critics not run.
+
+Open: the plantar lesser toes' banded shading (above); the hairline seams and the pinches at the web roots; toe 5's bones
+(spec 08); the free edges' French look.
+
+Cost: part 01 build about 30 s with the sock and the last; the stage from scratch about 600 s, the dense transfer and its
+lift about 300 of it; clay 11 s for eleven views; Cycles V1f 49 s, V5f 80 s.

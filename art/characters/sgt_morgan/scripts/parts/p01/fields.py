@@ -1198,7 +1198,7 @@ class Body:
         rec = foot.transfer
         ref = self.reference(cfg, str(cfg.get("loaded", "fBW")))
         q, rec_l = X.run(foot, foot.pre_beds, foot.cage, ref, cfg, place=(rec["R"], rec["o"]), keep=rec["keep"],
-                         say=say)
+                         say=say, align_leg=False)
         z0, z1 = cfg["floor_flat"]
         q = X.floor_flat(foot.cage, q, z0, z1)
         foot.transfer_loaded = rec_l
