@@ -301,6 +301,17 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    (`last.TOE_ALLOWANCE`). The V6 boot check against the drawing fails its 5 px rule (the drawn
    boot is shorter than a real boot round this last). Spec 02 revised the same day (its §0;
    questions Q13-Q19 for Jeff, Q13 being the stature: the real footbed lifts 33 mm, not 42).
+   **Toward the boot (Tuesday 27 October, afternoon)**: spec 18's `modifiers`, `sweep` and
+   `uv` built with self-tests (d29751a). Spec 16's twelve boot recipes and seven groups built
+   (4a38d27; `mat_hard.py` is new; LIB_VERSION 16.2), checked in look-dev on a stand-in boot
+   (`Lib.Test.Boot`, p16 V8-V10) against `ref/crop_boots_feet.png`: worn dark leather with a
+   broad toe highlight, dust in creases, a scuffed rand, braided laces; its deviations are in
+   spec 16 §9. Still to judge on the real boot: the reference's stronger contrast and warm/cool
+   split, the scuffs (they read as horizontal dashes), the webbing chevrons. Spec 02 must decide
+   the toe cap's polish (the stand-in used 0.6). Trap: triangle fans of hundreds of triangles
+   under Subdivision cost minutes per Cycles render (295 s to 6 s once removed). Jeff answered
+   the last's toe room: "Reality", so the 15 mm is measured from the standing socked toe and the
+   last becomes ~297 mm (notes in spec 01 §0 and spec 02 §0).
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
