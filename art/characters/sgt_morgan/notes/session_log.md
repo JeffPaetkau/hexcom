@@ -312,6 +312,28 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    under Subdivision cost minutes per Cycles render (295 s to 6 s once removed). Jeff answered
    the last's toe room: "Reality", so the 15 mm is measured from the standing socked toe and the
    last becomes ~297 mm (notes in spec 01 §0 and spec 02 §0).
+   **The detail pass from round 3b (c98ce4d)**: the scan now drives the toe walls except the
+   cleft floors and the walls under its bridges (`Foot.ScanKeep` 133 to 87 cage vertices), the
+   hallux and toe 2 laid together (`transfer.close_pairs`), one soft plantar crease per toe, one
+   clear EHL tendon and fewer, lower, blue-grey veins, the ankle from behind laid on the scan's
+   sections and eased out by z 252 (spec 03's leg moves 2.1 mm at z 200, spec 01 note); the last
+   is 297.1 mm. **Shape round 4**: 7, 6, 6, FAIL, 0 blocking, 9 of 18 claims fixed by all three
+   (`notes/critic/foot_shape_r4/`). All three critics now agree on one thing: the scanned foot is
+   soft and real, and the modelled toes are a harder object grafted on. Toes 2-4 are identical
+   straight columns with no PIP hump, curl or pulp past the nail (m1); in side view low crimped
+   strips where the scan has round bulbs (m2); stacked rings from below (m3); toe 5 plugged in
+   through a crisp ring (m4); hook notches at every web root (m5); a V slit still between the
+   hallux and toe 2 (m6). Minor: ripple rings on the hallux, a cut-like mark on its pad, no
+   anterior ankle crease, a slight Achilles kink at z 105, and the venous arch reading as a
+   drawn line across the instep in look-dev.
+   **Next (round 5 brief)**: take the toes' volumes from the scan too (knuckles, curl, pulps, the
+   lesser toes' differing widths and lengths), keeping our geometry only where the scan's toes
+   are fused, i.e. the cleft floors, and there blurred to the scan's softness rather than crisp;
+   remove the web-root notches and the hallux ripples; soften the venous arch; add one faint
+   anterior ankle crease. The scan is our best evidence and Jeff judged it better everywhere but
+   between the toes; round 4 says our toes are the weakest part, so the swap should go further.
+   Then the boot (part 02), whose shared modules (`gn_stitches`, `gear_webbing`,
+   `gear_hardware`) were being built when this entry was written.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

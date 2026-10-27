@@ -1,0 +1,62 @@
+{
+ "part": "01",
+ "round": 4,
+ "critic": "C3",
+ "lens": "craft",
+ "model": "claude-opus-5-5",
+ "packet_sha": "8ae8439c2db96d6174877722934c895261648ea233638df984c8e1a6aa7d91c9",
+ "questions": [
+  {"id": "Q2", "score": 5, "note": "The cascade reads right: the hallux leads toe 2 by a hair, 3 to 5 step back, and the 5th is rolled with its nail facing out in V1f. The toes are still where the render gives itself away. Toes 2 to 4 are near-identical cylinders, the tips are crimped in V3, the undersides are stacked rings in V4, toe 5 has a step at its root and the web roots have sharp hooks. Knuckles and pulps barely read."},
+  {"id": "Q7", "score": 7, "note": "From behind, the column is centred over the heel: a bell narrowing into a broad Achilles cord with soft hollows either side, as in the scan. The lateral malleolus sits lower and further back with its hollow; the medial side is higher and broader. The tells: a slight kink in the Achilles line near z 105 in V2o, where the scan eases into the leg, and no distinct anterior ankle crease in the clay."}
+ ],
+ "overall": 6,
+ "defects": [
+  {"id": "D1", "severity": "major", "preset": "pair_p01.V5f.L_form.png", "box_px": [1500, 290, 1900, 600], "what": "Toes 2, 3 and 4 are parallel cylinders of near-identical width, length and tip shape, like one toe repeated. They have no PIP knuckle hump and no pulp bulging past the nail, and they read as a row of fingers in V1f and in the plan as well.", "fix": "Make each toe its own shape: toe 2 the longest and slimmest, toes 3 and 4 shorter and curled. Give each a dorsal knuckle at the PIP, a pulp that bulges down and forward past the nail, and a slight lean toward toe 5.", "spec_ref": "§3.3"},
+  {"id": "D2", "severity": "major", "preset": "pair_p01.V3.L_form.png", "box_px": [1095, 585, 1250, 665], "what": "Seen from the lateral side, the lesser toe tips are crimped and crinkled, with sharp folded edges like pinched clay. The scan's tips are round, smooth bulbs.", "fix": "Round each tip into one convex pulp and nail end, with no folds in the silhouette."},
+  {"id": "D3", "severity": "major", "preset": "pair_p01.V4.L_form.png", "box_px": [1380, 690, 1540, 810], "what": "From below, the middle toes are stacked segments with crisp ring creases, like pills or a jointed tube. A real plantar toe is one plump pad behind a soft sulcus.", "fix": "Make each toe's underside one rounded pad, with at most one shallow, soft flexion crease at the joint and a deeper soft sulcus behind the pad."},
+  {"id": "D4", "severity": "major", "preset": "pair_p01.V3.L_form.png", "box_px": [1280, 610, 1315, 672], "what": "Toe 5 meets the forefoot through a crisp ring all round, like a tube plugged into a sleeve. The same step lines show at the roots of toes 3 to 5 in the plan, at about [1320, 210, 1480, 310].", "fix": "Blend each toe's base into the forefoot and the web with a continuous, wide fillet and no edge."},
+  {"id": "D5", "severity": "major", "preset": "pair_p01.V5f.L_form.png", "box_px": [1480, 285, 1885, 385], "what": "Small, sharp hook-shaped notches sit at the root of every web, between toes 1 and 2 through 4 and 5. They are visible as bright and dark ticks in V1f too, and they are the crispest relief on the forefoot.", "fix": "A real web is a soft, rounded saddle with no fold or notch at its root."},
+  {"id": "D6", "severity": "major", "preset": "pair_p01.V5f.L_form.png", "box_px": [1482, 320, 1518, 585], "what": "Where the hallux touches toe 2 there is a single crisp hairline from web to tip, and in the plan a narrow dark slot along the hallux at about [1525, 90, 1555, 215]. It reads as two parts butted together, not as two pads of flesh pressed together.", "fix": "Pressed toes flatten against each other into a short contact face, with a soft shadow that widens toward the tips and the web."},
+  {"id": "D7", "severity": "minor", "preset": "pair_p01.V2o.L_form.png", "box_px": [1090, 320, 1125, 375], "what": "The back outline still changes slope abruptly near z 105, where the scan's heel eases into the model's leg. It is a slight kink, no longer a notch.", "fix": "Let the Achilles line run as one smooth curve from the calf to the heel. Ease the blend with a smooth (C1) weight so the slope does not break at the bottom of the band."},
+  {"id": "D8", "severity": "minor", "preset": "pair_p01.V5f.L_form.png", "box_px": [1270, 380, 1420, 450], "what": "Faint concentric ripple rings remain on the medial back of the hallux behind the nail. They look like displacement steps, not interphalangeal wrinkles.", "fix": "Use two or three soft transverse wrinkles over the IP joint and none elsewhere."},
+  {"id": "D9", "severity": "minor", "preset": "pair_p01.V4.L_form.png", "box_px": [1535, 735, 1580, 765], "what": "A small, sharp dark dent across the hallux's plantar pad reads as a cut, not as a soft crease.", "fix": "Make the IP flexion crease a shallow, wide groove that fades at both ends."},
+  {"id": "D10", "severity": "minor", "preset": "pair_p01.V4o.L_form.png", "box_px": [1522, 790, 1538, 812], "what": "In the plantar silhouette, a tiny dark tick, a pinhole or crack, remains between the hallux and toe 2 where they meet.", "fix": "Close the contact so the silhouette is solid along the whole length where the toes touch."}
+ ],
+ "ranked": [
+  "[D1] The toes are the giveaway. Toes 2 to 4 are a row of near-identical, parallel cylinders, like fingers or one toe repeated, with no knuckle humps and no pulps bulging past the nails. Real lesser toes differ in length and girth, curl and lean toward the 5th.",
+  "Detail is sharp in the toes and soft everywhere else. The crisply modelled toes sit on a soft scanned foot, and the change of method shows at the toe bases, where the scan's soft relief meets the hard edges of the modelled toes.",
+  "[D2] Seen from the lateral side, the lesser toe tips are crimped and folded like pinched clay. The scan's tips are smooth round bulbs.",
+  "[D3] From below, the middle toes are stacked rings, like a jointed tube or a row of pills. A real plantar toe is one plump pad behind a soft sulcus.",
+  "[D4] Toe 5, and the roots of toes 3 and 4 in the plan, meet the forefoot through a crisp step, as if plugged in. Real toes run into the forefoot and the webs with no edge.",
+  "[D5] Sharp little hook notches sit at every web root, the crispest relief on the forefoot, visible even in V1f. A real web is a soft rounded saddle.",
+  "[D6] The hallux and toe 2 meet along a hairline in V5f and a dark slot in the plan, like two parts butted together. Pressed flesh flattens into a short contact face with a soft shadow.",
+  "[D7] A slight kink remains in the Achilles outline near z 105 in V2o, where the scan eases into the model's leg.",
+  "[D8] Faint ripple rings on the back of the hallux read as displacement steps, not skin wrinkles.",
+  "[D9] A small, sharp dent across the hallux's plantar pad reads as a cut.",
+  "[D10] A pinhole tick between the hallux and toe 2 breaks the plantar silhouette.",
+  "No distinct anterior ankle crease reads in the clay at the front of the ankle. The fold where the shin turns into the dorsum is missing as form.",
+  "Context, spec 03: the leg's calf mass shows as a lobe past the heel's medial edge in V4o and as a bump in V4. It hides the heel's medial outline in the plantar silhouettes."
+ ],
+ "verified_claims": [
+  {"id": "r3.m1", "fixed": false},
+  {"id": "r3.m2", "fixed": false},
+  {"id": "r3.m3", "fixed": false},
+  {"id": "r3.m4", "fixed": true},
+  {"id": "r3.m5", "fixed": true},
+  {"id": "r3.m6", "fixed": false},
+  {"id": "r3.m7", "fixed": true},
+  {"id": "r3.m8", "fixed": true},
+  {"id": "r3.m9", "fixed": false},
+  {"id": "r3.m10", "fixed": true},
+  {"id": "r3.m11", "fixed": true},
+  {"id": "r3.m12", "fixed": true},
+  {"id": "r3.m13", "fixed": false},
+  {"id": "r3.m14", "fixed": false},
+  {"id": "r3.m15", "fixed": false},
+  {"id": "r3.m16", "fixed": false},
+  {"id": "r3.m17", "fixed": false},
+  {"id": "r3.m18", "fixed": true}
+ ],
+ "pass": false,
+ "confidence": 0.65
+}

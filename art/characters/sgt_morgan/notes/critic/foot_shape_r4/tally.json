@@ -1,0 +1,989 @@
+{
+ "part": "01",
+ "round": 4,
+ "attempt": 1,
+ "packet": "renders/research/foot_hires/critic/shape_r4/",
+ "packet_sha": "8ae8439c2db96d6174877722934c895261648ea233638df984c8e1a6aa7d91c9",
+ "scope": "the whole left foot's large forms: silhouettes, profiles, volumes and transitions, in clay",
+ "critics": {
+  "C1": {
+   "lens": "fidelity",
+   "model": "claude-opus-5-5",
+   "overall": 7,
+   "pass": false,
+   "confidence": 0.65,
+   "blocking": 0,
+   "majors": 4,
+   "minors": 7
+  },
+  "C2": {
+   "lens": "reality",
+   "model": "claude-opus-5-5",
+   "overall": 6,
+   "pass": false,
+   "confidence": 0.65,
+   "blocking": 0,
+   "majors": 4,
+   "minors": 5
+  },
+  "C3": {
+   "lens": "craft",
+   "model": "claude-opus-5-5",
+   "overall": 6,
+   "pass": false,
+   "confidence": 0.65,
+   "blocking": 0,
+   "majors": 6,
+   "minors": 4
+  }
+ },
+ "median": 6,
+ "spread": 1,
+ "blocking": 0,
+ "metrics": null,
+ "failing_metrics": [],
+ "pass": false,
+ "decision": "revise",
+ "questions": {
+  "Q2": {
+   "C1": 6,
+   "C2": 5,
+   "C3": 5
+  },
+  "Q7": {
+   "C1": 7,
+   "C2": 7,
+   "C3": 7
+  }
+ },
+ "claims": {
+  "r3.m1": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m2": {
+   "C1": true,
+   "C2": true,
+   "C3": false
+  },
+  "r3.m3": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m4": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m5": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m6": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m7": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m8": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m9": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m10": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m11": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m12": {
+   "C1": true,
+   "C2": true,
+   "C3": true
+  },
+  "r3.m13": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m14": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m15": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m16": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m17": {
+   "C1": false,
+   "C2": false,
+   "C3": false
+  },
+  "r3.m18": {
+   "C1": false,
+   "C2": true,
+   "C3": true
+  }
+ },
+ "merged": [
+  {
+   "id": "m1",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The lesser toes give the foot away: toes 2-4 are straight, flat-topped parallel blocks of one width, with no knuckle and no curl, the nails running to the tips. A booted man's lesser toes are slightly clawed and knuckled, each tip curling onto a round pulp.",
+   "also": [
+    "Toes 2-4 are near-identical straight columns with no knuckle humps. Real toes (scan and photographs) each bulge at the PIP joint, curl slightly and differ in width and taper.",
+    "Toes 2-4 are three near-identical, straight, parallel columns with level tops and no PIP knuckle hump; the scan's toes each swell at the knuckle and flare into a round pulp, and no two are alike.",
+    "Toes 2-4 are straight, flat-topped, parallel blocks of near-equal width with no PIP knuckle hump, no flexion at the middle and distal joints, and the nail running to the very tip with no pulp showing; the same finger look shows in V1f and in plan.",
+    "The toes are the giveaway. Toes 2 to 4 are a row of near-identical, parallel cylinders, like fingers or one toe repeated, with no knuckle humps and no pulps bulging past the nails. Real lesser toes differ in length and girth, curl and lean toward the 5th.",
+    "Toes 2, 3 and 4 are parallel cylinders of near-identical width, length and tip shape, like one toe repeated. They have no PIP knuckle hump and no pulp bulging past the nail, and they read as a row of fingers in V1f and in the plan as well."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1495,
+      280,
+      1905,
+      605
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1495,
+      285,
+      1905,
+      605
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1500,
+      290,
+      1900,
+      600
+     ]
+    }
+   ],
+   "fixes": [
+    "Give each lesser toe its own dorsal PIP hump behind the nail fold, a slight downward curl to the tip and its own width and taper, following the scan's bulbs.",
+    "A booted man's lesser toes are slightly flexed: a rounded PIP hump 2-4 mm proud, the distal segment angled down onto a round pulp that bulges past and below the free edge, widths stepping down from toe 2 to toe 4, as in the scan beside it.",
+    "Make each toe its own shape: toe 2 the longest and slimmest, toes 3 and 4 shorter and curled. Give each a dorsal knuckle at the PIP, a pulp that bulges down and forward past the nail, and a slight lean toward toe 5."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 2,
+    "C2": 1,
+    "C3": 1
+   }
+  },
+  {
+   "id": "m2",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "In side view the lesser toes are low, flat, crimped strips where the scan's are round bulbs nearly as tall as they are long; the toe group reads thinner and more delicate than a 40-year-old soldier's.",
+   "also": [
+    "In the lateral view the lesser toe tips are thin, flat and crimped with hard edges, where the scan has round, full pulps.",
+    "In the lateral view the lesser toe tips are thin and crimped, with sharp top edges, lower and flatter than the scan's round, full bulbs at the same place.",
+    "In lateral view the lesser toe tips are low, flat and crimped, with sharp-edged steps at their ends; the scan's toes in the same view are round bulbs almost as tall as they are long.",
+    "Seen from the lateral side, the lesser toe tips are crimped and folded like pinched clay. The scan's tips are smooth round bulbs.",
+    "Seen from the lateral side, the lesser toe tips are crimped and crinkled, with sharp folded edges like pinched clay. The scan's tips are round, smooth bulbs."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_p01.V3.L_form.png",
+     "box_px": [
+      1095,
+      580,
+      1245,
+      668
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_p01.V3.L_form.png",
+     "box_px": [
+      1090,
+      580,
+      1250,
+      670
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_p01.V3.L_form.png",
+     "box_px": [
+      1095,
+      585,
+      1250,
+      665
+     ]
+    }
+   ],
+   "fixes": [
+    "Keep the scan's toe volume there: round full pulps with soft outlines, the tips as thick as the scan's.",
+    "Round each tip into a full pulp bulb about 10-12 mm tall, with the nail sitting on top of it rather than forming the end of the toe.",
+    "Round each tip into one convex pulp and nail end, with no folds in the silhouette."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 3,
+    "C2": 2,
+    "C3": 3
+   }
+  },
+  {
+   "id": "m3",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "From below the toes are stacked rings with fine striations and toe 5 is crumpled; real toes show one plump pad each behind a soft sulcus.",
+   "also": [
+    "From below the toes are stacked pills with crisp ring creases; real plantar toes are one plump pad each behind a soft sulcus.",
+    "From below, toes 2-5 are stacked pills with crisp transverse ring creases and hard outlines; the scan's plantar toes are each one plump pad behind a soft sulcus.",
+    "From below, toes 2-4 are stacked cylinders cut by crisp transverse rings and fine striations, and toe 5 is crumpled into folds, instead of one plump plantar pad per toe behind a soft sulcus.",
+    "From below, the middle toes are stacked rings, like a jointed tube or a row of pills. A real plantar toe is one plump pad behind a soft sulcus.",
+    "From below, the middle toes are stacked segments with crisp ring creases, like pills or a jointed tube. A real plantar toe is one plump pad behind a soft sulcus."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_p01.V4.L_form.png",
+     "box_px": [
+      1350,
+      630,
+      1530,
+      810
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_p01.V4.L_form.png",
+     "box_px": [
+      1350,
+      630,
+      1535,
+      815
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_p01.V4.L_form.png",
+     "box_px": [
+      1380,
+      690,
+      1540,
+      810
+     ]
+    }
+   ],
+   "fixes": [
+    "One full plantar pad per toe, a soft sulcus at the base, and at most faint flexion creases.",
+    "Each toe's underside is one smooth convex pulp pad, with at most a soft flexion crease at each joint, set off from the ball by a shallow rounded sulcus.",
+    "Make each toe's underside one rounded pad, with at most one shallow, soft flexion crease at the joint and a deeper soft sulcus behind the pad."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 4,
+    "C2": 3,
+    "C3": 4
+   }
+  },
+  {
+   "id": "m4",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "Toe 5 is plugged into the forefoot through a crisp ring at its base in V3; a real toe runs in through a soft fillet.",
+   "also": [
+    "Toe 5 has a crisp ring at its base in V3, like a tube in a sleeve; the scan's runs into the forefoot without an edge.",
+    "Toe 5 meets the forefoot through a crisp vertical ring near its base, like a tube plugged into a sleeve; the scan's toe 5 runs into the forefoot with no edge.",
+    "Toe 5 meets the forefoot through a crisp vertical ring all round its base, like a tube plugged into a sleeve.",
+    "Toe 5, and the roots of toes 3 and 4 in the plan, meet the forefoot through a crisp step, as if plugged in. Real toes run into the forefoot and the webs with no edge.",
+    "Toe 5 meets the forefoot through a crisp ring all round, like a tube plugged into a sleeve. The same step lines show at the roots of toes 3 to 5 in the plan, at about [1320, 210, 1480, 310]."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_p01.V3.L_form.png",
+     "box_px": [
+      1225,
+      605,
+      1312,
+      670
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_p01.V3.L_form.png",
+     "box_px": [
+      1280,
+      605,
+      1315,
+      675
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_p01.V3.L_form.png",
+     "box_px": [
+      1280,
+      610,
+      1315,
+      672
+     ]
+    }
+   ],
+   "fixes": [
+    "Blend the toe's base into the forefoot over several millimetres, with no ring or step.",
+    "The fifth toe's skin runs into the lateral forefoot through a soft concave fillet, with at most a faint dorsal crease over the MTP joint.",
+    "Blend each toe's base into the forefoot and the web with a continuous, wide fillet and no edge."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 6,
+    "C2": 5,
+    "C3": 5
+   }
+  },
+  {
+   "id": "m5",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "Sharp little hook notches sit at every web root, the crispest relief on the forefoot, visible even in V1f. A real web is a soft rounded saddle.",
+   "also": [
+    "Sharp hook notches at the web roots (V5f, V1f) where real webs are soft saddles.",
+    "Small, sharp, hook-shaped notches sit at the roots of the webs between toes 2-3, 3-4 and 4-5, also visible in V1f.",
+    "Hook notches at the web roots of toes 2-5 in V5f read as pinched geometry; a web is a smooth U of skin.",
+    "Small hook-shaped notches sit at the roots of the 2-3, 3-4 and 4-5 webs, like pinched or folded geometry.",
+    "Small, sharp hook-shaped notches sit at the root of every web, between toes 1 and 2 through 4 and 5. They are visible as bright and dark ticks in V1f too, and they are the crispest relief on the forefoot."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1485,
+      285,
+      1905,
+      350
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1620,
+      260,
+      1890,
+      345
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1480,
+      285,
+      1885,
+      385
+     ]
+    }
+   ],
+   "fixes": [
+    "The web roots are soft, shallow U-shaped saddles of skin.",
+    "A web is a smooth U of skin between the bases of the toes, with no fold, hook or overhang.",
+    "A real web is a soft, rounded saddle with no fold or notch at its root."
+   ],
+   "spec_refs": [
+    "§3.2"
+   ],
+   "ranks": {
+    "C1": 8,
+    "C2": 7,
+    "C3": 6
+   }
+  },
+  {
+   "id": "m6",
+   "severity": "major",
+   "critics": [
+    "C2",
+    "C3"
+   ],
+   "text": "The hallux and toe 2 meet along a knife-cut V slit from web to tip; touching skin flattens into a closed, soft contact line.",
+   "also": [
+    "The hallux and toe 2 meet along a knife-cut V slit with hard edges from the web to the tips (also a crisp line in V4), not a soft skin contact.",
+    "The hallux and toe 2 meet along a hairline in V5f and a dark slot in the plan, like two parts butted together. Pressed flesh flattens into a short contact face with a soft shadow.",
+    "Where the hallux touches toe 2 there is a single crisp hairline from web to tip, and in the plan a narrow dark slot along the hallux at about [1525, 90, 1555, 215]. It reads as two parts butted together, not as two pads of flesh pressed together."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1485,
+      325,
+      1515,
+      585
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1482,
+      320,
+      1518,
+      585
+     ]
+    }
+   ],
+   "fixes": [
+    "Touching toes flatten slightly against each other: a closed contact line with a rounded shadow that opens into a smooth U at the web.",
+    "Pressed toes flatten against each other into a short contact face, with a soft shadow that widens toward the tips and the web."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C2": 6,
+    "C3": 7
+   }
+  },
+  {
+   "id": "m7",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "In V1f, the view for proportion, the lesser toes are slimmer, more separate and more delicate than the scan's thick, pressed-together toes. The forefoot reads younger and finer than a boot-wearing man's.",
+   "also": [
+    "In the proportion view the lesser toes are slimmer and more separate than the scan's fat, pressed-together bulbs, with a crisp notch at each web root, so the forefoot reads more delicate than the scan's."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_p01.V1f.L_form.png",
+     "box_px": [
+      1250,
+      640,
+      1590,
+      780
+     ]
+    }
+   ],
+   "fixes": [
+    "Keep the scan's toe girth and the toes pressed together; only the nails and fine relief should be new."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 1
+   }
+  },
+  {
+   "id": "m8",
+   "severity": "minor",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "Contour-ripple rings on the back and tip of the hallux read as a displacement artefact.",
+   "also": [
+    "Fine contour-like ripple rings on the back of the hallux (and around its tip in hr.plan) are a displacement artefact, not skin wrinkles.",
+    "Faint contour-like ripples on the back of the hallux read as a displacement artefact, not IP wrinkles.",
+    "Faint contour-like ripples on the back of the hallux near its medial edge read as a displacement artefact, not the soft wrinkles over the IP joint.",
+    "Faint ripple rings on the back of the hallux read as displacement steps, not skin wrinkles.",
+    "Faint concentric ripple rings remain on the medial back of the hallux behind the nail. They look like displacement steps, not interphalangeal wrinkles."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1270,
+      380,
+      1420,
+      450
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1270,
+      385,
+      1420,
+      430
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_p01.V5f.L_form.png",
+     "box_px": [
+      1270,
+      380,
+      1420,
+      450
+     ]
+    }
+   ],
+   "fixes": [
+    "Smooth skin, or a few irregular transverse wrinkles over the IP joint only.",
+    "Two or three soft transverse wrinkles centred over the IP joint, fading toward the sides, and smooth skin elsewhere.",
+    "Use two or three soft transverse wrinkles over the IP joint and none elsewhere."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 9,
+    "C2": 9,
+    "C3": 9
+   }
+  },
+  {
+   "id": "m9",
+   "severity": "minor",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "A sharp slit-like mark across the hallux's plantar pad reads as a cut.",
+   "also": [
+    "A short, sharp mark across the hallux's plantar pad reads as a cut, not a soft flexion crease.",
+    "A small sharp mark on the hallux's plantar pad reads as a cut.",
+    "A small sharp-edged mark on the hallux's plantar pad reads as a cut rather than a soft flexion crease.",
+    "A small, sharp dent across the hallux's plantar pad reads as a cut.",
+    "A small, sharp dark dent across the hallux's plantar pad reads as a cut, not as a soft crease."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_p01.V4.L_form.png",
+     "box_px": [
+      1530,
+      735,
+      1580,
+      765
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_p01.V4.L_form.png",
+     "box_px": [
+      1535,
+      735,
+      1580,
+      765
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_p01.V4.L_form.png",
+     "box_px": [
+      1535,
+      735,
+      1580,
+      765
+     ]
+    }
+   ],
+   "fixes": [
+    "A shallow, soft-edged IP crease, or none at this scale.",
+    "The hallux pad is one smooth dome; its IP flexion crease is a soft, shallow transverse fold across the whole pad.",
+    "Make the IP flexion crease a shallow, wide groove that fades at both ends."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 10,
+    "C2": 10,
+    "C3": 10
+   }
+  },
+  {
+   "id": "m10",
+   "severity": "minor",
+   "critics": [
+    "C1",
+    "C3"
+   ],
+   "text": "A pinhole tick between the hallux and toe 2 breaks the plantar silhouette.",
+   "also": [
+    "A pinhole of background between hallux and toe 2 in the V4o silhouette, where they should touch.",
+    "A small speck of background still shows between the hallux and toe 2 in the plantar silhouette: a pinhole where the two should touch.",
+    "In the plantar silhouette, a tiny dark tick, a pinhole or crack, remains between the hallux and toe 2 where they meet."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_p01.V4o.L_form.png",
+     "box_px": [
+      1518,
+      788,
+      1540,
+      815
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_p01.V4o.L_form.png",
+     "box_px": [
+      1522,
+      790,
+      1538,
+      812
+     ]
+    }
+   ],
+   "fixes": [
+    "Close the contact so the silhouette is solid between hallux and toe 2.",
+    "Close the contact so the silhouette is solid along the whole length where the toes touch."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 12,
+    "C3": 11
+   }
+  },
+  {
+   "id": "m11",
+   "severity": "minor",
+   "critics": [
+    "C1"
+   ],
+   "text": "From above, crisp crinkles and dark slits at the bases of toes 3-5 make the lesser toes read as fingers rather than toes pressed together.",
+   "also": [
+    "From above, crisp crinkle lines and dark slits at the bases of toes 3, 4 and 5 make the lesser toes read as separate fingers; the scan's toes merge into the forefoot through soft webs."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_hr.plan_form.png",
+     "box_px": [
+      1320,
+      150,
+      1480,
+      320
+     ]
+    }
+   ],
+   "fixes": [
+    "Soft webs that close between the toes' bases, as the scan's do."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 7
+   }
+  },
+  {
+   "id": "m12",
+   "severity": "minor",
+   "critics": [
+    "C2"
+   ],
+   "text": "No anterior ankle crease at the dorsiflexion line in any view; a standing man shows at least one faint transverse fold there.",
+   "also": [
+    "No anterior ankle crease shows at the dorsiflexion line (z 80-85): the shin turns into the dorsum with no fold in V1f, V2 or V3."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_p01.V1f.L_form.png",
+     "box_px": [
+      1440,
+      270,
+      1730,
+      430
+     ]
+    }
+   ],
+   "fixes": [
+    "One transverse crease about 0.4 mm deep and 1.2 mm wide, bowed 3 mm toward the toes, with two or three fainter lines above it."
+   ],
+   "spec_refs": [
+    "§3.2"
+   ],
+   "ranks": {
+    "C2": 8
+   }
+  },
+  {
+   "id": "m13",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "A slight kink remains in the Achilles outline near z 105 in V2o, where the scan eases into the model's leg.",
+   "also": [
+    "The back outline still changes slope abruptly near z 105, where the scan's heel eases into the model's leg. It is a slight kink, no longer a notch."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_p01.V2o.L_form.png",
+     "box_px": [
+      1090,
+      320,
+      1125,
+      375
+     ]
+    }
+   ],
+   "fixes": [
+    "Let the Achilles line run as one smooth curve from the calf to the heel. Ease the blend with a smooth (C1) weight so the slope does not break at the bottom of the band."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 8
+   }
+  },
+  {
+   "id": "m14",
+   "severity": "minor",
+   "critics": [
+    "C1"
+   ],
+   "text": "The lateral toes seen past the heel in V8 are crinkled and sharper than the scan's at the same place.",
+   "also": [
+    "The lateral toes that peek past the heel are crinkled with sharp ridges, crisper than the scan's soft rings at the same place."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_p01.V8.L_form.png",
+     "box_px": [
+      1235,
+      595,
+      1335,
+      705
+     ]
+    }
+   ],
+   "fixes": [
+    "The same round, soft toe bulbs as the scan's."
+   ],
+   "spec_refs": [
+    "§3.3"
+   ],
+   "ranks": {
+    "C1": 11
+   }
+  },
+  {
+   "id": "m15",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "Detail is sharp in the toes and soft everywhere else. The crisply modelled toes sit on a soft scanned foot, and the change of method shows at the toe bases, where the scan's soft relief meets the hard edges of the modelled toes.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 2
+   }
+  },
+  {
+   "id": "m16",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "The sharpness is split: the scan-derived heel, arch, dorsum and ankle are soft and real, while the modelled toes carry hard-edged slits, rings and steps, so the toes look like a harder object grafted onto a real foot.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 4
+   }
+  },
+  {
+   "id": "m17",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The toes are crisp and hard-edged while the rest of the foot is soft scan surface. They read as a separate sculpt grafted onto the scan, not one continuous skin.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 5
+   }
+  },
+  {
+   "id": "m18",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "Context: in V4 and V4o a mass from the leg above stands up to about 30 mm outside the medial border in front of the heel and hides the medial heel and arch outline from below; any of it below z 200 would be an ankle overhanging the arch.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 11
+   }
+  },
+  {
+   "id": "m19",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "No distinct anterior ankle crease reads in the clay at the front of the ankle. The fold where the shin turns into the dorsum is missing as form.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 12
+   }
+  },
+  {
+   "id": "m20",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "No anterior ankle crease shows at the front of the ankle in V2 or V3. The hard transverse line across the mid-instep in V1f (the venous arch, out of scope) reads as a fold and breaks the dome of the dorsum.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 13
+   }
+  },
+  {
+   "id": "m21",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "Context, spec 03: the leg's calf mass shows as a lobe past the heel's medial edge in V4o and as a bump in V4. It hides the heel's medial outline in the plantar silhouettes.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 13
+   }
+  },
+  {
+   "id": "m22",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "Context: from below (V4, V4o) spec 03's calf stands well past the foot's medial border near the heel and hides the medial heel and arch outline, so the plantar silhouette cannot be compared there.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 14
+   }
+  }
+ ]
+}
