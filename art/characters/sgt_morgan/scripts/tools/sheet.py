@@ -140,20 +140,20 @@ def cell(im, lines, f, frame=None):
     return out
 
 
-def sheet(p, variants, out_png, title=None):
+def sheet(p, variants, out_png, title=None, show_edge=True):
     t0 = time.time()
     ref, ref_info = reference(p)
     size = ref.size if ref is not None else Image.open(variants[0]["image"]).size
-    m, used = ref_mask(p, size)
+    m, used = ref_mask(p, size) if show_edge else (None, [])
     variants = sorted(variants, key=lambda v: (v.get("objective") is None, v.get("objective") or 0.0))
     f = font(14)
     cells = []
     if ref is not None:
         r = fit(ref, CELL)
-        cells.append(cell(with_edge(r, m), ["reference", title or p["id"]], f, frame=CYAN))
+        cells.append(cell(with_edge(r, m) if show_edge else r, ["reference", title or p["id"]], f, frame=CYAN))
     for v in variants:
         im = fit(flat(Image.open(v["image"])), CELL)
-        cells.append(cell(with_edge(im, m), _label_lines(v), f))
+        cells.append(cell(with_edge(im, m) if show_edge else im, _label_lines(v), f))
     cw, ch = max(c.width for c in cells), max(c.height for c in cells)
     cols = max(1, min(len(cells), (SHEET_W - GAP) // (cw + GAP)))
     rows = -(-len(cells) // cols)
@@ -240,7 +240,7 @@ def main(argv):
             ap.error("sheet needs --images or --variants")
         run = a.run or datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         out = a.out or os.path.join(camera.part_dir(p.get("owner")), "sheets", f"{run}.png")
-        meta = sheet(p, variants, out, a.title)
+        meta = sheet(p, variants, out, a.title, not a.no_edge)
         print(f"[sheet] {len(meta['cells'])} variants, {meta['sheet_size'][0]} x {meta['sheet_size'][1]} px, "
               f"masks {meta['masks'] or 'none found'}, {meta['seconds']} s -> {os.path.relpath(out, env.PROJECT_DIR)}")
         return 0
