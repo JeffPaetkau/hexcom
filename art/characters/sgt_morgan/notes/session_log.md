@@ -289,6 +289,18 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    modelled tendons and veins the sharpest relief on the dorsum (should be soft, blurred, one
    clear hallux tendon); from behind the ankle column leans medially with a mass beyond the
    heel's medial edge (the 95-200 mm blend into our leg).
+   **Part 01's remaining stages (Tuesday 27 October)**: `sock` (lofted from convex-hull sections
+   of the scan-transferred surface and relaxed as a membrane 0.3 mm off the skin; welt, Geometry
+   Nodes ribs and toe seam, `sock_*` groups, metric `UV.Real`), `materials` (spec 16's recipes
+   through `lib/materials.py`; material masks on this foot's joints; lint 0 errors), `last`
+   (289.3 mm, flat insole, 12 degree toe spring, markers on the insole plane, bone-parented),
+   `interfaces` (104 `foot.*` and `sock.*` keys in `assets/interfaces.json`; the ankle axis
+   through the malleoli at z 85.9). 255 metrics, 215 pass, 40 reported, none fail; identical
+   rebuilds. Open for Jeff: the last leaves only ~9.7 mm ahead of the standing toe (real boots
+   15-22); measuring the 15 mm allowance from the standing socked toe would make it ~297 mm
+   (`last.TOE_ALLOWANCE`). The V6 boot check against the drawing fails its 5 px rule (the drawn
+   boot is shorter than a real boot round this last). Spec 02 revised the same day (its §0;
+   questions Q13-Q19 for Jeff, Q13 being the stature: the real footbed lifts 33 mm, not 42).
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec

@@ -1,0 +1,526 @@
+{
+ "foot.L.ankle_axis": {
+  "centre": [
+   204.0686,
+   2.0652,
+   85.8727
+  ],
+  "direction": [
+   0.9712,
+   0.2379,
+   -0.0124
+  ],
+  "lateral": [
+   237.8946,
+   10.351,
+   85.4397
+  ],
+  "medial": [
+   170.2426,
+   -6.2206,
+   86.3057
+  ],
+  "medial_resolved": true,
+  "source": "spec 01 \u00a77.1: the malleoli on the level-2 surface (footmetrics.ankle)"
+ },
+ "foot.L.frame": {
+  "heading_deg": -1.7704,
+  "origin": [
+   202.1996,
+   68.2181,
+   0.0
+  ]
+ },
+ "foot.L.joint.ball.head": [
+  157.5216,
+  -154.144,
+  16.0772
+ ],
+ "foot.L.joint.ball.tail": [
+  177.5216,
+  -154.144,
+  16.0772
+ ],
+ "foot.L.joint.foot.head": [
+  204.0686,
+  2.0652,
+  85.8727
+ ],
+ "foot.L.joint.foot.tail": [
+  199.1539,
+  -68.4623,
+  32.4638
+ ],
+ "foot.L.joint.heel.head": [
+  202.1996,
+  68.2181,
+  0.0
+ ],
+ "foot.L.joint.heel.tail": [
+  202.1996,
+  88.2181,
+  0.0
+ ],
+ "foot.L.joint.lowerleg02.tail": [
+  204.0686,
+  2.0652,
+  85.8727
+ ],
+ "foot.L.joint.toe1-1.head": [
+  169.4171,
+  -154.5116,
+  32.9584
+ ],
+ "foot.L.joint.toe1-1.tail": [
+  169.9211,
+  -182.0659,
+  24.6163
+ ],
+ "foot.L.joint.toe1-2.head": [
+  169.9211,
+  -182.0659,
+  24.6163
+ ],
+ "foot.L.joint.toe1-2.tail": [
+  175.2451,
+  -208.057,
+  12.7714
+ ],
+ "foot.L.joint.toe2-1.head": [
+  196.7812,
+  -156.4055,
+  29.4686
+ ],
+ "foot.L.joint.toe2-1.tail": [
+  197.7983,
+  -179.3679,
+  26.781
+ ],
+ "foot.L.joint.toe2-2.head": [
+  197.7983,
+  -179.3679,
+  26.781
+ ],
+ "foot.L.joint.toe2-2.tail": [
+  197.4297,
+  -191.3018,
+  20.3794
+ ],
+ "foot.L.joint.toe2-3.head": [
+  197.4297,
+  -191.3018,
+  20.3794
+ ],
+ "foot.L.joint.toe2-3.tail": [
+  197.8421,
+  -207.2295,
+  9.2347
+ ],
+ "foot.L.joint.toe3-1.head": [
+  215.7573,
+  -153.2395,
+  26.7692
+ ],
+ "foot.L.joint.toe3-1.tail": [
+  216.5934,
+  -174.412,
+  22.9507
+ ],
+ "foot.L.joint.toe3-2.head": [
+  216.5934,
+  -174.412,
+  22.9507
+ ],
+ "foot.L.joint.toe3-2.tail": [
+  216.3308,
+  -184.766,
+  17.5061
+ ],
+ "foot.L.joint.toe3-3.head": [
+  216.3308,
+  -184.766,
+  17.5061
+ ],
+ "foot.L.joint.toe3-3.tail": [
+  216.2675,
+  -197.1089,
+  9.275
+ ],
+ "foot.L.joint.toe4-1.head": [
+  235.2452,
+  -143.6812,
+  24.7699
+ ],
+ "foot.L.joint.toe4-1.tail": [
+  235.8411,
+  -161.3468,
+  21.9014
+ ],
+ "foot.L.joint.toe4-2.head": [
+  235.8411,
+  -161.3468,
+  21.9014
+ ],
+ "foot.L.joint.toe4-2.tail": [
+  234.8359,
+  -171.3838,
+  16.4583
+ ],
+ "foot.L.joint.toe4-3.head": [
+  234.8359,
+  -171.3838,
+  16.4583
+ ],
+ "foot.L.joint.toe4-3.tail": [
+  234.3333,
+  -181.4305,
+  7.5707
+ ],
+ "foot.L.joint.toe5-1.head": [
+  251.6601,
+  -130.9843,
+  18.5946
+ ],
+ "foot.L.joint.toe5-1.tail": [
+  253.3495,
+  -139.0172,
+  16.857
+ ],
+ "foot.L.joint.toe5-2.head": [
+  253.3495,
+  -139.0172,
+  16.857
+ ],
+ "foot.L.joint.toe5-2.tail": [
+  252.1015,
+  -146.7763,
+  15.4249
+ ],
+ "foot.L.joint.toe5-3.head": [
+  252.1015,
+  -146.7763,
+  15.4249
+ ],
+ "foot.L.joint.toe5-3.tail": [
+  247.701,
+  -155.3436,
+  7.5889
+ ],
+ "foot.L.joint.toes_master.head": [
+  169.4171,
+  -154.5116,
+  32.9584
+ ],
+ "foot.L.joint.toes_master.tail": [
+  251.6601,
+  -130.9843,
+  18.5946
+ ],
+ "foot.L.last.AnkleAxis.Lateral": [
+  237.8946,
+  10.351,
+  85.4397
+ ],
+ "foot.L.last.AnkleAxis.Medial": [
+  170.2426,
+  -6.2206,
+  86.3057
+ ],
+ "foot.L.last.Ball1": [
+  157.5216,
+  -154.1439,
+  -2.1
+ ],
+ "foot.L.last.Ball5": [
+  258.6378,
+  -131.2,
+  -2.1
+ ],
+ "foot.L.last.Pternion": [
+  204.0215,
+  67.32,
+  -2.1
+ ],
+ "foot.L.last.ToeTip": [
+  157.1332,
+  -220.6555,
+  11.6687
+ ],
+ "foot.L.last.collar_z": 210.0,
+ "foot.L.last.insole_z": -2.1,
+ "foot.L.last.length": 289.2866,
+ "foot.L.last.toe_spring_deg": 12.0,
+ "foot.R.ankle_axis": {
+  "centre": [
+   -203.7631,
+   1.9979,
+   86.0497
+  ],
+  "direction": [
+   -0.9714,
+   0.2366,
+   -0.0181
+  ],
+  "lateral": [
+   -237.6732,
+   10.2583,
+   85.419
+  ],
+  "medial": [
+   -169.8529,
+   -6.2625,
+   86.6804
+  ],
+  "medial_resolved": true,
+  "source": "spec 01 \u00a77.1: the malleoli on the level-2 surface (footmetrics.ankle)"
+ },
+ "foot.R.frame": {
+  "heading_deg": 2.3178,
+  "origin": [
+   -202.1888,
+   68.2227,
+   0.0
+  ]
+ },
+ "foot.R.joint.ball.head": [
+  -155.7058,
+  -153.6815,
+  16.0112
+ ],
+ "foot.R.joint.ball.tail": [
+  -135.7058,
+  -153.6815,
+  16.0112
+ ],
+ "foot.R.joint.foot.head": [
+  -203.7631,
+  1.9979,
+  86.0497
+ ],
+ "foot.R.joint.foot.tail": [
+  -199.1539,
+  -68.4623,
+  32.4638
+ ],
+ "foot.R.joint.heel.head": [
+  -202.1888,
+  68.2227,
+  0.0
+ ],
+ "foot.R.joint.heel.tail": [
+  -202.1888,
+  88.2227,
+  0.0
+ ],
+ "foot.R.joint.lowerleg02.tail": [
+  -203.7631,
+  1.9979,
+  86.0497
+ ],
+ "foot.R.joint.toe1-1.head": [
+  -167.8443,
+  -154.1728,
+  32.9911
+ ],
+ "foot.R.joint.toe1-1.tail": [
+  -167.7462,
+  -181.6996,
+  24.6369
+ ],
+ "foot.R.joint.toe1-2.head": [
+  -167.7462,
+  -181.6996,
+  24.6369
+ ],
+ "foot.R.joint.toe1-2.tail": [
+  -171.6116,
+  -208.0128,
+  12.9143
+ ],
+ "foot.R.joint.toe2-1.head": [
+  -195.5872,
+  -156.365,
+  29.6133
+ ],
+ "foot.R.joint.toe2-1.tail": [
+  -195.8648,
+  -179.2585,
+  26.8716
+ ],
+ "foot.R.joint.toe2-2.head": [
+  -195.8648,
+  -179.2585,
+  26.8716
+ ],
+ "foot.R.joint.toe2-2.tail": [
+  -195.2828,
+  -191.2733,
+  20.3391
+ ],
+ "foot.R.joint.toe2-3.head": [
+  -195.2828,
+  -191.2733,
+  20.3391
+ ],
+ "foot.R.joint.toe2-3.tail": [
+  -195.2487,
+  -207.2275,
+  9.1339
+ ],
+ "foot.R.joint.toe3-1.head": [
+  -214.9098,
+  -153.2533,
+  26.6747
+ ],
+ "foot.R.joint.toe3-1.tail": [
+  -214.9169,
+  -174.4338,
+  22.7981
+ ],
+ "foot.R.joint.toe3-2.head": [
+  -214.9169,
+  -174.4338,
+  22.7981
+ ],
+ "foot.R.joint.toe3-2.tail": [
+  -214.4147,
+  -184.8708,
+  17.4849
+ ],
+ "foot.R.joint.toe3-3.head": [
+  -214.4147,
+  -184.8708,
+  17.4849
+ ],
+ "foot.R.joint.toe3-3.tail": [
+  -213.9398,
+  -197.2707,
+  9.2465
+ ],
+ "foot.R.joint.toe4-1.head": [
+  -233.8111,
+  -143.9948,
+  24.2989
+ ],
+ "foot.R.joint.toe4-1.tail": [
+  -234.2297,
+  -161.6642,
+  21.8671
+ ],
+ "foot.R.joint.toe4-2.head": [
+  -234.2297,
+  -161.6642,
+  21.8671
+ ],
+ "foot.R.joint.toe4-2.tail": [
+  -233.0586,
+  -171.6004,
+  16.486
+ ],
+ "foot.R.joint.toe4-3.head": [
+  -233.0586,
+  -171.6004,
+  16.486
+ ],
+ "foot.R.joint.toe4-3.tail": [
+  -232.4009,
+  -181.595,
+  7.6308
+ ],
+ "foot.R.joint.toe5-1.head": [
+  -250.3005,
+  -131.45,
+  18.6692
+ ],
+ "foot.R.joint.toe5-1.tail": [
+  -251.9507,
+  -139.4565,
+  17.3063
+ ],
+ "foot.R.joint.toe5-2.head": [
+  -251.9507,
+  -139.4565,
+  17.3063
+ ],
+ "foot.R.joint.toe5-2.tail": [
+  -250.7291,
+  -146.9133,
+  15.7175
+ ],
+ "foot.R.joint.toe5-3.head": [
+  -250.7291,
+  -146.9133,
+  15.7175
+ ],
+ "foot.R.joint.toe5-3.tail": [
+  -246.6173,
+  -155.1923,
+  7.3552
+ ],
+ "foot.R.joint.toes_master.head": [
+  -167.8443,
+  -154.1728,
+  32.9911
+ ],
+ "foot.R.joint.toes_master.tail": [
+  -250.3005,
+  -131.45,
+  18.6692
+ ],
+ "foot.R.last.AnkleAxis.Lateral": [
+  -237.6732,
+  10.2583,
+  85.419
+ ],
+ "foot.R.last.AnkleAxis.Medial": [
+  -169.8529,
+  -6.2625,
+  86.6804
+ ],
+ "foot.R.last.Ball1": [
+  -155.7058,
+  -153.6815,
+  -2.1
+ ],
+ "foot.R.last.Ball5": [
+  -256.9263,
+  -131.7181,
+  -2.1
+ ],
+ "foot.R.last.Pternion": [
+  -204.3312,
+  67.2916,
+  -2.1
+ ],
+ "foot.R.last.ToeTip": [
+  -154.5557,
+  -220.2206,
+  11.6699
+ ],
+ "foot.R.last.collar_z": 210.0,
+ "foot.R.last.insole_z": -2.1,
+ "foot.R.last.length": 289.29,
+ "foot.R.last.toe_spring_deg": 12.0,
+ "sock.L.cuff_z": 228.0,
+ "sock.L.thickness_mm": {
+  "cuff": 2.4,
+  "gap": 0.3,
+  "heel": 2.2,
+  "leg": 1.6,
+  "sole": 3.0,
+  "sole_loaded": 1.8,
+  "toe": 2.2
+ },
+ "sock.L.top_z": 260.0,
+ "sock.R.cuff_z": 228.0,
+ "sock.R.thickness_mm": {
+  "cuff": 2.4,
+  "gap": 0.3,
+  "heel": 2.2,
+  "leg": 1.6,
+  "sole": 3.0,
+  "sole_loaded": 1.8,
+  "toe": 2.2
+ },
+ "sock.R.top_z": 260.0
+}
