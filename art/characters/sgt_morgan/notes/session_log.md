@@ -332,8 +332,15 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    remove the web-root notches and the hallux ripples; soften the venous arch; add one faint
    anterior ankle crease. The scan is our best evidence and Jeff judged it better everywhere but
    between the toes; round 4 says our toes are the weakest part, so the swap should go further.
-   Then the boot (part 02), whose shared modules (`gn_stitches`, `gear_webbing`,
-   `gear_hardware`) were being built when this entry was written.
+   Then the boot (part 02). Its shared modules are all built now: `gn_stitches`,
+   `gear_webbing` and `gear_hardware` (0e98454; self-tests pass, Cycles checks on the stand-in
+   boot in `renders/lib_gear/`, 11-16 s per view). Still wrong there: eyelets read slightly as
+   O-rings from the side, the welt is a little rope-like, the bar-tack on leather has a comb-like
+   edge, the `--lod bump` stitch fallback has no spec 16 layer to read it; `sr_buckle`,
+   `pocket_clip`, `binding`, `gear_pouch` are not built (no boot needs them). Part 02's build
+   starts from spec 02 §4 with `scripts/parts/p02/` (§0 item 10); Jeff's open questions there
+   are Q13-Q19 (Q13 the stature: the real footbed lifts 33 mm, not 42), the toe cap's polish,
+   and the Sketchfab reference boots R1-R2 he would download himself.
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
