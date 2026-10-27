@@ -281,7 +281,14 @@ leg); `renders/01_foot/sheets/locked_variants.png`.
    the scans by default (`downloads.json` group `scans`). The Cycles renders read as a real
    foot (`renders/research/foot_hires/fields_xfer5/`). Open: veins read as pale lines; nail
    free edges still a little French; under load the cage's arch drops 3.8 mm against the
-   scan's 5.5. Packet `shape_r3b` built; critics not yet run.
+   scan's 5.5. Packet `shape_r3b` built. **Shape round 3b (Tuesday 27 October)**: 6, 6, 6,
+   FAIL, 0 blocking, 17-23 of 31 claims confirmed fixed: the best yet (`notes/critic/
+   foot_shape_r3b/`). The critics: the scanned body is soft and organic, the modelled parts
+   crisp. Left: the toes (our kept inter-toe geometry) still fingers, a ~3 mm see-through slit
+   along the hallux and toe 2 for 35-40 mm, ringed plantar toes instead of plump pads; the
+   modelled tendons and veins the sharpest relief on the dorsum (should be soft, blurred, one
+   clear hallux tendon); from behind the ankle column leans medially with a mass beyond the
+   heel's medial edge (the 95-200 mm blend into our leg).
    working down the reviews' list (nail integration, toe cross-sections and joints, webs, the
    forefoot's structure, the dorsum's tendons and veins, the first MTP prominence).
 4. Then the sock and the last (part 01 §4.10 to §4.13), the `foot.*` interface keys, and spec
