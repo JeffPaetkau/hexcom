@@ -92,3 +92,22 @@ grade, the blind critic loop in `eval/critic/`); `scripts/tools/` (the Blender s
 - Animation for the game: retarget library or generated motion (Mixamo, Kimodo, GEM-X from a
   generated video) onto `Morgan.Rig`; this is why the skeleton is chosen in round 0 with retargeting
   in mind.
+
+## Decisions (Jeff delegated 1-3 to judgement, 2026-11-14; 4 is his)
+
+1. **Plate height: as drawn**, the plate top about 60 mm below the sternal notch. A plate riding a
+   little low is common in real wear, so the image is plausible and governs the arrangement.
+2. **The P9 holster stays hidden at the right rear hip.** The image shows no pistol and the right
+   leg rig carries magazine carriers; a hip holster is a real, common carry.
+3. **Boot questions (take 1's spec 02 §10.3):** Q13 the rest stature becomes **1844 mm**, so the
+   posed skull top still meets the drawn line on the real 33 mm footbed (Jeff's rule: height
+   follows the drawing; round 0 also found the head projecting low). Apply it at the next base
+   rebuild, then re-solve the pose. Q14 smooth full-grain leather (the drawing's highlights);
+   Q15 Cordura shaft panels (the real Zephyr Hi); Q16 the buckle at φ 150°, posterior-lateral,
+   where real cuff straps put it; Q17 no Sketchfab downloads, the build goes without reference
+   boot scans; Q18 the boot stays rigid on the foot bones; Q19 no anchor photographs. Earlier
+   defaults stand: our own chevron-and-block lugs (Q3), a plain toe-bumper oval (Q6), dust as
+   pictured with the left boot dustier (Q7), hidden parts kept low-poly (Q9), mesh laces (Q12).
+4. **Nothing paid** (Jeff). No Tripo, Meshy, Higgsfield or paid image models, and no paid tiers.
+   Free, local, open tools only: open-weight models that run on the RTX 3050 (e.g. a Hunyuan3D 2
+   mini variant, if it fits in 6 GB), CC0 or CC-BY data already reachable, and our own code.
