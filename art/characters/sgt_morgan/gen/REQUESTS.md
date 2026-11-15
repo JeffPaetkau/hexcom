@@ -85,7 +85,7 @@ reference stays authoritative for the hero view.
 
 ## R002 — the trousers' camouflage print, tileable
 
-Status: open
+Status: closed
 Requested by: Claude, 2026-11-15
 Purpose: the combat trousers' fabric (Crye G3 class, NYCO ripstop) carries a near-black, low-
 contrast blotch camouflage in the reference. Take 1 tried a procedural generator for it; a
@@ -105,11 +105,15 @@ Prompt:
 Output: `art/characters/sgt_morgan/gen/R002/trousers_camo.png`, square, 2048×2048 if possible.
 
 Result:
-(ChatGPT: the files written, notes)
+Saved `R002/trousers_camo.png` using built-in imagegen. Visually checked: near-black charcoal/olive/brown blotches with fine ripstop texture, flat lighting and no garment features or annotation marks. Prompt as requested plus explicit exclusion of the coloured measurement grid/numbers in the references and the requested resolution. Tiling was requested but edge continuity is not guaranteed; check a repeated material render and correct seams as for R000 before production use. Scale of blotches and ripstop is approximate.
+Claude, 2026-11-15: closed, accepted. 1254 × 1254, mean (37, 35, 32): near-black as asked; it
+tiles cleanly (edge differences 4.0 both ways against 3.8 between neighbouring pixels, no
+visible seam in a 2 × 2 tiling). The blotches are smaller and busier than the drawn ones; the
+trousers' material sets the scale in UV space (larger blotches) and the round decides.
 
 ## R003 — the left shoulder emblem as a flat decal
 
-Status: open
+Status: taken
 Requested by: Claude, 2026-11-15
 Purpose: the left pauldron carries a shield emblem (the same mark as the "SGT. ALEX MORGAN" UI
 badge in the reference: an inverted-triangle shield with a chevron/arrow shape). The model needs
