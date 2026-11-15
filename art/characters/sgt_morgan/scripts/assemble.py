@@ -779,9 +779,9 @@ pauldrons, forearm guards and knee pads, belt and leg rigs, and the carbine in b
 
 ## What "perfect" looks like
 
-At blockout stage: a viewer comparing the hero frame with the reference sees the same man, in the same pose,
-wearing the same kit in the same places at the same sizes, each layer resting on the one beneath it, the carbine
-held the way the reference holds it. Only surface detail, materials and colour variation are missing.
+A viewer comparing the hero frame with the reference sees the same man, in the same pose, wearing the same kit
+in the same places at the same sizes and in the same materials, each layer resting on the one beneath it, the
+carbine held the way the reference holds it.
 
 ## Pass criteria
 
@@ -813,15 +813,16 @@ held the way the reference holds it. Only surface detail, materials and colour v
 """
 
 DECLARE = [
-    "This is a blockout: flat colours sampled from the reference, no materials, textures, camouflage, webbing grid, "
-    "laces, stitching or other surface detail.",
+    "Materials are a first pass (round 5): library recipes, painted textures and wear masks, but no stitching "
+    "texture, fabric folds from simulation, decal detail beyond the emblem, or fine dirt.",
     "The legs follow real thigh lengths; the drawn thighs are about 28 % short, so the knees, knee pads, leg rigs "
     "and belt sit higher than drawn.",
     "The carbine is a real M4-pattern carbine at real size (855 mm): the drawn gun is shorter, with an oversized "
     "receiver, a rail far above the bore and several muzzle tubes. The right hand is on a real pistol grip, about "
     "110 mm behind the drawn one.",
     "The scene is only the matched camera, the key, side and world lights and a plain floor: no hangar, haze, depth "
-    "of field or colour grade.",
+    "of field or colour grade. The ungraded key renders every neutral surface with a warm cast; judge hue "
+    "relative to the rest of the frame.",
     "The face is a parametric head fitted toward the reference; skin is a default material.",
 ]
 
@@ -872,8 +873,8 @@ def make_packet(n, head_loaded):
         declare.append("No hair or stubble yet: the head part is not in this round's assembly.")
     argv = [sys.executable, "-I", os.path.join(SCRIPTS, "eval", "critic", "packet.py"),
             "--out", os.path.join(out, "critic"), "--part", "18", "--round", str(n), "--spec", spec,
-            "--scope", "the whole soldier at blockout stage: proportions, silhouette, placement, layering; "
-                       "ignore missing surface detail",
+            "--scope", "the whole soldier: proportions, silhouette, placement, layering, the hold, and the first "
+                       "materials (values, colours, wear) against the reference; ignore fine surface detail",
             "--presets", REF_PRESETS, "--force"]
     for r in renders:
         argv += ["--render", r]
