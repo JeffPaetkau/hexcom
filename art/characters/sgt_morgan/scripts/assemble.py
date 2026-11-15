@@ -86,7 +86,7 @@ SEARCH = (SCRIPTS, os.path.join(SCRIPTS, "parts"), os.path.join(SCRIPTS, "stages
 PARTS = ("trousers", "shirt", "boots", "gloves", "carrier", "armour", "belt", "carbine", "head")
 # what each part fits to besides the base body (the caches its script reads while building)
 DEPS = {"trousers": ["base"], "shirt": ["base"], "boots": ["base"], "gloves": ["base"],
-        "carrier": ["base", "shirt"], "armour": ["base", "shirt", "gloves", "trousers"],
+        "carrier": ["base", "shirt", "trousers"], "armour": ["base", "shirt", "gloves", "trousers"],
         "belt": ["base", "trousers"], "carbine": [], "head": ["base"]}
 LAYER = {"body": "body", "trousers": "clothing", "shirt": "clothing", "boots": "clothing", "gloves": "clothing",
          "head": "clothing", "carrier": "gear", "armour": "gear", "belt": "gear", "carbine": "carbine"}
