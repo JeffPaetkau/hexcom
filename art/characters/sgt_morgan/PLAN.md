@@ -111,3 +111,8 @@ grade, the blind critic loop in `eval/critic/`); `scripts/tools/` (the Blender s
 4. **Nothing paid** (Jeff). No Tripo, Meshy, Higgsfield or paid image models, and no paid tiers.
    Free, local, open tools only: open-weight models that run on the RTX 3050 (e.g. a Hunyuan3D 2
    mini variant, if it fits in 6 GB), CC0 or CC-BY data already reachable, and our own code.
+5. **Hunyuan3D 2's licence** (no "military purposes"): Jeff, 2026-11-15, a game soldier is fine.
+   Label AI-generated content in the credits as its licence asks.
+6. **The evaluation's colour**: the ungraded key renders neutral surfaces warm; neutralise it with
+   the evaluation grade (the colour grade is in scope, CLAUDE.md), judged against the reference's
+   neutrals (Jeff left it to judgement, 2026-11-15).
