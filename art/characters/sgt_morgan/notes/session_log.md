@@ -42,3 +42,26 @@ Everything else is archived for reference only.
   a face term for the head yaw) with gloves, and armour with belt. Then head (a new route: MPFB's
   targets are exhausted; a 3D face from the image or a generator, transferred onto MPFB's head as
   the foot's scan was) and carbine round 2.
+- **Round 2 so far (evening)**: shirt and carrier, the neck (800d936: a cowl gaiter under the
+  straps, the bag 75 mm lower, PALS, buckles, binding); boots and trousers (1a0b57a: laced boots
+  with take 1's materials, trousers with seat room and hem rolls; still smooth, no drape); armour
+  and belt (734b0ec: straight segmented forearm guards clear of the elbow, bigger pauldron caps,
+  two-piece knee caps, the right leg rig turned to the camera and moved inboard); carbine
+  (438a410: the forged and moulded forms, take 1's metal and polymer recipes). Jeff: the foot and
+  boot work must start from take 1's (cfdc3a0: boots.md §6, body.md §5, a PLAN.md rule).
+  Second pass on the Can It Code? videos (19fd287): our hero pose is the single-view depth case.
+- **Still running at 21:53 when Jeff stopped for the night** (uncommitted on disk):
+  (1) the pose and hands pass: contact and non-penetration terms in `pose_solve.py`
+  (`pose_contact.py`, `face_targets.json`), finger curls fitted to the grips, a face term for the
+  head yaw, the left foot's heading from 15.5° to about 5°, then the glove fit; (2) the foot port
+  and boots round 3: take 1's scan-transferred foot as `scripts/stages/foot.py` (+ `foot/`), the
+  sock and 297 mm last, the boots rebuilt round the last per take 1's spec 02, developed on copies
+  (`cache/stages/foot_dev.blend`) until the pose pass is done, then wired into assemble and
+  evaluated as round 3. If either was cut off, resume it from its files and notes; check
+  `git status` and `scripts/assemble.py --status` first.
+- **Next after those**: head round 2 by a new route (MPFB's face targets are exhausted: a 3D face
+  from the image or a generator, transferred onto MPFB's head as the foot's scan was), then a
+  full rebuild and the round 2/3 evaluation with the blind critics on the whole soldier, then
+  round 3 per part from each part's notes. Open for Jeff: the plate-top height (60 mm below the
+  notch, as drawn), the P9 holster's place (hidden at the right rear hip), spec 02's Q13-Q19,
+  and whether to use paid generators (Tripo/Meshy/Higgsfield, an image model for textures).
