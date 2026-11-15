@@ -45,3 +45,30 @@ possible (1024×1024 is fine).
 
 Result:
 (ChatGPT: the files written, notes)
+
+## R001 — the same man's head from the front and in profile (for the likeness fit)
+
+Status: open
+Requested by: Claude, 2026-11-15
+Purpose: the face is fitted from one three-quarter view, so its depth (nose, brow, jaw, cheek
+hollows, skull shape) is a guess. Views of the same man from the front and the side give the
+head fit something to measure. Identity must match the attached picture as closely as possible;
+style should be a neutral photographic reference, not a portrait.
+Inputs to attach: `art/characters/sgt_morgan/ref/crop_head_face.png` and
+`art/characters/sgt_morgan/ref/reference_full.png`.
+Prompt (one image per view, same man in every view):
+> Photographic reference of the exact same man as in the attached picture (same face, age about
+> 40, same short dark-brown hair textured on top and shorter at the sides, same stubble and
+> eyebrows, same nose, jaw and ears), head and neck only, no gaiter or clothing at the neck
+> except a plain dark crew-neck T-shirt collar. Neutral expression, mouth closed, eyes looking
+> straight ahead along the head's own direction. Even, soft, frontal studio lighting with no
+> strong shadows, plain light-grey background, a long lens (about 85-135 mm) so there is no
+> perspective distortion, the head level (Frankfort plane horizontal), sharp focus.
+> View: (a) exactly from the front; (b) exactly from his left side (true profile, the camera
+> on his left, looking at his left ear); (c) three-quarter from his front-left at 45 degrees.
+Output: `art/characters/sgt_morgan/gen/R001/front.png`, `profile_left.png`,
+`threequarter_left.png`, each about 1024×1024 or larger, the head filling about two thirds of
+the frame.
+
+Result:
+(ChatGPT: the files written, notes)
