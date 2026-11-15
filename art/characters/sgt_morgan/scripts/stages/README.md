@@ -244,3 +244,219 @@ The chin got worse because the fitted face's menton sits lower relative to the p
 reference's chin 4.8 px lower than the hand reading (y 135.8 against 131); head.md §3 has the fits tried. The
 body joints' residuals moved by at most 0.6 px. Every part that binds to the rig or reads hero_pose.json
 needs a re-run.
+
+## Round 2 (2026-11-14/15): the hold as contact, fitted fingers, a face term
+
+Round 1's hold was a single-view fit (notes/research_canitcode.md, "What the second pass adds", point 1): it
+reprojected well and was wrong in depth by centimetres, with the hands, the stock and the forearm inside the
+carbine and the carrier. Round 2 adds the real surfaces to the solve.
+
+### The surfaces (pose_contact.py, Blender) and how the solver reads them
+
+`"$SGT_BLENDER" -b cache/stages/base.blend --python scripts/stages/pose_contact.py -- --export` (20 s) writes
+`cache/stages/contact.npz`. `pose.py --solve` runs it first when a part cache, base.blend, pose_contact.py or
+face_targets.json is newer than it (`--export` forces it: the carrier is sampled in the current pose).
+- **The carbine** (`cache/parts/carbine.blend`, every `Carbine.*` mesh, all closed): inside/outside voxels at
+  1 mm in the carbine frame (Carbine.Root's space), by ray parity along x, y and z (majority of three).
+- **The carrier** (posed in the current hero pose, world, 1.5 mm voxels), with the posed matrix of `spine02`
+  at export; the solver carries the field rigidly with spine02 (the bag's weights are spine02/03/04/01).
+- **The surfaces that touch them**, as point sets skinned exactly as Blender skins them (rest vertices, the
+  part's own top-4 bone weights, linear blend): the glove shells with their knuckle guards and PIP pads (the
+  hands' outer surface, 1.8 mm over the skin), the shirt sleeves, the forearm guards, the hand skin (finger
+  self-contact) and the 831 face vertices `face_targets.json` names.
+- In the solver (`Contact`) the voxels become signed distance fields (mm, negative inside): Euclidean
+  distance transforms; the carbine's hollows filled first (per slice across the bore, slots closed 4 mm, holes
+  filled: the handguard's bore would otherwise read as outside) and the trigger guard's opening made a
+  keep-out block (`TRIGGER_KEEPOUT_XZ`, a side-view polygon +-13 mm wide: no finger may enter the guard);
+  smoothed one voxel; looked up trilinearly in float64. Built once into `cache/stages/contact_sdf.npz` (40 s).
+
+Checked against round 2's clash report on the round-1 pose: glove R in the carbine 15.6 mm (clash report
+15.7), glove L 7.1 (7.5), glove R in the bag 14.6 (15.4), sleeve in the stock 13.2 (13.4), guard 10.0 (9.6).
+The carbine's surface samples found the receiver 22-26 mm into pouch 1 where the clash test, which tests the
+carbine's coarse vertices only, said 14.
+
+### The new terms (CONTACT, FINGER, PLACE in pose_solve.py)
+
+| Term | What | Sigma |
+|---|---|---|
+| non-penetration | every glove point outside the carbine by 0.5 mm, sleeve and guard points by 1 mm; gloves, the forearm and upper-arm sleeve and guard points outside the carrier by 0.5 mm; the carbine's rear-half surface samples outside the carrier by 2 mm; a smooth hinge (softplus, 0.25 mm) per point | 0.5 mm |
+| palm on its grip | the mean distance of the 12 palm-side glove points (wrist, metacarpals, thumb base) nearest the gun: 0.8 mm | 1 mm |
+| butt on the carrier | the mean distance of the butt pad's 8 rear-face points nearest the carrier: 3 mm by the field (replaces round 0's "50 mm in front of the pectoral") | 0.8 mm |
+| face | MediaPipe's 399 face landmarks on the reference against the same mesh points on the model (face_targets.json, from head.py's correspondences), weighted as 20 points at 2 px | 8.9 px each |
+| hand targets | wrist and index/little knuckles to the placed hand (below) | 12 / 6 mm |
+| right elbow prior | 88 deg (round 1: 97) | 10 deg |
+| left foot heading | 5 deg (round 1: 17: the boots owner projected the drawn toe) | 6 deg |
+
+Dropped while contact is on: round 0's palm-on-a-cylinder radius and palm-facing terms (the real grip decides).
+
+### The order (solve())
+
+1. Round 1's objective (keypoints and priors; three starts, 8 s).
+2. **The right hand placed on the grip** (`place_hand`): the palm, the thenar and the first 90 mm of the forearm
+   as one rigid body, turned about the grip's axis (-45 to +30 deg) and slid along it (-10 to +10 mm) from 18
+   starts, then fitted (6 dof) to touch the grip without entering the gun or the carrier, the knuckle line kept
+   along the grip at its design distance and height (the grasp). The result is the target the arm reaches for.
+   Why: from round 1's pose the hand straddles the grip's tang and the stock's front strut (thenar and wrist
+   12-15 mm inside) and every whole-body descent stalled there (the wrist jammed at 38 deg ulnar).
+3. **Reach**: the body solve with the carbine's non-penetration off, so the arm can get there (it must pass
+   through the gun to); then on, stiffening (sigma 2 mm, then 0.5).
+4. **Fingers** (`fit_fingers`, each hand): per finger the MCP flexion and spread, PIP and DIP flexion (the
+   thumb: two axes at its base), 20 per hand, from up to six starts (the last fit, the tables, nearly open,
+   half closed, the thumb lifted either way). Terms: every finger glove point outside the gun (0.5 mm); each
+   phalanx's palm-side glove touching it (mean of its 4 nearest, 0.6 mm; sigma 2 mm, 3 for the right index,
+   2 for the right thumb); the gloves outside the other fingers' skin (each phalanx a cylinder about its bone,
+   radius the 80th percentile of its skin, no tighter than the rest pose allows) and, for middle and distal
+   phalanges, outside the palm's skin; the right index above the lower's bottom at the trigger (z -52 in the
+   gun frame: trigger discipline, along the receiver); priors to the curl tables (30 deg; the thumb 15),
+   spread 4 deg, DIP 0.7 PIP, neighbouring fingers curl alike (15 deg).
+5. The body again with the whole glove (fingers fixed), the fingers again, twice.
+
+`--continue-from <npz>` runs only fingers, one whole-glove body pass, fingers, from a saved solver state
+(`cache/stages/pose_x_pass1.npz` is written by every full solve); `--refit-fingers` only the fingers.
+
+A full solve takes about 25 minutes (round 1: 15 s): each body pass is a bounded trust-region least squares
+over 79 parameters and about 42 000 residuals, Jacobian by finite differences (diff_step 1e-5).
+
+Lessons now in the code: map_coordinates returns the grid's type, and float32 rounding swamped the finite
+differences (the first solves stalled at cost 5000); a voxel distance field's gradient jumps from cell to
+cell (smoothed); a stiff penetration penalty from a deeply penetrating start traps the hand (placement,
+reach, then stiffening); a nearest-vertex sign between fingers is wrong (cylinders instead); a finger fitted
+from the tables, already inside the gun, is pushed out the wrong side (starts from open).
+
+### Changes during the round
+
+- The trigger-guard keep-out: the first fits curled the right middle finger into the opening, onto the
+  guard's thin rear leg, which no glove point was inside (clash: guard 6.5 mm in the glove, 4.6 in the skin).
+- The carbine 2 mm off the carrier, the butt aiming at 3 mm by the field: the carrier's 1.5 mm field,
+  smoothed, rounds the bag's bound corners (clash: the pad 2.8 mm into the bag's top-right corner where the
+  field said 1.3 mm clear). After: 1.7 mm (the bag's PALS against the stock).
+- The committed body comes by continuation (`--continue-from`): a fresh full solve after the keep-out change
+  fell into a minimum with the left glove 5.5 mm in the handguard, while the earlier body was clean. Chain:
+  the full solve of 2026-11-14 21:43 (`cache/stages/pose_x_try4.npz`) -> continued with the keep-out and the
+  thumb prior (`pose_x_r2a.npz`) -> continued with the carrier margins (hero_pose.json, 2026-11-15 09:21).
+- The carbine was rebuilt by its owner during the round (new stock); contact.npz was exported on the carbine
+  of 21:00 and the carrier of 20:21.
+- The session was cut overnight and resumed on the same base (stature 1835; PLAN.md's 1844 not applied).
+
+### Residuals, round 1 -> round 2 (px, full frame)
+
+"Keypoints only" is round 1's objective on today's inputs (the left foot heading now 5): the starting point.
+
+| Joint | Round 1 | Keypoints only | Round 2 | Joint | Round 1 | Keypoints only | Round 2 |
+|---|---:|---:|---:|---|---:|---:|---:|
+| pupil R | 2.9 | 2.9 | 2.6 | wrist R | 18.6 | 18.3 | 13.9 |
+| pupil L | 3.5 | 3.5 | 2.8 | wrist L | 2.3 | 2.4 | **20.5** |
+| nose tip | 3.8 | 3.8 | 4.6 | hip R | 20.6 | 20.7 | 18.0 |
+| chin | 6.4 | 6.4 | 7.4 | hip L | 18.6 | 18.7 | 15.2 |
+| right ear | 8.5 | 8.5 | 4.2 | knee R | 2.5 | 2.5 | 4.0 |
+| skull top | 7.9 | 7.9 | **13.9** | knee L | 8.9 | 8.5 | 8.7 |
+| shoulder R | 7.5 | 8.1 | 12.1 | ankle R | 1.4 | 1.5 | 2.2 |
+| shoulder L | 7.4 | 7.2 | 12.2 | ankle L | 2.4 | 2.2 | 2.6 |
+| elbow R | 4.2 | 4.2 | **12.7** | butt pin | 3 | | 10.1 |
+| elbow L | 9.8 | 10.1 | **15.2** | muzzle pin | 17 | | 17.1 |
+
+- Where reality forced it: the arms (the right hand turned about 30 deg about the grip, the left hand moved
+  17-19 mm off its design place onto the real handguard), the carbine (butt pin 10 px: the butt now rests on
+  the bag instead of 26 mm in front of it), the skull top (the face term tilts the head 3.7 deg chin-up).
+- The face: MediaPipe's 399 landmarks 1.88 px RMS in round 1, **1.05 px** now; the right ear 8.5 -> 4.2 px.
+- Cost 65.3 (keypoints only: 41.2).
+
+Readbacks: elbows R **91.4** (round 1: 102.7) / L 44.8 deg; wrists (flexion / deviation) R 17.4 / 30.5 (at
+the soft ulnar limit), L 7.2 / -9.8; head yaw **13.7** (round 1: 8.6), pitch -0.7 (round 1: +3.0), roll -1.0;
+chest yaw -8.4, pitch 10.4; pelvis yaw -9.9; knees 19.7 / 9.5; foot headings R -82.6, **L 4.8** (round 1:
+16.2); carbine roll -24 deg (prior 0, sigma 10); skull top z 1836.6 mm. Blender vs the solver: 0.008 mm
+(pose_check.json, fingers included).
+
+### Contact (the solver's fields, mm; negative = inside)
+
+| Surface pair | Keypoints only | Round 2 |
+|---|---:|---:|
+| right glove in the carbine | -14.1 | -0.11 |
+| left glove in the carbine | -6.6 | +0.42 |
+| right glove in the carrier | -13.7 | +78 |
+| right sleeve / guard in the carbine | -6.7 / -9.7 | +12.2 / +7.4 |
+| carbine in the carrier | -21.8 | +0.68 |
+| butt pad to the carrier (mean of 8 nearest) | +26.4 | +1.0 |
+| right / left palm to its grip (mean of 12 nearest) | -10.6 / -6.1 | +0.99 / +0.22 |
+| fingers' gloves to the other fingers' skin, R / L | | +0.17 / +0.51 |
+| each right phalanx to the gun (the index along the receiver: 5.2 and 0.8) | | 0.4 to 1.9 |
+| each left phalanx to the gun (index and middle proximal 5.6 / 7.4) | | 0.7 to 7.4 |
+
+The right index lies along the receiver, its lowest glove point at z -52.9 in the gun frame (the lower's bottom
+at the trigger is -54): trigger discipline, as drawn. No finger enters the trigger guard. Fitted finger angles
+are in hero_pose.json `fingers`; the curl tables (`CURLS`) are now the starting point and a weak prior.
+
+### The clash report (renders/round_02/clashes.md: vertices more than 0.5 mm inside)
+
+| Pair | Round-1 pose | Round 2 |
+|---|---:|---:|
+| gloves-carbine | 3592 verts, 24.9 mm | 42, **1.0** (handguard in the left glove) |
+| body-carbine | 1850, 17.6 | **none** |
+| carrier-carbine | 706, 14.1 (charging handle in pouch 1) | 52, **1.7** (PALS against the stock) |
+| gloves-carrier / body-carrier | 472 / 160, 15.4 | **none** |
+| armour-carbine | 81, 9.6 | **none** |
+| shirt-carbine | 94, 22.9 | **none** |
+| body-gloves | 2657, 2.1 | 18, **1.5** (gloves over flexed joints) |
+| body-armour (guard at the right elbow) | 247, 32.9 | **none** (the armour's round-2 guard and the 91 deg elbow) |
+| body-shirt (right elbow) | 84, 18.7 | 25, 8.3 |
+| shirt-gloves (a cuff vertex) | 4, 24.5 | **none** |
+
+The target (no hand, carbine or arm penetration beyond 2 mm) is met. Over 2 mm, other owners: the carrier's
+flap in the trousers' waistband (12.8, skinning), the feet in the boot soles (designed), the shirt at the right
+elbow (8.3).
+
+### Renders looked at
+
+`renders/round_02/hands_rifle_compare.png`, `torso_vest_compare.png`, `arm_R_compare.png`, `arm_L_compare.png`,
+`head_face_compare.png`, `soldier_full_compare.png` and `_overlay.png`, `turnaround.png`, and
+`renders/pose/pose_hands_sheet.png` (each hand along the camera line, from the gun's right and left, from
+above and from the front: `pose_contact.py --render-hands`).
+- The silhouette still lies on the drawn figure; the left boot's toe now lands on the drawn one.
+- Right hand: on the grip, the index straight along the receiver as drawn, middle to little fingers round the
+  grip's front. But it is turned about 30 deg about the grip from the drawn one: the camera sees the thumb side
+  and the top of the hand more than the knuckle guard, and the thumb lies along the receiver's left side.
+- Left hand: overhand on the handguard, palm on top, fingers down its right side; less closed than drawn (index
+  and little finger nearly straight), the thumb along the top toward the muzzle. A small light flap shows at
+  the left glove's thumb web (gloves.md).
+- Head: turned to his left 13.7 deg; the drawing reads about 20. The carbine shows more of its top than drawn.
+
+### The right elbow
+
+The prior went from 97 to 88 deg (sigma 10); the solve took 91.4 with the hand on the grip and the butt on the
+carrier, so it is kept. The forearm guard no longer enters the body. The shirt still does: 25 vertices to
+8.3 mm at the back of the elbow (round 1: 18.7). The shirt's owner should add ease at the olecranon (or the
+body a corrective); the pose cannot open the elbow further without pulling the hand off the grip.
+
+### Still wrong, for the next round
+
+1. **The stock's front strut** (carbine): it hangs to z -96 only 30-35 mm behind the grip's back strap, where
+   the hand's web and the wrist go. So the right hand is turned 30 deg about the grip (the wrist passes to the
+   right of the strut) and the drawn knuckles-to-camera hold cannot be reached. A real MFT Minimalist at
+   position 3 is a tube housing with one diagonal strut to the toe and leaves that space. Carbine owner: check
+   the stock's front against the real part; then re-solve, and the hand can turn back toward the drawing.
+2. **Fresh full solves are fragile**: the right hand needs place_hand, and the left can still land 5.5 mm in
+   the handguard; the committed pose came by continuation. Next: a placement for the left hand that includes
+   the fingers (a rigid palm-only placement did not clear the overhand clamp), or multi-start contact passes.
+3. **Head yaw 13.7, not about 20**: MPFB's face under the face term prefers it, and the skull top rose to
+   13.9 px. After the head part's new face, rebuild face_targets.json (`pose_solve.py --face-targets`).
+4. **The carbine's roll** (24 deg against a 10 deg sigma) and the butt pin 10 px.
+5. **The left fingers** are less closed than drawn: the curl priors are weak on purpose. A grasp prior (the
+   fingertips under the handguard's 4:30 bevel, as carbine.md's grip point says) would bring them round.
+6. **Solve time** about 25 minutes; an analytic Jacobian (the skinning and the field lookups) would cut it.
+7. The carrier field rides spine02 rigidly; after a large chest change re-export (`pose.py --solve --export`).
+   assemble.py re-solves only when base.json or pose_solve.py is newer than hero_pose.json, not when a part
+   cache the contact data reads changes: re-solve by hand after a carbine, carrier, glove or armour rebuild.
+8. The stature becomes 1844 mm at the next base rebuild (PLAN.md Decisions, Q13), not applied here; with the
+   33 mm footbed it names, HEEL_SEAT/BALL_SEAT (36/24 here) change and the pose needs a full re-solve.
+
+### Files
+
+- `pose_solve.py`: Contact, place_hand, fit_fingers, the face term, the staged solve, `--face-targets`,
+  `--continue-from`, `--refit-fingers`, `--no-contact`.
+- `pose_contact.py` (new): the Blender side (`--export`, `--render-hands`).
+- `pose.py`: `--solve` refreshes contact.npz first, in a subprocess. pose.py does not import pose_contact:
+  the parts import pose.py, and assemble.py counts every module they import as an input of every part.
+- `face_targets.json` (new, data): 399 landmarks on 831 vertices.
+- `hero_pose.json`: the pose, with `stages` (keypoints-only and final contact numbers), `fingers` (angles and
+  contact per phalanx) and `residual_terms`.
+- Caches: `cache/stages/contact.npz`, `contact_sdf.npz` (274 MB, float32 fields), `pose_x_*.npz` (solver states).

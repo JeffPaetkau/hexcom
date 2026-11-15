@@ -67,10 +67,42 @@ Two failures were fixed:
 - A 30 mm spike at a fingertip, from even-offset Solidify; `common.solidify` now defaults to non-even.
 - The guard first sat over the finger bases.
 
-## 5. Still wrong, ranked for round 2
+## 5. Round 2 (2026-11-14/15, with the pose's round 2)
 
-1. **The glove follows the bare hand too closely.** It shows the fingernails' shape and the knuckle creases, and has no fingertip ease (+2.5 at each tip), no seams and no fourchettes. A glove-specific smoothing or a sculpted glove last would fix it.
-2. **Finger-to-palm contacts in the pose** (§4): they need either less curl or contact-aware fingers in round 0, and a glove that compresses there.
-3. **Knuckle guard:** it needs its moulded ribs (3 per boss at 7 mm pitch), the webs between the bosses, and to follow the knuckle arc better. On the right hand in the pose it is barely readable at hero scale.
+The gloves went into the pose solve rather than the other way round: the glove shells, knuckle guards and PIP
+pads are the hands' outer surface in `scripts/stages/pose_solve.py` (skinned with these objects' own weights,
+`pose_contact.py --export`). The solver keeps every glove point at least 0.5 mm outside the carbine and the
+carrier, puts the palm on its grip, and fits the fingers (replacing round 0's curl tables) so each phalanx
+touches the grip and no glove enters another finger's or the palm's skin (scripts/stages/README.md, "Round 2").
+
+**gloves.py is unchanged.** With the fitted fingers the shell no longer needed an offset or a corrective:
+
+| Check (hero pose) | Round 1 | Round 2 |
+|---|---:|---:|
+| Glove.L.Shell inside the skin (gloves.json clearance_posed) | 498 verts, 1.85 mm | 9 verts, 1.48 mm |
+| Glove.R.Shell inside the skin | 476 verts, 1.95 mm | 18 verts, 1.10 mm |
+| knuckle guards and pads, minimum clearance | 1.4 to 2.0 mm | 1.79 to 2.12 mm |
+| clash report body-gloves | 2657 verts, 2.1 mm | 18 verts, 1.5 mm |
+| clash report gloves-carbine | 3592 verts, 24.9 mm | 42 verts, 1.0 mm (the handguard in the left glove) |
+| clash report gloves-carrier | 472 verts, 15.4 mm | none |
+| clash report shirt-gloves (a cuff vertex in the sleeve) | 4 verts, 24.5 mm | none |
+
+The remaining shell vertices inside the skin sit at flexed finger joints, where the 1.8 mm offset is
+squeezed by the bend (left at [-14, -391, 955], right at [-198, -184, 1092] mm). Real gloves compress there.
+
+Renders opened: `renders/pose/pose_hands_sheet.png` (each hand from the camera, the gun's two sides, above and
+in front), `renders/round_02/hands_rifle_compare.png`, `arm_R_compare.png`, `arm_L_compare.png`.
+- The gloves follow the hands onto the grip and the handguard; the right index lies along the receiver.
+- **A light flap at the left glove's thumb web** in the camera view: the shell folds where the thumb is
+  abducted and extended (about -28 deg flexion and -19 deg spread at its base), and its inner face shows.
+
+## 6. Still wrong, ranked for round 3
+
+1. **The thumb-web fold** (§5): smooth the shell's weights across the thumb web (a few rings of weight
+   smoothing between `finger1-1` and `metacarpal1`), or a corrective for thumb abduction.
+2. **The glove follows the bare hand too closely.** It shows the fingernails' shape and the knuckle creases, and has no fingertip ease (+2.5 at each tip), no seams and no fourchettes. A glove-specific smoothing or a sculpted glove last would fix it.
+3. **Knuckle guard:** it needs its moulded ribs (3 per boss at 7 mm pitch), the webs between the bosses, and to follow the knuckle arc better. With the right hand now turned about 30 deg on the grip (the stock's front strut, pose README), it faces the camera less than drawn.
 4. **Cuff:** no closure tab, pull or binding. It is a uniform ring.
 5. **No leather, knit or neoprene materials**, and no dust on the up-facing bosses.
+6. If gloves.py changes the shell, re-run the pose's contact export and solve (the hands' outer surface is
+   this shell): `pose.py --solve --export`, or `pose_solve.py --continue-from cache/stages/pose_x_pass1.npz`.

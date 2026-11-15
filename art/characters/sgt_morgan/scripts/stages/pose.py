@@ -7,7 +7,10 @@ This script applies it, checks Blender's posed joints against the solver's forwa
 carbine stand-in, and saves the posed file.
 
   "$SGT_BLENDER" -b cache/stages/base.blend --python scripts/stages/pose.py [-- --solve]
-      --solve   re-run the solver first ("$SGT_PYIMG" -I scripts/stages/pose_solve.py)
+      --solve   re-run the solver first ("$SGT_PYIMG" -I scripts/stages/pose_solve.py); before it, round 2's
+                contact data (cache/stages/contact.npz, pose_contact.py) is re-exported when a part cache it
+                reads is newer
+      --export  with --solve: re-export the contact data anyway (it samples the carrier in the current pose)
   -> cache/stages/pose.blend (Body + collection Pose: Pose.Carbine.Frame, an empty bone-parented to
      wrist.R, and Pose.Carbine.Proxy, a block carbine 840 mm long in that frame)
      cache/stages/pose_check.json (Blender vs solver joint positions)
@@ -144,6 +147,20 @@ def check(rig, data):
     return {"max_mm": round(errs[worst], 4), "worst_bone": worst, "mean_mm": round(float(np.mean(list(errs.values()))), 4)}
 
 
+def run_export(force=False):
+    """Round 2: refresh cache/stages/contact.npz (the real surfaces the solver keeps the hands, arms and carbine
+    on and out of) by running pose_contact.py in its own Blender process. Not imported here, on purpose: the
+    part scripts import this module (common.apply_hero_pose), and assemble.py counts every module they import
+    as an input of every part."""
+    sys.path.insert(0, os.path.join(PROJECT, "scripts"))
+    from lib import env
+    args = ["-b", BASE_BLEND, "--python", os.path.join(HERE, "pose_contact.py"), "--", "--export"]
+    cmd, environ = env.blender_cmd(args + ([] if force else ["--if-stale"]))
+    r = subprocess.run(cmd, env=environ, cwd=PROJECT)
+    if r.returncode:
+        raise RuntimeError(f"contact export failed ({r.returncode})")
+
+
 def run_solver():
     sys.path.insert(0, os.path.join(PROJECT, "scripts"))
     from lib import env
@@ -161,6 +178,7 @@ def main(argv):
     import bpy
     t0 = time.perf_counter()
     if "--solve" in argv:
+        run_export(force="--export" in argv)
         run_solver()
     rig = bpy.data.objects.get(RIG)
     if rig is None:
