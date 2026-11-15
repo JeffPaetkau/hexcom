@@ -2,8 +2,9 @@
 
 Goal: a photoreal, rigged Blender model of the soldier in `ref/reference_full.png`,
 built entirely by scripts, generators, simulation and downloaded assets, verified by
-rendering and looking. Read `spec/00_overview.md` first, then the spec for the part
-you are working on.
+rendering and looking. Read `PLAN.md` first (take 2, breadth first, since 2026-11-14), then
+`notes/session_log.md`, then the notes of the part you are working on. Take 1 (part by part,
+2026-10-06 to 10-27) is archived under `archive/v1/` for reference only.
 
 ## Scope (Jeff, 2026-10-10)
 
@@ -23,11 +24,10 @@ textures, a skeleton that maps to Godot's humanoid profile) as well as render in
 2. **Units are metres in Blender, millimetres in specs.** Character origin is on the
    floor midway between the feet, +Z up, the character faces −Y (the camera sits on
    the −Y side), so +X is the SOLDIER'S LEFT (viewer's right). This matches
-   `notes/analysis_consolidated.md`.
+   `archive/v1/notes/analysis_consolidated.md`.
 3. **Render and look before you claim anything.** Every part script ends by rendering
-   the part in closeup from the views named in its spec into `renders/<part>/`, and
-   you open the PNG with the Read tool and compare it with the reference crop before
-   marking the step done. "It ran without errors" is not done.
+   the part in closeup into `renders/<part>/`, and you open the PNG with the Read tool and
+   compare it with the reference crop before marking the step done. "It ran without errors" is not done.
 4. **Scripts are idempotent and resumable.** Each `scripts/parts/<part>.py` can be run
    headlessly (`blender -b --python scripts/parts/<part>.py -- <args>`) on a fresh
    container after `scripts/setup_session.sh`, and re-running it replaces its own
@@ -44,21 +44,22 @@ textures, a skeleton that maps to Godot's humanoid profile) as well as render in
    stay separate files rather than packed into the .blend; if `deliver/` grows past a few
    hundred MB, propose Git LFS to Jeff.
 7. **Commit at every milestone.** The container is ephemeral; uncommitted work is lost.
-8. **Specs are the source of truth.** If you deviate from a spec, update the spec in
-   the same commit and explain why in the commit message.
+8. **Write down decisions where the next agent will look.** `PLAN.md` for the method, the
+   part's notes (`scripts/parts/<part>.md`) for the part: its real-world identity and
+   dimensions, what the reference shows, what each round did, what is still wrong.
 
 ## Layout
 
 - `ref/` reference image and upscaled crops (read-only)
-- `spec/` one Markdown spec per part, numbered in build order; `00_overview.md` holds
-  strategy, breakdown tree, evaluation method, roadmap
-- `notes/` analysis and research notes behind the specs
+- `PLAN.md` take 2's method and stages
+- `notes/` the session log and research notes
+- `archive/v1/` take 1: its specs, notes and part scripts (reference only)
 - `scripts/setup_session.sh` installs Blender, MPFB, and downloads assets
-- `scripts/lib/` shared Python helpers (materials, bevel/subdiv utilities, render
-  harness, measurement tools)
-- `scripts/parts/` one build script per part
-- `scripts/build_all.py` assembles the character from parts and poses it
-- `scripts/eval/` reference-matched camera, lights, critic render sets, metrics
+- `scripts/stages/` round 0: the base body with its skeleton, and the hero pose
+- `scripts/parts/` one build script and one notes file per part
+- `scripts/assemble.py` loads the body and every part, poses, renders the round's evaluation
+- `scripts/lib/` shared Python helpers (materials, sweeps, stitches, hardware, measurement)
+- `scripts/eval/` the matched hero camera, lights, render tiers, grade, the blind critic loop
 - `assets/` downloaded textures, HDRIs, MakeHuman data, AI models (gitignored)
 - `renders/` outputs (gitignored except `renders/eval/`)
 
@@ -118,20 +119,17 @@ is inconsistent with itself or with reality, reality wins.** Precedence:
    0.41 crotch height; the full-figure overlay will therefore deviate in the legs, and that
    is accepted).
 
-Specs written before this rule (01 to 05, 09) are revised against it in the critique pass.
-
 **The man's height and build follow the drawing** (Jeff, 2026-10-10, spec 01 §10.2 Q7 to
 Q9). Rest stature **1835 mm** barefoot: in the hero pose, in boots, the skull top meets the
 drawn line 1855 mm above the floor (the footbeds add 42, the pose costs 22). The build is the
 drawing's lean V-taper, not ANSUR's 83 kg man; the mass is an outcome. The feet are 274 mm
 (ANSUR's 282 less a shorter big toe: Jeff, 2026-10-15, "toe 2 looks right; it is the big toe
-that is too long"; the boot's last follows, spec 02 note). Specs still citing 1855, 1877 or 83 kg are corrected when their part is
-built.
+that is too long"). Take 1's archived specs that cite 1855, 1877 or 83 kg are superseded here.
 
 ## Paths
 
-Specs, notes and research scripts written in cloud sessions refer to `/home/user/sgt_morgan/...`;
-read that as this folder (`art/characters/sgt_morgan/` in the hexcom repository). Paths under
-`assets/ai/` in the notes have copies of the small results in `ref/ai/` (the face landmarks
+Take 1's specs, notes and research scripts (now in `archive/v1/`) written in cloud sessions refer to `/home/user/sgt_morgan/...`;
+read that as this folder (`art/characters/sgt_morgan/` in the hexcom repository). Their paths `spec/` and `notes/` now
+live under `archive/v1/`. Paths under `assets/ai/` in the notes have copies of the small results in `ref/ai/` (the face landmarks
 and meshes extracted from the reference). New scripts take paths relative to this folder and
 must run on both Linux and Windows.
