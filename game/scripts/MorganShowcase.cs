@@ -6,30 +6,37 @@ using Hexcom.Rules;
 namespace Hexcom.Game;
 
 /// <summary>
-/// A showcase, not the game: Sgt. Alex Morgan walking a loop on the game's own terrain, under its sky
-/// and sun, stopping to stand at one end. Run it with
+/// A showcase, not the game: Sgt. Alex Morgan on the game's own terrain, under its sky and sun. He
+/// stands in the model's rest pose, eases into the reference image's pose, holds it, then walks a
+/// loop and stops to stand at one end. Run it with
 /// <c>Godot_v4.7.2-stable_mono_win64_console --path game res://scenes/Morgan.tscn</c>.
 /// </summary>
 /// <remarks>
 /// <para>
 /// The ground, sky and sun come from <see cref="World"/>'s own builders and the same terrain seed,
-/// so he stands in the environment the game draws; nothing of the board, the HUD or the rules'
-/// units is here. World.tscn stays the main scene and is untouched by this one.
+/// and the camera is the game's own <see cref="TacticalCamera"/> with the game's controls (WASD or
+/// the arrows pan, Q and E turn, the wheel zooms, the middle button drags, the right button orbits,
+/// the screen edges pan, Shift hurries). Two differences, both about him: the camera follows him
+/// until you pan away, and Home or F, which recentre on the map's origin in the game, recentre on
+/// him and follow again here. Keys 1 to 5 are presets around him (behind, front, side, close, the
+/// game's default tactical height); the game does not use them. Escape quits, F11 toggles a window.
+/// Nothing of the board, the HUD or the rules' units is here; World.tscn stays the main scene.
 /// </para>
 /// <para>
 /// The model is <c>res://characters/morgan/morgan.glb</c>, written (with
 /// <c>morgan_motion.json</c> beside it) by <c>art/characters/sgt_morgan/scripts/export_godot.py</c>;
-/// the .glb is not committed. Its animations are in place: this script moves him along the path
-/// at the speed the export measured for the walk, so a planted foot stays planted, and sets him on
-/// the ground with <see cref="TerrainView.MeshHeight"/>. He is scaled from his measured height in
-/// boots to the rules' standing man, 1.80 m.
+/// the .glb is not committed. Its animations are Rest, Hero (static poses), Walk and Idle (in
+/// place): this script moves him along the path at the speed the export measured for the walk, so a
+/// planted foot stays planted, and sets him on the ground with <see cref="TerrainView.MeshHeight"/>.
+/// He is scaled from his measured height in boots to the rules' standing man, 1.80 m.
 /// </para>
 /// <para>
-/// Views (keys 1 to 5, or <c>--view</c>): follow, front, side, close, tactical (the game's
-/// <see cref="TacticalCamera"/> at its default pitch and distance, centred on him). A capture:
-/// <c>-- --shot out.png --view side --at 12</c> starts the loop <c>--at</c> seconds in, waits
-/// <c>--shot-after</c> frames (default 10), saves the viewport and quits. With Godot's own
-/// <c>--write-movie out.avi --fixed-fps 30 --quit-after N</c> it records instead.
+/// A capture: <c>-- --shot out.png --view side --at 12</c> starts <c>--at</c> seconds after the
+/// scene starts (the intro is the first <see cref="IntroSeconds"/>), waits <c>--shot-after</c>
+/// frames (default 10), saves the viewport and quits. <c>--view</c> is follow, front, three, side,
+/// close (a free camera that frames him exactly, for pictures) or tactical (the game's camera at its
+/// default pitch and distance). With Godot's own <c>--write-movie out.avi --fixed-fps 30
+/// --quit-after N</c> it records instead.
 /// </para>
 /// </remarks>
 public partial class MorganShowcase : Node3D
@@ -49,8 +56,13 @@ public partial class MorganShowcase : Node3D
     /// <summary>Seconds he stands at the near end before turning and walking off again.</summary>
     private const float IdleSeconds = 5f;
 
-    /// <summary>Seconds over which one animation hands over to the other.</summary>
+    /// <summary>Seconds over which walk and idle hand over to each other.</summary>
     private const float Blend = 0.35f;
+
+    /// <summary>The intro: the rest pose held, the move into the hero pose, the hero pose held, the step off.</summary>
+    private const float RestHold = 1.5f, ToHero = 1.5f, HeroHold = 3f, ToWalk = 0.6f;
+
+    private const float IntroSeconds = RestHold + ToHero + HeroHold;
 
     private Terrain _terrain = null!;
     private TerrainView _terrainView = null!;
@@ -66,9 +78,12 @@ public partial class MorganShowcase : Node3D
     private Vector2 _start, _along, _across;
     private float _t;
     private string _view = "follow";
+    private bool _interactive;
+    private bool _follow = true;
     private string _playing = "";
     private Vector3 _cameraAt;
     private bool _cameraPlaced;
+    private Vector2 _at, _facing;
 
     private string? _shot;
     private int _shotAfter = 10;
@@ -78,7 +93,9 @@ public partial class MorganShowcase : Node3D
         var args = OS.GetCmdlineUserArgs();
         _shot = ValueOf(args, "--shot");
         _shotAfter = int.TryParse(ValueOf(args, "--shot-after"), out var after) ? after : 10;
-        _view = ValueOf(args, "--view") ?? "follow";
+        var view = ValueOf(args, "--view");
+        _interactive = _shot is null && view is null;
+        _view = view ?? "tactical";
         _t = float.TryParse(ValueOf(args, "--at"), System.Globalization.CultureInfo.InvariantCulture, out var at) ? at : 0f;
 
         AddChild(World.BuildSky());
@@ -127,15 +144,23 @@ public partial class MorganShowcase : Node3D
             GD.PushWarning("no AnimationPlayer in the model; he will glide");
         }
 
+        // The game's camera, with the game's bindings; Home and F are taken over (see the remarks).
+        Bindings.Ensure();
+        InputMap.ActionEraseEvents(Bindings.Home);
         _camera = new Camera3D { Fov = 40f, Near = 0.05f, Far = 20000f };
         AddChild(_camera);
-        _tactical = new TacticalCamera { Terrain = _terrain, ControlsEnabled = false };
+        _tactical = new TacticalCamera { Terrain = _terrain, ControlsEnabled = _interactive };
         AddChild(_tactical);
-        UseView(_view);
 
         Pose(0f, first: true);
+        if (_interactive)
+        {
+            Preset(3);
+            _tactical.Settle();
+        }
+        else UseView(_view);
 
-        if (_shot is not null || Array.IndexOf(OS.GetCmdlineArgs(), "--write-movie") >= 0)
+        if (!_interactive || Array.IndexOf(OS.GetCmdlineArgs(), "--write-movie") >= 0)
         {
             var window = GetWindow();
             window.Mode = Window.ModeEnum.Windowed;
@@ -297,30 +322,94 @@ public partial class MorganShowcase : Node3D
         }
     }
 
+    /// <summary>
+    /// What he does at time t since the start: the intro (rest, into the hero pose, hold) at the
+    /// loop's start, then the loop. The animation, how long to blend into it, and where in it to be.
+    /// </summary>
+    private (Vector2 At, Vector2 Facing, string Animation, float Seek) Schedule(float t)
+    {
+        if (t < IntroSeconds)
+        {
+            var (at0, facing0, _, _) = StateAt(0f);
+            return (at0, facing0, t < RestHold ? "Rest" : "Hero", 0f);
+        }
+        var (at, facing, walking, walkTime) = StateAt(t - IntroSeconds);
+        return (at, facing, walking ? "Walk" : "Idle", walking ? walkTime % _walkLength : 0f);
+    }
+
+    private float BlendInto(string from, string to)
+        => (from, to) switch
+        {
+            ("Rest", "Hero") => ToHero,
+            ("Hero", _) => ToWalk,
+            _ => Blend,
+        };
+
     private void Pose(float delta, bool first)
     {
-        var (at, facing, walking, walkTime) = StateAt(_t);
+        var (at, facing, wanted, seek) = Schedule(_t);
+        _at = at;
+        _facing = facing;
         var y = TerrainView.MeshHeight(_terrain, at.X, at.Y);
         _morgan.Position = new Vector3(at.X, y, at.Y);
         // The model faces its +Z (glTF from Blender's -Y); turn +Z onto the facing.
         _morgan.Rotation = new Vector3(0f, Mathf.Atan2(facing.X, facing.Y), 0f);
 
-        if (_player is not null)
+        if (_player is not null && _player.HasAnimation(wanted) && wanted != _playing)
         {
-            var wanted = walking ? "Walk" : "Idle";
-            if (_player.HasAnimation(wanted) && wanted != _playing)
-            {
-                _player.Play(wanted, first ? 0f : Blend);
-                if (first && walking) _player.Seek(walkTime % _walkLength, true);
-                _playing = wanted;
-            }
+            _player.Play(wanted, first ? 0f : BlendInto(_playing, wanted));
+            if (first) _player.Seek(seek, true);
+            _playing = wanted;
         }
 
         _farPlane.Position = new Vector3(at.X, World.FarPlaneHeight, at.Y);
         _terrainView.Update(at);
-        PlaceCamera(at, y, facing, delta, first);
+
+        if (_interactive)
+        {
+            if (Panned()) _follow = false;
+            if (_follow && !_tactical.Dragging) _tactical.Set(focus: at);
+        }
+        else
+        {
+            PlaceCamera(at, y, facing, delta, first);
+        }
     }
 
+    /// <summary>Whether the player is panning the game camera (keys, middle drag or a screen edge), which ends following.</summary>
+    private bool Panned()
+    {
+        if (Input.GetVector(Bindings.Left, Bindings.Right, Bindings.Back, Bindings.Forward) != Vector2.Zero) return true;
+        if (Input.IsMouseButtonPressed(MouseButton.Middle)) return true;
+        if (!GetWindow().HasFocus()) return false;
+        var mouse = GetViewport().GetMousePosition();
+        var size = GetViewport().GetVisibleRect().Size;
+        const float edge = 8f;
+        return mouse.X >= 0 && mouse.Y >= 0 && mouse.X <= size.X && mouse.Y <= size.Y
+            && (mouse.X < edge || mouse.Y < edge || mouse.X > size.X - edge || mouse.Y > size.Y - edge);
+    }
+
+    /// <summary>The game camera's bearing (zero north, clockwise) for looking along a ground direction.</summary>
+    private static float Bearing(Vector2 look) => Mathf.RadToDeg(Mathf.Atan2(look.X, -look.Y));
+
+    /// <summary>Keys 1 to 5: behind, front, side, close, the game's default; all centred on him, following.</summary>
+    private void Preset(int key)
+    {
+        var f = _facing;
+        var side = new Vector2(-f.Y, f.X);
+        var (look, pitch, distance) = key switch
+        {
+            1 => (f, 20f, 8f),
+            2 => (-f, TacticalCamera.LowestPitchDegrees, 6f),
+            3 => ((-f + side * 0.7f).Normalized(), 16f, 7f),
+            4 => (-f, TacticalCamera.LowestPitchDegrees, TacticalCamera.Closest),
+            _ => (f, TacticalCamera.DefaultPitchDegrees, TacticalCamera.DefaultDistance),
+        };
+        _follow = true;
+        _tactical.Set(focus: _at, yawDegrees: Bearing(look), pitchDegrees: pitch, distance: distance);
+    }
+
+    /// <summary>The free camera used for pictures and movies: fixed to him, low and close where the game camera cannot go.</summary>
     private void PlaceCamera(Vector2 at, float y, Vector2 facing, float delta, bool first)
     {
         var body = new Vector3(at.X, y, at.Y);
@@ -333,16 +422,28 @@ public partial class MorganShowcase : Node3D
                 eye = body + forward * 5f + Vector3.Up * 1.3f;
                 look = body + Vector3.Up * 0.95f;
                 break;
+            case "three":
+                eye = body + forward * 4.2f + right * 2.6f + Vector3.Up * 1.45f;
+                look = body + Vector3.Up * 0.95f;
+                break;
             case "side":
                 eye = body - right * 5f + Vector3.Up * 1.2f;
                 look = body + Vector3.Up * 0.95f;
+                break;
+            case "feet":
+                eye = body - right * 2.6f + Vector3.Up * 0.45f;
+                look = body + Vector3.Up * 0.3f;
+                break;
+            case "feet_front":
+                eye = body + forward * 2.6f + Vector3.Up * 0.45f;
+                look = body + Vector3.Up * 0.3f;
                 break;
             case "close":
                 eye = body + forward * 1.7f - right * 0.7f + Vector3.Up * 1.55f;
                 look = body + Vector3.Up * 1.35f;
                 break;
             case "tactical":
-                _tactical.Set(focus: at, yawDegrees: Mathf.RadToDeg(Mathf.Atan2(-_along.X, -_along.Y)),
+                _tactical.Set(focus: at, yawDegrees: Bearing(-_along),
                     pitchDegrees: TacticalCamera.DefaultPitchDegrees, distance: TacticalCamera.DefaultDistance);
                 _tactical.Settle();
                 return;
@@ -352,7 +453,7 @@ public partial class MorganShowcase : Node3D
                 break;
         }
 
-        // Front, side and close stay fixed to him; the follow view trails, so a turn reads as a turn.
+        // The follow view trails, so a turn reads as a turn; the others stay fixed to him.
         if (_view == "follow" && _cameraPlaced && !first)
         {
             _cameraAt = _cameraAt.Lerp(eye, 1f - Mathf.Exp(-2.5f * delta));
@@ -362,7 +463,7 @@ public partial class MorganShowcase : Node3D
             _cameraAt = eye;
             _cameraPlaced = true;
         }
-        var ground = TerrainView.MeshHeight(_terrain, _cameraAt.X, _cameraAt.Z) + 0.4f;
+        var ground = TerrainView.MeshHeight(_terrain, _cameraAt.X, _cameraAt.Z) + 0.2f;
         if (_cameraAt.Y < ground) _cameraAt.Y = ground;
         _camera.LookAtFromPosition(_cameraAt, look, Vector3.Up);
     }
@@ -387,14 +488,23 @@ public partial class MorganShowcase : Node3D
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key) return;
-        switch (key.Keycode)
+        switch (key.PhysicalKeycode != Key.None ? key.PhysicalKeycode : key.Keycode)
         {
             case Key.Escape: GetTree().Quit(); break;
-            case Key.Key1: UseView("follow"); break;
-            case Key.Key2: UseView("front"); break;
-            case Key.Key3: UseView("side"); break;
-            case Key.Key4: UseView("close"); break;
-            case Key.Key5: UseView("tactical"); break;
+            case Key.F11:
+                var window = GetWindow();
+                if (window.Mode == Window.ModeEnum.Windowed) window.Mode = Window.ModeEnum.Fullscreen;
+                else { window.Mode = Window.ModeEnum.Windowed; window.Size = new Vector2I(1600, 900); }
+                break;
+            case Key.Home:
+            case Key.F:
+                if (_interactive) { _follow = true; _tactical.Set(focus: _at); }
+                break;
+            case Key.Key1: if (_interactive) Preset(1); break;
+            case Key.Key2: if (_interactive) Preset(2); break;
+            case Key.Key3: if (_interactive) Preset(3); break;
+            case Key.Key4: if (_interactive) Preset(4); break;
+            case Key.Key5: if (_interactive) Preset(5); break;
         }
     }
 

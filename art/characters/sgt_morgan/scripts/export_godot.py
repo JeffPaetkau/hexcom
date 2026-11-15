@@ -45,6 +45,9 @@ missing. Walk: 35_01 (subject 35, "walk"); idle: 77_02 ("standing"). Retarget by
 (MAP below): for every mapped bone the source's world rotation change from its T-pose is applied to the
 target bone after the target's rest (MPFB's A-pose) has been swung onto the source's T-pose bone
 directions; twist bones, toes and the face follow their parents; the fingers take the hero pose's grip.
+The feet are then re-aimed from the boots' soles (fix_feet: no roll, toes forward, stance soles flat),
+because the CMU foot's roll and yaw do not carry over to MPFB's foot. Two static actions open the
+showcase: Rest (the rest pose, grounded) and Hero (hero_pose.json via scripts/stages/pose.py, grounded).
 The walk is one gait cycle, in place (the hips' forward drift removed, their sway kept), looped by
 spreading the end-to-start mismatch over the cycle; the feet are pinned to the ground every frame (the
 lowest of each boot's heel and toe points at z = 0); the forward speed at which the planted foot stays
@@ -714,6 +717,101 @@ def ground(tgt, frames, pts):
     return info
 
 
+def fix_feet(tgt, frames, sole, toe_out_deg=6.0, flat_deg=(8.0, 20.0), tilt_deg=(-65.0, 30.0), near=0.03):
+    """Re-aim each foot from its sole rather than from the CMU ankle-to-ball segment, whose roll and yaw
+    do not carry over to MPFB's foot (the boots came out pigeon-toed, rolled onto an edge in the swing and
+    heel-down in stance). Kept from the retarget: the ankle position and the sole's heel-to-toe tilt
+    (clamped to tilt_deg). Set here: no roll (the sole's width level), the heading of the pelvis turned out
+    by toe_out_deg, and, on a foot within `near` of the lower foot, a tilt under flat_deg[0] eased to flat
+    (fading out by flat_deg[1], so heel strike and heel-off keep their angle)."""
+    up = Vector((0, 0, 1))
+    root_fwd = tgt.rest["root"].to_3x3().inverted() @ Vector((0, -1, 0))
+    loc = {}
+    for s in sole:
+        R0 = tgt.rest[f"foot.{s}"]
+        f0 = (R0 @ sole[s][1]) - (R0 @ sole[s][0])
+        f0.z = 0
+        Ri = R0.to_3x3().inverted()
+        loc[s] = _frame(Ri @ f0.normalized(), Ri @ up)
+
+    for basis in frames:
+        P = tgt.fk(basis)
+        h = P["root"].to_3x3() @ root_fwd
+        h.z = 0
+        h.normalize()
+        low = {s: min((P[f"foot.{s}"] @ p).z for p in sole[s]) for s in sole}
+        lowest = min(low.values())
+        for s, sign in (("L", 1.0), ("R", -1.0)):
+            n = f"foot.{s}"
+            f = P[n].to_3x3() @ loc[s].col[0]
+            tilt = math.degrees(math.asin(max(-1.0, min(1.0, f.z))))
+            tilt = max(tilt_deg[0], min(tilt_deg[1], tilt))
+            a = abs(tilt)
+            w = 1.0 if a <= flat_deg[0] else 0.0 if a >= flat_deg[1] else (flat_deg[1] - a) / (flat_deg[1] - flat_deg[0])
+            if low[s] - lowest > near:
+                w = 0.0
+            tilt = math.radians(tilt * (1.0 - w))
+            hd = Matrix.Rotation(math.radians(toe_out_deg) * sign, 3, "Z") @ h
+            fd = hd * math.cos(tilt) + Vector((0, 0, math.sin(tilt)))
+            Rd = _frame(fd, up) @ loc[s].transposed()
+            Pn = Matrix.Translation(P[n].translation) @ Rd.to_4x4()
+            parent = tgt.bones[n].parent.name
+            basis[n] = tgt.rel[n].inverted() @ P[parent].inverted() @ Pn
+            P[n] = Pn
+
+
+def _frame(f, u):
+    """Orthonormal 3x3 with columns: f, u made perpendicular to f, and their cross product."""
+    f = f.normalized()
+    u = (u - f * u.dot(f)).normalized()
+    m = Matrix.Identity(3)
+    for i, c in enumerate((f, u, f.cross(u))):
+        m.col[i] = c
+    return m
+
+
+def static_frames(tgt, basis, pts):
+    """A two-frame static action's frames, grounded on the lowest sole point."""
+    frames = [{n: B.copy() for n, B in basis.items()}]
+    if "root" not in frames[0]:
+        frames[0]["root"] = Matrix.Identity(4)
+    ground(tgt, frames, pts)
+    return [frames[0], {n: B.copy() for n, B in frames[0].items()}]
+
+
+def hero_basis(rig, src=None):
+    """The reference image's pose. Read from the assembled .blend the mesh was built from (assemble.py
+    posed its Morgan.Rig with scripts/stages/pose.py apply_hero_pose and placed the carbine on that pose,
+    so the grip matches this build even when hero_pose.json has moved on since); else through
+    apply_hero_pose itself (read-only use)."""
+    if src and os.path.exists(src):
+        with bpy.data.libraries.load(src, link=False) as (data_from, data_to):
+            data_to.objects = [n for n in data_from.objects if n == "Morgan.Rig"]
+        if data_to.objects:
+            other = data_to.objects[0]
+            out = {pb.name: pb.matrix_basis.copy() for pb in other.pose.bones
+                   if pb.matrix_basis != Matrix.Identity(4)}
+            arm = other.data
+            bpy.data.objects.remove(other, do_unlink=True)
+            bpy.data.armatures.remove(arm)
+            say(f"hero pose: {len(out)} posed bones read from {src}")
+            return out
+    sp = os.path.join(SCRIPTS, "stages")
+    if sp not in sys.path:
+        sys.path.insert(0, sp)
+    from pose import apply_hero_pose  # noqa: E402
+    apply_hero_pose(rig)
+    out = {pb.name: pb.matrix_basis.copy() for pb in rig.pose.bones
+           if pb.matrix_basis != Matrix.Identity(4)}
+    for pb in rig.pose.bones:
+        pb.location = (0, 0, 0)
+        pb.rotation_quaternion = (1, 0, 0, 0)
+        pb.scale = (1, 1, 1)
+    bpy.context.view_layer.update()
+    say(f"hero pose: {len(out)} posed bones from pose.py apply_hero_pose (hero_pose.json as it is now)")
+    return out
+
+
 def contacts(tgt, basis, pts):
     posed = tgt.fk(basis)
     return {s: [posed[f"foot.{s}"] @ p for p in pts[s]] for s in pts}
@@ -954,7 +1052,10 @@ def anim_stage(out_path, mesh_blend=MESH_BLEND):
     hero = json.load(open(HERO_JSON))
     fingers = {n: Quaternion(q) for n, q in hero["bones"].items() if n.startswith(("finger", "metacarpal"))}
     pts, sole_z = contact_points(tgt, bpy.data.objects["Morgan.Boots"])
-    keyed = sorted(set(MAP) | set(fingers))
+    built_from = json.load(open(os.path.join(CACHE, "mesh_report.json"))).get("source")
+    hero_pose = hero_basis(rig, built_from)
+    # every action keys the same bones, so Godot's crossfades never leave one holding another's pose
+    keyed = sorted(set(MAP) | set(fingers) | set(hero_pose))
     motion = {"source": "CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), BVH by B. Hahne via "
                         "github.com/meshula/cmu-mocap", "fps": FPS, "in_place": True}
 
@@ -966,6 +1067,7 @@ def anim_stage(out_path, mesh_blend=MESH_BLEND):
     frames, scale, _ = retarget(tgt, src, s_frames, fingers, travel_dir=travel)
     frames, drift = make_loop(frames)
     center_root(tgt, frames)
+    fix_feet(tgt, frames, pts)
     info = ground(tgt, frames, pts)
     v = planted_speed(info)
     info = clean_feet(tgt, frames, pts, v)
@@ -993,6 +1095,7 @@ def anim_stage(out_path, mesh_blend=MESH_BLEND):
     frames, drift = make_loop(frames)
     # in place: the hips' sway stays, their mean horizontal offset from the rest goes (basis space of root)
     center_root(tgt, frames)
+    fix_feet(tgt, frames, pts)
     ground(tgt, frames, pts)
     key_action(rig, "Idle", frames, keyed)
     say(f"idle {IDLE[0]}: source frames {a}-{b} ({(b - a) / SRC_FPS:.1f} s), score {score:.3f}")
@@ -1001,6 +1104,12 @@ def anim_stage(out_path, mesh_blend=MESH_BLEND):
     src_action = src.animation_data.action
     bpy.data.objects.remove(src, do_unlink=True)
     bpy.data.actions.remove(src_action)
+
+    # the intro: the rest pose and the reference image's pose, each a static two-frame action
+    key_action(rig, "Rest", static_frames(tgt, {}, pts), keyed)
+    key_action(rig, "Hero", static_frames(tgt, hero_pose, pts), keyed)
+    motion["intro"] = {"rest": "Rest (MPFB A-pose, soles on the ground)",
+                       "hero": "Hero (scripts/stages/hero_pose.json via pose.py apply_hero_pose, grounded)"}
 
     # height in the rest pose, boots on: for the game's scale to the rules' standing man
     zs = [(o.matrix_world @ v.co).z for n in ("Morgan.Body", "Morgan.Hair") if (o := bpy.data.objects.get(n))
