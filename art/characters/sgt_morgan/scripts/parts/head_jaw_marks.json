@@ -1,0 +1,21 @@
+{
+ "note": "Head round 4 (head.md §11): the jaw line read by hand from gen/R001 (1254 px square images), as take 1's pose analysis read its joints. Pixels (x right, y down) in each image. MediaPipe has no gonion or under-jaw plane, so these are the jaw's landmarks. profile_left.png (the camera on his left, the face pointing to image left): 'jaw_border' is the shadowed mandible lower border from the chin to the jaw angle (the dark crease under the stubbled jaw, 2026-11-15 zoom at 10 px grid); 'gonion' its end below and in front of the ear lobe; 'cervicomental' the corner of the silhouette where the under-chin line meets the throat; 'thyroid' the laryngeal prominence on the throat outline. front.png: 'jaw_border_R' / '_L' the jaw's lower edge from the gonion (where the face outline stops being vertical, below the ear lobe) to beside the menton, read on the crease between the stubbled jaw and the paler neck; R is the soldier's right (image left). The front's L side was read on the image, not mirrored. Head_shape_r4.py triangulates these with the fitted R001 cameras: each front point is put on its front-camera ray where the profile camera sees it on the profile's jaw-border polyline (the fit is symmetric, so the left profile serves both sides). The hero crop's jaw line (ref/crop_head_face.png, crop px) is recorded for the evaluation overlay only: the camera looks up at the chin there, so the dark band under the jaw is the under-jaw plane itself, its top edge the mandible border and its bottom edge the crease into the neck.",
+ "profile": {
+  "jaw_border": [[300, 912], [360, 898], [420, 885], [470, 870], [520, 855], [560, 845], [590, 830], [615, 810], [638, 795]],
+  "gonion": [638, 795],
+  "cervicomental": [447, 950],
+  "thyroid": [458, 1032],
+  "ear_lobe_bottom": [690, 708]
+ },
+ "front": {
+  "gonion_R": [400, 835],
+  "gonion_L": [874, 832],
+  "jaw_border_R": [[400, 835], [420, 858], [445, 875], [475, 892], [512, 905], [558, 922], [600, 933]],
+  "jaw_border_L": [[874, 832], [854, 858], [829, 875], [799, 892], [762, 905], [716, 922], [674, 933]],
+  "menton": [637, 938]
+ },
+ "hero_crop": {
+  "jaw_border_top": [[328, 489], [360, 498], [395, 504], [444, 505], [486, 503], [521, 500], [556, 494], [598, 480]],
+  "underjaw_crease": [[328, 489], [360, 503], [395, 513], [444, 520], [486, 524], [521, 520], [556, 510], [598, 489]]
+ }
+}

@@ -32,6 +32,9 @@ stubble and eye material changes for base.py to call. Until they are wired (§6.
 "$SGT_BLENDER" -b --python scripts/parts/head.py -- --dev --prefix head_r2_ --samples 64          # ~75 s: part + renders
 ```
 
+Rounds 3 and 4 of the shape (§10, §11) are developed beside it on copies and write their own targets
+(`head-shape-r3.target`, `head-shape-r4.target`); switching is a copy over `head-shape.target` (§11.6).
+
 ## 1. What it is
 
 The face of a 38 to 42-year-old Caucasian man. The real-world numbers are take 1's (spec 06 §2.5 and §3, where the image was overruled by norms):
@@ -529,3 +532,187 @@ and item 1 below is where the heavy read comes from.
    mouth corner. Eye and mouth details, which stay MPFB's.
 6. Round 2's §7 items 2-7 stand: the head pose, hair, skin, the nasion (now 3.1-3.3 mm, was 4.7-5.3), R001 as
    inferred, expression.
+
+## 11. Head shape round 4 (2026-11-15): the jaw and the neck (not wired)
+
+Developed on copies like round 3: `scripts/parts/head_shape_r4.py` writes `scripts/parts/head-shape-r4.target` (+
+`head_shape_r4.json`), starting from `head-shape-r3.target`; `head-shape.target` (round 2, loaded by base.py) is
+untouched. The hand-read jaw marks are `scripts/parts/head_jaw_marks.json`. Same harness as rounds 2-3 (base.py at
+dca7a15, stature 1835, round 1's hero pose snapshot), dev base `cache/stages/head_dev_r4.blend`, work in `cache/head_r4/`.
+
+```
+"$SGT_PYIMG" -I scripts/parts/head_shape_r4.py --fit --rounds 4          # ~15 min: head-shape-r4.target (canthi patched)
+"$SGT_PYIMG" -I scripts/parts/head_shape_r4.py --check r2,r3,r4 --check-fixed r2,r3,r4   # the numbers below
+"$SGT_PYIMG" -I scripts/parts/head_shape_r4.py --render r4 --sheets      # ~60 s: renders/head/r4/ (r2 | r3 | r4 sheets)
+"$SGT_PYIMG" -I scripts/parts/head_shape_r4.py --patch-canthus           # the outer-canthus patch alone (the fit does it)
+```
+
+### 11.1 Method
+
+Round 3's transfer continued for four rounds with every round-3 term (hero landmarks and nuisance, hand points, hero
+and three-quarter far-cheek outlines, R001 landmarks, profile outline and features, the Hunyuan prior with its mask
+remapped onto the new region, bending, cranium, skull top), except the relief, plus:
+
+1. **The region runs into the neck.** head.py's region (head and neck weights > 0.3) plus the skin above z 1500 (rest,
+   about the sternal notch) inside |x| < 120. The pinned ring moves from z 1531-1573 (45 mm under the menton at the
+   front) to z ~1500. The new skin behind y -10 (the nape) is held (1 mm); the helpers follow round 3's region only,
+   so the neck joint cubes and bones do not move; weights are per vertex and a shape key does not touch them.
+2. **Outlines that see the jaw** (R001 through the cameras solved on round 3's face in round 0, then held): the
+   profile outline continued down the throat to below the laryngeal prominence (rows 962-1086, every 6 px); the
+   profile's under-chin line as columns (296-428: per column, the bottom of the projected mesh's covered interval
+   containing a point inside the chin, against the first background pixel below it); the front's two side outlines
+   from below the ear lobes to the gonion (rows 740-836; scored as half-width, the common shift removed). Below the
+   gonion R001's neck stands about 14 mm a side outside the jaw; following it would put the neck girth near 480 mm
+   (a tape girth), so it is not used.
+3. **The jaw as landmarks** (`head_jaw_marks.json`, read by hand on 10-20 px grids and drawn back on the images to
+   check). MediaPipe marks no gonion or under-jaw plane, so: the gonion and the mandible's lower border in the front
+   (both sides, read separately) and in the profile, triangulated by matching the two polylines by arc fraction and
+   taking the closest point of each front ray and profile ray (the front's R side mirrored onto his left, then
+   averaged). The rays miss each other by 0.5-3 mm near the chin and 12-20 mm at the gonion: the front puts the jaw
+   angle lower than the profile does. So each point's sigma is sqrt(1.2² + (gap/3)²): 1.3 mm at the chin, 7 mm at the
+   gonion. Gonion triangulated at (±73, -36, 1636): 51 mm over the menton, 97 mm behind it. Plus **the under-jaw
+   plane**: points between the profile's midline under-chin line (z ~1583.5 from the chin back to the corner) and
+   the border at the same y, at 35 % and 70 % of the way, stopping 12 mm in front of the hand-read chin-neck corner.
+   Point-to-plane terms on the nearest vertex with a compatible normal, no more than 6-12 mm below the target.
+4. **Soft tissue:** a sculpt prior on the total offset since round 3: the cheek under the zygoma (20 mm outside the
+   mouth corner, half way between mouth and subnasale, r 11 mm, -3 mm) and the jowl (10 mm outside and 20 mm below
+   the mouth corner, r 10 mm, -2.5 mm) sit in; the masseter is left. It reached -1.0 of the -1.5 mm mean wanted (the
+   hero and three-quarter outlines hold the cheek).
+5. **Freedom where the jaw needs it:** the bending sigma (and round 3's curvature sigma) x2 in the jaw zone (below the
+   mouth corners, in front of the ears, down to 25-45 mm under the menton, not within 6-18 mm of the midline) and
+   round 3's prior offset sigma x2 there (the prior has no data under the chin).
+6. **Defect terms:** round 3's and 4's change smoothed at the mouth corners (L of the change since round 2, 0.05 mm);
+   the total change since round 1 smoothed within 8 mm of any triangle flipped against round 1's face (recomputed each
+   round); and after the last round **the outer canthi patched**: round 2-4's total displacement made a rigid
+   translation within 6 mm of MediaPipe 33 / 263, blended out by 22 mm.
+
+What was tried and dropped (each a full fit, kept in `cache/head_r4/v1`-`v7`, renders `renders/head/r4/v1`-`v5`):
+- **v1** (bending everywhere, three rounds): the marks moved 7.6 -> 6.2 mm; the jaw barely changed.
+- **v2**: the jaw formed, but:
+  - a hard groove ran round the nose from the canthus to the mouth corner. **The relief term** (Depth Anything) pushed
+    the nasal dorsum back 2.3 mm a solve (found by switching the term groups off one at a time); round 2 had already
+    noted its nose requests as the estimator's bias. The relief is off in round 4, and the profile features then fell
+    under 2 mm.
+  - a hard normal cut in the first sculpt also creased the side of the nose.
+- **v3:** the region's side boundary (|x| < 75) ran up the neck to z 1568 and the field kinked along it, so |x| < 120.
+- **v4-v6:** midline folds at the glabella, under the chin and at the chin-neck corner (a dihedral of 31° -> 157-174°).
+  The profile outlines pull only midline vertices; with relaxed bending the midline sank alone, and the throat rows at
+  3 px gave each long neck edge many samples. So: the midline keeps round 2's stiffness, 6 px samples, the under-jaw
+  points stop short of the corner, and the corner itself is left to the bending.
+- **Lid rings** (16 mm round each eyeball moving rigidly): did not touch the defect and moved the lids up to 8 mm; off.
+
+### 11.2 The red blob was the outer canthus, not the inner one
+
+Ray-casting the hero camera through the zoom's pixels on each dev base:
+- Back-facing skin hits (the socket lining seen through the lower lid): round 1's face 0, round 2 29, round 3 59,
+  round 4 before the patch 68. Mapped to vertices they sit at x ±46, beside MediaPipe 33/263: the **outer** corner of
+  the lower lid. The head is turned, so the right eye's outer corner is on the viewer's left of the zoom, and §10.3
+  mislabelled it.
+- Round 2's field folded that corner over: triangles there flip against round 1's face.
+- The patch restores round 1's corner, translated: 0 hits. Max change 8.9 mm on lining vertices.
+
+### 11.3 Numbers (`cache/head_r4/check_{r2,r3,r4}.json`, `checkfixed_*.json`)
+
+All three dev bases through the round-4 harness (the extended region), so r2 and r3 differ slightly from §6.3 / §10.2
+where the region matters. "Check" re-solves every R001 camera on MediaPipe per mesh; "fixed" holds round 2's cameras.
+
+| | R2 check | R3 check | **R4 check** | R2 fixed | R3 fixed | **R4 fixed** |
+|---|---|---|---|---|---|---|
+| Hero MediaPipe RMS, no nuisance, px | 1.64 | 1.68 | 1.71 | | | |
+| Hero jaw oval (detector), px | 4.67 | 4.51 | **4.43** | | | |
+| Hero with nuisance, px | 0.60 | 0.66 | 0.76 | 0.60 | 0.66 | 0.76 |
+| Hero far-cheek silhouette rms (mean), px | 0.80 (-0.13) | 1.21 (-0.30) | 1.08 (+0.27) | same | | |
+| Front landmarks, mm | 1.04 | 1.37 | 1.09 | 1.12 | 1.55 | 1.32 |
+| Front half-width, ear lobe to gonion, mm | 2.28 | 1.06 | 1.34 | 2.28 | 0.93 | 1.69 |
+| Three-quarter landmarks, mm | 1.18 | 1.51 | 1.62 | 1.18 | 1.57 | 2.05 |
+| Three-quarter far-cheek silhouette rms (mean), mm | 1.09 (0.75) | 2.05 (1.55) | 1.60 (0.90) | 1.03 (0.68) | 1.30 (0.20) | 1.43 (0.24) |
+| Profile outline, brow to throat, mm | 1.90 | 1.74 | **1.12** | 1.96 | 1.76 | 2.38 |
+| Profile glabella / nasion / pronasale / pogonion, mm | 0.9 / 5.3 / 3.8 / 2.5 | 5.7 / 3.7 / 1.2 / 1.8 | 2.5 / 2.2 / 0.7 / 2.2 | 0.3 / 4.7 / 3.5 / 2.5 | 4.4 / 3.3 / 1.4 / 2.2 | 3.2 / 1.4 / 2.0 / 0.9 |
+| Profile throat (rows 962-1086), mm | 2.09 | 2.39 | 2.11 | 2.09 | 2.32 | 1.98 |
+| Profile under-chin line, mm | 0.74 | 0.53 | 0.73 | 0.74 | 0.58 | 1.43 |
+| **Jaw border marks** rms (mean, + = model below/outside), mm | 8.38 (6.15) | 7.59 (4.90) | **3.59 (2.60)** | 8.38 (6.15) | 8.55 (6.24) | **4.35 (3.37)** |
+| **Gonion** (- = model inside), mm | -4.8 | -6.5 | **-2.2** | -4.8 | -5.2 | -2.1 |
+| **Under-jaw plane** rms (mean), mm | 4.55 (4.08) | 4.54 (3.91) | **1.16 (1.03)** | 4.55 (4.08) | 4.72 (3.95) | **0.95 (0.53)** |
+| Neck girth at menton -35 / -50 / -65 (hull of the slice, not a tape), mm | 523 / 512 / 567 | 517 / 507 / 558 | 522 / 511 / 565 | | | |
+| Breadth 38 / 20 mm above the menton, mm | 133.7 / 122.9 | 138.1 / 122.3 | 139.1 / 125.0 | | | |
+| Bizygomatic-like / vertex-menton, mm | 170.0 / 250.9 | 170.1 / 249.9 | 173.0 / 250.7 | | | |
+| Triangles flipped against round 1's face | 8 | 50 | 12 | | | |
+
+- Hero key points (px, r2 -> r4): nose tip 2.89 -> 2.86, mouth R 0.26 -> 0.85, gonion L 5.31 -> 5.37, eye R outer
+  1.23 -> 1.53; the rest within 0.2.
+- So round 4 does what the brief asked where it is measured: the jaw border, gonion and under-jaw plane move 3-6 mm
+  towards R001's, and the profile outline improves (with its cameras re-solved; held at round 2's it is worse, 2.38 mm,
+  so part of that number is camera).
+- It costs:
+  - the hero landmarks 0.07 px rms (0.16 with the nuisance);
+  - the hero far cheek, which now sits 0.27 px outside the drawn line (round 2: 0.13 inside);
+  - the three-quarter landmarks and far cheek 0.4-0.5 mm (the cheek is 1 mm outside R001's far cheek on average);
+  - 5 mm of breadth at the jaw angle (the gonion follows R001's wider jaw: 139 against spec 06's 138 bigonial) and
+    3 mm at the cheekbones.
+- The neck girth is unchanged (±1 mm).
+
+### 11.4 Renders looked at (`renders/head/r4/`, sheets `cmp_*` are r2 | r3 | r4, the reference first where there is one)
+
+- `cmp_rest_side_L_clay.png`, `cmp_r001_profile.png`:
+  - the mandible's lower border now runs as a visible line from the chin up to an angle below the ear, with a crease
+    under it and the neck set back. r2 and r3 slope from the chin straight into the neck.
+  - Still softer than R001, whose throat recedes further and whose jaw angle is sharper.
+- `cmp_rest_threequarter_{clay,cycles}.png`: the clearest gain; a jaw edge from chin to angle and a flatter cheek under
+  the zygoma. The face reads leaner.
+- `cmp_rest_front_{clay,cycles}.png`, `cmp_r001_front.png`:
+  - leaner, with the jaw corners showing and less fullness under the cheekbones.
+  - A faint vertical crease remains at the bottom of the throat (the chin-neck corner on the midline, one edge at
+    103°).
+  - The lower face is a little wider at the angle.
+- `cmp_hero_head_face_cycles.png`, `cmp_hero_head_face.png` (reference | r2 | r3 | r4):
+  - the jowl and the soft fullness under the chin are much reduced and the far jaw has an edge.
+  - It is still a fuller, rounder face than the drawing's: the drawing's cheeks hollow more, its chin is narrower and
+    more pointed in this view, and its jaw line is higher on the near side.
+  - Placement unchanged.
+- `cmp_zoom_g_eye_right_x20.png`: no red lining at the corner of the eye (round 3: a red blob).
+- `cmp_zoom_g_jaw_x10.png`: round 3's fold at the near mouth corner is gone; the chin is squarer.
+- `landmarks_r{2,3,4}_*.png`: MediaPipe's points, reference red, model green.
+
+### 11.5 Recommendation
+
+Switch to round 4. It is the first round that changes the read of the lower face: a jaw line, a jaw angle and an
+under-jaw plane, in every view that shows them. It removes round 2's and 3's eye-corner defect and round 3's
+mouth-corner fold, and keeps round 3's better nose and profile. The losses are a few tenths of a px in the hero and
+about half a mm in the R001 three-quarter. The open question is the wider jaw angle: it follows R001 (ChatGPT's
+reading) more than the drawing, which is narrower at the angle in the hero view.
+
+### 11.6 Switching the pipeline to it
+
+1. `cp scripts/parts/head-shape-r4.target scripts/parts/head-shape.target`. base.py's `head_shape.apply` loads that
+   path. The file is the displacement of the round-1 face (it includes rounds 2 and 3), applied before `fit_height`,
+   so it carries to the 1844 base.
+2. The target now also moves neck skin down to z ~1500 (the throat and the front and sides of the neck; the nape is
+   held). The rig's weights and joint cubes are unchanged. **Rebuild every part built on base.blend, the shirt's
+   neck gaiter above all**, so it fits the new neck.
+3. Then as §9:
+   - rebuild base;
+   - run `head.py --check` and `pose_solve.build_face_targets(...)` (the face moved up to 9 mm);
+   - re-solve the pose;
+   - rebuild the head part;
+   - then `assemble.py`.
+4. To go back: `git checkout scripts/parts/head-shape.target`.
+
+### 11.7 Still wrong, ranked for round 5
+
+1. **The face is still fuller than the drawing's in the hero view.** The cheeks under the zygoma hollow less (the
+   sculpt reached -1 of -1.5 mm; the outlines hold it), the chin is broader in that view, and the near jaw line sits
+   lower than drawn. The hero view has no jaw-line term: the camera looks up at the chin, so the drawn dark band under
+   the jaw is the under-jaw plane itself. `head_jaw_marks.json` records its top and bottom edges in crop pixels; a
+   hero jaw-line term needs the model's occluding contour there.
+2. **The jaw angle's height disagrees between R001's front and profile by 12-20 mm** (the rays miss). The gonion is
+   weighted down, but R001 is ChatGPT's inference; a second opinion (a generated three-quarter from his right, or a
+   Hunyuan run with a back view) would settle where the angle is.
+3. **A faint midline crease at the chin-neck corner** (one edge 31° -> 103°) and small notches at both mouth corners
+   (MPFB's corner geometry under the field). Under the gaiter the crease is hidden in the hero.
+4. **R001 camera dependence:** with round 2's cameras held the profile outline reads 2.38 mm (re-solved 1.12). The
+   cameras were re-solved once on round 3's face; landmarks on flat normal renders would steady them (§10.5 item 3).
+5. The relief (Depth Anything) is off; it fought the profile on the nose. A better normal estimator could come back
+   as a shading term.
+6. 12 triangles still flip against round 1's face (r2 8, r3 50): the inner canthus (as round 2), the alar crease and
+   the mouth corner. None shows in the renders looked at.
+7. Round 2's §7 items 2-7 stand: the head pose, hair, skin, R001 as inferred, expression.
