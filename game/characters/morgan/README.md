@@ -54,3 +54,17 @@ ffmpeg -i morgan.avi -c:v libx264 -crf 22 -pix_fmt yuv420p morgan.mp4
 ```
 
 `--at` starts the loop that many seconds in; `--shot-after N` waits N frames before saving (10).
+
+## Running it from Windows PowerShell (5.1)
+
+PowerShell 5.1 has no `&&` and no `$GODOT`; use:
+
+```powershell
+$godot = "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe"
+cd E:\hexcom\game
+dotnet build
+& $godot --path . res://scenes/Morgan.tscn
+```
+
+If Godot reports missing imports (after a fresh export), run `& $godot --headless --path . --import`
+once first. Keys 1-5: follow, front, side, close, tactical camera; Escape quits.
