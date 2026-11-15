@@ -59,6 +59,30 @@ COL = {"belt": "#2a2724", "buckle": "#1b1b1c", "hanger_tan": "#736054", "hanger_
        "platform": "#24221f", "strap": "#161515", "poly_black": "#24211e", "poly_tan": "#816f5f",
        "pmag": "#1e1d1c", "frag": "#463e34", "case": "#3a3e40", "holster": "#1f1d1c", "slide": "#4f5050",
        "frame": "#2c2c2c", "metal": "#3b3a38", "steel": "#8d8a85", "tan_metal": "#8a7350", "case_dark": "#232526"}
+# Materials round (round 5, 2026-11-15; COL stays the solid-view colour): black nylon rigger belt and straps,
+# black Cordura platforms, textured black polymer carrier bodies, holster and case, the magazine carriers' tan
+# moulded plates, gunmetal hardware, coyote and black hangers, olive Cordura frag pouch. The left rig dustier.
+_KIT = {"wear": "belt.kit", "dust__amount": 0.5}
+MATERIALS = {
+    "Belt.Mat.Belt": ("Webbing.Nylon.Black", "Belt", dict(_KIT)),
+    "Belt.Mat.Strap": ("Webbing.Nylon.Black", "Strap", dict(_KIT)),
+    "Belt.Mat.HangerBlack": ("Webbing.Nylon.Black", "HangerBlack", dict(_KIT)),
+    "Belt.Mat.HangerTan": ("Webbing.Nylon.Coyote", "HangerTan", {}),
+    "Belt.Mat.Platform": ("Cordura.500D.Black", "Platform", dict(_KIT)),
+    "Belt.Mat.Frag": ("Cordura.500D.OliveBrown", "Frag", {}),
+    "Belt.Mat.PolyBlack": ("Polymer.Black.Textured", "PolyBlack", {"dust__amount": 0.2}),
+    "Belt.Mat.Holster": ("Polymer.Black.Textured", "Holster", {}),
+    "Belt.Mat.Pmag": ("Polymer.Black.Textured", "Pmag", {"albedo_hex": "#2e2d2b"}),
+    "Belt.Mat.Case": ("Polymer.Black.Textured", "Case", {"albedo_hex": "#34383a"}),
+    "Belt.Mat.CaseDark": ("Polymer.Black.Textured", "CaseDark", {}),
+    "Belt.Mat.PolyTan": ("Polymer.Tan.Moulded", "PolyTan", {"albedo_hex": "#3e382f"}),
+    "Belt.Mat.TanMetal": ("Polymer.Tan.Moulded", "TanMetal", {"rough": 0.45}),
+    "Belt.Mat.Buckle": ("Metal.Gunmetal", "Buckle", {}),
+    "Belt.Mat.Metal": ("Metal.Gunmetal", "Metal", {}),
+    "Belt.Mat.Slide": ("Metal.Gunmetal", "Slide", {}),
+    "Belt.Mat.Steel": ("Metal.Gunmetal", "Steel", {"f0": (0.40, 0.40, 0.41), "aniso": 0.0}),
+    "Belt.Mat.Frame": ("Polymer.Black.Textured", "Frame", {}),
+}
 
 
 def _frame(origin, xa, nn, up):
@@ -412,6 +436,7 @@ def main(render=True):
     out["rigid"] = {ob.name: bone for ob, bone in rigid}
     out["soft"] = [ob.name for ob in soft]
     G.say(json.dumps({k: v for k, v in out.items() if k not in ("rigid", "soft")}))
+    out["materials"] = C.library_pass(coll, PART, MATERIALS, side_dust={"L": 1.0, "R": 0.8}, say_tag=TAG)
     if render:
         rep = G.finish_part(TAG, coll, body, rig, clothing, (0.0, 0.0, 860.0), 900.0,
                             ["ref.belt_hips", "ref.legs_knees", "ref.soldier_full"], extra=out)

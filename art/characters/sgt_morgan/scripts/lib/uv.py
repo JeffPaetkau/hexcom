@@ -224,6 +224,47 @@ def unwrap(ob, seams=None, *, uv=ATLAS, method="ANGLE_BASED", margin=0.002, tol=
     return {"seams": int(flags.sum()), "islands": int(islands(ob, uv).max() + 1) if len(me.polygons) else 0}
 
 
+def real_project(ob, angle_deg=66.0, uv=REAL, replace=False):
+    """A metric `UV.Real` (1 UV unit = 1 m of the object's surface, spec 16 §5.1) by Smart UV Project, each
+    island then scaled so its UV area equals its world area: tiled weaves, prints and wear
+    keep their real scale on every island (islands may overlap in this map: it is for tiling, never for a
+    bake, which uses UV.Atlas). Keeps the active UV map. Returns the islands' density spread before the
+    scaling (max/min of sqrt(world/uv)) and the island count; does nothing if the map exists and not replace."""
+    import bpy
+    me = ob.data
+    if me.uv_layers.get(uv) is not None and not replace:
+        return None
+    if me.uv_layers.get(uv) is not None:
+        me.uv_layers.remove(me.uv_layers[uv])
+    prev = me.uv_layers.active.name if me.uv_layers.active else None
+    lay = me.uv_layers.new(name=uv)
+    me.uv_layers.active = lay
+    with ctx.mode(ob, "EDIT"):
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.uv.smart_project(angle_limit=math.radians(angle_deg), island_margin=0.0, area_weight=0.0,
+                                 correct_aspect=True, scale_to_bounds=False)
+    me.uv_layers.active = me.uv_layers[uv]
+    d = _data(ob, uv)
+    lab = islands(ob, uv, d)
+    wa, ua, _, _ = _areas(d)
+    ua = np.abs(ua)
+    n = int(lab.max()) + 1 if len(lab) else 0
+    W = np.bincount(lab, wa, n) * 1e-6           # m² (world areas are mm²)
+    U = np.bincount(lab, ua, n)
+    k = np.sqrt(np.where(U > 1e-12, W / np.maximum(U, 1e-12), 0.0))
+    P, L = len(d["ls"]), len(d["uv"])
+    face_of_loop = np.empty(L, np.int64)
+    face_of_loop[np.repeat(d["ls"], d["lt"]) + np.arange(L) - np.repeat(np.cumsum(d["lt"]) - d["lt"], d["lt"])] = \
+        np.repeat(np.arange(P), d["lt"])
+    # each island scaled by its own factor (about the UV origin: where an island lands is free for a tiled map)
+    uvs = d["uv"] * k[lab[face_of_loop], None]
+    me.uv_layers[uv].data.foreach_set("uv", uvs.astype(np.float32).ravel())
+    if prev is not None and prev in me.uv_layers:
+        me.uv_layers.active = me.uv_layers[prev]
+    ok = k[k > 0]
+    return {"islands": n, "spread": float(ok.max() / ok.min()) if len(ok) else 0.0}
+
+
 # --------------------------------------------------------------------------- density
 
 def texel_density(ob, px, uv=None):

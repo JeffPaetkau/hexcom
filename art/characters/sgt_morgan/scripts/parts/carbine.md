@@ -241,3 +241,23 @@ position of the "position 3" label, so it was left (moving it moves the butt con
 **Renders looked at:** `renders/carbine/carbine_right_ortho.png`: the stock reads as the Minimalist (the diagonal strut
 from the toe to the front junction, the tan frame round the QD cup), and the space behind the grip is open below the
 end plate.
+
+## 9. Round 5 (2026-11-15): materials
+
+- `lib_material()` now asks the library for a **variant** (`materials.get(recipe, "Carbine", key, ...)`), so the
+  library itself names the material `Carbine.Mat.<Key>` and lint checks it (round 2 renamed the result, which
+  broke lint's name rule).
+- Round 2's hardcoat and polymer kept, retuned against the hero render. A first darkening (F0 0.032) put the
+  carbine's median at about half the reference's (ratio 1.95: the drawn rifle reads a lighter grey with a broad
+  sheen), so the anodise sits at F0 0.060, roughness 0.50-0.66, dust 0.15-0.2 (honest wear: the edges to bare
+  aluminium as before, dust in the low spots); stock #2e2d2b, grip #222120 (the plastic floor), PMAG #403f3d.
+- The remaining flat colours moved onto recipes: bolt carrier and pins `Metal.Steel.Phosphate` (new), polished
+  parts a bright gunmetal, barrel and A2 `Coating.Cerakote.BurntBronze` (new), the tan stripes
+  `Paint.FDE.Brushed` (new; the painted builder, chipped to the black beneath), the butt pad
+  `Rubber.Moulded.Black`, the floorplate a grey polymer, the glass `Glass.Optic.Coated` (new).
+
+Renders opened: `renders/round_05/hands_rifle_compare.png`, `torso_vest_compare.png`. Median ratio 1.15 (still a
+little dark), warm under the key like everything else.
+
+Still wrong (materials): no markings, no bead-blast micro-structure (spec 16's MG.Anodise is not built), no
+carbon soot at the muzzle.

@@ -148,3 +148,37 @@ Guard.R.Lower 10.9 mm into the carbine's stock (the pose: the stock lies inside 
 - Built on the base of 19:00 and hero_pose.json of 19:01; the pose agent's re-solve (pose.py of 20:18) was not
   yet in the assembly. If the right elbow opens to 90-100 deg the guard only gets easier; if the right thigh
   turns in, the belt's right rig theta must follow (belt.md).
+
+## 8. Round 5 (2026-11-15): materials
+
+`MATERIALS` in armour.py (swapped by `common.library_pass`):
+- **`Polymer.Painted.Armour`** (new, `painted` builder in `mat_hard.py`) on the pauldrons, guard plates and
+  bands (`Shell`) and the knee caps (`Knee`). Reading of the reference (it supersedes spec 16's
+  Polymer.Tan.Painted, D8): FDE-moulded shells field-painted a dark grey, worn back to the tan on the rims, in
+  chips, and on the knee caps' raised frames. The paint (#454648) carries ChatGPT's R004 worn-paint swatch (made
+  seamless, box-projected at 150 mm, 60 %: scratches, tan specks, uneven cover) and a 35 mm mottle. The rims are
+  found by a Bevel node (2.5 mm; knee 3.5 mm) against the TRUE normal, because the plates' bevelled,
+  weighted-normal edges already round the shading normal and the library's MG.Mask.EdgeBevel (which compares with
+  it) saw nothing there. Chips are a noise above a 1.5 % cover (knee 4 %) gathered in patches; the substrate is
+  tan #7a705e, 0.08 mm lower, rougher. The knee caps' frames are a point attribute `paint_wear` written from the
+  slab's own grid (`frame_wear()`: 1 within 9-12.5 mm of the outline), worn at 0.9, broken by a 12 mm noise. Dust
+  from preset `armour.top` (0.5; knee 0.6), grime in the slots.
+- **Emblem: `Decal.Emblem`** (new, `decal` builder): a brushed blue-grey anodised plate (F0 0.14-0.19) with
+  ChatGPT's R003 mask thresholded (0.30-0.42) as a light grey dielectric mark on `UV.Decal`, a planar 0-1 UV from
+  the plate's principal axes (`decal_uv()`: v up, u to the right seen from outside, never mirrored); the emblem
+  kept at its aspect at 92 % of the plate's width, its point 12 % above the plate's.
+- **Strobe: `Lens.Strobe.Polycarbonate`** (frosted, transmission 0.35). Sleeves, bases, straps:
+  `Neoprene.Black`; foam `Foam.ClosedCell.Black`; rivets `Metal.Gunmetal`; the cam buckle a brighter gunmetal;
+  the red tab `Polymer.Black.Smooth` recoloured #7a3f42; the strap tails `Webbing.Nylon.Coyote`.
+- `wear_dust_scale` 1.0 left, 0.85 right.
+
+Renders opened: `renders/round_05/arm_L_compare.png` (the emblem reads: chevron and X on the blue-grey plate),
+`arm_R_compare.png`, `legs_knees_compare.png`, `torso_vest_compare.png`.
+
+Still wrong (materials):
+1. The drawn plates read lighter and greyer on their worn faces, with broad pale rims; ours are darker with fine
+   specks and narrow rims (a rim is only as wide as the bevel radius).
+2. The R004 tan specks and the dust drift read as a fine speckle at hero scale; the reference's wear is coarser.
+3. The emblem's outer triangle paints a light outline inside the plate's rim; on the drawn plate only the X and
+   chevron are light. A mask without the outline (a follow-up request) would fix it.
+4. The strobe is a frosted box: no body, no clip.

@@ -121,3 +121,21 @@ hands' outer surface in the pose solve. Two pose changes act on them (scripts/st
 
 Clearance in the pose and the clashes are in `renders/round_04/clashes.md` (the round's numbers, gloves.json's
 clearance block is from the pre-solve pose).
+
+## 8. Round 5 (2026-11-15): materials
+
+`MATERIALS` in gloves.py (swapped by `common.library_pass`):
+- **Back: `Knit.Glove.Honeycomb`** (new; cotton_jersey at 115 mm as the floor of the knit; no embossed honeycomb
+  yet), **palm: `Leather.Glove.Goat`** (new; synthetic leather, Leather037's pebble at 41 mm, roughness 0.52):
+  `palm_faces()` moves the shell's knit faces whose outward normal looks out of the palm side (against the hand
+  frame's z by more than 0.25; winding found from the shell's centroid) to a third slot, so the palm and the
+  finger fronts are leather.
+- **Cuff: `Neoprene.Black`** (new), **knuckle guard and PIP pads: `TPR.Glove.Black`** (new; polymer builder,
+  dusty crests: dust 0.8, pads 0.5).
+- The right hand (on the grip, knuckles up) dust x1.0, the left x0.7.
+
+Renders opened: `renders/round_05/hands_rifle_compare.png`, `torso_vest_compare.png`. Values sit near the
+reference's (median ratio 0.91).
+
+Still wrong (materials): no honeycomb emboss, no seams or stitch rows, the palm/back split is by normal, not by
+the real pattern pieces; the guard's ribs (geometry) are missing so its dust has little to settle on.

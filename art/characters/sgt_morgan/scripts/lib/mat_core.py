@@ -333,7 +333,15 @@ def manifest():
 
 
 def asset_path(asset, kind):
-    """The file of a texture set's map kind (color, normal_gl, roughness, ao, displacement, ...)."""
+    """The file of a texture set's map kind (color, normal_gl, roughness, ao, displacement, ...). A painted
+    texture of the image queue (mat_catalogue.GEN_TEXTURES: files under gen/<request>/, committed with the
+    model, not in the manifest) is addressed the same way, by its id and kind."""
+    from . import mat_catalogue as C
+    gen = C.GEN_TEXTURES.get(asset)
+    if gen is not None:
+        if kind not in gen["maps"]:
+            raise KeyError(f"{asset} has no {kind!r} map: {sorted(gen['maps'])}")
+        return os.path.join(env.PROJECT_DIR, *gen["maps"][kind].split("/"))
     entry = manifest().get(asset)
     if entry is None:
         raise KeyError(f"{asset} is not in assets/manifest.json")
@@ -352,7 +360,8 @@ def texture(asset, kind):
     if img is not None and os.path.normcase(bpy.path.abspath(img.filepath)) == os.path.normcase(path):
         return img
     if not os.path.isfile(path):
-        raise MissingAsset(f"{os.path.relpath(path, env.PROJECT_DIR)} is missing (lint L5); restore it with {RESTORE}")
+        raise MissingAsset(f"{os.path.relpath(path, env.PROJECT_DIR)} is missing (lint L5); restore it with {RESTORE}"
+                           " (or, for a gen/ texture, from the repository: gen/REQUESTS.md)")
     if img is not None:
         bpy.data.images.remove(img)
     img = bpy.data.images.load(path, check_existing=False)

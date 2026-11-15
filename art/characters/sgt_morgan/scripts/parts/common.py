@@ -673,6 +673,65 @@ def flat_material(name, hexcol, rough=0.8, sheen=0.0):
     return m
 
 
+def library_pass(coll, part, table, side_dust=None, say_tag=None):
+    """Take 2's materials round: swap the part's round-1 flat colours for the materials library's recipes.
+
+    table maps a flat material's name (`Carrier.Mat.Cordura`) to (recipe ID, variant, overrides); the library
+    material is `<Part>.Mat.<Variant>` (materials.get(..., variant=...)), so with the variant equal to the
+    flat name's last word the names stay as they were. Every slot of every mesh in coll that holds a listed
+    flat material gets the recipe (face assignments are kept: only the slot's material changes). Objects whose
+    new materials read `UV.Real` get one (lib/uv.py real_project: Smart UV Project scaled to metres per island)
+    if they have none. side_dust ({"L": 1.0, "R": 0.7}) sets `wear_dust_scale` on objects named `.L.`/`.R.`.
+    Flat materials left without users are removed. Returns {"swapped", "uv_real", "lint"} (lint errors and
+    warnings of materials.lint("part:<Part>"), printed)."""
+    import bpy
+    from lib import materials as M, uv as U
+    say_tag = say_tag or part.lower()
+    flats = {}
+    for name in table:
+        m = bpy.data.materials.get(name)
+        if m is not None and m.get("lib_version") is None:
+            m.name = name + ".flat"
+            flats[name] = m
+    swapped, uv_done = {}, {}
+    objs = [o for o in coll.all_objects if o.type == "MESH"]
+    for ob in objs:
+        if side_dust:
+            for sd, k in side_dust.items():
+                if f".{sd}." in ob.name:
+                    ob["wear_dust_scale"] = float(k)
+        for i, m in enumerate(ob.data.materials):
+            if m is None:
+                continue
+            key = next((n for n, f in flats.items() if f == m), None)
+            if key is None:
+                continue
+            rid, var, over = table[key]
+            lm = M.get(rid, part, var, **(over or {}))
+            ob.data.materials[i] = lm
+            swapped.setdefault(lm.name, []).append(ob.name)
+        reads = set()
+        for m in ob.data.materials:
+            if m is not None and m.get("reads"):
+                reads.update(json.loads(m["reads"]).get("uv", []))
+        if "UV.Real" in reads and ob.data.uv_layers.get("UV.Real") is None:
+            uv_done[ob.name] = U.real_project(ob)
+    # the flat colours no object uses any more (also those made for keys no object took, and those still held
+    # only by orphan meshes left from joins) go, so lint sees the part's own materials alone
+    used = {m.name for o in bpy.data.objects if o.type == "MESH" for m in o.data.materials if m is not None}
+    for m in list(bpy.data.materials):
+        if (m.name.startswith(f"{part}.Mat.") and m.get("lib_version") is None and m.name not in used
+                and m.library is None):
+            bpy.data.materials.remove(m)
+    issues = [i for i in M.lint(f"part:{part}") if i.level == "error" or i.code not in ("W6",)]
+    for i in issues:
+        say(say_tag, f"lint {i.level} {i.code} {i.target}: {i.message}")
+    say(say_tag, f"library materials: {len(swapped)} ({', '.join(sorted(swapped))}); UV.Real made on "
+                 f"{len(uv_done)} objects; lint errors {sum(i.level == 'error' for i in issues)}")
+    return {"swapped": {k: len(v) for k, v in swapped.items()}, "uv_real": len(uv_done),
+            "lint": [f"{i.level} {i.code} {i.target}: {i.message}" for i in issues]}
+
+
 def mesh_object(name, V_mm, F, coll, mat=None, smooth=True, mats=None, face_mat=None):
     """A mesh object from mm vertices and polygon tuples, linked to coll. mats/face_mat: several materials
     and a per-face material index."""

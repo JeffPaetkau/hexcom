@@ -3,6 +3,46 @@
 Newest first. One entry per working session: what was done, what is next, anything a fresh
 session must know. Take 1's log is `archive/v1/notes/session_log.md`.
 
+## 2026-11-15 — round 5: materials for the whole soldier (head and skin aside)
+
+**Done (uncommitted, for Jeff's review).**
+- Library (`scripts/lib/`, LIB_VERSION 16.3, lint and every family self-test pass): painted textures from the image
+  queue addressed like CC0 sets (`mat_catalogue.GEN_TEXTURES`, `mat_core.asset_path`); **variants**
+  (`materials.get(id, part, variant)` -> `<Part>.Mat.<Variant>`, lint checks it); builders `printed` and `cloth`
+  (`mat_fabric`), `painted`, `lens`, `decal` (`mat_hard`); dust's up-facing band exposed to recipes (cloth holds dust
+  on its sides); 23 new recipes (camouflage ripstop, olive 500D/1000D Cordura, black ripstop, FR jersey, fleece,
+  neoprene, glove knit and synthetic leather, olive and coyote webbing, the painted armour, moulded tan and textured
+  black polymer, TPR, moulded rubber, brass, phosphate steel, burnt bronze, brushed FDE, the strobe and optic
+  lenses, the emblem decal). `lib/uv.py real_project()`: a metric `UV.Real` by Smart UV Project scaled per island.
+  `scripts/tools/seamless.py`: the half-offset blend (R000 and R004 made seamless).
+- Parts: each script has a `MATERIALS` table (flat material -> recipe, variant, overrides) applied by
+  `common.library_pass()` before the cache is saved (it also makes `UV.Real`, sets `wear_dust_scale` per side,
+  drops the flats, runs lint). Trousers (R002 print, dust zones by height, left leg dustier), shirt (jersey torso,
+  ripstop sleeves, fleece gaiter), gloves (knit back, synthetic-leather palm by normal, neoprene cuff, TPR guard),
+  carrier (R000 Cordura, webbing, polymer, brass antenna), armour (painted shells worn to tan with R004, knee-cap
+  frames, the R003 emblem decal on `UV.Decal`, the strobe), belt, carbine (round 2's metal and polymer retuned,
+  the rest onto recipes). Boots: take 1's leather retuned in the catalogue. Each part's notes have a round-5 section.
+- Requests: R004 (worn grey paint over tan, the armour) made, used, closed. R000/R002/R003 used.
+- Round 5 rendered (`renders/round_05/`); albedos tuned against the hero frame with per-part medians over an exact
+  part mask (a Workbench flat-colour pass) on a fast loop that re-renders `cache/assembled.blend` after updating its
+  library materials in place (scratch tools, not committed).
+
+**Evaluation light (checked, not changed).** `assemble.py` scales spec 17's lights by 0.3 (round 0's choice);
+with that the skin anchor's luminance lands on the reference (median ratio 0.97), so the level is right. The
+colour is not: against the reference every neutral surface renders warm. The per-channel gain that maps the
+skin's render median onto the reference's is (1.04, 1.33, 1.72) in linear light, and the black and grey
+materials show the same cast, so it is the 4500 K key (and no grade in the panels), not the materials. The
+albedos were kept physically neutral and judged with that cast divided out; re-balancing the key's temperature
+(or grading the Cycles panel) is an integration decision.
+
+**Per-part medians, round 5 (cast removed; ratio = reference / render luminance, 1 is a match; round 4 in brackets):**
+trousers 1.13 (2.20), shirt 0.76 (0.59), boots 1.09 (1.35), gloves 0.90 (0.99), carrier 1.10 (0.84), armour 0.80
+(0.47), belt 0.57 (0.68; its mask lies mostly where the drawn rigs are not), carbine 1.14 (1.81).
+
+**Next.** Wear masks per part (the reference's scuffs, stains and edge fraying are coarser and stronger than ours);
+garment panel UVs (the camouflage jumps at Smart-UV islands); the boots' crease and polish fields; the emblem
+mask without its outer outline; the evaluation light's colour.
+
 ## 2026-11-14 — take 2 begins (Opus, local workstation)
 
 **Jeff's decision.** Back up and start fresh, breadth first: a basic MakeHuman model and skeleton,

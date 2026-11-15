@@ -62,7 +62,29 @@ ROLLS = [(257.0, 13.0, 11.0, 0.3), (218.0, 17.0, 10.0, 2.1), (184.0, 19.0, 9.0, 
 STACK_TOP = 300.0
 DRAPE = {"upper": 0.24, "lower": 0.08, "inner_half_deg": 58.0}
 KNEE_FOLDS = {"amp": 1.8, "pitch": 24.0, "half": 46.0, "seam_dz": 118.0, "seam": 1.8}
-COLOURS = {"camo": "#2a2723", "knee": "#232325"}
+COLOURS = {"camo": "#2a2723", "knee": "#232325"}   # the solid-view colours (round 1); Cycles uses MATERIALS
+# Materials round (round 5, 2026-11-15): the library's recipes (scripts/lib/materials.py) per flat material:
+# the shell the R002 camouflage print on NYCO ripstop, the knee-pad pockets black 500D Cordura. Dust is held on
+# the cloth's sides too (up_low), by height zones (lower legs dusty, the seat least) and the left leg dustier.
+MATERIALS = {
+    "Trousers.Mat.Camo": ("NYCO.Ripstop.Camo", "Camo", {}),
+    "Trousers.Mat.KneePocket": ("Cordura.500D.Black", "KneePocket",
+                                {"wear": "cloth.thigh", "dust__amount": 0.8, "dust__up_low": -0.4,
+                                 "dust__up_high": 0.9, "dust__up_power": 1.0}),
+}
+
+
+def dust_zones(ob):
+    """The trousers' dust zones (wear preset cloth.thigh) from the rest heights, the left leg (+x) x1.0, the
+    right x0.8 (as the left boot is the dustier)."""
+    from lib import materials as M
+    V = np.array([tuple(v.co) for v in ob.data.vertices]) * 1000.0
+    z = V[:, 2]
+    side = np.where(V[:, 0] > 0, 1.0, 0.8)
+    s = lambda a, b: smoothstep(a, b, z)   # noqa: E731
+    zones = {"shin": (1.0 - s(380.0, 560.0)) * side, "knee": s(380.0, 480.0) * (1.0 - s(560.0, 660.0)) * side,
+             "thigh": s(560.0, 680.0) * (1.0 - s(820.0, 900.0)) * side, "seat": s(820.0, 900.0) * side}
+    return M.wear_zones(ob, "cloth.thigh", zones)
 CONVEX_K = 0.9             # how far the leg shell moves out to its sectional convex hull (cloth spans hollows)
 
 
@@ -365,6 +387,9 @@ def main():
         C.subsurf(o, 1)
     Vr = np.array([tuple(v.co) for v in ob.data.vertices]) * 1000.0
     smooth_weights(ob, Vr[:, 2] > 860.0, iters=14)
+    for o in [ob] + pk:
+        dust_zones(o)
+    lib = C.library_pass(coll, "Trousers", MATERIALS, say_tag=TAG)
     rest = C.clearance([ob] + pk, body, "rest")
     meas = measure(ob, bd, ex)
     meas["seat_standoff_mm"] = seat_standoff(ob, bd)
@@ -373,7 +398,7 @@ def main():
     posed = C.clearance([ob] + pk, body, "hero pose")
     C.rest_pose(rig)
     C.save_part(TAG, coll, {"measure_rest_mm": meas, "clearance_rest": rest, "clearance_posed": posed,
-                            "pose": used, "verts": len(V)})
+                            "pose": used, "verts": len(V), "materials": lib})
     if "--no-render" not in args:
         C.render_part(TAG, coll, (0, 0, 600), 1250, crops=("ref.legs_knees", "ref.soldier_full"))
         C.rest_pose(bpy.data.objects[C.RIG])

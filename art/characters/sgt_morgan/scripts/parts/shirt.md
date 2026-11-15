@@ -176,3 +176,20 @@ corrective (a shape key driven by the elbow angle, or a baked pose correction), 
 off the skin, upperarm01/02 and spine01 weights): 17-18 vertices to 7.4-8.1 mm, where the arm swings forward and in to
 hold the carbine and the sleeve's root folds into the chest. The same kind of fix (sharing the shoulder's weights with
 the clavicle and spine over a band) is the next step; it was not in this round's brief.
+
+## 8. Round 5 (2026-11-15): materials
+
+`MATERIALS` in shirt.py (swapped by `common.library_pass`):
+- **Torso: `Knit.Jersey.FR`** (new; cotton_jersey's normal at 264 mm), **sleeves: `NYCO.Ripstop.Black`** (new;
+  Fabric061 at 64 mm and the 6 mm ripstop grid): a G3-class shirt is FR jersey under the carrier and ripstop on
+  the arms. `sleeve_faces()` puts the faces whose centre lies outboard of the shoulder joint (rest x) on the
+  sleeve slot. Both at #252525 (just above §3.1's floor for black textiles), sheen 0.04, light dust (0.25).
+- **Gaiter: `Fleece.Polyester`** (new; knitted_fleece at 230 mm with its ±6 % luminance high-pass, sheen 0.10,
+  dust 0.7 from preset `fleece.toproll`, which carries the lit folds).
+- `wear_dust_scale` 1.0 right, 0.9 left.
+
+Renders opened: `renders/round_05/torso_vest_compare.png`, `arm_L_compare.png`, `soldier_full_compare.png`.
+
+Still wrong (materials): the shirt renders brighter than the reference's median (ratio 0.78) although the albedo
+is at the textile floor: the dust and sheen lift it and the warm key browns it (session log); the sleeve has no
+elbow wear, no seams or panels to break it up; the sleeve/torso split is a plane, not the real raglan seam.

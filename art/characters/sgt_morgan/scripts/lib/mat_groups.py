@@ -610,6 +610,10 @@ def weather(nb, rec, color, rough, spec, edge=None, vector=None, box=False):
     d = nb.group("MG.Weather.Dust", {"Base Color": out["color"], "Base Roughness": out["rough"],
                                      "Base Specular": out["spec"], "Amount": amount,
                                      "Noise mm": shape["noise_mm"], "AO Distance mm": shape["ao_mm"],
+                                     # take 2: cloth holds dust on its sides too (a recipe may widen the
+                                     # up-facing band and soften its power; None keeps the group's 0.25-0.85, 2)
+                                     "Up Low": du.get("up_low"), "Up High": du.get("up_high"),
+                                     "Up Power": du.get("up_power"),
                                      "Open": shape["open"], "Shelter": shape["shelter"],
                                      "Side": object_prop(nb, "wear_dust_scale", 1.0),
                                      "Zone": dust_zone(nb) if "wear_dust" in rec.get("reads", {}).get("attributes", ())

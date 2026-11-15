@@ -15,6 +15,15 @@ albedo x 0.8, raised to the class floor, roughness + 0.05, no wear). Grime then 
 mat_groups.weather() from the recipe's wear preset; dust scales the coat and the sheen by (1 - c) and damps
 the weave's relief (§4.2 steps 9-10).
 
+Take 2's materials round (2026-11-15) adds two builders. `printed`: a painted texture of the image queue
+(mat_catalogue.GEN_TEXTURES, gen/REQUESTS.md) carries the pattern: its linear colour divided by its own mean
+(so the painter's colour never sets the level), its luminance spread raised by `contrast`, times the recipe's
+albedo; a photographed set's normal, the basket weave and the ripstop grid on top (NYCO.Ripstop.Camo from
+R002, the olive Cordura from R000). `cloth`: a dyed cloth on a photographed construction (its normal, its
+roughness map about the recipe's value where the set has statistics, a luminance high-pass where it has
+colour statistics) and the optional ripstop grid: the shirt's ripstop and jersey, the fleece gaiter, the
+neoprene, the glove's knit and synthetic leather.
+
 Every tiled map is sampled on `UV.Real` (metres; u along a strap or a lace, v across or around) through
 MG.Tile.AntiRepeat (§4.8); an object without that UV map samples one texel everywhere, i.e. a plain cloth,
 and assign() reports the missing map.
@@ -29,6 +38,7 @@ GROUPS_USED = {"knit_sock": ("MG.Tile.AntiRepeat", "MG.Knit.Stitch", "MG.Weather
                "webbing": _WEAR + ("MG.Weave.Herringbone", "MG.Mask.EdgeBevel"),
                "lace": _WEAR + ("MG.Braid",),
                "thread": (), "foam": (),
+               "printed": _WEAR + ("MG.Weave.Basket",), "cloth": _WEAR,
                "backface": _WEAR + ("MG.Knit.Stitch", "MG.Weave.Basket", "MG.Polish", "MG.Weave.Herringbone",
                                     "MG.Mask.EdgeBevel", "MG.Braid")}
 
@@ -220,8 +230,95 @@ def build_knit_sock(mat, rec):
     K.output(nb, p.outputs[0])
 
 
+# --------------------------------------------------------------------------- take 2: printed and plain cloth
+
+def _ripstop(nb, uv, rp):
+    """§4.7's ripstop grid as two thin lines on UV.Real: the doubled yarns every `grid_mm`, `line` of the
+    cell wide, raised `height_mm`. Returns (mask, height in metres)."""
+    x, y, _ = nb.separate(uv)
+    g = rp["grid_mm"] / 1000.0
+
+    def line(c):
+        f = nb.math("FRACT", nb.math("DIVIDE", c, g))
+        d = nb.math("MINIMUM", f, nb.math("SUBTRACT", 1.0, f))          # 0 on a grid line, 0.5 mid-cell
+        return nb.math("SUBTRACT", 1.0, nb.smoothstep(d, 0.5 * rp["line"], rp["line"]))
+    m = nb.math("MAXIMUM", line(x), line(y))
+    return m, nb.math("MULTIPLY", m, rp["height_mm"] / 1000.0)
+
+
+def _photo_normal(nb, asset, uv, tile, strength, uvname):
+    return nb.node("ShaderNodeNormalMap", space="TANGENT", uv_map=uvname,
+                   inputs={"Strength": strength, "Color": antirepeat(nb, asset, "normal_gl", uv, tile)}).outputs["Normal"]
+
+
+def build_printed(mat, rec):
+    """A painted print (GEN_TEXTURES) on the recipe's albedo: colour = albedo x (image / image mean) x
+    (image luminance / its mean)^(contrast - 1), so the mean is the recipe's and the spread the painter's
+    raised by `contrast`; then the photographed set's normal, the weave and the ripstop grid, weather last."""
+    nb = K.new_tree(mat)
+    base = C.hex_to_linear(rec["albedo_hex"])
+    uv = nb.uv(rec["uv"])
+    pr = rec["print"]
+    st = C.GEN_TEXTURES[pr["image"]]["stats"]
+    img = antirepeat(nb, pr["image"], "color", uv, pr["tile_mm"])
+    ratio = nb.vmath("DIVIDE", img, tuple(st["mean_lin"]))
+    lum = nb.node("ShaderNodeRGBToBW", inputs={"Color": img}).outputs[0]
+    k = nb.math("POWER", nb.math("MAXIMUM", nb.math("DIVIDE", lum, st["lum_mean"]), 1e-4), pr["contrast"] - 1.0)
+    col = nb.vmath("SCALE", nb.vmath("MULTIPLY", ratio, base), scale=k)
+    mo = rec.get("mottle")
+    if mo:   # fading and soiling over a few cm (a worn garment is never one even colour): +-amount, rougher where paler
+        n = nb.noise_signed(uv, 1000.0 / mo["noise_mm"], detail=3.0)
+        col = nb.vmath("SCALE", col, scale=nb.math("MULTIPLY_ADD", n, mo["amount"], 1.0))
+    r = rec["rough"]
+    height = None
+    if rec.get("weave"):
+        wv = rec["weave"]
+        height = K.sock(nb.group("MG.Weave.Basket", {"Vector": uv, "Pitch U mm": wv["pitch_mm"],
+                                                     "Pitch V mm": wv["pitch_mm"], "Crown mm": wv["crown_mm"],
+                                                     "Distortion": wv["distortion"]}), "Height", out=True)
+    if rec.get("ripstop"):
+        m, h = _ripstop(nb, uv, rec["ripstop"])
+        height = h if height is None else nb.math("ADD", height, h)
+        r = nb.math("MULTIPLY_ADD", m, rec["ripstop"]["rough_add"], r)
+    nm = rec.get("normal")
+    normal = _photo_normal(nb, nm["texture"], uv, nm["tile_mm"], nm["strength"], rec["uv"]) if nm else None
+    w = G.weather(nb, rec, col, r, rec["spec"], vector=uv)
+    _finish(nb, rec, base, w, normal, height)
+
+
+def build_cloth(mat, rec):
+    """A dyed cloth on a photographed construction: the set's normal, its roughness map about the recipe's
+    value (where TILE_PERIODS has its mean), a luminance high-pass of its colour (where it has colour
+    statistics and the recipe asks), the optional ripstop grid, weather last."""
+    nb = K.new_tree(mat)
+    base = C.hex_to_linear(rec["albedo_hex"])
+    uv = nb.uv(rec["uv"])
+    cl = rec["cloth"]
+    tp = C.TILE_PERIODS[cl["texture"]]
+    st = tp.get("stats", {})
+    tile = cl["tile_mm"]
+    col = base
+    if cl.get("highpass", 0.0) > 0.0 and "diff_lum_mean" in st:
+        lum = nb.node("ShaderNodeRGBToBW", inputs={"Color": antirepeat(nb, cl["texture"], "color", uv, tile)}).outputs[0]
+        hp = nb.map_range(nb.math("DIVIDE", nb.math("SUBTRACT", lum, st["diff_lum_mean"]), 2.0 * st["diff_lum_sd"]),
+                          -1.0, 1.0, -1.0, 1.0)
+        col = nb.vmath("SCALE", base, scale=nb.math("MULTIPLY_ADD", hp, cl["highpass"], 1.0))
+    r = rec["rough"]
+    if "rough_mean" in st:
+        rmap = nb.node("ShaderNodeRGBToBW", inputs={"Color": antirepeat(nb, cl["texture"], "roughness", uv, tile)}).outputs[0]
+        r = _rough_about(nb, rmap, r, st["rough_mean"], cl.get("rough_gain", 0.5))
+    height = None
+    if rec.get("ripstop"):
+        m, height = _ripstop(nb, uv, rec["ripstop"])
+        r = nb.math("MULTIPLY_ADD", m, rec["ripstop"]["rough_add"], r)
+    normal = _photo_normal(nb, cl["texture"], uv, tile, cl["normal"], rec["uv"])
+    w = G.weather(nb, rec, col, r, rec["spec"], vector=uv)
+    _finish(nb, rec, base, w, normal, height)
+
+
 BUILDERS = {"knit_sock": build_knit_sock, "cordura": build_cordura, "webbing": build_webbing, "lace": build_lace,
-            "thread": build_thread, "foam": build_foam, "backface": build_backface}
+            "thread": build_thread, "foam": build_foam, "backface": build_backface, "printed": build_printed,
+            "cloth": build_cloth}
 
 
 def selftest():

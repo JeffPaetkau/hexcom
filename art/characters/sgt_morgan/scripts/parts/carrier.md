@@ -184,3 +184,32 @@ trousers face within 25 mm, offset within 45 deg of its inward normal):
   Binding: 390 -> 0 vertices, in rest and posed.
 
 The cummerbund's rows start 2 mm above the hem (`zc0`), so they rose 8 mm with it.
+
+## 9. Round 5 (2026-11-15): materials
+
+`MATERIALS` in carrier.py (swapped by `common.library_pass`; `COL` stays the solid-view colour):
+- **`Cordura.500D.OliveBrown`** (new, `printed` builder) on the bag, flap, pads, admin panel and cummerbund:
+  ChatGPT's R000 swatch made seamless by the half-offset blend (`scripts/tools/seamless.py`,
+  `gen/R000/cordura_olive_worn_seamless.png`) on `UV.Real` at 250 mm (its colour over its own mean, so the
+  recipe's albedo sets the level), Fabric063's normal at 156 mm and the 0.61 mm basket weave, a ±28 % fade and
+  soiling mottle over 70 mm, dust 1.2 from preset `cordura.top` (up-facing flap tops and pouch lids), grime at
+  pouch bottoms. Albedos per use: bag #4d473d, flap #524a3f, pads #4a443a, admin panel #5a5244 (paler and
+  dustier, as drawn), cummerbund #403b33.
+- **`Cordura.1000D.OliveBrown`** (new) on the pouches (#474138) and the radio pouch (#413b33).
+- **`Webbing.Nylon.OliveBrown`** (new) on the straps, PALS and cummerbund webbing (#4b453b, #464036, #3a362f);
+  **`Webbing.Nylon.Black`** on the binding.
+- **`Polymer.Black.Smooth`** on the buckles and ladder-locks, **`Polymer.Black.Textured`** (new) on the radio,
+  the magazines and the black polymer, **`Polymer.Tan.Moulded`** (new) on the tan polymer,
+  **`Metal.Brass.Aged`** (new; tarnished F0, bright worn edges) on the antenna, **`Rubber.Moulded.Black`** (new)
+  on its cap, **`Metal.Gunmetal`** on the steel.
+- Albedos were set against the hero render: the first pass (#3f382e) rendered 1.65 x too dark and too saturated
+  against the reference's median over the carrier's mask; the second sits at ratio 1.10.
+
+Renders opened: `renders/round_05/torso_vest_compare.png`, `soldier_full_compare.png`, `turnaround.png`.
+
+Still wrong (materials):
+1. Flatter than the drawn vest: the reference's carrier has strong light and dark scuffing, dark stains on the
+   panel, frayed edges and dust in the PALS slots; ours has a mottle and up-facing dust. Per-panel wear masks
+   (pouch and flap edges, the panel's stains) are the next step; a painted panel swatch could carry them.
+2. The admin panel's hook-and-loop field, patches and name tape are not built.
+3. Under the evaluation's warm key the olive reads brown (session log, round 5).

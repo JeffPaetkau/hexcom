@@ -292,3 +292,19 @@ Renders looked at: `boots_feet_compare.png` (the left boot stands on the drawn o
 visible; the right boot's toe a flat wedge past the drawn toe; the cuff straps under the trouser hems, as drawn),
 `soldier_full_compare.png`, `legs_knees_compare.png`, `turnaround.png` (the boots sit under the stacked hems from
 every side; no stray geometry).
+
+## 9. Round 5 (2026-11-15): materials checked in the hero frame
+
+The boots keep take 1's twelve recipes (`apply_library`); the round checked them in the hero frame's Cycles
+render against the reference's median over the boots' mask. `Leather.Boot.FullGrain` (in the catalogue, so
+`boots.py` is unchanged): albedo #2d2b29 -> #353433 (the boots rendered 1.35 x too dark), roughness 0.50 -> 0.55
+(the satin highlight read brighter than the drawn one: p90 ratio 0.73); dust stays 1.0 on preset `boot.toe` with
+the left boot the dustier. `Cordura.500D.Black`'s dust gained the up-band keys (None here: unchanged).
+Now at a median ratio of 1.09 and p90 0.63.
+
+Renders opened: `renders/round_05/boots_feet_compare.png`, `soldier_full_compare.png`.
+
+Still wrong (materials): the drawn boots are scuffed and creased all over, grey with dust in the creases and on the
+toe caps and dull; ours read as a smooth, even satin with dust on the toe only. The crease field and polish zones
+the leather recipe reads (`crease`, `polish`) are missing on this build (spec 02 §5), so the scuff, crease and
+polish layers are off; the specular highlight stays brighter than the drawing's.

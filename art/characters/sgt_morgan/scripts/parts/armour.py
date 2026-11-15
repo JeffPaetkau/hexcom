@@ -43,7 +43,71 @@ PART, TAG = "Armour", "armour"
 
 COL = {"shell": "#7b7064", "knee": "#6a6158", "black": "#1d1c1b", "emblem": "#a9b3bd", "mark": "#e6ebef",
        "strobe": "#9fb0bf", "strobe_body": "#333537", "tan": "#8a7560", "metal": "#5b5a58",
-       "silver": "#9a948c", "red": "#a0545c", "foam": "#2a2927"}
+       "silver": "#9a948c", "red": "#a0545c", "foam": "#2a2927"}   # solid-view colours; Cycles uses MATERIALS
+# Materials round (round 5, 2026-11-15): FDE-moulded shells painted dark grey, worn through to the tan on the
+# rims and in chips (the reference's knee caps and pauldrons), the knee caps the most worn; neoprene sleeves,
+# bases and straps; the emblem plate brushed blue-grey anodised with R003's mark (UV.Decal, decal_uv()); the
+# strobe's frosted lens; gunmetal rivets, a brighter cam buckle, a red TPR tab, coyote strap tails.
+MATERIALS = {
+    "Armour.Mat.Shell": ("Polymer.Painted.Armour", "Shell", {}),
+    "Armour.Mat.Knee": ("Polymer.Painted.Armour", "Knee", {"edge__radius_mm": 3.5, "edge__width": 0.06,
+                                                           "chips__cover": 0.04, "chips__noise_mm": 5.0,
+                                                           "dust__amount": 0.6}),
+    "Armour.Mat.Black": ("Neoprene.Black", "Black", {}),
+    "Armour.Mat.Emblem": ("Decal.Emblem", "Emblem", {}),
+    "Armour.Mat.Foam": ("Foam.ClosedCell.Black", "Foam", {}),
+    "Armour.Mat.Metal": ("Metal.Gunmetal", "Metal", {}),
+    "Armour.Mat.Silver": ("Metal.Gunmetal", "Silver", {"f0": (0.42, 0.42, 0.43), "rough_range": (0.30, 0.42),
+                                                       "aniso": 0.0}),
+    "Armour.Mat.Red": ("Polymer.Black.Smooth", "Red", {"albedo_hex": "#7a3f42", "rough": 0.55}),
+    "Armour.Mat.Strobe": ("Lens.Strobe.Polycarbonate", "Strobe", {}),
+    "Armour.Mat.Tan": ("Webbing.Nylon.Coyote", "Tan", {}),
+}
+
+
+def frame_wear(ob, urange, v0, v1, nu, nv, hw_fn, inner=(9.0, 12.5)):
+    """The knee cap's raised frame as the point attribute `paint_wear` (1 on the frame, 0 on the centre panel
+    2 mm below it), from the slab's own grid parameters (gear_common.grid_points: rows v, columns u over
+    urange(v); inner then outer surface): e = distance to the outline (knee_field's), worn where e < 9-12.5 mm."""
+    W = []
+    for j in range(nv + 1):
+        v = v0 + (v1 - v0) * j / nv
+        a, b = urange(v)
+        for u in np.linspace(a, b, nu + 1):
+            e = min(hw_fn(v) - abs(u), v - v0, v1 - v)
+            W.append(1.0 - G.smoothstep(e, inner[0], inner[1]))
+    W = np.array(W, np.float32)
+    me = ob.data
+    if len(me.vertices) != 2 * len(W):
+        return None
+    att = me.attributes.get("paint_wear") or me.attributes.new("paint_wear", "FLOAT", "POINT")
+    att.data.foreach_set("value", np.concatenate([W, W]))
+    return round(float(W.mean()), 3)
+
+
+def decal_uv(ob, uv="UV.Decal"):
+    """A 0-1 planar UV over a plate for a decal (R003's emblem): the plate's principal axes, v up (toward
+    the plate's highest rest z), u to the right as seen from outside (away from the body's mid-line), so the
+    image is never mirrored."""
+    me = ob.data
+    M = np.array(ob.matrix_world)
+    V = np.array([tuple(v.co) for v in me.vertices]) @ M[:3, :3].T + M[:3, 3]
+    c = V.mean(0)
+    _, _, W = np.linalg.svd(V - c, full_matrices=False)
+    a_len, n = W[0], W[2]
+    if np.dot(c[:2], n[:2]) < 0:                      # the plate's normal out from the body (sideways at the shoulder)
+        n = -n
+    up = a_len if a_len[2] >= 0 else -a_len
+    right = np.cross(up, n)
+    P = V - c
+    pu, pv = P @ right, P @ up
+    u = (pu - pu.min()) / max(np.ptp(pu), 1e-9)
+    v = (pv - pv.min()) / max(np.ptp(pv), 1e-9)
+    lay = me.uv_layers.get(uv) or me.uv_layers.new(name=uv)
+    lv = np.empty(len(me.loops), np.int64)
+    me.loops.foreach_get("vertex_index", lv)
+    lay.data.foreach_set("uv", np.stack([u[lv], v[lv]], 1).astype(np.float32).ravel())
+    return {"width_mm": round(float(np.ptp(pu)) * 1000.0, 1), "height_mm": round(float(np.ptp(pv)) * 1000.0, 1)}
 
 # Pauldron (mm; frame A: around the shoulder joint and the upper-arm axis)
 CAP_PAD = 12.0                # shirt to the cap's inner face: 6 mm foam, its carrier and the cup's stand-off
@@ -322,6 +386,7 @@ def main(render=True):
             ob = G.slab("Pauldron.L.Tier1.Emblem", coll, cap.surf(CAP_PAD + CAP_T + 1.4),
                         lambda q: (-emb_hw(q), emb_hw(q)), qe - he, qe + he, 1.0, M["emblem"], nu=8, nv=10,
                         bevel_mm=0.4)
+            S["emblem_decal_uv"] = decal_uv(ob)
             rigid.append((ob, "upperarm01.L"))
 
         # ------------------------------------------------ forearm guard
@@ -490,11 +555,14 @@ def main(render=True):
         ob = G.slab(f"Kneepad.{side}.Cap", coll, kvs(cap_off, True), lambda v: (-octagon_hw(v), octagon_hw(v)),
                     v0m, v1m, KNEE_CAP_T, M["knee"], nu=64, nv=60, bevel_mm=0.8,
                     t_field_fn=knee_field(v0m, v1m, KNEE_CAP_T))
+        S["cap_frame_share"] = frame_wear(ob, lambda v: (-octagon_hw(v), octagon_hw(v)), v0m, v1m, 64, 60, octagon_hw)
         rigid.append((ob, f"lowerleg01.{side}"))
         v0u, v1u = KNEE_SPLIT[0], KNEE_HH
         ob = G.slab(f"Kneepad.{side}.Lame", coll, kvs(cap_off + KNEE_CAP_T + 1.4 + 0.8, True),
                     lambda v: (-octagon_hw(v) + 3.0, octagon_hw(v) - 3.0), v0u, v1u, KNEE_CAP_T, M["knee"], nu=56,
                     nv=26, bevel_mm=0.8, t_field_fn=knee_field(v0u, v1u, KNEE_CAP_T, ridge=False))
+        S["lame_frame_share"] = frame_wear(ob, lambda v: (-octagon_hw(v) + 3.0, octagon_hw(v) - 3.0), v0u, v1u, 56, 26,
+                                           octagon_hw)
         rigid.append((ob, f"lowerleg01.{side}"))
         # red tab on the lateral edge (v 20..50 in the cap's frame), protruding 6 beyond the frame
         pt, nt = kvs(cap_off, True)(KNEE_HW - 2.0, 35.0)
@@ -537,6 +605,7 @@ def main(render=True):
     out["rigid"] = {ob.name: bone for ob, bone in rigid}
     out["soft"] = [ob.name for ob, _c in soft]
     G.say(json.dumps({k: v for k, v in out.items() if k in ("L", "R")}))
+    out["materials"] = C.library_pass(coll, PART, MATERIALS, side_dust={"L": 1.0, "R": 0.85}, say_tag=TAG)
     if render:
         rep = G.finish_part(TAG, coll, body, rig, clothing, (0.0, 0.0, 1000.0), 1900.0,
                             ["ref.arm_R", "ref.arm_L", "ref.legs_knees", "ref.soldier_full"], extra=out)

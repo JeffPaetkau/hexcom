@@ -28,8 +28,22 @@ boot test object (test_boot, swatch views V8-V10). A part script for the boot:
         ob["wear_dust_scale"] = 1.0 if ".L." in ob.name else 0.7
     # and the attributes the leather reads: `crease` (the crease field), `polish` (counter, lateral quarter)
 
-Everything else of §7.2 raises NotBuilt with its section: chips, crest, camouflage, bakes and the
-wear-source switch.
+Take 2's materials round (2026-11-15): painted textures from the image queue (gen/REQUESTS.md) are addressed
+like CC0 sets (mat_catalogue.GEN_TEXTURES); new builders `printed` and `cloth` (mat_fabric), `painted`,
+`lens` and `decal` (mat_hard); the soldier's recipes (camouflage ripstop from R002, olive Cordura from R000
+made seamless, the shirt's ripstop and jersey, fleece, neoprene, glove knit and leather, olive and coyote
+webbing, the painted armour, moulded tan and textured black polymer, TPR, moulded rubber, brass, phosphate
+steel, burnt bronze, brushed FDE paint, the strobe and optic lenses, the emblem decal from R003). And
+**variants**: one recipe, several finishes in one part,
+
+    M.assign(ob, "Polymer.Painted.Armour", part="Armour", variant="KneeCap", chips__cover=0.25)
+
+gives `Armour.Mat.KneeCap` (the variant replaces the ID in the name; the material records its recipe and
+variant, and lint checks the name against both). Parts that swap their round-1 flat colours for library
+materials do it through scripts/parts/common.py library_pass().
+
+Everything else of §7.2 raises NotBuilt with its section: the chips group, crest, the camouflage generator,
+bakes and the wear-source switch.
 """
 import copy
 import difflib
@@ -72,8 +86,11 @@ def recipe(id):
     raise KeyError(f"no catalogue ID {id!r} in spec 16 §3.3" + (f"; did you mean {close}?" if close else ""))
 
 
-def material_name(id, part):
-    """§7.1: `<Part>.Mat.<ID>`, dropping a leading word of the ID equal to the part (`Eye.Mat.Cornea`)."""
+def material_name(id, part, variant=None):
+    """§7.1: `<Part>.Mat.<ID>`, dropping a leading word of the ID equal to the part (`Eye.Mat.Cornea`); with a
+    variant (take 2), `<Part>.Mat.<Variant>`."""
+    if variant:
+        return naming.check(f"{part}.Mat.{variant}")
     first, _, rest = id.partition(".")
     return naming.check(f"{part}.Mat.{rest if first == part and rest else id}")
 
@@ -118,14 +135,15 @@ def ensure_groups(names=None):
     return {n: G.build(n) for n in names}
 
 
-def get(id, part, **overrides):
-    """The material `<Part>.Mat.<ID>`, created or brought up to date (idempotent, §7.4)."""
+def get(id, part, variant=None, **overrides):
+    """The material `<Part>.Mat.<ID>` (or `<Part>.Mat.<Variant>`), created or brought up to date (idempotent,
+    §7.4)."""
     import bpy
     rec = _overridden(recipe(id), overrides)
     mod = _module(rec)
     ensure_groups(mod.GROUPS_USED.get(rec["builder"], ()))
     h = recipe_hash(rec, overrides, mod)
-    name = material_name(id, part)
+    name = material_name(id, part, variant)
     mat = next((m for m in bpy.data.materials if m.name == name and m.library is None), None)
     if mat is not None and mat.get("recipe_hash") == h:
         return mat
@@ -136,6 +154,10 @@ def get(id, part, **overrides):
                            "replaces a material it did not create (§7.4): remove or rename it")
     mod.build_material(mat, rec, part, overrides)
     mat["recipe"], mat["recipe_hash"], mat["lib_version"] = id, h, LIB_VERSION
+    if variant:
+        mat["variant"] = variant
+    elif "variant" in mat:
+        del mat["variant"]
     mat["overrides"] = json.dumps(overrides, sort_keys=True, default=str)
     mat["reads"] = json.dumps(rec.get("reads", {}), sort_keys=True)
     mat["tree_hash"] = K.tree_hash(mat.node_tree)
@@ -179,11 +201,11 @@ def face_selection(ob, faces):
     return sel
 
 
-def assign(obj, id, part=None, faces=None, **overrides):
+def assign(obj, id, part=None, faces=None, variant=None, **overrides):
     """Put the recipe's material on an object (on `faces` only, if given) and report the recipe's inputs
     the object lacks. `part` defaults to the object's own prefix (`Foot.L.Nail.1` -> `Foot`)."""
     part = part or obj.name.split(".")[0]
-    mat = get(id, part, **overrides)
+    mat = get(id, part, variant, **overrides)
     me = obj.data
     if all(m is None or m.name != mat.name for m in me.materials):
         me.materials.append(mat)
@@ -257,7 +279,7 @@ def apply_wear_preset(mat, preset):
         return mat
     over = json.loads(mat.get("overrides", "{}"))
     over["wear"] = name
-    m = get(rid, mat.name.split(".Mat.")[0], **over)
+    m = get(rid, mat.name.split(".Mat.")[0], mat.get("variant"), **over)
     m["wear_preset"] = name
     return m
 
@@ -1169,8 +1191,8 @@ def lint(scope="all"):
                 add("error", "L10", mat.name, f"recipe {rid!r}: {e}")
                 continue
             part = mat.name.split(".Mat.")[0]
-            if material_name(rid, part) != mat.name:
-                add("error", "L10", mat.name, f"expected {material_name(rid, part)} for recipe {rid}")
+            if material_name(rid, part, mat.get("variant")) != mat.name:
+                add("error", "L10", mat.name, f"expected {material_name(rid, part, mat.get('variant'))} for recipe {rid}")
             rule = C.CLASS_RULES[rec["class"]]
             y = C.luminance(hex_to_linear(rec["albedo_hex"]))
             if rule.get("albedo_y") and not (rule["albedo_y"][0] <= y <= rule["albedo_y"][1]):

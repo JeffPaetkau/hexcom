@@ -76,6 +76,33 @@ COL = {
     "poly_black": "#24211e", "poly_tan": "#816f5f", "mag": "#1e1d1c",
     "webbing_pals": "#4d4438", "webbing_cb": "#2a2520", "brass_dark": "#4a3f2c",
 }
+# Materials round (round 5, 2026-11-15; COL stays the solid-view colour): R000's olive 500D Cordura (made
+# seamless) on the bag, flap, pads and cummerbund, 1000D on the pouches, matching olive webbing, black binding,
+# the admin panel a lighter, dustier Cordura, polymer buckles, the radio's textured polymer, the brass antenna
+# with its rubber cap, olive magazines' black PMAGs.
+_CB = {"albedo_hex": "#3a362f"}
+MATERIALS = {
+    "Carrier.Mat.Cordura": ("Cordura.500D.OliveBrown", "Cordura", {}),
+    "Carrier.Mat.Flap": ("Cordura.500D.OliveBrown", "Flap", {"albedo_hex": "#524a3f"}),
+    "Carrier.Mat.Pad": ("Cordura.500D.OliveBrown", "Pad", {"albedo_hex": "#4a443a"}),
+    "Carrier.Mat.Panel": ("Cordura.500D.OliveBrown", "Panel", {"albedo_hex": "#5a5244", "dust__amount": 1.1}),
+    "Carrier.Mat.Cummerbund": ("Cordura.500D.OliveBrown", "Cummerbund", {"albedo_hex": "#403b33"}),
+    "Carrier.Mat.Pouch": ("Cordura.1000D.OliveBrown", "Pouch", {}),
+    "Carrier.Mat.RadioPouch": ("Cordura.1000D.OliveBrown", "RadioPouch", {"albedo_hex": "#413b33"}),
+    "Carrier.Mat.Webbing": ("Webbing.Nylon.OliveBrown", "Webbing", {}),
+    "Carrier.Mat.WebbingPals": ("Webbing.Nylon.OliveBrown", "WebbingPals", {"albedo_hex": "#464036"}),
+    "Carrier.Mat.WebbingCb": ("Webbing.Nylon.OliveBrown", "WebbingCb", dict(_CB)),
+    "Carrier.Mat.Binding": ("Webbing.Nylon.Black", "Binding", {"wear": "cordura.top"}),
+    "Carrier.Mat.Hardware": ("Polymer.Black.Smooth", "Hardware", {}),
+    "Carrier.Mat.PolyBlack": ("Polymer.Black.Textured", "PolyBlack", {}),
+    "Carrier.Mat.PolyTan": ("Polymer.Tan.Moulded", "PolyTan", {}),
+    "Carrier.Mat.Mag": ("Polymer.Black.Textured", "Mag", {"albedo_hex": "#2e2d2b"}),
+    "Carrier.Mat.Radio": ("Polymer.Black.Textured", "Radio", {}),
+    "Carrier.Mat.Brass": ("Metal.Brass.Aged", "Brass", {}),
+    "Carrier.Mat.BrassDark": ("Metal.Brass.Aged", "BrassDark", {"f0": (0.22, 0.18, 0.11)}),
+    "Carrier.Mat.Steel": ("Metal.Gunmetal", "Steel", {"f0": (0.40, 0.41, 0.42), "aniso": 0.0}),
+    "Carrier.Mat.Cap": ("Rubber.Moulded.Black", "Cap", {}),
+}
 
 
 def notch_z(bd):
@@ -733,6 +760,7 @@ def main(render=True):
                                if n in bpy.data.objects}
         G.say("flap weights from the trousers' waistband:", out["flap_weights"])
     out["objects"] = sorted(o.name for o in coll.all_objects)
+    out["materials"] = C.library_pass(coll, PART, MATERIALS, side_dust={"L": 1.0, "R": 0.9}, say_tag=TAG)
     if render:
         rep = G.finish_part(TAG, coll, body, rig, clothing, (0.0, 0.0, 1330.0), 760.0,
                             ["ref.torso_vest", "ref.soldier_full"], extra=out)

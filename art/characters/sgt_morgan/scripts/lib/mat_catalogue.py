@@ -11,8 +11,10 @@ unit for that socket, and how §3.3.1 states them), colours as hexes or linear t
 """
 import math
 
-LIB_VERSION = "16.2"   # bump on any recipe change (§7.4); materials also hash the library's source
+LIB_VERSION = "16.3"   # bump on any recipe change (§7.4); materials also hash the library's source
                        # 16.2 (2026-10-27): the boot's recipes and the dust, edge, polish and weave groups
+                       # 16.3 (2026-11-15, take 2's materials round): painted textures from gen/ (GEN_TEXTURES),
+                       # the printed, cloth, painted, decal and lens builders, variants, the soldier's recipes
 
 
 # --------------------------------------------------------------------------- colour (§5.6)
@@ -136,6 +138,38 @@ TILE_PERIODS = {
     "SurfaceImperfections017": {"native_mm": 400.0, "period_px": None, "feature": "dirt speckle",
                                 "tiles_mm": {"default": 400.0}},
 }
+# Painted textures from the image queue (gen/REQUESTS.md; "structure by code, surfaces from paintings",
+# notes/research_canitcode.md): committed under gen/<request>/, addressed like a CC0 set by id and map kind
+# (mat_core.asset_path). `native_mm` is the fabric across the image as the request asked for it; the tile a
+# recipe uses is set by the round against the reference (the painter's scale is approximate). `stats` are the
+# image's mean linear colour and Rec.709 luminance (scripts/tools/seamless.py prints them), by which the
+# printed builder divides so the recipe's albedo, not the painter's, sets the mean.
+GEN_TEXTURES = {
+    # R000, made seamless by the half-offset blend (scripts/tools/seamless.py; the source tiled with a faint seam)
+    "R000.cordura": {"maps": {"color": "gen/R000/cordura_olive_worn_seamless.png"}, "request": "R000",
+                     "stats": {"mean_lin": (0.07851, 0.05991, 0.03404), "lum_mean": 0.0620, "lum_sd": 0.0252}},
+    # R002 tiled cleanly as delivered (edge differences 4.0 against 3.8 between neighbours)
+    "R002.camo": {"maps": {"color": "gen/R002/trousers_camo.png"}, "request": "R002",
+                  "stats": {"mean_lin": (0.01920, 0.01748, 0.01450), "lum_mean": 0.01763, "lum_p5": 0.0098,
+                            "lum_p95": 0.0320}},
+    # R004, made seamless by the half-offset blend (it tiled almost cleanly: edges 4.9 / 3.6 against 3.4)
+    "R004.paint": {"maps": {"color": "gen/R004/armour_paint_worn_seamless.png"}, "request": "R004",
+                   "stats": {"mean_lin": (0.06919, 0.06781, 0.05871), "lum_mean": 0.06745, "lum_sd": 0.01072}},
+    # R003: light grey (#c8c8c4) on black; a data mask, thresholded in the decal builder
+    "R003.emblem": {"maps": {"mask": "gen/R003/emblem_mask.png"}, "request": "R003", "stats": {}},
+}
+TILE_PERIODS.update({
+    # 25 cm of 500D across the image as asked; its weave is ~0.6 mm, so the tile keeps the request's scale
+    "R000.cordura": {"native_mm": 250.0, "period_px": None, "feature": "500D weave, dust and scuffs (painted)",
+                     "tiles_mm": {"500D": 250.0, "1000D": 300.0}},
+    # 60 cm asked; the drawn blotches are larger than the painted ones (R002's closing note), so the
+    # trousers sample it at 750 mm (blotches about 90 - 180 mm, as on the drawn thighs)
+    "R002.camo": {"native_mm": 600.0, "period_px": None, "feature": "blotch camouflage print (painted)",
+                  "tiles_mm": {"default": 750.0}},
+    # 15 cm asked: fine scratches 5 - 40 mm long, chips 1 - 4 mm
+    "R004.paint": {"native_mm": 150.0, "period_px": None, "feature": "worn aerosol paint over tan (painted)",
+                   "tiles_mm": {"default": 150.0}},
+})
 TILE_TOLERANCE = 0.08   # L6: a tile scale more than 8 % off its registry value is an error
 
 
@@ -291,7 +325,7 @@ LEATHER_BOOT = {
     "users": {"02": "Boot.Mat.Leather.Boot.FullGrain: vamp, toe box, quarters, stays, counter, backstrap, keepers, "
                     "tongue face"},
     "owner": "16 (§3.3.5), regional data 02 (§5: dust zones, polish zones, the crease field)",
-    "albedo_hex": "#2d2b29", "rough": 0.50, "ior": 1.50, "spec": 0.5, "sheen": 0.0,
+    "albedo_hex": "#353433", "rough": 0.55, "ior": 1.50, "spec": 0.5, "sheen": 0.0,
     "texture": "Leather032", "tile_mm": 80.0, "uv": "UV.Real", "normal_strength": 0.35,
     # §3.2: the grain's roughness map spans 0.40-0.75; as built its p2-p98 band is mapped onto a span of 0.35
     # centred on `rough`, so the recipe's 0.50 stays the mean (the map's own mean is 0.65)
@@ -398,7 +432,9 @@ CORDURA_500D_BLACK = dict(
     # inside the polished zone only: §3.3.4's "scuffs #4a4b4e 20 %" as a 20 % shift toward the abraded grey,
     # broken by a 3 mm noise (read as 20 % cover it drew pale blotches like a camouflage print)
     scuff={"hex": "#4a4b4e", "share": 0.20, "noise_mm": 3.0},
-    dust={"amount": 1.0}, grime={"amount": 0.4, "oil": 0.2}, wear="boot.toe",
+    # the up-facing band (take 2): None keeps MG.Weather.Dust's own; a user on a garment's side overrides it
+    dust={"amount": 1.0, "up_low": None, "up_high": None, "up_power": None}, grime={"amount": 0.4, "oil": 0.2},
+    wear="boot.toe",
     reads=_reads("polish", uv="UV.Real", optional=("polish",)),
     marks="S: §3.4 (weight); E: yarn pitch 0.61 mm; M: Fabric063's period (§3.2)")
 WEBBING_BLACK = dict(
@@ -454,6 +490,223 @@ FABRIC_BACKFACE = {
     "wear": "none", "reads": {}, "export": "dielectric", "marks": "E: C41",
 }
 
+# --------------------------------------------------------------------------- take 2's materials round (2026-11-15)
+
+# The soldier's recipes beyond the boot. Values start from §3.3's identities; albedos were set against the hero
+# frame's Cycles render (scripts/assemble.py, lights at 0.3 of spec 17's, where the skin anchor lands on the
+# reference: renders/round_05, per-part medians), not from §2.2's inverse chain, whose irradiance E was too
+# high (it put the trousers' mean at Y 0.066). Parts choose a variant name per use (materials.get(...,
+# variant=...): `<Part>.Mat.<Variant>`) so one recipe serves several finishes in one part.
+_CLOTH = dict(_TEXTILE)
+
+# --- fabric, printed: a painted texture's pattern on the recipe's albedo (mat_fabric.build_printed)
+NYCO_RIPSTOP_CAMO = dict(
+    _CLOTH, builder="printed", **{"class": "textile_coloured"},
+    identity="Crye G3-class 50/50 NYCO ripstop, 230 g/m², printed with the near-black blotch camouflage",
+    users={"09": "trouser shell, loops, flaps"},
+    albedo_hex="#363533", rough=0.74, spec=0.42, sheen=0.06,
+    # R002 sets the pattern; its luminance spread is raised by `contrast` (the painter's tones span 1 : 3.3
+    # p5 - p95, the drawn trousers more), the recipe's albedo sets the mean
+    print={"image": "R002.camo", "tile_mm": 750.0, "contrast": 2.0},
+    mottle={"noise_mm": 150.0, "amount": 0.15},
+    normal={"texture": "Fabric061", "tile_mm": 64.0, "strength": 0.25},
+    # the 6 mm ripstop grid: doubled yarns, a little raised and glossier (§4.7's MG.Weave.Ripstop, built here
+    # as two thin waves on UV.Real)
+    ripstop={"grid_mm": 6.0, "line": 0.10, "height_mm": 0.05, "rough_add": -0.05},
+    # cloth holds dust on its sides too: the up-facing band widened and its power softened (mat_groups.weather)
+    dust={"amount": 1.2, "rough": 0.85, "up_low": -0.55, "up_high": 0.9, "up_power": 1.0, "noise_mm": 90.0},
+    grime={"amount": 0.7, "oil": 0.15}, wear="cloth.thigh",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)),
+    marks="M: R002's statistics; E: tone ratio and albedo from the hero render (round 5)")
+CORDURA_500D_OLIVE = dict(
+    _CLOTH, builder="printed", **{"class": "textile_coloured"},
+    identity="Cordura 500D nylon 6.6, PU-coated back, 237 g/m², olive-brown/coyote (JPC-class carrier)",
+    users={"13": "bag, flap, wings, pad tops, cummerbund faces", "14": "frag pouch"},
+    albedo_hex="#4d473d", rough=0.78, spec=0.35, sheen=0.06,
+    print={"image": "R000.cordura", "tile_mm": 250.0, "contrast": 1.0},
+    mottle={"noise_mm": 70.0, "amount": 0.28},
+    normal={"texture": "Fabric063", "tile_mm": 156.0, "strength": 0.6},
+    weave={"pitch_mm": 0.61, "crown_mm": 0.04, "distortion": 0.4},
+    dust={"amount": 1.2}, grime={"amount": 0.6, "oil": 0.2}, wear="cordura.top",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)),
+    marks="M: R000 (made seamless); S: §3.4; E: albedo from the hero render")
+CORDURA_1000D_OLIVE = dict(
+    CORDURA_500D_OLIVE, identity="Cordura 1000D, 373 g/m², olive-brown (pouch bodies, flaps, radio pouch)",
+    users={"13": "pouch bodies, radio pouch", "14": "pouches"},
+    albedo_hex="#474138", rough=0.80,
+    print={"image": "R000.cordura", "tile_mm": 300.0, "contrast": 1.0},
+    normal={"texture": "Fabric063", "tile_mm": 190.0, "strength": 0.6},
+    weave={"pitch_mm": 0.74, "crown_mm": 0.05, "distortion": 0.4})
+
+# --- fabric, plain dyed cloth on a photographed construction (mat_fabric.build_cloth)
+NYCO_RIPSTOP_BLACK = dict(
+    _CLOTH, builder="cloth", identity="Crye G3-class NYCO ripstop combat-shirt sleeves, black",
+    users={"10": "sleeves, shoulder panels"},
+    albedo_hex="#252525", rough=0.70, spec=0.35, sheen=0.04,
+    cloth={"texture": "Fabric061", "tile_mm": 64.0, "normal": 0.25, "highpass": 0.0},
+    ripstop={"grid_mm": 6.0, "line": 0.10, "height_mm": 0.04, "rough_add": -0.04},
+    dust={"amount": 0.25}, grime={"amount": 0.3, "oil": 0.3}, wear="cloth.shoulder",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)), marks="E: §3.3.4; albedo from the hero render")
+KNIT_JERSEY_FR = dict(
+    _CLOTH, builder="cloth", identity="Crye G3-class flame-resistant jersey torso, black",
+    users={"10": "torso under the carrier"},
+    albedo_hex="#252525", rough=0.78, spec=0.32, sheen=0.04,
+    cloth={"texture": "cotton_jersey", "tile_mm": 264.0, "normal": 0.6, "highpass": 0.0},
+    dust={"amount": 0.3}, grime={"amount": 0.3, "oil": 0.4}, wear="cloth.shoulder",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)), marks="E: §3.3.4")
+FLEECE_POLYESTER = dict(
+    _CLOTH, builder="cloth", identity="100-weight polyester microfleece neck gaiter, dark brown-black",
+    users={"10": "gaiter"},
+    albedo_hex="#2c2621", rough=0.82, spec=0.30, sheen=0.10,
+    cloth={"texture": "knitted_fleece", "tile_mm": 230.0, "normal": 0.5, "highpass": 0.06},
+    dust={"amount": 0.7, "rough": 0.9}, grime={"amount": 0.2, "oil": 0.3}, wear="fleece.toproll",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)),
+    marks="E: §3.3.4 (the lit fold is reached by dust, not sheen)")
+NEOPRENE_BLACK = dict(
+    _CLOTH, builder="cloth", **{"class": "rubber"}, ior=1.52,
+    identity="SCR neoprene with nylon-jersey faces: glove cuffs, guard sleeves, knee-cap bases",
+    users={"11": "cuff", "12": "sleeves, bases"},
+    albedo_hex="#272627", rough=0.78, spec=0.5, sheen=0.04,
+    cloth={"texture": "Fabric082A", "tile_mm": 200.0, "normal": 0.4, "highpass": 0.0},
+    dust={"amount": 0.4}, grime={"amount": 0.3, "oil": 0.3}, wear="cloth.shoulder",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)), marks="E: §3.3.4")
+KNIT_GLOVE = dict(
+    _CLOTH, builder="cloth", identity="M-Pact-class stretch knit glove back, black",
+    users={"11": "back of hand, fingers"},
+    albedo_hex="#282624", rough=0.72, spec=0.38, sheen=0.06,
+    cloth={"texture": "cotton_jersey", "tile_mm": 115.0, "normal": 0.6, "highpass": 0.0},
+    dust={"amount": 0.35}, grime={"amount": 0.4, "oil": 0.5}, wear="cloth.shoulder",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)), marks="E: §3.3.4")
+LEATHER_GLOVE = dict(
+    _CLOTH, builder="cloth", **{"class": "leather"}, ior=1.50,
+    identity="synthetic leather (Clarino-class) palm and finger pads, black",
+    users={"11": "palm, pads"},
+    albedo_hex="#2a2826", rough=0.52, spec=0.5, sheen=0.0,
+    cloth={"texture": "Leather037", "tile_mm": 41.0, "normal": 0.6, "highpass": 0.0},
+    dust={"amount": 0.3}, grime={"amount": 0.5, "oil": 0.6}, wear="cloth.shoulder",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)), marks="E: §3.3.5 (goat pebble 0.6 mm)")
+WEBBING_OLIVE = dict(
+    WEBBING_BLACK, **{"class": "textile_coloured"},
+    identity="carrier webbing dyed to match the Cordura: PALS, straps, keepers",
+    users={"13": "PALS strips, straps, keepers"},
+    albedo_hex="#4b453b", dust={"amount": 0.8}, grime={"amount": 0.4, "oil": 0.2}, wear="cordura.top",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)))
+WEBBING_COYOTE = dict(
+    WEBBING_BLACK, **{"class": "textile_coloured"},
+    identity="Coyote Brown 498 webbing: hangers, kneepad strap tails",
+    users={"14": "right hanger", "12": "strap tails"},
+    albedo_hex="#45392c", dust={"amount": 0.6}, grime={"amount": 0.4, "oil": 0.2}, wear="belt.kit",
+    reads=_reads(uv="UV.Real", optional=("wear_dust",)))
+
+# --- hard: painted shells, moulded tan, TPR, metals, the lenses and the decal
+POLYMER_PAINTED_ARMOUR = {
+    "family": "hard", "class": "paint", "builder": "painted",
+    "identity": "FDE moulded polymer shells field-painted dark grey (aerosol), worn through to the tan "
+                "moulding on the rims and in chips: pauldrons, forearm guards, knee caps",
+    "users": {"12": "pauldron tiers, guard plates, knee caps"},
+    "owner": "16 (take 2; the reference's grey centres with tan rims and chips on the knee caps and pauldrons "
+             "replace §3.3.6's Polymer.Tan.Painted reading, D8)",
+    "albedo_hex": "#454648", "rough": 0.58, "rough_span": 0.14, "ior": 1.50, "spec": 0.5, "sheen": 0.0,
+    "texture": "Plastic012B", "tile_mm": 100.0, "projection": "box",
+    "mottle": {"noise_mm": 35.0, "amount": 0.15, "hex": "#5a564c"},     # aerosol paint's uneven cover
+    # R004's painted swatch by box projection: scratches, specks of tan, uneven cover (over its own mean)
+    "paint_image": {"image": "R004.paint", "tile_mm": 150.0, "amount": 0.6},
+    "peel": {"noise_mm": 1.0, "height_mm": 0.004},                       # orange peel (§3.1 paint)
+    # the moulding under the paint, where it wears through: tan, rougher, a 0.08 mm step down
+    "substrate": {"hex": "#7a705e", "rough": 0.62, "step_mm": 0.08},
+    # rims: the bevel mask at a wide radius (the plates' rounded edges), broken by a noise
+    "edge": {"radius_mm": 2.5, "width": 0.06, "noise_mm": 4.0, "noise_amount": 0.5, "amount": 1.0},
+    # chips on the faces: a noise threshold (cover) gathered in patches, denser near the edges
+    "chips": {"noise_mm": 3.0, "cover": 0.015, "patch_mm": 60.0, "edge_bias": 0.5},
+    # a part's wear zone, the point attribute `paint_wear` (0 - 1; 0 where missing): the knee caps' raised
+    # frames, worn to the tan in the reference; broken by a noise so the bare frame keeps islands of paint
+    "frame": {"attribute": "paint_wear", "amount": 0.9, "noise_mm": 12.0, "break": 0.6},
+    "dust": {"amount": 0.5}, "grime": {"amount": 0.7, "oil": 0.3, "cavity": 0.8}, "wear": "armour.top",
+    "reads": {"attributes": ["paint_wear"], "object_props": ["wear_dust_scale"],
+              "optional": ["paint_wear", "wear_dust_scale"]},
+    "export": "dielectric", "marks": "E: the reference's knee caps and pauldrons; §3.1 paint",
+}
+POLYMER_TAN_MOULDED = dict(
+    POLYMER_BLACK_SMOOTH, identity="moulded-in-colour FDE polymer: magazine-carrier plates, flank plate",
+    users={"14": "drop-leg carrier plates"},
+    albedo_hex="#463f36", rough=0.52,
+    edge={"radius_mm": 1.0, "width": 0.10, "noise_mm": 1.5, "amount": 1.0, "albedo_add": 0.04, "rough_add": 0.06},
+    dust={"amount": 0.6}, grime={"amount": 0.5, "oil": 0.2, "cavity": 0.6}, wear="belt.kit",
+    marks="E: §3.3.6 Polymer.Tan.Moulded (stress-whitened scuffs at the edges)")
+POLYMER_BLACK_TEXTURED = dict(
+    POLYMER_BLACK_SMOOTH, identity="glass-filled nylon with a moulded texture: carrier bodies, platforms, radio",
+    users={"13": "radio body, buckles", "14": "carrier bodies, platform core, holster"},
+    albedo_hex="#272624", rough=0.56, rough_span=0.12, relief_mm=0.01,
+    dust={"amount": 0.35}, grime={"amount": 0.4, "oil": 0.3, "cavity": 0.6}, marks="E: §3.3.6")
+TPR_GLOVE = dict(
+    POLYMER_BLACK_SMOOTH, **{"class": "rubber"}, ior=1.52,
+    identity="thermoplastic rubber knuckle guard and pads (M-Pact class)",
+    users={"11": "knuckle guard, pads"},
+    albedo_hex="#292827", rough=0.56, rough_span=0.12,
+    edge={"radius_mm": 1.2, "width": 0.10, "noise_mm": 1.0, "amount": 1.0, "albedo_add": 0.03, "rough_add": 0.08},
+    dust={"amount": 0.8}, grime={"amount": 0.3, "oil": 0.5, "cavity": 0.5},
+    marks="E: §3.3.5 TPR.Glove.Black (dusty crests on the bosses)")
+RUBBER_MOULDED = dict(
+    _RUBBER, builder="rubber", identity="moulded rubber: antenna cap, butt pad, light button",
+    users={"13": "antenna cap", "15": "butt pad"},
+    albedo_hex="#262729", rough=0.70, rough_range=(0.62, 0.80), wear="metal.hardware",
+    dust={"amount": 0.3}, grime={"amount": 0.3, "oil": 0.2},
+    reads={"object_props": ["wear_dust_scale"], "optional": ["wear_dust_scale"]})
+METAL_BRASS_AGED = dict(
+    GUNMETAL, identity="turned brass antenna sleeve, tarnished", users={"13": "antenna"},
+    albedo_hex="#705e46",
+    # §3.3.7: base (0.55, 0.42, 0.22) 60 % tarnished toward (0.30, 0.25, 0.17): the mean, darkened by handling
+    f0=(0.40, 0.32, 0.19), rough=0.38, rough_range=(0.32, 0.46), aniso=0.0,
+    edge={"radius_mm": 0.6, "width": 0.08, "noise_mm": 0.6, "amount": 0.8, "f0": (0.62, 0.50, 0.28), "rough": 0.24},
+    dust={"amount": 0.2}, grime={"amount": 0.5, "oil": 0.3, "cavity": 0.5})
+METAL_STEEL_PHOSPHATE = dict(
+    GUNMETAL, identity="manganese-phosphate steel: bolt carrier, gas block, pins", users={"15": "steel parts"},
+    albedo_hex="#3a3938", f0=(0.060, 0.060, 0.062), rough=0.50, rough_range=(0.42, 0.58), aniso=0.0,
+    edge={"radius_mm": 0.4, "width": 0.08, "noise_mm": 0.6, "amount": 0.6, "f0": (0.50, 0.50, 0.51), "rough": 0.25})
+COATING_BURNT_BRONZE = dict(
+    GUNMETAL, identity="Cerakote H-148 Burnt Bronze over the barrel and the A2 flash hider",
+    users={"15": "barrel, A2"},
+    # §3.3.7 gives a pigmented film (metallic 0.45); built on the metal builder with a low, brown F0 so the
+    # film reads brown, not shiny
+    albedo_hex="#5f4c3e", f0=(0.20, 0.13, 0.08), rough=0.42, rough_range=(0.36, 0.50), aniso=0.0,
+    edge={"radius_mm": 0.4, "width": 0.08, "noise_mm": 0.6, "amount": 0.3, "f0": (0.10, 0.10, 0.10), "rough": 0.5},
+    dust={"amount": 0.15}, grime={"amount": 0.6, "oil": 0.2, "cavity": 0.6})
+PAINT_FDE_BRUSHED = dict(
+    POLYMER_PAINTED_ARMOUR, identity="hand-brushed flat dark earth enamel stripes on the carbine",
+    users={"15": "tan patches"},
+    albedo_hex="#8a6a48", rough=0.62, mottle={"noise_mm": 8.0, "amount": 0.2, "hex": "#a07c55"}, paint_image=None,
+    substrate={"hex": "#2a2826", "rough": 0.5, "step_mm": 0.06},
+    edge={"radius_mm": 0.6, "width": 0.10, "noise_mm": 1.0, "noise_amount": 0.6, "amount": 0.8},
+    chips={"noise_mm": 2.0, "cover": 0.06, "patch_mm": 30.0, "edge_bias": 0.6}, frame=None,
+    reads={"object_props": ["wear_dust_scale"], "optional": ["wear_dust_scale"]},
+    dust={"amount": 0.2}, grime={"amount": 0.3, "oil": 0.3, "cavity": 0.6}, wear="rifle",
+    marks="E: §3.3.6 Paint.FDE.Brushed; chips to the black hardcoat beneath")
+LENS_STROBE = {
+    "family": "hard", "class": "glass", "builder": "lens",
+    "identity": "frosted polycarbonate dome of the IR strobe", "users": {"12": "strobe lens"},
+    "owner": "16 (§3.3.8)", "albedo_hex": "#7d8996", "rough": 0.30, "ior": 1.58, "transmission": 0.35, "coat": 0.0,
+    "wear": "none", "reads": {}, "export": "dielectric, alpha opaque", "marks": "E: §3.3.8",
+}
+LENS_OPTIC = dict(LENS_STROBE, identity="coated optic and light glass, seen dark", users={"15": "T-2, M300C"},
+                  albedo_hex="#0e1418", rough=0.04, ior=1.52, transmission=0.0, coat=1.0)
+DECAL_EMBLEM = {
+    "family": "hard", "class": "metal", "builder": "decal",
+    "identity": "the shield emblem: a brushed blue-grey anodised plate with the light X-chevron mark (R003)",
+    "users": {"12": "left pauldron emblem plate"}, "owner": "16 (§4.9; take 2: the mask is R003, thresholded)",
+    "albedo_hex": "#a9b3bd", "f0": (0.14, 0.16, 0.19), "rough": 0.45,
+    # the mask's luminance, thresholded (its anti-aliased grey ramp kept soft over threshold[0] - [1]);
+    # `box` is the image region (u0, v0, u1, v1) that the plate's 0 - 1 decal UV covers (outside the image:
+    # no mark). The emblem (R003's bbox 0.146 - 0.853 x 0.084 - 0.907) at 92 % of the 50 mm plate's width,
+    # its aspect kept on the 95 mm plate, its point 12 % above the plate's
+    "mask": {"image": "R003.emblem", "uv": "UV.Decal", "threshold": (0.30, 0.42),
+             "box": (0.115, -0.091, 0.885, 1.369)},
+    "mark": {"hex": "#c8c8c4", "rough": 0.55},
+    "edge": {"radius_mm": 0.5, "width": 0.10, "noise_mm": 0.8, "amount": 0.6, "f0": (0.60, 0.62, 0.64), "rough": 0.30},
+    "dust": {"amount": 0.3}, "grime": {"amount": 0.5, "oil": 0.2, "cavity": 0.6}, "wear": "armour.top",
+    "reads": {"uv": ["UV.Decal"], "object_props": ["wear_dust_scale"], "optional": ["wear_dust_scale"]},
+    "export": "metal; the mark baked into BaseColor", "marks": "M: R003; E: §3.3.7 ClearBrushed",
+}
+
 CATALOGUE = {
     "Skin.Foot": SKIN_FOOT,
     "Nail.Plate": NAIL_PLATE,
@@ -472,6 +725,30 @@ CATALOGUE = {
     "Thread.Bonded.Black": THREAD_BLACK,
     "Fabric.BackFace": FABRIC_BACKFACE,
     "Foam.ClosedCell.Black": FOAM_BLACK,
+    # take 2's materials round (2026-11-15)
+    "NYCO.Ripstop.Camo": NYCO_RIPSTOP_CAMO,
+    "Cordura.500D.OliveBrown": CORDURA_500D_OLIVE,
+    "Cordura.1000D.OliveBrown": CORDURA_1000D_OLIVE,
+    "NYCO.Ripstop.Black": NYCO_RIPSTOP_BLACK,
+    "Knit.Jersey.FR": KNIT_JERSEY_FR,
+    "Fleece.Polyester": FLEECE_POLYESTER,
+    "Neoprene.Black": NEOPRENE_BLACK,
+    "Knit.Glove.Honeycomb": KNIT_GLOVE,
+    "Leather.Glove.Goat": LEATHER_GLOVE,
+    "Webbing.Nylon.OliveBrown": WEBBING_OLIVE,
+    "Webbing.Nylon.Coyote": WEBBING_COYOTE,
+    "Polymer.Painted.Armour": POLYMER_PAINTED_ARMOUR,
+    "Polymer.Tan.Moulded": POLYMER_TAN_MOULDED,
+    "Polymer.Black.Textured": POLYMER_BLACK_TEXTURED,
+    "TPR.Glove.Black": TPR_GLOVE,
+    "Rubber.Moulded.Black": RUBBER_MOULDED,
+    "Metal.Brass.Aged": METAL_BRASS_AGED,
+    "Metal.Steel.Phosphate": METAL_STEEL_PHOSPHATE,
+    "Coating.Cerakote.BurntBronze": COATING_BURNT_BRONZE,
+    "Paint.FDE.Brushed": PAINT_FDE_BRUSHED,
+    "Lens.Strobe.Polycarbonate": LENS_STROBE,
+    "Glass.Optic.Coated": LENS_OPTIC,
+    "Decal.Emblem": DECAL_EMBLEM,
 }
 BOOT_RECIPES = ("Leather.Boot.FullGrain", "Cordura.500D.Black", "Rubber.Outsole.Black", "Rubber.Rand.Black",
                 "EVA.Midsole.BlueGrey", "Webbing.Nylon.Black", "Lace.Nylon.Black", "Metal.Gunmetal",
@@ -536,8 +813,11 @@ WEAR_PRESETS = {
                                              "paint.rib": (220, 0.65)}, "users": ["12"]},
     "panel": {"dust": 0.30, "grime_band": 0.5, "chips": {"panel": (220, 0.60)}, "users": ["13"]},
     "cordura.top": {"dust": 0.35, "grime_bottom": 0.8, "crest": 0.6, "users": ["13", "14"]},
+    # take 2 (2026-11-15): dust zones by height on the trousers (the reference: lower legs dusty, the seat and
+    # thighs less), the left leg the dustier as the left boot is; the hem grime band (mm above the floor)
     "cloth.thigh": {"dust": 0.40, "grime_band_mm": (320, 200), "grime": 0.6, "grime_oil": 0.2, "crest": 0.7,
-                    "stress": 0.45, "users": ["09"]},
+                    "stress": 0.45, "dust_zones": {"shin": 1.0, "knee": 0.8, "thigh": 0.45, "seat": 0.25},
+                    "side": {"L": 1.0, "R": 0.8}, "users": ["09"]},
     "cloth.shoulder": {"dust": 0.35, "dust_cuff": 0.4, "crest": 0.6, "users": ["10"]},
     "fleece.toproll": {"dust": 0.45, "crest": 0.5, "users": ["10"]},
     # boot.toe's dust shape (2026-10-27, as built): spec 02 §3.5 and the reference put the dust in the creases'

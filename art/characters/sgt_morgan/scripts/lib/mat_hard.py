@@ -21,6 +21,18 @@ Built so far, the boot's (2026-10-27, spec 02 §0 item 7):
 * Polymer.Black.Smooth: acetal at 0.40, Plastic012B (box) as roughness and a 4 um scratch relief, edges
   abraded +0.012 albedo, +0.08 roughness.
 
+Take 2's materials round (2026-11-15):
+
+* `painted` (Polymer.Painted.Armour, Paint.FDE.Brushed): an aerosol or brushed paint over a moulding of
+  another colour. The paint's uneven cover is a mottle toward a second hex over a few cm; orange peel as a
+  bump; the paint wears through to the substrate on the edges (MG.Mask.EdgeBevel at a wide radius, broken by
+  a noise) and in chips (a noise above a cover threshold, gathered in patches, the threshold lowered near the
+  edges), a small step down where it is gone; grime and dust last, by box projection.
+* `lens`: a clear or frosted polymer or glass (transmission, roughness, an optional coat), no wear.
+* `decal`: a brushed anodised plate (metal F0, edge wear to bare metal like `metal`) with a mark from a
+  painted mask (GEN_TEXTURES, thresholded) on the object's 0-1 `UV.Decal`, the mark a dielectric paint mixed
+  over the metal, grime on both, dust as the dielectric layer of dust_over_metal().
+
 Hard parts without UV.Real sample tiled maps by box projection on Object coordinates (blend 0.2, §5.1); the
 leather reads UV.Real like cloth (§3.3.5: "grain through UV.Real").
 """
@@ -33,7 +45,10 @@ GROUPS_USED = {"leather": _WEAR + ("MG.Polish", "MG.Mask.EdgeBevel"),
                "rubber": _WEAR + ("MG.Mask.EdgeBevel",),
                "midsole": _WEAR,
                "metal": _WEAR + ("MG.Mask.EdgeBevel", "MG.Weather.Edge"),
-               "polymer": _WEAR + ("MG.Mask.EdgeBevel", "MG.Weather.Edge")}
+               "polymer": _WEAR + ("MG.Mask.EdgeBevel", "MG.Weather.Edge"),
+               "painted": _WEAR,
+               "lens": (),
+               "decal": _WEAR + ("MG.Mask.EdgeBevel", "MG.Weather.Edge")}
 
 
 def build_material(mat, rec, part, overrides):
@@ -249,8 +264,104 @@ def build_polymer(mat, rec):
     _out(nb, p.outputs[0])
 
 
+# --------------------------------------------------------------------------- take 2: paint, lenses, decals
+
+def build_painted(mat, rec):
+    nb = K.new_tree(mat)
+    st = C.TILE_PERIODS[rec["texture"]]["stats"]
+    obj = nb.coords("Object")
+    rmap = _bw(nb, G.antirepeat(nb, rec["texture"], "roughness", obj, rec["tile_mm"], box=True))
+    r = nb.math("ADD", rec["rough"] - 0.5 * rec["rough_span"],
+                nb.math("MULTIPLY", _band01(nb, rmap, st["rough_p2"], st["rough_p98"]), rec["rough_span"]))
+    base = C.hex_to_linear(rec["albedo_hex"])
+    mo = rec["mottle"]
+    col = nb.mix(nb.math("MULTIPLY", _noise01(nb, mo["noise_mm"], 3.0), mo["amount"]), base, C.hex_to_linear(mo["hex"]))
+    pi = rec.get("paint_image")
+    if pi:   # a painted swatch (GEN_TEXTURES) by box projection: its colour over its own mean, times the paint's
+        st_i = C.GEN_TEXTURES[pi["image"]]["stats"]
+        img = G.antirepeat(nb, pi["image"], "color", obj, pi["tile_mm"], box=True)
+        ratio = nb.vmath("DIVIDE", img, tuple(st_i["mean_lin"]))
+        ratio = nb.vmath("ADD", nb.vmath("SCALE", ratio, scale=pi["amount"]), (1.0 - pi["amount"],) * 3)
+        col = nb.vmath("MULTIPLY", col, ratio)
+    # where the paint is gone: the worn edges and the chips. The rims are found against the TRUE normal: the
+    # plates' bevelled, weighted-normal edges already round the shading normal, so MG.Mask.EdgeBevel (which
+    # compares with it) sees nothing there; facets of a curved face differ from the bevel's normal by less
+    # than `floor`, which the mask ignores
+    ed = rec["edge"]
+    bev = nb.node("ShaderNodeBevel", samples=8, inputs={"Radius": ed["radius_mm"] * 0.001})
+    d = nb.math("SUBTRACT", 1.0, nb.vmath("DOT_PRODUCT", bev.outputs["Normal"], nb.geometry("True Normal")))
+    fl = ed.get("floor", 0.015)
+    edge = nb.map_range(d, fl, fl + ed["width"], 0.0, 1.0, "SMOOTHSTEP")
+    lo_b, hi_b = K.NOISE_BAND
+    en = nb.map_range(nb.noise(obj, 1000.0 / ed["noise_mm"], detail=2.0), lo_b, hi_b, 0.3, 1.0)
+    edge = nb.math("MULTIPLY", edge, nb.math("MULTIPLY_ADD", en, ed["noise_amount"], 1.0 - ed["noise_amount"]))
+    ch = rec["chips"]
+    thr = K.cover_threshold(ch["cover"])
+    thr_local = nb.math("MULTIPLY_ADD", edge, -0.08 * ch["edge_bias"], thr)
+    cn = _noise01(nb, ch["noise_mm"], 2.0)
+    chip = nb.map_range(nb.math("SUBTRACT", cn, thr_local), -0.006, 0.006, 0.0, 1.0)
+    patch = nb.smoothstep(_noise01(nb, ch["patch_mm"]), 0.42, 0.62)
+    chip = nb.math("MULTIPLY", chip, nb.math("MAXIMUM", patch, edge))
+    worn = nb.math("MAXIMUM", nb.math("MULTIPLY", edge, ed["amount"]), chip, clamp=True)
+    fr = rec.get("frame")
+    if fr:   # a part's own wear zone (the knee caps' raised frames, worn bare in the reference): a point attribute
+        fw = nb.math("MULTIPLY", nb.attr(fr["attribute"]), nb.map_range(_noise01(nb, fr["noise_mm"]), 0.25, 0.6,
+                                                                        1.0 - fr["break"], 1.0))
+        worn = nb.math("MAXIMUM", worn, nb.math("MULTIPLY", fw, fr["amount"]), clamp=True)
+    sub = rec["substrate"]
+    col = nb.mix(worn, col, C.hex_to_linear(sub["hex"]))
+    r = nb.mix(worn, r, sub["rough"], kind="FLOAT")
+    pe = rec["peel"]
+    h = nb.math("ADD", nb.math("MULTIPLY", nb.noise_signed(obj, 1000.0 / pe["noise_mm"], detail=1.0), 0.5 * pe["height_mm"] * 0.001),
+                nb.math("MULTIPLY", worn, -sub["step_mm"] * 0.001))
+    w = G.weather(nb, rec, col, r, rec["spec"], edge=edge)
+    n = nb.bump(nb.math("ADD", nb.math("MULTIPLY", h, w["damp"]), w["height"]))
+    p = K.principled(nb, base=w["color"], rough=w["rough"], ior=rec["ior"], spec=w["spec"], normal=n)
+    _out(nb, p.outputs[0])
+
+
+def build_lens(mat, rec):
+    nb = K.new_tree(mat)
+    p = K.principled(nb, base=C.hex_to_linear(rec["albedo_hex"]), rough=rec["rough"], ior=rec["ior"],
+                     transmission=rec.get("transmission", 0.0), coat=rec.get("coat", 0.0), coat_rough=0.03,
+                     coat_ior=1.5)
+    _out(nb, p.outputs[0])
+
+
+def build_decal(mat, rec):
+    nb = K.new_tree(mat)
+    mk = rec["mask"]
+    u0, v0, u1, v1 = mk["box"]
+    uv = nb.vmath("ADD", nb.vmath("MULTIPLY", nb.uv(mk["uv"]), (u1 - u0, v1 - v0, 0.0)), (u0, v0, 0.0))
+    nd = K.image_node(nb, K.texture(mk["image"], "mask"), uv)
+    nd.extension = "CLIP"
+    m = nb.smoothstep(_bw(nb, nd.outputs["Color"]), mk["threshold"][0], mk["threshold"][1])
+    ed = rec["edge"]
+    edge = G.edge_mask(nb, ed)
+    r = nb.math("MULTIPLY_ADD", _noise01(nb, 8.0), 0.08, rec["rough"] - 0.04)
+    we = nb.group("MG.Weather.Edge", {"Base Color": rec["f0"], "Base Roughness": r, "Base Metallic": 1.0,
+                                      "Worn Color": ed["f0"], "Worn Roughness": ed["rough"], "Worn Metallic": 1.0,
+                                      "Edge": edge, "Amount": ed["amount"]})
+    rec_g = dict(rec, dust={"amount": 0.0})
+    wm = G.weather(nb, rec_g, K.sock(we, "Color", out=True), K.sock(we, "Roughness", out=True), 0.5)
+    metal = K.principled(nb, base=wm["color"], metal=1.0, rough=wm["rough"]).outputs[0]
+    wk = G.weather(nb, rec_g, C.hex_to_linear(rec["mark"]["hex"]), rec["mark"]["rough"], 0.5)
+    mark = K.principled(nb, base=wk["color"], rough=wk["rough"], ior=1.5, spec=0.5).outputs[0]
+    mx = nb.node("ShaderNodeMixShader")
+    nb.set(mx, 0, m)
+    nb.link(metal, mx.inputs[1])
+    nb.link(mark, mx.inputs[2])
+    shader = mx.outputs[0]
+    du = rec.get("dust") or {}
+    if du.get("amount", 0.0) > 0.0:
+        d = nb.group("MG.Weather.Dust", {"Amount": du["amount"], "Side": G.object_prop(nb, "wear_dust_scale", 1.0),
+                                         "Edge": edge})
+        shader = dust_over_metal(nb, shader, K.sock(d, "Coverage", out=True))
+    _out(nb, shader)
+
+
 BUILDERS = {"leather": build_leather, "rubber": build_rubber, "midsole": build_midsole, "metal": build_metal,
-            "polymer": build_polymer}
+            "polymer": build_polymer, "painted": build_painted, "lens": build_lens, "decal": build_decal}
 
 
 # --------------------------------------------------------------------------- self-test

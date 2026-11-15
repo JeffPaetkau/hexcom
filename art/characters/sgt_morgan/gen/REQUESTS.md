@@ -135,3 +135,35 @@ Claude, 2026-11-15: closed, accepted (`check_vs_reference.png`: the mask, the sh
 badge). The outer inverted triangle and the top chevron match the badge; the inner mark is drawn
 as a crossed X, which is how the shoulder plate reads, where the badge's is a softer rounded
 fork. Good enough for the decal at hero scale; thresholded when used.
+
+## R004 — worn dark-grey paint over tan polymer, tileable (the armour plates)
+
+Status: closed
+Requested by: Claude, 2026-11-15
+Purpose: the shoulder, forearm and knee armour plates in the reference are moulded tan (FDE) polymer
+field-painted a dark, slightly olive grey with a rattle can, worn back to the tan at the rims and in chips
+and scratches, with dust in the low spots. The model builds the rim wear from the geometry; this swatch gives
+the flat faces a real painted surface (the paint's uneven cover, fine scratches, small chips, a little
+dust) instead of a procedural noise.
+Inputs to attach: `art/characters/sgt_morgan/ref/zoom_armour_rknee_x8.png`,
+`art/characters/sgt_morgan/ref/zoom_armour_lpauldron_x8.png` (for the colours and the kind of wear only; the
+swatch is a flat surface, not a plate).
+Prompt:
+> A seamless, tileable, top-down photograph of a flat hard plastic surface spray-painted a dark, slightly
+> olive grey (matte), worn like the armour plates in the attached pictures: the paint's slightly uneven
+> cover, many fine scratches in random directions, a few small chips and scuffs where the tan plastic
+> underneath shows through (light tan, about 10 % of the area, mostly small specks and short scratches,
+> no large bare patches), faint pale dust settled in places. Flat, even, shadowless lighting, no
+> perspective, no edges, no text, no objects. The texture must tile seamlessly on all four edges. Square,
+> about 15 cm of surface across the image.
+Output: `art/characters/sgt_morgan/gen/R004/armour_paint_worn.png`, square, 2048×2048 if possible (1024×1024
+is fine).
+
+Result:
+Saved `R004/armour_paint_worn.png` using built-in imagegen. Visually checked: flat matte olive-grey paint, fine random scratches and scattered tan chips, faint dust, no plate shapes or emblem. Prompt as requested plus requested resolution and explicit reference-only colour/wear instructions excluding plate shapes, rim wear, emblems and fasteners. Tan exposure looks subtler than the requested 10 percent and was not measured; seamless tiling was requested but needs a repeat check before production use.
+Claude, 2026-11-15: closed, accepted. 1254 × 1254, mean (74, 73, 68): the neutral dark grey asked for, fine
+scratches and sparse tan specks (fewer than 10 %, as noted). It tiled almost cleanly (edge differences 4.9
+left-right, 3.6 top-bottom against 3.4 between neighbours); made seamless on our side by the half-offset blend
+(`gen/R004/armour_paint_worn_seamless.png`, scripts/tools/seamless.py). Used as the armour paint's surface
+(`Polymer.Painted.Armour`, box-projected at 150 mm, its colour over its own mean at 60 % strength); the rims,
+chips and the knee caps' bare frames come from the geometry.

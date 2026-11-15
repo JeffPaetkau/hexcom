@@ -27,7 +27,37 @@ HAND_EASE, CUFF_EASE = 1.8, 11.0
 CUFF_LEN = 50.0                         # cuff edge, mm proximal of the wrist joint (M-Pact ~ 50)
 GUARD = {"half_w": 46.0, "half_h": 17.0, "thick": 4.5, "boss": 2.0, "back": 16.0}   # 92 x 34 x 6.5 (M-Pact 3 class: ~95 x 35 x 6)
 PAD = {"half_w": 9.0, "half_h": 8.0, "thick": 2.5}
-COLOURS = {"knit": "#1e1c1b", "cuff": "#1b1c1e", "guard": "#2f2c2a", "pad": "#2a2826"}
+COLOURS = {"knit": "#1e1c1b", "cuff": "#1b1c1e", "guard": "#2f2c2a", "pad": "#2a2826", "palm": "#232120"}
+# Materials round (round 5, 2026-11-15; the solid-view colours above stay): an M-Pact-class glove is a black
+# stretch-knit back, a synthetic-leather palm (the shell's faces that look out of the palm side, palm_faces()),
+# a neoprene cuff, TPR knuckle guard and PIP pads. The right hand (on the grip, the knuckles up) the dustier.
+MATERIALS = {
+    "Glove.Mat.Knit": ("Knit.Glove.Honeycomb", "Knit", {}),
+    "Glove.Mat.Palm": ("Leather.Glove.Goat", "Palm", {}),
+    "Glove.Mat.Cuff": ("Neoprene.Black", "Cuff", {}),
+    "Glove.Mat.Guard": ("TPR.Glove.Black", "Guard", {}),
+    "Glove.Mat.Pad": ("TPR.Glove.Black", "Pad", {"dust__amount": 0.5}),
+}
+
+
+def palm_faces(V, F, fc, side):
+    """Face materials with the palm (2) on knit faces (0) whose normal looks out of the palm side of the hand
+    (against the hand frame's z, the back of the hand) by more than 0.25."""
+    _, _, _, z, _ = hand_frame(side)
+    V = np.asarray(V, float)
+    fc = np.array(fc, np.int32)
+    N, Cn = [], []
+    for f in F:
+        p = V[list(f)]
+        n = np.cross(p[1] - p[0], p[-1] - p[0])
+        N.append(n / max(np.linalg.norm(n), 1e-12))
+        Cn.append(p.mean(0))
+    N, Cn = np.array(N), np.array(Cn)
+    # the shell's winding: outward when the normals point away from the shell's own centroid on the whole
+    if np.einsum("ij,ij->i", N, Cn - Cn.mean(0)).sum() < 0:
+        N = -N
+    fc[(fc == 0) & (N @ z < -0.25)] = 2
+    return fc
 
 
 def smoothstep(e0, e1, x):
@@ -123,7 +153,9 @@ def main():
     objs, meas = [], {}
     for side in ("L", "R"):
         V, F, fc = build_shell(bd, side, bvh0)
-        sh = C.mesh_object(f"Glove.{side}.Shell", V, F, coll, mats=[mats["knit"], mats["cuff"]], face_mat=fc)
+        fc = palm_faces(V, F, fc, side)
+        sh = C.mesh_object(f"Glove.{side}.Shell", V, F, coll, mats=[mats["knit"], mats["cuff"], mats["palm"]],
+                           face_mat=fc)
         sh["sgt_clay"] = (0.40, 0.40, 0.42)
         shell_bvh = C.bvh_from(V, F)
         O, x, y, z, heads = hand_frame(side)
@@ -157,11 +189,13 @@ def main():
         meas[side] = {"guard_mm": [2 * GUARD["half_w"], 2 * GUARD["half_h"], GUARD["thick"] + GUARD["boss"]],
                       "knuckle_breadth_mm": round(float(np.linalg.norm(heads[3] - heads[0])), 1),
                       "cuff_len_mm": CUFF_LEN, "verts": len(Vw)}
+    lib = C.library_pass(coll, "Glove", MATERIALS, side_dust={"R": 1.0, "L": 0.7}, say_tag=TAG)
     rest = C.clearance(objs, body, "rest")
     used = C.apply_hero_pose(rig)
     posed = C.clearance(objs, body, "hero pose")
     C.rest_pose(rig)
-    C.save_part(TAG, coll, {"measure_mm": meas, "clearance_rest": rest, "clearance_posed": posed, "pose": used})
+    C.save_part(TAG, coll, {"measure_mm": meas, "clearance_rest": rest, "clearance_posed": posed, "pose": used,
+                            "materials": lib})
     if "--no-render" not in args:
         wr = C.bone_mm("wrist.L")
         C.render_part(TAG, coll, (wr[0] + 30, wr[1] - 70, wr[2] - 50), (330, 330), crops=("ref.hands_rifle", "ref.soldier_full"))

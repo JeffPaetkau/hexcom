@@ -61,7 +61,30 @@ GAITER = {"h_c": 60.0, "h_ref": 100.0, "fan_deg": 70.0,      # fan centre for th
 # The carrier's shoulder straps (carrier.py imports this): centre line |x| and pad width (mm). The gaiter is
 # pressed flat under them.
 STRAP = {"x": 140.0, "w": 64.0}
-COLOURS = {"shirt": "#2c2927", "gaiter": "#383029"}
+COLOURS = {"shirt": "#2c2927", "gaiter": "#383029"}   # the solid-view colours (round 1); Cycles uses MATERIALS
+# Materials round (round 5, 2026-11-15): a G3-class combat shirt is FR jersey on the torso (under the carrier)
+# and NYCO ripstop on the sleeves (faces outboard of the shoulder joints, sleeve_faces()); the gaiter fleece.
+MATERIALS = {
+    "Shirt.Mat.Shirt": ("Knit.Jersey.FR", "Shirt", {}),
+    "Shirt.Mat.Sleeve": ("NYCO.Ripstop.Black", "Sleeve", {}),
+    "Shirt.Mat.Gaiter": ("Fleece.Polyester", "Gaiter", {}),
+}
+
+
+def sleeve_faces(ob):
+    """Material index 1 (the sleeve) on faces whose centre lies outboard of the shoulder joint (rest x)."""
+    import bpy
+    me = ob.data
+    if len(me.materials) < 2:
+        me.materials.append(C.flat_material("Shirt.Mat.Sleeve", COLOURS["shirt"], 0.8))
+    xs = abs(float(C.bone_mm("upperarm01.L")[0])) - 15.0
+    cen = np.zeros(len(me.polygons) * 3)
+    me.polygons.foreach_get("center", cen)
+    cen = cen.reshape(-1, 3) * 1000.0
+    idx = (np.abs(cen[:, 0]) > xs).astype(np.int32)
+    me.polygons.foreach_set("material_index", idx)
+    me.update()
+    return int(idx.sum())
 
 
 def smoothstep(e0, e1, x):
@@ -437,6 +460,9 @@ def main():
         if o is gaiter:
             m.use_even_offset = False
         C.subsurf(o, 1)
+    n_sleeve = sleeve_faces(shell)
+    lib = C.library_pass(coll, "Shirt", MATERIALS, side_dust={"L": 0.9, "R": 1.0}, say_tag=TAG)
+    lib["sleeve_faces"] = n_sleeve
     rest = C.clearance([shell, gaiter], body, "rest")
     lay_rest = C.clearance_between(gaiter, shell, "rest")
     meas = measure(shell, gaiter)
@@ -446,7 +472,8 @@ def main():
     lay_pose = C.clearance_between(gaiter, shell, "hero pose")
     C.rest_pose(rig)
     C.save_part(TAG, coll, {"measure_mm": meas, "clearance_rest": rest, "clearance_posed": posed,
-                            "gaiter_over_shirt": {"rest": lay_rest, "posed": lay_pose}, "pose": used})
+                            "gaiter_over_shirt": {"rest": lay_rest, "posed": lay_pose}, "pose": used,
+                            "materials": lib})
     if "--no-render" not in args:
         C.render_part(TAG, coll, (0, -40, 1260), (1400, 900), crops=("ref.torso_vest", "ref.arm_R", "ref.arm_L", "ref.soldier_full"))
 

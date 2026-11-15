@@ -408,11 +408,10 @@ def material(key, hexcol, rough=0.5, metal=0.0, coat=0.0):
 
 
 def lib_material(key, recipe, hexcol, **overrides):
-    """`Carbine.Mat.<key>` from the materials library (scripts/lib/materials.py) with overrides; renamed
-    from the library's `<Part>.Mat.<ID>` so that one recipe can serve several finishes. hexcol is the
-    solid-view colour (the Workbench ortho views)."""
-    m = LIBMAT.get(recipe, PART, **overrides)
-    m.name = f"{PART}.Mat.{key}"
+    """`Carbine.Mat.<key>` from the materials library (scripts/lib/materials.py) with overrides, the key as
+    the library's variant (round 5: the library names it `<Part>.Mat.<Variant>` itself, so one recipe serves
+    several finishes and lint checks the name). hexcol is the solid-view colour (the Workbench ortho views)."""
+    m = LIBMAT.get(recipe, PART, key, **overrides)
     m.diffuse_color = (*hex_rgb(hexcol), 1.0)
     m["hex"] = hexcol
     MATS[key] = m
@@ -423,32 +422,37 @@ ALU_F0 = (0.62, 0.62, 0.63)   # bare 6061/7075 under worn hardcoat, darkened by 
 
 
 def make_materials():
+    # Round 5 (materials round): round 2's recipes tuned darker and more neutral toward the reference (the hero
+    # render's carbine read warm and a stop bright: median (80, 62, 46) against (58, 54, 52)), the dust lighter,
+    # and the remaining flat colours moved onto library recipes with a little honest wear (edges, chips on the
+    # brushed FDE, soot-dark bronze).
     # Type III hardcoat anodise (receivers, handguard): read as a near-black metal with a broad sheen;
     # edges worn to bare aluminium. The reference reads #413c3b lit (weapon analysis §3.15).
-    lib_material("Anodised", "Metal.Gunmetal", "#3e3a38", f0=(0.040, 0.039, 0.038), rough_range=(0.46, 0.62),
-                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.35, edge__radius_mm=0.35, dust__amount=0.12,
-                 grime__amount=0.3)
-    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.042, 0.040, 0.038), rough_range=(0.48, 0.64),
-                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.4, edge__radius_mm=0.35, dust__amount=0.18,
+    lib_material("Anodised", "Metal.Gunmetal", "#3e3a38", f0=(0.060, 0.060, 0.061), rough_range=(0.50, 0.66),
+                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.35, edge__radius_mm=0.35, dust__amount=0.15,
                  grime__amount=0.35)
+    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.062, 0.061, 0.061), rough_range=(0.52, 0.68),
+                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.4, edge__radius_mm=0.35, dust__amount=0.2,
+                 grime__amount=0.4)
     # semi-gloss hardcoat: buffer tube, castle nut, light, optic
-    lib_material("Hardcoat", "Metal.Gunmetal", "#2c2a29", f0=(0.048, 0.047, 0.047), rough_range=(0.28, 0.40),
-                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.28, edge__amount=0.45, dust__amount=0.08,
-                 grime__amount=0.2)
+    lib_material("Hardcoat", "Metal.Gunmetal", "#2c2a29", f0=(0.060, 0.060, 0.061), rough_range=(0.32, 0.44),
+                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.28, edge__amount=0.45, dust__amount=0.05,
+                 grime__amount=0.25)
     # glass-filled nylon / polymer: stock, grip and trigger guard, magazine (Stealth Gray PMAG)
-    lib_material("Polymer", "Polymer.Black.Smooth", "#3d3733", albedo_hex="#232120", rough=0.58,
-                 rough_span=0.14, dust__amount=0.2)
-    lib_material("PolymerDark", "Polymer.Black.Smooth", "#1f1d1c", albedo_hex="#1e1d1c", rough=0.52,
-                 rough_span=0.12, dust__amount=0.12)
-    lib_material("Magazine", "Polymer.Black.Smooth", "#423e3a", albedo_hex="#3a3835", rough=0.62,
-                 rough_span=0.14, dust__amount=0.2)
-    material("Rubber", "#141211", 0.85)               # butt pad
-    material("MagBase", "#4a4644", 0.6)
-    material("Steel", "#2f2e2e", 0.35, 0.8)           # bolt carrier, gas block, pins, QD sockets
-    material("SteelBright", "#8a8a8a", 0.3, 1.0)      # mag release, polished parts
-    material("Bronze", "#5f4c3e", 0.4, 0.8)           # burnt-bronze barrel and A2 (take 1 D3)
-    material("FDE", "#9a7a58", 0.75)                  # tan paint (#a68869 .. #d4a271 lit in the image)
-    material("Lens", "#0e1418", 0.05, 0.0, 1.0)       # optic and light glass, dark, glossy
+    lib_material("Polymer", "Polymer.Black.Smooth", "#3d3733", albedo_hex="#2e2d2b", rough=0.58,
+                 rough_span=0.14, dust__amount=0.12)
+    lib_material("PolymerDark", "Polymer.Black.Smooth", "#1f1d1c", albedo_hex="#222120", rough=0.52,
+                 rough_span=0.12, dust__amount=0.08)
+    lib_material("Magazine", "Polymer.Black.Smooth", "#423e3a", albedo_hex="#403f3d", rough=0.62,
+                 rough_span=0.14, dust__amount=0.15)
+    lib_material("Rubber", "Rubber.Moulded.Black", "#141211", rough=0.78, rough_range=(0.72, 0.85))   # butt pad
+    lib_material("MagBase", "Polymer.Black.Smooth", "#4a4644", albedo_hex="#33312f", rough=0.6, dust__amount=0.2)
+    lib_material("Steel", "Metal.Steel.Phosphate", "#2f2e2e")                    # bolt carrier, gas block, pins
+    lib_material("SteelBright", "Metal.Gunmetal", "#8a8a8a", f0=(0.45, 0.45, 0.46), rough_range=(0.28, 0.38),
+                 aniso=0.0)                                                         # mag release, polished parts
+    lib_material("Bronze", "Coating.Cerakote.BurntBronze", "#5f4c3e")            # barrel and A2 (take 1 D3)
+    lib_material("FDE", "Paint.FDE.Brushed", "#9a7a58")                          # tan paint (#a68869 .. #d4a271 lit)
+    lib_material("Lens", "Glass.Optic.Coated", "#0e1418")                        # optic and light glass
 
 
 def clean_own():

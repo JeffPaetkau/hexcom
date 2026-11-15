@@ -128,3 +128,19 @@ carrier, armour or carbine.
 - Built on the trousers of 19:51 and hero_pose.json of 19:01; the pose agent's re-solve was not in the assembly.
 - The holster touches the right cargo pocket's flap in the pose (the flap swings with the leg; the holster rides
   the pelvis): 2 mm.
+
+## 8. Round 5 (2026-11-15): materials
+
+`MATERIALS` in belt.py (swapped by `common.library_pass`): `Webbing.Nylon.Black` on the belt, straps and black
+hangers, `Webbing.Nylon.Coyote` (new) on the tan hanger, `Cordura.500D.Black` on the platforms, all with preset
+`belt.kit` and dust 0.5; `Polymer.Black.Textured` (new) on the carrier bodies, holster, PMAGs (#2e2d2b), the case
+(#34383a) and frames; the magazine carriers' tan plates `Polymer.Tan.Moulded` (new; moulded-in-colour FDE,
+#3e382f, stress-whitened edges); `Cordura.500D.OliveBrown` on the frag pouch; `Metal.Gunmetal` on the buckle,
+slide and hardware (a brighter F0 on the steel). The left rig dust x1.0, the right x0.8.
+
+Renders opened: `renders/round_05/belt_hips_compare.png`, `soldier_full_compare.png`, `legs_knees_compare.png`.
+
+Still wrong: the median over the belt's mask reads brighter than the reference (ratio 0.57) even after darkening
+the tan plates and the dust; most of that mask lies where the drawn rigs are not (the rigs' placement differs,
+§5), so it is not a material number to chase. The drawn carriers' tan accents are small edges and flaps, ours
+whole plates.

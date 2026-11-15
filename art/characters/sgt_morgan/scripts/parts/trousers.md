@@ -142,3 +142,31 @@ were slim, smooth tubes.
 6. **Pockets are still pillows on a sheet:** no bellows side gussets, hook-and-loop strips or the knee
    pocket's top opening. The flap overhangs only by being larger.
 7. **No camouflage, ripstop or Cordura materials** (the materials round; spec 16 has `Cordura.500D.*`).
+
+## 6. Round 5 (2026-11-15): materials
+
+The flat colours became the library's recipes (`MATERIALS` in trousers.py, swapped by `common.library_pass`;
+the hexes in `COLOURS` stay as the solid-view colours):
+- **Shell: `NYCO.Ripstop.Camo`** (new; `Trousers.Mat.Camo`). The pattern is ChatGPT's R002 print on `UV.Real`
+  (Smart UV Project scaled to metres per island, `lib/uv.py real_project`), tiled at 750 mm so the blotches are
+  about 90-180 mm as on the drawn thighs (the painter's were smaller). The print's colour is divided by its own
+  mean and its luminance spread raised by `contrast` 2.0 (R002 spans only 1 : 3.3 p5-p95); the recipe's albedo
+  #363533 sets the mean. Fabric061's normal at 64 mm, the 6 mm ripstop grid (raised, glossier lines), a ±15 %
+  fade mottle over 150 mm.
+- **Wear where it happens**: dust held on the cloth's sides too (the up-facing band widened to -0.55..0.9, power
+  1), in 90 mm patches, by height zones from the rest heights (`dust_zones()`: shin 1.0, knee 0.8, thigh 0.45,
+  seat 0.25), the left leg x1.0 and the right x0.8 (the left boot is the dustier); grime in the hem band (below
+  200-320 mm above the floor, preset `cloth.thigh`).
+- **Knee-pad pockets: `Cordura.500D.Black`** (`Trousers.Mat.KneePocket`) with the trousers' wear preset.
+- The albedo was set against the hero render (the flat #2a2723 rendered 1.75 x too dark against the reference's
+  median over the trousers' mask); see the integration notes in `notes/session_log.md` (round 5) for the
+  per-part table and the warm cast of the evaluation light.
+
+Renders opened: `renders/round_05/legs_knees_compare.png`, `soldier_full_compare.png`, `boots_feet_compare.png`.
+The camouflage reads on the lower legs and the shins are dustier than the thighs, as drawn.
+
+Still wrong (materials):
+1. The print is cut at the Smart UV islands (no garment panel layout yet): blotches jump at island seams.
+2. The drawn trousers carry larger pale scuffed patches on the thighs and shins (wear plus dust); ours are
+   evener. A wear mask (scuffs at the knees and the shin fronts) is the next step.
+3. Under the evaluation's warm key everything dark reads brown; see the session log.
