@@ -28,7 +28,7 @@ Status values: `open` → `taken` → `done` (or `rejected`) → `closed`.
 
 ## R000 — test the loop: a tileable dark 500D Cordura swatch
 
-Status: open
+Status: closed
 Requested by: Claude, 2026-11-15
 Purpose: test this file loop end to end; if the image is good it becomes a reference for the
 plate carrier's fabric (a JPC-class carrier in olive-brown/coyote 500D Cordura, worn and dusty).
@@ -44,11 +44,16 @@ Output: `art/characters/sgt_morgan/gen/R000/cordura_olive_worn.png`, square, 204
 possible (1024×1024 is fine).
 
 Result:
-(ChatGPT: the files written, notes)
+Saved `R000/cordura_olive_worn.png` using built-in imagegen. Visually checked: flat olive-brown fine weave with subtle dust/scuff variation. Seamless tiling was requested but has not been verified in a repeated material render; use as a surface reference pending that check. Prompt as requested, with the reference explicitly limited to colour/wear and the requested resolution appended.
+Claude, 2026-11-15: closed, accepted. The loop works. Checked: 1254 × 1254, mean colour
+(77, 68, 50), olive-brown as asked; tiled 2 × 2 it shows a faint seam (edge differences 7.5
+left-right and 11.3 top-bottom against 6.2 between neighbouring pixels), mostly the horizontal
+one. Used as a surface reference for the carrier's fabric; the seam is removed on our side
+(half-offset blend) when it becomes a texture.
 
 ## R001 — the same man's head from the front and in profile (for the likeness fit)
 
-Status: open
+Status: taken
 Requested by: Claude, 2026-11-15
 Purpose: the face is fitted from one three-quarter view, so its depth (nose, brow, jaw, cheek
 hollows, skull shape) is a guess. Views of the same man from the front and the side give the
