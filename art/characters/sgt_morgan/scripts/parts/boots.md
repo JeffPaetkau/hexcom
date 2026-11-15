@@ -169,3 +169,102 @@ previous iteration." Take 1 spent three weeks here; round 3 starts from it, not 
   real boots leave 15-22 mm ahead of the standing toe.
 - **Optional references**: spec 02 §3.6 lists two licensed boot scans on Sketchfab (Garmont T8,
   Danner TFX) that Jeff would have to download himself.
+
+## 7. Round 3 (2026-11-15; developed on `cache/stages/foot_dev.blend`, cache `boots_dev`)
+
+Build (development): `"$SGT_BLENDER" -b --python scripts/parts/boots.py -- --base cache/stages/foot_dev.blend
+--tag boots_dev` (about 2 min with renders), then `"$SGT_PYIMG" -I scripts/parts/boots_sections.py --tag boots_dev`.
+Once the foot is in base.blend the defaults (`--base` base.blend, `--tag boots`) are the pipeline's. It needs the
+body's `Foot.Contact`, `Foot.NailBed.*` and nail plates (scripts/stages/foot.py) and raises without them.
+
+**What changed, from take 1's work** (Jeff: reuse it; PLAN.md Decisions 3: Q14 smooth full-grain, Q15 Cordura,
+Q16 buckle at phi 150, Q17 no reference scans, Q18 rigid):
+1. **The sock** (take 1 part 01 §4.10-4.11, `stages/foot/sock.py`): `Sock.{L,R}.Body` in Part.Boots, 155 rings
+   x 96, a membrane 0.3 mm off the rendered skin with its nails, Solidify by region (leg 1.6, cuff 2.4, heel and
+   toe 2.2, sole 3.0), the GN knit ribs, `Knit.Sock.WoolNylon(.Reinforced)`; bound to the rig like a garment.
+2. **The last** (part 01 §4.13, `stages/foot/last.py`): the loaded foot, socked at its loaded thickness, ball
+   sides +2, instep +2, heel sides +1, the insole plane, the toe box stretched (x 1.44 over its front 45 mm) so its
+   tip is 15 mm ahead of the standing socked toe, 12 degrees of toe spring about the 1st-5th metatarsal heads'
+   line. Saved apart in `cache/parts/<tag>_lasts.blend` (`Boot.{L,R}.Last`, markers `.Pternion`, `.Ball1`,
+   `.Ball5`, `.ToeTip`), out of the part, so the assembly's clash test never sees the foot inside it.
+3. **The upper on the last**: round 2's implicit form, its cloud now the last grown 3.5 mm (leather 2.0 + lining
+   1.5) and 9.5 over the ankle padding behind the throat, not the skin + 5. The sections' crowns are rounded (a
+   soft |t|), the heel's rear 38 mm capped back to a half-ellipse (it was a flat-backed box), the nose a domed
+   puff (e^0.55, not a wedge). The skin clearance signs by ray parity (the nearest face misread points behind the
+   Achilles as inside and the push made spikes). Grid 300 x 240.
+4. **The sole plane is the pose's**: 36 mm under the heel landmark and 24 under the metatarsal heads, exactly the
+   points `pose_solve.py` seats (round 2 put 36 at 30 mm ahead of the heel landmark: its 3 mm sink).
+5. **The throat** runs from the rim down the shaft front (horizontal casts from the shaft's axis; casts from one
+   inner point left the shaft half way up, so round 2's top hook stood at h 168) and over the instep; the stays,
+   eyelets and laces are laid in its own (arc length, across) coordinates by casts along the local normal.
+6. **Library hardware**: `gear_hardware.eyelet()` x 5 and `speed_hook()` x 2 a side, seated with seeded error and
+   oriented outward; laces criss-cross in the throat's coordinates, the strands taking turns over, slacker low.
+7. **The cuff strap** (take 1's `lib_gear.build_strap`, on the real boot): 15 x 1.5 webbing at h 158 (159.5 on
+   the right), anchored under both stays (phi -31 / +31), round the heel into a ladder-lock at phi 150, the lateral
+   end threaded back through it and forward through the lateral keeper; leather keepers at phi +-72 with box-X
+   stitches; fold and anchor bar tacks. 0 mm into the boot.
+8. **Stitches** (`gn_stitches`, `Thread.Bonded.Black`): double rows on the toe cap's seam (136-141 mm), the
+   counter's top edge (239), the leather quarters' edge under the Cordura (75 / 90), three rows a stay; about 560
+   stitches, 1.4 m of thread a boot.
+9. **Detail where the boot flexes** (spec 02 §4.15), seeded per boot (a pair, not a mirror): 2-3 dominant vamp
+   folds along the oblique metatarsal heads' line, spacings 9-16, depths 1.5-2.4, wandering and fading to one side,
+   5-8 fine wrinkles; 2-3 ankle-break folds on the quarters, deeper laterally; padding swells over the malleoli
+   (the lateral lower); 16 short compression wrinkles on the Cordura.
+
+**Measured** (`cache/parts/boots_dev.json`):
+
+| Quantity | Round 3 (L / R) | Target / source |
+|---|---|---|
+| Foot (scan transfer) | 275.3 / 275.1 | 274.3 declared (CLAUDE.md: 274) |
+| Last length | 297.07 / 297.05 | 297.1 (take 1) |
+| Last tip ahead of the standing socked toe / bare toe | 14.98 / 17.5 (15.6 on the x 0 section) | 15 (Jeff: "Reality"; real boots 15-22) |
+| Last toe spring, read on its bottom | 12.15 / 12.29 deg | 12 |
+| Last width across the ball line | 114.7 | 038's broad forefoot + sock + 2 x 2 |
+| Outsole length | 310.0 / 309.9 | 305 (spec 02 §0 note): +5 from the end allowances that let the ends round |
+| Outsole width max / at the ball | 141.3 / 133.1 (R 141.0 / 132.3) | ~116 was for the stand-in last; this last is 115 wide |
+| Rim above the floor at the heel; shaft at the rim | 212; 138 x 106 | 212; 138 x 106 (drawing; Zephyr Hi 210) |
+| E1 (lowest eyelet) height | 90.9 / 91.5 | 85-95 on the real instep (spec 02 §0 item 6); drawn 80 |
+| Lace rows, h | 198, 176, 153, 130, 111, 101, 90 | hooks 206 / 189 |
+| Footbed seats | 36 / 24 at the pose's landmarks | 36 / 24 (spec 02 §0 item 2) |
+| Posed lug bottoms | -1.6 / -1.8 mm | 0 (round 2: -3.3 / -2.9) |
+| Upper outer face to the last | min -6.6, 1st percentile +5.3 | >= 3.5; the min is the nose rounding the last's square toe-box corner, above the toes |
+
+**The footbed and the pose (the numbers).** The pose seats the rest skin floor (z 0) at 36 / 24; the last's
+insole plane is the loaded sock's sole, 2.1 mm below that floor (`last.insole_z`), and the bare heel pad reaches
+z -1.5. So inside the boot the sock sits 2.1 mm into the footbed's top. Exact would be the pose seating at
+38.1 / 26.1, or the boot's seats at 33.9 / 21.9 (the pose's call; Q13's 1844 rebuild re-solves it anyway). The
+-1.6 / -1.8 mm posed sink is measured against a pose solved on base.json's OLD foot landmarks; re-measure once
+base.py runs foot.py and the pose is re-solved on the new ones.
+
+**Renders looked at** (renders/boots/; round 2's are kept in `renders/boots/round2/`):
+- `sheet_r3f.png` (lateral, front 3/4, rear, below, medial-back, right medial) and `boots_closeup_L_*`: a laced
+  high boot, the lacing now from the instep to the collar, a cuff strap with ladder-lock and keepers, stitch rows
+  on the toe cap, counter and quarters, a rounded heel from behind and in the sole's plan.
+- `dbg_eyelets.png` (the lower throat): rolled eyelets seated on stitched stays, the laces entering them.
+- `dbg_toe.png`: the toe box low and flat behind a near-vertical rubber bumper wall: still the weakest form.
+- `boots_last_L_lateral/top/in_boot_lateral.png` (X-ray) and `sections_L.png` / `sections_R.png`: the last
+  encloses the loaded foot with the toe room ahead and the sprung toe box; the upper stands outside the last at the
+  ball and the heel; on the long section the upper's nose cuts the last's square toe-box corner by up to 6.6 mm.
+- `sheet_sock.png`: the sock reads as a sock over the foot (the knit is shader-side, not seen in Workbench); a flat
+  facet at the toe tip where the toe closure links.
+- `boots_hero_boots_feet_pair.png` (hero camera, the pose agent's in-progress pose): the left boot stands where
+  the drawn one does, laces centred; the right boot's toe still reaches past the drawn toe (real length) and reads
+  as a flat wedge where the drawn toe is a high rounded cap.
+
+## 8. Still wrong, ranked for round 4
+
+1. **The toe box**: low and flat behind a vertical bumper wall; the drawn boots have a high, rounded, scuffed toe
+   cap with the bumper wrapping it. The last's toe box is take 1's stretched sock (flat-topped, square-cornered):
+   give the last a real toe-box section (the Zephyr's internal 73 x 27 at the hallux, spec 02 §3.1) and lay the
+   bumper on the toe's curve. The nose rounding also cuts the last's corner (6.6 mm).
+2. **Still smooth beside the reference**: the folds exist but are faint at the hero distance; the drawing's
+   creased, scuffed, panelled leather needs the wear masks (dust in creases, scuffs) and fewer, stronger folds;
+   no welts (`gn_stitches.welt`), no collar binding row, no pull loop yet.
+3. **The collar** is a uniform roll on the rim; the drawn one is a soft padded slump under the hems.
+4. **Outsole 310 x 141**: 5 mm over spec 02's 305 (the end allowances that let heel and nose round); the width
+   follows this broad last. Round the ends without adding length.
+5. **E1 at h 91** against the drawn 80 (the real instep); the drawn lacing starts lower on the vamp.
+6. **Hooks** at h 198 / 176 (spec 206 / 189, H1-H2 17.5 apart); the pitch is even; the knot is a plain torus.
+7. **Toes in the sole**: the rest foot's flat toes pass through the sprung sole top (hidden); the pose should
+   extend the toes 12 degrees (a pose item), then that clash goes.
+8. **Footbed consistency**: the 2.1 mm of sock in the footbed and the -1.7 mm posed sink (above).

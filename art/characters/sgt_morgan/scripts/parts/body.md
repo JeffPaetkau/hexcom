@@ -146,3 +146,58 @@ The boots hide the foot in the hero frame, but the last (and so the boot's shape
 from it, and Jeff may want a barefoot loadout shot later. Porting the scan transfer into
 `scripts/stages/base.py` (or a body stage after it) is the body's round 2 or 3 item, before the
 boots' next round.
+
+## 6. The foot, ported (round 3, 2026-11-15; development copy, not yet in base.blend)
+
+**What.** `scripts/stages/foot.py` with its modules in `scripts/stages/foot/` (copies of take 1's
+`archive/v1/scripts/parts/p01/` fields, footmetrics, transfer, scanref, scanfit, nails, sock, last, matmasks,
+`params.json`, `scan_targets.json`, imports pointed at `stages.foot`; plus `marks.py`, base.py's foot-landmark
+definition). It takes a body with `Morgan.Rig` at rest and applies, in take 1's order:
+1. take 1's fitted MPFB foot targets (`params.json` "targets": foot depth +0.108, horizontal +0.074, vert-decr
+   0.447, ankle girth +0.029). Loaded after the rig is fitted, so no bone moves: take 1's ankle bone followed
+   vert-decr 11 mm below the malleoli; here it stays where base.py put it.
+2. `Foot.Sculpt`: subject 038's seated CC0 scan transferred onto MakeHuman's topology (UVs, groups and weights
+   kept), scaled to 274.3 mm, our geometry kept only in the toes' clefts (`Foot.ScanKeep`, 85 / 87 cage vertices),
+   the scan handing over to the leg from z 110 and the leg eased onto it up to z 252.
+3. ten nail plates `Foot.{L,R}.Nail.1-5` (collection Body, bone-parented to the distal toe bones; library
+   `Nail.Plate` / `Nail.FreeEdge`).
+4. the masks `Foot.Region`, `.Sole`, `.PlantarContact`, `.ContactZone`, `.NailBed.1-5`, `.ScanKeep`.
+5. `Foot.Contact` (038's standing scan, value 0): the last is built from it at 1.
+
+Run: `"$SGT_BLENDER" -b --python scripts/stages/foot.py -- [--in FILE] [--out FILE] [--render]` (9 s, renders
+2 s). It refuses to write `cache/stages/base.blend` without `--in-place`; the intended wiring is base.py calling
+`apply(body, rig)` (load foot.py by path with importlib: `scripts/stages/foot/` is a package of the same name)
+after the rig and before `measure()` / `landmarks()`, so base.json carries the new feet's landmarks and
+assemble's stale-check re-solves the pose. Development output: `cache/stages/foot_dev.blend`,
+`cache/stages/foot.json`, `renders/foot/`.
+
+**Measured** (`cache/stages/foot.json`, frame F): foot length 275.3 L / 275.1 R (take 1: 275.24; declared
+274.3), ball breadth 104.1, heel breadth 67.0, bimalleolar 72.3, malleoli apexes z 78.6 / 91.0, dorsum 87.4 / 75.2
+/ 60.1 at 50 / 60 / 70 % L (038's), medial arch 19.8; transfer residual rms 0.315 mm, max 2.4 (take 1: 0.314,
+2.41). The sole's lowest point is z -1.5 (the scan's heel pad below base.py's floor; the pose seats the
+landmarks, so this only matters for the barefoot rest stature, +1.5 mm).
+
+**Renders looked at.** `renders/foot/sheet_foot_L.png` (V1f, V2, V3, V4, V5f, V8) and
+`renders/foot/compare_take1_L.png` (take 1's final `renders/01_foot/p01.V*.L_form.png` above ours, scan 038 pair
+below): the medial, lateral and posterior forms are take 1's to the eye: the scan's sole on the floor, the heel's
+bell, the Achilles, the malleoli, the toe cascade with the hallux touching toe 2. The toes keep take 1's faults
+(round-4 critics' m1-m4: lesser toes as straight columns, crimped tips in profile, ringed plantar toes, toe 5
+plugged in through a ring).
+
+**What was not ported.** The 7, 6, 6 of take 1's shape round 4 scored its *dense research skin*
+(`archive/v1/scripts/research/foot_hires/`, level-5, 1.2 M vertices, 144 s), not part 01's cage foot that this
+stage ports; the dense skin is a render/bake layer and is not ported. Nor are take 1's material masks
+(`matmasks`, callus etc.), guides, hair, or the `foot.*` interface keys (no consumer in take 2). The toe bones are
+MPFB's (toe 5's 12-21 mm off its transferred joint, as in take 1).
+
+**Stature (Q13: 1844 at the next base rebuild).** The stage is stature-independent where it matters: the
+transfer scales the scan to the absolute 274.3 mm and places it by the foot's own frame (pternion, heading), the
+targets' weights and the leg blend band are fixed in mm, and the last and boots are built from the result. At
+1844 the MPFB foot under the transfer is 0.5 % larger, which moves only our kept cleft geometry and the toe
+cubes by tenths of a mm; the foot, sock, last (297.1) and boots stay the same size. Re-check the transfer
+residual and `foot.json` after that rebuild; nothing needs re-fitting unless the rms leaves 0.3-0.4 mm.
+
+**Still wrong (foot), ranked:** (1) the toes (take 1's round-5 brief: the toes' volumes from the scan, our
+geometry only in the cleft floors); (2) no material masks, so the foot renders with MPFB's body skin;
+(3) toe-bone placement (toe 5); (4) the rest foot's toes are flat, so inside the sprung toe box they pass
+through the boot's sole top unless the pose extends the toes 12 degrees (a pose item).
