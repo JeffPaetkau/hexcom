@@ -74,3 +74,87 @@ Game Animations?" (u-zCpmAkLBs), "I Tested 9 AI Video Models for Game Animation"
    is the upgrade if the fitted pose looks wrong from the side.
 5. **Cloth folds** (the trousers' stack on the boots, sleeves) are the next soft thing where
    simulation or a generator should beat code.
+
+## Second pass (2026-11-14 evening): three more transcripts
+
+### Crazy AI Animation Workflow - Opus 5.5 (evK-Y83Qlco)
+
+- One roe deer, three tries. (1) Opus builds it in Blender from code (tubes, capsules, blended
+  ellipsoids, 4 render-compare rounds, ~40 min), rigs 29 bones and keys a walk: silhouette close,
+  face poor, motion blocky, bad weights. (2) A Tripo model from the same picture in a minute:
+  "a huge difference" in face, fur and proportions; the coded walk still artificial. (3) Render
+  the Tripo model exactly from the side on grey (a known camera), Seedance makes a 4 s video of
+  that deer running (strict prompt: side view, camera follows, no cuts, four legs), then a script
+  poses the skeleton frame by frame by analysis by synthesis: render, compare outline and legs
+  with the video, nudge the bones, repeat (97 frames, ~30 min a clip). That one worked.
+- Per-animal fixes: a 60 fps file with 24 fps motion; crossing thin legs lost track, so the AI
+  marked the legs by hand-like annotation on the tricky frames; painted-on wings rebuilt as real
+  geometry.
+- **The failure that matters to us: a person lifting a stone.** From the camera the outline
+  matched to the pixel, but in 3D the chest sank into the legs and the stone sat inside the body.
+  One view cannot see depth; where arms reach toward the camera and hands hold an object, the
+  guess goes wrong by centimetres and the object passes through the body. Filming from the side
+  just moves the problem. Their fix: two (or more) synchronized views, as real mocap does.
+
+### Is This Really AI? Insane Opus 5.5 GameDev Workflow (XqtnBlPJ6KE)
+
+- Roles: Opus builds, GPT-6 Astra paints pictures (concepts, textures, decals, VFX sprites), Tripo
+  makes small detailed props, the human directs and tests.
+- Blockout first, then GPT paints the look **over the blockout render**: three looks, pick one.
+- The same wall piece three ways: Tripo (fastest, looks great far away, wrong scale, an air
+  conditioner a metre off the wall, everything baked into one texture, little control); Blender by
+  code (perfect shapes, coded dirt "way too clean"); **Blender shapes + GPT-painted textures and
+  dirt (the winner)**. Rule: structure in Blender, textures from GPT, Tripo for small details only.
+- The Blender script measures GPT's drawing so parts land where it painted them. Textures: a one-
+  metre patch painted by GPT, made seamless by a half-offset blend, height and roughness derived
+  from it; dirt = whatever in GPT's drawing is darker than the clean wall, projected on.
+- Tripo CLI for batches (18 props in ~10 min, six at a time, resumable); inputs are GPT pictures of
+  each object from front, side and back. Faults: face budgets exceeded, models facing backwards
+  (Opus checks each from four sides and fixes it).
+- Quality tests that break the build on purpose (11 ways) to prove the checks catch it; a bot that
+  walks every stair to prove reachability.
+- Lighting iterated round by round against a GPT paint-over of a screenshot.
+- Explosions: GPT sprites only grow and fade; a Seedance video cut into 64 frames moves for real.
+
+### This Is How to Make Game Textures With AI (_rMMP7GPgt4)
+
+- A texture is a set (colour, normal, roughness, height); UVs map it; walls in metric UVs;
+  triplanar where UVs are bad.
+- Four sources on one wall: a shader written from one prompt (never repeats, too clean), Blender
+  nodes baked (the most computer-made look), Poly Haven (good, but everyone has it), **GPT-painted
+  pictures made tileable by their tool** (his favourite): even out the lighting, snap joints to a
+  grid, cut brick rows in the gaps so copies meet, overlap-and-cut for patternless plaster, derive
+  height, normal and roughness from the joints.
+- Hiding repeats: a big soft noise, a second scale, hex tiling (breaks joints on bricks).
+- Wear where it really happens: a script finds edges (corners, window reveals) into a mask and the
+  shader breaks the plaster there; trim sheets for long thin parts; decals placed by a script that
+  knows where dirt goes (under sills and pipes, along the bottom). Interior mapping, parallax
+  occlusion (and Crimson Desert's silhouette cut).
+
+### What the second pass adds for this project
+
+1. **Our pose is the stone-lifting case.** One drawn view, two hands on an object held toward the
+   camera: round 1's clash report has the hands and stock 15-25 mm inside the carbine and the
+   right forearm guard 33 mm inside the body. Priors helped, but the depth is a guess. The
+   remedies, cheapest first: (a) hard contact constraints in the solve (palms on the grip surfaces,
+   the stock on the carrier, no penetration), which round 2's hands-and-grip pass should add;
+   (b) a silhouette term (render and compare outlines, as their deer fit did) on top of keypoints;
+   (c) a second view: an image or video model asked to show the same soldier from the side or
+   three-quarter (Seedance/Kling orbit, or a GPT image) would give depth to fit against, as their
+   troll was filmed from two sides. (c) costs Jeff's accounts; it is not needed yet.
+2. **Structure by code, surfaces from paintings.** For the soldier the equivalent is: our real-
+   dimension geometry (rounds 1-2) plus painted surface detail: the camouflage print, fabric
+   wear, mud, scuffs and the emblem as generated, tileable pictures and decals placed where wear
+   really happens (edge masks from geometry, as take 1's materials library already does for
+   leather). An image model is the missing tool here; Jeff has ChatGPT, so pictures could be made
+   there and dropped into `assets/` when we reach the materials round.
+3. **Generators for single organic props and the head.** Tripo-style image-to-3D from front, side
+   and back pictures beats code for organic things (the deer's face), but gets scale and placement
+   wrong and bakes everything into one texture. So: use it for shape (the head, perhaps the
+   pauldrons or pouches as references), always re-measured, re-scaled and transferred onto our
+   own topology and materials, never dropped in raw.
+4. **A paint-over as the target.** For lighting and look, they iterate against a GPT paint-over of
+   their own render. We have the reference already, but a paint-over of *our* render (same pose,
+   our proportions) would be a fairer target where reality-wins makes us differ from the drawing.
+5. **Tests that prove the checks work** (break it on purpose): worth doing for assemble.py's clash
+   report and the critic tally, so a quiet check is not mistaken for a pass.
