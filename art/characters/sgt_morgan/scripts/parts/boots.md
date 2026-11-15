@@ -137,3 +137,35 @@ to about 5 degrees.** The boot follows the foot bone. Length stays real.
    from zones only (no baked masks).
 8. The 3 mm sink into the floor in the pose (round 0, unchanged). One stray upper vertex on the right boot
    (§4).
+
+## 6. Take 1's foot and boot work: reuse it (Jeff, 2026-11-14)
+
+Jeff: "For the foot and boot work it's probably worth referencing all the work we did in the
+previous iteration." Take 1 spent three weeks here; round 3 starts from it, not from scratch.
+
+- **The boot spec, revised for building on 2026-10-27**: `archive/v1/spec/02_boots.md`. §0 holds
+  the settled decisions (reality wins: Lowa Zephyr / Garmont T8 class, the pair not a mirror, the
+  trousers stacking on the collars, the strap as a three-quarter ring, the footbed 36/24); §2 the
+  measured reference (extents, colours, construction cues read from the zooms); §3 the real
+  boot's dimensions (sole stack, upper components, lugs, hardware, laces, strap, how it wears);
+  §4 a twelve-step construction plan (last, sole outline and lofts, lugs, upper shell and throat,
+  overlays, rand and bumper, collar, tongue and gussets, hardware, stitch rows, strap, laces with
+  the exact criss-cross routing and over/under order, joins, topology budget, "against the
+  mechanical look" §4.15); §5 materials and wear masks. Its questions Q13-Q19 are in §10.3 (Q13:
+  the real footbed lifts 33 mm, not 42).
+- **The last** (take 1 part 01, `archive/v1/scripts/parts/p01/last.py`): built on the loaded,
+  scan-shaped foot with real allowances, the toe room measured from the standing socked toe
+  (Jeff: "Reality"), 297.1 mm long (right 297.0), 12° toe spring, markers on the insole plane.
+  The boot is built round the last, which is built round the foot.
+- **The library made for this boot**: the twelve boot recipes and seven groups in
+  `scripts/lib/materials.py` and `mat_*.py` (tested on a stand-in boot: `archive/v1/scripts/
+  lib_gear.py`, take 1's renders under `renders/16_materials/` and `renders/lib_gear/`), and
+  `gn_stitches.py` (3.4 mm pitch, felled ridges, bar tacks), `gear_hardware.py` (eyelets, speed
+  hooks, ladder-lock, aglets: quad-only, no triangle fans), `gear_webbing.py` (the ankle strap,
+  keepers, pull loop), `sweep.py` (laces), `modifiers.py`, `uv.py`. Spec 02 §4.9 has the as-built
+  notes (bar-tack pitch 0.6, hook plate 12 × 13 × 1, the welt as swept geometry).
+- **Lessons**: triangle fans under Subdivision cost minutes per Cycles render; the scuffs read as
+  horizontal dashes; the reference has stronger contrast and a warm/cool split than the stand-in;
+  real boots leave 15-22 mm ahead of the standing toe.
+- **Optional references**: spec 02 §3.6 lists two licensed boot scans on Sketchfab (Garmont T8,
+  Danner TFX) that Jeff would have to download himself.

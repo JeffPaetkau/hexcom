@@ -125,3 +125,24 @@ The four scripts were re-run unchanged:
 4. **The right elbow's skin stretches under linear skinning** at 103° (the shirt clearance above). This calls for a corrective shape key or a better weight at the olecranon.
 5. **Hands and feet are untouched.** MPFB's defaults: the fingers are curl tables, so the gloves press into the palms. The feet are covered by the boots.
 6. **No abdominal or oblique definition, and no veins.** These are invisible under the gear, so they are low priority.
+
+## 5. Take 1's foot: reuse it (Jeff, 2026-11-14)
+
+Take 2's base uses MPFB's default foot. Take 1 built a far better one (part 01, archived): MPFB's
+foot fitted to ANSUR and to Jeff's direction (274 mm: "toe 2 looks right; it is the big toe that
+is too long"), then **the large forms transferred from a real CC0 scan** (Zenodo 10360304, subject
+038; `assets/scans/zenodo_10360304/`, fetched by setup's `scans` group), keeping MakeHuman's
+topology, UVs, groups and weights. The blind critics scored it 7, 6, 6 with nothing blocking
+(`archive/v1/notes/critic/foot_shape_r4/`); round 5's brief (the toes from the scan too, our
+geometry only in the clefts) is in `archive/v1/notes/session_log.md`. Code:
+`archive/v1/scripts/parts/01_foot_ankle_sock.py` and `p01/` (fit_targets, fit_sculpt, transfer,
+scanfit, scanref, nails, sock, last, layers), the dense research layer in
+`archive/v1/scripts/research/foot_hires/`, notes in `archive/v1/notes/research_foot_hires.md` and
+`archive/v1/spec/01_foot_ankle_sock.md` (its §0 decision table and dated notes). Also the sock
+(lofted from the scan-transferred foot, 0.3 mm off the skin) and the last (297.1 mm) that take 1's
+boot was to be built on.
+
+The boots hide the foot in the hero frame, but the last (and so the boot's shape and fit) comes
+from it, and Jeff may want a barefoot loadout shot later. Porting the scan transfer into
+`scripts/stages/base.py` (or a body stage after it) is the body's round 2 or 3 item, before the
+boots' next round.

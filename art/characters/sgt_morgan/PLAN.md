@@ -70,6 +70,10 @@ silhouette as a whole), then **choose** the next round's brief per part, worst f
   wrong. That replaces take 1's long specs. Take 1's specs (`archive/v1/spec/`) are evidence to
   read, not plans to follow.
 - Render and look before claiming anything. A round's result is a picture.
+- **Start from take 1's work on the part** (Jeff, 2026-11-14, on the foot and boots): before a
+  part's round, read what take 1 did for it in `archive/v1/` (its spec's §0 decisions, §2-§3
+  evidence and §4 plan, its code, its critic rounds and session-log entries) and reuse what
+  worked. Breadth first changes the order of the work, not the value of what was learned.
 
 ## Tools carried forward from take 1
 
