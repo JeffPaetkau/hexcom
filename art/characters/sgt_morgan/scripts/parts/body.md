@@ -147,7 +147,7 @@ from it, and Jeff may want a barefoot loadout shot later. Porting the scan trans
 `scripts/stages/base.py` (or a body stage after it) is the body's round 2 or 3 item, before the
 boots' next round.
 
-## 6. The foot, ported (round 3, 2026-11-15; development copy, not yet in base.blend)
+## 6. The foot, ported (round 3, 2026-11-15; in base.blend since the round 3 rebuild)
 
 **What.** `scripts/stages/foot.py` with its modules in `scripts/stages/foot/` (copies of take 1's
 `archive/v1/scripts/parts/p01/` fields, footmetrics, transfer, scanref, scanfit, nails, sock, last, matmasks,
@@ -165,11 +165,27 @@ definition). It takes a body with `Morgan.Rig` at rest and applies, in take 1's 
 5. `Foot.Contact` (038's standing scan, value 0): the last is built from it at 1.
 
 Run: `"$SGT_BLENDER" -b --python scripts/stages/foot.py -- [--in FILE] [--out FILE] [--render]` (9 s, renders
-2 s). It refuses to write `cache/stages/base.blend` without `--in-place`; the intended wiring is base.py calling
-`apply(body, rig)` (load foot.py by path with importlib: `scripts/stages/foot/` is a package of the same name)
-after the rig and before `measure()` / `landmarks()`, so base.json carries the new feet's landmarks and
-assemble's stale-check re-solves the pose. Development output: `cache/stages/foot_dev.blend`,
-`cache/stages/foot.json`, `renders/foot/`.
+2 s). It refuses to write `cache/stages/base.blend` without `--in-place`. **Wiring (done 2026-11-15):** base.py's
+`apply_foot()` loads foot.py by path (importlib: `scripts/stages/foot/` is a package of the same name) and calls
+`apply(body, rig)` after the rig and before `measure()` / `landmarks()`, so base.json carries the new feet's
+landmarks (`SGT_BASE_NO_FOOT=1` skips it); base.json gains `foot` (targets, transfer, measures) and
+`stature_before_foot_mm`. assemble.py lists foot.py, its modules, `params.json`, `scan_targets.json` and
+`marks.py` as base's inputs (`FOOT_INPUTS()`: the import scan cannot see a by-path load). Standalone development
+output: `cache/stages/foot_dev.blend`, `cache/stages/foot.json`, `renders/foot/`.
+
+**No pose re-solve.** The rebuilt base.json's 163 bones (heads, tails, matrices) equal the old ones exactly (max
+difference 0.0); only the feet's four landmarks a side moved (the scan's heel and border) and the barefoot
+stature reads 1836.5 (1835.0 before the foot: the heel pad at z -1.5). assemble.py now re-solves only when
+`pose.base_signature()` (the bones to 0.01 mm and every landmark but the feet's) differs from
+`scripts/stages/hero_pose_basis.json`, written by `pose.py --solve` (recorded now for the committed solve), or when
+pose_solve.py is newer than hero_pose.json; it printed "no re-solve" and re-applied hero_pose.json (Blender vs
+solver 0.008 mm). The cost: in the pose the new foot landmarks sit 0.3 mm (heel), 0.35 (1st head) and 1.7-1.9
+(5th head) below their 36 / 24 seats, where the old ones were 0.1-0.6; the boots' posed lugs sink 1.6-1.8 mm. The
+1844 rebuild's re-solve will seat the new landmarks.
+
+**Toes in the boot.** pose.py turns each proximal toe bone up 12 degrees at its MTP joint (`TOE_SPRING_DEG`, the
+last's toe spring), after hero_pose.json. Leaf bones the solver does not fit (heel, mt1, mt5 ride foot.*), so the
+solved pose is unchanged; `check()` leaves the toes out. Read back: toe 2's angle to the foot 19.1 -> 31.0 deg.
 
 **Measured** (`cache/stages/foot.json`, frame F): foot length 275.3 L / 275.1 R (take 1: 275.24; declared
 274.3), ball breadth 104.1, heel breadth 67.0, bimalleolar 72.3, malleoli apexes z 78.6 / 91.0, dorsum 87.4 / 75.2
@@ -199,5 +215,5 @@ residual and `foot.json` after that rebuild; nothing needs re-fitting unless the
 
 **Still wrong (foot), ranked:** (1) the toes (take 1's round-5 brief: the toes' volumes from the scan, our
 geometry only in the cleft floors); (2) no material masks, so the foot renders with MPFB's body skin;
-(3) toe-bone placement (toe 5); (4) the rest foot's toes are flat, so inside the sprung toe box they pass
-through the boot's sole top unless the pose extends the toes 12 degrees (a pose item).
+(3) toe-bone placement (toe 5); (4) the feet's landmarks sit up to 1.9 mm under their seats until the next
+pose solve.

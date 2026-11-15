@@ -1903,11 +1903,16 @@ def main():
             say(f"{side}: strap or stitches failed ({type(e).__name__}: {e})")
         for k, ob in built.items():
             ob["sgt_clay"] = CLAY.get(k, (0.30, 0.30, 0.31))
+            bake_transform(ob)           # common.load_part reads matrix_world before an update: identity only
             if k in ("Sole", "Lugs"):
                 C.bind(ob, body, rig, only=[f"foot.{side}"],
                        collapse={"toe*": f"foot.{side}", f"lowerleg02.{side}": f"foot.{side}"})
             else:
                 C.bind(ob, body, rig, collapse={"toe*": f"foot.{side}"})
+        n_fixed = {k: fill_unweighted(built[k], built["Upper"]) for k in built if k != "Upper"}
+        if any(n_fixed.values()):
+            say(f"{side}: unweighted vertices given the upper's nearest weights: "
+                f"{ {k: v for k, v in n_fixed.items() if v} }")
         sock = bpy.data.objects[f"Sock.{side}.Body"]
         C.bind(sock, body, rig)
         from stages.foot import sock as SK
@@ -1966,6 +1971,46 @@ def main():
                             "lasts": os.path.relpath(lasts_path, C.PROJECT), "seconds": round(time.perf_counter() - t0, 1)})
     if "--no-render" not in args:
         render_round3(coll, lasts_path, extra, say)
+
+
+def bake_transform(ob):
+    """Move an object's own transform into its mesh (round 3: the ladder-lock came from gear_hardware with a
+    matrix; common.load_part reads matrix_world from the freshly loaded cache before any depsgraph update, gets the
+    identity and so put the buckles on the floor between the feet in the assembly)."""
+    from mathutils import Matrix
+    if ob.type != "MESH" or ob.parent is not None:
+        return
+    M = ob.matrix_basis.copy()
+    if all(abs(M[i][j] - (1.0 if i == j else 0.0)) < 1e-9 for i in range(4) for j in range(4)):
+        return
+    ob.data.transform(M)
+    ob.matrix_basis = Matrix.Identity(4)
+
+
+def fill_unweighted(ob, ref):
+    """Vertices the weight transfer left with no weight (they would stay at rest under the Armature: round 3's
+    stitch carriers drew threads from the posed boot back to its rest place) take the weights of the nearest
+    vertex of ref (the upper). Returns how many."""
+    from mathutils import kdtree
+    me = ob.data
+    if not len(me.vertices):
+        return 0
+    zero = [v.index for v in me.vertices if sum(e.weight for e in v.groups) < 1e-6]
+    if not zero:
+        return 0
+    rv = ref.data.vertices
+    kd = kdtree.KDTree(len(rv))
+    for v in rv:
+        kd.insert(v.co, v.index)
+    kd.balance()
+    names = {g.index: g.name for g in ref.vertex_groups}
+    for i in zero:
+        _, j, _ = kd.find(me.vertices[i].co)
+        for e in rv[j].groups:
+            nm = names[e.group]
+            g = ob.vertex_groups.get(nm) or ob.vertex_groups.new(name=nm)
+            g.add([i], e.weight, "REPLACE")
+    return len(zero)
 
 
 def C_surface(ob):

@@ -268,3 +268,27 @@ base.py runs foot.py and the pose is re-solved on the new ones.
 7. **Toes in the sole**: the rest foot's flat toes pass through the sprung sole top (hidden); the pose should
    extend the toes 12 degrees (a pose item), then that clash goes.
 8. **Footbed consistency**: the 2.1 mm of sock in the footbed and the -1.7 mm posed sink (above).
+
+### Round 3 in the assembly (2026-11-15, `renders/round_03/`)
+
+Built in the pipeline (base.blend now carries the foot: body.md §6; the pose re-applied, not re-solved; the toes
+turned up 12 degrees by pose.py). Two faults only the assembly showed, fixed in boots.py:
+- **The buckles lay on the floor between the feet**: the ladder-lock had an object transform, and
+  `common.load_part` reads `matrix_world` from the freshly loaded cache before any depsgraph update (it reads
+  identity). boots.py now bakes every object's transform into its mesh before binding (`bake_transform`). Any part
+  with transformed objects would hit the same `load_part` limitation.
+- **Stitches stayed at rest** (threads drawn from the posed boot back to its rest place): `common.bind`'s weight
+  transfer gives edge-only meshes (the stitch carriers) no weights. boots.py now copies the upper's nearest
+  vertex's weights onto unweighted vertices (`fill_unweighted`; 1338 / 1362 stitch and 156 / 160 tack vertices).
+  Other parts' stitch carriers (if any) would need the same.
+
+Clashes (`clashes.md`): body in the boot soles 113 vertices, max 6.7 mm (designed: the footbed stands 4 mm below
+the stripe top that closes the sole solid, plus the 2.1 mm sock, the heel pad); the socks in the skin 2231
+vertices, max 3.0 at the ankle (linear skinning of a 0.3 mm garment over the flexed ankle; hidden). No boot part
+clashes with the trousers or another part. Posed lugs sink 1.6 / 1.8 mm (the new feet's landmarks sit 0.3-1.9 mm
+under the seats until the next pose solve).
+
+Renders looked at: `boots_feet_compare.png` (the left boot stands on the drawn one, laces centred, stitch rows
+visible; the right boot's toe a flat wedge past the drawn toe; the cuff straps under the trouser hems, as drawn),
+`soldier_full_compare.png`, `legs_knees_compare.png`, `turnaround.png` (the boots sit under the stacked hems from
+every side; no stray geometry).

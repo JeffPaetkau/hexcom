@@ -50,6 +50,59 @@ PROXY_BOXES = (
 )
 
 
+# Round 3 (boots.md §8 item 7): the toes bend up at their MTP joints by the boots' last's toe spring, so the
+# posed toes lie in the sprung toe box instead of through the sole. The proximal toe bones are leaves the solver
+# does not fit (it seats heel, mt1 and mt5, which ride foot.*), so this moves nothing it solved; check() leaves
+# the toes out.
+TOE_SPRING_DEG = 12.0
+TOE_BONES = tuple(f"toe{k}-1.{s}" for s in ("L", "R") for k in range(1, 6))
+# What a solve depends on in base.json: the bones (rest heads, tails, parents) and the landmarks it fits, less
+# the feet's (heel, toe, mt1, mt5), which only seat the feet on the footbeds and move with the foot stage while
+# the bones do not (scripts/assemble.py re-solves only when this signature differs from the one recorded at the
+# last solve, scripts/stages/hero_pose_basis.json; a full solve takes 25 min and is not reproducible).
+BASIS_JSON = os.path.join(HERE, "hero_pose_basis.json")
+BASE_JSON = os.path.join(PROJECT, "cache", "stages", "base.json")
+FOOT_MARKS = ("heel_", "toe_", "mt1_", "mt5_")
+
+
+def base_signature(path=BASE_JSON):
+    """sha256 of what the solve reads from base.json (bones to 0.01 mm, landmarks but the feet's)."""
+    import hashlib
+    with open(path, encoding="utf-8") as f:
+        b = json.load(f)
+    bones = {n: [v["parent"], [round(x, 2) for x in v["head"]], [round(x, 2) for x in v["tail"]]]
+             for n, v in sorted(b["bones"].items())}
+    marks = {k: [round(x, 2) for x in v["rest_mm"]] for k, v in sorted(b["landmarks"].items())
+             if not k.startswith(FOOT_MARKS)}
+    blob = json.dumps({"bones": bones, "landmarks": marks}, sort_keys=True).encode()
+    return hashlib.sha256(blob).hexdigest()
+
+
+def write_basis():
+    with open(BASIS_JSON, "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"doc": "pose.py base_signature() of the base.json hero_pose.json was solved on (scripts/assemble.py "
+                          "re-solves only when it changes)", "base_signature": base_signature(),
+                   "written": time.strftime("%Y-%m-%d %H:%M:%S")}, f, indent=1)
+
+
+def toe_spring(rig, deg=TOE_SPRING_DEG):
+    """Turn each proximal toe bone up by deg about the foot's lateral axis (rest space), at its head (MTP)."""
+    import math
+    from mathutils import Quaternion, Vector
+    for name in TOE_BONES:
+        pb = rig.pose.bones.get(name)
+        if pb is None:
+            continue
+        b = pb.bone
+        d = (b.tail_local - b.head_local).normalized()
+        axis = d.cross(Vector((0.0, 0.0, 1.0))).normalized()       # horizontal, across the toe
+        q = Quaternion(axis, math.radians(deg))
+        if (q @ d).z < d.z:                                         # the tip must rise
+            q = Quaternion(axis, -math.radians(deg))
+        R = b.matrix_local.to_3x3()
+        pb.rotation_quaternion = (R.inverted() @ q.to_matrix() @ R).to_quaternion() @ pb.rotation_quaternion
+
+
 def load_pose(path=HERO_JSON):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
@@ -72,6 +125,8 @@ def apply_hero_pose(rig, path=HERO_JSON, data=None):
             raise KeyError(f"{rig.name} has no bone {name!r}")
         pb.rotation_quaternion = Quaternion(q)
     rig.pose.bones[data["root_bone"]].location = Vector(data["root_location"])
+    if TOE_SPRING_DEG:
+        toe_spring(rig)
     bpy.context.view_layer.update()
     return data
 
@@ -140,6 +195,8 @@ def check(rig, data):
     import numpy as np
     errs = {}
     for name, p in data["joints_world_mm"].items():
+        if TOE_SPRING_DEG and name.startswith("toe") and not name.split(".")[0].endswith("-1"):
+            continue                                    # the toes' spring is not the solver's
         pb = rig.pose.bones[name]
         h = np.array(rig.matrix_world @ pb.head) * 1000.0
         errs[name] = float(np.linalg.norm(h - np.array(p)))
@@ -180,6 +237,7 @@ def main(argv):
     if "--solve" in argv:
         run_export(force="--export" in argv)
         run_solver()
+        write_basis()
     rig = bpy.data.objects.get(RIG)
     if rig is None:
         raise RuntimeError(f"open {os.path.relpath(BASE_BLEND, PROJECT)} first: no {RIG}")

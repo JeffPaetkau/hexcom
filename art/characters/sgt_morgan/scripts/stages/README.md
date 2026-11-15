@@ -460,3 +460,16 @@ body a corrective); the pose cannot open the elbow further without pulling the h
 - `hero_pose.json`: the pose, with `stages` (keypoints-only and final contact numbers), `fingers` (angles and
   contact per phalanx) and `residual_terms`.
 - Caches: `cache/stages/contact.npz`, `contact_sdf.npz` (274 MB, float32 fields), `pose_x_*.npz` (solver states).
+
+## Round 3 (2026-11-15): the foot in base.py, re-solve by signature, toes in the boot
+
+- **base.py** applies take 1's foot after the rig (`apply_foot()` -> `scripts/stages/foot.py`, see
+  `scripts/parts/body.md` §6): MPFB foot targets, the scan transfer (`Foot.Sculpt`), nails, masks, `Foot.Contact`.
+  No bone moves (163 bones identical to 0.0 mm); the feet's landmarks change; barefoot stature 1836.5 (1835.0
+  before the foot: the scan's heel pad at z -1.5).
+- **Re-solve only when the solve's inputs change.** `pose.base_signature()` hashes base.json's bones (to 0.01 mm)
+  and its landmarks except the feet's; `pose.py --solve` writes it to `hero_pose_basis.json`; `assemble.py`
+  (`pose_needs_solve()`) re-solves when it differs or when pose_solve.py is newer than hero_pose.json, else it
+  re-applies hero_pose.json (prints which). Without the basis file it falls back to the old timestamp rule.
+- **Toes**: `apply_hero_pose` turns the proximal toe bones up 12 degrees at the MTP joints (`TOE_SPRING_DEG`, the
+  boots' last's toe spring); `check()` skips the toes. The solved bones are untouched.

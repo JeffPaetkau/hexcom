@@ -5,7 +5,7 @@ stature (skull top to sole, barefoot) is 1835 mm, re-grounded on its lowest vert
 the ankle joint cubes, facing -Y with +X his left (CLAUDE.md rule 2); MPFB's `default` skeleton (163
 bones) with MPFB's own weights; MPFB's middle-aged Caucasian male skin, toned; eyes, eyebrows and eyelashes (cheap
 MHCLO assets); no hair, no clothes. Take 1's build_all.py stages S1 and S2 (archive/v1/scripts/
-build_all.py) without part 01's foot targets.
+build_all.py); since round 3 with take 1's foot applied after the rig (scripts/stages/foot.py, apply_foot()).
 
   "$SGT_BLENDER" -b --python scripts/stages/base.py [-- --render]
   -> cache/stages/base.blend   objects Body.Mesh and Morgan.Rig (and Body.Eyes, Body.Eyebrows,
@@ -547,6 +547,21 @@ def eye_materials(eyes, lashes, brows):
     return out
 
 
+def apply_foot(body, rig):
+    """Round 3 (scripts/parts/body.md §6): take 1's scan-transferred foot, nails and loaded key, by
+    scripts/stages/foot.py's apply() (loaded by path: scripts/stages/foot/ is its package of the same name). It moves
+    no bone (the foot targets load after the rig is fitted). SGT_BASE_NO_FOOT=1 skips it."""
+    if os.environ.get("SGT_BASE_NO_FOOT"):
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("foot_stage", os.path.join(HERE, "foot.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    rec = mod.apply(body, rig)
+    say(f"foot: {json.dumps({k: rec[k] for k in ('transfer', 'seconds')}, default=str)}")
+    return json.loads(json.dumps({k: v for k, v in rec.items() if k != "nails"}, default=float))
+
+
 def render_rest():
     """Rest clay views of the body for the body part (scripts/parts/common.py render_rest_views):
     renders/body/body_rest_{front,side,threequarter}.png and body_chest_rest_*.png."""
@@ -620,6 +635,8 @@ def main():
         err = max(abs(a - b) for ra, rb in zip(ob.matrix_world, ident) for a, b in zip(ra, rb))
         if err > 1e-9:
             raise RuntimeError(f"{ob.name}'s world matrix is not the identity")
+    stature_before_foot = round(stature_mm(body), 3)
+    foot = apply_foot(body, rig)
     meas = measure(body, rig)
     marks = landmarks(body, rig)
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -632,6 +649,7 @@ def main():
                "units": "mm; rig space = world (rig and body at the origin, identity)",
                "macro": macros, "body_targets": loaded, "face_targets": face,
                "face_fit": "scripts/parts/head_fit.json" if face else None, "skin": skin, "stature_mm": round(stature_mm(body), 3),
+               "stature_before_foot_mm": stature_before_foot, "foot": foot,
                "stature_target_mm": STATURE_MM, "height_iterations": n, "moved_mm": moved,
                "assets": added, "measure": meas, "landmarks": marks,
                "blender": bpy.app.version_string, "seconds": round(time.perf_counter() - t0, 2),

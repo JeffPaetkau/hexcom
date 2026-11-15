@@ -127,7 +127,8 @@ def apply(body, rig, prm=None, nail_collection=None):
     prm = prm or params()
     rec = {"source": "take 1 part 01 (archive/v1/scripts/parts/01_foot_ankle_sock.py, p01/), ported to "
                      "scripts/stages/foot/", "params": os.path.relpath(PARAMS, PROJECT).replace("\\", "/")}
-    rig.data.pose_position = "REST"
+    was_position = rig.data.pose_position
+    rig.data.pose_position = "REST"               # restored at the end: base.blend is saved with the rig in POSE
     # 1. the MPFB foot targets
     rec["targets"] = foot_targets(body, prm["targets"])
     # 2. the sculpt: the scan transfer
@@ -211,6 +212,7 @@ def apply(body, rig, prm=None, nail_collection=None):
         q = foot.frame.to_f(rest[foot.R])
         loaded[foot.R] = foot.frame.to_w(fields.contact(B, side, q, transfer=cfg))
     S.key_from_positions(body, "Foot.Contact", loaded / 1000.0, base=rest / 1000.0, value=0.0)
+    rig.data.pose_position = was_position
     bpy.context.view_layer.update()
     rec["measure"] = measure(body)
     rec["seconds"] = round(time.perf_counter() - t0, 1)

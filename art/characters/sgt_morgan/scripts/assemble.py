@@ -118,11 +118,48 @@ def stamp(t):
 
 # =========================================================================== freshness and rebuilds (no bpy)
 
+def FOOT_INPUTS():
+    """Round 3: base.py loads scripts/stages/foot.py by path (importlib; its package scripts/stages/foot/ has the
+    same name), so the import scan cannot see it: the stage, what it imports and its data are base's inputs."""
+    f = os.path.join(SCRIPTS, "stages", "foot.py")
+    d = os.path.join(SCRIPTS, "stages", "foot")
+    # its --render helpers (parts/common.py, which imports stages/pose.py) are not inputs of base.blend
+    mods = [m for m in imported_modules(f) if os.path.normcase(os.path.join(SCRIPTS, "parts")) not in os.path.normcase(m)
+            and os.path.basename(m) != "pose.py"]
+    return [f] + mods + [os.path.join(d, n) for n in ("params.json", "scan_targets.json", "marks.py")]
+
+
+def pose_needs_solve():
+    """Round 3: re-solve the pose only when what the solve reads from base.json changed (pose.base_signature: the
+    bones to 0.01 mm and the landmarks but the feet's), against scripts/stages/hero_pose_basis.json written at the
+    last solve, or when pose_solve.py is newer than hero_pose.json; without a basis file, round 0-2's rule (base.json
+    newer than hero_pose.json). A full solve is 25 min and not reproducible (README "Round 2"), and the foot stage
+    rewrites base.json without moving a bone. Returns (bool, why)."""
+    ht = os.path.getmtime(HERO_JSON) if os.path.exists(HERO_JSON) else 0
+    solver = os.path.join(SCRIPTS, "stages", "pose_solve.py")
+    if os.path.exists(solver) and os.path.getmtime(solver) > ht:
+        return True, "pose_solve.py is newer than hero_pose.json"
+    basis = os.path.join(SCRIPTS, "stages", "hero_pose_basis.json")
+    if os.path.exists(basis) and os.path.exists(BASE_JSON):
+        sp = os.path.join(SCRIPTS, "stages")
+        if sp not in sys.path:
+            sys.path.insert(0, sp)
+        import pose as P
+        with open(basis, encoding="utf-8") as f:
+            was = json.load(f).get("base_signature")
+        now = P.base_signature(BASE_JSON)
+        return (now != was, "base.json's bones or solved landmarks changed" if now != was
+                else "base.json's bones and solved landmarks unchanged (basis signature): hero_pose.json re-applied")
+    if os.path.exists(BASE_JSON) and os.path.getmtime(BASE_JSON) > ht:
+        return True, "base.json is newer than hero_pose.json (no basis file)"
+    return False, "hero_pose.json is newer than base.json"
+
+
 def items():
     """The build order: name, script, cache, data files read, deps, Blender argv builder."""
     out = [
         {"name": "base", "script": os.path.join(SCRIPTS, "stages", "base.py"), "out": BASE_BLEND,
-         "data": [os.path.join(SCRIPTS, "parts", "head_fit.json")], "deps": []},
+         "data": [os.path.join(SCRIPTS, "parts", "head_fit.json")] + FOOT_INPUTS(), "deps": []},
         {"name": "pose", "script": os.path.join(SCRIPTS, "stages", "pose.py"),
          "out": os.path.join(CACHE, "stages", "pose.blend"), "data": [HERO_JSON], "deps": ["base"]},
     ]
@@ -217,9 +254,9 @@ def blender_argv(it):
     from lib import env
     if it["name"] == "pose":
         args = ["-b", BASE_BLEND, "--python", it["script"]]
-        ht = os.path.getmtime(HERO_JSON) if os.path.exists(HERO_JSON) else 0
-        solve_in = [BASE_JSON, os.path.join(SCRIPTS, "stages", "pose_solve.py")]
-        if any(os.path.exists(f) and os.path.getmtime(f) > ht for f in solve_in):
+        solve, why = pose_needs_solve()
+        print(f"[assemble] pose: {'re-solve' if solve else 'no re-solve'}: {why}", flush=True)
+        if solve:
             args += ["--", "--solve"]
     elif it["name"] == "base":
         args = ["-b", "--python", it["script"]]
