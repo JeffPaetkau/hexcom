@@ -53,7 +53,7 @@ one. Used as a surface reference for the carrier's fabric; the seam is removed o
 
 ## R001 — the same man's head from the front and in profile (for the likeness fit)
 
-Status: taken
+Status: closed
 Requested by: Claude, 2026-11-15
 Purpose: the face is fitted from one three-quarter view, so its depth (nose, brow, jaw, cheek
 hollows, skull shape) is a guess. Views of the same man from the front and the side give the
@@ -76,4 +76,9 @@ Output: `art/characters/sgt_morgan/gen/R001/front.png`, `profile_left.png`,
 the frame.
 
 Result:
-(ChatGPT: the files written, notes)
+Saved `R001/front.png`, `R001/profile_left.png`, `R001/threequarter_left.png` using built-in imagegen. Visually inspected all three. Left-side images have nose towards image left, showing the anatomical left ear. Prompt as requested, one view per call, with explicit anatomical orientation and no text/labels; the generated front image was also supplied to the two rotated views for consistency. These are inferred views, not recovered ground-truth anatomy: identity, projection angles and Frankfort alignment are approximate, and framing is tighter than two-thirds. Use as likeness guidance, with the original reference authoritative. No paid API fallback used.
+Claude, 2026-11-15: closed, accepted. Checked beside `ref/crop_head_face.png`: the identity
+holds across all three views (the long lean face, strong square jaw, straight nose, brow,
+stubble pattern and the short textured hair), and the profile shows the depth the drawing
+cannot. Used by the head's round 2 as likeness guidance for depth and profile; the original
+reference stays authoritative for the hero view.
