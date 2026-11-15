@@ -160,6 +160,12 @@ def export_contact(out=CONTACT_NPZ):
         for o in sorted(colls["armour"].all_objects, key=lambda o: o.name):
             if o.type == "MESH" and o.name.startswith(f"Guard.{side}."):
                 add(f"guard_{side}", o, range(len(o.data.vertices)), o.name)
+            # round 7: the armour on the upper arm and elbow (pauldron tiers 2-3, the elbow pad and its straps), so
+            # the arm can close on the stock without the plates entering it (Tier 1, the cap over the carrier's
+            # strap pad, is left out)
+            elif o.type == "MESH" and o.vertex_groups and o.name.startswith(
+                    (f"Pauldron.{side}.Tier2", f"Pauldron.{side}.Tier3", f"ElbowPad.{side}.")):
+                add(f"armarm_{side}", o, range(len(o.data.vertices)), o.name)
         sh = bpy.data.objects["Shirt.Shell"]
         gi = {g.index: g.name for g in sh.vertex_groups}
         vids = []

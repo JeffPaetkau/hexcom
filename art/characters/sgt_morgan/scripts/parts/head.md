@@ -716,3 +716,28 @@ reading) more than the drawing, which is narrower at the angle in the hero view.
 6. 12 triangles still flip against round 1's face (r2 8, r3 50): the inner canthus (as round 2), the alar crease and
    the mouth corner. None shows in the renders looked at.
 7. Round 2's §7 items 2-7 stand: the head pose, hair, skin, R001 as inferred, expression.
+
+## 12. Round 7 (2026-11-15): round 4 switched in
+
+Done as §11.6 (scripts/stages/README.md, "Round 7", has the pose side):
+- `head-shape-r4.target` copied over `head-shape.target`; base rebuilt (`base.py`, 20 s): stature 1844.07 mm (height
+  macro 0.58965, unchanged), every body and limb bone unchanged to 0.01 mm; the face bones moved (tongue / special04
+  10.6 mm, levator02 7.4, temporalis 6.0-6.5); the solved landmarks moved: nose tip 3.4 mm back, chin 1.8 mm back,
+  pupils 0.4-0.6 mm, ears 0.4 mm. The pose signature changed, so the pose was re-solved.
+- Every part built on base.blend rebuilt (trousers, shirt, boots, gloves, carrier, armour, belt, head). The gaiter fits
+  the new neck: 9.0 mm off the skin at rest, 7.8 in the old hero pose, nothing inside (shirt log).
+- `head.py --check r7pre` (the new base through round 4's pose): MediaPipe RMS **1.28 px** (median 1.13, max 3.65), jaw
+  oval 2.34 px; key points nose tip 1.44, chin 0.66, gonions 1.65 / 1.76, cheeks 3.3 / 4.3 px.
+- `pose_solve.build_face_targets("r7pre")`: face_targets.json now 402 landmarks on 843 vertices.
+
+**The head's yaw** (critic m15: "the head faces the camera"; the drawing reads about 20 deg, a critic said 30). On this
+face, with the body held at round 4's pose and only the neck and head free (`cache/r7/`, scratch), the face term alone
+wants **18.2 deg** of yaw at 1.02 px RMS; round 4's 14.9 was held there by the hand-read pupils, nose tip, menton and
+above all the skull-top pixel (a guess through the hair, 12-17 px off). The face term does not want the chin up: its
+pitch stays at 0.5 to -1 deg against a prior of -6. So the solve now down-weights the hand points the face term
+duplicates (`FACE_SUPERSEDES`). The re-solved pose: head yaw **17.5 deg** (round 4: 14.9), pitch -1.0, roll -2.5; the
+face term's MediaPipe RMS **0.85 px** (round 4: 0.99); right ear 2.7 px, chin 8.3, skull top 17.3 (down-weighted).
+In the hero render it still reads closer to frontal than the drawing (stages README, round 7); a face nearer the
+drawing's (§11.7 item 1) is what would let the face term turn it further.
+
+The hair cap: `Head.Hair` one vertex 0.2 mm inside the skin at rest (round 4: 1.97).

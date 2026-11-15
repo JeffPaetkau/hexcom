@@ -599,3 +599,157 @@ solve's hands).
 5. **The right forefoot in the sole** (10.4 mm, was 6.7): the pose now seats the round-3 foot's own landmarks; boots.md §8
    items 7-8 (the toes, the footbed's 2.1 mm) need a look with the new numbers.
 6. Fresh full solves were not tried on this base; the pose is a continuation of round 2's (item 2 of round 2 stands).
+
+## Round 7 (2026-11-15): head round 4 switched in; the leg, the head turn, the stock under the arm, the left hand
+
+Critics (notes/critic/soldier_r5/tally.md): m16 the right leg turned out ~70 deg, the knee pad facing out; m15 the head
+faces the camera; m39/m47 the stock floats beside the arm instead of being pinned under it; the left hand reads open.
+
+### Inputs that changed
+- **Head round 4** (head.md §11.6, §12): `head-shape-r4.target` over `head-shape.target`, base rebuilt (body bones
+  unchanged to 0.01 mm, the face's landmarks moved up to 3.4 mm), every part rebuilt on it, `head.py --check r7pre`
+  (1.28 px) and `build_face_targets("r7pre")` (402 landmarks on 843 vertices).
+- **Contact export** after the rebuild (round 6's thicker glove shell is now the solver's hand surface: gloves.md §10
+  item 3), with a new point set `armarm_{L,R}` (`pose_contact.py`: pauldron tiers 2-3, the elbow pads and their
+  straps, ~14 500 points a side), so the arm can close on the stock without its plates entering it.
+
+### Solver changes (pose_solve.py)
+- **The legs** (m16). Round 4's right leg: hip external rotation 27 deg, tibia 12, and the foot twisted **39 deg**
+  against the shank (no ankle does that) to put the boot in the drawn profile while the knee faced 47 deg out.
+  `Model.leg_turn` (new readback `leg_turn_hip_knee_foot_deg`) splits a leg's turn-out into hip (thigh against the
+  pelvis, about the femur), knee (shank against thigh) and foot (heel-to-toe against the shank's front), measured
+  from the rest leg (the bone rolls put the thigh's axis 9 deg off the shank's). The reference cannot be followed
+  literally: its right boot is in profile (85-100 deg) with the knee pad only 25-45 deg out. Reality wins:
+  `LEG_LIMITS` hip -15..35, tibia +-12, foot -12..15 (normal tibial torsion toes out ~10); `LEG_PRIOR` tibia 5 +- 6,
+  foot 10 +- 6; `KNEE_FACING` R -45 -> **-30** (sigma 15 -> 8); `FOOT_HEADING` R -85 -> **-50**. The right boot is
+  still clearly more in profile than the left (+6).
+- **The head** (m15). On the round-4 face, with the body held, the face term alone wants 18.2 deg of yaw at 1.02 px
+  RMS; the hand-read pupils, nose tip, menton and skull top held it at 14.2 (the skull top, a guess through the hair,
+  12-17 px off). `FACE_SUPERSEDES`: while the face term is on, their sigmas x3 (pupils, nose, chin) and x2 (skull
+  top); the right ear keeps its own (MediaPipe has no ear). The face term does not lift the chin (pitch 0.5 to -1
+  against a trial prior of -6), so no pitch prior was added.
+- **The stock under the arm** (m39, m47). `STOCK_PIN`: the mean of the 12 nearest upper-arm and elbow points
+  (sleeve and `armarm`, bones upperarm01/02 and lowerarm01) to the carbine behind gun x -160 (the stock, not the
+  grip), a point farther forward counted that much farther, held at 1 mm (sigma 1.5). Round 4's arm was 6 mm (elbow)
+  to 80+ mm (upper arm) off the stock.
+- **The left hand** (the open hand). Round 4's knuckles sat 40 mm over the bore with the palm on the top rail, where
+  the fingers (proximal ~45 mm, middle ~28) only reach down the right face. `place_left_arm` fits the left clavicle,
+  shoulder, elbow, forearm twist and wrist (12) with the left fingers (20) under the whole solve's residuals, the old
+  left-hand targets off (`Model.hand_skip`), plus the grasp (GRASP["L"]: the tips under the handguard), each finger's
+  front on the gun, and curls near a wrap (MCP 30 or 45, PIP 90, DIP 0.65 PIP; `LEFT_ARM`); its result becomes the
+  left hand's targets. `--continue-from <npz> --place-left` runs it, refits the right fingers, one body pass at pen
+  sigma 2, then the usual fingers / whole glove / fingers. Saved states now carry the left targets (`hand_L`), and a
+  continuation without `--place-left` loads them.
+- Tried and dropped (described here, not kept in the code): (1) place_hand's rigid placement with the table curls (the
+  table hook fits round the handguard near no design; the fit hung the hand under the gun, cost 135-9000); (2) a free
+  hand with its fingers fitted round the handguard from a grid of 504 designs: a clean wrap (palm on the camera face,
+  tips under the bottom flat, glove 0.36 mm in) but out of the arm's reach: the body solve left the wrist 43 mm off it
+  at the radial limit and the fingers 6-26 mm off the gun; (3) the left fingers' touch and grasp as body terms with
+  the left targets off, and (4) the deepest 24 points of each full sleeve and guard set as extra non-penetration
+  residuals (the stock's toe went 4.4 mm into the right guard's sleeve between subsampled points) with the sleeve's
+  pin on all its points: both continuations stalled (xtol after 12-19 evaluations; costs 818 and 124 against 95) with
+  the stock pin 8 mm off and the hands 20-37 mm off their targets. States kept: `cache/r7/pose_x_solve{2,4}.npz`.
+
+### The chain
+`cache/r7/pose_x_r4_committed.npz` (round 4's state) -> `--continue-from ... --place-left` (1121 s: place_left_arm 255 s,
+the pen-sigma-2 pass 45 evaluations, the whole-glove pass 70, xtol) = **hero_pose.json** (state `cache/r7/pose_x_solve2b.npz`,
+also `cache/stages/pose_x_pass1.npz`, with its left targets). The code as it stands reproduces this chain (the dropped
+attempts were reverted). `hero_pose_basis.json` written. Blender vs the solver: 0.008 mm.
+
+### Residuals, round 4 -> round 7 (px, full frame)
+
+| Joint | Round 4 | Keypoints only (r7) | Round 7 | Joint | Round 4 | Keypoints only (r7) | Round 7 |
+|---|---:|---:|---:|---|---:|---:|---:|
+| pupil R | 2.6 | 3.0 | 2.1 | wrist R | 15.6 | 18.6 | 16.4 |
+| pupil L | 2.9 | 2.9 | 3.0 | wrist L | 18.3 | 2.3 | **21.6** |
+| nose tip | 4.6 | 3.3 | 5.7 | hip R | 20.3 | 21.9 | 19.6 |
+| chin | 9.0 | 7.7 | 8.3 | hip L | 16.6 | 19.9 | 15.3 |
+| right ear | 5.0 | 8.3 | **2.7** | knee R | 5.0 | 1.7 | 4.1 |
+| skull top | 12.6 | 7.7 | **17.3** | knee L | 9.3 | 8.6 | 8.2 |
+| shoulder R | 10.1 | 8.1 | **19.8** | ankle R | 2.5 | 2.6 | 3.6 |
+| shoulder L | 12.6 | 6.2 | 13.9 | ankle L | 3.3 | 3.0 | 3.8 |
+| elbow R | 8.7 | 4.2 | 9.5 | butt pin | 10.2 | | 9.3 |
+| elbow L | 16.1 | 10.5 | 18.2 | muzzle pin | 17.7 | | **24.5** |
+
+- Cost 95.5 (round 4: 61.8); keypoints only 41.7. Face: MediaPipe's landmarks **0.85 px** RMS (round 4: 0.99).
+- The right shoulder (19.8 px) and the skull top (17.3) pay for the stock pin and the head turn: the arm adducts and
+  the upper arm comes forward onto the stock; the down-weighted skull top follows the face. The muzzle (24 px) and the
+  carbine's roll (-17.9 deg) moved with the left hand.
+
+Readbacks: head yaw **17.5** (round 4: 14.9), pitch -1.0, roll -2.5; legs (hip / knee / foot turn-out from rest) R
+**21.1 / 5.8 / 13.7** (round 4: 26.8 / 11.8 / 38.9), L 6.2 / 4.6 / 8.1; knee facing R **-34.9** (-46.8), L 0.7; foot
+headings R **-45.5** (-82.7), L 6.4; knees 21.6 / 9.6; elbows R 87.1, L 47.3; wrists (flexion / deviation) R 29.2 / 21.5,
+L -14.6 / -10.0; pelvis yaw -8.9, chest yaw -6.9, pitch 10.1; skull top z 1844.2 mm. Hand targets: left 7 / 3 / 2 mm
+(wrist / index / little MCP), right wrist 21 mm off place_hand's.
+
+### Contact (the solver's fields, mm; negative = inside)
+
+| Surface pair | Round 4 | Round 7 |
+|---|---:|---:|
+| right / left glove in the carbine (min) | +0.08 / +0.25 | -0.32 / -0.38 |
+| right sleeve / guard in the carbine (min) | +5.6 / +0.9 | **-1.6 / -4.4** |
+| stock to the upper arm and elbow (STOCK_PIN, mean of 12, all points) | 6-80 | **+0.7** |
+| carbine in the carrier | +1.6 | +1.05 |
+| butt pad to the carrier (mean of 8 nearest) | +1.3 | +2.1 |
+| right / left palm to its grip (mean of 12) | +0.24 / +0.44 | +0.70 / +0.55 |
+
+The stock is pinned: its toe lies in the crook of the elbow on the forearm guard's neoprene sleeve, 4.4 mm into it at 24
+points between the solver's subsample (the solve's own subsampled measure read the pin 10 mm off, so it kept pulling).
+The left grasp, distal glove means in the gun frame (mm): index (238.7, -36.0, -9.7), middle (259.6, -22.4, -14.9), ring
+(294.7, -27.6, -16.0), little (309.5, -18.2, +5.8): the tips at the lower edge of the right (camera) face, not under the
+bottom flat; MCP 40-60, PIP 5-29: the fingers bend at the knuckles and lie down the face, the proximal phalanges 6-17 mm
+off the gun. GRASP["L"] is still not met.
+
+### The clash report (renders/round_07/clashes.md)
+
+| Pair | Round 6 | Round 7 |
+|---|---:|---|
+| body-boots | 2364, 10.4 | 2327, 10.4 (unchanged: the right forefoot in the sole) |
+| shirt-carrier | 762, 4.8 | 937, **23.1**: two bag vertices against a crumpled fold of the shirt front 19-23 mm behind them (checked in assembled.blend: the bag point lies in front of the shirt; the open-shell test's normal at the fold misreads it); the real worst is the right strap pad 6.4 mm in the gaiter |
+| shirt-gloves | none | 3, 20.9: the right glove's cuff inside the sleeve's cuff (layering; the same test) |
+| body-shirt | 23, 6.4 | 14, **14.1** at the back of the right armpit (the adducted arm) |
+| gloves-carbine | 37, 1.4 | 142, **5.5**: the handguard in the left glove; body-carbine 62, 3.8 (the skin there). The solver's smoothed field read 0.4 mm: the handguard's slotted wall is thinner than its smoothing |
+| shirt-carbine | none | 60, 4.3 (the stock in the sleeve at the elbow's crook) |
+| armour-carbine | 9, 0.7 | 95, 3.9 (Guard.R.Sleeve on the stock's toe) |
+| shirt-armour | 91, 3.3 | 232, 4.1 (the left guard's wrist foam in the sleeve) |
+| gloves-armour | 25, 5.1 | 16, 2.7 |
+| carrier-carbine | 32, 2.0 | 56, 2.3 (the butt pad in the bag's face) |
+
+Stand-off check (renders/round_07/standoff.md): 21 objects, the same set as round 6 (the radio pouch, the pistol-mag
+pouch, the belt's right carrier tails, the front bag...); nothing the pose changed.
+
+Note: a parallel round-8 materials pass was editing `scripts/lib/`, `scripts/eval/grade*` and the parts' material
+tables while this round ran; `--rebuild` built the parts from its working copy, so round 7's Cycles panels show its
+graded, in-progress materials.
+
+### Renders looked at (renders/round_07/)
+`soldier_full_compare`, `head_face_compare`, `hands_rifle_compare`, `torso_vest_compare`, `legs_knees_compare`,
+`boots_feet_compare`, `turnaround`, and `renders/pose/pose_hands_{L,R}_{camera,gun_right,front}.png` (`pose_contact.py
+--render-hands --quick`).
+- Legs: the right boot is a three-quarter (about 45 deg out) instead of a profile; the right knee pad faces
+  forward-right, no longer outward; the stance reads natural. The drawn boot is more in profile.
+- Head: turned a little more to his left than round 6, but beside the reference it still reads close to frontal: the
+  drawing shows more of his right cheek and his far eye nearer the nose. The chin is level, not lifted.
+- Stock: it lies along the inside of the right upper arm and forearm, its toe in the elbow's crook, the butt on the
+  carrier: braced rather than floating. The upper arm hangs closer to the body.
+- Left hand: over the handguard with the back of the hand to the camera, the fingers bent at the knuckles down the near
+  face, the tips at its lower edge. More closed than round 6 but not the drawn grip, where the fingertips show curled
+  under the handguard.
+- Right hand: as round 4 (on the grip, the index along the receiver).
+
+### Still wrong, for the next round
+1. **The left hand's grasp** (GRASP["L"] unmet; the glove 5.5 mm into the handguard by the clash test). The hand can wrap
+   only if the arm brings it lower and nearer the gun's left side; a free-hand wrap exists (dropped attempt 2) but the
+   arm did not reach it. Next: the wrap's hand pose as the target of an arm-only IK (clavicle to wrist, the wrist's
+   limits explicit) before the body solve, or a looser left wrist-pixel target (the drawn cuff box, 14 px).
+2. **The solver under-reads thin walls and misses points**: the carbine field's 1-voxel smoothing hides the handguard's
+   slotted wall (5.5 mm in the clash test, 0.4 in the field) and the 1-in-6 guard subsample misses the guard's sleeve on
+   the stock (4.4 mm). Exact distances to the carbine's triangles for points within a few mm, made smooth enough for
+   finite differences (the worst-k attempt stalled the solver).
+3. **Head yaw 17.5** against the drawn ~20 (a critic read 30); the face term on this face wants ~18. A face closer to the
+   drawing (head.md §11.7 item 1) is what would let it turn further; the chin is not lifted.
+4. The right shoulder pixel (19.8) and the back-of-armpit shirt clash (14.1 mm) from the adducted arm; the shirt's
+   armpit needs ease (shirt.md §7).
+5. The muzzle pin 24.5 px and the carbine's roll -18 deg.
+6. Round 4's items 4-5 stand (the strap pads in the gaiter, the right forefoot in the sole). The right wrist is off its
+   ulnar limit now (flexion 29, deviation 21.5).

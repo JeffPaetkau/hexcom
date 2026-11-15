@@ -33,6 +33,8 @@ distances per stage and the fitted finger angles.
 
   "$SGT_PYIMG" -I scripts/stages/pose_solve.py [--restarts N] [--no-contact] [--refit-fingers]
       (about 25 minutes with contact; --no-contact is round 1's objective, 10 s)
+  "$SGT_PYIMG" -I scripts/stages/pose_solve.py --continue-from <state.npz> [--place-left]
+      (round 7: from a saved state; --place-left first fits the left arm and fingers round the handguard)
   "$SGT_PYIMG" -I scripts/stages/pose_solve.py --face-targets      (rebuild face_targets.json from head.py's fit)
 """
 import argparse
@@ -94,11 +96,28 @@ TARGETS = {
     "foot.L": ("head", (930.0, 853.0), 8.0, "x hand/mp, y sole 907 - 54"),
 }
 
-HEEL_SEAT, BALL_SEAT = 0.036, 0.024     # footbed heights (m), LOWA Zephyr class (take 1 spec 02 §3.1)
+# Round 7 (critic m15, the head turned less than drawn): with the face term on (MediaPipe's ~400 landmarks), the hand
+# read single pixels of the pupils, nose tip and menton count the same evidence twice and the skull top is a guess
+# through the hair (its 12-17 px residual held the head back). On the round-4 face, the face term alone wants 18.2 deg
+# of yaw at 1.02 px RMS; with these four at full weight it settled at 14.2 (1.28 px). Their sigmas are multiplied by
+# these factors while the face term is on; the right ear (MediaPipe has no ear) keeps its own.
+FACE_SUPERSEDES = {"pupil_R": 3.0, "pupil_L": 3.0, "nose_tip": 3.0, "chin": 3.0, "skull_top": 2.0}
+
+HEEL_SEAT, BALL_SEAT = 0.036, 0.024    # footbed heights (m), LOWA Zephyr class (take 1 spec 02 §3.1)
 # the left foot: 17 in round 0 (spec 08 D3); round 2 projects the boot toe through the hero camera and the
 # drawn toe matches about 5 (at 17 the toe landed ~6 cm past the drawn one, to his left)
-FOOT_HEADING = {"R": -85.0, "L": 5.0}  # toe direction, deg from the camera axis (-Y), + toward his left (+X)
-KNEE_FACING = {"R": -45.0, "L": 12.0}
+# Round 7 (critic m16: the right leg turned out ~70 deg, the knee pad facing out): the drawing's right boot is in
+# profile (85-100 deg) while its knee pad faces only ~25-45 deg out, which no comfortable leg does. Round 4 reached
+# the boot's heading by twisting the foot 39 deg against the shank and the tibia 12 deg (hip 27). Reality wins: each
+# joint stays in a comfortable standing range (LEG_LIMITS, from the rest leg: hip external rotation to 35, the tibia
+# to 12, the foot (ankle and subtalar, with the ~10 deg toe-out of normal tibial torsion) to 15), the knee faces about
+# 30 deg to his right (the pelvis's -9 and ~16 of hip turn-out: "roughly forward"), and the right boot turns out about
+# 50 deg: still clearly more in profile than the left (+5), no longer a full profile.
+FOOT_HEADING = {"R": -50.0, "L": 5.0}  # toe direction, deg from the camera axis (-Y), + toward his left (+X); round 4: R -85
+KNEE_FACING = {"R": -30.0, "L": 12.0}  # round 4: R -45
+KNEE_FACING_SIGMA = {"R": 8.0, "L": 15.0}   # round 4: 15 both
+LEG_LIMITS = {"hip": (-15.0, 35.0), "knee": (-12.0, 12.0), "foot": (-12.0, 15.0)}   # deg, + external (leg_turn)
+LEG_PRIOR = {"knee": (5.0, 6.0), "foot": (10.0, 6.0)}                                 # deg: mean, sigma
 KNEE_FLEX = {"R": (17.0, 6.0), "L": (9.0, 5.0)}
 ELBOW_FLEX = {"R": (88.0, 10.0), "L": (55.0, 12.0)}     # pose note §6 (R 95-100, L 55); round 2: R 88 (the 102 deg elbow pinched the shirt and guard; see README)
 # Wrists (deg, relative to the rig's rest hand): flexion + toward the palm, deviation + toward the little
@@ -284,6 +303,12 @@ CONTACT = {
     "butt_touch_mm": 3.0, "butt_sigma_mm": 0.8, "butt_k": 8,  # butt pad on the carrier's face
     "face_sigma_px": 2.0, "face_equiv": 20.0,   # the face's ~400 landmarks weigh as 20 points at 2 px
 }
+# Round 7 (critics m39, m47): the reference's stock is pinned under the right arm against the chest, its butt in
+# the shoulder's pocket on the carrier and the inner upper arm and elbow closed on its side, so the carbine is braced
+# by the arm, not carried by the hands alone. Round 4's arm hung 6 mm (forearm guard) to 80+ mm (upper arm) off it.
+# The mean of the k nearest upper-arm and elbow points (sleeve and arm armour) to the stock (gun x behind -160 mm:
+# the stock and the buffer tube's rear, not the receiver or the grip) is held at touch_mm.
+STOCK_PIN = {"on": True, "x_max_mm": -160.0, "touch_mm": 1.0, "sigma_mm": 1.5, "k": 12}
 HAND_CORE = ("wrist", "metacarpal", "finger1-1")     # the palm and the thenar: what the palm terms use
 CHAINS = ("finger1", "finger2", "finger3", "finger4", "finger5")
 
@@ -366,7 +391,8 @@ class Contact:
         self.gun_surf = self.gun_surf[self.gun_surf[:, 0] < 120.0]    # only the rear half can reach the carrier
         # point sets
         self.sets = {}
-        for key in ("glove_L", "glove_R", "guard_L", "guard_R", "sleeve_L", "sleeve_R", "skin_L", "skin_R", "face"):
+        for key in ("glove_L", "glove_R", "guard_L", "guard_R", "sleeve_L", "sleeve_R", "armarm_L", "armarm_R",
+                    "skin_L", "skin_R", "face"):
             if f"pts_{key}_V" not in d:
                 continue
             V = d[f"pts_{key}_V"].astype(float) / 1000.0
@@ -395,9 +421,13 @@ class Contact:
             sk_["chain"][np.array([n_.startswith("finger1-1") for n_ in sk_["dom"]])] = "palm"
             # the sleeve and guard points that can meet the carrier: the lower upper arm down (not the shoulder,
             # which the straps lie on by design)
-            for key in (f"sleeve_{s}", f"guard_{s}"):
+            for key in (f"sleeve_{s}", f"guard_{s}", f"armarm_{s}"):
+                if key not in self.sets:
+                    continue
                 q = self.sets[key]
                 q["arm"] = np.array([n_.startswith(("upperarm02", "lowerarm", "wrist")) for n_ in q["dom"]])
+                # round 7: what can pin the stock: the upper arm and the elbow (STOCK_PIN)
+                q["pin"] = np.array([n_.startswith(("upperarm01", "upperarm02", "lowerarm01")) for n_ in q["dom"]])
         if "face" in self.sets and os.path.exists(FACE_JSON):
             fj = json.load(open(FACE_JSON, encoding="utf-8"))
             vid = {v: i for i, v in enumerate(fj["vertex_ids"])}
@@ -499,6 +529,12 @@ class Model:
             cand = [Rl[:, 0], -Rl[:, 0], Rl[:, 2], -Rl[:, 2]]
             best = max(range(4), key=lambda j: cand[j] @ np.array([0, -1.0, 0]))
             self.knee_front[s] = (Rl.T @ cand[best])
+        self.thigh_front = {}       # round 7: the thigh's anterior axis, as the shank's
+        for s in "LR":
+            Rl = R[f"upperleg01.{s}"]
+            cand = [Rl[:, 0], -Rl[:, 0], Rl[:, 2], -Rl[:, 2]]
+            best = max(range(4), key=lambda j: cand[j] @ np.array([0, -1.0, 0]))
+            self.thigh_front[s] = (Rl.T @ cand[best])
         # the carbine (its start: the two-pin solution) and the hand targets in its frame
         self.gun0, self.gun_sol = carbine_frame()
         self._G = None
@@ -522,7 +558,17 @@ class Model:
         # round 2: the real surfaces (set by solve()); finger rotations held fixed while the body is solved
         self.contact, self.finger_basis, self.contact_full = None, {}, False
         self.gun_pen = True        # False: the hands and arms may pass through the carbine (the reach stage)
+        self.hand_skip = set()     # round 7: sides whose hand targets are switched off (place_left_arm)
         self.root = sk.names[0] if sk.parent[sk.names[0]] is None else [n for n in sk.names if sk.parent[n] is None][0]
+        # round 7: the legs' rotations at rest (the bones' rolls put the thigh's axis ~9 deg off the shank's), so
+        # the readback and the limits measure from the rest leg
+        b0, rw0 = self.basis(np.zeros(self.n))
+        P0 = sk.fk(b0, rw0)
+        self.leg_rest = {s: self.leg_rotations(P0, s) for s in "LR"}
+
+    def leg_turn(self, P, s):
+        """(hip, knee, foot) external rotation from the rest leg, deg (leg_rotations less the rest's)."""
+        return tuple(a - b for a, b in zip(self.leg_rotations(P, s), self.leg_rest[s]))
 
     @staticmethod
     def angle(a, b, c):
@@ -610,6 +656,29 @@ class Model:
         f = P[f"lowerleg01.{s}"][:3, :3] @ self.knee_front[s]
         return math.degrees(math.atan2(f[0], -f[1]))
 
+    def leg_rotations(self, P, s):
+        """Round 7: the leg's turn-out split by joint (deg, + = external rotation, the toe or kneecap turned away
+        from the midline): the hip (the thigh's front against the pelvis's, about the femur), the knee (the shank's
+        front against the thigh's, about the shank) and the foot (its heel-to-toe line against the shank's front,
+        seen from above: the ankle and subtalar joints). Their sum is about the foot's heading against the pelvis."""
+        sg = 1.0 if s == "R" else -1.0
+
+        def about(u, a, b):
+            u = u / np.linalg.norm(u)
+            a = a - u * (a @ u)
+            b = b - u * (b @ u)
+            return math.degrees(math.atan2(float(u @ np.cross(a, b)), float(a @ b)))
+        Rp = P[self.root][:3, :3] @ self.R[self.root].T
+        pf = Rp @ np.array([0.0, -1.0, 0.0])
+        h, k, a = (P[n][:3, 3] for n in (f"upperleg01.{s}", f"lowerleg01.{s}", f"foot.{s}"))
+        tf = P[f"upperleg01.{s}"][:3, :3] @ self.thigh_front[s]
+        kf = P[f"lowerleg01.{s}"][:3, :3] @ self.knee_front[s]
+        hip = sg * about(k - h, pf, tf)
+        knee = sg * about(a - k, tf, kf)
+        toe = self.point(P, f"toe_{s}") - self.point(P, f"heel_{s}")
+        foot = sg * about(np.array([0.0, 0.0, -1.0]), kf, toe)
+        return hip, knee, foot
+
     def com(self, P):
         """Rough centre of mass (Dempster-style segment shares) with the carbine at 3.4 kg on 80 kg."""
         pts = [("root", 0.142), ("spine03", 0.139), ("spine01", 0.216), ("head", 0.081)]
@@ -636,8 +705,11 @@ class Model:
         names = list(TARGETS)
         pts = np.array([self.point(P, n) for n in names])
         px = CAM.project(pts)
+        face_on = self.contact is not None and self.contact.face_idx is not None
         for n, p in zip(names, px):
             _, tgt, sig, _ = TARGETS[n]
+            if face_on:
+                sig *= FACE_SUPERSEDES.get(n, 1.0)
             add(f"px:{n}:x", p[0] - tgt[0], sig)
             add(f"px:{n}:y", p[1] - tgt[1], sig)
         # 2. the carbine on its pins and against the carrier, and the hands on the carbine
@@ -679,7 +751,8 @@ class Model:
                     sg = HAND_SIGMA_MM["wrist" if bone.startswith("wrist") else "knuckle"]
                     if self.contact is not None:
                         sg = HAND_SIGMA_MM["wrist_contact" if bone.startswith("wrist") else "knuckle_contact"]
-                    add(f"hand:{bone}:{'xyz'[j]}", d[j] * 1000.0, sg)
+                    # round 7: place_left_arm fits the left hand to the gun itself, without the old target
+                    add(f"hand:{bone}:{'xyz'[j]}", 0.0 if s in self.hand_skip else d[j] * 1000.0, sg)
         # 3. feet on the footbeds, at the headings
         for s in "LR":
             # each point keeps its rest height above the sole, raised onto the footbed
@@ -703,7 +776,13 @@ class Model:
             kf = self.knee_flex(P, s)
             add(f"prior:knee_flex_{s}", kf - KNEE_FLEX[s][0], KNEE_FLEX[s][1])
             add(f"limit:knee_hyper_{s}", min(0.0, kf - 3.0), 0.5)
-            add(f"prior:knee_facing_{s}", self.knee_facing(P, s) - KNEE_FACING[s], 15.0)
+            add(f"prior:knee_facing_{s}", self.knee_facing(P, s) - KNEE_FACING[s], KNEE_FACING_SIGMA[s])
+            # round 7: each joint of the leg within its comfortable standing range
+            for nm, v in zip(("hip", "knee", "foot"), self.leg_turn(P, s)):
+                lo_, hi_ = LEG_LIMITS[nm]
+                add(f"limit:leg_{nm}_rot_{s}", min(0.0, v - lo_) + max(0.0, v - hi_), 1.0)
+                if nm in LEG_PRIOR:
+                    add(f"prior:leg_{nm}_rot_{s}", v - LEG_PRIOR[nm][0], LEG_PRIOR[nm][1])
             ef = self.angle(P[f"upperarm01.{s}"][:3, 3], P[f"lowerarm01.{s}"][:3, 3], P[f"wrist.{s}"][:3, 3])
             add(f"limit:elbow_{s}", min(0.0, ef - 10.0) + max(0.0, ef - 145.0), 0.5)
             add(f"prior:elbow_flex_{s}", ef - ELBOW_FLEX[s][0], ELBOW_FLEX[s][1])
@@ -778,12 +857,27 @@ class Model:
             # the palm on its grip: the mean of its closest points' distances
             palm = (g["core"] & g["palmar"])[sel]
             add(f"touch:palm_{s}", kmin_mean(dg[palm], K["touch_k"]) - K["touch_mm"], K["touch_sigma_mm"])
-            for key in (f"sleeve_{s}", f"guard_{s}"):
+            pin_d = []
+            for key in (f"sleeve_{s}", f"guard_{s}", f"armarm_{s}"):
+                if key not in C_.sets:
+                    continue
                 q = C_.sets[key]
                 sel = q["sub"] if sub else np.ones(len(q["V"]), bool)
                 Y = C_.lbs(key, Ms, sel)
-                hinge(f"pen:{key}_in_carbine", C_.gun_d(Y, G), K["margin_arm_gun_mm"])
+                dY = C_.gun_d(Y, G)
+                hinge(f"pen:{key}_in_carbine", dY, K["margin_arm_gun_mm"])
                 hinge(f"pen:{key}_in_carrier", C_.car_d(Y[q["arm"][sel]], P, Tc), K["margin_carrier_mm"])
+                if s == "R" and key != f"guard_{s}":
+                    # round 7: the distance to the stock of the upper arm's and elbow's outer surface; a point
+                    # beside the receiver (gun x past STOCK_PIN's end) counts as that much farther
+                    pm = q["pin"][sel]
+                    gx = ((Y[pm] - G[:3, 3]) @ G[:3, 0]) * 1000.0
+                    pin_d.append(dY[pm] + softplus(gx - STOCK_PIN["x_max_mm"], 2.0))
+            if s == "R" and pin_d and STOCK_PIN["on"]:
+                # the stock pinned under the right arm (critics m39, m47): the butt in the shoulder's pocket on the
+                # carrier (touch:butt_on_carrier) and the arm closed on the stock's side, so the carbine is braced
+                v = kmin_mean(np.concatenate(pin_d), STOCK_PIN["k"])
+                add("touch:stock_under_arm_R", v - STOCK_PIN["touch_mm"], STOCK_PIN["sigma_mm"])
         # the carbine clear of the carrier (pouches, bag), the butt pad on its face
         S = C_.gun_world(C_.gun_surf[::2] if sub else C_.gun_surf, G)
         hinge("pen:carbine_in_carrier", C_.car_d(S, P, Tc), K["margin_carbine_carrier_mm"])
@@ -1208,6 +1302,146 @@ def place_hand(model, x, side):
     return out
 
 
+# Round 7, the left hand's wrap (critics: the left hand still reads open on the handguard). Round 4 left the knuckles
+# 40 mm above the bore with the palm flat on the top rail; from there the fingers (proximal phalanx ~45 mm, middle ~28)
+# reach only down the right face, and fit_fingers could not curl them under (README "Round 4"). Tried first, and
+# dropped (README "Round 7"): (1) place_hand's rigid placement with the table curls: the table hook fits round the
+# handguard near no design, the fit hung the hand under the gun; (2) a free hand with its fingers fitted round the
+# handguard from a grid of designs: it found a clean wrap (palm on the camera face, the tips under the bottom flat),
+# but out of the arm's reach: the body solve left the wrist 43 mm off it at the radial limit, the fingers 6-26 mm off
+# the gun and the thumb in the rail.
+# So the hand is placed through the arm: the left clavicle, shoulder, elbow, forearm twist and wrist (12) and the left
+# fingers (20) are fitted together under the whole solve's residuals (keypoints, priors, wrist limits, contact), with
+# the old left-hand targets off, plus the grasp: the tips in GRASP["L"]'s band, each finger's front on the gun, the
+# curls near a wrap (MCP / PIP from LEFT_ARM's starts, DIP 0.65 PIP).
+LEFT_ARM = {"bones": ("clavicle.L", "upperarm01.L", "lowerarm01.L", "lowerarm02.L", "wrist.L"),
+            "starts": ((30.0, 90.0), (45.0, 90.0)), "nfev": (60, 80), "curl_sigma_deg": 25.0, "thumb_sigma_deg": 30.0}
+
+
+def place_left_arm(model, x, verbose=True):
+    """Fit the left arm and fingers so the hand wraps the handguard (LEFT_ARM). Returns the new x; sets
+    model.hand_local["L"] to the fitted wrist and knuckles (gun frame), model.finger_params["L"], the left fingers
+    in model.finger_basis."""
+    side, C_, A = "L", model.contact, LEFT_ARM
+    idx = np.concatenate([np.arange(model.slices[b][0].start, model.slices[b][0].stop) for b in A["bones"]])
+    na = len(idx)
+    axes = finger_axes(model, side)
+    layout = []
+    for b, al in axes.items():
+        f, j = b.split(".")[0].split("-")
+        j = int(j)
+        for ax, kind in al:
+            lo_, hi_ = (THUMB_BOUNDS if f == "finger1" else FINGER_BOUNDS)[j] if kind == "flex" else (-25.0, 25.0)
+            if kind == "spread" and f == "finger1":
+                lo_, hi_ = -40.0, 40.0
+            layout.append((b, ax, kind, (f, j), (lo_, hi_)))
+    keep = {k: v for k, v in model.finger_basis.items() if not k.endswith("." + side)}
+    g = C_.sets[f"glove_{side}"]
+    gsel = np.isin(g["chain"], CHAINS[1:]) & (g["palmar"] | np.array([d.split(".")[0].endswith("-3") for d in g["dom"]]))
+    dom, chain, palmar = g["dom"][gsel], g["chain"][gsel], g["palmar"][gsel]
+    grasp = [(np.nonzero(dom == f"{f}-3.{side}")[0], terms) for f, terms in GRASP[side].items()]
+    touch = [np.nonzero((chain == f) & palmar)[0] for f in CHAINS[1:]]
+    lo_b, hi_b = model.bounds()
+    lo_t, hi_t = np.array([L[4][0] for L in layout]), np.array([L[4][1] for L in layout])
+    lo, hi = np.r_[lo_b[idx], lo_t], np.r_[hi_b[idx], hi_t]
+
+    def basis_of(t):
+        fb = {}
+        for (b, ax, kind, _, _), v in zip(layout, t):
+            m = rv(ax * D(v))
+            fb[b] = m if b not in fb else fb[b] @ m
+        return {b: rot4(m) for b, m in fb.items()}
+
+    def tab_of(mcp, pip):
+        curl = {"finger2": (mcp, pip, 0.65 * pip), "finger3": (mcp, pip, 0.65 * pip),
+                "finger4": (mcp + 3.0, pip, 0.65 * pip), "finger5": (mcp + 5.0, pip - 5.0, 0.65 * (pip - 5.0))}
+        return np.array([(curl.get(fj[0], CURLS[side][fj[0]])[fj[1] - 1] if kind == "flex" else 0.0)
+                         for (_, _, kind, fj, _) in layout])
+
+    def extra(xx, t, tab, detail=False):
+        P, _, _ = model.pose(xx)
+        G = model.gun(xx)
+        X = C_.lbs(f"glove_{side}", C_.mats(P), gsel)
+        dg = C_.gun_d(X, G)
+        Lg = (X - G[:3, 3]) @ G[:3, :3] * 1000.0
+        out, tips = [], {}
+        for ii in touch:
+            out.append((kmin_mean(dg[ii], 4) - FINGER["touch_mm"]) / 3.0)
+        for (ii, terms), f in zip(grasp, GRASP[side]):
+            q = Lg[ii].mean(0)
+            tips[f] = [round(float(c), 1) for c in q]
+            for ax, bound, sgn, sg in terms:
+                out.append(float(softplus(sgn * (bound - q["xyz".index(ax)]), 0.5)) / sg)
+        vals = {}
+        for (b, ax, kind, _, _), val, tb in zip(layout, t, tab):
+            vals[(b, kind)] = val
+            th_ = b.startswith("finger1-")
+            if kind == "flex":
+                out.append((val - tb) / (A["thumb_sigma_deg"] if th_ else A["curl_sigma_deg"]))
+            else:
+                out.append(val / (A["thumb_sigma_deg"] if th_ else FINGER["spread_sigma_deg"]))
+        for f in CHAINS[1:]:
+            pip, dip = vals[(f"{f}-2.{side}", "flex")], vals[(f"{f}-3.{side}", "flex")]
+            out.append((dip - FINGER["dip_pip_ratio"] * pip) / FINGER["dip_sigma_deg"])
+        for a2, b2 in (("finger2", "finger3"), ("finger3", "finger4"), ("finger4", "finger5")):
+            for j in (1, 2):
+                out.append((vals[(f"{a2}-{j}.{side}", "flex")] - vals[(f"{b2}-{j}.{side}", "flex")])
+                           / FINGER["neighbour_sigma_deg"])
+        if detail:
+            return np.array(out), {"tips_gun_mm": tips, "finger_front_to_gun_mm": [round(kmin_mean(dg[ii], 4), 1) for ii in touch]}
+        return np.array(out)
+
+    def res(p, tab):
+        xx = x.copy()
+        xx[idx] = p[:na]
+        model.finger_basis = {**keep, **basis_of(p[na:])}
+        return np.r_[model.residuals(xx), extra(xx, p[na:], tab)]
+    old_full, old_skip, sig_final = model.contact_full, set(model.hand_skip), CONTACT["pen_sigma_mm"]
+    model.contact_full, model.hand_skip = True, {side}
+    best = None
+    t_start = time.perf_counter()
+    for mcp, pip in A["starts"]:
+        tab = tab_of(mcp, pip)
+        p = np.clip(np.r_[x[idx], tab], lo + 1e-6, hi - 1e-6)
+        for sig, nf in zip((3.0, sig_final), A["nfev"]):
+            CONTACT["pen_sigma_mm"] = sig
+            sol = least_squares(res, p, args=(tab,), bounds=(lo, hi), x_scale="jac", diff_step=1e-5, max_nfev=nf,
+                                xtol=1e-8, ftol=1e-8)
+            p = sol.x
+        CONTACT["pen_sigma_mm"] = sig_final
+        if verbose:
+            xx = x.copy()
+            xx[idx] = sol.x[:na]
+            model.finger_basis = {**keep, **basis_of(sol.x[na:])}
+            print(f"  left arm from curls {mcp}/{pip}: cost {sol.cost:.2f} ({time.perf_counter() - t_start:.0f} s), "
+                  f"{extra(xx, sol.x[na:], tab, True)[1]}", flush=True)
+        if best is None or sol.cost < best[0].cost:
+            best = (sol, tab, (mcp, pip))
+    sol, tab, start = best
+    model.contact_full, model.hand_skip = old_full, old_skip
+    x = x.copy()
+    x[idx] = sol.x[:na]
+    t = sol.x[na:]
+    model.finger_basis = {**keep, **basis_of(t)}
+    model.finger_params = {**getattr(model, "finger_params", {}), side: t.copy()}
+    P, _, _ = model.pose(x)
+    G = model.gun(x)
+    Gi = np.linalg.inv(G)
+    bones = (f"wrist.{side}", f"finger2-1.{side}", f"finger5-1.{side}")
+    model.hand_local[side] = {b: (Gi @ P[b])[:3, 3] for b in bones}
+    _, info = extra(x, t, tab, True)
+    out = {"start_curls": start, "cost": round(float(sol.cost), 2), **info,
+           "wrist_flex_dev_deg": [round(v, 1) for v in model.wrist_angles(P, side)],
+           "hand_targets_gun_mm": {b: [round(float(c) * 1000, 1) for c in v] for b, v in model.hand_local[side].items()}}
+    print(f"left arm placed: {out}", flush=True)
+    return x, out
+
+
+def hand_targets_npz(model):
+    """Round 7: the left hand's targets (gun frame, m: wrist, index and little MCP) for a saved solver state."""
+    return {"hand_L": np.array([model.hand_local["L"][b] for b in ("wrist.L", "finger2-1.L", "finger5-1.L")])}
+
+
 def joint_px(model, x):
     P, _, _ = model.pose(x)
     out = {}
@@ -1233,7 +1467,7 @@ def contact_report(model, x):
     return {k: v for k, v in info.items() if k.startswith(("pen:", "touch:", "face:"))}
 
 
-def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=None):
+def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=None, place_left=False):
     with open(BASE_JSON, encoding="utf-8") as f:
         base = json.load(f)
     with open(KP_JSON, encoding="utf-8") as f:
@@ -1292,12 +1526,26 @@ def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=N
             z = np.load(continue_from)
             x = z["x"]
             model.finger_params = {s: z[f"fp_{s}"] for s in "LR" if f"fp_{s}" in z}
+            if "hand_L" in z.files and not place_left:      # round 7: the left hand's targets from place_left_arm
+                model.hand_local["L"] = dict(zip(("wrist.L", "finger2-1.L", "finger5-1.L"), z["hand_L"]))
+                stages["hand_L_targets_from"] = os.path.relpath(continue_from, PROJECT).replace(os.sep, "/")
             model.contact_full = True
+            if place_left:
+                # round 7: the left arm and fingers fitted round the handguard (place_left_arm), the right fingers
+                # refit, then the body at a soft penetration sigma before the usual fingers / whole glove / fingers
+                x, stages["place_hand"]["L"] = place_left_arm(model, x)
+                fingers_out = {"R": fit_fingers(model, x, "R")}
+                sig_final = CONTACT["pen_sigma_mm"]
+                CONTACT["pen_sigma_mm"] = 2.0
+                x = run("continued: contact, pen sigma 2.0", 80).x
+                CONTACT["pen_sigma_mm"] = sig_final
+                np.savez(os.path.join(PROJECT, "cache", "stages", "pose_x_left.npz"), x=x,
+                         **{f"fp_{k}": v for k, v in getattr(model, "finger_params", {}).items()}, **hand_targets_npz(model))
             fingers_out = {s: fit_fingers(model, x, s) for s in "RL"}
             sol = run("continued: whole glove", 150)
             x = sol.x
             np.savez(os.path.join(PROJECT, "cache", "stages", "pose_x_pass1.npz"), x=x,
-                     **{f"fp_{k}": v for k, v in getattr(model, "finger_params", {}).items()})
+                     **{f"fp_{k}": v for k, v in getattr(model, "finger_params", {}).items()}, **hand_targets_npz(model))
             fingers_out = {s: fit_fingers(model, x, s) for s in "RL"}
             stages["continued_from"] = os.path.relpath(continue_from, PROJECT).replace(os.sep, "/")
         if not refit_fingers and not continue_from:
@@ -1322,7 +1570,7 @@ def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=N
                 sol = run(f"contact pass {it}, whole glove", 150)
                 x = sol.x
                 np.savez(os.path.join(PROJECT, "cache", "stages", f"pose_x_pass{it}.npz"), x=x,
-                         **{f"fp_{k}": v for k, v in getattr(model, "finger_params", {}).items()})
+                         **{f"fp_{k}": v for k, v in getattr(model, "finger_params", {}).items()}, **hand_targets_npz(model))
                 rep_ = contact_report(model, x)
                 print("  ", {k: v for k, v in rep_.items() if not k.endswith(":min_mm")}, flush=True)
                 print("   cost by term:", cost_by_term(model, x), flush=True)
@@ -1366,6 +1614,7 @@ def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=N
         "elbow_flex_deg": {s: round(model.angle(P[f"upperarm01.{s}"][:3, 3], P[f"lowerarm01.{s}"][:3, 3],
                                                 P[f"wrist.{s}"][:3, 3]), 1) for s in "LR"},
         "foot_heading_deg": {s: round(model.heading(P, s), 1) for s in "LR"},
+        "leg_turn_hip_knee_foot_deg": {s: [round(v, 1) for v in model.leg_turn(P, s)] for s in "LR"},
         "wrist_flex_dev_deg": {s: [round(v, 1) for v in model.wrist_angles(P, s)] for s in "LR"},
         "foot_points_z_mm": {k: round(float(model.point(P, k)[2]) * 1000, 1) for k in
                              ("heel_L", "mt1_L", "mt5_L", "toe_L", "heel_R", "mt1_R", "mt5_R", "toe_R")},
@@ -1461,7 +1710,10 @@ if __name__ == "__main__":
                                            "whole-glove body pass, fingers")
     ap.add_argument("--refit-fingers", action="store_true",
                     help="keep the body of the last full solve (cache/stages/pose_x_pass1.npz), fit only the fingers")
+    ap.add_argument("--place-left", action="store_true",
+                    help="with --continue-from (round 7): fit the left arm and fingers round the handguard first")
     a = ap.parse_args()
     if a.face_targets:
         sys.exit(build_face_targets())
-    sys.exit(solve(a.restarts, contact=not a.no_contact, refit_fingers=a.refit_fingers, continue_from=a.continue_from))
+    sys.exit(solve(a.restarts, contact=not a.no_contact, refit_fingers=a.refit_fingers, continue_from=a.continue_from,
+                   place_left=a.place_left))
