@@ -16,18 +16,18 @@ namespace Hexcom.Game;
 public partial class World : Node3D
 {
     /// <summary>Metres the far plane extends each way from the focus. Well past where fog ends it.</summary>
-    private const float PlainReach = 20000f;
+    internal const float PlainReach = 20000f;
 
     /// <summary>
     /// Where the far plane sits. It only shows beyond the eight kilometres of terrain mesh,
     /// deep in fog, and is kept below the hills so it never pokes through a valley before then.
     /// </summary>
-    private const float FarPlaneHeight = -25f;
+    internal const float FarPlaneHeight = -25f;
 
     private static readonly Color Horizon = new(0.72f, 0.79f, 0.90f);
 
     /// <summary>The landscape's seed. One number decides every hill.</summary>
-    private const int Seed = 7;
+    internal const int Seed = 7;
 
     /// <summary>
     /// Where the unit stands at the start unless a capture says otherwise: beside the highway
@@ -215,7 +215,7 @@ public partial class World : Node3D
         }
     }
 
-    private static WorldEnvironment BuildSky()
+    internal static WorldEnvironment BuildSky()
     {
         var sky = new ProceduralSkyMaterial
         {
@@ -258,10 +258,10 @@ public partial class World : Node3D
     }
 
     /// <summary>Where the sun sits: 38 degrees up, in the south-south-west (bearing 215). Low enough that hills shade.</summary>
-    private static readonly Vector2 DefaultSun = new(38f, 215f);
+    internal static readonly Vector2 DefaultSun = new(38f, 215f);
 
     /// <param name="sun">Elevation above the horizon and compass bearing of the sun, degrees.</param>
-    private static DirectionalLight3D BuildSun(Vector2 sun)
+    internal static DirectionalLight3D BuildSun(Vector2 sun)
         => new()
         {
             // A light shines along its -Z. Pitch it down by the elevation, then turn it so the
