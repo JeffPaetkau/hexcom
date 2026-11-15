@@ -19,13 +19,13 @@ Sources: take 1 `archive/v1/spec/10_combat_shirt_gaiter.md` §2 to §3 (G3 produ
 
 | Quantity | Real / source (mm) | Built, rest (mm) |
 |---|---|---|
-| Torso ease | snug knit, chest +40 | 5 mm offset (3.5 mm where it is tucked, below z 1060) |
+| Torso ease | snug knit, chest +40 | 5 mm offset; 2 mm where it is tucked (below z 1060, round 2: laid on the skin there) |
 | Chest girth (garment) | body + about 40 | 1059 (convex hull at z 1360; body chest 993) |
-| Sleeve ease | rib or ripstop upper arm 390 vs body 345 (about +7 offset); elbow 360; forearm 350 | 10 at the shoulder, 14 upper arm, 18 at the elbow, 16 forearm, 11 then 5.5 over the last 40 mm |
+| Sleeve ease | rib or ripstop upper arm 390 vs body 345 (about +7 offset); elbow 360; forearm 350 | round 2: 12 at the shoulder, 18 upper arm, 19 at the elbow, 16 forearm, 11 then 5.5 over the last 40 mm |
 | Cuff | 215, closing to 200, ending inside the glove gauntlet | cut 8 mm past the wrist joint, 5 to 5.5 mm offset, inside the glove cuff (0 and 1 vertex uncovered in the pose) |
 | Hem | tucked, at about h 850 | cut at z 930, inside the trousers |
-| Collar | mandarin, 55 tall | the shell runs up the neck to a plane at 1542 front and about 1600 back (under the gaiter) |
-| Gaiter | 280 x 460 tube, 3 thick; stack about 82 to 92 tall; roll 1 about 42 tall and 22 proud, roll 2 28 / 16, roll 3 20 / 12 | seat 10 mm (front) to 40 mm (back) up the neck axis, top 110 to 150 (saddle); rolls 27 / 19 / 13 proud; wall 3; spans z 1493 to 1647, 210 wide |
+| Collar | mandarin, 55 tall | the shell runs up the neck to a plane at 1542 front and about 1584 back (round 2, lowered 16 at the back to stay under the gaiter) |
+| Gaiter | fleece tube 280 x 460, 3 thick, pushed down into a cowl | round 2: a cowl from the chin to under the bag top, 1471 to 1659 tall, 304 wide over the shoulders (skirt), its folds out to 120 in front of the neck axis; lip 26/20/16 proud (front/side/back), main roll 52/36/24, lower roll 18/14/8; wall 3; flat (11 mm over the skin) under the strap corridor |x| > 92 |
 
 ## 2. What the reference shows
 
@@ -41,6 +41,11 @@ Evidence: `ref/crop_torso_vest.png`, `ref/crop_arm_*`, `ref/zoom_shirt_*`, `ref/
 - **Bicep pockets:** omitted (take 1 D6). Elbow-pad pockets are not modelled; the armour part's elbow caps sit outside.
 - **Collar zip and placket:** not built; hidden by the gaiter and carrier.
 - **Colours:** flat. Shirt #2c2927, gaiter #383029.
+- **Gaiter shape (round 2):** procedural, not simulated. The drawn cowl is three or four large soft folds; a
+  procedural fold field gives them exactly where the drawing has them, deterministically, in 3 s. A cloth
+  simulation (a tube collided with the posed body and pushed down) is the round-3 route to real buckling detail.
+- **The gaiter is flat under the carrier's straps** (`STRAP` in shirt.py, which carrier.py imports): in the drawing
+  the straps lie on top of it, so the fleece there is pressed to the collar.
 
 ## 4. Round 1 (2026-11-14)
 
@@ -80,11 +85,62 @@ Earlier failures, now fixed:
 - The first sleeves were too slim.
 - The first gaiter was too small.
 
-## 5. Still wrong, ranked for round 2
+## 5. Round 2 (2026-11-14): the gaiter as a cowl
 
-1. **The gaiter is still smaller than drawn** (210 wide against the drawing's about 233), and its rolls are too regular. Its lower front edge is ragged where the seat ring meets the chest. It needs the saddle tilt of the crevices (15°), the left pleat, and a sculpted or simulated buckle pattern.
-2. **Right elbow in the pose:** 71 shell vertices are inside the arm at the back of the 107° right elbow (posed x -385, y +97, z 1279). The skin there stretches beyond the 18 mm ease under linear skinning. It is not visible from the hero camera; the elbow points back and the forearm guard covers the area. Fix with a corrective shape or more ease at the olecranon, or let the armour part's elbow cap cover it.
-3. **No folds:** the elbow bunching, the drape under the pauldrons and the blousing above the waistband all need cloth simulation or displacement.
-4. **No rib shoulder panels, back seam, cuff tab or collar.**
-5. **Shirt tail at the lower back** and **collar back under the gaiter:** small layering misses behind the figure (§4).
-6. **No knit, ripstop or fleece materials.**
+### Gaiter (rebuilt)
+1. **The skin under it, on a coherent grid.** For each of 96 meridians round the neck axis (from (0, 12, 1488)
+   toward neck03), the same rays: a fan from the axis point 60 mm up (70 degrees below the horizontal up to it, landing
+   on the chest, trapezius and upper back), then horizontal rays climbing the axis. The grid is Taubin-smoothed
+   before anything is built on it; round 2's first try cast rays per meridian with their own arc lengths and the
+   neighbouring meridians disagreed, so the folds came out crumpled.
+2. **Arc length s along each meridian**, 0 at the ring 100 mm up the axis, + up. Each meridian runs from the skirt
+   edge s_bot (front -120: under the bag top; side -88: under the straps; back -48: under the rear bag) to the
+   top edge s_top (front 18: under the chin; side 40: behind the jaw, 12 higher on his left as drawn; back 62).
+3. **The folds** are cos² lobes along s on top of the collar allowance (11 on the neck, 10 on the chest): a lip at
+   the top edge, the main roll under the jaw (52 proud at the front), a lower roll falling over the collar, soft
+   vertical drapes in the front skirt. Their heights vary round the neck (harmonics 2, 3, 5 at 24/14/7 %), their
+   positions wander (+-7 and +-4 mm, harmonics 2 and 3), and a crease on his left front (65 degrees) cuts them by
+   55 %, so the rolls read as one bunched tube, not as rings.
+4. **The folds bulge away from the neck axis**, not along the skin normal: the normals converge in the hollow where
+   the neck meets the shoulders, and 50 mm along them folded the surface through itself (the crumpled look of the
+   first tries).
+5. **Pressed flat under the straps:** wherever a gaiter point would lie outboard of |x| 92 (the strap's inner edge
+   less 4 mm, blended over 12 mm), the folds are taken out and the fleece lies at the collar allowance; the straps
+   lie on that.
+6. Taubin-smoothed, pushed out to 9 mm from the skin; Solidify 3 (non-even), Subdivision 1; weights from the body.
+
+### Shirt
+- Tail: below z 1060 the shell is laid on the skin at 2 mm (smoothing had bridged the lumbar hollow, and the
+  trousers, which hug it, came through: round 1's clash 13).
+- Sleeves: 4 mm more ease on the upper arm, 2 at the shoulder (the drawn sleeves are fuller).
+- Collar lowered at the back (1584 instead of 1600) so it stays under the gaiter when the head turns.
+
+### Clearance and checks
+- Gaiter: rest 9.0 mm from the skin, hero pose 8.4, nothing inside. Shell: rest 1.5 minimum; in the pose 92 vertices
+  inside the arm at the back of the right elbow, as in round 1 (the pose's elbow pinch, unchanged).
+- The "gaiter over shell" layering number printed by the script (-49 rest) is a false alarm of the open-shell
+  test at the collar's top edge (the gaiter lies above the edge, whose nearest face points the other way); the
+  assembly's clash test, which ignores boundary faces, finds no shirt-gaiter clash.
+
+### Renders looked at
+- `renders/shirt/shirt_rest_{front,side,threequarter}.png`: a cowl bunched round the neck, the skirt flat over the
+  collar to the shoulders.
+- Dev loop (scratch, not kept): the gaiter alone with the carrier and head caches, rest views and the hero head
+  crop beside the reference, after each change.
+- `renders/round_02/head_face_compare.png`, `torso_vest_compare.png`, `turnaround.png` (see carrier.md §6 for the
+  integration).
+
+## 6. Still wrong, ranked for round 3
+
+1. **The cowl is still tidier than drawn.** The drawn one is looser: deeper, more irregular folds, the main roll
+   overhanging the one below it (a profile curve can bulge but not overhang), and a softer, heavier drape at the
+   front into the bag top. A short cloth simulation from this shape (gravity, body collision, pinned skirt) is the
+   next step; bake the result and transfer weights as now.
+2. **Strap pads and the shirt in the pose:** the pads sink 4 to 7 mm into the shirt and gaiter over the shoulders in
+   the hero pose only (skinning; carrier.md §7).
+3. **Right elbow in the pose:** 84 shell vertices inside the arm at the back of the 102 degree elbow, as in round 1
+   (pose / body weights).
+4. **No folds in the shirt itself:** elbow bunching, the drape under the pauldrons, blousing above the waistband.
+5. **No rib shoulder panels, back seam, cuff tab or collar detail; no knit, ripstop or fleece materials.**
+6. The sleeve still shows a soft step at the elbow where the upper-arm and forearm sections are made convex
+   separately.
