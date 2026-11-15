@@ -44,7 +44,8 @@ They are headless and idempotent.
 - **Rig**: MPFB's `default` skeleton (163 bones) with MPFB's own weights, named `Morgan.Rig`. The mesh is
   `Body.Mesh`. Both are in the collection `Body`, with the MHCLO assets `Body.Eyes` (high-poly,
   procedural material), `Body.Eyebrows` (eyebrow006) and `Body.Eyelashes` (eyelashes02). The skin is
-  MPFB's default material. There is no hair and no clothing.
+  MPFB's default material. There is no hair and no clothing. (Round 1 changed the targets, the brows, the skin
+  and the eye materials: see "Round 1" at the end.)
 - **base.json** holds the macros, targets, stature, measurements, and every bone's rest head, tail and
   `matrix_local` (mm, rig space = world). It also holds the surface landmarks the pose fits, each tied
   rigidly to one bone: skull top, nose tip, chin, ears, pupils, the right pectoral, and per foot the
@@ -202,3 +203,44 @@ Readbacks:
 - **Feet hover 21–36 mm above the floor.** They stand on footbeds that the boots will supply.
 - **The muzzle is 17 px off its pin.** This is the deliberate trade above: the drawn carbine is shorter
   than a real one.
+
+## Round 1 (2026-11-14): the body and head parts changed base.py
+
+Details are in `scripts/parts/body.md` and `head.md`. base.py now applies:
+- the body part's chest, neck, arm and leg targets;
+- the face targets that `scripts/parts/head.py --fit` writes to `scripts/parts/head_fit.json`;
+- MPFB's middle-aged Caucasian male skin (ENHANCED_SSS, toned to `#ab7d71`);
+- brown irises with an iris material slot for Workbench, and skin-coloured lash cards and dark brown brow
+  cards in Workbench (they made the red rims);
+- `eyebrow001` instead of `eyebrow006`;
+- `--render` for the body's rest clay views.
+
+base.json's neck girth is now a tape square to the neck axis under the larynx. The old horizontal plane
+cut through the lengthened chin; it is kept as `neck_horizontal_old`.
+
+Stature is 1835.02 mm. The body targets move no joint cube. What moved:
+- the face targets moved the head joint 6.5 mm down, neck02 7.4 mm and neck03 3.6 mm;
+- the height refit moved every other joint by about 0.9 mm (twist bones up to 2.0 mm).
+
+`pose.py --solve` was re-run on the new body. Residuals, round 0 → round 1 (px):
+
+| Joint | Residual | Joint | Residual |
+|---|---|---|---|
+| pupils R / L | 2.1 → 2.9 / 3.9 → 3.5 | knees R / L | 2.7 → 2.5 / 9.0 → 8.9 |
+| nose tip | 3.7 → 3.8 | ankles R / L | 1.5 → 1.4 / 2.7 → 2.4 |
+| chin | **1.6 → 6.4** | wrist R | 18.8 → 18.6 |
+| right ear | 9.8 → 8.5 | wrist L | 2.2 → 2.3 |
+| skull top | **6.5 → 7.9** | hips R / L | 20.1 → 20.6 / 18.0 → 18.6 |
+| shoulder joints R / L | 6.9 → 7.5 / 6.9 → 7.4 | | |
+| elbows R / L | 4.4 → 4.2 / 10.1 → 9.8 | | |
+
+- Solver cost: 39.34 → 40.58.
+- Head yaw: 11.4° → 8.6° (world).
+- The figure stands 15 mm nearer the camera (pelvis y 176 → 161 mm).
+- Elbows 103° / 48°, knees 17° / 10°.
+- The carbine pins are unchanged.
+
+The chin got worse because the fitted face's menton sits lower relative to the pupils. MediaPipe reads the
+reference's chin 4.8 px lower than the hand reading (y 135.8 against 131); head.md §3 has the fits tried. The
+body joints' residuals moved by at most 0.6 px. Every part that binds to the rig or reads hero_pose.json
+needs a re-run.

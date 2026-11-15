@@ -3,15 +3,21 @@
 An MPFB 2.0.17 male at the drawing's lean V-taper build, 40 years old, height macro fitted so the rest
 stature (skull top to sole, barefoot) is 1835 mm, re-grounded on its lowest vertex and centred between
 the ankle joint cubes, facing -Y with +X his left (CLAUDE.md rule 2); MPFB's `default` skeleton (163
-bones) with MPFB's own weights; MPFB's default skin material; eyes, eyebrows and eyelashes (cheap
+bones) with MPFB's own weights; MPFB's middle-aged Caucasian male skin, toned; eyes, eyebrows and eyelashes (cheap
 MHCLO assets); no hair, no clothes. Take 1's build_all.py stages S1 and S2 (archive/v1/scripts/
 build_all.py) without part 01's foot targets.
 
-  "$SGT_BLENDER" -b --python scripts/stages/base.py
+  "$SGT_BLENDER" -b --python scripts/stages/base.py [-- --render]
   -> cache/stages/base.blend   objects Body.Mesh and Morgan.Rig (and Body.Eyes, Body.Eyebrows,
                                Body.Eyelashes) in collection Body
      cache/stages/base.json    stature, macros, targets, key girths and breadths, every bone's rest
                                head/tail/matrix (mm, rig space = world) and the landmarks pose.py fits
+
+--render adds the body part's rest clay views (renders/body/body_rest_*.png, body_chest_rest_*.png).
+
+Round 1 (scripts/parts/body.md, head.md): the chest, neck and limb targets of the body part; the face
+targets that scripts/parts/head.py --fit writes to scripts/parts/head_fit.json; MPFB's skin material toned
+to the reference; the eye, eyelash and eyebrow material fixes.
 
 Idempotent: it starts from an empty file every time.
 """
@@ -42,21 +48,62 @@ MACRO = {"gender": 1.0, "age": round(age_macro(40.0), 6), "muscle": 0.70, "weigh
 # The drawing's V-taper (bare bideltoid ~ 60 cm, hips 35 cm, waist:hip 0.88) and real arm segments.
 # MPFB's default male puts the elbow 268 mm below the shoulder joint (ANSUR ~ 330-340); the upper-arm
 # length target restores most of it. Values chosen by measuring (base.json "measure") against
-# analysis_pose_proportions.md §4 and research_dimensions.md, not by eye.
+# analysis_pose_proportions.md §4 and research_dimensions.md, not by eye. None of the targets below the
+# first five moves a joint cube (checked: 0.0 mm), so the hero pose's joints are those of round 0.
 BODY_TARGETS = {
     "torso-vshape-incr": 0.50,
     "measure-shoulder-dist-incr": 0.20,
     "hip-scale-horiz-decr": 0.15,
     "measure-waist-circ-decr": 0.10,
     "measure-upperarm-length-incr": 1.00,
-    "measure-neck-circ-incr": 0.30,
-    "torso-muscle-pectoral-incr": 0.30,
-    "l-upperarm-muscle-incr": 0.40,
-    "r-upperarm-muscle-incr": 0.40,
+    # Round 1 (body part, scripts/parts/body.md): a lean, fit man's chest instead of MPFB's soft rounded
+    # mound. The pectoral muscle carries the shape (0.3 -> 0.7), its mass moves up (breast-trans-up), the
+    # breast fullness and the nipples go (bust-circ-decr, nipple size/point), and the lats (dorsi) put the
+    # girth back: chest girth 990 against round 0's 993, with a 15 mm step at the pectoral's lower edge.
+    "torso-muscle-pectoral-incr": 0.70,
+    "breast-trans-up": 0.50,
+    "measure-bust-circ-decr": 0.30,
+    "nipple-size-decr": 0.60,
+    "nipple-point-decr": 0.30,
+    "torso-muscle-dorsi-incr": 0.50,
+    # The neck (tape square to the neck axis under the larynx, measure()): round 0 read 405 with 0.3; the
+    # fitted face widens the upper neck by about 15 mm on its own, so 0.1 gives 409 (ANSUR II mean about 397,
+    # a muscular neck a little over). Arms (upper arm 318 -> 338, forearm
+    # 247 -> 275: round 0's forearm was below ANSUR's 5th percentile) and legs (thigh 546 -> 554).
+    "measure-neck-circ-incr": 0.10,
+    "l-upperarm-muscle-incr": 0.70,
+    "r-upperarm-muscle-incr": 0.70,
+    "l-lowerarm-muscle-incr": 0.60,
+    "r-lowerarm-muscle-incr": 0.60,
+    "l-upperleg-muscle-incr": 0.40,
+    "r-upperleg-muscle-incr": 0.40,
+    "l-lowerleg-muscle-incr": 0.15,
+    "r-lowerleg-muscle-incr": 0.15,
 }
+# The face: MPFB face/head targets fitted by scripts/parts/head.py --fit (least squares on MediaPipe's
+# landmarks through the hero camera; scripts/parts/head.md). base.py applies them like the body targets,
+# so the eye bones and the landmarks pose.py fits follow the fitted face. SGT_BASE_NO_FACE=1 skips them.
+HEAD_FIT = os.path.join(PROJECT, "scripts", "parts", "head_fit.json")
+# Skin: MPFB's middle-aged Caucasian male texture as an ENHANCED_SSS material, toned towards the
+# reference's albedo (analysis_face_grooming.md §7: base #b98670) by a multiply in its colour chain (the
+# group's own colorMix node switched to MULTIPLY); the viewport colour (what Workbench shows) is that albedo.
+SKIN_MHMAT = "middleage_caucasian_male/middleage_caucasian_male.mhmat"
+# Calibrated once (head part, round 1): the analysis's #b98670 rendered through the hero camera under the
+# evaluation lights came out brighter and more orange than the reference's lit cheek, forehead and nose
+# (render/reference linear ratios R 0.83, G 0.84, B 1.01), so the albedo was scaled by them.
+SKIN_ALBEDO = "#ab7d71"
+# The tone is measured, not chosen: the albedo divided by the texture's mean over the face (base.json "skin").
+# Eyes (body brief): MPFB's procedural eye shows blue irises in Cycles and plain white in Workbench, and the
+# eyelash and eyebrow cards showed red (their viewport colour) round the eyes. Iris per the analysis:
+# dark warm brown-grey, sclera never white in this light.
+IRIS_MAJOR, IRIS_MINOR, SCLERA = "#5b4a3e", "#3a2d26", "#d9d0c8"
+# Workbench draws the lash cards solid: a dark lash colour there reads as heavy eyeliner wings, so their
+# viewport colour is the skin's (they vanish in Workbench); Cycles uses the lash texture.
+LASH_RGB, BROW_RGB = "#a97a66", "#3b2a22"
+IRIS_DEG = 34.0                       # half-angle of the iris cap on the eyeball (iris 12 mm on a 24 mm ball: 30)
 STATURE_MM, STATURE_TOL_MM, HEIGHT_START = 1835.0, 0.25, 0.583
 ASSETS = (("eyes", "high-poly/high-poly.mhclo", "PROCEDURAL_EYES", "Body.Eyes"),
-          ("eyebrows", "eyebrow006/eyebrow006.mhclo", "MAKESKIN", "Body.Eyebrows"),
+          ("eyebrows", "eyebrow001/eyebrow001.mhclo", "MAKESKIN", "Body.Eyebrows"),
           ("eyelashes", "eyelashes02/eyelashes02.mhclo", "MAKESKIN", "Body.Eyelashes"))
 
 
@@ -290,10 +337,19 @@ def measure(body, rig):
     z_hip = head("upperleg01.L")[2] - 0.08
     hips = max((zgirth(z, trunk | legs), z) for z in np.linspace(z_hip - 0.05, z_hip + 0.05, 11))
     z_delt = head("upperarm01.L")[2] - 0.03
+    # neck: a tape square to the neck axis (neck01 -> neck03) 10 mm below neck02, under the larynx. Round 0's
+    # horizontal plane midway between neck02 and neck03 read 386 there, but once the face targets lengthened
+    # the jaw (round 1) it cut through the chin and read 466; it is kept as neck_horizontal_old for comparison.
+    n1, n3 = head("neck01"), head("neck03")
+    dn = (n3 - n1) / np.linalg.norm(n3 - n1)
+    cn = head("neck02") - dn * 0.010
+    Pn = section(co, edges, cn, dn, neck)
+    Pn = Pn[np.linalg.norm(Pn - cn, axis=1) < 0.10]
     out = {
         "stature_mm": round(float(co[:, 2].max() - co[:, 2].min()) * 1000, 2),
         "girth_mm": {
-            "neck": zgirth(z_neck, neck),
+            "neck": tape(Pn, cn, dn),
+            "neck_horizontal_old": zgirth(z_neck, neck),
             "chest": zgirth(z_chest, trunk),
             "waist_min": waist[0], "waist_z_mm": round(waist[1] * 1000),
             "hip": hips[0], "hip_z_mm": round(hips[1] * 1000),
@@ -381,6 +437,128 @@ def dump_bones(rig):
     return out
 
 
+# --------------------------------------------------------------------------- face targets and materials
+
+def face_targets():
+    """head.py --fit's MPFB face/head target weights ({} without the file or with SGT_BASE_NO_FACE)."""
+    if os.environ.get("SGT_BASE_NO_FACE") or not os.path.exists(HEAD_FIT):
+        return {}
+    with open(HEAD_FIT, encoding="utf-8") as f:
+        d = json.load(f)
+    return {k: float(v) for k, v in d["targets"].items() if abs(float(v)) >= 1e-3}
+
+
+def srgb_lin(h):
+    c = [int(h.lstrip("#")[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
+    return tuple(v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c)
+
+
+def lin_srgb_hex(c):
+    out = []
+    for v in c:
+        v = max(0.0, min(1.0, float(v)))
+        out.append(12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055)
+    return "#" + "".join(f"{round(v * 255):02x}" for v in out)
+
+
+def skin_material(mpfb, body):
+    """MPFB's ENHANCED_SSS skin on Body.Mesh (one material, Body.Skin), its diffuse texture multiplied by a
+    tone that takes the texture's mean over the face (the UVs of the skin weighted to the head bone) to
+    SKIN_ALBEDO. Returns the means before and after and the tone, for base.json."""
+    import numpy as np
+    p = mpfb.assets.find_asset_absolute_path(SKIN_MHMAT, asset_subdir="skins")
+    if p is None:
+        raise FileNotFoundError(f"MPFB has no skin {SKIN_MHMAT}")
+    mpfb.human.set_character_skin(p, body, skin_type="ENHANCED_SSS", material_instances=False)
+    mat = body.data.materials[0]
+    mat.name = "Body.Skin"
+    grp = next(n for n in mat.node_tree.nodes if n.type == "GROUP")
+    inner = grp.node_tree
+    inner.name = "Body.Skin.Group"
+    mat.diffuse_color = (*srgb_lin(SKIN_ALBEDO), 1.0)
+    img = inner.nodes["DiffuseTexture"].image
+    w, h = img.size
+    px = np.empty(w * h * 4, np.float32)
+    img.pixels.foreach_get(px)
+    px = px.reshape(h, w, 4)
+    me = body.data
+    uv = me.uv_layers.active.data
+    gi = body.vertex_groups["head"].index
+    head_v = {v.index for v in me.vertices if any(e.group == gi and e.weight > 0.9 for e in v.groups)}
+    uvs = np.array([uv[li].uv[:] for poly in me.polygons for li in poly.loop_indices
+                    if me.loops[li].vertex_index in head_v])
+    xs = np.clip((uvs[:, 0] * w).astype(int), 0, w - 1)
+    ys = np.clip((uvs[:, 1] * h).astype(int), 0, h - 1)
+    col = px[ys, xs, :3][px[ys, xs, 3] > 0.5].mean(axis=0)
+    tone = np.clip(np.array(srgb_lin(SKIN_ALBEDO)) / np.maximum(col, 1e-4), 0.0, 1.5)
+    inner.nodes["Mix"].blend_type = "MULTIPLY"
+    grp.inputs["colorMixIn"].default_value = (*[float(v) for v in tone], 1.0)
+    grp.inputs["colorMixInStrength"].default_value = 1.0
+    toned = col * tone
+    return {"material": mat.name, "mhmat": SKIN_MHMAT, "tone_linear": [round(float(v), 4) for v in tone],
+            "target_albedo": SKIN_ALBEDO,
+            "face_texture_mean": lin_srgb_hex(col), "face_texture_mean_toned": lin_srgb_hex(toned),
+            "viewport_colour": SKIN_ALBEDO}
+
+
+def eye_materials(eyes, lashes, brows):
+    """The eye fixes (body brief). EnhancedEye's iris colours become the reference's brown-grey and its
+    white an off-white; the viewport colours (Workbench) become sclera off-white and, on a second material
+    slot holding the iris faces (within IRIS_DEG of each eye's forward axis), the iris brown. The second
+    slot's material is a copy with the same node settings, so Cycles renders both slots alike. The lash and
+    brow cards get dark brown viewport colours (their red viewport colour made the red rims)."""
+    import numpy as np
+    out = {}
+    if eyes is not None and eyes.data.materials:
+        m = eyes.data.materials[0]
+        m.name = "Body.Eyes.Sclera"
+        grp = next((n for n in m.node_tree.nodes if n.type == "GROUP"), None)
+        if grp is not None:
+            for k, v in (("IrisMajorColor", IRIS_MAJOR), ("IrisMinorColor", IRIS_MINOR), ("EyeWhiteColor", SCLERA)):
+                if k in grp.inputs:
+                    grp.inputs[k].default_value = (*srgb_lin(v), 1.0)
+        m.diffuse_color = (*srgb_lin(SCLERA), 1.0)
+        iris = m.copy()
+        iris.name = "Body.Eyes.Iris"
+        iris.diffuse_color = (*srgb_lin(IRIS_MAJOR), 1.0)
+        eyes.data.materials.append(iris)
+        me = eyes.data
+        mw = np.array(eyes.matrix_world)
+        co = np.array([v.co[:] for v in me.vertices]) @ mw[:3, :3].T + mw[:3, 3]
+        n_iris = 0
+        for side in (1, -1):
+            sel = co[:, 0] * side > 0
+            c = (co[sel].min(0) + co[sel].max(0)) / 2.0
+            for poly in me.polygons:
+                fc = co[list(poly.vertices)].mean(0)
+                if fc[0] * side <= 0:
+                    continue
+                d = fc - c
+                d /= np.linalg.norm(d) + 1e-12
+                if -d[1] > math.cos(math.radians(IRIS_DEG)):
+                    poly.material_index = 1
+                    n_iris += 1
+        out["eyes"] = {"iris": IRIS_MAJOR, "iris_minor": IRIS_MINOR, "sclera": SCLERA, "iris_faces": n_iris}
+    for ob, hexc in ((lashes, LASH_RGB), (brows, BROW_RGB)):
+        if ob is not None:
+            for m in ob.data.materials:
+                m.diffuse_color = (*srgb_lin(hexc), 1.0)
+            out[ob.name] = hexc
+    return out
+
+
+def render_rest():
+    """Rest clay views of the body for the body part (scripts/parts/common.py render_rest_views):
+    renders/body/body_rest_{front,side,threequarter}.png and body_chest_rest_*.png."""
+    import bpy
+    sys.path.insert(0, os.path.join(PROJECT, "scripts", "parts"))
+    import common as C
+    C.rest_pose(bpy.data.objects[RIG])
+    out = os.path.join(PROJECT, "renders", "body")
+    C.render_rest_views("body", [], (0, 0, 920), 1950, out_dir=out)
+    C.render_rest_views("body_chest", [], (0, 0, 1330), 600, out_dir=out)
+
+
 def main():
     import bpy
     from mathutils import Matrix
@@ -403,6 +581,14 @@ def main():
         kb = mpfb.targets.load_target(body, path, weight=w)
         loaded[kb.name] = round(float(kb.value), 4)
     say(f"body targets {loaded}")
+    face = {}
+    for name, w in face_targets().items():
+        path = mpfb.targets.target_full_path(name)
+        if not path or os.path.basename(path).split(".")[0] != name:
+            raise FileNotFoundError(f"MPFB has no target {name!r} (head_fit.json)")
+        kb = mpfb.targets.load_target(body, path, weight=w)
+        face[kb.name] = round(float(kb.value), 4)
+    say(f"face targets ({len(face)}) {face}")
     h, s, n = fit_height(mpfb, body, STATURE_MM, STATURE_TOL_MM, HEIGHT_START)
     moved = ground_and_centre(body)
     body_collection(body)
@@ -425,6 +611,9 @@ def main():
         ob.name = name
         body_collection(ob)
         added[name] = len(ob.data.vertices)
+    skin = skin_material(mpfb, body)
+    get = bpy.data.objects.get
+    skin["eyes"] = eye_materials(get("Body.Eyes"), get("Body.Eyelashes"), get("Body.Eyebrows"))
     bpy.context.view_layer.update()
     ident = Matrix.Identity(4)
     for ob in (rig, body):
@@ -441,7 +630,8 @@ def main():
     macros["height"] = round(h, 6)
     summary = {"stage": "round0.base", "body": BODY, "rig": RIG, "collection": COLL,
                "units": "mm; rig space = world (rig and body at the origin, identity)",
-               "macro": macros, "body_targets": loaded, "stature_mm": round(stature_mm(body), 3),
+               "macro": macros, "body_targets": loaded, "face_targets": face,
+               "face_fit": "scripts/parts/head_fit.json" if face else None, "skin": skin, "stature_mm": round(stature_mm(body), 3),
                "stature_target_mm": STATURE_MM, "height_iterations": n, "moved_mm": moved,
                "assets": added, "measure": meas, "landmarks": marks,
                "blender": bpy.app.version_string, "seconds": round(time.perf_counter() - t0, 2),
@@ -450,6 +640,8 @@ def main():
         json.dump(summary, f, indent=1)
     say(json.dumps({k: summary[k] for k in ("stature_mm", "assets", "seconds")}))
     say(json.dumps(meas, indent=1))
+    if "--render" in sys.argv:
+        render_rest()
     return 0
 
 
