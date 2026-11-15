@@ -82,3 +82,48 @@ holds across all three views (the long lean face, strong square jaw, straight no
 stubble pattern and the short textured hair), and the profile shows the depth the drawing
 cannot. Used by the head's round 2 as likeness guidance for depth and profile; the original
 reference stays authoritative for the hero view.
+
+## R002 — the trousers' camouflage print, tileable
+
+Status: open
+Requested by: Claude, 2026-11-15
+Purpose: the combat trousers' fabric (Crye G3 class, NYCO ripstop) carries a near-black, low-
+contrast blotch camouflage in the reference. Take 1 tried a procedural generator for it; a
+painted print should read more like real fabric.
+Inputs to attach: `art/characters/sgt_morgan/ref/zoom_trousers_full_x3.png`,
+`art/characters/sgt_morgan/ref/zoom_trousers_camo_lthigh_plain_x8.png`,
+`art/characters/sgt_morgan/ref/zoom_trousers_camo_rthigh_plain_x8.png`.
+Prompt:
+> A flat, seamless, tileable textile print swatch of the camouflage pattern on the trousers in
+> the attached pictures, seen straight on as if the fabric were laid flat and scanned: a
+> near-black, low-contrast blotch camouflage in charcoal, very dark olive and dark grey-brown,
+> with irregular rounded blotches about 3-12 cm across with slightly feathered edges, printed on
+> nylon-cotton ripstop with a faint 6 mm ripstop grid just visible. Clean new fabric: no dirt,
+> no folds, no shadows, no seams, no stitching, no lighting gradient, no text. Even, shadowless
+> lighting. The image must tile seamlessly on all four edges. Square, about 60 cm of fabric
+> across the image.
+Output: `art/characters/sgt_morgan/gen/R002/trousers_camo.png`, square, 2048×2048 if possible.
+
+Result:
+(ChatGPT: the files written, notes)
+
+## R003 — the left shoulder emblem as a flat decal
+
+Status: open
+Requested by: Claude, 2026-11-15
+Purpose: the left pauldron carries a shield emblem (the same mark as the "SGT. ALEX MORGAN" UI
+badge in the reference: an inverted-triangle shield with a chevron/arrow shape). The model needs
+it as a flat decal to place on the plate.
+Inputs to attach: `art/characters/sgt_morgan/ref/zoom_armour_emblem_x16.png`,
+`art/characters/sgt_morgan/ref/reference_full.png` (the badge left of "SGT. ALEX MORGAN" at the
+top left of the frame, and the emblem on his left shoulder).
+Prompt:
+> A clean, flat, front-on vector-style rendering of the emblem shown in the attached pictures
+> (the shield-shaped badge beside "SGT. ALEX MORGAN" in the interface, which is also painted on
+> the soldier's left shoulder plate): the same outline and inner shapes, in a single light grey
+> (#c8c8c4) on a pure black background, crisp edges, no shading, no texture, no perspective, no
+> text, centred, the emblem filling about 80 % of the image height.
+Output: `art/characters/sgt_morgan/gen/R003/emblem_mask.png`, square, 1024×1024 or larger.
+
+Result:
+(ChatGPT: the files written, notes)
