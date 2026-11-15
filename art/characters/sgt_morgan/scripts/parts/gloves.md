@@ -101,8 +101,23 @@ in front), `renders/round_02/hands_rifle_compare.png`, `arm_R_compare.png`, `arm
 1. **The thumb-web fold** (§5): smooth the shell's weights across the thumb web (a few rings of weight
    smoothing between `finger1-1` and `metacarpal1`), or a corrective for thumb abduction.
 2. **The glove follows the bare hand too closely.** It shows the fingernails' shape and the knuckle creases, and has no fingertip ease (+2.5 at each tip), no seams and no fourchettes. A glove-specific smoothing or a sculpted glove last would fix it.
-3. **Knuckle guard:** it needs its moulded ribs (3 per boss at 7 mm pitch), the webs between the bosses, and to follow the knuckle arc better. With the right hand now turned about 30 deg on the grip (the stock's front strut, pose README), it faces the camera less than drawn.
+3. **Knuckle guard:** it needs its moulded ribs (3 per boss at 7 mm pitch), the webs between the bosses, and to follow the knuckle arc better. Round 4: with the carbine's real stock the right hand turned back (§7), so the guard faces the camera more.
 4. **Cuff:** no closure tab, pull or binding. It is a uniform ring.
 5. **No leather, knit or neoprene materials**, and no dust on the up-facing bosses.
 6. If gloves.py changes the shell, re-run the pose's contact export and solve (the hands' outer surface is
    this shell): `pose.py --solve --export`, or `pose_solve.py --continue-from cache/stages/pose_x_pass1.npz`.
+
+## 7. Round 4 (2026-11-15): the grasp, on the new base
+
+gloves.py is unchanged; the gloves were rebuilt on the 1844 mm base (their weights from the new body) and are again the
+hands' outer surface in the pose solve. Two pose changes act on them (scripts/stages/README.md, "Round 4"):
+- **The carbine's stock** (carbine.md §8) no longer hangs behind the grip, so place_hand starts the right hand at a turn
+  of −15 deg about the grip (round 2: −30): the knuckle guard and the back of the hand face the camera more.
+- **A grasp term** (pose_solve.py `GRASP`) holds the fingertips where the reference has them. Right: middle, ring and
+  little tips on the grip's far side (met: y +14.9 / +18.9 / +8.7 mm in the gun frame), the thumb tip on the far side
+  below the receiver (y +32, z −46: met), the index straight along the receiver. Left: the tips under the handguard
+  (not met: they reach the corner under its right face, y −16 to −21, z −24 to −29, and the little finger stays on the
+  face; the hand would have to sit lower and further right, which the body solve did not do).
+
+Clearance in the pose and the clashes are in `renders/round_04/clashes.md` (the round's numbers, gloves.json's
+clearance block is from the pre-solve pose).

@@ -56,7 +56,7 @@ Other built dimensions:
 - **Lower controls:** pin heads Ø9.5 (right) and flush ends (left) at the pivot and takedown pins, hammer and trigger pin ends Ø3.9, mag release Ø9.5 in a 160°-to-340° fence 2.2 proud, bolt catch with a 4-rib paddle (left), selector lever on SAFE (left) with its axle end on the right, trigger guard a 6.5 × 5.5 bar.
 - **Handguard and rail:** octagon 38.1 across the flats, 33 ID, rear collar 39.7, front chamfer 2. M-LOK 32 × 7 slots (r 2.4) at 3, 6 and 9 o'clock, 8 per face on a 40 pitch. Seven Ø10 holes on each lower bevel at 26 mm pitch. Two clamp screws in the rear collar's lower bevels.
 - **Receiver extension:** buffer tube Ø29.16 with its bottom rib, castle nut Ø36 with three notches, QD end plate.
-- **Stock:** 180 × 128, a rounded 34 × 37 tube housing, an 16 mm skeleton plate with a big window (corner radii 7 to 10), a rear post widening from 17 to 42 mm to the 44.5 wide pad, a front lug 22 wide with the sling loop the drawing paints tan.
+- **Stock (round 4):** 180 × 128 (real 180 × 133 × 44.5), a rounded 34 × 37 tube housing, a 16 mm skeleton plate: the rear post widening from 17 to 42 mm to the 44.5 wide pad, one diagonal strut (14 mm) from the toe up to a front junction under the housing (22 wide, down to z −44) with the QD socket through it (both sides, at x −146.7, z −31) and the tan frame round it; a sling slot through the toe block. Round 2's bottom rail and the front lug to z −96 are gone (§8).
 - **Light:** M300C, 104 long with a Ø28.6 bezel and a knurled Ø24 tail cap with its shroud, axis at y −32, z +16.
 
 **Mass.** The script sums each component's mesh volume × density.
@@ -192,7 +192,7 @@ These are joined by EXACT unions and cut by EXACT differences, then smoothed by 
    - the FDE patches are flat stickers with hard edges, needing chipping and wear, which is the library's planned `chips` (NotBuilt);
    - the grip checkering and the PMAG texture and dot-matrix panel are not in any material.
 3. **Trigger guard** is still a round-cornered loop. The mil-spec guard is a flat band with a squarer front drop and a hinged front with a plunger. The trigger blade is a plain extrusion.
-4. **Stock:** the outline is from take 1's remembered geometry plus the drawing, not a catalogue photo of the MFT Minimalist. Unchecked: the window shape, the strut angle, and the housing section (round or squared). The latch lever is not built.
+4. **Stock:** round 4 rebuilt it as the real Minimalist's three members (§8); still unchecked against a catalogue photo: the housing section (round or squared), the cheek riser, the exact strut angle. The latch lever is not built.
 5. **Forward assist and deflector:** better proportioned, but still a cylinder plus a hull. The real forging blends the two into one sculpted boss, and the deflector's top runs into the rail deck.
 6. **Optic and light:** the T-2's square body sides, battery cap, brightness dial and tethered caps are simplified. The LRP's clamp shape and the light's window and TIR are absent.
 7. **PMAG:** ribs only on the lower body. There is no bolt-catch notch, and no front and rear texture.
@@ -213,3 +213,31 @@ These are joined by EXACT unions and cut by EXACT differences, then smoothed by 
 9. **Magazine:** no dot-matrix panel, texture, bolt-catch notch or over-travel stop. Rib proportions are unchecked against a PMAG photo.
 10. **Not built:** pins, the selector's right-side axle, T-marks, markings, the sling itself (none in the reference), the barrel nut, and the bolt-face detail inside the port.
 11. **Mass** depends on guessed fill factors; replace them with real component masses (take 1 §3.14) when they matter.
+
+## 8. Round 4 (2026-11-15): the stock checked against the real part
+
+**What was wrong.** The pose round (scripts/stages/README.md, round 2, "Still wrong" 1) found the stock's front strut
+hanging to z −96 only 30–35 mm behind the A2 grip's back strap, where the firing hand's web and wrist go: the right hand
+had to turn about 30° on the grip to pass it. Round 2's outline was a closed frame (housing, rear post, a bottom rail from
+the toe and a front lug hanging below the housing's front), which is a fixed-stock shape, not the Minimalist's.
+
+**The real part** (MFT BATTLELINK Minimalist, mil-spec; retailer specifications): 7.08 × 5.22 × 1.75 in (180 × 133 ×
+44.5 mm), 5.8 oz; a skeleton of the tube housing, the rear post to the angled rubber pad, and one diagonal strut from the
+toe forward and up to the front of the housing, where the latch and a single ambidextrous QD socket sit ("forward/bottom
+portion"); several sling slots. Under the housing's front it is open. On an AR-15 the space directly behind the A2 grip
+and under the receiver extension is empty down to the hand: the only parts there are the castle nut and the QD end plate
+(to z −32 here, which is real).
+
+**Built** (`build_stock_and_tube`): the outline is the housing, the post and the strut from the toe block (solid below
+z −82, with a 24 × 7 sling slot) up at about 37° to a junction under the housing's front, x −166.7 to −126.7, its lowest
+point z −44 (was −96); a quadrilateral window between them. The QD socket is a through-bore with a steel cup on each side
+(`Sling.Stock.QD`, `Sling.Stock.QD.L`); the drawn tan frame (`Paint.StockLug`) is now on the junction's right face round
+the cup. Length of pull 292.8 mm and the pad (12.2° rake) are unchanged: about position 2–3 of 6 on a mil-spec tube
+(collapsed about 268 mm here; real carbine stocks collapse to about 10.5–10.75 in and step about 0.65–0.75 in), within a
+position of the "position 3" label, so it was left (moving it moves the butt contact the pose solves).
+`Carbine.Root`, the grip empties (gaps 0.54 / 0.56 mm) and every name the pose reads are unchanged; `measure.json` adds
+`stock_qd_xz_mm` and `stock_front_junction_bottom_z_mm`.
+
+**Renders looked at:** `renders/carbine/carbine_right_ortho.png`: the stock reads as the Minimalist (the diagonal strut
+from the toe to the front junction, the tan frame round the QD cup), and the space behind the grip is open below the
+end plate.

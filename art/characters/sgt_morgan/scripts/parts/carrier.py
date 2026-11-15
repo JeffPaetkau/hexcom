@@ -43,7 +43,7 @@ PLATE_R_LAT, PLATE_R_LONG = 254.0, 457.0  # multi-curve
 BAG_W, BAG_H = 285.0, 340.0              # plate + about 22 per side; top 8 above the plate
 BAG_T = 31.0                             # back panel and foam 5 + plate 25 + front wall 1
 CORNER_CLIP = 50.0                       # shooter's-cut corners, 45 deg
-FLAP_W, FLAP_H, FLAP_T = 255.0, 42.0, 6.0          # JPC class flap carrying one PALS row; its hem clears the belt
+FLAP_W, FLAP_H, FLAP_T = 255.0, 34.0, 6.0          # JPC class flap carrying one PALS row; round 4: 42 -> 34 (see flap_to_waist)
 REAR_RAISE = -25.0                       # rear bag top relative to the throat point (round 1: +15); 50 above the front
 CB_H, CB_T = 150.0, 20.0                 # cummerbund: 3 PALS rows, padded
 CB_RISE = 45.0                           # the band's rise from the front to the back (clears the belt there)
@@ -292,6 +292,48 @@ def strap_profile(under, x, sgn, c, phis, width, clear=3.0):
         nrm.append(G.unit(dv - b * xa))
     return np.array(pts), np.array(nrm), slope
 
+
+
+def flap_to_waist(ob, trousers, z_top, z_hem, ramp_end=12.0):
+    """Round 4: blend the weights of ob's vertices below z_top (the bag's bottom edge, mm) toward those of the nearest
+    vertex of the trousers' shell (rest): none at z_top, all of them from ramp_end mm above the hem down (smoothstep
+    between). Returns how many vertices changed."""
+    from mathutils import kdtree
+    me = ob.data
+    zs = np.array([v.co.z for v in me.vertices]) * 1000.0
+    sel = np.nonzero(zs < z_top)[0]
+    if not len(sel):
+        return 0
+    tv = trousers.data.vertices
+    mt = trousers.matrix_basis
+    kd = kdtree.KDTree(len(tv))
+    for v in tv:
+        kd.insert(mt @ v.co, v.index)
+    kd.balance()
+    tnames = {g.index: g.name for g in trousers.vertex_groups}
+    onames = {g.index: g.name for g in ob.vertex_groups}
+    a, b = z_top, z_hem + ramp_end
+    for i in sel:
+        v = me.vertices[int(i)]
+        t = min(max((a - zs[i]) / (a - b), 0.0), 1.0)
+        sm = t * t * (3 - 2 * t)
+        own = {onames[e.group]: e.weight for e in v.groups}
+        _, j, _ = kd.find(ob.matrix_basis @ v.co)
+        their = {tnames[e.group]: e.weight for e in tv[j].groups}
+        st = sum(their.values()) or 1.0
+        so = sum(own.values()) or 1.0
+        new = {}
+        for k, w in own.items():
+            new[k] = new.get(k, 0.0) + (1 - sm) * w / so
+        for k, w in their.items():
+            new[k] = new.get(k, 0.0) + sm * w / st
+        for k, w in new.items():
+            g = ob.vertex_groups.get(k) or ob.vertex_groups.new(name=k)
+            if w > 1e-4:
+                g.add([int(i)], float(w), "REPLACE")
+            elif k in own:
+                g.remove([int(i)])
+    return int(len(sel))
 
 
 def main(render=True):
@@ -681,6 +723,15 @@ def main(render=True):
             ob["sgt_bind"] = "weights from Shirt.Shell"
         else:
             G.soft_bind(ob, body, rig, collapse=collapse)
+    # round 4: the flap lies on the trousers' waistband, so its weights pass from the bag's (the spine) at the bag's
+    # bottom edge to the waistband's (the pelvis) toward its hem; skinned from the belly alone, the posed waistband
+    # came 12.8 mm up through the flap and its hem binding (rounds 2-3 clash, posed only)
+    tr = bpy.data.objects.get("Trousers.Shell")
+    if tr is not None:
+        out["flap_weights"] = {n: flap_to_waist(bpy.data.objects[n], tr, zb_f, hem)
+                               for n in ("Carrier.Front.Bag", "Carrier.Front.Flap.Binding", "Carrier.Front.Flap.PALS")
+                               if n in bpy.data.objects}
+        G.say("flap weights from the trousers' waistband:", out["flap_weights"])
     out["objects"] = sorted(o.name for o in coll.all_objects)
     if render:
         rep = G.finish_part(TAG, coll, body, rig, clothing, (0.0, 0.0, 1330.0), 760.0,

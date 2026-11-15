@@ -765,7 +765,11 @@ def bind(ob, body, rig, collapse=None, only=None):
     """Weights from Body.Mesh by a Data Transfer modifier (vertex groups, nearest face interpolated, deform
     bones only; source evaluated at rest with the helpers masked), applied; then an Armature modifier on
     Morgan.Rig at the top of the stack. collapse: {group-name prefix or name: target group} merged after
-    the transfer (e.g. toes into the foot for a rigid sole). only: keep just these groups (renormalised)."""
+    the transfer (e.g. toes into the foot for a rigid sole). only: keep just these groups (renormalised).
+    Round 4: vertices the transfer leaves with no weight at all (round 3's boots: edge-only meshes such as the
+    stitch carriers, which the Data Transfer modifier skips) take the weights of the nearest skin vertex of the
+    rest body before collapse and only apply, so they ride the bones of the surface they lie on; the count is
+    kept in ob["sgt_filled_weights"]."""
     import bpy
     pp = rig.data.pose_position
     rig.data.pose_position = "REST"
@@ -786,10 +790,11 @@ def bind(ob, body, rig, collapse=None, only=None):
     with bpy.context.temp_override(object=ob, active_object=ob, selected_objects=[ob], selected_editable_objects=[ob]):
         bpy.ops.object.modifier_move_to_index(modifier=m.name, index=0)
         bpy.ops.object.modifier_apply(modifier=m.name)
-    rig.data.pose_position = pp
     for g in list(ob.vertex_groups):
         if g.name not in deform:
             ob.vertex_groups.remove(g)
+    filled = _fill_unweighted(ob, body, deform)      # still at rest
+    rig.data.pose_position = pp
     # gather weights, collapse, normalise, drop empty groups
     names = [g.name for g in ob.vertex_groups]
     W = np.zeros((len(ob.data.vertices), len(names)), np.float32)
@@ -831,7 +836,38 @@ def bind(ob, body, rig, collapse=None, only=None):
         bpy.ops.object.modifier_move_to_index(modifier=arm.name, index=0)
     ob.parent = rig
     ob.matrix_parent_inverse = rig.matrix_world.inverted()
+    if filled:
+        ob["sgt_filled_weights"] = int(filled)
+        say("bind", f"{ob.name}: {filled} unweighted vertices given the nearest skin vertex's weights")
     return arm
+
+
+def _fill_unweighted(ob, body, deform):
+    """bind()'s fallback (round 4): every vertex of ob with no deform weight takes the deform weights of the nearest
+    skin vertex of Body.Mesh at rest (helpers left out; world space, so ob's own transform counts). Call with the
+    rig at rest. Returns how many vertices were filled."""
+    from mathutils import kdtree
+    me = ob.data
+    if not len(me.vertices):
+        return 0
+    zero = [v.index for v in me.vertices if sum(e.weight for e in v.groups) < 1e-6]
+    if not zero:
+        return 0
+    bd = body_data(body)
+    skin = np.nonzero(bd["in_body"])[0]
+    kd = kdtree.KDTree(len(skin))
+    for i in skin:
+        kd.insert(tuple(bd["V"][i] * MM), int(i))
+    kd.balance()
+    groups = [(nm, w) for nm, w in bd["groups"].items() if nm in deform]
+    mw = (ob.parent.matrix_world @ ob.matrix_parent_inverse @ ob.matrix_basis) if ob.parent else ob.matrix_basis.copy()
+    for vi in zero:
+        _, bi, _ = kd.find(mw @ me.vertices[vi].co)
+        for nm, w in groups:
+            if w[bi] > 1e-4:
+                g = ob.vertex_groups.get(nm) or ob.vertex_groups.new(name=nm)
+                g.add([vi], float(w[bi]), "REPLACE")
+    return len(zero)
 
 
 # --------------------------------------------------------------------------- caches
@@ -851,10 +887,12 @@ def save_part(part, coll, extra=None):
                 m.object = None
         if ob.parent is not None and ob.parent.type == "ARMATURE":
             ob["sgt_parent"] = ob.parent.name
-            saved.append(("parent", ob, ob.parent, ob.matrix_parent_inverse.copy()))
-            mw = ob.matrix_world.copy()
+            saved.append(("parent", ob, ob.parent, ob.matrix_parent_inverse.copy(), ob.matrix_basis.copy()))
+            # from the matrices themselves, not matrix_world, which is stale until a depsgraph update
+            # (round 4: an object given a transform and bound in the same script read the identity)
+            mw = ob.parent.matrix_world @ ob.matrix_parent_inverse @ ob.matrix_basis
             ob.parent = None
-            ob.matrix_world = mw
+            ob.matrix_basis = mw
     try:
         ids = {coll, *coll.all_objects}
         tmp = path + ".tmp.blend"
@@ -865,10 +903,9 @@ def save_part(part, coll, extra=None):
             if s[0] == "mod":
                 s[1].object = s[2]
             else:
-                mw = s[1].matrix_world.copy()
                 s[1].parent = s[2]
                 s[1].matrix_parent_inverse = s[3]
-                s[1].matrix_world = mw
+                s[1].matrix_basis = s[4]
     if extra is not None:
         with open(os.path.join(PARTS_DIR, f"{part}.json"), "w") as f:
             json.dump(extra, f, indent=1)
@@ -892,10 +929,16 @@ def load_part(part, rig=None):
                 if m.type == "ARMATURE" and m.object is None:
                     m.object = bpy.data.objects.get(ob.get("sgt_armature", RIG)) or rig
             if ob.get("sgt_parent") and ob.parent is None:
-                mw = ob.matrix_world.copy()
-                ob.parent = bpy.data.objects.get(ob["sgt_parent"]) or rig
-                ob.matrix_parent_inverse = ob.parent.matrix_world.inverted()
-                ob.matrix_world = mw
+                # round 4: the object's transform is its matrix_basis (it was saved unparented); matrix_world of
+                # a freshly appended object is the identity until a depsgraph update, and reading it put
+                # round 3's buckles (an object with a transform) on the floor. Keep the basis, parent with the
+                # inverse of the rig's current matrix, so the world matrix stays the saved one.
+                par = bpy.data.objects.get(ob["sgt_parent"]) or rig
+                mb = ob.matrix_basis.copy()
+                ob.parent = par
+                ob.matrix_parent_inverse = par.matrix_world.inverted()
+                ob.matrix_basis = mb
+    bpy.context.view_layer.update()
     return dst.collections[0] if dst.collections else None
 
 

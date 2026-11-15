@@ -1903,7 +1903,7 @@ def main():
             say(f"{side}: strap or stitches failed ({type(e).__name__}: {e})")
         for k, ob in built.items():
             ob["sgt_clay"] = CLAY.get(k, (0.30, 0.30, 0.31))
-            bake_transform(ob)           # common.load_part reads matrix_world before an update: identity only
+            bake_transform(ob)           # round 3 workaround; common.load_part keeps transforms since round 4 (harmless)
             if k in ("Sole", "Lugs"):
                 C.bind(ob, body, rig, only=[f"foot.{side}"],
                        collapse={"toe*": f"foot.{side}", f"lowerleg02.{side}": f"foot.{side}"})
@@ -1976,7 +1976,8 @@ def main():
 def bake_transform(ob):
     """Move an object's own transform into its mesh (round 3: the ladder-lock came from gear_hardware with a
     matrix; common.load_part reads matrix_world from the freshly loaded cache before any depsgraph update, gets the
-    identity and so put the buckles on the floor between the feet in the assembly)."""
+    identity and so put the buckles on the floor between the feet in the assembly). Round 4: common.save_part and
+    load_part now carry object transforms themselves; this stays, harmless."""
     from mathutils import Matrix
     if ob.type != "MESH" or ob.parent is not None:
         return
@@ -1990,7 +1991,8 @@ def bake_transform(ob):
 def fill_unweighted(ob, ref):
     """Vertices the weight transfer left with no weight (they would stay at rest under the Armature: round 3's
     stitch carriers drew threads from the posed boot back to its rest place) take the weights of the nearest
-    vertex of ref (the upper). Returns how many."""
+    vertex of ref (the upper). Returns how many. Round 4: common.bind now fills such vertices from the nearest skin
+    vertex itself, so this normally finds none; it stays as a check."""
     from mathutils import kdtree
     me = ob.data
     if not len(me.vertices):

@@ -473,3 +473,129 @@ body a corrective); the pose cannot open the elbow further without pulling the h
   re-applies hero_pose.json (prints which). Without the basis file it falls back to the old timestamp rule.
 - **Toes**: `apply_hero_pose` turns the proximal toe bones up 12 degrees at the MTP joints (`TOE_SPRING_DEG`, the
   boots' last's toe spring); `check()` skips the toes. The solved bones are untouched.
+
+## Round 4 (2026-11-15): stature 1844, head round 2, the real stock, the grasp
+
+### Inputs that changed
+- **base.py**: rest stature **1844 mm** (PLAN.md Decisions 3, Q13; height macro 0.58965, skull top 1844.06 over the rest
+  floor, 1845.6 to the heel pad), head round 2 wired in (head.md §9: head-shape.target, eyelashes01, head_skin). Every
+  bone moved (about 0.5 % longer), so the pose signature changed and the pose was re-solved.
+- **The 33 mm footbed** (round 2's item 8): the 33 mm is the lift the real 36 / 24 seats give the figure (spec 02 §0
+  item 2, Q13), not new seats. HEEL_SEAT / BALL_SEAT stay 36 / 24 and the boots were not re-seated.
+- **The carbine's stock** (carbine.md §8): the real Minimalist's diagonal strut; nothing hangs below z −44 behind the
+  grip (was −96).
+- **face_targets.json** rebuilt on the round-2 face (`head.py --check r4pre` on the new base, then
+  `build_face_targets("r4pre")`: 397 landmarks on 833 vertices).
+- All parts rebuilt on the new base before the contact export (contact.npz 22 s, the fields 36 s).
+
+### Solver changes (pose_solve.py)
+- **GRASP** (fit_fingers): one hinge per term on the mean of each finger's distal glove points in the gun frame. Right
+  hand: middle, ring and little tips on the grip's far side (y ≥ +4 / +4 / +2 mm), the thumb tip on the far side
+  (y ≥ +6) and below the receiver (z ≤ −46). Left hand: index to little tips below the handguard's middle (z ≤ −10),
+  not hanging below it (z ≥ −27) and in toward its bottom flat (y ≥ −15). A first left grasp with only "z ≤ −9" let
+  the fingers hang straight down the right face past the bottom (looked at in `renders/pose/pose_hands_sheet.png`).
+- **HEAD_YAW** sigma 10 → 6 (prior 20).
+
+### The chain
+`pose_x_r3_committed.npz` (round 2/3's committed state, a copy of the pose_x_pass1.npz behind round 3's
+hero_pose.json) → `--continue-from` on the new base (607 s; place_hand chose a start turn of −15 deg, round 2 −30;
+the whole-glove pass converged at cost 60.96 in 131 evaluations) → `--refit-fingers` with the stricter left grasp →
+`--continue-from` that state again (459 s, cost 60.36; the body hardly moved). States kept in `cache/r4logs/`
+(`pose_x_solve1.npz`, `pose_x_solve1_final.npz`) and `cache/stages/pose_x_pass1.npz`; hero_pose_basis.json written.
+Blender vs the solver: 0.008 mm.
+
+### Residuals, round 2 → round 4 (px, full frame)
+
+| Joint | Round 2 | Keypoints only (r4) | Round 4 | Joint | Round 2 | Keypoints only (r4) | Round 4 |
+|---|---:|---:|---:|---|---:|---:|---:|
+| pupil R | 2.6 | 3.1 | 2.6 | wrist R | 13.9 | 18.6 | 15.6 |
+| pupil L | 2.8 | 3.1 | 2.9 | wrist L | 20.5 | 2.3 | 18.3 |
+| nose tip | 4.6 | 3.3 | 4.6 | hip R | 18.0 | 22.0 | 20.3 |
+| chin | 7.4 | 7.9 | **9.0** | hip L | 15.2 | 20.1 | 16.6 |
+| right ear | 4.2 | 8.4 | 5.0 | knee R | 4.0 | 3.3 | 5.0 |
+| skull top | 13.9 | 7.9 | 12.6 | knee L | 8.7 | 9.5 | 9.3 |
+| shoulder R | 12.1 | 8.0 | 10.1 | ankle R | 2.2 | 2.0 | 2.5 |
+| shoulder L | 12.2 | 6.2 | 12.6 | ankle L | 2.6 | 3.4 | 3.3 |
+| elbow R | 12.7 | 4.2 | **8.7** | butt pin | 10.1 | | 10.2 |
+| elbow L | 15.2 | 10.6 | 16.1 | muzzle pin | 17.1 | | 17.7 |
+
+- Cost 61.8 (round 2: 65.3); keypoints only 42.6. Face: MediaPipe's landmarks **0.99 px** RMS (round 2: 1.05).
+- Readbacks: head yaw **14.9** (round 2: 13.7), pitch +0.9, roll −1.4; chest yaw −8.1, pitch 11.4; pelvis yaw −9.2;
+  elbows R **96.3** (91.4) / L 44.1; wrists (flexion / deviation) R 14.7 / 30.1 (still at the soft ulnar limit), L
+  3.1 / −12.4; knees 20.2 / 9.5; foot headings −82.7 / 4.9; carbine roll −22.5 (−24); skull top z 1842.8 mm (round 2:
+  1836.6). Feet on the 36 / 24 seats within 1 mm. Hand targets: right wrist 23 mm off place_hand's (round 2: 34).
+- The head yaw: the prior at sigma 6 pulls 5.1 sigma-units and gains 1.2 deg; the face term (now on the round-2 face)
+  holds it near 15. A tighter prior would trade face RMS for yaw: not done.
+
+### Contact (the solver's fields, mm; negative = inside)
+
+| Surface pair | Keypoints only | Round 4 |
+|---|---:|---:|
+| right / left glove in the carbine (min) | −14.1 / −6.6 | +0.08 / +0.25 |
+| right glove in the carrier | −13.9 | +68 |
+| right sleeve / guard in the carbine | −4.8 / −9.2 | +5.6 / +0.9 |
+| carbine in the carrier | −21.9 | +1.6 |
+| butt pad to the carrier (mean of 8 nearest) | +26.8 | +1.3 |
+| right / left palm to its grip (mean of 12 nearest) | −10.7 / −6.1 | +0.24 / +0.44 |
+| fingers' gloves to the other fingers' skin, R / L | | +0.13 / +0.03 |
+
+The grasp (distal glove means, gun frame mm): right middle / ring / little tips at y +14.9 / +18.9 / +8.7 (the grip's
+far side: wrapped), the thumb at (−86.6, +32.1, −46.1) on the far side behind the grip top; right MCP / PIP: middle
+8 / 54, ring 26 / 40, little 31 / 21; the index straight, its lowest glove point z −52.3 (trigger discipline). Left:
+index, middle and ring tips at z −23.5 / −28.8 / −24.2 but y −20.4 / −15.8 / −20.6 (the corner under the right face,
+not under the bottom), the little finger's at z +0.6 (along the right face); MCP 54 / 45 / 26 / 0, PIP 19 / 27 / 22 /
+10. The left grasp's terms are not met: from where the body solve puts the left hand, the fingers cannot turn under the
+handguard without entering it; the hand itself must move (a left-hand placement, item 2 below).
+
+### Other fixes in the round (part notes)
+- `common.py`: `save_part` / `load_part` carry an object's own transform (they read `matrix_world`, stale before a
+  depsgraph update, so round 3's buckles landed on the floor); `bind` gives every vertex the Data Transfer leaves
+  unweighted (round 3's stitch carriers) the nearest skin vertex's weights. The boots' local workarounds stay and now
+  find nothing to do (the boots' stitches and tacks: 1314 / 1366 and 156 / 160 vertices filled by `bind`).
+- `shirt.py`: the sleeve's weights shared across the elbow on the crook side (shirt.md §7).
+- `carrier.py`: the flap's weights blended to the waistband's, the flap 34 mm (carrier.md §8).
+- `carbine.py`: the Minimalist stock (carbine.md §8).
+
+### The clash report (renders/round_04/clashes.md)
+
+| Pair | Round 3 | Round 4 |
+|---|---:|---:|
+| trousers-carrier (the flap in the waistband) | 459 verts, 12.8 mm | **none** |
+| body-shirt | 25, 8.3 (right elbow 8.3; front of the armpit 8.1) | 23, 6.4 (elbow 15 verts to 3.1 at the crook; armpit 8 to 6.4) |
+| body-boots | 2344, 6.7 | 2364, **10.4** (the right forefoot and toes in the right sole, 110 verts at z 25; the socks in the skin 3.0, unchanged) |
+| shirt-carrier (strap pads, posed) | 726, 4.4 | 762, 4.8 |
+| carrier-carbine | 52, 1.7 | 32, 2.0 (the butt pad 2.0 into the bag's face) |
+| trousers-belt | 69, 1.9 | 70, 1.8 |
+| body-gloves | 18, 1.5 | 28, 1.6 |
+| gloves-carbine | 42, 1.0 | 29, 1.4 (the handguard in the left glove) |
+| body-head | none | 1, 2.0 (one hair-cap vertex) |
+| shirt-armour | none | none (a first all-round elbow blend made 543 verts, 4.9 mm: fixed) |
+
+### Renders looked at (renders/round_04/)
+`soldier_full_compare.png`, `hands_rifle_compare.png`, `head_face_compare.png`, `torso_vest_compare.png`,
+`arm_R_compare.png`, `boots_feet_compare.png`, `turnaround.png`, and `renders/pose/pose_hands_sheet.png` (the first
+solve's hands).
+- Whole figure: on the drawn silhouette as before; nothing stray in the turnaround.
+- Right hand: on the grip with the back of the hand and the knuckle guard toward the camera (round 2 showed the thumb
+  side), the index straight along the receiver over the trigger guard, middle to little fingers round the grip's front.
+  Closer to the drawn fist, though the ring and little fingers are less tucked than drawn.
+- Left hand: overhand on the handguard, the palm on top, but the fingers lie down its right face and the index points
+  along the rail: it still reads open, not curled under as drawn.
+- The stock reads as the real Minimalist (diagonal strut, the tan frame on the front junction); the space behind the
+  grip is open.
+- Head: turned to his left 14.9 deg against the drawn ~20; in Cycles the stubble shows on the chin and lip, the skin is
+  less orange than round 2; the face still reads broad and soft (head.md §7).
+- Boots: as round 3 (the right toe a flat wedge past the drawn toe).
+
+### Still wrong, for the next round
+1. **The left hand's grasp**: the fingers cannot curl under the handguard from where the body solve puts the hand. A
+   left-hand placement like place_hand's, with the fingers (the README's round-2 item 2), or the hand target moved down
+   and right (HANDS["L"]), then a continuation.
+2. **Head yaw 14.9 deg** (drawn ~20): the face term on the round-2 face holds it; skull top 12.6 px, chin 9.0 px (round
+   2: 7.4; the round-2 face's menton is 5 mm lower and the hand-read chin target was not revisited: head.md §6.6 item 4).
+3. **The right wrist is still at its soft ulnar limit (30 deg)** and the right elbow went to 96 deg (91 in round 2),
+   which brought the crook clash back to 3.1 mm. A corrective shape for the shirt at the elbow, or a prior on the elbow.
+4. **The front of the right armpit** (shirt 6.4 mm, shirt.md §7) and the strap pads in the shirt and gaiter (4.8 mm).
+5. **The right forefoot in the sole** (10.4 mm, was 6.7): the pose now seats the round-3 foot's own landmarks; boots.md §8
+   items 7-8 (the toes, the footbed's 2.1 mm) need a look with the new numbers.
+6. Fresh full solves were not tried on this base; the pose is a continuation of round 2's (item 2 of round 2 stands).

@@ -30,6 +30,18 @@ SLEEVE = [(0.0, 12.0), (0.5, 18.0), (0.95, 19.0), (1.05, 18.0), (1.5, 16.0), (1.
 COLLAR = {"co": (0.0, -60.0, 1542.0), "no": (0.0, -0.35, 1.0)}    # collar top: 1542 front, ~1584 back (under the gaiter)
 HEM_Z = 930.0                                                     # tucked hem, inside the trousers
 CUFF_BEYOND_WRIST = 8.0                                           # the cuff edge past the wrist joint (mm)
+# Round 4, the elbow in the pose (91 deg between the segments, 44 deg more flexion than the rest arm's bend). The
+# sleeve took the skin's weights there (forearm 0.9 to 1.0 right past the joint), so the sleeve's inside at the
+# crook, 19 mm off the skin, turned the full 44 deg with the forearm into the biceps: round 2/3's body-shirt clash
+# (25 vertices, 8.3 mm; the notes called it the back of the elbow, but measured in rest it is the crook, the
+# anterior side, cos -0.99 to the point of the elbow). A sleeve does not hinge at the joint: the cloth over the
+# elbow is shared by both segments. So over ELBOW_BAND (arm parameter: 0 shoulder, 1 elbow, 2 wrist) the sleeve's
+# arm weights pass smoothly from the upper arm to the forearm (elbow_blend) and the cloth at the crook turns about
+# half the angle. Tried: (0.70, 1.35) 4.4 mm inside, (0.60, 1.45) 2.0, (0.50, 1.55) 0.3 (kept), (0.40, 1.60) 1.2.
+# The outside of the sleeve then rides 17 mm over the olecranon (mean 20), so it needs no extra ease there (an
+# 8 mm lobe was tried and dropped: it only bulked the elbow).
+ELBOW_BAND = (0.50, 1.55)
+ELBOW_FRONT = (0.0, 0.5)     # the blend acts on the crook side only: smoothstep of -cos to the point of the elbow
 # The gaiter (round 2): a fleece cowl bunched round the neck. s = arc length along the skin's meridian, 0 at
 # the ring h_ref up the neck axis (on the neck all round), + up. Triples are (front, side, back).
 GAITER = {"h_c": 60.0, "h_ref": 100.0, "fan_deg": 70.0,      # fan centre for the skirt's rays; s origin
@@ -69,6 +81,61 @@ def arm_param(V, side):
         m = dist < best
         out[m] = k + t[m]
         best[m] = dist[m]
+    return out
+
+
+def elbow_back(side):
+    """The elbow joint (rest mm) and the unit direction from it to the point of the elbow: the rest arm is bent
+    45 deg, so the joint lies off the shoulder-wrist line on the extensor side."""
+    sh, el, wr = C.bone_mm(f"upperarm01.{side}"), C.bone_mm(f"lowerarm01.{side}"), C.bone_mm(f"wrist.{side}")
+    d = wr - sh
+    back = el - (sh + d * (((el - sh) @ d) / (d @ d)))
+    return el, back / np.linalg.norm(back)
+
+
+def elbow_blend(shell):
+    """Round 4: over ELBOW_BAND the sleeve's arm weights (upperarm*, lowerarm*) are re-shared by the arm parameter
+    alone, the forearm's share a smoothstep across the band, each segment's groups keeping their own proportions;
+    other bones' weights are untouched. Returns the number of vertices changed per side."""
+    me = shell.data
+    R = np.array([tuple(v.co) for v in me.vertices]) * 1000.0
+    names = {g.index: g.name for g in shell.vertex_groups}
+    out = {}
+    a, b = ELBOW_BAND
+    for side, sg in (("L", 1.0), ("R", -1.0)):
+        m = np.nonzero(np.sign(R[:, 0]) == sg)[0]
+        t = arm_param(R[m], side)
+        el, back = elbow_back(side)
+        rr = R[m] - el
+        front = smoothstep(ELBOW_FRONT[0], ELBOW_FRONT[1], -(rr @ back) / np.maximum(np.linalg.norm(rr, axis=1), 1e-9))
+        sel = (t > a - 0.05) & (t < b + 0.05) & (front > 0.0)
+        n = 0
+        for i, ti, fr in zip(m[sel], t[sel], front[sel]):
+            v = me.vertices[int(i)]
+            w = {names[e.group]: e.weight for e in v.groups}
+            up = {k: x for k, x in w.items() if k.startswith("upperarm") and k.endswith(side)}
+            lo = {k: x for k, x in w.items() if k.startswith("lowerarm") and k.endswith(side)}
+            A = sum(up.values()) + sum(lo.values())
+            if A < 0.3:          # the armpit and torso side of the band: not the sleeve over the joint
+                continue
+            su, sl_ = sum(up.values()), sum(lo.values())
+            # the crook side takes the band's share; elsewhere the skin's (the forearm guard and the pauldron, rigid on
+            # their bones, sit over the outer sleeve: blending there pushed the sleeve 4.9 mm out through the guard)
+            fl = float(fr * smoothstep(a, b, ti) + (1.0 - fr) * (sl_ / A))
+            new = {}
+            for k, x in (up.items() if su > 1e-6 else [(f"upperarm02.{side}", 1.0)]):
+                new[k] = (1 - fl) * A * x / (su if su > 1e-6 else 1.0)
+            for k, x in (lo.items() if sl_ > 1e-6 else [(f"lowerarm01.{side}", 1.0)]):
+                new[k] = fl * A * x / (sl_ if sl_ > 1e-6 else 1.0)
+            for k, x in new.items():
+                g = shell.vertex_groups.get(k) or shell.vertex_groups.new(name=k)
+                if x > 1e-4:
+                    g.add([int(i)], float(x), "REPLACE")
+                elif k in w:
+                    g.remove([int(i)])
+            n += 1
+        out[side] = n
+    C.say(TAG, f"elbow weights re-shared over the band {ELBOW_BAND}: {out}")
     return out
 
 
@@ -364,6 +431,8 @@ def main():
     gaiter["sgt_clay"] = (0.52, 0.47, 0.42)
     for o, th in ((shell, 1.2), (gaiter, GAITER["wall"])):
         C.bind(o, body, rig)
+        if o is shell:
+            elbow_blend(shell)
         m = C.solidify(o, th, inward=True)
         if o is gaiter:
             m.use_even_offset = False

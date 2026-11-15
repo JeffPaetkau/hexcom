@@ -841,8 +841,13 @@ def build_stock_and_tube(report):
             .add(cylinder_between((D["nut_front"] - 1.6, -10.0, -26.0), (D["nut_front"] - 1.6, 10.0, -26.0), 4.75, 16)))
     finish(ep, 0.5, 2)
 
-    # MFT BATTLELINK Minimalist, position 3 of 6: a moulded skeleton (tube housing, rear post widening to the
-    # angled pad, lower strut from the toe forward and up to the front lug with its sling loop)
+    # MFT BATTLELINK Minimalist, position 3 of 6 (round 4, checked against the real part): 7.08 x 5.22 x 1.75 in
+    # (180 x 133 x 44.5 mm), a moulded skeleton of three members: the tube housing on top, the rear post widening to
+    # the angled pad, and ONE diagonal strut from the toe forward and up to a junction under the housing's front,
+    # which carries the latch and the ambidextrous QD socket ("forward/bottom portion"). Under the housing's front
+    # the stock is open: the space behind the A2 grip, where the firing hand's web and wrist go. Round 2's outline
+    # had a bottom rail from the toe to a front lug hanging to z -96 only 30-35 mm behind the grip's back strap (a
+    # fixed-stock shape, not the Minimalist's), which turned the posed right hand 30 deg on the grip.
     heel = np.array([D["butt_heel"], 18.0])
     toe = np.array([D["pad_toe"], -110.0])
     dvec = (toe - heel) / np.linalg.norm(toe - heel)
@@ -853,17 +858,20 @@ def build_stock_and_tube(report):
         return heel[0] + t * dvec[0] + inset * nrm[0]
 
     sx0 = D["stock_front"]
-    A = np.array([xr(-110.0) + 28.0, -110.0])
-    B = np.array([sx0 - 36.0, -95.0])
-    outline = fillet([(sx0 - 28.0, 6.0), (xr(6.0), 6.0), (xr(-110.0), -110.0), tuple(A), tuple(B),
-                      (sx0 - 28.0, -93.6)], [0, 0, 5.0, 9.0, 0, 0], 6)
+    A = np.array([xr(-110.0) + 30.0, -110.0])        # the strut leaves the toe block here (its lower edge)
+    B = np.array([sx0 - 34.0, -44.0])                # and meets the front junction's underside here
+    J_BOT = -44.0                                    # the junction's lowest point (z, mm below the bore)
+    outline = fillet([(sx0 - 14.0, 6.0), (xr(6.0), 6.0), (xr(-110.0), -110.0), tuple(A), tuple(B),
+                      (sx0 - 14.0, J_BOT + 4.0)], [0, 0, 5.0, 9.0, 8.0, 0], 6)
     sd = (B - A) / np.linalg.norm(B - A)
     up_n = np.array([-sd[1], sd[0]]) if sd[0] > 0 else np.array([sd[1], -sd[0]])
-    Ap = A + 13.0 * up_n
-    W2 = isect((xr(0.0, 24.0), 0.0), dvec, (0.0, -24.0), (1.0, 0.0))
-    W3 = isect((xr(0.0, 24.0), 0.0), dvec, Ap, sd)
-    W4 = Ap + sd * ((sx0 - 30.0 - Ap[0]) / sd[0])
-    window = fillet([(sx0 - 30.0, -24.0), tuple(W2), tuple(W3), tuple(W4)], [8.0, 10.0, 9.0, 7.0], 6)
+    Ap = A + 14.0 * up_n                             # the strut's upper edge (14 mm thick across)
+    post_p, post_d = (xr(0.0, 24.0), 0.0), dvec      # the rear post's front edge
+    W1 = isect(Ap, sd, (0.0, -24.0), (1.0, 0.0))     # under the housing, at the strut
+    W2 = isect(post_p, post_d, (0.0, -24.0), (1.0, 0.0))
+    W3 = isect(post_p, post_d, (0.0, -82.0), (1.0, 0.0))   # the toe block below z -82 stays solid
+    W4 = isect(Ap, sd, (0.0, -82.0), (1.0, 0.0))
+    window = fillet([tuple(W1), tuple(W2), tuple(W3), tuple(W4)], [6.0, 9.0, 8.0, 8.0], 6)
     plate = prism(outline, -8.0, 8.0, "xz", holes=[window])
     hs = rect_f(-17.0, 17.0, -18.5, 18.5, 13.0, 6)          # tube housing section (y, z)
     x_end = xr(-18.5, 10.0)
@@ -873,15 +881,18 @@ def build_stock_and_tube(report):
              (xr(16.0, 8.0), -21.0, 16.0)],
             [(xr(-110.0, 30.0), -8.5, -110.0), (xr(-110.0, 30.0), 8.5, -110.0), (xr(16.0, 30.0), 8.5, 16.0),
              (xr(16.0, 30.0), -8.5, 16.0)]]
-    lug = prism(fillet([(sx0 - 32.0, -15.0), (sx0 - 32.0, -96.0), (sx0 - 4.0, -92.5), (sx0, -86.0), (sx0, -15.0)],
-                       [0, 6.0, 5.0, 4.0, 0], 5), -11.0, 11.0, "xz")
+    # the front junction under the housing: latch and QD boss, 22 wide, down to J_BOT
+    lug = prism(fillet([(sx0 - 40.0, -15.0), (sx0 - 40.0, J_BOT + 2.0), (sx0 - 22.0, J_BOT), (sx0 - 3.0, J_BOT + 7.0),
+                        (sx0, -15.0)], [0, 5.0, 6.0, 5.0, 0], 5), -11.0, 11.0, "xz")
     stock = obj("Stock", housing, "Polymer", real="MFT BATTLELINK Minimalist (mil-spec), pos 3 of 6",
                 density=1.15, fill=0.9)
     union(stock, plate, loft(rear), lug)
     cut = Geo()
     cut.add(lathe_x([(sx0 + 1.0, 14.9), (x_end - 6.0, 14.9)], 40))                     # tube channel
     cut.add(box(x_end - 6.0, sx0 + 1.0, -3.7, 3.7, -17.6, -10.0))                       # its rib slot
-    cut.add(prism(rect_f(sx0 - 23.0, sx0 - 9.0, -82.0, -44.0, 4.0, 4), -30.0, 30.0, "xz"))   # sling loop
+    QD = (sx0 - 20.0, J_BOT + 13.0)                                                       # the QD socket's axis (x, z)
+    cut.add(cylinder_between((QD[0], -14.0, QD[1]), (QD[0], 14.0, QD[1]), 4.75, 20))     # through-bore, both sides
+    cut.add(prism(rect_f(xr(-100.0, 26.0), xr(-100.0, 26.0) + 24.0, -102.0, -95.0, 3.0, 4), -30.0, 30.0, "xz"))  # sling slot
     boolean(stock, cut)
     finish(stock, 1.4, 2)
     pad = [tuple(heel), tuple(toe), tuple(toe + 8.0 * nrm), tuple(heel + 8.0 * nrm)]
@@ -896,8 +907,13 @@ def build_stock_and_tube(report):
         grooves.add(prism([tuple(v) for v in q], -30, 30, "xz"))
     boolean(po, grooves)
     finish(po, 2.0, 3, smooth_deg=40)
-    obj("Sling.Stock.QD", cylinder_between((sx0 - 16.0, -10.5, -30.0), (sx0 - 16.0, -12.2, -30.0), 6.5, 24), "Steel",
-        smooth_deg=40, real="QD socket, stock front lug (right)", density=7.85)
+    for sy in (-1.0, 1.0):
+        nm = "Sling.Stock.QD" if sy < 0 else "Sling.Stock.QD.L"
+        cup = obj(nm, cylinder_between((QD[0], sy * 10.5, QD[1]), (QD[0], sy * 12.2, QD[1]), 6.5, 24), "Steel",
+                  smooth_deg=40, real=f"QD socket cup, stock front junction ({'right' if sy < 0 else 'left'})", density=7.85)
+        boolean(cup, cylinder_between((QD[0], sy * 9.0, QD[1]), (QD[0], sy * 14.0, QD[1]), 4.75, 20))
+    report["stock_qd_xz_mm"] = [round(QD[0], 1), round(QD[1], 1)]
+    report["stock_front_junction_bottom_z_mm"] = J_BOT
     report["stock_rake_deg"] = round(math.degrees(math.atan2(abs(toe[0] - heel[0]), abs(toe[1] - heel[1]))), 1)
     return sx0
 
@@ -1111,8 +1127,11 @@ def build_paint(sx0, mlok_r):
             boolean(ob, cut)
         return ob
     patch("StockStripe", R(-372), R(-302), -4.0, 3.0, -17.0)
-    patch("StockLug", sx0 - 29.0, sx0 - 3.0, -90.0, -39.0, -11.0,
-          holes=[[(sx0 - 23.0, -82.0), (sx0 - 9.0, -82.0), (sx0 - 9.0, -44.0), (sx0 - 23.0, -44.0)]])
+    # the drawn tan frame round the stock's front sling point: on the real stock's front junction (round 4), its hole
+    # round the QD cup
+    qx, qz = sx0 - 20.0, -31.0
+    patch("StockLug", sx0 - 35.0, sx0 - 5.0, -40.0, -19.0, -11.0,
+          holes=[[(qx - 7.5, qz - 7.5), (qx + 7.5, qz - 7.5), (qx + 7.5, qz + 7.5), (qx - 7.5, qz + 7.5)]])
     patch("UpperStripe", R(-195), R(-157), 2.0, 12.6, -UPPER_HW)
     patch("LowerMark", R(-56), R(-49), -50.0, -38.0, -MAGWELL_HW)
     patch("MagwellFront", R(-25), R(-19), -52.0, -38.0, -MAGWELL_HW)

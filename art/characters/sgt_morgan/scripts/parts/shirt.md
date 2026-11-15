@@ -138,9 +138,41 @@ Earlier failures, now fixed:
    next step; bake the result and transfer weights as now.
 2. **Strap pads and the shirt in the pose:** the pads sink 4 to 7 mm into the shirt and gaiter over the shoulders in
    the hero pose only (skinning; carrier.md §7).
-3. **Right elbow in the pose:** 84 shell vertices inside the arm at the back of the 102 degree elbow, as in round 1
-   (pose / body weights).
+3. **Right elbow in the pose:** round 4 (§7) found it was the crook, not the back, and fixed it by sharing the
+   sleeve's weights across the joint.
 4. **No folds in the shirt itself:** elbow bunching, the drape under the pauldrons, blousing above the waistband.
 5. **No rib shoulder panels, back seam, cuff tab or collar detail; no knit, ripstop or fleece materials.**
 6. The sleeve still shows a soft step at the elbow where the upper-arm and forearm sections are made convex
    separately.
+
+## 7. Round 4 (2026-11-15): the right elbow
+
+**What it was.** Rounds 1-3 reported shirt vertices up to 8.3 mm inside the body "at the back of the right elbow" in the
+hero pose (91° between the segments; the rest arm is already bent 45°, so the pose adds 44° of flexion). Measured in rest
+coordinates, the offending vertices sit at the **crook** (antecubital side, cos −0.99 to the point of the elbow), just
+past the joint (arm parameter 1.11-1.18), 19 mm off the skin, with the skin's own weights (forearm 0.90-0.99). A sleeve
+skinned like that hinges at the joint: its inside at the crook turns the full 44° with the forearm into the biceps. The
+olecranon was never the problem: the sleeve rides 17 mm over it (mean 20) in the pose.
+
+**Fix** (`elbow_blend`, `ELBOW_BAND`, `ELBOW_FRONT`): after `common.bind`, on the crook side of the sleeve and over the
+arm parameter band 0.50-1.55 (mid upper arm to a third down the forearm), the sleeve's arm weights (upperarm*, lowerarm*)
+are re-shared by the arm parameter, the forearm's share a smoothstep across the band, each segment's groups keeping their
+proportions; other bones untouched; vertices with less than 0.3 arm weight (the armpit, the torso) are left. The crook
+side is a smoothstep of −cos to the point of the elbow (0 to 0.5): the outer sleeve keeps the skin's weights, because the
+forearm guard and the pauldron, rigid on their bones, sit over it (a first version blended all round and pushed the sleeve
+4.9 mm out through `Guard.R.Sleeve` and 3.8 mm through the pauldron's lowest tier in the assembly). The cloth at the crook
+then turns about half the angle, as a real sleeve's does.
+
+Bands tried, right elbow (vertices more than 0.5 mm inside the posed body / max depth), at round 3's pose (91°), all
+round: none 17 / 8.3 mm; 0.70-1.35 21 / 4.4; 0.60-1.45 6 / 2.0; 0.50-1.55 1 / 0.3; 0.40-1.60 1 / 1.2. At round 4's
+re-solved pose (96°), crook side only, with the guard and pauldron tested too: **0.50-1.55: 15 / 3.1, armour clear
+(kept)**; 0.45-1.45 32 / 9.9; 0.55-1.60 22 / 6.0 and the guard 3.4; 0.60-1.50 13 / 5.9 and the guard 4.7; 0.50-1.80
+91 / 9.9 (the forearm's inside then lags into the forearm). An extra 8 mm of ease over the olecranon (the brief's
+suggestion) was tried and dropped: it changed nothing at the crook and only bulked the elbow. The left elbow (44°) was
+already clear and stays so. Linear blend skinning cannot do better at a 96° elbow with a 19 mm sleeve: the next step is a
+corrective (a shape key driven by the elbow angle, or a baked pose correction), not more weight sharing.
+
+**Still inside in the pose:** the front of the right armpit (anterior axillary fold, arm parameter 0.15-0.26, 14 mm
+off the skin, upperarm01/02 and spine01 weights): 17-18 vertices to 7.4-8.1 mm, where the arm swings forward and in to
+hold the carbine and the sleeve's root folds into the chest. The same kind of fix (sharing the shoulder's weights with
+the clavicle and spine over a band) is the next step; it was not in this round's brief.

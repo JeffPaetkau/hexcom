@@ -16,7 +16,7 @@ have.
 | Plates | SAPI Medium 241 x 318, multi-curve R 254 across, R 457 along | SAPI sizing chart (9.5 x 12.5 in); curvatures spec 13 §3.2 |
 | Front and rear bags | 285 x 340, shooter's-cut corners 50 at 45 deg, 31 thick over the plate tapering to 14 at the margin; every edge bound (a 7 mm radius roll, black) | plate + about 22 per side; build-up spec 13 §3.2 (5 back panel and foam + 25 plate + 1 front); 25 mm binding tape folded (spec 13 §3.2) |
 | Front bag position (round 2) | top at z 1453, 52 below the suprasternal notch (1505, the clavicles' sternal ends); plate top 60 below it; rear bag top 1503 | drawn (see §3) |
-| Front flap | 255 x 42 x 6, below the front bag (one object with the bag); lies on the belly where it stands proud of the plate; bound hem; one PALS row of 6 cells | JPC class, spec 13 §3.2 |
+| Front flap | 255 x 34 x 6 (round 4; 42 before), below the front bag (one object with the bag); lies on the belly where it stands proud of the plate; bound hem; one PALS row of 6 cells | JPC class, spec 13 §3.2 |
 | PALS (round 2) | Type III 25.4 x 1.3 webbing, bar-tack columns at 38.1, rows at 50.8: front bag 5 rows x 7 cells from 25 above its bottom up to the panel, flap 1 x 6, cummerbund 3 x 6 a side; 3 mm sag between columns | MIL-spec PALS, spec 13 §3.3; `lib/gear_webbing.pals_rows` |
 | Cummerbund | 150 tall x 20 thick, from 25 mm behind the front bag's edge to 25 mm behind the rear bag's; rises 45 toward the back (over the belt and the trousers' waist there) | JPC/6094 class, 3 PALS rows (spec 13 §3.8) |
 | Shoulder pads | 64 x 8, centre lines at x +-140 (`shirt.STRAP`), tilted to the trapezius; 38 x 1.5 webbing down their centre | spec 13 §3.7 (70 wide, 6-10 pad); the drawn pads sit at the gaiter's outer edge |
@@ -155,7 +155,7 @@ the neck (clash 6), the cummerbund under the shirt (clash 10).
 4. **No bar tacks or stitches** on the PALS (`gear_webbing.pals_tacks` is ready), no edge topstitch.
 5. **Cummerbund** is a constant 20 mm band (no padded rows, ribbed edges); its front ends lie under the flap
    without a closure.
-6. **Flap in the trousers in the pose** (skinning): give the flap pelvis weight, or let it ride out.
+6. **Flap in the trousers in the pose**: fixed in round 4 (§8).
 7. Radio pouch is a box; the radio's body is hidden; the antenna 28 mm more lateral than take 1's position.
 8. Colours flat; no Cordura, webbing or hardware materials yet.
 
@@ -165,3 +165,22 @@ the neck (clash 6), the cummerbund under the shirt (clash 10).
 - The carrier fits to the shirt cache (shirt and gaiter) and to the trousers cache (cummerbund, flap); the armour
   fits to the shirt. `assemble.py`'s DEPS list only base and shirt for the carrier, so a trousers change does not
   mark it stale: add "trousers" there when the integrator next touches assemble.py.
+
+## 8. Round 4 (2026-11-15): the flap and the trousers' waistband
+
+The clash (rounds 2-3): `Carrier.Front.Flap.Binding` 390 vertices to 12.8 mm and the flap part of `Carrier.Front.Bag` 69
+to 10.0 mm in `Trousers.Shell`, at the front waist. Two causes, measured with the assembly's open-shell rule (nearest
+trousers face within 25 mm, offset within 45 deg of its inward normal):
+- **Skinning** (the bag's flap): the flap took the belly's weights (the spine) and the waistband the pelvis's, so the
+  posed waistband rose into the flap. `flap_to_waist()` now blends the weights of every vertex below the bag's bottom
+  edge (the flap in `Carrier.Front.Bag`, the hem binding, the flap's PALS) toward those of the nearest trousers vertex:
+  none at the bag's edge, all of them from 12 mm above the hem down (smoothstep). The flap's top moves with the plate,
+  its hem with the waistband. Bag: 69 -> 0 vertices.
+- **Fit** (the hem binding): the binding (a 4.5 mm radius roll) lay 4-10 mm above the waistband's top edge (z 1052 at the
+  front) but 5 mm behind its front plane, so in rest already it counted as inside the waistband's lip (247 vertices,
+  13.4 mm; the round-2 notes' "rest: clear" came from the carrier's own triangle check, which does not test the
+  trousers). The flap is 34 mm tall (was 42): it still carries its PALS row (25.4 webbing, 4 mm margins) and its hem,
+  after following the belly, ends about 12 mm above the waistband, as the drawing's flap hem sits above the belt.
+  Binding: 390 -> 0 vertices, in rest and posed.
+
+The cummerbund's rows start 2 mm above the hem (`zc0`), so they rose 8 mm with it.

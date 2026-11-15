@@ -1,7 +1,7 @@
 """Round 0, stage 1: the base body (PLAN.md, "Round 0: the body and the pose").
 
 An MPFB 2.0.17 male at the drawing's lean V-taper build, 40 years old, height macro fitted so the rest
-stature (skull top to sole, barefoot) is 1835 mm, re-grounded on its lowest vertex and centred between
+stature (skull top to sole, barefoot) is 1844 mm (round 4; 1835 before), re-grounded on its lowest vertex and centred between
 the ankle joint cubes, facing -Y with +X his left (CLAUDE.md rule 2); MPFB's `default` skeleton (163
 bones) with MPFB's own weights; MPFB's middle-aged Caucasian male skin, toned; eyes, eyebrows and eyelashes (cheap
 MHCLO assets); no hair, no clothes. Take 1's build_all.py stages S1 and S2 (archive/v1/scripts/
@@ -18,6 +18,10 @@ build_all.py); since round 3 with take 1's foot applied after the rig (scripts/s
 Round 1 (scripts/parts/body.md, head.md): the chest, neck and limb targets of the body part; the face
 targets that scripts/parts/head.py --fit writes to scripts/parts/head_fit.json; MPFB's skin material toned
 to the reference; the eye, eyelash and eyebrow material fixes.
+
+Round 4 (head.md §6.6, PLAN.md Decisions 3): the head round 2 wired in (head_shape.apply after the face targets and
+before the height fit; eyelashes01; head_skin.apply after the landmarks: skin, stubble mask, eyes) and the rest stature
+1844 mm.
 
 Idempotent: it starts from an empty file every time.
 """
@@ -101,10 +105,13 @@ IRIS_MAJOR, IRIS_MINOR, SCLERA = "#5b4a3e", "#3a2d26", "#d9d0c8"
 # viewport colour is the skin's (they vanish in Workbench); Cycles uses the lash texture.
 LASH_RGB, BROW_RGB = "#a97a66", "#3b2a22"
 IRIS_DEG = 34.0                       # half-angle of the iris cap on the eyeball (iris 12 mm on a 24 mm ball: 30)
-STATURE_MM, STATURE_TOL_MM, HEIGHT_START = 1835.0, 0.25, 0.583
+# Round 4 (PLAN.md Decisions 3, Q13, recorded 2026-11-15): 1844, not 1835. The real Zephyr-class footbed (36 at the
+# heel, 24 at the ball) lifts the figure about 33 mm, not the 42 that the 1835 assumed, and Jeff's rule is that the
+# height follows the drawing: at 1844 the posed skull top still meets the drawn line in boots.
+STATURE_MM, STATURE_TOL_MM, HEIGHT_START = 1844.0, 0.25, 0.590
 ASSETS = (("eyes", "high-poly/high-poly.mhclo", "PROCEDURAL_EYES", "Body.Eyes"),
           ("eyebrows", "eyebrow001/eyebrow001.mhclo", "MAKESKIN", "Body.Eyebrows"),
-          ("eyelashes", "eyelashes02/eyelashes02.mhclo", "MAKESKIN", "Body.Eyelashes"))
+          ("eyelashes", "eyelashes01/eyelashes01.mhclo", "MAKESKIN", "Body.Eyelashes"))   # head round 2: short lashes (head_skin.LASHES_R2)
 
 
 def say(*a):
@@ -604,6 +611,14 @@ def main():
         kb = mpfb.targets.load_target(body, path, weight=w)
         face[kb.name] = round(float(kb.value), 4)
     say(f"face targets ({len(face)}) {face}")
+    # head round 2 (scripts/parts/head.md §6.6): the free-form corrective head-shape.target, before the height fit and
+    # the rig, so the joint cubes, the eye bones and the MHCLO assets follow the face
+    sys.path.insert(0, os.path.join(PROJECT, "scripts", "parts"))
+    import head_shape
+    kb = head_shape.apply(mpfb, body)
+    if kb is not None:
+        face[kb.name] = round(float(kb.value), 4)
+        say(f"head shape: {kb.name} at {kb.value}")
     h, s, n = fit_height(mpfb, body, STATURE_MM, STATURE_TOL_MM, HEIGHT_START)
     moved = ground_and_centre(body)
     body_collection(body)
@@ -639,6 +654,9 @@ def main():
     foot = apply_foot(body, rig)
     meas = measure(body, rig)
     marks = landmarks(body, rig)
+    # head round 2 (head.md §6.6): the skin's subsurface and tone, the stubble mask, the eyes
+    import head_skin
+    skin["head_r2"] = head_skin.apply(body, marks, get("Body.Eyes"))
     os.makedirs(OUT_DIR, exist_ok=True)
     tmp = OUT_BLEND + ".tmp.blend"
     bpy.ops.wm.save_as_mainfile(filepath=tmp, copy=True, compress=False)

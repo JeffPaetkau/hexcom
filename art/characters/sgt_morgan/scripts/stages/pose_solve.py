@@ -107,7 +107,7 @@ ELBOW_FLEX = {"R": (88.0, 10.0), "L": (55.0, 12.0)}     # pose note §6 (R 95-10
 WRIST = {"R": {"flex": (-12.0, 15.0), "dev": (10.0, 10.0)}, "L": {"flex": (10.0, 15.0), "dev": (-10.0, 10.0)}}
 WRIST_LIMITS = {"flex": (-60.0, 70.0), "dev": (-20.0, 30.0)}
 PELVIS = {"yaw": (-10.0, 6.0), "pitch": (2.0, 4.0), "roll": (0.0, 3.0)}
-CHEST_YAW, HEAD_YAW = (-5.0, 5.0), (20.0, 10.0)
+CHEST_YAW, HEAD_YAW = (-5.0, 5.0), (20.0, 6.0)     # round 4: head yaw sigma 10 -> 6 (the drawing reads ~20; round 2 took 13.7)
 WEIGHT_RIGHT = 0.55
 
 # The carbine (M4 pattern, 16 in barrel, 840 mm overall, stock collapsed one position). Its frame, the
@@ -878,6 +878,21 @@ FINGER = {
     "index_straight_sigma_deg": 8.0,
     "thumb_sigma_deg": 15.0,     # the thumb stays near its table pose (round 2's first fit lifted the right one into the air)
 }
+# Round 4, the grasp (the reference: the right hand a closed fist on the pistol grip, the fingers wrapped round the
+# grip's front strap, the thumb round its far side, the index straight along the receiver; the left hand over the
+# handguard with the fingers curled under it). Round 2's fit only asked each phalanx to touch the gun, and with the
+# hand turned 30 deg on the grip the fingers touched it nearly open. Each entry holds the mean of a finger's distal
+# glove points (gun frame, mm) beyond a bound: (axis, bound, +1 = at least / -1 = at most, sigma mm), one hinge each.
+GRASP = {
+    "R": {"finger3": [("y", 4.0, +1, 2.0)], "finger4": [("y", 4.0, +1, 2.0)], "finger5": [("y", 2.0, +1, 2.0)],
+          # the thumb round the grip's far (left, +Y) side below the receiver, not along the receiver's wall
+          "finger1": [("y", 6.0, +1, 2.0), ("z", -46.0, -1, 3.0)]},
+    # the tips curled under the handguard (octagon 38.1 across the flats, 19 to a flat: its 4:30 bevel spans z -8 to
+    # -19 on the camera side, y < 0): below its middle, in toward its bottom flat, and not hanging below it (a first
+    # try with only "z below -9" let the fingers hang straight down the right face past the bottom)
+    "L": {f: [("z", -10.0, -1, 2.0), ("z", -27.0, +1, 2.0), ("y", -15.0, +1, 2.0)]
+          for f in ("finger2", "finger3", "finger4", "finger5")},
+}
 FINGER_BOUNDS = {1: (-35.0, 95.0), 2: (0.0, 110.0), 3: (0.0, 85.0)}
 THUMB_BOUNDS = {1: (-40.0, 80.0), 2: (-20.0, 80.0), 3: (-10.0, 85.0)}
 
@@ -972,6 +987,8 @@ def fit_fingers(model, x, side, verbose=True):
             if m.any():
                 touch.append((b, np.nonzero(m)[0], sg))
     idx_pts = np.nonzero(np.isin(gdom, [f"finger2-2.{side}", f"finger2-3.{side}"]))[0] if side == "R" else None
+    grasp = [(f, np.nonzero(gdom == f"{f}-3.{side}")[0], terms) for f, terms in GRASP.get(side, {}).items()]
+    grasp = [g_ for g_ in grasp if len(g_[1])]
     G = model.gun(x)
     base_b, rw = model.basis(x)
     keep = {k: v for k, v in model.finger_basis.items() if not k.endswith("." + side)}
@@ -1023,6 +1040,13 @@ def fit_fingers(model, x, side, verbose=True):
             ig, js = int(np.argmin(dg)), int(np.argmin(dself))
             info["gun_worst"] = (str(gdom[ig]), int((dg < -0.5).sum()))
             info["self_worst"] = (str(gdom[js]), int((dself < 0.0).sum()))
+        if grasp:
+            for f, ii, terms in grasp:
+                q = ((X[ii] - G[:3, 3]) @ G[:3, :3]).mean(0) * 1000.0
+                for ax, bound, sgn, sg in terms:
+                    v = q["xyz".index(ax)]
+                    out.append(float(softplus(sgn * (bound - v), 0.5)) / sg)
+                info[f"grasp:{f}"] = [round(float(c), 1) for c in q]
         if idx_pts is not None:
             z = ((X[idx_pts] - G[:3, 3]) @ G[:3, :3])[:, 2] * 1000.0
             out += list(np.maximum(0.0, Fk["index_floor_mm"] - z) / 1.0)

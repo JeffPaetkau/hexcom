@@ -333,7 +333,7 @@ back. Largest displacement 10.4 mm; 95 % of the face moved under 3 mm a round.
 - The hair clumps break the cap's silhouette but read as thorns, not piecey hair.
 - `head_r2_landmarks_after_{hero,front,threequarter}.png`: MediaPipe's points, reference red, model green.
 
-### 6.6 Wiring (once the pose re-solve is done)
+### 6.6 Wiring (done in round 4, §9)
 
 In `scripts/stages/base.py`:
 1. After the face-target loop (before `fit_height`): `import head_shape; head_shape.apply(mpfb, body)` (with the parts
@@ -382,3 +382,21 @@ check the licence terms before relying on it. Its head mesh would then be transf
 head exactly as round 2's shape key and take 1's foot scan were, keeping MPFB's topology, UVs and
 weights, with the fit to the four views as the check. If it does not run here, the fallback is a
 shading term or targeted local sculpting of the jaw line, cheek hollows, nose tip and lips.
+
+## 9. Round 4 (2026-11-15): round 2 wired into base.py, the stature 1844
+
+**Wired** as §6.6 says (`scripts/stages/base.py`): `head_shape.apply(mpfb, body)` after the face-target loop and before
+`fit_height` (the key `head-shape` at 1.0, recorded in base.json's `face_targets`); `eyelashes01` in `ASSETS`;
+`head_skin.apply(body, marks, Body.Eyes)` after `landmarks()` (base.json `skin.head_r2`: the skin retune to #a5746f, the
+packed stubble mask, the eyes). head.py's own round-2 skin step now skips (the skin group carries `Stubble.Mix`), and
+`head.py` (no `--dev`) builds the part on base.blend. The rest stature became 1844 mm in the same rebuild (PLAN.md
+Decisions 3): height macro 0.58965, skull top 1844.06 mm over the rest floor (1845.6 to the heel pad's lowest vertex,
+as round 3's 1835.0 / 1836.5).
+
+**Face targets for the pose.** `head.py --check r4pre` on the new base through round 3's pose (MediaPipe RMS 4.14 px,
+most of it the 9 mm taller body under an old pose), then `pose_solve.build_face_targets("r4pre")`: face_targets.json now
+holds 397 landmarks on 833 vertices of the round-2 face (round 2's file was built on the round-1 face). The pose was
+re-solved on it (scripts/stages/README.md, "Round 4").
+
+The hair cap (`Head.Hair`) has one vertex 1.97 mm inside the skin at rest on the new head (posed numbers in
+head.json); round 1's cap rules still hold elsewhere.

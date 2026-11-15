@@ -120,8 +120,11 @@ is inconsistent with itself or with reality, reality wins.** Precedence:
    is accepted).
 
 **The man's height and build follow the drawing** (Jeff, 2026-10-10, spec 01 §10.2 Q7 to
-Q9). Rest stature **1835 mm** barefoot: in the hero pose, in boots, the skull top meets the
-drawn line 1855 mm above the floor (the footbeds add 42, the pose costs 22). The build is the
+Q9). Rest stature **1844 mm** barefoot (PLAN.md Decisions 3, Q13, recorded 2026-11-15; applied in
+round 4): in the hero pose, in boots, the skull top meets the drawn line about 1855 mm above the
+floor. It was 1835 while the footbeds were thought to add 42 mm; the real Zephyr-class footbed
+(heel seat 36, ball seat 24) lifts the figure only about 33, so by Jeff's rule that the height
+follows the drawing the body grew 9 mm instead of the head landing under the drawn line. The build is the
 drawing's lean V-taper, not ANSUR's 83 kg man; the mass is an outcome. The feet are 274 mm
 (ANSUR's 282 less a shorter big toe: Jeff, 2026-10-15, "toe 2 looks right; it is the big toe
 that is too long"). Take 1's archived specs that cite 1855, 1877 or 83 kg are superseded here.
