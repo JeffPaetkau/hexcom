@@ -1,7 +1,8 @@
 # Boots
 
-Build: `"$SGT_BLENDER" -b --python scripts/parts/boots.py [-- --no-render]` (about 12 s with renders). Output:
-`cache/parts/boots.blend` (collection `Part.Boots`), `cache/parts/boots.json`, `renders/boots/*.png`.
+Build: `"$SGT_BLENDER" -b --python scripts/parts/boots.py [-- --no-render]` (about 40 s with renders on the
+workstation). Output: `cache/parts/boots.blend` (collection `Part.Boots`), `cache/parts/boots.json`,
+`renders/boots/*.png` (rest views, the hero pairs, and four closeups of the left boot: `boots_closeup_L_*`).
 
 ## 1. What it is
 
@@ -11,20 +12,25 @@ Build: `"$SGT_BLENDER" -b --python scripts/parts/boots.py [-- --no-render]` (abo
 - a DuraPU double-density midsole on a rubber outsole;
 - a padded collar and a gusseted tongue.
 
-Sources: take 1 `archive/v1/spec/02_boots.md` §3, which cites LOWA's product pages (its S1 to S4) and a measured review (S4: stack heights, lug depth, drop).
+Sources: take 1 `archive/v1/spec/02_boots.md` §2 to §3, which cites LOWA's product pages (its S1 to S4) and a
+measured review (S4: stack heights, lug depth, drop).
 
-| Quantity | Real / source (mm) | Built (mm) |
+| Quantity | Real / source (mm) | Built, round 2 (mm) |
 |---|---|---|
-| Outsole length | 297 for this 274 mm foot (last 289 + toe 5 + heel 3) | 301 |
-| Outsole width at the ball | about 116 | 116.6 |
+| Outsole length | 300 to 305 for this 274 mm foot (spec 02 §0, last 297 + 5 + 3) | 306 (upper 300, toe room 10 past the 5 mm offset) |
+| Outsole width at the ball | about 116 | 124 (upper 116 + 2 x 3 sidewall; see §5 item 6) |
 | Heel seat (floor to footbed) | 36 (S4: 36.3) | 36 |
 | Ball seat | 24 (S4: 23.7), so the drop is 12 | 24 |
-| Visible stack (floor to rand top) | 49 at the heel, 23 at the ball | 49 / 23 / 21 at the toe |
+| Midsole stripe top (floor) | stripe and rand: 49 to the rand top at the heel, 23 at the ball | stripe 40 / 21 / 19 (heel, ball, toe), rand 10 above it, 12 at the heel, rising to a 26 mm toe bumper |
+| Lugs | 4.5 to 5 deep (S4: 4.7); perimeter teeth 15 / 30 pitch, forefoot chevrons, waist bars, heel blocks | 5 deep (waist bars 3), teeth 15 forefoot / 26 behind, teeth wrap 3 up the sidewall; 2 x 3 heel blocks, about 400 lug faces a boot |
 | Toe spring | 15 | 15 (quadratic from the ball line) |
-| Rim height above the floor | 212 at the sides (S1: 210 outside) | 212 (rim at rest z 176, sole at rest z -36) |
-| Shaft outer section | 128 x 100 at h 110, 136 x 104 at h 158, 138 x 106 at the rim (measured on the drawing) | the same ellipses, centred on the leg's section at the rim |
-| Padded collar | about 22 tall x 10 thick | 22 x 10 roll |
-| Upper over the foot | leather 2.0 + lining 1.5 | 5 mm offset from the skin (with air); toe allowance +10 |
+| Rim height above the floor | 212 at the sides (S1: 210 outside), Achilles notch 206 | 212, notch 6 deep |
+| Shaft outer section | 128 x 100 at h 110, 136 x 104 at h 158, 138 x 106 at the rim (drawing) | the same ellipses (at least), centred on the shin, narrowing 22 % into the heel counter |
+| Throat | E1 at h 85 to 95 on the real last (spec 02 §0 item 6); gap 30 at E1, 44 at the top | E1 at h 97 (60 % of the length from the heel), gap 30 to 44, stays 22 wide standing 2.4 proud |
+| Eyelets and hooks | 5 eyelets (flange 10, hole 5.5) + 2 speed hooks | the same, as rings and a plate with a bent wire |
+| Lace | round 4 mm, criss-cross | 4 mm tubes, criss-cross with one strand over the other, a bar at E1 |
+| Tongue | top at h 222, 12 thick | top 10 above the rim, 6 thick (Solidify) |
+| Padded collar | about 22 tall x 10 thick | 22 x 10 roll behind the stays, tapering into them |
 
 ## 2. What the reference shows
 
@@ -34,70 +40,100 @@ Evidence: `ref/crop_boots_feet.png`, `ref/zoom_boots_*`, spec 02 §2.
 - Five eyelets and two hooks with laces.
 - A cuff strap with a buckle.
 - A padded collar under the stacked trouser hems.
-- The right boot points 85° to his right (seen in profile); the left points 17° to his left.
+- The right boot is seen in profile (pointing to his right); the left faces the camera with its laces centred
+  (round 2 measurement: about 5 degrees to his left, not the pose's 15.5, see §4).
 
 ## 3. Departures and why
 
-- **Not built:** laces, eyelets, hooks, the strap and buckle, lugs, the toe bumper and the panel seams. These are round 2 and later.
-- **Lacing:** a 48 mm raised strip, 3.5 proud, stands in for the tongue and lace stays from the throat up the shaft front.
-- **Sole:** a plain two-material slab, midsole #262626 over outsole #121212, with an outsole line at +8.
-- **Colours:** flat. Leather #201e1c, collar #1b1b1c.
+- **Not built yet:** the cuff strap and buckle (the drawing's identity, not the Zephyr's), the pull loop, the
+  stitching (`gn_stitches.py`), the toe bumper's emboss, sipes, the heel rocker.
+- **Length:** reality wins (CLAUDE.md): 306 mm outsole for the 274 mm foot, though the drawn boots look shorter.
+- **The feet stand inside the soles** below the footbed (clash list: body in boot soles, designed). The toes
+  also pass through the sprung toe's floor; a footbed cavity can wait.
 
-## 4. Round 1 (2026-11-14)
+## 4. Round 2 (2026-11-14)
 
-### Frame
-The boot is built in the rest body's frame with the footbed under the rest foot. The sole plane runs through:
-- z = -36 under the heel seat (30 mm ahead of the heel point);
-- z = -24 under the ball (the mt1 and mt5 midpoint).
+**The upper is a last's form, not the skin's.** Round 1 offset the skin and bridged the toes with convex
+hulls, which read as a clog. Round 2 (`Last` in `boots.py`):
+1. The foot and lower leg skin is refined twice and offset 5 mm (6 over the top): the cloud the upper must
+   hold.
+2. **The foot:** every 4 mm along the foot, the convex hull of the cloud's slice across the foot; its half
+   widths, medial and lateral of the crown, per 3 mm height band. Behind the instep only the part below
+   60 mm belongs to the foot; the ankle above that belongs to the shaft.
+3. The ends: the toe is the nose station's section shrunk elliptically over 50 mm in plan and squashed in
+   profile, 10 mm past the offset toes; the heel is a half-ellipse in plan.
+4. **Smoothing in each section's own height fraction** (0 at the base, 1 at the top): an upper envelope
+   along the foot on the top line and on the widths at each fraction. Smoothing in absolute height bands
+   instead let the instep's height spill forward and raised the toe box by 20 mm. Widths never grow upward,
+   so everything stays inside.
+5. **The shaft:** horizontal ellipses centred on a straight line fitted through the shin's slices, at least
+   the drawn axes, grown to contain the ankle, narrowing 22 % below h 130 into the heel counter and running
+   down into the sole. If the shaft stops at a height, a shelf forms where it meets the foot.
+6. A smooth union (radius 16) of foot and shaft, cut at the rim (6 mm Achilles notch) and at the sole top
+   less 4.
+7. Meshed by first-exit ray casting from a point inside, 240 x 210, first row on the rim. Despiked,
+   Taubin-smoothed and pushed out to 2.5 mm from the skin (0 to 8 vertices need it).
 
-So in rest the soles hang 24 to 36 mm below the floor. Round 0's hero pose lifts each foot onto exactly these seats (`pose_solve.py`, `HEEL_SEAT, BALL_SEAT = 0.036, 0.024`).
+**Overlays and throat.** Leather (toe cap, heel counter, quarters below h 98) stands 0.8 mm proud of the
+Cordura shaft panels; the toe cap and the counter take another 0.8. Three flex creases cross the vamp behind
+the toe cap, deeper laterally (the take 1 test boot's pattern). The throat's centre line runs from the rim
+down the shaft front and over the instep (`Throat`). E1 sits at 60 % of the boot's length and the 7
+positions are evenly spaced above it. The tongue and gussets sit 1.2 mm below the quarters between the
+stays. The stays, tongue top, collar, eyelets, hooks and laces are separate objects; the laces lie at a
+constant height over the surface cast under each point.
 
-### How the posed feet sit in the boots
-Measured with `scripts/stages/pose.py apply_hero_pose(rig)` and `hero_pose.json` of 2026-11-14 17:47:
-- Lowest sole point in the pose: L **-3.2 mm**, R **-2.9 mm**. The 2nd-percentile point (heel area) is -2.9 and -2.6 mm.
-- The boots therefore stand on the floor, sunk 3 mm into it.
-- The foot sits on its footbed, because the boot is rigged to the same foot it was built around.
+**Rand and sole.** Both use horizontal sections of the upper at the stripe top (casts from inside the
+forefoot). The rand's upper rows follow the upper's 3-D normal, so the bumper lies on the toe box's slope
+instead of standing off it as a lip. The sole and lug layer are as in §1.
 
-### What round 0 or integration must change
-1. **Nothing has to move for the boots to stand.** The pose already raises the feet by the footbed heights, so do not raise the body again: that would float the boots 33 to 36 mm.
-2. **The 3 mm sink.** Either lower the solver's seats by 3 mm in its foot term, or raise the root by 3 mm.
-3. **Rest pose.** If the rest pose ever has to show the boots on the floor (for example a glTF export in rest), raise Body and Rig by the heel seat (36 mm), or export the rest pose with that offset. Then re-solve the pose with the seats at zero.
-4. **Stature.** CLAUDE.md's 1855 mm in boots assumes the footbed lift. The solver's pelvis height already includes it.
+**Materials.** The take 1 boot recipes drop in (`apply_library`):
+- leather and Cordura on the upper, with UV.Real from the grid's arc lengths;
+- leather on the stays and tongue, Cordura on the collar (UV.Real by principal axes);
+- the rand and outsole rubbers, the PU midsole, gunmetal hardware, the nylon lace;
+- dust zones from `boot.toe`, with the left boot the dustier.
 
-### Method, per side
-1. The foot and ankle skin is copied, cut 50 mm above the rim (MPFB's shin faces are long, so it is cut rather than filtered), refined, and pushed out 5 mm.
-2. The front is pushed 10 mm forward into a toe box. Each cross-section across the foot moves to its convex hull, which bridges the toes, and the forefoot is domed (+7 mm at the centre line).
-3. The ankle and shaft are set to the measured shaft ellipses.
-4. The shell is voxel-remeshed (4.5 mm, `common.voxel_remesh`) into a clean surface, opened above the rim again, Taubin-smoothed (60 iterations, boundary pinned), cut at the rim, and pushed out to 3.5 mm.
-5. Everything below the sole top less 4 mm is clamped up, and the flattened floor faces are dropped; they sit inside the sole.
+If the library raises, the flat colours stay.
 
-**Sole.** The upper's footprint near the sole top: the lateral and medial extremes per 5 mm station, smoothed, with half-ellipse toe and heel ends, grown 3 mm for the sidewall. It is extruded from the sole plane (with toe spring) up to the visible stack, and is rigid on `foot.{L,R}`.
+**Measured** (`boots.json`): outsole 306 x 124, posed lug bottoms at -3.3 (L) and -2.9 (R) mm, so the
+3 mm sink of round 1 is unchanged (a round 0 item). Posed headings: L 15.5 degrees to his left, R 83 degrees
+to his right. Clearance: 0 vertices inside except one stray vertex of `Boot.R.Upper` at rest
+(-213, 66, 91), behind the right heel, reported 18 mm inside the skin. It survived the neighbour-mean
+repair and the push-out, so it may be a sign error of the nearest-face test there; it is not visible and the
+clash test does not list it.
 
-**Collar.** The rim vertices are ordered by angle, resampled to 72 points, and a 10 x 22 elliptical roll is swept round them.
-
-**Rigging.**
-- The upper and collar take weights from the body, with the toes merged into the foot.
-- The sole is weighted 1.0 to the foot bone.
-- No Solidify on the upper: it is closed except at the rim, the collar covers that, and even-offset Solidify exploded on the toe box.
-
-**Clearance from the skin.** Rest: upper 2.8 mm minimum, sole 6.7, collar 16.5, 0 inside. Hero pose: the same, 0 inside.
+**The left boot's heading and length** (round 1 integration item 1). Its silhouette still reaches past
+the drawn toe to the viewer's right in `renders/round_02/boots_feet_overlay.png`. Projecting the posed toe
+through `eval/camproj.py`, the drawn toe's x (935 px) matches a heading of about 5 degrees, not the pose's
+15.5. Length cannot be judged from the image: its floor perspective is about 150 mm inconsistent in depth
+(`floor_point` puts the drawn right toe 150 mm behind ours at the same x). **For round 0: turn the left foot
+to about 5 degrees.** The boot follows the foot bone. Length stays real.
 
 **Renders looked at.**
-- `boots_rest_front`, `_side`, `_threequarter`: these read as a pair of high-top tactical boots. Chunky sole with heel drop and toe spring, domed toe box, upright shaft, padded collar.
-- `boots_hero_boots_feet_pair`: both boots in the drawn places and headings, soles on the floor. Our right boot is a little longer in profile than the drawn one (real length).
-- `renders/round_01/clothing_hero_boots_feet.png`: the trouser hems are over the shafts.
+- `boots_closeup_L_lateral`, `_front34`, `_medial_back`, `_below`: these read as a laced high boot. Low toe
+  box with toe spring and a bumper, vamp and creases, lace throat with stays, eyelets and laces, quarters
+  with the counter and the Cordura line, padded collar, lugged sole.
+- `renders/round_02/boots_feet_compare.png`: the right boot's profile lies on the drawn one from heel to toe.
+  The left boot faces the camera with the laces visible below the hem.
+- In Cycles the leather shows grain and sheen.
 
-Earlier failures, now fixed:
-- Solidify spikes from the flattened floor.
-- A half collar, because the rim boundary was fragmented.
-- The voxel step's filled top sagging into the shaft.
-- A crumpled toe from the hull step.
+## 5. Still wrong, ranked for round 3
 
-## 5. Still wrong, ranked for round 2
-
-1. **No laces, eyelets, hooks, tongue edges, strap or buckle.** These carry the boot's identity in the drawing. The take 1 materials library already has the boot recipes and a test boot with laces (`scripts/lib/materials.py` `test_boot`, `_laces_and_hardware`, `_strap_and_buckle`).
-2. **The forefoot is still lumpy** where the toes were bridged, with a faint crease at the toe tip. The toe box should come from a last (a smooth parametric or scanned last; take 1 spec 02 §3.6 lists CC BY boot scans: Garmont T8, Danner TFX, a LOWA Tibet).
-3. **The shaft is a plain upright cylinder.** It needs the real shaft's taper toward the ankle at the front, the heel counter's bell, ankle padding, and the forward lean that follows the shin.
-4. **The sole is a smooth slab.** It needs lugs, the heel breast step, the toe bumper with its lip, and the rand.
-5. **The 3 mm sink into the floor** in the pose (see §4).
-6. **No leather, Cordura or rubber materials.** The take 1 recipes exist (`Leather.Boot.FullGrain` and others).
+1. **Left boot heading** (round 0): about 5 degrees instead of 15.5 (§4). Until then its toe stands about
+   6 cm too far to his left in the hero frame.
+2. **The shaft is a stovepipe.** It is a plain cylinder from the counter to the rim, wider than the heel
+   (real, but stark). The drawn shaft follows the shin with ankle padding, and its throat side is open in the
+   lace area. The shaft-instep junction shows faceted crumples in the clay renders (the smooth union, plus
+   the Cordura step and creases there).
+3. **Lacing too short and high.** E1 at h 97 (this foot's high instep; the drawn E1 is at h 72 to 80). The
+   stays are thin flat strips and the hooks read as boxy flags. They sit mostly above the hem, so they matter
+   little in the hero frame.
+4. **No cuff strap and buckle** (the drawing's identity), no stitching, no pull loop.
+5. **The toe tip** has a small crease where the rounded nose meets the bumper's top rows. The bumper's top
+   edge is plain, with no lip detail or emboss.
+6. **Width:** the outsole is 124 at the ball against the real boot's ~116. The forefoot follows this foot's
+   99 mm skin width + 10 mm of offset + 6 mm of sidewall. Thin the sidewall at the ball, or the offset at the
+   sides.
+7. **Wear:** no creases at the ankle break, no collar slump, the pair is still a mirror image, and the dust is
+   from zones only (no baked masks).
+8. The 3 mm sink into the floor in the pose (round 0, unchanged). One stray upper vertex on the right boot
+   (§4).
