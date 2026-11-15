@@ -848,6 +848,47 @@ def together(parts=GEAR):
     return out
 
 
+# --------------------------------------------------------------------------- detail helpers (round 2)
+
+def hw_object(name, coll, piece, M, material):
+    """A lib.gear_hardware Piece (ladder-lock, tri-glide, rivet, screw head...) placed by the 4 x 4 frame M
+    (mm) as a world-space identity object with one flat material (the binds and checks expect that)."""
+    from mathutils import Matrix
+    from lib import gear_hardware as GH
+    ob = GH.to_object(name, piece, matrix=M, material=None, coll=coll)
+    ob.data.transform(ob.matrix_world)
+    ob.matrix_world = Matrix.Identity(4)
+    ob.data.materials.clear()
+    ob.data.materials.append(material)
+    return ob
+
+
+def tube(name, coll, pts, radius, material, closed=False, sides=10, step=2.0):
+    """A round tube (lib.sweep.Tube) along points (mm): shock cord, piping, rolled edges."""
+    from lib import sweep as SW
+    P = SW.Path(np.asarray(pts, float), closed=closed).resampled(step)
+    ob = SW.Tube(P, radius, sides=sides, caps=not closed).to_object(name, coll)
+    ob.data.materials.clear()
+    ob.data.materials.append(material)
+    return ob
+
+
+def edge_profile(e, bead=0.9, bead_w=3.0, ramp=1.5):
+    """Thickness added at distance e (mm) inside a moulded plate's outline: a rolled rim bead `bead` proud
+    for `bead_w` mm, blending to zero over `ramp` mm (use with slab(t_field_fn=...))."""
+    if e <= bead_w:
+        return bead
+    if e >= bead_w + ramp:
+        return 0.0
+    t = (e - bead_w) / ramp
+    return bead * (1.0 - t * t * (3.0 - 2.0 * t))
+
+
+def smoothstep(x, a, b):
+    t = min(1.0, max(0.0, (x - a) / (b - a)))
+    return t * t * (3.0 - 2.0 * t)
+
+
 if __name__ == "__main__":
     a = C._argv()
     if a and a[0] == "--together":
