@@ -66,8 +66,10 @@
    "sha256": "3152477ce0d8d6978d76b995120de97cb5b928701fd0f817769f59e249a16b70",
    "url": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf/resolve/main/model.safetensors"},
   {"group": "depth", "dest": "assets/ai/depth_anything_v2_small/config.json", "bytes": 950,
+   "sha256": "c56698d3643dde1f83ea2212759e6b31a22b8f827246a36dd007ee8a22b3ff75",
    "url": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf/resolve/main/config.json"},
   {"group": "depth", "dest": "assets/ai/depth_anything_v2_small/preprocessor_config.json", "bytes": 775,
+   "sha256": "d41175c0d889477ca8fc67191e540faef14baf6275157b3fdecf78469e6bbf84",
    "url": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf/resolve/main/preprocessor_config.json"},
 
   {"group": "scans", "dest": "assets/scans/zenodo_10360304/ply/038_mBW_R.ply", "bytes": 4570751,

@@ -22,6 +22,16 @@ Commands:
 
 The skin tone, the eye materials and the eyebrow asset (`eyebrow001`) are set in base.py; body.md §3 covers the eyes.
 
+Round 2 (§6) adds a third piece: `scripts/parts/head_shape.py` fits a free-form corrective, `scripts/parts/head-shape.target`
+(MPFB target format, loaded by base.py after head_fit.json's targets), and `scripts/parts/head_skin.py` holds the skin,
+stubble and eye material changes for base.py to call. Until they are wired (§6.6), both are applied to development copies:
+
+```
+"$SGT_PYIMG" -I scripts/parts/head_shape.py --fit --rounds 3        # ~110 s: writes head-shape.target, head_shape.json
+"$SGT_PYIMG" -I scripts/parts/head_shape.py --check after --blend cache/head_r2/dev_base.blend   # the numbers
+"$SGT_BLENDER" -b --python scripts/parts/head.py -- --dev --prefix head_r2_ --samples 64          # ~75 s: part + renders
+```
+
 ## 1. What it is
 
 The face of a 38 to 42-year-old Caucasian man. The real-world numbers are take 1's (spec 06 §2.5 and §3, where the image was overruled by norms):
@@ -215,3 +225,160 @@ The analysis's albedo `#b98670`, rendered through the hero camera under the eval
 6. **The stubble is a tint.** It has a hard edge in Workbench and is barely visible in Cycles. There is no greyer chin and no texture. Round 2: a density-mapped short-strand system or a baked albedo/normal layer.
 7. **The eyes read dark in Cycles** (the sclera barely visible) and the lids are not hooded. The brows are heavy bars in Workbench, and the brow targets went up (eyebrows-trans-up 0.25) against the analysis's "very low brows".
 8. **Expression is not modelled.** Brow-lower, lid-tightener and pressed lips (analysis §7, spec 06 §7.2) are absent; the model is neutral.
+
+## 6. Round 2 (2026-11-15): the shape from four views, transferred onto MPFB's head
+
+### 6.1 Method
+
+The face targets stay (head_fit.json). On top of them, one corrective shape key, `head-shape`: a per-vertex displacement
+of the head region (4361 skin vertices, head-bone weight > 0.3) solved the way take 1's foot was transferred onto its
+scan (`scripts/stages/foot/transfer.py`): a smooth displacement field on MPFB's own topology, data terms where something is
+measured, a bending energy |L U|² everywhere else. Topology, UVs, groups and weights are untouched. The field is
+symmetric (mirror pairs) and zero on the neck ring; the skull top and the cranium under the hair are held (stature, hair
+cap). The helper geometry follows (eyes, teeth, tongue and joint cubes rigidly with the skin around them, the other
+helpers per vertex), so the eye bones and the MHCLO eyes, brows and lashes that base.py fits from them follow the face.
+
+Every measurement is "the same detector on both": the reference and a render of the model through the same camera.
+
+| View | Source | Terms (sigma) |
+|---|---|---|
+| hero | `ref/crop_head_face.png`, matched hero camera, posed | MediaPipe landmarks (1.5 px, jaw oval x1.5) with round 1's exclusions and a nuisance head rotation and shift; the pose solve's hand points (nose tip, menton, right ear); **the far-cheek silhouette** against the dark background, rows 68-124 (1.0 px) |
+| front | `gen/R001/front.png` (ChatGPT, R001), own camera solved | MediaPipe landmarks (3.5 mm); **relief** from Depth Anything V2 Small (3 mm) |
+| three-quarter | `gen/R001/threequarter_left.png` | MediaPipe landmarks (3.5 mm); **far-cheek silhouette** against the grey background, brow to chin (2.5 mm); relief (3 mm) |
+| profile | `gen/R001/profile_left.png` | **the front silhouette**, brow to throat (2.5 mm), and four outline features: glabella, nasion, nose tip, pogonion. No MediaPipe: it squashes a true profile (it read it as 51.7°) |
+
+The R001 views' cameras (head rotation, focal length, principal point at a fixed 1.1 m, a long lens) are solved with
+the shape. The front and the profile hold their turn (sigma 3°: a profile's midline alone cannot tell its turn from the
+face's depth); the three-quarter finds its own (32°; it was asked for 45). The relief term: Depth Anything on the R001
+photo and on the model's render through the fitted camera, each map turned into millimetres by an affine fit to the
+model's true depth over the visible face (forehead rows and eyes left out); the difference less its best plane is the
+depth each vertex should gain (clipped at 5 mm a round). Gauss-Newton: cameras and nuisance with U fixed, then U with the
+cameras fixed (one sparse solve), four times per round; three rounds, each re-rendering and re-detecting (110 s).
+
+The silhouettes were added after a first run: MediaPipe's regression is prior-heavy and reads two different faces
+alike, so the landmark residuals alone were already small (front 1.6 mm, three-quarter 2.0 mm) while the face still
+read heavy. Outlines are model-free.
+
+### 6.2 Sources checked
+
+- **3DDFA (take 1)**: only its 40 shape and 10 expression parameters and 68 landmarks are in `ref/ai/`
+  (`face_3ddfa_lm68.json`); the BFM basis and the dense mesh are not in the repository, and take 1 called the fit
+  generic. `ref/ai/face_ref_mesh.obj` is MediaPipe's 468-point mesh with MediaPipe's generic depth. Neither was used.
+- **FLAME-class fits (DECA, EMOCA, SMIRK)**: the FLAME model needs an account, so they are ruled out by the brief.
+- **gen/R001** arrived during the round (front, three-quarter, profile; inferred by ChatGPT, angles approximate) and
+  carries the depth: the profile outline and the three-quarter's far cheek.
+- **Depth Anything V2 Small** (Apache-2.0): installed through setup's existing `--with-depth` route (torch 2.14.1 CPU and
+  transformers 5.18.0 into `assets/ai/venv`; weights in `assets/ai/depth_anything_v2_small/`, the two config hashes now
+  added to `scripts/setup/downloads.json`). Its fit to the model's own true depth leaves 3.3-5.5 mm rms, so its relief
+  is weak evidence: weighted at 3 mm; §7 item 1 says where it disagrees with the outlines.
+
+### 6.3 Numbers (`cache/head_r2/check_{before,after}.json`)
+
+Before = round 1's base (`cache/head_r2/base_snapshot.blend`); after = the same with head-shape.target. Both through
+round 1's committed hero pose (`cache/head_r2/hero_pose_r1.json`), the R001 cameras re-solved for each mesh alone.
+
+| | Before (round 1) | After (round 2) |
+|---|---|---|
+| Hero, MediaPipe RMS, no nuisance (round 1's measure), ~400 points | 1.88 px | **1.64 px** |
+| Hero, median / jaw oval | 1.23 / 4.63 px | 1.02 / 4.67 px |
+| Hero, with the nuisance rotation and shift | 0.77 px | 0.60 px |
+| Hero far-cheek silhouette, 94 rows | 1.35 px | **0.80 px** |
+| Front landmarks (R001) | 1.59 mm | **1.04 mm** |
+| Three-quarter landmarks | 1.52 mm | 1.17 mm |
+| Three-quarter far-cheek silhouette | 1.68 mm | **1.02 mm** |
+| Profile outline, brow to throat, 222 rows | 4.41 mm | **1.90 mm** |
+| Profile features glabella / nasion / nose tip / pogonion | 4.9 / 4.4 / 2.4 / 3.5 mm | 0.9 / 5.3 / 3.8 / 2.5 mm |
+| Relief (Depth Anything difference), front / three-quarter, during the fit | 4.5 / 9.4 mm | 3.6 / 4.5 mm |
+
+The hero's key points (px): nose tip 2.52 → 2.89, eye outer R 2.05 → 1.23, mouth R 0.70 → 0.26, gonion L 4.84 → 5.31.
+The shape (rest): vertex to menton 245.8 → 250.9 mm (longer: the menton 5 mm lower), the breadth 38 mm above the
+menton 137.4 → 133.7 and 20 mm above it 124.3 → 122.9 (a narrower lower jaw), the nose tip 3.7 mm back, the menton 4.5 mm
+back. Largest displacement 10.4 mm; 95 % of the face moved under 3 mm a round.
+
+### 6.4 Materials
+
+`head_skin.py` (for base.py; applied by head.py --dev until wired):
+- **Skin**: SSS weight 0.2 → 0.06, radius scale 0.1 → 0.05, radii (1, 0.2, 0.1) → (1, 0.35, 0.2), albedo #ab7d71 → #a5746f
+  (pinker). Hero crop against the reference (hue / saturation): cheek 20.3 / 0.33 → 18.3 / 0.34 (ref 16.2 / 0.35),
+  forehead 20.9 / 0.39 → 19.6 / 0.25 (ref 17.3 / 0.34), nose 17.6 / 0.38 → 15.9 / 0.41 (ref 15.5 / 0.36), chin
+  19.4 / 0.60 → 20.6 / 0.41 (ref 16.1 / 0.36). The point under the zygoma is still 0.56 against 0.38: the model has no
+  hollow there, so the point sits on a lit bulge's terminator.
+- **Stubble**: no shell. A UV mask (`Body.StubbleMask`, 2048², packed; R density, G grey) from head.py's density map,
+  fading over ~15 mm, drives a mix in the skin group's colour chain: dots (0.9 mm noise) darken it towards #2c1f18,
+  greyed up to 45 % on the chin, roughness +0.25. Per-vertex attributes were tried first: Cycles read them as 0 inside
+  MPFB's skin group. A generated image went black after a render-engine switch, so the mask goes through a PNG and is
+  packed.
+- **Eyes**: the black eyes were EnhancedEye's cornea shell, a refracting glass (transmission 1, IOR 1.33) over the whole
+  eye: no direct light reaches the sclera and iris without caustics. Now a dark glossy veil (transmission 0, alpha 0.25,
+  colour black, roughness 0.02); sclera #e6e0da, iris #6a5646 / #3f322a. Short lashes (`eyelashes01` instead of
+  base.py's long, curled `eyelashes02`).
+- **Hair** (head.py): the cap a little lower (top 24 → 17 mm at the front, 14 → 10 at the crown) and darker (#3a2a1e
+  rendered at value 0.46 against the drawn 0.24; now #271b14, no sheen), with 60 tapered, bent clumps on the top leaning
+  with the sweep (7-13 mm, roots 4.2-6.5 mm), none on the sides. The stubble shell is gone from Part.Head.
+
+### 6.5 Renders looked at (renders/head/, prefix `head_r2_`)
+
+- `rest_{front,side,side_L,threequarter}_{clay,cycles}.png` beside round 1's: the stubble's hard edge is gone; the chin
+  and moustache carry a soft dark stubble in Cycles; the eyes show sclera and a dark iris; the skin is a little less
+  orange. The face is longer and a little narrower at the jaw. **Honestly, it still reads broad and soft**: jowly below
+  the cheekbones, a fleshy rounded nose tip, thick lips, a soft under-jaw running into the neck with no jaw line.
+- `r001_{front,threequarter,profile}_sheet.png` (R001 | model | 50 %): the outlines now lie on R001's (the profile, the
+  three-quarter's far cheek, the front's face width), which is what the numbers say. The difference is inside the
+  outline: the photo has hollow cheeks, a defined mandible edge and a crease under the jaw where the model is full.
+- `hero_head_face_pair.png`, `hero_head_face_cycles_pair.png` (reference | model | 50 %): size and placement match;
+  the head is still turned less to his left and less chin-up than the drawing (the pose, §7 item 2); the far cheek now
+  meets the drawn outline.
+- `zoom_{z_head_x8,g_eye_right_x20,g_nose_mouth_x14,g_jaw_x10}_sheet.png`: the eye has a sclera and a catchlight; the
+  stubble reads on the chin and upper lip; the jaw zoom shows the model's soft, round jaw against the drawn angle.
+- The hair clumps break the cap's silhouette but read as thorns, not piecey hair.
+- `head_r2_landmarks_after_{hero,front,threequarter}.png`: MediaPipe's points, reference red, model green.
+
+### 6.6 Wiring (once the pose re-solve is done)
+
+In `scripts/stages/base.py`:
+1. After the face-target loop (before `fit_height`): `import head_shape; head_shape.apply(mpfb, body)` (with the parts
+   directory on `sys.path`). It loads `scripts/parts/head-shape.target` as the shape key `head-shape` at weight 1, before
+   the rig, so the joint cubes, eye bones and MHCLO assets follow.
+2. In `ASSETS`, the eyelashes `eyelashes01/eyelashes01.mhclo` (`head_skin.LASHES_R2`).
+3. After `marks = landmarks(body, rig)`: `skin["head_r2"] = head_skin.apply(body, marks, get("Body.Eyes"))`. It retunes
+   Body.Skin (the tone from #ab7d71 to #a5746f), packs the stubble mask and fixes the eyes.
+4. Rebuild base, re-solve the pose (the menton moved 5 mm down and back; the hand-read chin target in pose_solve.py may
+   want a look), rebuild the head part (`head.py` without `--dev`; it skips head_skin when the skin group already has
+   `Stubble.Mix`), and every part built on base.blend.
+
+head-shape.target is a displacement of the round-1 face: if head_fit.json is refitted, re-run `head_shape.py --fit`.
+
+## 7. Still wrong, ranked for round 3
+
+1. **The face still reads broad and soft** although its outlines now match the four views to 1-2 mm: the form inside
+   the outline is still MPFB's. Jowls under the cheekbones where the drawing and R001 have hollows; no mandible edge or
+   crease between jaw and neck (the submental plane runs straight into the throat); a fleshy, rounded nose tip; thick
+   lips. The bending energy (0.2 mm) smooths what the data cannot see, and the relief term is too noisy to carve hollows.
+   Its remaining requests (the nose 3-5 mm deeper, the bearded chin forward) contradict the profile outline, so they
+   look like Depth Anything's bias on the photo. Next: a shading term (render against reference under matched light:
+   the hollows and the jaw edge show as shading), a better normal estimator than relative depth, or explicit local
+   targets (spec 06 §3.3: sub-zygomatic hollow −3 mm over r 16, jaw corner r 10, vermilion 6 / 9.5 mm) as a sculpt on
+   top of the transfer.
+2. **The head's pose** (round 1 §5 item 1): yaw and chin-up are still less than drawn; the hero nuisance wants about
+   +6° of yaw and 7° chin-up. The pose agent's face term should settle it; then re-check the hero numbers.
+3. **Hair**: the clumps read as thorns and the cap as a helmet. Strands (hair curves with clumping) come next.
+4. **Skin**: hue 18-20° against the drawing's 16-17°, and the cool side stays warm (the evaluation lights, not the
+   skin). No pores or lines beyond MPFB's texture.
+5. **The profile nasion** is 5.3 mm off: MPFB's nasion sits higher and shallower than R001's, and the bending holds the brow.
+6. **R001 is inferred**: its three-quarter came out at 32°, not the 45 asked, and its proportions are ChatGPT's reading
+   of the same drawing. It is guidance, not truth (weighted below the hero).
+7. **Expression** is still neutral (round 1 §5 item 8).
+
+## 8. Note for round 3 (Claude, 2026-11-15)
+
+Round 2's outlines match to 1-2 mm in four views, but the face still reads soft and jowly next
+to the drawing and R001: the shape inside the outline is what is wrong, and neither landmarks nor
+outlines nor the noisy depth estimate can carve it. The candidate that fits "free, local, open"
+(PLAN.md decision 4) is **Hunyuan3D 2 (mini or multi-view `2mv`)**, open weights, which turns one
+or several pictures into a 3D shape; the multi-view model takes front, left and back views, and
+R001 supplies front and left profile (and ChatGPT can make a back view on request). Shape-only
+generation in low-VRAM mode is reported to fit in about 5-6 GB, so it may run on the RTX 3050;
+check the licence terms before relying on it. Its head mesh would then be transferred onto MPFB's
+head exactly as round 2's shape key and take 1's foot scan were, keeping MPFB's topology, UVs and
+weights, with the fit to the four views as the check. If it does not run here, the fallback is a
+shading term or targeted local sculpting of the jaw line, cheek hollows, nose tip and lips.

@@ -560,14 +560,17 @@ def main():
 
 # =========================================================================== Blender: the part
 
-HAIR_HEX = "#3a2a1e"          # analysis §8: root/base colour (lit mid-tone #614d42, shadow #30241c)
+HAIR_HEX = "#271b14"          # round 2: analysis §8 base #3a2a1e rendered at value 0.46 against the drawn 0.24 under the key
 STUBBLE_HEX = "#3b2a22"       # analysis §9: the stubble hairs
 HAIR = {                      # mm; analysis §8 (lengths), consolidated hairline, pose README (head top)
     # Hair 35-45 mm long stands at an angle, so the mass is thinner than the length: the drawn mass top is
     # about 4 px (~10-15 mm) over the scalp and the spike tips 6 px (~13 mm) higher. A first cap built with
     # the lengths as thickness (42 / 30) stood 49 mm over the skull: a pompadour helmet.
-    "top_front": 24.0,        # the lifted fringe at the front
-    "top_back": 14.0,         # the crown
+    # round 2: the mass a little lower (the spikes below carry the height the round-1 cap made with bulk)
+    "top_front": 17.0,        # the lifted fringe at the front
+    "top_back": 10.0,         # the crown
+    "tufts": 60, "tuft_gap": 9.0,          # clumps on the top, at least this far apart (mm)
+    "tuft_len": (7.0, 13.0), "tuft_r": (4.2, 6.5),   # clump length and root radius (mm): piecey clumps, not thorns
     "side": 2.5,              # the temple taper, 3 -> 1, skin-blended fade to the ear top
     "back_low": 7.0,          # the occipital taper, 8 at the bulge -> 1 at the nape
     "edge_fade": 9.0,         # thickness ramps from the hairline over this surface distance
@@ -633,6 +636,35 @@ def relax_boundary(C, V, F, bvh, iters=40, pin_inner=8):
     return V
 
 
+def _tuft(base, direction, side, length, r0, rng, rings=5, segs=6):
+    """A tapered, slightly flattened and bent clump of hair (a cone of quads ending in a point): base (3,) on the
+    cap, direction (3,) unit, side (3,) unit across the sweep. Returns (V, F) local to the tuft."""
+    d = np.asarray(direction, float)
+    s = np.asarray(side, float)
+    s = s - d * (s @ d)
+    s /= np.linalg.norm(s) + 1e-9
+    t = np.cross(d, s)
+    bend = rng.uniform(0.3, 0.55)
+    V, F = [], []
+    for i in range(rings):
+        u = i / (rings - 1)
+        c = base + d * length * u + t * length * bend * u * u      # bows along the sweep's lean
+        r = r0 * (1.0 - u) ** 1.2
+        for j in range(segs):
+            a = 2 * np.pi * j / segs
+            V.append(c + s * np.cos(a) * r * 1.5 + t * np.sin(a) * r * 0.8)
+    tip = base + d * length * 1.12 + t * length * bend * 1.25
+    V.append(tip)
+    for i in range(rings - 1):
+        for j in range(segs):
+            a, b = i * segs + j, i * segs + (j + 1) % segs
+            F.append((a, b, b + segs, a + segs))
+    k = len(V) - 1
+    for j in range(segs):
+        F.append(((rings - 1) * segs + j, (rings - 1) * segs + (j + 1) % segs, k))
+    return np.array(V), F
+
+
 def build_hair(C, bd, coll, seed=7):
     """Head.Hair: a round-1 cap. The scalp (MPFB's `scalp` group, plus the forehead above the reference's
     hairline, less the ears) is refined twice on the skin and pushed out by a thickness field: a lifted
@@ -675,15 +707,42 @@ def build_hair(C, bd, coll, seed=7):
     top = np.where(s > 0.55)[0]
     spikes = []
     if len(top):
-        for c in rng.choice(top, size=min(46, len(top)), replace=False):
-            sig = rng.uniform(4.0, 7.5)
-            hgt = rng.uniform(3.0, 9.0) * (0.7 + 0.3 * float(np.cos(np.radians(az[c]))))
+        for c in rng.choice(top, size=min(30, len(top)), replace=False):
+            sig = rng.uniform(4.0, 7.0)
+            hgt = rng.uniform(1.5, 4.5) * (0.7 + 0.3 * float(np.cos(np.radians(az[c]))))
             r = np.linalg.norm(Vs - Vs[c], axis=1)
             P += (D * (hgt * np.exp(-0.5 * (r / sig) ** 2) * s)[:, None])
-            spikes.append(round(float(hgt), 1))
     P = C.taubin(P, E, iters=2, pin=edge)
     P = C.push_out(P, bvh, np.maximum(0.4, 0.5 * t))
-    mat = C.flat_material("Head.Mat.Hair", HAIR_HEX, rough=0.55, sheen=0.3)
+    # round 2: the silhouette spikes (analysis §8: 8-10 distinct spikes against the background; "a smooth hair cap
+    # will fail"). Tapered clumps rooted in the cap's top, leaning with the sweep (up, forward, to his right),
+    # longest at the front, none on the tapered sides: short and textured on top, shorter at the sides.
+    Pn = C.vertex_normals(P, Fs)
+    tops = np.where((s > 0.62) & ~edge)[0]
+    order = rng.permutation(tops)
+    roots = []
+    for c in order:
+        if all(np.linalg.norm(Vs[c] - Vs[q]) > HAIR["tuft_gap"] for q in roots):
+            roots.append(c)
+        if len(roots) >= HAIR["tufts"]:
+            break
+    Vt, Ft = [np.asarray(P)], [list(Fs)]
+    nv = len(P)
+    for c in roots:
+        front = float(np.clip(np.cos(np.radians(az[c])), 0, 1))
+        dvec = Pn[c] * 0.3 + sweep * 0.7 + rng.normal(0, 0.2, 3)          # lying with the sweep, tips lifting
+        dvec /= np.linalg.norm(dvec)
+        length = rng.uniform(*HAIR["tuft_len"]) * (0.75 + 0.45 * front) * s[c]
+        r0 = rng.uniform(*HAIR["tuft_r"])
+        side = np.cross(dvec, sweep) + rng.normal(0, 0.3, 3)
+        tv, tf = _tuft(P[c] - dvec * 2.5, dvec, side, length, r0, rng)
+        Vt.append(tv)
+        Ft.append([tuple(i + nv for i in f) for f in tf])
+        nv += len(tv)
+        spikes.append(round(float(length), 1))
+    P = np.concatenate(Vt)
+    Fs = [f for fl in Ft for f in fl]
+    mat = C.flat_material("Head.Mat.Hair", HAIR_HEX, rough=0.75, sheen=0.0)     # round 1 sheen 0.3 read tan
     ob = C.mesh_object("Head.Hair", P, Fs, coll, mat=mat)
     ob["sgt_clay"] = (0.30, 0.25, 0.21)
     C.subsurf(ob, 1)
@@ -792,8 +851,13 @@ def build_stubble(C, bd, coll, marks):
 # ----------------------------------------------------------------------------- renders
 
 HEAD_T = np.array([0.0, -30.0, 1738.0])          # rest view target (mm)
+# round 2: both profiles (side = from his right, side_L = from his left) and the three-quarter from his front-right
 HEAD_VIEWS = {"front": (np.array([0.0, -1.0, 0.0]), 330.0), "side": (np.array([-1.0, 0.0, 0.0]), 330.0),
+              "side_L": (np.array([1.0, 0.0, 0.0]), 330.0),
               "threequarter": (np.array([-0.64, -0.75, 0.12]), None)}
+# the reference's face zooms (archive/v1/notes/analysis_face_grooming.md §12): full-frame box and scale
+ZOOMS = {"z_head_x8": ((745, 30, 865, 150), 8), "g_eye_right_x20": ((784, 66, 812, 88), 20),
+         "g_nose_mouth_x14": ((796, 84, 840, 134), 14), "g_jaw_x10": ((755, 95, 860, 140), 10)}
 
 
 def _clay_colours(coll):
@@ -808,8 +872,8 @@ def _clay_colours(coll):
         o.color = (*(o.get("sgt_clay") or (0.45, 0.47, 0.5)), 1.0)
 
 
-def render_rest_head(coll, samples):
-    """renders/head/head_rest_{front,side,threequarter}_{clay,cycles}.png on the rest body."""
+def render_rest_head(coll, samples, prefix="head_"):
+    """renders/head/<prefix>rest_{front,side,side_L,threequarter}_{clay,cycles}.png on the rest body."""
     import bpy
     import common as C
     from eval import render as R
@@ -838,7 +902,7 @@ def render_rest_head(coll, samples):
                 cam.data.type, cam.data.lens = "PERSP", 85.0
                 C._look(cam, HEAD_T + dv * 1250.0, HEAD_T)
             cam.data.sensor_fit = "AUTO"
-            out.append(C._render(os.path.join(OUT, f"head_rest_{v}_{mode}.png")))
+            out.append(C._render(os.path.join(OUT, f"{prefix}rest_{v}_{mode}.png")))
     restore()
     return out
 
@@ -874,46 +938,133 @@ def render_hero_cycles(coll, preset, path, samples):
     return path
 
 
+def sheet3(ref_png, render_png, out_png, bg=(0.16, 0.16, 0.17)):
+    """[reference | render on a flat background | render over the reference at 50 %] (common.pair_sheet's layout
+    with an even overlay)."""
+    import common as C
+    ref = C._load_px(ref_png)
+    rnd = C._load_px(render_png)
+    h, w = rnd.shape[:2]
+    if ref.shape[:2] != (h, w):
+        ref = C._fit(ref, h, w)
+    a = rnd[..., 3:4]
+    solo = rnd[..., :3] * a + np.array(bg) * (1 - a)
+    over = 0.5 * solo + 0.5 * ref[..., :3]
+    gap = np.ones((h, 10, 3), np.float32)
+    s = np.concatenate([ref[..., :3], gap, solo, gap, over], 1)
+    C._save_px(np.concatenate([s, np.ones((h, s.shape[1], 1), np.float32)], 2), out_png)
+    return out_png
+
+
+def render_zooms(coll, samples, prefix):
+    """The reference's face zooms (ZOOMS) through the hero camera, Cycles, each beside its reference zoom."""
+    import bpy
+    import common as C
+    from eval import camera, render as R, scene as escene
+    sc = bpy.context.scene
+    restore = C.visible_only([coll])
+    _eval_lights(sc)
+    escene.colour_management(sc)
+    out = []
+    for name, (box, scale) in ZOOMS.items():
+        camera.apply({"camera": {"type": "hero"}, "render": {"border_px": list(box), "scale": scale}}, sc, percent=100)
+        R._set_tier(sc, "look", samples=samples)
+        sc.render.film_transparent = True
+        sc.render.image_settings.file_format, sc.render.image_settings.color_mode = "PNG", "RGBA"
+        p = C._render(os.path.join(OUT, f"{prefix}zoom_{name}.png"))
+        out.append(sheet3(os.path.join(PROJECT, "ref", "face_zooms", name + ".png"), p,
+                          os.path.join(OUT, f"{prefix}zoom_{name}_sheet.png")))
+    restore()
+    return out
+
+
+def render_views_r001(coll, samples, prefix):
+    """The rest head through head_shape.py's fitted cameras of gen/R001's views (cache/head_r2/cams.json), Cycles,
+    beside each view."""
+    import bpy
+    import common as C
+    import head_shape as HS
+    from eval import render as R, scene as escene
+    cams = os.path.join(HS.WORK, "cams.json")
+    if not os.path.exists(cams):
+        return []
+    sc = bpy.context.scene
+    restore = C.visible_only([coll])
+    _eval_lights(sc)
+    out = []
+    for v, par in json.load(open(cams))["views"].items():
+        HS.bl_view_render(sc, par, os.path.join(OUT, f"{prefix}r001_{v}.png"))
+        R._set_tier(sc, "look", samples=samples)
+        escene.colour_management(sc)
+        sc.render.film_transparent = True
+        sc.render.image_settings.file_format, sc.render.image_settings.color_mode = "PNG", "RGBA"
+        p = C._render(os.path.join(OUT, f"{prefix}r001_{v}.png"))
+        out.append(sheet3(os.path.join(HS.R001, HS.VIEWS[v][0]), p, os.path.join(OUT, f"{prefix}r001_{v}_sheet.png")))
+    restore()
+    return out
+
+
+def _dev_mode(C):
+    """--dev: work on head_shape.py's development base (cache/head_r2/dev_base.blend, with the head-shape target),
+    the round-1 hero pose snapshot, the part cache in cache/head_r2/ (never cache/parts/head.blend while the
+    pose is being re-solved), and head_skin.py's skin, stubble and eyes applied to the body in this session."""
+    import head_shape as HS
+    C.BASE_BLEND, C.BASE_JSON = HS.DEV_BLEND, HS.DEV_JSON
+    C.PARTS_DIR = HS.WORK
+    C.apply_hero_pose = lambda rig: (HS.pose_hero(rig), "cache/head_r2/hero_pose_r1.json")[1]
+
+
 def bl_build(argv):
     import bpy
     import common as C
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-render", action="store_true")
     ap.add_argument("--samples", type=int, default=64)
+    ap.add_argument("--dev", action="store_true", help="head_shape.py's development base and caches (round 2)")
+    ap.add_argument("--prefix", default="head_")
     args = ap.parse_args(argv)
+    if args.dev:
+        _dev_mode(C)
     t0 = time.perf_counter()
     body, rig = C.open_base()
     bd = C.body_data(body)
     marks = C.base_json()["landmarks"]
     coll = C.part_collection("Head")
     hair, hinfo = build_hair(C, bd, coll)
-    stub, sinfo = build_stubble(C, bd, coll, marks)
-    for ob in (hair, stub):
-        C.bind(ob, body, rig)
-    rest_clear = C.clearance([hair, stub], body, "rest")
+    C.bind(hair, body, rig)
+    rest_clear = C.clearance([hair], body, "rest")
     fit = json.load(open(FIT_JSON)) if os.path.exists(FIT_JSON) else {}
-    extra = {"part": "head", "hair": hinfo, "stubble": sinfo, "clearance_rest": rest_clear,
-             "face_targets": len(fit.get("targets", {})), "face_fit": "scripts/parts/head_fit.json"}
+    extra = {"part": "head", "hair": hinfo, "stubble": "a shading of the skin (head_skin.py), no shell",
+             "clearance_rest": rest_clear,
+             "face_targets": len(fit.get("targets", {})), "face_fit": "scripts/parts/head_fit.json",
+             "face_shape": "scripts/parts/head-shape.target (head_shape.py)", "base": C.BASE_BLEND}
     C.save_part("head", coll, extra)
+    if "Stubble.Mix" not in bpy.data.node_groups.get("Body.Skin.Group", bpy.data.node_groups[0]).nodes:
+        # round 2: the skin, the stubble (a shading of the skin) and the eyes are head_skin.py's, applied by base.py
+        # once wired; until then here, for this part's renders only (the body is not saved). After save_part: its
+        # library write dropped the packed stubble mask's pixels when applied before it.
+        import head_skin
+        extra["skin_applied_here"] = head_skin.apply(body, marks, bpy.data.objects.get("Body.Eyes"))
     if not args.no_render:
         os.makedirs(OUT, exist_ok=True)
-        render_rest_head(coll, args.samples)
+        pre = args.prefix
+        render_rest_head(coll, args.samples, pre)
+        render_views_r001(coll, args.samples, pre)
         used = C.apply_hero_pose(rig)
-        extra["clearance_posed"] = C.clearance([hair, stub], body, "posed")
-        C.render_hero([coll], "ref.head_face", os.path.join(OUT, "head_hero_head_face.png"),
-                      os.path.join(OUT, "head_hero_head_face_pair.png"))
-        render_hero_cycles(coll, "ref.head_face", os.path.join(OUT, "head_hero_head_face_cycles.png"), args.samples)
-        C.pair_sheet(REF_CROP, os.path.join(OUT, "head_hero_head_face_cycles.png"), os.path.join(OUT, "head_hero_head_face_cycles_pair.png"))
-        C.render_hero([coll], "ref.soldier_full", os.path.join(OUT, "head_hero_soldier_full.png"),
-                      os.path.join(OUT, "head_hero_soldier_full_pair.png"))
-        render_hero_cycles(coll, "ref.soldier_full", os.path.join(OUT, "head_hero_soldier_full_cycles.png"), args.samples)
-        C.pair_sheet(os.path.join(PROJECT, "ref", "crop_soldier_full.png"), os.path.join(OUT, "head_hero_soldier_full_cycles.png"),
-                     os.path.join(OUT, "head_hero_soldier_full_cycles_pair.png"))
+        extra["clearance_posed"] = C.clearance([hair], body, "posed")
+        C.render_hero([coll], "ref.head_face", os.path.join(OUT, f"{pre}hero_head_face.png"))
+        sheet3(REF_CROP, os.path.join(OUT, f"{pre}hero_head_face.png"), os.path.join(OUT, f"{pre}hero_head_face_pair.png"))
+        render_hero_cycles(coll, "ref.head_face", os.path.join(OUT, f"{pre}hero_head_face_cycles.png"), args.samples)
+        sheet3(REF_CROP, os.path.join(OUT, f"{pre}hero_head_face_cycles.png"), os.path.join(OUT, f"{pre}hero_head_face_cycles_pair.png"))
+        render_zooms(coll, args.samples, pre)
+        render_hero_cycles(coll, "ref.soldier_full", os.path.join(OUT, f"{pre}hero_soldier_full_cycles.png"), args.samples)
+        C.pair_sheet(os.path.join(PROJECT, "ref", "crop_soldier_full.png"), os.path.join(OUT, f"{pre}hero_soldier_full_cycles.png"),
+                     os.path.join(OUT, f"{pre}hero_soldier_full_cycles_pair.png"))
         extra["pose"] = used
     extra["seconds"] = round(time.perf_counter() - t0, 1)
     with open(os.path.join(C.PARTS_DIR, "head.json"), "w") as f:
-        json.dump(extra, f, indent=1)
-    say(json.dumps({k: extra[k] for k in ("hair", "stubble", "seconds")}))
+        json.dump(extra, f, indent=1, default=str)
+    say(json.dumps({k: extra[k] for k in ("hair", "seconds")}))
     return 0
 
 
