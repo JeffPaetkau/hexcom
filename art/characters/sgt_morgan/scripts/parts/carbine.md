@@ -1,7 +1,8 @@
 # Carbine
 
-Build: `"$SGT_BLENDER" -b --python scripts/parts/carbine.py [-- --no-render] [--keep-scene]` (about 15 s on
-the RTX 3050). Output: `cache/parts/carbine.blend`, `renders/carbine/*.png`, `renders/carbine/measure.json`.
+Build: `"$SGT_BLENDER" -b --python scripts/parts/carbine.py [-- --no-render] [--keep-scene]` (about 9 s
+without renders, 50 s with them, on the RTX 3050), or `"$SGT_PYIMG" -I scripts/assemble.py --rebuild carbine`.
+Output: `cache/parts/carbine.blend`, `renders/carbine/*.png`, `renders/carbine/measure.json`.
 
 ## 1. What it is
 
@@ -26,36 +27,41 @@ configuration take 1 chose (`archive/v1/spec/15_carbine.md` §1.2):
 - **Hand empties:** the empties sit at the centre of each palm's contact with the gun. Local +Z is the palm normal pointing into the gun, local +X runs across the palm from the little finger to the index finger, and Y = Z × X.
   - `Carbine.Grip.R` is at (−74.6, −15.0, −85.2) mm. That is the right side of the A2 grip, 54 mm down its 25° axis from the receiver. Its Z axis is +Y, and it is 0.6 mm from the grip surface.
   - `Carbine.Grip.L` is at (292.0, 10.2, 17.6) mm, at take 1's left-hand station R.y 170. It is an overhand hold: the palm sits over the 11 o'clock side of the handguard, which is how the reference reads (the back of the hand over the rail, the fingers down the right face, the tips under the 4:30 bevel). Its Z axis is (0, −0.5, −0.87), and it is 0.6 mm from the handguard surface.
+  - Round 2 did not move either empty: the grip's right face at that station and the handguard's bevel stayed where they were. The script measures the gaps on every build (`measure.json` `grip_empty_gap_mm`: 0.54 and 0.56 mm). Object names the pose solve reads, `Carbine.Grip` and `Carbine.Stock.ButtPad`, are unchanged. The A2 grip's outline did change slightly (finger groove, nub, beavertail), and so did the pad (grooves); the pose agent's voxelised carbine should be re-exported.
 
 ## 2. Dimensions built (mm; sources in take 1 spec 15 §3.15 and weapon analysis §2)
 
-The script measured the following on the built meshes (`measure.json`):
+The script measured the following on the built meshes (`measure.json`, round 2):
 
 | Quantity | Built | Real / source |
 |---|---|---|
-| Overall length, butt heel to A2 front | **855.3** | 16 in carbine: 794 collapsed to 876 extended, so position 3 is about 856 (research_dimensions §12) |
+| Overall length, butt heel to A2 front | **855.7** | 16 in carbine: 794 collapsed to 876 extended, so position 3 is about 856 (research_dimensions §12) |
 | Barrel, bolt face to crown | **406.4** | 16.0 in |
 | Barrel and A2 ahead of the handguard | 86.3 | the MCMR-13 is 340.4 long; the A2 is 44.5 × 21.8 |
-| Height, optic top to floorplate | 302.4 | T-2 axis 39 mm above the rail (LRP + 39 mm spacer) |
-| Height without the optic | 242.4 | rail top +30.2 above the bore (A2 sight height 2.6 in minus 1.41 in co-witness) |
-| Height without the optic or magazine (rail top to grip bottom) | 174.2 | A2 grip is about 102 tall, raked 25° |
+| Height, optic top to floorplate | 300.9 | T-2 axis 39 mm above the rail (LRP + 39 mm spacer) |
+| Height without the optic | 240.0 | rail top +30.2 above the bore (A2 sight height 2.6 in minus 1.41 in co-witness) |
+| Height without the optic or magazine (rail top to grip bottom) | 174.5 | A2 grip is about 102 tall, raked 25° |
 | Width overall | 68.5 | includes the light on its offset mount |
+| Width of the upper across the forward assist | 46.3 | walls 31.0; the forward-assist housing 15.5 proud of the right wall (take 1 §3.2: X +31.5) |
 | Length of pull, trigger face to pad centre | 292.8 | short pull, right over plate armour |
 | Stock pad rake | 12.2° | the Minimalist's angled pad |
-| Magazine floorplate tilt | 15.5° | PMAG 190.5 × 66 × 22.1, constant curve |
-| Rail teeth | 20 on the receiver, 34 on the handguard | MIL-STD-1913: 10.01 pitch, 5.23 slots, 3.0 deep, 21.2 top |
+| Magazine floorplate tilt | 15.2° | PMAG 190.5 × 66 × 22.1, constant curve |
+| Rail recoil slots | 20 on the receiver, 34 on the handguard, one phase (the joint falls inside one slot) | MIL-STD-1913: 10.01 pitch, 5.23 slots, 3.0 deep, 21.2 top, 45° flanks to the 15.67 neck |
+| Rendered triangles, whole carbine | 70.1 k | take 1 §4.18 budget 143 k; no Subdivision |
 
 Other built dimensions:
-- **Receiver:** upper 197 long and 29 wide; lower 26 wide with a 30 mm magwell (33 at the flared lip); 67 × 23 magwell opening.
-- **Port:** ejection port 76.2 × 20.3, with the dust cover open.
-- **Handguard and rail:** octagon 38.1 across the flats, 33 ID. M-LOK 32 × 7 slots at 3, 6 and 9 o'clock, 8 per face. Seven Ø10 holes on each lower bevel at 26 mm pitch.
-- **Receiver extension:** buffer tube Ø29.16, castle nut Ø36.
-- **Stock:** 180 × 128 with a 44.5 wide pad.
-- **Light:** M300C, 104 long with a Ø28.6 bezel, axis at y −32, z +16.
+- **Receiver:** upper 197 long, walls 31.0 wide, a 22.6 deck under the rail with 45°-ish shoulders, carrier bore Ø25.6 hollow behind the port, front lower corner rounded r 7. Lower: pocket walls 30.0, magwell 27.6 with front corners r 7, flaring at the lip to 31.6 wide (3.0 forward, 1.0 back), 67 × 23 opening with a 2.2 inner flare. Buffer-tower boss Ø35.6, cut flat at z +11.6 under the charging handle.
+- **Port:** ejection port 76.2 × 20.3 with r 3 corners; the dust cover (78.7 × 23.4 × 1.6) hangs open on a Ø2.4 rod in two hinge bosses, its latch bump outward.
+- **Forward assist:** Ø19 housing on an axis 13° out from the bore in plan, rising out of the wall as a teardrop boss; Ø14 round button, 11 mm behind it, with a grooved face. **Deflector:** wedge behind the port, ridge 9.5 out from the wall.
+- **Lower controls:** pin heads Ø9.5 (right) and flush ends (left) at the pivot and takedown pins, hammer and trigger pin ends Ø3.9, mag release Ø9.5 in a 160°-to-340° fence 2.2 proud, bolt catch with a 4-rib paddle (left), selector lever on SAFE (left) with its axle end on the right, trigger guard a 6.5 × 5.5 bar.
+- **Handguard and rail:** octagon 38.1 across the flats, 33 ID, rear collar 39.7, front chamfer 2. M-LOK 32 × 7 slots (r 2.4) at 3, 6 and 9 o'clock, 8 per face on a 40 pitch. Seven Ø10 holes on each lower bevel at 26 mm pitch. Two clamp screws in the rear collar's lower bevels.
+- **Receiver extension:** buffer tube Ø29.16 with its bottom rib, castle nut Ø36 with three notches, QD end plate.
+- **Stock:** 180 × 128, a rounded 34 × 37 tube housing, an 16 mm skeleton plate with a big window (corner radii 7 to 10), a rear post widening from 17 to 42 mm to the 44.5 wide pad, a front lug 22 wide with the sling loop the drawing paints tan.
+- **Light:** M300C, 104 long with a Ø28.6 bezel and a knurled Ø24 tail cap with its shroud, axis at y −32, z +16.
 
 **Mass.** The script sums each component's mesh volume × density.
-- A fully solid blockout weighs 5.09 kg.
-- With per-component fill factors it is **3.11 kg empty and 3.47 kg loaded** (30 × 12 g rounds). Fill factors are the fraction of each envelope that is material in the real part, e.g. upper 0.45 and magazine shell 0.25.
+- The closed volumes (now hollow where the real parts are hollow: the upper's bore, the stock's window and channel) weigh 4.34 kg solid.
+- With per-component fill factors it is **3.01 kg empty and 3.37 kg loaded** (30 × 12 g rounds). Fill factors are the fraction of each closed volume that is material in the real part, e.g. upper 0.75 and the magazine 0.2.
 - Real: an M4 is 2.9 kg empty, plus the T-2 (0.105 kg) and the M300C (0.116 kg), which gives about 3.1 kg; take 1 §3.14 estimates 3.2 to 3.4 kg loaded.
 - The fill factors are judgement, so this number is a sanity check, not a measurement.
 
@@ -95,6 +101,13 @@ right pectoral and the muzzle points toward his left thigh.
 
 These are the image's lit values used as albedo, so they are not calibrated.
 
+**Round 2 materials.** The hexes above remain the solid-view colours (the Workbench ortho views). Cycles now uses:
+- `Carbine.Mat.Anodised`, `.Handguard` and `.Hardcoat`: the library's `Metal.Gunmetal` recipe (`scripts/lib/mat_hard.py`), re-tuned toward black Type III hardcoat. F0 is about 0.04 (0.05 for the semi-gloss hardcoat on the tube, light and optic), roughness 0.46 to 0.64 (0.28 to 0.40 semi-gloss), no anisotropy. Edges wear to bare aluminium (F0 0.62) through the library's bevel edge mask (radius 0.35 mm, amount 0.35 to 0.45), and the recipe adds its dust and grime.
+- `Carbine.Mat.Polymer`, `.PolymerDark` and `.Magazine`: `Polymer.Black.Smooth` re-coloured to albedo #232120 (stock), #1e1d1c (grip, trigger guard) and #3a3835 (the PMAG).
+- Flat colours for the rest: FDE (now #9a7a58, rougher), bronze, steel, rubber, lens and the floorplate (#4a4644).
+
+The library names a material `<Part>.Mat.<ID>`, so one recipe could make only one material per part. `lib_material()` therefore renames each result.
+
 ## 5. Round 1 (2026-11-14)
 
 **Built:** every major component as its own object (46 objects).
@@ -125,7 +138,69 @@ These are the image's lit values used as albedo, so they are not calibrated.
 - In the hero direction the orientation matches the reference.
 - The real gun's receiver lands up and left of the drawn one, the magazine hangs about 30° more forward than drawn, and less muzzle shows. These are the accepted reality-wins deviations above.
 
-## 6. Still wrong or missing, ranked for round 2
+## 6. Round 2 (2026-11-14): the forms of the real parts
+
+**Method.** Each hull is now one manifold solid. Parts are built from closed primitives:
+- prisms of filleted outlines (`fillet()`), with n-gon caps;
+- lofts of rounded sections (`loft()`, `rect_f()`);
+- lathes, and convex hulls (`hull()`).
+
+These are joined by EXACT unions and cut by EXACT differences, then smoothed by angle and finished with a Bevel plus a Weighted Normal modifier. The weighted normals replaced the bevel's harden normals: the large flat n-gons had been shading with diagonal seams. There is no Subdivision anywhere. Every mesh is manifold (`measure.json` `non_manifold_edges` is empty), and the whole gun renders 70 k triangles. Take 1 never built the carbine (spec 15 only), so what was reused is its §3 dimensions and §4 construction plan.
+
+**Built:**
+- **Upper.** The section has walls, shoulders and the rail deck, and the 1913 rail is integral, with the real dovetail profile and its slots on one phase with the handguard rail. The carrier bore is hollow, so the port opens onto the carrier, which shows its forward-assist serrations and its bolt. Also built: the forward-assist teardrop boss and round button, the deflector ridge, hinge bosses with the rod, and the open dust cover with its curl and latch bump. The charging handle has a left latch with grooves.
+- **Lower.** The pocket body carries a lofted magwell with rounded front corners and a flared, rounded lip, plus the opening and its inner flare. The pivot-pin lobe, trigger-guard ears and mag-release fence are on the right; the bolt-catch boss and selector boss are on the left. The tower boss is flat under the charging handle. Separate small parts: pin heads, pin ends, selector axle end, mag release, ribbed bolt catch, selector lever on SAFE, trigger, the swept trigger guard and its pin.
+- **A2 grip.** A 15-section loft with a beavertail, finger groove and nub, flat sides and round straps, and a hollow open bottom.
+- **Stock and tube.** A Minimalist skeleton: housing, plate with the window, a rear post widening to the pad, and a front lug with the sling loop. The pad is grooved. The buffer tube has its rib, the castle nut three notches, and the QD end plate a bored socket.
+- **Handguard.** Octagon with the integral rail and slots, rounded M-LOK slots, holes, and two clamp screws. The handguard QD socket is lathed.
+- **Light, optic, muzzle.**
+  - Light: knurled tail cap with its shroud, body, head cone, a bezel ring groove and a recessed lens. Its mount has screw recesses.
+  - Optic: T-2 body with its hood, the turret block and base block, fluted-cap turrets, and the LRP riser with its lightening window and a throw lever.
+  - A2: rounded-end slots and wrench flats.
+- **PMAG.** The section is resampled to 240 points, so the three ribs a side are lofted into the body and taper in and out. Below the magwell lip a 63 → 66 step stands in for the over-travel stop. The floorplate is flared, with its front lip.
+- **Paint.** The patches moved onto the new surfaces:
+  - the stock-lug patch is now a frame round the sling loop, which is what the drawing's tan frame with a dark interior is;
+  - the handguard patches have the M-LOK slots cut through them;
+  - the upper stripe stays on the flat wall.
+
+**Renders looked at** (all in `renders/carbine/`):
+- `carbine_right_ortho.png`, `carbine_left_ortho.png`, `carbine_top_ortho.png` (100 mm bar);
+- `carbine_34_clay.png`, `carbine_34_cycles.png`;
+- `carbine_receiver_R_clay.png`, `carbine_receiver_R_cycles.png`, `carbine_receiver_L_clay.png`, `carbine_receiver_L_cycles.png`: new closeups, 70 mm lens;
+- `carbine_hero_vs_ref.png`.
+
+**What they show:**
+- From the right it now reads as an M4: port with carrier and serrations, hanging dust cover, forward assist and deflector, mag release in its fence, pivot and takedown pins, A2 grip with nub and beavertail.
+- From the left: bolt catch, selector and pin ends.
+- From above: the light offset at 2 o'clock and the deflector and forward assist standing out on the right.
+- In Cycles the receivers are dark with a soft sheen and lighter edges.
+- First pass: diagonal shading seams crossed the flat sides of the upper and lower, and the deflector was a flat-faced block. Both were fixed (weighted normals; a ridge-shaped hull).
+- In the hero direction the silhouette lies on the reference as in round 1. Under that view's studio key the receivers and stock still read mid-grey, lighter than the reference's dark gun. It is a different light from the evaluation scene; judge it in the round's hero frame.
+
+## 7. Still wrong or missing, ranked for round 3
+
+1. **The lower is still a flat slab on its sides.** A forged lower has relief that catches light and reads in the hero frame:
+   - the rear takedown lobe and tang curve;
+   - a raised rim round the trigger-pocket walls;
+   - the magwell's side pockets (left);
+   - the curved transition from the magwell's rear into the trigger-guard area;
+   - the grip's top meeting the lower's angled tang.
+
+   The upper's right wall above and ahead of the port is also one flat plane. Next round: a side-profile relief pass on both receivers, judged against a photo.
+2. **Finish under the evaluation lights.** Check the receivers, stock and paint in the round's hero frame (the carbine's own studio key reads them lighter than the reference):
+   - the rail-tooth tops read nearly silver (edge wear plus the key on the flat tops);
+   - the FDE patches are flat stickers with hard edges, needing chipping and wear, which is the library's planned `chips` (NotBuilt);
+   - the grip checkering and the PMAG texture and dot-matrix panel are not in any material.
+3. **Trigger guard** is still a round-cornered loop. The mil-spec guard is a flat band with a squarer front drop and a hinged front with a plunger. The trigger blade is a plain extrusion.
+4. **Stock:** the outline is from take 1's remembered geometry plus the drawing, not a catalogue photo of the MFT Minimalist. Unchecked: the window shape, the strut angle, and the housing section (round or squared). The latch lever is not built.
+5. **Forward assist and deflector:** better proportioned, but still a cylinder plus a hull. The real forging blends the two into one sculpted boss, and the deflector's top runs into the rail deck.
+6. **Optic and light:** the T-2's square body sides, battery cap, brightness dial and tethered caps are simplified. The LRP's clamp shape and the light's window and TIR are absent.
+7. **PMAG:** ribs only on the lower body. There is no bolt-catch notch, and no front and rear texture.
+8. **Not built:** markings and T-marks, gas-block set screws, the barrel nut, BCG details beyond serrations, the dust-cover spring, the buffer-tube position holes, the sling itself (none in the reference).
+9. **Hero placement** still uses take 1's spec 08 solve in this part's own hero check. The pose agent's solve is the one that counts.
+10. **Mass** fill factors are judgement; replace them with real component masses (take 1 §3.14) when they matter.
+
+## Round 1's ranked list (kept for the record; round 2 addressed items 1 to 4 and 7, partly 8 and 9)
 
 1. **Receivers are slab boxes.** The forged upper's shape is missing: the front ring and the step down to the lower, the rear "ears", and the takedown and pivot lug bosses. So is the lower's: the rounded magwell front, the trigger-guard ears, the pin bosses and the rear tower blend. Together these are what makes a gun-literate eye say "M4", and they are the biggest gap.
 2. **Forward assist reads as a long tube lying beside the port.** It is too long and too low, and in the side view it looks like a second barrel. The deflector is too small to read. The dust cover is a flat rectangle hanging straight down, where the real cover is open at about 165° on its hinge rod.

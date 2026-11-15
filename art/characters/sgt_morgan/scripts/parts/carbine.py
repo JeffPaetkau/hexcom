@@ -1,21 +1,31 @@
-"""Carbine, take 2 round 1: a blockout of the soldier's M4-pattern carbine at real dimensions.
+"""Carbine, take 2 round 2: the soldier's M4-pattern carbine with the forms of the real parts.
 
     "$SGT_BLENDER" -b --python scripts/parts/carbine.py [-- --no-render] [--keep-scene]
 
-Builds every major component as its own object, `Carbine.<Component>`, in the collection `Part.Carbine`,
-parented to one root empty `Carbine.Root`, saves `cache/parts/carbine.blend`, prints and writes the
-measurements (`renders/carbine/measure.json`) and renders the round's views into `renders/carbine/`.
-Notes, sources and decisions: `scripts/parts/carbine.md`.
+Builds every component as its own object, `Carbine.<Component>`, in the collection `Part.Carbine`, parented
+to one root empty `Carbine.Root`, saves `cache/parts/carbine.blend`, prints and writes the measurements
+(`renders/carbine/measure.json`) and renders the round's views into `renders/carbine/`. Notes, sources and
+decisions: `scripts/parts/carbine.md` (round 1 the blockout, round 2 the forged and moulded forms).
 
-Frame (the brief of round 1, shared with the pose agent): `Carbine.Root` sits on the bore axis directly above
-the trigger face; local +X runs along the bore toward the muzzle, +Z up through the top rail, +Y to the gun's
-LEFT (so -Y is the ejection-port side, the side the hero camera sees). Millimetres in this file, metres in
-Blender. Take 1's rifle frame R (archive/v1/spec/15_carbine.md: origin bore x receiver front face, +Y muzzle,
-+X gun's right) maps as  x = R.y + 122,  y = -R.x,  z = R.z  (the trigger face is at R.y = -122).
+Frame (shared with the pose agent): `Carbine.Root` sits on the bore axis directly above the trigger face;
+local +X runs along the bore toward the muzzle, +Z up through the top rail, +Y to the gun's LEFT (so -Y is
+the ejection-port side, the side the hero camera sees). Millimetres in this file, metres in Blender. Take
+1's rifle frame R (archive/v1/spec/15_carbine.md: origin bore x receiver front face, +Y muzzle, +X gun's
+right) maps as  x = R.y + 122,  y = -R.x,  z = R.z  (the trigger face is at R.y = -122).
 
 Hand empties (consumed by the pose solve): `Carbine.Grip.R` and `Carbine.Grip.L` sit at the centre of each
 palm's contact with the gun. Their axes: local +Z = the palm normal pointing INTO the gun, local +X = across
-the palm from the little finger toward the index finger, +Y = Z x X.
+the palm from the little finger toward the index finger, +Y = Z x X. Round 2 kept both where round 1 put
+them (the grip's right face and the handguard's 10:30 bevel did not move); the script prints each one's
+distance to the surface it rests on.
+
+Construction (round 2): each part's hull is one manifold solid, built from closed primitives (prisms of
+filleted outlines, lofts of rounded sections, lathes, convex hulls), joined by EXACT unions and cut by EXACT
+differences, then smoothed by angle and finished with a Bevel and a Weighted Normal modifier. No Subdivision anywhere
+(take 1: triangle fans under subdivision made Cycles renders take minutes); flat caps are n-gons.
+Materials: the receivers, handguard, tube, light and optic use the library's `Metal.Gunmetal` recipe
+re-tuned toward black hardcoat (dark F0, broad roughness, edges worn to bare aluminium); the stock, grip and
+magazine use `Polymer.Black.Smooth` re-coloured; the rest stay flat colours (carbine.md §4).
 
 Idempotent: by default it starts from an empty factory scene (the .blend is this part's own cache); with
 --keep-scene it removes only its own `Carbine.*` data and `Part.Carbine` and builds into the open file.
@@ -33,6 +43,7 @@ from mathutils import Matrix, Vector, geometry
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))  # scripts/
 from lib import env  # noqa: E402
+from lib import materials as LIBMAT  # noqa: E402
 from lib import modifiers as MOD  # noqa: E402
 
 MM = 0.001
@@ -63,8 +74,17 @@ D = dict(
     bolt_face=R(-12.2), receiver_face=R(0.0), hg_rear=R(0.5), hg_front=R(340.9),
     gas_block=(R(204.0), R(229.0)), barrel_step=R(191.0), barrel_journal=R(194.0),
     thread=R(381.5), a2_rear=R(382.7), crown=R(394.2), muzzle=R(427.2),
-    rail_top=30.2, parting=-17.0,
+    rail_top=30.2, rail_base=22.6, parting=-17.0,
 )
+UPPER_HW = 15.5      # upper receiver side walls (take 1 §3.2: 31.0 over the walls)
+LOWER_HW = 15.0      # lower receiver fire-control pocket walls
+MAGWELL_HW = 13.8    # magwell outer (27.6 wide); its lip flares 2.0 more
+HG_AF, HG_ID = 38.1, 33.0   # MCMR-13: 1.50 in across the flats, 1.30 in inside
+
+
+def lip_z(x):
+    """The magwell's bottom lip, raked 6 deg: Z -76.5 at its front (R -10), -84.0 at its rear (R -88)."""
+    return -76.5 + (x - D["magwell_front"]) * (7.5 / (D["magwell_front"] - D["magwell_rear"]))
 
 
 # ============================================================================ small geometry kit
@@ -84,7 +104,9 @@ class Geo:
     def __init__(self):
         self.V, self.F = [], []
 
-    def add(self, V, F):
+    def add(self, V, F=None):
+        if isinstance(V, Geo):
+            V, F = V.V, V.F
         V = np.asarray(V, float).reshape(-1, 3)
         F = [tuple(int(i) for i in f) for f in F]
         if _signed_volume(V, F) < 0:
@@ -117,7 +139,8 @@ def _ccw(L):
 
 def prism(outline, c0, c1, plane="xz", holes=()):
     """An outline (outer loop + optional holes, 2D) extruded from c0 to c1 along the third axis.
-    plane 'xz': (a, b) = (x, z), extruded along y; 'yz': along x; 'xy': along z."""
+    plane 'xz': (a, b) = (x, z), extruded along y; 'yz': (y, z) along x; 'xy': (x, y) along z.
+    Without holes the caps are single n-gons; with holes they are triangulated."""
     loops = [_ccw(outline)] + [_ccw(h)[::-1] for h in holes]
     flat = [p for L in loops for p in L]
     n = len(flat)
@@ -131,12 +154,16 @@ def prism(outline, c0, c1, plane="xz", holes=()):
             j = (i + 1) % k
             F.append((off + i, off + j, n + off + j, n + off + i))
         off += k
-    for t in _tri_caps(loops):
-        a, b, c = t
-        p = V2[[a, b, c]]
-        cw = (p[1, 0] - p[0, 0]) * (p[2, 1] - p[0, 1]) - (p[1, 1] - p[0, 1]) * (p[2, 0] - p[0, 0]) < 0
-        F.append((a, b, c) if cw else (a, c, b))           # bottom cap clockwise (normal -c)
-        F.append((n + a, n + c, n + b) if cw else (n + a, n + b, n + c))
+    if not holes:
+        F.append(tuple(range(n))[::-1])
+        F.append(tuple(n + i for i in range(n)))
+    else:
+        for t in _tri_caps(loops):
+            a, b, c = t
+            p = V2[[a, b, c]]
+            cw = (p[1, 0] - p[0, 0]) * (p[2, 1] - p[0, 1]) - (p[1, 1] - p[0, 1]) * (p[2, 0] - p[0, 0]) < 0
+            F.append((a, b, c) if cw else (a, c, b))           # bottom cap clockwise (normal -c)
+            F.append((n + a, n + c, n + b) if cw else (n + a, n + b, n + c))
     if plane == "xz":      # (a, b, c) -> (x, z, y)
         V = V[:, [0, 2, 1]]
     elif plane == "yz":    # (a, b, c) -> (y, z, x)
@@ -168,6 +195,24 @@ def lathe_x(stations, seg=32, cy=0.0, cz=0.0, loop=False):
     return Geo().add(V, F)
 
 
+def loft(rings, cap0=True, cap1=True):
+    """Quads between successive rings of equal point count (each ring a closed loop of 3D points), n-gon
+    caps at the ends."""
+    Rg = [np.asarray(r, float) for r in rings]
+    k = len(Rg[0])
+    V = np.vstack(Rg)
+    F = []
+    for i in range(len(Rg) - 1):
+        for j in range(k):
+            j2 = (j + 1) % k
+            F.append((i * k + j, i * k + j2, (i + 1) * k + j2, (i + 1) * k + j))
+    if cap0:
+        F.append(tuple(range(k))[::-1])
+    if cap1:
+        F.append(tuple((len(Rg) - 1) * k + j for j in range(k)))
+    return Geo().add(V, F)
+
+
 def frame_to(p0, p1, up=(0, 0, 1)):
     """4 x 4 that maps the local x axis onto p0 -> p1 (origin p0)."""
     p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
@@ -186,6 +231,11 @@ def frame_to(p0, p1, up=(0, 0, 1)):
 def cylinder_between(p0, p1, r, seg=24):
     L = float(np.linalg.norm(np.subtract(p1, p0)))
     return lathe_x([(0, r), (L, r)], seg).transformed(frame_to(p0, p1))
+
+
+def lathe_between(p0, p1, stations, seg=32):
+    """lathe_x stations (distance from p0 along p0 -> p1, radius) placed on the segment p0 -> p1."""
+    return lathe_x(stations, seg).transformed(frame_to(p0, p1))
 
 
 def sweep(centres, normals, section, cap=True):
@@ -207,16 +257,100 @@ def sweep(centres, normals, section, cap=True):
     return Geo().add(V, F)
 
 
+def catmull(P, n=6):
+    """Catmull-Rom through the 2D points P, n samples per span, ends included."""
+    P = np.asarray(P, float)
+    ext = np.vstack([2 * P[0] - P[1], P, 2 * P[-1] - P[-2]])
+    out = []
+    for i in range(1, len(ext) - 2):
+        p0, p1, p2, p3 = ext[i - 1], ext[i], ext[i + 1], ext[i + 2]
+        for t in np.linspace(0, 1, n, endpoint=False):
+            out.append(0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                              + (-p0 + 3 * p1 - 3 * p2 + p3) * t ** 3))
+    out.append(P[-1])
+    return np.array(out)
+
+
+def fillet(poly, radii, n=6):
+    """A closed 2D polygon with each corner rounded by its radius (a scalar or one per corner; 0 keeps the
+    corner sharp), n points per arc; radii shrink where two corners would overlap."""
+    P = [np.array(p, float) for p in poly]
+    m = len(P)
+    radii = [radii] * m if np.isscalar(radii) else list(radii)
+    out = []
+    for i in range(m):
+        v, p, q, r = P[i], P[i - 1], P[(i + 1) % m], radii[i]
+        if r <= 0:
+            out.append(tuple(v))
+            continue
+        a, b = p - v, q - v
+        la, lb = np.linalg.norm(a), np.linalg.norm(b)
+        a, b = a / la, b / lb
+        th = math.acos(float(np.clip(np.dot(a, b), -1.0, 1.0)))
+        if th < 1e-3 or th > math.pi - 1e-3:
+            out.append(tuple(v))
+            continue
+        d = r / math.tan(th / 2)
+        dmax = 0.45 * min(la, lb)
+        if d > dmax:
+            d = dmax
+            r = d * math.tan(th / 2)
+        s, e = v + a * d, v + b * d
+        bis = (a + b) / np.linalg.norm(a + b)
+        c = v + bis * (r / math.sin(th / 2))
+        a0 = math.atan2(s[1] - c[1], s[0] - c[0])
+        a1 = math.atan2(e[1] - c[1], e[0] - c[0])
+        da = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+        for t in np.linspace(0, 1, n):
+            ang = a0 + da * t
+            out.append((c[0] + r * math.cos(ang), c[1] + r * math.sin(ang)))
+    return out
+
+
+def rect_f(u0, u1, v0, v1, radii, n=6):
+    """Rectangle [u0, u1] x [v0, v1] with filleted corners; radii in the order (u1, v0), (u1, v1), (u0, v1),
+    (u0, v0); the same corner order every call, so rings made by it loft cleanly."""
+    return fillet([(u1, v0), (u1, v1), (u0, v1), (u0, v0)], radii, n)
+
+
+def resample(poly, m):
+    """A closed polyline resampled to m points evenly spaced by arc length, from its first point."""
+    P = np.asarray(poly, float)
+    Q = np.vstack([P, P[:1]])
+    seg = np.linalg.norm(np.diff(Q, axis=0), axis=1)
+    s = np.r_[0, np.cumsum(seg)]
+    t = np.linspace(0, s[-1], m, endpoint=False)
+    return np.c_[np.interp(t, s, Q[:, 0]), np.interp(t, s, Q[:, 1])]
+
+
+def isect(p, d, q, e):
+    """Intersection of the 2D lines p + s d and q + t e."""
+    A = np.array([[d[0], -e[0]], [d[1], -e[1]]], float)
+    s, _ = np.linalg.solve(A, np.subtract(q, p))
+    return np.asarray(p, float) + s * np.asarray(d, float)
+
+
+def hull(points):
+    """Convex hull of 3D points (mm), coplanar triangles merged into n-gons."""
+    bm = bmesh.new()
+    for p in points:
+        bm.verts.new(p)
+    res = bmesh.ops.convex_hull(bm, input=list(bm.verts))
+    junk = [g for g in res["geom_interior"] + res["geom_unused"] if isinstance(g, bmesh.types.BMVert)]
+    if junk:
+        bmesh.ops.delete(bm, geom=junk, context="VERTS")
+    bmesh.ops.dissolve_limit(bm, angle_limit=math.radians(0.5), verts=list(bm.verts), edges=list(bm.edges))
+    bm.verts.index_update()
+    V = [tuple(v.co) for v in bm.verts]
+    F = [tuple(v.index for v in f.verts) for f in bm.faces]
+    bm.free()
+    return Geo().add(V, F)
+
+
 def octagon(af, phase=math.pi / 8):
     """Regular octagon with the given across-flats, flats facing +-y and +-z (vertices at 22.5 + k 45 deg)."""
     rc = af / 2 / math.cos(math.pi / 8)
     return [(rc * math.cos(phase + k * math.pi / 4), rc * math.sin(phase + k * math.pi / 4)) for k in range(8)]
-
-
-def chamfered_rect(w, h, c):
-    """Rectangle w x h centred on the origin with corners chamfered by c (8 points, CCW)."""
-    a, b = w / 2, h / 2
-    return [(a, -b + c), (a, b - c), (a - c, b), (-a + c, b), (-a, b - c), (-a, -b + c), (-a + c, -b), (a - c, -b)]
 
 
 def rounded_rect(w, h, r, per=5, cx=0.0, cy=0.0):
@@ -227,6 +361,18 @@ def rounded_rect(w, h, r, per=5, cx=0.0, cy=0.0):
         for t in np.radians(a0 + np.linspace(0, 90, per)):
             out.append((c[0] + r * math.cos(t), c[1] + r * math.sin(t)))
     return out
+
+
+def corner_cut(cx, cz, r, sx, sz, y0, y1, n=8):
+    """Cutter (plane xz, extruded y0..y1) that rounds the corner (cx, cz) of a side profile with radius r;
+    sx, sz = +-1 point from the profile's inside toward the corner."""
+    c = (cx - sx * r, cz - sz * r)
+    a0, a1 = math.atan2(0.0, sx), math.atan2(sz, 0.0)
+    da = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+    pts = [(cx + sx * 2, cz + sz * 2), (cx + sx * 2, cz - sz * r)]
+    pts += [(c[0] + r * math.cos(a0 + da * t), c[1] + r * math.sin(a0 + da * t)) for t in np.linspace(0, 1, n)]
+    pts.append((cx - sx * r, cz + sz * 2))
+    return prism(pts, y0, y1, "xz")
 
 
 # ============================================================================ scene plumbing
@@ -261,20 +407,47 @@ def material(key, hexcol, rough=0.5, metal=0.0, coat=0.0):
     return m
 
 
+def lib_material(key, recipe, hexcol, **overrides):
+    """`Carbine.Mat.<key>` from the materials library (scripts/lib/materials.py) with overrides; renamed
+    from the library's `<Part>.Mat.<ID>` so that one recipe can serve several finishes. hexcol is the
+    solid-view colour (the Workbench ortho views)."""
+    m = LIBMAT.get(recipe, PART, **overrides)
+    m.name = f"{PART}.Mat.{key}"
+    m.diffuse_color = (*hex_rgb(hexcol), 1.0)
+    m["hex"] = hexcol
+    MATS[key] = m
+    return m
+
+
+ALU_F0 = (0.62, 0.62, 0.63)   # bare 6061/7075 under worn hardcoat, darkened by grime (aluminium F0 0.91)
+
+
 def make_materials():
-    # receivers: #413c3b / #403c39 (weapon analysis §3.15); handguard #393532 (warmer, dust)
-    material("Anodised", "#3e3a38", 0.55, 0.3)
-    material("Handguard", "#393532", 0.55, 0.3)
-    material("Hardcoat", "#2c2a29", 0.35, 0.4)        # buffer tube, light, castle nut: semi-gloss
-    material("Polymer", "#3d3733", 0.6)               # stock body
-    material("PolymerDark", "#1f1d1c", 0.6)           # grip, trigger guard (icon grip #121415)
+    # Type III hardcoat anodise (receivers, handguard): read as a near-black metal with a broad sheen;
+    # edges worn to bare aluminium. The reference reads #413c3b lit (weapon analysis §3.15).
+    lib_material("Anodised", "Metal.Gunmetal", "#3e3a38", f0=(0.040, 0.039, 0.038), rough_range=(0.46, 0.62),
+                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.35, edge__radius_mm=0.35, dust__amount=0.12,
+                 grime__amount=0.3)
+    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.042, 0.040, 0.038), rough_range=(0.48, 0.64),
+                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.4, edge__radius_mm=0.35, dust__amount=0.18,
+                 grime__amount=0.35)
+    # semi-gloss hardcoat: buffer tube, castle nut, light, optic
+    lib_material("Hardcoat", "Metal.Gunmetal", "#2c2a29", f0=(0.048, 0.047, 0.047), rough_range=(0.28, 0.40),
+                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.28, edge__amount=0.45, dust__amount=0.08,
+                 grime__amount=0.2)
+    # glass-filled nylon / polymer: stock, grip and trigger guard, magazine (Stealth Gray PMAG)
+    lib_material("Polymer", "Polymer.Black.Smooth", "#3d3733", albedo_hex="#232120", rough=0.58,
+                 rough_span=0.14, dust__amount=0.2)
+    lib_material("PolymerDark", "Polymer.Black.Smooth", "#1f1d1c", albedo_hex="#1e1d1c", rough=0.52,
+                 rough_span=0.12, dust__amount=0.12)
+    lib_material("Magazine", "Polymer.Black.Smooth", "#423e3a", albedo_hex="#3a3835", rough=0.62,
+                 rough_span=0.14, dust__amount=0.2)
     material("Rubber", "#141211", 0.85)               # butt pad
-    material("Magazine", "#423e3a", 0.6)
-    material("MagBase", "#595452", 0.55)
+    material("MagBase", "#4a4644", 0.6)
     material("Steel", "#2f2e2e", 0.35, 0.8)           # bolt carrier, gas block, pins, QD sockets
     material("SteelBright", "#8a8a8a", 0.3, 1.0)      # mag release, polished parts
     material("Bronze", "#5f4c3e", 0.4, 0.8)           # burnt-bronze barrel and A2 (take 1 D3)
-    material("FDE", "#b08a62", 0.7)                   # tan paint (#a68869 .. #d4a271 in the image)
+    material("FDE", "#9a7a58", 0.75)                  # tan paint (#a68869 .. #d4a271 lit in the image)
     material("Lens", "#0e1418", 0.05, 0.0, 1.0)       # optic and light glass, dark, glossy
 
 
@@ -302,9 +475,14 @@ ROOT = None
 OBJS = {}
 
 
-def obj(component, geo, mat, *, bevel=None, smooth=35.0, real=None, density=None, fill=1.0):
+def smooth(ob, angle):
+    ob.data.shade_smooth()
+    ob.data.set_sharp_from_angle(angle=math.radians(angle))
+
+
+def obj(component, geo, mat, *, bevel=None, segs=2, smooth_deg=35.0, real=None, density=None, fill=1.0):
     """`Carbine.<component>` from a Geo (mm), parented to the root, with a material, an optional Bevel
-    (width mm) and smoothing by angle. density (g/cm3) and fill (fraction of the blockout envelope that is
+    (width mm) and smoothing by angle. density (g/cm3) and fill (fraction of the closed volume that is
     material in the real part) feed the mass estimate."""
     name = f"{PART}.{component}"
     me = bpy.data.meshes.new(name)
@@ -315,17 +493,27 @@ def obj(component, geo, mat, *, bevel=None, smooth=35.0, real=None, density=None
     collection().objects.link(ob)
     ob.parent = ROOT
     me.materials.append(MATS[mat])
-    if smooth:
-        me.shade_smooth()
-        me.set_sharp_from_angle(angle=math.radians(smooth))
+    if smooth_deg:
+        smooth(ob, smooth_deg)
     if bevel:
-        MOD.bevel(ob, bevel, 2, 35.0, harden=True)
+        MOD.bevel(ob, bevel, segs, 35.0)
+        MOD.weighted_normal(ob, 50, keep_sharp=True)
     if real:
         ob["real_part"] = real
     if density:
         ob["density"] = density
         ob["fill"] = fill
     OBJS[component] = ob
+    return ob
+
+
+def finish(ob, bevel=None, segs=2, smooth_deg=35.0, angle=35.0):
+    """After the booleans: smooth by angle, add the Bevel and a Weighted Normal (face area, keep sharp), so
+    the large flat n-gons of the boolean results shade flat."""
+    smooth(ob, smooth_deg)
+    if bevel:
+        MOD.bevel(ob, bevel, segs, angle)
+    MOD.weighted_normal(ob, 50, keep_sharp=True)
     return ob
 
 
@@ -362,6 +550,12 @@ def boolean(ob, geo, op="DIFFERENCE"):
     return ob
 
 
+def union(ob, *geos):
+    for g in geos:
+        boolean(ob, g, "UNION")
+    return ob
+
+
 def empty(component, loc, X=None, Z=None, size=30.0, kind="ARROWS"):
     ob = bpy.data.objects.new(f"{PART}.{component}", None)
     ob.empty_display_type = kind
@@ -380,189 +574,365 @@ def empty(component, loc, X=None, Z=None, size=30.0, kind="ARROWS"):
     return ob
 
 
-# ============================================================================ the build
-def rail(x0, x1, base_z, top=D["rail_top"]):
-    """MIL-STD-1913 rail: a 15.67 mm neck/spine up to 3.0 below the top, and the dovetail teeth (21.2 top,
-    45 deg flanks to the 15.67 neck) on a 10.01 pitch with 5.23 slots, the first tooth flush with x0."""
-    g = Geo()
-    neck, topw, slot_d, pitch, slot = 15.67, 21.2, 3.0, 10.01, 5.23
-    g.add(*_vf(box(x0, x1, -neck / 2, neck / 2, base_z, top - slot_d)))
-    tooth = [(-neck / 2, top - slot_d), (neck / 2, top - slot_d), (neck / 2, top - 2.77), (topw / 2, top - 0.5),
-             (topw / 2 - 0.5, top), (-topw / 2 + 0.5, top), (-topw / 2, top - 0.5), (-neck / 2, top - 2.77)]
-    x = x0
-    n = 0
-    while x + (pitch - slot) <= x1 + 1e-6:
-        g.add(*_vf(prism(tooth, x, x + pitch - slot, "yz")))
-        x += pitch
-        n += 1
+# ============================================================================ the parts
+def rail_section(top, bottom, spine_hw=None):
+    """MIL-STD-1913 cross-section in (y, z), CCW: 21.2 top with 0.5 chamfers, 45 deg flanks in to the 15.67
+    neck, 45 deg out again to the 21.2 base 7.6 below the top; then down to `bottom` (straight at the base
+    width, or at spine_hw for a handguard's spine)."""
+    rs = [(10.1, top), (10.6, top - 0.5), (7.835, top - 3.265), (7.835, top - 4.4), (10.6, top - 7.165),
+          (10.6, top - 7.6)]
+    if spine_hw:
+        rs += [(spine_hw, top - 7.6), (spine_hw, bottom)]
+    else:
+        rs += [(10.6, bottom)]
+    return rs[::-1] + [(-y, z) for y, z in rs]
+
+
+def rail_slots(x0R, x1R, top, joint_at_front):
+    """Recoil-slot cutters (5.23 wide, 3.0 deep, 10.01 pitch) on one phase for both rails: slot centres at
+    R.y = -0.5 + 10.01 k, so the joint between the receiver and handguard rails falls inside one slot
+    (take 1 §4.4). Returns (cutter, slot count)."""
+    g, n = Geo(), 0
+    for k in range(-30, 40):
+        c = -0.5 + 10.01 * k
+        a, b = c - 2.615, c + 2.615
+        if joint_at_front:
+            ok = a >= x0R + 3.0 and a < x1R
+        else:
+            ok = b > x0R and b <= x1R - 3.0
+        if ok:
+            g.add(box(R(a), R(b), -12.0, 12.0, top - 3.0, top + 2.0))
+            n += 1
     return g, n
 
 
-def _vf(geo):
-    return geo.V, geo.F
+def build_upper(report):
+    hw = UPPER_HW
+    deck = 11.3
+    sec = [(-hw, -17.0), (hw, -17.0), (hw, 13.0), (13.4, 17.6), (deck, 19.6), (deck, D["rail_base"]),
+           (-deck, D["rail_base"]), (-deck, 19.6), (-13.4, 17.6), (-hw, 13.0)]
+    up = obj("Upper", prism(sec, D["upper_rear"], D["receiver_face"], "yz"), "Anodised",
+             real="BCM M4 forged flat-top upper (mil-spec)", density=2.81, fill=0.75)
+    # the integral receiver rail
+    rail = prism(rail_section(D["rail_top"], D["rail_base"] - 0.6), R(-196.5), R(-1.5), "yz")
+    # forward-assist housing: a teardrop boss that rises out of the right wall behind the port (the front
+    # buried in the wall), 13 deg out from the bore in plan; rear end R -141, 15.5 proud of the wall
+    A = np.array([R(-99.0), -12.0, 5.5])
+    B = np.array([R(-141.0), -21.5, 6.3])
+    ax = (B - A) / np.linalg.norm(B - A)
+    e1 = np.cross(ax, [0, 0, 1.0])
+    e1 /= np.linalg.norm(e1)
+    e2 = np.cross(e1, ax)
+    rings = []
+    for t, r in ((0.0, 2.5), (0.07, 4.8), (0.16, 6.9), (0.28, 8.5), (0.42, 9.4), (0.55, 9.5), (1.0, 9.5)):
+        c = A + t * (B - A)
+        rings.append([c + r * (math.cos(a) * e1 + math.sin(a) * e2) for a in np.linspace(0, 2 * np.pi, 28,
+                                                                                      endpoint=False)])
+    fa = loft(rings)
+    # brass deflector: a wedge behind the port's top rear corner, its striking face ~40 deg to the bore
+    defl = hull([(R(-96.5), -14.6, 9.0), (R(-96.5), -14.6, 20.5), (R(-125.0), -14.6, 7.0), (R(-125.0), -14.6, 22.0),
+                 (R(-111.5), -24.5, 11.5), (R(-111.5), -24.5, 17.0), (R(-118.0), -21.0, 20.5)])
+    # dust-cover hinge bosses under the port
+    bosses = Geo().add(box(R(-18.4), R(-13.0), -18.9, -14.6, -14.6, -9.0)).add(
+        box(R(-103.6), R(-98.0), -18.9, -14.6, -14.6, -9.0))
+    union(up, rail, fa, defl, bosses)
+    slots, n_up = rail_slots(-196.5, -1.5, D["rail_top"], joint_at_front=True)
+    cut = Geo()
+    cut.add(lathe_x([(D["upper_rear"] - 2.0, 12.8), (R(-14.0), 12.8)], 40))                 # carrier bore
+    cut.add(prism(rounded_rect(D["port_front"] - D["port_rear"], 20.3, 3.0, 5,
+                               (D["port_front"] + D["port_rear"]) / 2, 1.55), -hw - 12.0, -4.0, "xz"))  # port
+    cut.add(corner_cut(D["receiver_face"], -17.0, 7.0, 1, -1, -hw - 1, hw + 1))             # front lower corner
+    cut.add(cylinder_between(A + 0.42 * (B - A), B + 0.5 * ax, 7.2, 24))                           # FA plunger bore
+    cut.add(cylinder_between((R(-104), -17.2, -11.6), (R(-12), -17.2, -11.6), 1.25, 12))  # hinge-rod hole
+    cut.add(slots)
+    boolean(up, cut)
+    finish(up, 0.6, 2)
+    report["rail_slots_receiver"] = n_up
+
+    # forward-assist button (M4 round button with its grooved face), 11 mm behind the housing
+    obj("Upper.ForwardAssist", lathe_between(B - 3.0 * ax, B + 11.0 * ax,
+                                             [(0, 7.0), (12.0, 7.0), (13.0, 6.7), (13.7, 6.0), (13.7, 4.7),
+                                              (13.2, 4.3), (13.7, 3.8), (13.7, 2.3), (13.3, 1.9)]),
+        "Steel", smooth_deg=40, real="M4 forward assist, round button", density=7.85, fill=0.8)
+    # bolt carrier seen through the port: forward-assist serrations on its right side, bolt head ahead
+    bc = obj("BoltCarrier", lathe_x([(R(-120), 12.6), (R(-27), 12.6), (R(-26), 9.0), (R(-12.4), 9.0)], 40), "Steel",
+             real="M16-profile bolt carrier (seen through the port)", density=7.85, fill=0.6)
+    serr = Geo()
+    for k in range(14):
+        x = R(-92.0) + 1.6 * k
+        serr.add(box(x, x + 0.8, -13.6, -11.9, -3.5, 3.5))
+    serr.add(box(R(-60.0), R(-30.0), -13.6, -11.6, -4.5, 4.5))                    # ejection relief cut
+    boolean(bc, serr)
+    finish(bc, None, smooth_deg=40)
+    obj("Upper.HingeRod", cylinder_between((R(-103.5), -17.2, -11.6), (R(-12.5), -17.2, -11.6), 1.2, 12), "Steel",
+        smooth_deg=40, density=7.85)
+    # dust cover, open: 78.7 x 23.4 x 1.6 sheet hanging from its rod, the inside (latch bump) now outward
+    plate = fillet([(D["port_rear"] - 1.3, -35.4), (D["port_front"] + 1.2, -35.4), (D["port_front"] + 1.2, -12.0),
+                    (D["port_rear"] - 1.3, -12.0)], [2.0, 2.0, 0, 0], 4)
+    cov = obj("Upper.DustCover", prism(plate, -18.0, -16.4, "xz"), "Anodised",
+              real="ejection-port cover, open on its hinge rod", density=7.85)
+    curl = Geo().add(cylinder_between((R(-97.3), -17.2, -11.6), (R(-62.0), -17.2, -11.6), 1.9, 16))
+    curl.add(cylinder_between((R(-52.0), -17.2, -11.6), (R(-19.0), -17.2, -11.6), 1.9, 16))
+    union(cov, curl, box(R(-34.0), R(-27.0), -19.4, -17.6, -31.0, -26.5))            # latch bump
+    boolean(cov, cylinder_between((R(-104), -17.2, -11.6), (R(-12), -17.2, -11.6), 1.25, 12))
+    finish(cov, 0.4, 2)
+    # mil-spec charging handle: the T behind the receiver, latch on the LEFT
+    t = rect_f(R(-208.0), R(-197.4), -14.5, 14.5, [0, 0, 4.0, 4.0], 5)
+    ch = obj("ChargingHandle", prism(t, 13.0, 24.0, "xy"), "Anodised", real="mil-spec charging handle, left latch",
+             density=2.81)
+    union(ch, prism(rect_f(R(-209.0), R(-198.5), 12.0, 19.5, [1.5, 3.0, 3.0, 0], 4), 15.0, 22.5, "xy"))
+    grooves = Geo()
+    for k in range(5):
+        y = 13.5 + 1.25 * k
+        grooves.add(box(R(-210.0), R(-205.0), y, y + 0.6, 21.8, 23.0))
+    boolean(ch, grooves)
+    finish(ch, 0.5, 2)
+    return A, B
 
 
-def build():
-    global ROOT
-    ROOT = bpy.data.objects.new(f"{PART}.Root", None)
-    ROOT.empty_display_type = "ARROWS"
-    ROOT.empty_display_size = 0.1
-    collection().objects.link(ROOT)
-    report = {}
+def build_lower():
+    hw, mw = LOWER_HW, MAGWELL_HW
+    body = prism([(R(-86.0), -17.0), (D["lower_rear"], -17.0), (D["lower_rear"], -27.4), (D["grip_front_top"], -54.0),
+                  (R(-86.0), -54.0)], -hw, hw, "xz")
+    low = obj("Lower", body, "Anodised", real="BCM M4 forged lower (mil-spec)", density=2.81, fill=0.55)
+    # receiver-extension boss (the rear tower), flat on top under the charging handle
+    boss = lathe_x([(D["upper_rear"] - 0.2, 17.8), (D["lower_rear"], 17.8)], 40)
+    # magwell: rounded front corners (r 7), flared lip all round, rounded lip edge
+    x0, x1 = D["magwell_rear"], D["magwell_front"]
 
-    # ---------------------------------------------------------------- upper receiver (BCM M4 forged flat-top)
-    hw = 14.5   # half width of the side walls (E)
-    up_top = 20.0
-    sec = [(-hw, D["parting"]), (hw, D["parting"]), (hw, 12.0), (hw - 4.0, up_top), (-hw + 4.0, up_top), (-hw, 12.0)]
-    g = prism(sec, D["upper_rear"], D["receiver_face"], "yz")
-    # front receiver ring (barrel-nut seat) and the takedown/pivot lugs are hidden; forward-assist housing:
-    fa0, fa1 = np.array([R(-96), -13.0, 5.0]), np.array([R(-140), -22.0, 7.0])
-    upper = obj("Upper", g, "Anodised", bevel=1.0, real="BCM M4 forged flat-top upper (mil-spec)",
-                density=2.81, fill=0.45)
-    # ejection port opening (76.2 x 20.3, Y -96.2..-20.0, Z -8.6..+11.7), cut through the right wall
-    boolean(upper, box(D["port_rear"], D["port_front"], -hw - 3, -4.0, -8.6, 11.7))
-    obj("Upper.ForwardAssist", Geo().add(*_vf(cylinder_between(fa0, fa1, 9.5)))
-        .add(*_vf(cylinder_between(fa1, fa1 + (fa1 - fa0) / np.linalg.norm(fa1 - fa0) * 12.0, 7.0))),
-        "Anodised", real="M4 forward assist, round button", density=2.81, fill=0.6)
-    obj("Upper.Deflector", prism([(R(-96), -hw + 0.5), (R(-117), -hw + 0.5), (R(-108), -23.0), (R(-99), -21.0)],
-                                 8.0, 22.0, "xy"), "Anodised", bevel=0.8, density=2.81)
-    # dust cover, open: 78.7 x 23.4 x 1.6 hanging from its hinge rod at the port's lower edge
-    obj("Upper.DustCover", box(D["port_rear"] - 1.2, D["port_front"] + 1.3, -hw - 3.3, -hw - 1.7, -12.0 - 23.4, -12.0),
-        "Anodised", bevel=0.5, real="ejection-port cover, open", density=7.85)
-    obj("BoltCarrier", lathe_x([(R(-120), 12.65), (R(-26), 12.65)], 32), "Steel",
-        real="M16-profile bolt carrier (seen through the port)", density=7.85, fill=0.7)
-    # charging handle: T-handle behind the upper over the buffer tower, latch on the LEFT (+y)
-    g = box(R(-208), R(-197.5), -14.5, 14.5, 15.0, 25.0)
-    g.add(*_vf(box(R(-209), R(-196), 14.0, 22.0, 16.0, 23.5)))
-    obj("ChargingHandle", g, "Anodised", bevel=0.8, real="mil-spec charging handle, left latch", density=2.81)
-    g, n_up = rail(D["upper_rear"] + 0.5, D["receiver_face"] - 1.5, up_top - 0.5)
-    obj("Upper.Rail", g, "Anodised", bevel=0.3, smooth=None, real="MIL-STD-1913 receiver rail", density=2.81)
+    def mw_ring(z_of, ex_f, ex_r, ex_s, rf=7.0, rr=3.0):
+        pts = rect_f(x0 - ex_r, x1 + ex_f, -mw - ex_s, mw + ex_s, [rf + ex_s, rf + ex_s, rr, rr], 6)
+        return [(x, y, z_of(x)) for x, y in pts]
+    rings = [mw_ring(lambda x: -17.0, 0, 0, 0),
+             mw_ring(lambda x: lip_z(x) + 10.0, 0, 0, 0),
+             mw_ring(lambda x: lip_z(x) + 4.0, 1.6, 0.6, 1.1),
+             mw_ring(lambda x: lip_z(x) + 1.3, 3.0, 1.0, 2.0),
+             mw_ring(lambda x: lip_z(x), 2.4, 0.5, 1.4)]
+    magwell = loft(rings)
+    pivot = cylinder_between((R(-13.0), -mw, -24.0), (R(-13.0), mw, -24.0), 9.0, 32)
+    ears = Geo().add(box(R(-94.5), R(-84.0), -6.2, -3.35, -62.5, -52.0)).add(box(R(-94.5), R(-84.0), 3.35, 6.2,
+                                                                                -62.5, -52.0))
+    # mag-release fence: a raised arc round the button's rear and lower sides (right side)
+    bx, bz = R(-74.0), -38.0
+    arc = [(bx + 8.6 * math.cos(a), bz + 8.6 * math.sin(a)) for a in np.radians(np.linspace(160, 340, 13))]
+    arc += [(bx + 6.2 * math.cos(a), bz + 6.2 * math.sin(a)) for a in np.radians(np.linspace(340, 160, 13))]
+    fence = prism(arc, -mw + 0.8, -mw - 2.2, "xz")
+    # left side: bolt-catch boss over the magwell's rear, selector boss
+    bcb = prism(rect_f(R(-98.0), R(-77.0), -32.0, -17.5, [3, 0, 0, 3], 4), mw - 0.8, mw + 2.0, "xz")
+    selb = cylinder_between((R(-150.0), hw - 0.6, -30.0), (R(-150.0), hw + 1.2, -30.0), 7.5, 32)
+    union(low, boss, magwell, pivot, ears, fence, bcb, selb)
+    cut = Geo()
+    cut.add(box(R(-24.0), R(0.0), -20.0, 20.0, -17.0, 40.0))                         # pivot lobe at the parting line
+    cut.add(box(D["lower_rear"] - 2.0, D["upper_rear"] + 0.5, -20.0, 20.0, 11.6, 30.0))   # ... tower top flat
+    xm = R(-49.0)
 
-    # ---------------------------------------------------------------- lower receiver (BCM M4 forged lower)
-    lw = 13.0
-    g = prism([(D["magwell_rear"], D["parting"]), (D["lower_rear"], D["parting"]), (D["lower_rear"], -27.4),
-               (D["grip_front_top"], -54.0), (D["magwell_rear"], -54.0)], -lw, lw, "xz")
-    g.add(*_vf(lathe_x([(D["lower_rear"], 17.8), (D["upper_rear"] + 2.0, 17.8)], 32)))          # buffer tower
-    g.add(*_vf(box(D["lower_rear"], D["upper_rear"] + 2.0, -17.0, 17.0, -27.4, 0.0)))
-    mw = 15.0
-    g.add(*_vf(prism([(D["magwell_front"], D["parting"]), (D["magwell_rear"], D["parting"]),
-                      (D["magwell_rear"], -84.0), (D["magwell_front"], -76.5)], -mw, mw, "xz")))
-    g.add(*_vf(prism([(D["magwell_front"] + 1.5, -66.0), (D["magwell_rear"] - 1.5, -73.5),
-                      (D["magwell_rear"] - 1.5, -84.0), (D["magwell_front"] + 1.5, -76.5)], -mw - 1.5, mw + 1.5, "xz")))
-    lower = obj("Lower", g, "Anodised", bevel=1.0, real="BCM M4 forged lower (mil-spec)", density=2.81, fill=0.4)
-    # magwell opening 67 x 23, open at the bottom (the magazine enters it)
-    boolean(lower, box(R(-83.5), R(-16.5), -11.5, 11.5, -95.0, -30.0))
-    # trigger guard: U of a 6.5 x 4.5 bar under the lower, opening ~60 x 30
-    tg = [(R(-86), -54.0), (R(-86), -92.0), (R(-152), -92.0), (R(-152), -54.0),
-          (R(-147.5), -54.0), (R(-147.5), -87.5), (R(-90.5), -87.5), (R(-90.5), -54.0)]
-    obj("TriggerGuard", prism(tg, -3.25, 3.25, "xz"), "PolymerDark", bevel=1.2, real="mil-spec trigger guard",
-        density=2.7)
-    trig = [(-3.0, -53.0), (4.0, -53.0), (3.0, -63.0), (1.0, -72.0), (-3.5, -80.0), (-5.0, -79.0), (-2.0, -70.0),
-            (-0.5, -62.0)]
+    def op_ring(z_of, ex):
+        pts = rect_f(xm - 33.5 - ex, xm + 33.5 + ex, -11.5 - ex, 11.5 + ex, 2.0 + ex, 4)
+        return [(x, y, z_of(x)) for x, y in pts]
+    cut.add(loft([op_ring(lambda x: -10.0, 0), op_ring(lambda x: lip_z(x) + 4.0, 0),
+                  op_ring(lambda x: lip_z(x) - 1.0, 2.2)]))                          # opening and inner flare
+    cut.add(lathe_x([(D["upper_rear"] + 1.0, 14.65), (D["lower_rear"] - 1.0, 14.65)], 40))   # extension bore
+    cut.add(box(R(-144.0), R(-98.0), -4.25, 4.25, -60.0, -30.0))                    # trigger slot
+    boolean(low, cut)
+    finish(low, 0.7, 2)
+
+    # small parts
+    def pin_head(nm, x, z, r, side, face, proud, dome=True):
+        y0 = side * face
+        st = [(0, r), (0.5 + proud * 0.5, r), (0.5 + proud, r * 0.72)] if dome else [(0, r), (0.5 + proud, r)]
+        obj(nm, lathe_between((x, y0 - side * 0.5, z), (x, y0 + side * proud, z), st, 24),
+            "Steel", smooth_deg=40, density=7.85)
+    pin_head("Lower.PinPivot", R(-13.0), -24.0, 4.75, -1, mw, 1.5)
+    pin_head("Lower.PinTakedown", R(-183.0), -24.0, 4.75, -1, hw, 1.5)
+    pin_head("Lower.PinPivot.L", R(-13.0), -24.0, 3.2, 1, mw, 0.3, dome=False)
+    pin_head("Lower.PinTakedown.L", R(-183.0), -24.0, 3.2, 1, hw, 0.3, dome=False)
+    for nm, x, z in (("Hammer", R(-100.0), -36.0), ("Trigger", R(-121.0), -44.0)):
+        obj(f"Lower.Pin{nm}", cylinder_between((x, -hw - 0.3, z), (x, hw + 0.3, z), 1.95, 16), "Steel",
+            smooth_deg=40, density=7.85)
+    obj("Lower.SelectorEnd", cylinder_between((R(-150.0), -hw + 0.5, -30.0), (R(-150.0), -hw - 0.4, -30.0), 3.6, 24),
+        "Steel", smooth_deg=40, density=7.85)
+    obj("MagRelease", lathe_between((bx, -mw + 1.0, bz), (bx, -mw - 3.6, bz),
+                                    [(0, 4.75), (3.6, 4.75), (4.4, 4.2), (4.6, 2.5)], 24),
+        "SteelBright", smooth_deg=40, real="mag-release button in its fence, right side", density=7.85)
+    # bolt catch (left): pivot boss at the top, ribbed paddle below
+    bc = fillet([(R(-80.0), -18.5), (R(-80.0), -27.0), (R(-86.0), -38.5), (R(-97.0), -38.5), (R(-97.0), -33.0),
+                 (R(-88.0), -26.0), (R(-88.0), -18.5)], [3, 2, 2, 2, 1, 2, 3], 4)
+    bco = obj("BoltCatch", prism(bc, mw + 1.5, mw + 4.6, "xz"), "Anodised", real="bolt catch, left", density=7.85)
+    ribs = Geo()
+    for k in range(4):
+        x = R(-96.0) + 2.2 * k
+        ribs.add(box(x, x + 1.0, mw + 4.0, mw + 5.5, -39.0, -33.0))
+    boolean(bco, ribs)
+    finish(bco, 0.4, 2)
+    # selector lever (left), on SAFE: the lever points forward along the bore
+    lev = fillet([(R(-150.0) - 4.0, -26.0), (R(-150.0) + 22.0, -27.6), (R(-150.0) + 24.5, -30.0),
+                  (R(-150.0) + 22.0, -32.4), (R(-150.0) - 4.0, -34.0), (R(-150.0) - 6.0, -30.0)],
+                 [2, 2, 2, 2, 2, 2], 4)
+    sel = obj("Selector", prism(lev, hw + 1.0, hw + 4.4, "xz"), "Anodised", real="safety selector, left", density=7.85)
+    union(sel, cylinder_between((R(-150.0), hw + 0.6, -30.0), (R(-150.0), hw + 4.6, -30.0), 4.9, 24))
+    finish(sel, 0.5, 2)
+    # trigger (mil-spec curved blade) and trigger guard (a 6.5 x 4.5 bar)
+    trig = [(-3.0, -50.0), (4.0, -50.0), (3.2, -61.0), (1.6, -70.0), (-2.2, -78.5), (-4.6, -80.0), (-5.4, -78.6),
+            (-2.4, -70.0), (-0.8, -61.0)]
     obj("Trigger", prism(trig, -3.2, 3.2, "xz"), "Steel", bevel=0.4, real="mil-spec trigger", density=7.85)
-    obj("MagRelease", lathe_x([(0, 4.75), (2.5, 4.75)], 24).transformed(
-        frame_to((R(-74), -lw - 0.5, -38.0), (R(-74), -lw - 3.0, -38.0))), "SteelBright",
-        real="mag-release button, right side", density=7.85)
-    obj("BoltCatch", box(R(-96), R(-72), lw - 0.5, lw + 3.0, -27.0, -16.0), "Anodised", bevel=0.6, density=7.85)
-    g = cylinder_between((R(-150), lw - 0.5, -30.0), (R(-150), lw + 2.5, -30.0), 4.75)
-    g.add(*_vf(box(R(-150) - 3.5, R(-150) + 22.0, lw + 1.0, lw + 3.5, -33.5, -26.5)))
-    obj("Selector", g, "Anodised", bevel=0.5, real="safety selector, left", density=7.85)
+    path = catmull([(R(-89.5), -55.0), (R(-90.5), -68.0), (R(-94.5), -81.0), (R(-102.0), -86.0),
+                    (R(-122.0), -86.6), (R(-140.0), -85.4), (R(-148.0), -80.5), (R(-152.5), -71.0),
+                    (R(-156.0), -61.0)], 6)
+    tang = np.gradient(path, axis=0)
+    tang /= np.linalg.norm(tang, axis=1)[:, None]
+    nrm = np.c_[-tang[:, 1], tang[:, 0]]
+    obj("TriggerGuard", sweep(path, nrm, rounded_rect(5.5, 6.5, 1.8, 3)), "PolymerDark", smooth_deg=50,
+        real="mil-spec trigger guard", density=2.7)
+    obj("TriggerGuard.Pin", cylinder_between((R(-89.5), -6.6, -57.5), (R(-89.5), 6.6, -57.5), 1.6, 12), "Steel",
+        smooth_deg=40, density=7.85)
 
-    # ---------------------------------------------------------------- pistol grip (USGI A2)
+
+def grip_frame():
     rake = math.radians(25.0)
     axis_up = np.array([math.sin(rake), math.cos(rake)])           # (x, z), grip axis toward the receiver
     fwd = np.array([math.cos(rake), -math.sin(rake)])              # front strap direction
     front_top = np.array([D["grip_front_top"], -54.0])
-    top_c = front_top - 25.0 * fwd + 6.0 * axis_up                 # top section 55 deep; 6 mm into the lower
-    L = 102.0 + 6.0
-    stations = []   # (t along the axis from the top, depth, width, front bulge)
-    for t, d, w, nub in ((0, 50, 30.0, 0), (18, 49, 30.0, 0), (28, 47, 29.5, 3.5), (38, 46, 29.0, 0),
-                         (70, 44, 28.5, 0), (L - 4, 42, 27.5, 0), (L, 40, 25.5, 0)):
-        stations.append((t, d, w, nub))
-    V, F = [], []
-    ring = None
-    for k, (t, d, w, nub) in enumerate(stations):
+    top_c = front_top - 25.0 * fwd + 6.0 * axis_up                 # top section centre, 6 mm into the lower
+    return axis_up, fwd, top_c
+
+
+def build_grip():
+    """USGI A2: straight back strap rising into a beavertail under the lower's tang, a finger groove and the
+    A2 nub on the front strap, flat checkered sides, round straps, hollow open bottom."""
+    axis_up, fwd, top_c = grip_frame()
+    # (t down the axis from the top section, front strap u, back strap u, half width)
+    st = [(0, 25.0, -27.0, 15.0), (6, 25.0, -34.0, 15.0), (10, 24.8, -30.5, 15.0), (16, 24.3, -27.0, 14.95),
+          (24, 23.8, -25.6, 14.9), (32, 24.0, -25.1, 14.8), (39, 25.6, -24.8, 14.7), (45, 26.8, -24.7, 14.6),
+          (51, 25.2, -24.8, 14.5), (58, 23.9, -24.9, 14.4), (70, 23.5, -24.7, 14.15), (84, 23.0, -24.1, 13.85),
+          (96, 22.2, -23.1, 13.4), (104, 21.4, -22.1, 12.9), (108, 19.9, -20.5, 11.5),
+          (108, 17.2, -17.8, 9.4), (86, 17.2, -17.8, 9.4)]
+    rings = []
+    for t, uf, ub, h in st:
         c = top_c - t * axis_up
-        pts = rounded_rect(d, w, 9.0, 5)
-        cur = []
-        for u, v in pts:
-            p = c + (u + (nub if u > 0 else 0)) * fwd
-            cur.append(len(V))
-            V.append((p[0], v, p[1]))
-        if ring is not None:
-            for j in range(len(cur)):
-                j2 = (j + 1) % len(cur)
-                F.append((ring[j], ring[j2], cur[j2], cur[j]))
-        else:
-            F.append(tuple(cur)[::-1])
-        ring = cur
-    F.append(tuple(ring))
-    obj("Grip", Geo().add(V, F), "PolymerDark", bevel=1.0, smooth=50.0, real="USGI A2 pistol grip",
-        density=1.15, fill=0.45)
+        rf = min(h * 0.92, 13.0)
+        sec = rect_f(ub, uf, -h, h, [rf, rf, 8.0, 8.0], 7)
+        rings.append([(c[0] + u * fwd[0], v, c[1] + u * fwd[1]) for u, v in sec])
+    obj("Grip", loft(rings), "PolymerDark", smooth_deg=55, real="USGI A2 pistol grip", density=1.15, fill=0.85)
+    return axis_up, fwd, top_c
 
-    # ---------------------------------------------------------------- receiver extension, castle nut, end plate
-    obj("BufferTube", lathe_x([(D["lower_rear"] + 20, 14.58), (D["tube_rear"], 14.58)], 32), "Hardcoat",
+
+def build_stock_and_tube(report):
+    obj("BufferTube", lathe_x([(D["lower_rear"] + 20, 14.58), (D["tube_rear"] + 1.5, 14.58),
+                               (D["tube_rear"], 13.2)], 40), "Hardcoat",
         real="mil-spec carbine receiver extension, OD 1.148 in", density=2.81, fill=0.25)
-    obj("CastleNut", lathe_x([(D["nut_rear"], 18.0), (D["nut_front"], 18.0)], 32), "Hardcoat", bevel=0.6,
-        real="mil-spec castle nut", density=7.85, fill=0.5)
-    g = lathe_x([(D["nut_front"], 19.0), (D["endplate_front"], 19.0)], 32)
-    g.add(*_vf(box(D["nut_front"], D["endplate_front"], -8.0, 8.0, -32.0, -10.0)))
-    g.add(*_vf(cylinder_between((D["nut_front"] - 2.0, -9.0, -26.0), (D["nut_front"] - 2.0, 9.0, -26.0), 8.0)))
-    obj("Sling.EndPlate", g, "Steel", bevel=0.5, real="QD end plate (sling socket each side)", density=7.85, fill=0.8)
+    obj("BufferTube.Rib", box(R(-222.0), D["tube_rear"] + 2, -3.25, 3.25, -16.9, -12.5), "Hardcoat", bevel=0.4,
+        density=2.81, fill=0.5)
+    nut = obj("CastleNut", lathe_x([(D["nut_front"], 17.2), (D["nut_front"] - 0.8, 18.0), (D["nut_rear"] + 0.8, 18.0),
+                                    (D["nut_rear"], 17.2)], 48), "Hardcoat",
+              real="mil-spec castle nut", density=7.85, fill=0.35)
+    notches = Geo()
+    for a in (90, 210, 330):
+        M = np.eye(4)
+        t = math.radians(a - 90)
+        M[:3, :3] = np.array([[1, 0, 0], [0, math.cos(t), -math.sin(t)], [0, math.sin(t), math.cos(t)]])
+        notches.add(box(D["nut_rear"] - 1, D["nut_rear"] + 3.2, -2.4, 2.4, 14.8, 20.0).transformed(M))
+    boolean(nut, notches)
+    finish(nut, 0.4, 2)
+    g = lathe_x([(D["nut_front"], 19.0), (D["endplate_front"], 19.0)], 40)
+    g.add(box(D["nut_front"], D["endplate_front"], -6.5, 6.5, -32.0, -12.0))
+    g.add(cylinder_between((D["nut_front"] - 1.6, -9.0, -26.0), (D["nut_front"] - 1.6, 9.0, -26.0), 8.0, 24))
+    ep = obj("Sling.EndPlate", g, "Steel", real="QD end plate (sling socket each side)", density=7.85, fill=0.8)
+    boolean(ep, lathe_x([(D["nut_front"] + 1, 14.65), (D["endplate_front"] - 1, 14.65)], 40)
+            .add(cylinder_between((D["nut_front"] - 1.6, -10.0, -26.0), (D["nut_front"] - 1.6, 10.0, -26.0), 4.75, 16)))
+    finish(ep, 0.5, 2)
 
-    # ---------------------------------------------------------------- stock (MFT BATTLELINK Minimalist, pos. 3)
+    # MFT BATTLELINK Minimalist, position 3 of 6: a moulded skeleton (tube housing, rear post widening to the
+    # angled pad, lower strut from the toe forward and up to the front lug with its sling loop)
     heel = np.array([D["butt_heel"], 18.0])
     toe = np.array([D["pad_toe"], -110.0])
     dvec = (toe - heel) / np.linalg.norm(toe - heel)
     nrm = np.array([-dvec[1], dvec[0]]) if (-dvec[1]) > 0 else np.array([dvec[1], -dvec[0]])   # forward
 
-    def xr(z, inset=8.0):   # x of the frame's rear edge at height z (pad front face + inset)
+    def xr(z, inset=8.0):   # x of the line parallel to the pad's front face, `inset` mm forward of the pad face
         t = (z - heel[1]) / dvec[1]
         return heel[0] + t * dvec[0] + inset * nrm[0]
 
     sx0 = D["stock_front"]
-    outer = [(sx0, 6.0), (xr(6.0), 6.0), (xr(-110.0), -110.0), (xr(-110.0) + 22, -110.0), (sx0 - 30, -97.0),
-             (sx0, -92.0)]
-    window = [(sx0 - 33, -28.0), (xr(-28.0, 24.0), -28.0), (xr(-86.0, 22.0), -86.0), (xr(-86.0, 22.0) + 16, -93.0),
-              (sx0 - 44, -80.0), (sx0 - 36, -70.0)]
-    sw = 17.0
-    g = prism(outer, -sw, sw, "xz", holes=[window])
-    g.add(*_vf(lathe_x([(sx0, 18.3), (xr(10.0, 6.0), 18.3)], 32)))          # tube housing over the extension
-    stock = obj("Stock", g, "Polymer", bevel=2.0, smooth=40.0, real="MFT BATTLELINK Minimalist (mil-spec), pos 3 of 6",
-                density=1.15, fill=0.45)
+    A = np.array([xr(-110.0) + 28.0, -110.0])
+    B = np.array([sx0 - 36.0, -95.0])
+    outline = fillet([(sx0 - 28.0, 6.0), (xr(6.0), 6.0), (xr(-110.0), -110.0), tuple(A), tuple(B),
+                      (sx0 - 28.0, -93.6)], [0, 0, 5.0, 9.0, 0, 0], 6)
+    sd = (B - A) / np.linalg.norm(B - A)
+    up_n = np.array([-sd[1], sd[0]]) if sd[0] > 0 else np.array([sd[1], -sd[0]])
+    Ap = A + 13.0 * up_n
+    W2 = isect((xr(0.0, 24.0), 0.0), dvec, (0.0, -24.0), (1.0, 0.0))
+    W3 = isect((xr(0.0, 24.0), 0.0), dvec, Ap, sd)
+    W4 = Ap + sd * ((sx0 - 30.0 - Ap[0]) / sd[0])
+    window = fillet([(sx0 - 30.0, -24.0), tuple(W2), tuple(W3), tuple(W4)], [8.0, 10.0, 9.0, 7.0], 6)
+    plate = prism(outline, -8.0, 8.0, "xz", holes=[window])
+    hs = rect_f(-17.0, 17.0, -18.5, 18.5, 13.0, 6)          # tube housing section (y, z)
+    x_end = xr(-18.5, 10.0)
+    housing = loft([[(sx0, 0.9 * y, 0.9 * z) for y, z in hs], [(sx0 - 3.0, y, z) for y, z in hs],
+                    [(x_end, y, z) for y, z in hs]])
+    rear = [[(xr(-110.0, 8.0), -21.0, -110.0), (xr(-110.0, 8.0), 21.0, -110.0), (xr(16.0, 8.0), 21.0, 16.0),
+             (xr(16.0, 8.0), -21.0, 16.0)],
+            [(xr(-110.0, 30.0), -8.5, -110.0), (xr(-110.0, 30.0), 8.5, -110.0), (xr(16.0, 30.0), 8.5, 16.0),
+             (xr(16.0, 30.0), -8.5, 16.0)]]
+    lug = prism(fillet([(sx0 - 32.0, -15.0), (sx0 - 32.0, -96.0), (sx0 - 4.0, -92.5), (sx0, -86.0), (sx0, -15.0)],
+                       [0, 6.0, 5.0, 4.0, 0], 5), -11.0, 11.0, "xz")
+    stock = obj("Stock", housing, "Polymer", real="MFT BATTLELINK Minimalist (mil-spec), pos 3 of 6",
+                density=1.15, fill=0.9)
+    union(stock, plate, loft(rear), lug)
+    cut = Geo()
+    cut.add(lathe_x([(sx0 + 1.0, 14.9), (x_end - 6.0, 14.9)], 40))                     # tube channel
+    cut.add(box(x_end - 6.0, sx0 + 1.0, -3.7, 3.7, -17.6, -10.0))                       # its rib slot
+    cut.add(prism(rect_f(sx0 - 23.0, sx0 - 9.0, -82.0, -44.0, 4.0, 4), -30.0, 30.0, "xz"))   # sling loop
+    boolean(stock, cut)
+    finish(stock, 1.4, 2)
     pad = [tuple(heel), tuple(toe), tuple(toe + 8.0 * nrm), tuple(heel + 8.0 * nrm)]
-    obj("Stock.ButtPad", prism(pad, -22.25, 22.25, "xz"), "Rubber", bevel=2.5, smooth=40.0,
-        real="rubberised butt pad, 12 deg rake", density=1.1)
-    obj("Sling.Stock.QD", cylinder_between((sx0 - 18, -sw + 0.5, -60.0), (sx0 - 18, -sw - 1.5, -60.0), 7.0),
-        "Steel", real="QD socket, stock front lug (right)", density=7.85)
+    padg = prism(pad, -22.25, 22.25, "xz")
+    po = obj("Stock.ButtPad", padg, "Rubber", real="rubberised butt pad, 12 deg rake", density=1.1)
+    grooves = Geo()
+    for k in range(6):
+        z = -95.0 + 19.0 * k
+        p0 = heel + (z - heel[1]) / dvec[1] * dvec
+        q = [p0 - 0.75 * dvec - 3.0 * nrm, p0 + 0.75 * dvec - 3.0 * nrm, p0 + 0.75 * dvec + 0.8 * nrm,
+             p0 - 0.75 * dvec + 0.8 * nrm]
+        grooves.add(prism([tuple(v) for v in q], -30, 30, "xz"))
+    boolean(po, grooves)
+    finish(po, 2.0, 3, smooth_deg=40)
+    obj("Sling.Stock.QD", cylinder_between((sx0 - 16.0, -10.5, -30.0), (sx0 - 16.0, -12.2, -30.0), 6.5, 24), "Steel",
+        smooth_deg=40, real="QD socket, stock front lug (right)", density=7.85)
     report["stock_rake_deg"] = round(math.degrees(math.atan2(abs(toe[0] - heel[0]), abs(toe[1] - heel[1]))), 1)
+    return sx0
 
-    # ---------------------------------------------------------------- barrel, gas, muzzle device
+
+def build_barrel():
     st = [(D["bolt_face"], 12.5), (R(14.0), 12.5), (R(14.0), 8.55), (R(60.0), 7.95), (D["barrel_step"], 7.95),
           (D["barrel_journal"], 9.525), (D["thread"], 9.525), (D["thread"], 6.35), (D["crown"], 6.35)]
-    obj("Barrel", lathe_x(st, 32), "Bronze", real="16 in government-profile barrel, mid-length gas",
+    obj("Barrel", lathe_x(st, 40), "Bronze", real="16 in government-profile barrel, mid-length gas",
         density=7.85, fill=0.93)
-    g = lathe_x([(D["gas_block"][0], 13.5), (D["gas_block"][1], 13.5)], 32)
-    g.add(*_vf(box(D["gas_block"][0], D["gas_block"][1], -6.0, 6.0, 0.0, 16.0)))
-    obj("GasBlock", g, "Steel", bevel=0.6, real="0.750 in low-profile gas block", density=7.85, fill=0.8)
+    gb = obj("GasBlock", lathe_x([(D["gas_block"][0], 13.5), (D["gas_block"][1], 13.5)], 40), "Steel",
+             real="0.750 in low-profile gas block", density=7.85, fill=0.8)
+    union(gb, box(D["gas_block"][0], D["gas_block"][1], -6.0, 6.0, 0.0, 16.0))
+    finish(gb, 0.6, 2)
     obj("GasTube", lathe_x([(D["receiver_face"] - 10, 2.29), (D["gas_block"][0] + 10, 2.29)], 12, cz=10.7),
         "Steel", real="mid-length gas tube", density=7.85, fill=0.4)
-    a2 = [(D["a2_rear"] - 1.2, 10.9), (D["muzzle"], 10.9), (D["muzzle"], 7.6), (R(405.0), 7.6), (R(405.0), 3.4),
-          (D["a2_rear"] - 1.2, 6.4)]
-    muzzle = obj("Muzzle", lathe_x(a2, 32, loop=True), "Bronze", real="A2 birdcage flash hider (burnt bronze)",
+    a2 = [(D["a2_rear"] - 1.2, 10.4), (D["a2_rear"] - 0.6, 10.9), (D["muzzle"] - 0.6, 10.9), (D["muzzle"], 10.3),
+          (D["muzzle"], 7.6), (R(405.0), 7.6), (R(405.0), 3.4), (D["a2_rear"] - 1.2, 6.4)]
+    muzzle = obj("Muzzle", lathe_x(a2, 40, loop=True), "Bronze", real="A2 birdcage flash hider (burnt bronze)",
                  density=7.85)
     cuts = Geo()
-    for ang in (0, 60, 120, -60, -120):       # five slots, the bottom sector closed
+    for ang in (0, 60, 120, -60, -120):       # five slots with rounded ends, the bottom sector closed
         a = math.radians(ang)
         M = np.eye(4)
         M[:3, :3] = np.array([[1, 0, 0], [0, math.cos(a), -math.sin(a)], [0, math.sin(a), math.cos(a)]])
-        cuts.add(*_vf(box(R(406.5), R(424.5), -1.3, 1.3, 5.0, 14.0).transformed(M)))
+        cuts.add(prism(rounded_rect(18.0, 2.6, 1.25, 4, R(412.2), 0.0), 5.0, 14.0, "xy").transformed(M))
+    cuts.add(box(D["a2_rear"] - 2, D["a2_rear"] + 14.5, -20, -9.52, -20, 20))           # wrench flats
+    cuts.add(box(D["a2_rear"] - 2, D["a2_rear"] + 14.5, 9.52, 20, -20, 20))
     boolean(muzzle, cuts)
+    finish(muzzle, 0.3, 2)
 
-    # ---------------------------------------------------------------- handguard (BCM MCMR-13, octagon 38.1 AF)
-    af, idf = 38.1, 33.0
-    rows = [(D["hg_rear"], af + 1.6), (D["hg_rear"] + 10.0, af + 1.6), (D["hg_rear"] + 10.0, af),
-            (D["hg_front"] - 2.0, af), (D["hg_front"], af - 4.0)]
+
+def build_handguard(report):
+    af, idf = HG_AF, HG_ID
+    rows = [(D["hg_rear"], af + 1.6), (D["hg_rear"] + 10.0, af + 1.6), (D["hg_rear"] + 10.6, af),
+            (D["hg_front"] - 2.4, af), (D["hg_front"], af - 4.0)]
     V, F = [], []
     for x, a in rows:
         for y, z in octagon(a):
@@ -575,102 +945,202 @@ def build():
         for j in range(8):
             j2 = (j + 1) % 8
             F.append((i * 8 + j, i * 8 + j2, (i + 1) * 8 + j2, (i + 1) * 8 + j))
+    last = (len(rows) - 1) * 8
     for j in range(8):    # inner wall, rear and front annuli
         j2 = (j + 1) % 8
         F.append((inner0 + 8 + j, inner0 + 8 + j2, inner0 + j2, inner0 + j))
         F.append((inner0 + j, inner0 + j2, j2, j))
-        last = (len(rows) - 1) * 8
         F.append((last + j, last + j2, inner0 + 8 + j2, inner0 + 8 + j))
-    g = Geo().add(V, F)
-    rg, n_hg = rail(D["hg_rear"] + 1.0, D["hg_front"] - 0.5, af / 2 - 1.0)
-    g.add(*_vf(rg))
-    hg = obj("Handguard", g, "Handguard", bevel=0.6, smooth=None, real="BCM MCMR-13 M-LOK free-float handguard",
+    hg = obj("Handguard", Geo().add(V, F), "Handguard", real="BCM MCMR-13 M-LOK free-float handguard",
              density=2.7, fill=1.0)
-    cuts = Geo()
-    slots = [R(14 + 40 * k) for k in range(8)]
-    for x in slots:               # M-LOK 32 x 7 at 3, 6 and 9 o'clock
-        cuts.add(*_vf(box(x, x + 32.0, -af / 2 - 3, -af / 2 + 3.5, -3.5, 3.5)))       # 3 o'clock (right, -y)
-        cuts.add(*_vf(box(x, x + 32.0, af / 2 - 3.5, af / 2 + 3, -3.5, 3.5)))         # 9 o'clock (left)
-        cuts.add(*_vf(box(x, x + 32.0, -3.5, 3.5, -af / 2 - 3, -af / 2 + 3.5)))       # 6 o'clock
-    holes = [R(105 + 26 * k) for k in range(7)]
-    for x in holes:               # lightening holes, 10 mm, on the 4:30 and 7:30 bevels
+    union(hg, prism(rail_section(D["rail_top"], af / 2 - 0.5, spine_hw=7.835), D["hg_rear"] + 0.0,
+                    D["hg_front"] - 0.6, "yz"))
+    slots, n_hg = rail_slots(0.5, 340.9, D["rail_top"], joint_at_front=False)
+    cuts = Geo().add(slots)
+    mlok_r = Geo()
+    for k in range(8):                       # M-LOK 32 x 7 at 3, 6 and 9 o'clock, 40 mm pitch
+        xc = R(30.0 + 40.0 * k)
+        sl = rounded_rect(32.0, 7.0, 2.4, 5, xc, 0.0)
+        mlok_r.add(prism(sl, -af / 2 - 3.0, -af / 2 + 3.6, "xz"))
+        cuts.add(prism(sl, af / 2 - 3.6, af / 2 + 3.0, "xz"))
+        cuts.add(prism(sl, -af / 2 - 3.0, -af / 2 + 3.6, "xy"))
+    cuts.add(mlok_r)
+    for k in range(7):                       # lightening holes, 10 mm, on the 4:30 and 7:30 bevels
+        x = R(105.0 + 26.0 * k)
         for s in (-1, 1):
             n = np.array([0.0, s * 0.7071, -0.7071])
             c = np.array([x, 0.0, 0.0])
-            cuts.add(*_vf(cylinder_between(c + 14.0 * n, c + 23.0 * n, 5.0, 20)))
+            cuts.add(cylinder_between(c + 14.0 * n, c + 23.0 * n, 5.0, 24))
+    for s in (-1, 1):                        # clamp-screw counterbores on the rear collar's lower bevels
+        n = np.array([0.0, s * 0.7071, -0.7071])
+        c = np.array([R(5.5), 0.0, 0.0])
+        cuts.add(cylinder_between(c + 18.4 * n, c + 21.5 * n, 3.9, 20))
     boolean(hg, cuts)
-    obj("Sling.Handguard.QD", cylinder_between((R(270), af / 2 - 0.5, 0.0), (R(270), af / 2 + 1.5, 0.0), 7.0),
-        "Steel", real="M-LOK QD socket, left side", density=7.85)
+    finish(hg, 0.5, 2)
+    for s, nm in ((-1, "R"), (1, "L")):
+        n = np.array([0.0, s * 0.7071, -0.7071])
+        c = np.array([R(5.5), 0.0, 0.0])
+        sc = obj(f"Handguard.ClampScrew.{nm}", lathe_between(c + 18.0 * n, c + 20.2 * n,
+                                                             [(0, 3.5), (2.2, 3.5)], 20), "Steel",
+                 smooth_deg=40, density=7.85)
+        boolean(sc, cylinder_between(c + 19.4 * n, c + 21.0 * n, 1.5, 6))           # hex socket
+        finish(sc, 0.25, 1, smooth_deg=40)
+    obj("Sling.Handguard.QD", lathe_between((R(270), af / 2 - 0.5, 0.0), (R(270), af / 2 + 1.6, 0.0),
+                                            [(0, 7.0), (1.6, 7.0), (2.1, 6.4), (2.1, 4.75), (0.5, 4.75)],
+                                            24), "Steel", smooth_deg=40, real="M-LOK QD socket, left side",
+        density=7.85)
+    report["rail_slots_handguard"] = n_hg
+    return mlok_r
 
-    # ---------------------------------------------------------------- weapon light (SureFire M300C) + offset mount
+
+def build_light():
     ly, lz = -32.0, 16.0
-    light = [(R(10), 11.0), (R(12), 12.0), (R(34), 12.0), (R(34), 11.0), (R(76), 11.0), (R(90), 14.3),
-             (R(113.2), 14.3), (R(114), 13.5)]
-    obj("Light", lathe_x(light, 32, cy=ly, cz=lz), "Hardcoat", real="SureFire M300C Mini Scout light",
+    st = [(R(9.4), 6.4), (R(10.6), 6.6), (R(10.6), 9.6), (R(11.6), 11.4), (R(12.6), 12.0)]
+    x = R(13.0)
+    while x + 1.6 <= R(29.0):                # Z68 tail cap knurl as grooves
+        st += [(x, 12.0), (x + 0.5, 11.5), (x + 1.1, 11.5), (x + 1.6, 12.0)]
+        x += 1.6
+    st += [(R(30.2), 12.0), (R(30.8), 11.2), (R(76.0), 11.0), (R(77.0), 11.4), (R(89.0), 14.0), (R(90.0), 14.3),
+           (R(99.0), 14.3), (R(99.4), 13.9), (R(100.2), 13.9), (R(100.6), 14.3), (R(113.2), 14.3), (R(114.0), 13.5),
+           (R(114.0), 12.4), (R(112.6), 12.4)]
+    obj("Light", lathe_x(st, 40, cy=ly, cz=lz), "Hardcoat", smooth_deg=40, real="SureFire M300C Mini Scout light",
         density=2.7, fill=0.55)
-    obj("Light.Lens", lathe_x([(R(113.6), 12.0), (R(114.2), 12.0)], 32, cy=ly, cz=lz), "Lens", density=2.5)
-    mount = [(-af / 2 + 0.5, -9.0), (-af / 2 - 4.5, -9.0), (ly - 3.0, lz - 10.0), (ly + 4.0, lz - 9.0),
-             (-af / 2 + 0.5, 4.0)]
-    obj("Light.Mount", prism(mount, R(16), R(44), "yz"), "Anodised", bevel=0.8,
-        real="Arisaka Offset Scout Mount, M-LOK, first 3 o'clock slot", density=2.7)
+    obj("Light.Lens", lathe_x([(R(112.4), 12.4), (R(112.9), 12.4)], 40, cy=ly, cz=lz), "Lens", density=2.5)
+    obj("Light.Shroud", Geo().add(box(R(8.4), R(12.0), ly - 3.2, ly + 3.2, lz + 7.2, lz + 11.4))
+        .add(box(R(8.4), R(12.0), ly - 3.2, ly + 3.2, lz - 11.4, lz - 7.2)), "Hardcoat", bevel=0.6,
+        real="Z68 tail-cap shroud", density=2.7)
+    af = HG_AF
+    mount = fillet([(-af / 2 + 0.5, -9.5), (-af / 2 - 4.5, -9.5), (ly - 2.0, lz - 10.6), (ly + 6.0, lz - 9.4),
+                    (-af / 2 + 0.5, 4.5)], [0, 2.0, 2.5, 2.5, 0], 4)
+    m = obj("Light.Mount", prism(mount, R(16), R(44), "yz"), "Anodised",
+            real="Arisaka Offset Scout Mount, M-LOK, first 3 o'clock slot", density=2.7)
+    boolean(m, Geo().add(cylinder_between((R(22.0), -af / 2 - 6, 0.0), (R(22.0), -af / 2 - 3.6, 0.0), 2.4, 12))
+            .add(cylinder_between((R(38.0), -af / 2 - 6, 0.0), (R(38.0), -af / 2 - 3.6, 0.0), 2.4, 12)))
+    finish(m, 0.7, 2)
 
-    # ---------------------------------------------------------------- optic (Aimpoint Micro T-2 on LRP + 39 mm)
+
+def build_optic():
     oz = D["rail_top"] + 39.0
     ox0, ox1 = R(-174), R(-106)
-    g = lathe_x([(ox0, 14.0), (ox0 + 4, 15.0), (ox1 - 12, 15.0), (ox1 - 8, 16.5), (ox1, 16.5)], 32, cz=oz)
-    obj("Optic", g, "Hardcoat", real="Aimpoint Micro T-2", density=2.7, fill=0.5)
-    g = cylinder_between(((ox0 + ox1) / 2 + 4, 0, oz + 13.0), ((ox0 + ox1) / 2 + 4, 0, oz + 21.0), 6.5)
-    g.add(*_vf(cylinder_between(((ox0 + ox1) / 2 + 4, -13.0, oz), ((ox0 + ox1) / 2 + 4, -21.0, oz), 6.5)))
-    obj("Optic.Turrets", g, "Hardcoat", density=2.7)
-    for nm, x in (("Optic.Lens.Rear", ox0 + 0.6), ("Optic.Lens.Front", ox1 - 1.0)):
-        obj(nm, lathe_x([(x - 0.4, 12.0), (x + 0.4, 12.0)], 32, cz=oz), "Lens", density=2.5)
+    st = [(ox0 + 1.6, 11.0), (ox0, 12.2), (ox0, 13.4), (ox0 + 1.4, 14.6), (ox0 + 12.0, 14.6), (ox0 + 14.0, 15.3),
+          (ox1 - 16.0, 15.3), (ox1 - 14.0, 16.2), (ox1 - 1.2, 16.2), (ox1, 15.4), (ox1, 12.6), (ox1 - 2.6, 11.4)]
+    body = obj("Optic", lathe_x(st, 48, cz=oz), "Hardcoat", real="Aimpoint Micro T-2", density=2.7, fill=0.5)
+    xm = (ox0 + ox1) / 2 + 3.0
+    union(body, prism(rect_f(xm - 10.0, xm + 10.0, -9.0, 9.0, 3.0, 4), oz + 8.0, oz + 15.0, "xy"),   # turret block
+          prism(rect_f(xm - 10.0, xm + 10.0, oz - 9.0, oz + 9.0, 3.0, 4), -16.5, -9.0, "xz"),
+          prism(rect_f(ox0 + 8.0, ox1 - 14.0, -13.5, 13.5, 2.0, 3), oz - 15.0, oz - 7.0, "xy"))     # base
+    finish(body, 0.5, 2)
+    turret = [(0, 6.6), (5.8, 6.6), (6.3, 6.0), (8.6, 6.0), (9.0, 5.4)]
+    g = lathe_between((xm, 0, oz + 13.0), (xm, 0, oz + 23.0), turret, 32)
+    g.add(lathe_between((xm, -13.0, oz), (xm, -23.0, oz), turret, 32))
+    obj("Optic.Turrets", g, "Hardcoat", smooth_deg=40, density=2.7)
+    for nm, x in (("Optic.Lens.Rear", ox0 + 1.4), ("Optic.Lens.Front", ox1 - 2.4)):
+        obj(nm, lathe_x([(x - 0.4, 11.4), (x + 0.4, 11.4)], 40, cz=oz), "Lens", density=2.5)
+    # Aimpoint LRP with the 39 mm spacer: rail clamp, riser with a lightening window, throw lever (left)
     mx0, mx1 = R(-160), R(-118)
-    g = box(mx0, mx1, -16.0, 16.0, D["rail_top"] - 2.0, D["rail_top"] + 7.0)
-    g.add(*_vf(prism([(-11, D["rail_top"] + 6.0), (11, D["rail_top"] + 6.0), (8, oz - 13.0), (-8, oz - 13.0)],
-                     mx0 + 3, mx1 - 3, "yz")))
-    g.add(*_vf(box(mx0 + 8, mx1 - 8, -21.0, -16.0, D["rail_top"] - 1.0, D["rail_top"] + 6.0)))   # LRP lever
-    obj("Optic.Mount", g, "Anodised", bevel=0.8, real="Aimpoint LRP mount + 39 mm spacer", density=2.7, fill=0.7)
+    rt = D["rail_top"]
+    mo = obj("Optic.Mount", prism(rect_f(mx0, mx1, -13.0, 13.0, 2.5, 3), rt - 5.0, rt + 5.0, "xy"), "Anodised",
+             real="Aimpoint LRP mount + 39 mm spacer", density=2.7, fill=0.7)
+    riser = fillet([(mx0 + 2.0, rt + 4.0), (mx1 - 2.0, rt + 4.0), (mx1 - 6.0, oz - 13.0), (mx0 + 6.0, oz - 13.0)],
+                   [0, 0, 3.0, 3.0], 4)
+    union(mo, prism(riser, -10.5, 10.5, "xz"),
+          cylinder_between(((mx0 + mx1) / 2, 12.0, rt), ((mx0 + mx1) / 2, 15.5, rt), 5.0, 24))
+    cut = Geo().add(prism(rect_f(mx0 + 10.0, mx1 - 10.0, rt + 9.0, oz - 19.0, 3.0, 4), -12.0, 12.0, "xz"))
+    cut.add(box(mx0 - 1, mx1 + 1, -10.7, 10.7, rt - 6.0, rt - 0.2))                    # rail channel (clears the teeth)
+    boolean(mo, cut)
+    finish(mo, 0.6, 2)
+    lev = fillet([((mx0 + mx1) / 2 - 4.0, rt - 2.5), (mx0 - 6.0, rt - 1.5), (mx0 - 8.0, rt + 2.0),
+                  (mx0 - 5.0, rt + 4.0), ((mx0 + mx1) / 2 + 4.0, rt + 3.5)], [2, 2, 2, 2, 2], 4)
+    obj("Optic.Lever", prism(lev, 15.0, 18.6, "xz"), "Anodised", bevel=0.5, real="LRP throw lever", density=2.7)
 
-    # ---------------------------------------------------------------- magazine (PMAG 30 GEN M3, constant curve)
-    mx, mtop, straight, arc, Rc = R(-49.0), -14.5, 76.0, 108.5, 400.0
-    cs, ns = [], []
-    for z in np.linspace(mtop, mtop - straight, 8):
+
+def build_magazine(report):
+    """PMAG 30 GEN M3: straight 63 x 21.4 inside the magwell, a stepped body 66 x 22.1 below it on a
+    constant R 400 curve, three low ribs a side on the lower body (lofted into the section, tapering out at
+    both ends), a flared floorplate with its front lip."""
+    mx, mtop, Rc, arc = R(-49.0), -14.5, 400.0, 106.0
+    straight_z = [-14.5, -30.0, -50.0, -70.0, -84.0, -87.6, -90.5]
+    dims = [(63.0, 21.4)] * 5 + [(65.0, 21.9), (66.0, 22.1)]
+    cs, ns, ds = [], [], []
+    for z, d in zip(straight_z, dims):
         cs.append((mx, z))
         ns.append((1.0, 0.0))
+        ds.append(d)
     th_end = arc / Rc
-    for th in np.linspace(0, th_end, 13)[1:]:
-        cs.append((mx + Rc - Rc * math.cos(th), mtop - straight - Rc * math.sin(th)))
+    narc = 14
+    for th in np.linspace(0, th_end, narc + 1)[1:]:
+        cs.append((mx + Rc - Rc * math.cos(th), straight_z[-1] - Rc * math.sin(th)))
         ns.append((math.cos(th), math.sin(th)))
-    body = sweep(cs, ns, [(u, v) for u, v in chamfered_rect(64.0, 22.0, 2.5)])
-    ribs = Geo()
-    k0 = 9
-    for u in (-16.0, 0.0, 16.0):
-        for s in (-1, 1):
-            sect = [(u - 1.2, s * 10.5), (u + 1.2, s * 10.5), (u + 1.2, s * 11.8), (u - 1.2, s * 11.8)]
-            ribs.add(*_vf(sweep(cs[k0:-1], ns[k0:-1], sect)))
-    body.add(*_vf(ribs))
-    obj("Magazine", body, "Magazine", bevel=0.6, smooth=40.0, real="Magpul PMAG 30 AR/M4 GEN M3",
-        density=1.3, fill=0.25)
+        ds.append((66.0, 22.1))
+    nr = len(cs)
+    w_rib = np.zeros(nr)
+    k0 = len(straight_z)
+    w_rib[k0 + 1:nr - 1] = 1.0
+    w_rib[k0] = 0.35
+    w_rib[nr - 2] = 0.5
+    rings = []
+    for (c, n, (dd, ww), wr) in zip(cs, ns, ds, w_rib):
+        sec = resample(rect_f(-dd / 2, dd / 2, -ww / 2, ww / 2, [4.5, 4.5, 2.0, 2.0], 8), 240)
+        u, v = sec[:, 0], sec[:, 1]
+        side = np.abs(v) > ww / 2 - 0.3
+        bump = np.zeros_like(u)
+        for uc in (-16.0, 0.0, 16.0):
+            bump = np.maximum(bump, np.clip((1.2 + 0.5 - np.abs(u - uc)) / 0.5, 0, 1))
+        v = v + np.sign(v) * side * 0.8 * wr * bump
+        rings.append([(c[0] + uu * n[0], vv, c[1] + uu * n[1]) for uu, vv in zip(u, v)])
+    obj("Magazine", loft(rings), "Magazine", smooth_deg=40, real="Magpul PMAG 30 AR/M4 GEN M3",
+        density=1.3, fill=0.2)
     c, n = np.array(cs[-1]), np.array(ns[-1])
     t = np.array([n[1], -n[0]])         # tangent (down along the spine)
-    fp = sweep([tuple(c), tuple(c + 6.0 * t)], [tuple(n), tuple(n)], rounded_rect(66.6, 24.6, 5.0, 4))
-    obj("Magazine.Floorplate", fp, "MagBase", bevel=0.8, real="PMAG flared floorplate", density=1.3, fill=0.6)
+    fr = []
+    for s, dd, ww, sh in ((-0.4, 66.4, 22.5, 0.6), (1.0, 68.8, 24.8, 1.0), (5.0, 68.8, 24.8, 1.0),
+                          (6.0, 67.2, 23.2, 1.0)):
+        sec = rect_f(-dd / 2 + sh - 0.6, dd / 2 + sh, -ww / 2, ww / 2, [7.0, 7.0, 3.5, 3.5], 6)
+        p = c + s * t
+        fr.append([(p[0] + uu * n[0], vv, p[1] + uu * n[1]) for uu, vv in sec])
+    obj("Magazine.Floorplate", loft(fr), "MagBase", smooth_deg=40, real="PMAG flared floorplate", density=1.3,
+        fill=0.6)
     report["mag_floor_tilt_deg"] = round(math.degrees(th_end), 1)
 
-    # ---------------------------------------------------------------- tan paint (the drawing's FDE accents)
-    def patch(nm, x0, x1, z0, z1, y, side=-1):
-        return obj(f"Paint.{nm}", box(x0, x1, y, y + side * 0.4, z0, z1), "FDE", smooth=None, density=1.2)
-    patch("StockStripe", R(-370), R(-300), -26.0, -20.0, -sw)
-    patch("StockLug", sx0 - 33, sx0 - 3, -88.0, -32.0, -sw - 0.05)
-    patch("UpperStripe", R(-196), R(-152), 8.0, 18.0, -hw)
-    patch("LowerMark", R(-55), R(-48), -48.0, -20.0, -mw)
-    patch("MagwellFront", R(-16), R(-10.5), -50.0, -36.0, -mw)
-    hgf = -af / 2
-    patch("HandguardA", R(56), R(76), -7.5, 7.0, hgf)
-    patch("HandguardB", R(80), R(96), -7.5, 6.0, hgf)
 
-    # ---------------------------------------------------------------- hand empties
-    # right palm on the A2 grip's right side, 48 mm down the axis from the receiver (index on the trigger)
+def build_paint(sx0, mlok_r):
+    def patch(nm, x0, x1, z0, z1, y, side=-1, cut=None, holes=()):
+        g = prism([(x0, z0), (x1, z0), (x1, z1), (x0, z1)], y, y + side * 0.4, "xz", holes=holes)
+        ob = obj(f"Paint.{nm}", g, "FDE", smooth_deg=None, density=1.2)
+        if cut is not None:
+            boolean(ob, cut)
+        return ob
+    patch("StockStripe", R(-372), R(-302), -4.0, 3.0, -17.0)
+    patch("StockLug", sx0 - 29.0, sx0 - 3.0, -90.0, -39.0, -11.0,
+          holes=[[(sx0 - 23.0, -82.0), (sx0 - 9.0, -82.0), (sx0 - 9.0, -44.0), (sx0 - 23.0, -44.0)]])
+    patch("UpperStripe", R(-195), R(-157), 2.0, 12.6, -UPPER_HW)
+    patch("LowerMark", R(-56), R(-49), -50.0, -38.0, -MAGWELL_HW)
+    patch("MagwellFront", R(-25), R(-19), -52.0, -38.0, -MAGWELL_HW)
+    hgf = -HG_AF / 2
+    patch("HandguardA", R(56), R(76), -7.5, 7.0, hgf, cut=mlok_r)
+    patch("HandguardB", R(80), R(96), -7.5, 6.0, hgf, cut=mlok_r)
+
+
+def build():
+    global ROOT
+    ROOT = bpy.data.objects.new(f"{PART}.Root", None)
+    ROOT.empty_display_type = "ARROWS"
+    ROOT.empty_display_size = 0.1
+    collection().objects.link(ROOT)
+    report = {}
+    build_upper(report)
+    build_lower()
+    axis_up, fwd, top_c = build_grip()
+    sx0 = build_stock_and_tube(report)
+    build_barrel()
+    mlok_r = build_handguard(report)
+    build_light()
+    build_optic()
+    build_magazine(report)
+    build_paint(sx0, mlok_r)
+
+    # hand empties (unchanged from round 1: the surfaces under them did not move)
+    # right palm on the A2 grip's right side, 54 mm down the axis from the top section (index on the trigger)
     p = top_c - 54.0 * axis_up - 4.0 * fwd
     empty("Grip.R", (p[0], -15.0, p[1]), X=(axis_up[0], 0, axis_up[1]), Z=(0, 1, 0))
     # left hand overhand on the handguard (reference: back of the hand over the rail, fingers down the right
@@ -678,8 +1148,21 @@ def build():
     d11 = np.array([0.0, 0.5, 0.866])
     q = np.array([R(170.0), 0.0, 0.0]) + 20.3 * d11
     empty("Grip.L", tuple(q), X=(-1, 0, 0), Z=tuple(-d11))
-    report["rail_slots"] = {"receiver_teeth": n_up, "handguard_teeth": n_hg}
+    report["grip_empty_gap_mm"] = {"Grip.R": surface_gap("Grip.R", "Grip"),
+                                   "Grip.L": surface_gap("Grip.L", "Handguard")}
     return report
+
+
+def surface_gap(empty_name, target):
+    """Distance (mm) from a hand empty to the nearest point of the evaluated target mesh."""
+    from mathutils.bvhtree import BVHTree
+    bpy.context.view_layer.update()
+    ob = OBJS[target]
+    dg = bpy.context.evaluated_depsgraph_get()
+    tree = BVHTree.FromObject(ob, dg)
+    p = OBJS[empty_name].matrix_basis.translation
+    hit = tree.find_nearest(Vector(p))
+    return round((hit[0] - Vector(p)).length / MM, 2) if hit[0] is not None else None
 
 
 # ============================================================================ measurements
@@ -703,15 +1186,32 @@ def volume_cm3(ob):
     return v * 1e6
 
 
+def topology(ob):
+    """Faces, triangles after evaluation (render mesh), and the non-manifold edge count of the base mesh."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    oe = ob.evaluated_get(dg)
+    me = oe.to_mesh()
+    me.calc_loop_triangles()
+    tris = len(me.loop_triangles)
+    oe.to_mesh_clear()
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    nm = sum(1 for e in bm.edges if not e.is_manifold)
+    bm.free()
+    return len(ob.data.polygons), tris, nm
+
+
 def measure(extra):
     lo, hi = np.full(3, 1e9), np.full(3, -1e9)
     parts = {}
+    topo = {}
     for k, ob in OBJS.items():
         if ob.type != "MESH":
             continue
         co = mesh_world_mm(ob)
         lo, hi = np.minimum(lo, co.min(0)), np.maximum(hi, co.max(0))
         parts[k] = (co.min(0), co.max(0))
+        topo[k] = topology(ob)
     nb = lambda keys: (np.min([parts[k][0] for k in keys], 0), np.max([parts[k][1] for k in keys], 0))  # noqa: E731
     no_optic = [k for k in parts if not k.startswith("Optic")]
     gun = [k for k in no_optic if not k.startswith("Magazine")]
@@ -734,10 +1234,14 @@ def measure(extra):
         "height_without_optic_mm": round(nb(no_optic)[1][2] - nb(no_optic)[0][2], 1),
         "height_without_optic_or_mag_mm (rail top to grip)": round(nb(gun)[1][2] - nb(gun)[0][2], 1),
         "width_overall_mm": round(hi[1] - lo[1], 1),
+        "width_receiver_with_forward_assist_mm": round(parts["Upper"][1][1] - parts["Upper"][0][1], 1),
         "length_of_pull_mm (trigger to pad centre)": round(0.0 - (D["butt_heel"] + D["pad_toe"]) / 2, 1),
-        "mass_solid_blockout_g": round(solid),
+        "mass_solid_closed_volumes_g": round(solid),
         "mass_estimate_g (fill factors, empty magazine)": round(est),
         "mass_estimate_loaded_g": round(est + rounds),
+        "triangles_rendered_total": int(sum(t[1] for t in topo.values())),
+        "non_manifold_edges": {k: t[2] for k, t in topo.items() if t[2]},
+        "topology (faces, rendered tris, non-manifold edges)": topo,
         "mass_by_part (cm3, solid g, estimate g)": mass,
     }
     out.update(extra)
@@ -857,7 +1361,7 @@ def cycles(sc, samples=96):
     print("[carbine] cycles device:", env.use_device(sc), flush=True)
 
 
-def studio_lights(target=(120, 0, -30), key_dir=(0.3, -1.0, 0.8)):
+def studio_lights(target=(120, 0, -30), key_dir=(0.3, -1.0, 0.8), rim_dir=(0.2, 1.0, 0.6)):
     obs = []
     t = Vector(target) * MM
 
@@ -871,8 +1375,8 @@ def studio_lights(target=(120, 0, -30), key_dir=(0.3, -1.0, 0.8)):
         ob.rotation_euler = (t - pos).to_track_quat("-Z", "Y").to_euler()
         obs.append(ob)
     area("Carbine.Aux.Key", key_dir, 45.0, 1.2, (1.0, 0.95, 0.88))
-    area("Carbine.Aux.Fill", (-0.6, -0.8, 0.2), 12.0, 2.0, (0.9, 0.95, 1.0))
-    area("Carbine.Aux.Rim", (0.2, 1.0, 0.6), 40.0, 1.0, (0.75, 0.85, 1.0))
+    area("Carbine.Aux.Fill", (-0.6, -0.8 if key_dir[1] < 0 else 0.8, 0.2), 12.0, 2.0, (0.9, 0.95, 1.0))
+    area("Carbine.Aux.Rim", rim_dir, 40.0, 1.0, (0.75, 0.85, 1.0))
     return obs
 
 
@@ -935,7 +1439,7 @@ def renders(meas):
     render(os.path.join(OUT_DIR, "carbine_left_ortho.png"))
     remove(bar)
 
-    # right side (the reference's side), orthographic, bar; compared with the icon crop
+    # right side (the reference's side), orthographic, bar
     look_at(cam, (cx, -1500, -62), (cx, 0, -62))
     bar = scale_bar((cx - 420, -30, -235), (1, 0, 0), (0, 0, 1))
     render(os.path.join(OUT_DIR, "carbine_right_ortho.png"))
@@ -943,7 +1447,6 @@ def renders(meas):
 
     # top, orthographic (muzzle to the right, the gun's left at the top of the frame)
     sc.render.resolution_y = 640
-    look_at(cam, (cx, 0, 1500), (cx, 0, 0))
     cam.matrix_world = Matrix(((1, 0, 0, cx * MM), (0, 1, 0, 0), (0, 0, 1, 1.5), (0, 0, 0, 1)))
     bar = scale_bar((cx - 420, -110, 120), (1, 0, 0), (0, 1, 0))
     render(os.path.join(OUT_DIR, "carbine_top_ortho.png"))
@@ -962,6 +1465,21 @@ def renders(meas):
     render(os.path.join(OUT_DIR, "carbine_34_cycles.png"))
     remove(lights)
 
+    # receiver closeups from both sides: clay (form) and Cycles (finish)
+    sc.render.resolution_x, sc.render.resolution_y = 1800, 1200
+    cd.lens = 70.0
+    for side, pos, key, rim in (("R", (70, -560, 150), (0.3, -1.0, 0.8), (0.2, 1.0, 0.6)),
+                                ("L", (-30, 560, 150), (-0.3, 1.0, 0.8), (0.2, -1.0, 0.6))):
+        tg = (15, 0, -32)
+        look_at(cam, pos, tg)
+        workbench(sc, "SINGLE", bg=(0.86, 0.86, 0.84))
+        render(os.path.join(OUT_DIR, f"carbine_receiver_{side}_clay.png"))
+        cycles(sc, 128)
+        world_colour(sc, (0.18, 0.18, 0.19), 0.6)
+        lights = studio_lights(tg, key, rim)
+        render(os.path.join(OUT_DIR, f"carbine_receiver_{side}_cycles.png"))
+        remove(lights)
+
     # hero direction: the carbine at take 1's solved placement, the reference camera, the crop region only
     ROOT.matrix_world = hero_root_matrix()
     bpy.context.view_layer.update()
@@ -976,8 +1494,6 @@ def renders(meas):
     sc.render.border_min_y, sc.render.border_max_y = 1 - y1 / 941, 1 - y0 / 941
     sc.render.film_transparent = True
     world_colour(sc, (0.25, 0.25, 0.27), 0.5)
-    # reference light (analysis_consolidated §8, simplified): warm key from the camera's upper left, cool rim
-    # from his left (viewer's right) and behind
     hero_t = (0, -300, 900)
     lights = studio_lights(hero_t, key_dir=(-0.6, -1.0, 0.7))
     hero_png = os.path.join(OUT_DIR, "carbine_hero_render.png")
@@ -1017,7 +1533,7 @@ def main():
         json.dump(meas, f, indent=1, default=float)
     print("[carbine] measurements:")
     for k, v in meas.items():
-        if k != "mass_by_part (cm3, solid g, estimate g)":
+        if k not in ("mass_by_part (cm3, solid g, estimate g)", "topology (faces, rendered tris, non-manifold edges)"):
             print(f"  {k}: {v}")
     for k, v in meas["mass_by_part (cm3, solid g, estimate g)"].items():
         print(f"    {k:24s} {v}")
