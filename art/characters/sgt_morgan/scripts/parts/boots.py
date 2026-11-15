@@ -21,7 +21,9 @@ Round 3 (boots.md §5): take 1's work reused (archive/v1/spec/02_boots.md §4, p
    ankle padding, with the shaft ellipses of the drawing (138 x 106 at the rim) where they are bigger.
 4. Detail laid where the boot flexes and loads (spec 02 §4.15): seeded flex folds along the metatarsal heads' line
    (different on each boot), ankle-break folds, padding over the malleoli, soft Cordura wrinkles; the throat's
-   foot (E1) at h 86 on this instep.
+   foot (E1) at h 79 (round 6: the lacing runs on down the vamp to about 125 mm behind the toe; at h 86 it stopped
+   150 mm behind it and the bare vamp read as a galosh), the leather quarter's edge rising toward the throat, a
+   stitched leather mudguard falling from the heel to the ball, the toe cap 1.6 mm proud.
 5. The library's hardware, webbing and stitches (scripts/lib/gear_hardware, gear_webbing, gn_stitches, sweep):
    rolled eyelets, plate speed hooks, the cuff strap round the shaft at h 158 through a ladder-lock at phi 150
    and two leather keepers at phi +-72, stitch rows on the toe cap, the counter, the stays and the collar.
@@ -61,7 +63,13 @@ K_UNION = 16.0                                   # smooth-union radius (mm) wher
 NOTCH = 6.0                                      # Achilles notch at the back of the rim
 COLLAR = {"tall": 22.0, "thick": 8.0}
 LACE_PITCH, LACE_TOP = 22.5, 5.0                 # eyelet pitch along the throat, top hook below the rim
-E1_H = 86.0                                      # the lowest eyelet's height on the real instep (spec 02 §0 item 6: 85-95)
+E1_H = 79.0                                      # round 6: the lowest eyelet's height (86 put E1 151 mm behind the toe and
+                                                 # left a 90 mm bare vamp: the critics' galosh; the drawn E1 is ~137 behind)
+QUARTER = (98.0, 14.0, 60.0)                     # round 6: the leather quarter's top edge, h 98 at the back rising 14 mm over
+                                                 # 60 mm toward the throat (a straight h 98 read as a hard collar seam)
+MUD = (92.0, 45.0, 1.0)                          # round 6: the leather mudguard's top edge, h 92 behind falling to 45 at the
+                                                 # ball, standing 1.0 proud (the drawn boot's diagonal panel line)
+TOECAP_LIFT = 1.6                                # round 6: the toe cap's step over the vamp (0.8 did not read in profile)
 GAP = (30.0, 44.0)                               # throat gap between the stays at E1 and at the top
 STAY_W, STAY_PROUD = 22.0, 2.4
 LACE_R = 2.0
@@ -667,6 +675,23 @@ def _fold_profile(x, depth):
     return depth * (-np.exp(-(x / 0.95) ** 2) + 0.42 * np.exp(-((x + 2.6) / 2.4) ** 2) + 0.28 * np.exp(-((x - 2.4) / 2.6) ** 2))
 
 
+def ankle_s(last):
+    """s of the shaft's front at h 70 (the ankle's front), the start of the quarter's rise and the ankle folds."""
+    i_a = int(np.argmin(np.abs(last.zs - 70.0)))
+    return float(last.cs[i_a])
+
+
+def quarter_h(last, s):
+    """Round 6: the leather quarter's top edge (under the Cordura) at s: h 98 at the back, rising toward the throat."""
+    s0 = ankle_s(last)
+    return QUARTER[0] + QUARTER[1] * smoothstep(s0, s0 + QUARTER[2], s)
+
+
+def mud_h(ff, s):
+    """Round 6: the mudguard's top edge at s: high at the heel, falling to MUD[1] at the ball."""
+    return MUD[0] + (MUD[1] - MUD[0]) * smoothstep(60.0, ff.s_ball - 10.0, s)
+
+
 def decorate_upper(last, ff, P, F, throat, side="L"):
     """Overlays, folds, padding and the throat as displacement along the field's normal; face materials (0 leather,
     1 Cordura). Round 3 (spec 02 §3.5, §4.4 step 5, §4.15): the vamp's folds lie along the metatarsal heads' line,
@@ -684,8 +709,10 @@ def decorate_upper(last, ff, P, F, throat, side="L"):
     # Cordura shaft panels above the quarters (leather below 98 mm, the counter, the stays and backstrap)
     dback = np.abs(t - last.rim_c[1])
     backstrap = smoothstep(11.0, 9.0, dback) * smoothstep(last.rim_c[0] - 20.0, last.rim_c[0] - 40.0, s)
-    cordura = smoothstep(97.0, 99.0, h) * (1 - backstrap) * (1 - counter)
-    lift = 0.8 * (1 - cordura) + 0.8 * toecap + 0.8 * counter
+    qh = quarter_h(last, s)
+    cordura = smoothstep(qh - 1.0, qh + 1.0, h) * (1 - backstrap) * (1 - counter)
+    mud = smoothstep(mud_h(ff, s) + 1.0, mud_h(ff, s) - 1.0, h) * (1 - toecap) * (1 - counter)
+    lift = 0.8 * (1 - cordura) + TOECAP_LIFT * toecap + 0.8 * counter + MUD[2] * mud
     # the vamp's flex folds along the metatarsal heads' line (oblique: the 5th head lies behind the 1st)
     lm = FootFrame.LANDMARKS or C.base_json()["landmarks"]
     m1 = np.array(lm[f"mt1_{side}"]["rest_mm"])
@@ -711,8 +738,7 @@ def decorate_upper(last, ff, P, F, throat, side="L"):
         hc += _fold_profile(x, dep) * fd * lat
     hc *= on_vamp
     # ankle-break folds on the quarters in front of the ankle, rising toward the back, deeper laterally
-    i_a = int(np.argmin(np.abs(last.zs - 70.0)))
-    s_ank = float(last.cs[i_a])
+    s_ank = ankle_s(last)
     lateral = np.sign(t - tc)
     front_q = smoothstep(s_ank - 5.0, s_ank + 25.0, s) * smoothstep(1.05, 0.55, np.abs(t - tc) / np.maximum(w_half, 30.0)) * \
         (1 - throat.gap_mask(P))
@@ -743,7 +769,8 @@ def decorate_upper(last, ff, P, F, throat, side="L"):
     fc = np.array([cordura[list(f)].mean() for f in F])
     crease = smoothstep(0.15, 0.6, -(hc + ab + cw))
     return V, (fc > 0.5).astype(int), {"crease": crease, "zones": {"toecap": toecap, "counter": counter,
-                                                                   "cordura": cordura, "backstrap": backstrap}}
+                                                                   "cordura": cordura, "backstrap": backstrap,
+                                                                   "mudguard": mud}}
 
 
 class Throat:
@@ -758,13 +785,24 @@ class Throat:
         zz = np.arange(RIM_Z - 1.0, z_m, -2.0)
         Os = ff.xyz(np.interp(zz, last.zs, last.cs), np.interp(zz, last.zs, last.ct), zz)
         Q1, _ = last.cast(Os, np.repeat(ff.u[None], len(zz), 0))
-        sl = ff.s_ball + 30.0          # past E1, so the stays' lower ends and the bottom bar have line under them
+        sl = ff.s_ball + 45.0          # past E1, so the stays' lower ends and the bottom bar have line under them
+                                       # (round 6: +45, was +30: the line ended above h 79 and capped E1 at h 93)
         low = ff.xyz(sl, np.interp(sl, last.st, last.tc), np.interp(sl, last.st, last.zb + last.h) + 6.0)
         mid = Q1[-1] + ff.u * 6.0
         tg = np.vstack([mid + (low - mid) * x for x in np.linspace(0, 1, 70)[1:]])
         D = tg - O
         D /= np.linalg.norm(D, axis=1, keepdims=True)
         Q2, _ = last.cast(np.repeat(O[None], len(D), 0), D)
+        # round 6: over the instep, rays from the ankle point leave the vamp short of targets further forward (they
+        # dip), so also cast straight up from inside the last's bottom under each target and keep the nearer hit
+        st_, tt_ = ff.s_of(tg), ff.t_of(tg)
+        zb_ = np.interp(st_, last.st, last.zb) + 12.0
+        B0 = ff.xyz(st_, tt_, zb_)
+        Du = ff.xyz(st_, tt_, zb_ + 10.0) - B0
+        Du /= np.linalg.norm(Du, axis=1, keepdims=True)
+        Q2b, okb = last.cast(B0, Du, far=200.0)
+        nearer = okb & (np.linalg.norm(Q2b - tg, axis=1) < np.linalg.norm(Q2 - tg, axis=1))
+        Q2[nearer] = Q2b[nearer]
         Q = np.vstack([Q1, Q2])
         L = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(Q, axis=0), axis=1))])
         self.Lmax = float(L[-1])
@@ -1492,14 +1530,22 @@ def build_stitches(S, S_stays, Vu, Fu, last, ff, throat, zones, coll, side):
         path = GS.seam_path(S, ordered(P, ang, step=0.08), step=1.0)
         out.append(_rows_toward(GS, path, S, (1.6, 5.4), lambda p: -(ff.h_of(p)[0] + 0.42 * ff.s_of(p)[0]), sd + 2))
         info["counter_mm"] = round(float(path.s[-1]), 1)
-    # the leather quarter's top edge under the Cordura (h 98), in front of the counter, each side
+    # the leather quarter's top edge under the Cordura (quarter_h: h 98 rising toward the throat), each side
     for sgn in (1.0, -1.0):
         keep = gapm & (s > 70.0) & (sgn * (t - tc) > 0)
-        P = iso_points(Vu, Fu, h - 98.0, keep)
+        P = iso_points(Vu, Fu, h - quarter_h(last, s), keep)
         if len(P) > 8:
             path = GS.seam_path(S, ordered(P, ff.s_of(P)), step=1.0)
             out.append(_rows_toward(GS, path, S, (1.6, 5.4), lambda p: -ff.h_of(p)[0], sd + 3 + int(sgn > 0)))
             info[f"quarter_{'lat' if sgn > 0 else 'med'}_mm"] = round(float(path.s[-1]), 1)
+    # round 6: the mudguard's top edge (mud_h), two rows on the mudguard, each side, from behind the ball to the counter
+    for sgn in (1.0, -1.0):
+        keep = above & gapm & (s > 75.0) & (sc < last.s_tip - 84.0) & (sgn * (t - tc) > 0)
+        P = iso_points(Vu, Fu, h - mud_h(ff, s), keep)
+        if len(P) > 8:
+            path = GS.seam_path(S, ordered(P, ff.s_of(P)), step=1.0)
+            out.append(_rows_toward(GS, path, S, (1.6, 5.4), lambda p: -ff.h_of(p)[0], sd + 20 + int(sgn > 0)))
+            info[f"mudguard_{'lat' if sgn > 0 else 'med'}_mm"] = round(float(path.s[-1]), 1)
     # the stays: one row 1.8 from the throat edge, two near the back edge
     Ls = np.linspace(2.0, throat.e1_L + 8.0, 40)
     for sgn in (1.0, -1.0):

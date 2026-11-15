@@ -38,6 +38,8 @@ Evaluation, renders/round_NN/:
                             silhouette edge in cyan
   turn_<view>.png, turnaround.png   the posed soldier from the front, three-quarters, both sides and the back
                             (Workbench, one flat colour per part as in <label>_parts.png)
+  standoff.json, standoff.md  hard gear standing off what it should sit on (round 6: a pouch hinged into the
+                            air, a clip floating off its strap; see standoff_report)
   clashes.json, clashes.md  interpenetration in the hero pose between parts (body, clothing, gear, carbine;
                             a part's own objects are never tested against each other: their overlaps are designed)
   assembly.json             what was loaded and bound, pose and carbine checks, cache freshness, timings
@@ -505,6 +507,179 @@ def clash_report(groups):
             "seconds": round(time.perf_counter() - t0, 1)}
 
 
+STANDOFF_PARTS = ("boots", "gloves", "belt", "carrier", "armour")   # hard gear and hardware; garments are not tested
+STANDOFF_MM, STANDOFF_TOUCH, STANDOFF_CAP, STANDOFF_COS = 5.0, 2.5, 60.0, 0.5
+STANDOFF_SAMPLES = 700
+STANDOFF_HOLD = 0.2          # a stand-off needs under this share of its attachment face touching (a knee cap moved 8 mm
+                             # out still touched its base over 17 % of it with its sloping sides)
+# objects whose gap to what lies under them is designed (object name, or a prefix ending in "." -> why); listed apart
+STANDOFF_DESIGNED = {
+    "Boot.L.Upper": "the last's allowances (toe room 15 mm ahead of the toes, 9.5 mm of ankle padding)",
+    "Boot.R.Upper": "as Boot.L.Upper",
+    "Boot.L.Sole": "the sole's top stands 4 mm under the footbed", "Boot.R.Sole": "as Boot.L.Sole",
+    "Boot.L.Lugs": "moulded into the outsole; rays from their side walls look up past the sole's edge",
+    "Boot.R.Lugs": "as Boot.L.Lugs",
+    "Boot.L.Tongue": "the tongue's padding over the instep allowance", "Boot.R.Tongue": "as Boot.L.Tongue",
+    "Boot.L.Collar": "a padded roll on the rim, attached by its edge; its inner face looks across the shaft's ease",
+    "Boot.R.Collar": "as Boot.L.Collar",
+    "Belt.Rig.R.Carrier.1.PMAG": "the spare magazine stands 53 mm proud of its carrier, above the platform's top",
+    "Belt.Rig.R.Carrier.2.PMAG": "as Carrier.1.PMAG",
+    "Belt.Rig.R.Carrier.1.Cord": "the shock cord stretched over the spare magazine's floor plate, anchored at both ends",
+    "Belt.Rig.R.Carrier.2.Cord": "as Carrier.1.Cord",
+    "Belt.Rig.L.Platform": "lifted 6 mm over the trousers and cargo pockets so the thigh straps run under it (PLATFORM_LIFT)",
+    "Belt.Rig.R.Platform": "as Belt.Rig.L.Platform",
+    "Belt.Rig.L.Hanger": "a webbing hanger spanning from the belt to the platform's top edge over the hip crease",
+    "Belt.Rig.R.Hanger": "as Belt.Rig.L.Hanger",
+    "Sock.": "a garment: it lies on the skin",
+}
+
+
+def surface_samples(V, F, n, seed=0):
+    """n points spread over a mesh's faces by area (fan-triangulated), with their face normals: a coarse box has
+    vertices only at its corners, and a vertex test reads a box resting on a curved surface by its middle as
+    standing off at its corners."""
+    import numpy as np
+    T = np.array([(f[0], f[i], f[i + 1]) for f in F for i in range(1, len(f) - 1)])
+    A, B, Cc = V[T[:, 0]], V[T[:, 1]], V[T[:, 2]]
+    cr = np.cross(B - A, Cc - A)
+    area = np.linalg.norm(cr, axis=1)
+    keep = area > 1e-9
+    T, A, B, Cc, cr, area = T[keep], A[keep], B[keep], Cc[keep], cr[keep], area[keep]
+    rng = np.random.default_rng(seed)
+    k = rng.choice(len(T), size=n, p=area / area.sum())
+    r1, r2 = rng.random(n), rng.random(n)
+    sq = np.sqrt(r1)
+    P = (1 - sq)[:, None] * A[k] + (sq * (1 - r2))[:, None] * B[k] + (sq * r2)[:, None] * Cc[k]
+    N = cr[k] / area[k][:, None]
+    return P, N
+
+
+def standoff_report(groups, parts=STANDOFF_PARTS, keep_all=False):
+    """Parts that stand off whatever they should sit on (round 6; the clash test cannot see a part in the air).
+
+    Per object of the tested parts, in the hero pose (Subdivision off, Solidify ON: the real surfaces, unlike the clash
+    test), at STANDOFF_SAMPLES points spread over its faces by area (surface_samples), orientation-free (some meshes
+    are wound inward):
+      - the support direction of a vertex is the direction to the skin's nearest point; the sample's face normal line,
+        signed to look that way, must lie within 60 degrees of it;
+      - a ray along it whose first surface is the object itself starts on the object's far side (it crosses its
+        own body) and is skipped; the others form the object's ATTACHMENT FACE, and their gap is the distance to
+        the first surface of any other object (another part, another object of the same part, the body) within
+        STANDOFF_CAP mm, else the cap;
+      - the sample's clearance is the distance to the nearest surface of any other object (within STANDOFF_MM).
+    Flagged:
+      - "floats": no surface sample within STANDOFF_TOUCH (2.5 mm) of another object (a clip in the air, a
+        ladder-lock lying over its strap);
+      - "stands off": otherwise, when the median gap over the attachment face exceeds STANDOFF_MM, under 20 %
+        (STANDOFF_HOLD) of that face is within STANDOFF_TOUCH, and the face holds at least 10 % of the samples (a pouch hinged out
+        from the belt by one edge, a cap standing off the knee);
+      - "dangles": a thin object (under 8 mm in its smallest extent: a cord, a rod) with 40 % or more of its
+        samples further than STANDOFF_MM from anything (stiff tails hanging in the air).
+    Designed gaps (STANDOFF_DESIGNED, with the reason) are listed apart. A heuristic: it finds the faults the
+    critics found in round 5; a part sitting in the right place but in the wrong form passes."""
+    import numpy as np
+    from mathutils import Vector
+    import common as C
+    t0 = time.perf_counter()
+    Vs, Fs, owner, n = [], [], [], 0
+    datas = {}
+    for part, objs in groups.items():
+        for o in objs:
+            if o.type != "MESH":
+                continue
+            V, F = C.evaluated_world_mm(o, disable=("SUBSURF",))     # the real surfaces: Solidify on
+            if not len(V) or not F:
+                continue
+            datas[o.name] = (part, V, F)
+            Vs.append(V)
+            Fs += [tuple(i + n for i in f) for f in F]
+            owner += [o.name] * len(F)
+            n += len(V)
+    allbvh = C.bvh_from(np.concatenate(Vs), Fs)
+    Vb, Fb = next((V, F) for (part, V, F) in datas.values() if part == "body")
+    body_bvh = C.bvh_from(Vb, Fb)
+    out, designed, every = [], [], []
+    for nm, (part, V, F) in datas.items():
+        if part not in parts:
+            continue
+        Ps, Ns = surface_samples(V, F, STANDOFF_SAMPLES, seed=len(nm))
+        idx = np.arange(len(Ps))
+        gaps, near = [], []
+        for i in idx:
+            p, nv = Vector(Ps[i]), Vector(Ns[i])
+            hits = [h for h in allbvh.find_nearest_range(p, STANDOFF_MM) if owner[h[2]] != nm]
+            near.append(min(h[3] for h in hits) if hits else STANDOFF_MM + 1.0)
+            loc, _nrm, _k, dist = body_bvh.find_nearest(p)
+            if loc is None or dist < 1e-6 or nv.length < 0.5:
+                continue
+            d = (loc - p).normalized()
+            if abs(d.dot(nv)) < STANDOFF_COS:
+                continue                      # a side face: its normal looks past the body
+            h = allbvh.ray_cast(p + d * 0.05, d, STANDOFF_CAP)
+            if h[0] is not None and owner[h[2]] == nm:
+                continue                      # the ray crosses the object's own body: its far side
+            gaps.append(STANDOFF_CAP if h[0] is None else h[3] + 0.05)
+        near = np.array(near)
+        gaps = np.array(gaps)
+        lo, hi = Ps.min(0), Ps.max(0)
+        thin = float(np.min(hi - lo)) < 8.0
+        rec = {"object": nm, "part": part, "samples": int(len(idx)), "attach_share": round(len(gaps) / len(idx), 2),
+               "median_gap_mm": round(float(np.median(gaps)), 1) if len(gaps) else None,
+               "attach_contact": round(float(np.mean(gaps <= STANDOFF_TOUCH)), 2) if len(gaps) else 0.0,
+               "nearest_other_mm": round(float(near.min()), 1) if near.min() <= STANDOFF_MM else f">{STANDOFF_MM:g}",
+               "contact_share": round(float(np.mean(near <= STANDOFF_TOUCH)), 2),
+               "far_share": round(float(np.mean(near > STANDOFF_MM)), 2)}
+        flags = []
+        if near.min() > STANDOFF_TOUCH:
+            flags.append("floats")
+        elif len(gaps) >= 0.1 * len(idx) and np.median(gaps) > STANDOFF_MM and rec["attach_contact"] < STANDOFF_HOLD:
+            flags.append("stands off")
+        if thin and rec["far_share"] >= 0.4:
+            flags.append("dangles")
+        rec["flags"] = flags
+        if keep_all:
+            every.append(rec)
+        why = next((w for k, w in STANDOFF_DESIGNED.items() if nm == k or (k.endswith(".") and nm.startswith(k))), None)
+        if why and flags:
+            rec["designed"] = why
+            designed.append(rec)
+        elif flags:
+            out.append(rec)
+    out.sort(key=lambda r: -(r["median_gap_mm"] or 99.0))
+    return {"threshold_mm": STANDOFF_MM, "touch_mm": STANDOFF_TOUCH, "cap_mm": STANDOFF_CAP, "parts": list(parts), "standing_off": out,
+            "designed": designed, "objects_tested": sum(1 for d in datas.values() if d[0] in parts),
+            "seconds": round(time.perf_counter() - t0, 1), **({"all": every} if keep_all else {})}
+
+
+def standoff_md(n):
+    path = os.path.join(round_dir(n), "standoff.json")
+    if not os.path.exists(path):
+        return None
+    S = json.load(open(path, encoding="utf-8"))
+    L = [f"# Round {n}: parts standing off what they should sit on (hero pose)", "",
+         f"Generated by `scripts/assemble.py` (`standoff_report`). Parts {', '.join(S['parts'])}: per object, the "
+         "attachment face is the surface samples whose normal line looks toward the skin (rays crossing the object's own body "
+         "skipped); the gap is the ray in the "
+         f"skin's direction to any other object's surface (cap {S['cap_mm']:g} mm). Flags (see `standoff_report`): "
+         f"floats (nothing within {S.get('touch_mm', 2.5):g} mm), stands off (median gap over the attachment face over "
+         f"{S['threshold_mm']:g} mm with under 20 % of it touching), dangles (a thin object mostly over "
+         f"{S['threshold_mm']:g} mm from anything). {S['objects_tested']} objects tested.", "",
+         "| Object | Flags | Median gap over the attachment face (mm) | Attachment face share | Nearest other object (mm) | Share within 2.5 mm |",
+         "|---|---|---:|---:|---:|---:|"]
+    for r in S["standing_off"]:
+        L.append(f"| {r['object']} | {', '.join(r['flags'])} | {r['median_gap_mm']} | {r['attach_share']} | "
+                 f"{r['nearest_other_mm']} | {r['contact_share']} |")
+    if not S["standing_off"]:
+        L.append("| (none) | | | | | |")
+    if S["designed"]:
+        L += ["", "Designed gaps (not flagged): " + "; ".join(
+            f"{r['object']} ({', '.join(r['flags'])}, median {r['median_gap_mm']}: {r['designed']})" for r in S["designed"])]
+    L += ["", f"Test time {S['seconds']} s."]
+    with open(os.path.join(round_dir(n), "standoff.md"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(L) + "\n")
+    return rel(os.path.join(round_dir(n), "standoff.md"))
+
+
 def blender_main(argv):
     import bpy
     import numpy as np
@@ -645,6 +820,12 @@ def blender_main(argv):
         with open(os.path.join(out, "clashes.json"), "w", encoding="utf-8") as f:
             json.dump(clashes, f, indent=1)
         T["clashes"] = clashes["seconds"]
+        print("[assemble] stand-off ...", flush=True)
+        so = standoff_report(groups)
+        with open(os.path.join(out, "standoff.json"), "w", encoding="utf-8") as f:
+            json.dump(so, f, indent=1)
+        T["standoff"] = so["seconds"]
+        print(f"[assemble] stand-off: {len(so['standing_off'])} objects over {STANDOFF_MM:g} mm", flush=True)
     info = {"round": a.round, "pose": used, "pose_check": pchk, "carbine": carb_check, "parts_loaded": list(loaded),
             "bound": bound, "inputs_at_load": stamps, "assembled": rel(ASSEMBLED),
             "posed_bbox_mm": {"lo": [round(float(v) * 1000) for v in lo], "hi": [round(float(v) * 1000) for v in hi]},
@@ -940,6 +1121,7 @@ def main(argv):
     t = time.perf_counter()
     made = compose(a.round)
     md = clash_md(a.round)
+    smd = standoff_md(a.round)
     timing["sheets"] = round(time.perf_counter() - t, 1)
     bj = os.path.join(out, "assembly_blender.json")
     info = json.load(open(bj, encoding="utf-8")) if os.path.exists(bj) else {}
@@ -950,7 +1132,7 @@ def main(argv):
         timing["packet"] = round(time.perf_counter() - t, 1)
     timing["total"] = round(time.perf_counter() - t0, 1)
     info.update({"freshness": rows, "rebuilt": [{"item": n, "seconds": s, "ok": ok} for n, s, ok in rebuilt],
-                 "sheets": made, "clashes_md": md, "packet": packet, "driver_seconds": timing,
+                 "sheets": made, "clashes_md": md, "standoff_md": smd, "packet": packet, "driver_seconds": timing,
                  "missing_parts": [p for p in PARTS if not os.path.exists(os.path.join(CACHE, "parts", f"{p}.blend"))]})
     with open(os.path.join(out, "assembly.json"), "w", encoding="utf-8") as f:
         json.dump(info, f, indent=1)

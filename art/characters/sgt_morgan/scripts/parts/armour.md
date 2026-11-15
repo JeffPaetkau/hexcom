@@ -19,6 +19,9 @@ No issued military pauldron exists; the classes follow take 1's spec 12 §3.1.
 | Elbow cap | fin 14 x 40 x 5 on the lateral epicondyle, pad 30 x 28 x 6 just below | drawn (spec 12 D6: no real product this small) |
 | Knee pad | round 2: octagonal cap 160 x 190 in two lames (main v -95..48, upper lame v 36..95 over it), 3.5 wall, 20 mm dome over the patella, a 12 mm frame with a 1.2 rim bead and the centre panel 2 below it, a centre ridge on the main lame; padded base 7 thick, 12 larger all round; 38 mm strap round the back of the knee with a 50 x 32 ladder-lock and a tan tail on the medial side; red tab 30 x 14 x 3 on the lateral edge | Alta AltaFlex / Crye AirFlex class (Alta 229 x 165 x 38) |
 
+Round 6 (section 9) supersedes this table for the forearm guards (two plates), the elbow (a pad, not the fin and
+pad chips), the knee pads (one faceted cap 150 x 164) and the pauldron cap's pad (7 mm over a 6 mm foam liner).
+
 ## 2. What the reference shows (crop_arm_*, zoom_armour_*, crop_legs_knees)
 
 Worn tan-grey moulded shells (the left side reads blue-grey under the cool light: one colour, spec 12 D1). The
@@ -182,3 +185,83 @@ Still wrong (materials):
 3. The emblem's outer triangle paints a light outline inside the plate's rim; on the drawn plate only the X and
    chevron are light. A mask without the outline (a follow-up request) would fix it.
 4. The strobe is a frosted box: no body, no clip.
+
+## 9. Round 6 (2026-11-15): form fixes after the first whole-soldier critic round
+
+Critic items (notes/critic/soldier_r5/tally.md): m7/m10 pauldrons as flat cards standing off over dark gaps;
+m17/m25/m28 forearm guards as telescoping rings crossing the right elbow crease; m22 the left elbow pad missing and
+the left guard short of the wrist; m33/m2/m29 knee pads as tall flat plates, the right one standing off the outer
+knee and gaping at the top; m36/m44 chips and silver clips hovering off the elbows and bands. Evidence: the
+`ref/zoom_armour_*` and `zoom_arm_*` crops and take 1's spec 12 §2-§3 (cap seat on a 6 mm foam pad at shirt + 0.2;
+guard plates over sleeve + foam; knee cap forward bulge 30, frame 12 with slots).
+
+**Causes of the floating bits.**
+- The elbow "chips" (m36) were round 1's lateral elbow fin and pad, rigid boxes seated 3 mm off the sleeve on two
+  different bones: they hovered at every elbow angle. Replaced by a real elbow pad (below).
+- The silver clips (m44) were the bicep bands' cam buckles, 3-4 mm off the band. Now a flat gunmetal ladder-lock
+  (30 x 24 x 2.6) lying on the band's end, the elastic through it.
+- The knee caps were rigid on `lowerleg01`: wherever the knee bent or the shin twisted against the thigh (the hero
+  pose turns the right leg out), the cap swung off the trousers' knee pocket, and the separate upper lame flared off
+  the thigh (the "empty scoop"). Now one cap, **mounted on the skin at the kneecap** (`gear_common.mount_bind` on
+  Body.Mesh), so it seats on the kneecap whatever the leg's turn.
+
+**What changed.**
+- **Pauldrons**: the cap's pad 12 -> 7 mm, filled by a 6 mm foam liner (`Tier1.Foam`); its top flange stops at -40 deg
+  (was -54: it reached over the carrier's strap pad and lifted the whole cap); the field smoothed 4 times (was 10:
+  that flattened the cup into a plank); a 25 mm webbing link from the cap's top edge up over the strap pad
+  (`Tier1.Link`). Tier 2: pad 6 -> 4.5 over a 4 mm foam liner, arc 118 -> 140 mm (wraps the deltoid), and a 20 mm
+  elastic strap round the inner arm (`Tier2.Strap`).
+- **Forearm guards, a gauntlet**: two plates instead of four rings: a long shaped main shell d 96-214 over the outer
+  160 deg of the forearm, its proximal edge receding 30 mm at the sides (a rounded tongue toward the elbow), rib
+  and grooves; a wrist plate d 204-258 (150 deg) under its lip down to the glove cuff; the sleeve 4 mm (was 3),
+  from d 84 (124 on the flexor side), so nothing lies above d 84 and nothing crosses the elbow crease; straps at
+  d 122 and 240. Plates, foam and ladder-locks mounted on the forearm's skin at their centres (they follow its
+  twist).
+- **Elbow pads, both arms** (the reference has one on the left, m22): a domed cap 70 x 80 (3 mm wall, rim bead,
+  recessed centre) on a 4 mm neoprene base, centred on the point of the elbow a little to the outside, with
+  18 mm straps round the upper arm 52 mm above the joint (on the flexed right arm only round the back and sides,
+  its ends in the fold) and round the forearm 74 mm below it. Cap and base are
+  soft-bound (per-vertex weights): mounted as one piece the first try rotated with half the right elbow's 107 deg
+  fold and stood off it at both ends.
+- **Knee pads**: a faceted dome 150 x 164 (was 160 x 190 in two lames): planar facets (sides, top, bottom) rising
+  22 mm to a flat central plate, the 12 mm frame with its rim bead, the centre panel 2 mm down with the ridge, three
+  18 x 5 slots a side in the frame; the padded base follows the dome (the foam a hard cap sits on), so the cap lies
+  on it; the red tab lies on the lateral facet; the ladder-lock lies on the strap and is mounted on it.
+
+Materials: new objects use existing slots (foam liners `Armour.Mat.Foam`, link and straps `Armour.Mat.Black`, the
+ladder-lock `Armour.Mat.Metal`, the elbow cap `Armour.Mat.Shell`); `Armour.Mat.Silver` is now unused. **MATERIALS
+table not edited.**
+
+**Renders opened** (renders/round_06/): `arm_R_compare`, `arm_L_compare`, `arm_R/L_parts`, `legs_knees_compare`,
+`hands_rifle_cycles`, `soldier_full_compare`, `turnaround`. What they show, honestly:
+- The pauldron caps now hug the deltoid as curved cups over their foam (no dark gap), the left with its emblem; the
+  mid plates wrap the arm; the bicep bands carry a dark ladder-lock instead of the silver block.
+- The left forearm guard runs from below the elbow to the glove cuff as a long shell with a rounded tongue toward
+  the elbow and a wrist plate under its lip; the elbow pad shows as a dark oval cap on the outside of the elbow,
+  edge-on, close to the drawn one.
+- The right forearm guard, seen nearly end-on, still reads as a broad cuff in two stacked segments: two plates are
+  better than four rings, but from this camera any shell round the forearm shows its two edges.
+- The knee caps read as faceted domed caps with a central plate, the right one seated on the knee and facing his
+  right with the turned-out leg (m16, the pose's). They still look a little pillow-like (rounded dome, soft facets).
+- The arms carry many bands (tier 2 strap, tier 3 band, the elbow straps): busy in the parts colours, nearly
+  invisible black on black in Cycles.
+
+**Stand-off check** (`renders/round_06/standoff.md`): no armour object flagged (round 5: both pauldron caps and mid
+plates, both knee caps, the left knee lame and both elbow pads).
+
+**Clashes** (`renders/round_06/clashes.md`): `Guard.R.Wrist.Foam` 5 mm into the right glove's cuff shell and 3 mm into
+the shirt (the wrist plate laps over the cuff and its foam lies inside the cuff shell; hidden); the carbine's stock
+0.7 mm into the right guard's sleeve. The first try's full elbow straps went 13-15 mm into the shirt at the flexed
+right elbow; the right upper strap now leaves out the crease (its ends lie in the fold).
+
+## 10. Still wrong, ranked for round 7
+
+1. **The right forearm guard from the hero camera** still reads as a cuff of rings; a more sculpted main shell
+   (a raised spine, a flared lower edge, an asymmetric outline) and a single strap would help more than plate count.
+2. **Knee caps**: facets too soft (the softmin blend, k 0.05) and the dome too round; the drawn cap has crisp
+   bevelled facets, slots and a D-slot, and a darker pitted centre. Size 150 x 164 against take 1's measured
+   160 x 190 (the critics read the old 190 as too tall; revisit once the pose turns the right leg in).
+3. **Bands on the arms**: the tier 2 strap and the elbow straps add rings; consider black elastic hidden under the
+   plates and keep the bicep band as the only visible ring.
+4. The elbow pad is soft-bound: it follows the skin, so the cap bends a little over the flexed right elbow.
+5. Tier 2's vents, the strobe's clip and the emblem's outer outline are as round 5 left them.

@@ -139,3 +139,45 @@ reference's (median ratio 0.91).
 
 Still wrong (materials): no honeycomb emboss, no seams or stitch rows, the palm/back split is by normal, not by
 the real pattern pieces; the guard's ribs (geometry) are missing so its dust has little to settle on.
+
+## 9. Round 6 (2026-11-15): an M-Pact-class form
+
+Critics m20, m31, m51 (notes/critic/soldier_r5/tally.md): glossy mannequin hands with no panels, knuckle guard
+segments, palm reinforcement or cuff closure; blockier and more padded than a bare-hand shell.
+
+**The rule kept: the palm and the finger fronts stay where round 5's shell was** (the hands are solved against the
+carbine with this shell as their surface; scripts/stages/README.md). The bulk goes on the back:
+- **Padded back**: the shell's ease grows 1.6 mm on the back of the hand and 1.0 mm on the backs of the fingers
+  (`BACK_PAD`, ramped by the skin normal against the hand frame's z from 0.15 to 0.55, nothing on the cuff).
+- **Panels as seams**: 0.35 mm grooves along the fingers' sides where the back meets the palm (the fourchettes) and
+  a panel seam across the back 22 mm behind the knuckle guard (`SIDE_SEAM`).
+- **Knuckle guard in segments**: a domed boss over each knuckle (3.2 high, r 11.5), a 1.4 mm groove between bosses,
+  three moulded ribs across each boss at 7 mm pitch (`GUARD_SEG`); 92 x 34 as before.
+- **Finger knuckle pads**: the PIP pads 19 x 18 x 3.0 (were 18 x 16 x 2.5) with ribs at 6 mm.
+- **Palm reinforcement**: `Glove.{L,R}.PalmPatch`, a 60 x 48 synthetic-leather patch on the palm heel, a sheet
+  0.15-0.35 mm over the shell with a 0.6 mm outward Solidify: the palm front moves out by under 1 mm there only.
+- **Cuff closure**: `Glove.{L,R}.CuffTab`, a 30 x 44 x 2.2 hook-and-loop tab on the back of the cuff, its pull end
+  raised 1.75 mm.
+
+Materials: the patch uses `Glove.Mat.Palm`, the tab `Glove.Mat.Cuff` (existing slots; **MATERIALS table not
+edited**).
+
+**The pose is not re-solved.** gloves.md §6 item 6 still applies: the pose agent should re-export the contact
+surface and re-solve when convenient; the fronts moved under 1 mm, so the grip holds as it is (clashes below).
+
+**Renders opened** (renders/round_06/): `hands_rifle_cycles`, `hands_rifle_clay`, `arm_R_compare`, `arm_L_compare`.
+At hero distance the right glove now shows a segmented knuckle guard with distinct bosses and the PIP pads; the left
+glove, overhand on the handguard, shows its knuckle plate and finger pads. They read as padded tactical gloves rather
+than bare-hand casts, but still smooth: no visible honeycomb, stitching or fourchette seams at this scale.
+
+**Clashes** (`renders/round_06/clashes.md`): gloves-carbine 37 vertices, 1.4 mm (the handguard in the left glove, as
+round 4/5: 1.0-1.4); body-gloves 28 vertices, 1.6 mm (flexed finger joints); the right forearm guard's wrist foam 5 mm
+inside the right cuff shell (the guard laps over the cuff). Pose clearances (gloves.json): the shells 14 / 18 vertices
+inside the skin, at most 1.25 mm (round 4: 9 / 18, 1.48).
+
+## 10. Still wrong, ranked for round 7
+
+1. Seams and stitching as geometry or normal detail (the grooves are 0.35 mm, invisible at hero distance); the
+   knit back's honeycomb; the guard's edges could stand prouder.
+2. The thumb-web fold (section 6 item 1) and fingertip ease are unchanged.
+3. Re-export the contact surface and re-solve the pose with the new shell when the pose agent next solves.

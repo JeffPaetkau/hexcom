@@ -589,6 +589,51 @@ def rigid_bind(ob, rig, bone):
     return ob
 
 
+def mount_bind(ob, rig, carrier, point, k=6):
+    """Round 6: attach a rigid item to the soft-bound thing it is mounted on (a holster on the belt, a ladder-lock
+    on its strap). Every vertex of ob gets the same weights: those of `carrier` (already bound, with vertex groups)
+    averaged over its k vertices nearest `point` (mm, rest). Linear skinning with one weight set moves ob as one
+    blended transform, so it stays on its carrier's surface wherever the pose takes it; rigid_bind to one bone
+    (round 1-5) left the round-5 holster on the pelvis while the belt under it followed the turned-out thigh, and
+    the ladder-locks on the thigh bone while their straps followed the skin's weights."""
+    import bpy
+    from mathutils import kdtree
+    me = carrier.data
+    mw = np.array(carrier.matrix_world)
+    V = np.array([tuple(v.co) for v in me.vertices]) @ mw[:3, :3].T + mw[:3, 3]
+    kd = kdtree.KDTree(len(V))
+    for i, p in enumerate(V):
+        kd.insert(tuple(p), i)
+    kd.balance()
+    near = kd.find_n(tuple(np.asarray(point, float) * C.MM), k)
+    deform = {b.name for b in rig.data.bones if b.use_deform}
+    gname = {g.index: g.name for g in carrier.vertex_groups if g.name in deform}
+    acc = {}
+    for _co, i, _d in near:
+        for e in me.vertices[i].groups:
+            if e.group in gname:
+                acc[gname[e.group]] = acc.get(gname[e.group], 0.0) + e.weight
+    tot = sum(acc.values())
+    if tot <= 1e-6:
+        raise ValueError(f"mount_bind: {carrier.name} has no weights near {point}")
+    for g in list(ob.vertex_groups):
+        ob.vertex_groups.remove(g)
+    allv = list(range(len(ob.data.vertices)))
+    for nm, w in sorted(acc.items(), key=lambda kv: -kv[1]):
+        if w / tot > 1e-3:
+            ob.vertex_groups.new(name=nm).add(allv, float(w / tot), "REPLACE")
+    arm = ob.modifiers.new("Armature", "ARMATURE")
+    arm.object = rig
+    arm.use_vertex_groups = True
+    arm.use_bone_envelopes = False
+    with bpy.context.temp_override(object=ob, active_object=ob, selected_objects=[ob], selected_editable_objects=[ob]):
+        bpy.ops.object.modifier_move_to_index(modifier=arm.name, index=0)
+    ob.parent = rig
+    ob.matrix_parent_inverse = rig.matrix_world.inverted()
+    ob["sgt_bind"] = f"mount:{carrier.name}"
+    return {k_: round(w / tot, 3) for k_, w in acc.items() if w / tot > 1e-3}
+
+
 def dominant_bone(bd, point, allowed=None, k=24):
     """The deform bone with the largest summed weight over the k skin vertices nearest `point` (mm),
     among `allowed` names if given."""

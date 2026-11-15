@@ -1,16 +1,21 @@
-"""Gloves, round 1 blockout: a pair of hard-knuckle tactical gloves (Mechanix M-Pact class: stretch knit back,
-synthetic leather palm, one-piece moulded TPR knuckle guard, TPR PIP pads, a neoprene cuff closing with a
-hook-and-loop tab), fitted to the MPFB hands. Notes: scripts/parts/gloves.md.
+"""Gloves, round 6: a pair of hard-knuckle tactical gloves (Mechanix M-Pact class: stretch knit back,
+synthetic leather palm with a palm-heel reinforcement, a one-piece moulded TPR knuckle guard in segments with
+ribbed bosses, ribbed TPR PIP pads, a neoprene cuff closing with a hook-and-loop tab), fitted to the MPFB hands.
+Round 6 put the bulk on the back (padded knit, BACK_PAD) and kept the palm and finger fronts where round 5's shell
+was: the hands are solved against the carbine with this shell as their surface. Notes: scripts/parts/gloves.md.
 
   "$SGT_BLENDER" -b --python scripts/parts/gloves.py [-- --no-render]
-  -> cache/parts/gloves.blend (Part.Gloves: Glove.{L,R}.Shell, .Knuckle, .Pad.{2..5}), cache/parts/gloves.json,
+  -> cache/parts/gloves.blend (Part.Gloves: Glove.{L,R}.Shell, .Knuckle, .Pad.{2..5}, .PalmPatch, .CuffTab),
+     cache/parts/gloves.json,
      renders/gloves/*.png
 
 Shell: the hand skin and the forearm up to 50 mm proximal of the wrist joint, refined, pushed out 1.8 mm
 (knit 1.2 + air; capped between the fingers by the gap test) and 11 mm over the cuff (3.5 air over the
-shirt cuff + 3 neoprene + the sleeve itself), smoothed lightly, cut at the cuff edge. Knuckle guard and PIP
-pads: sheets laid on the glove shell from above the back of the hand (rays down onto it), with a flat top
-and four bosses over the knuckles. All take weights from the body.
+shirt cuff + 3 neoprene + the sleeve itself), smoothed lightly, cut at the cuff edge; round 6: 1.6 mm more on
+the back of the hand and 1.0 on the backs of the fingers, 0.35 mm grooves for the fourchette seams and a panel
+seam behind the guard. Knuckle guard, PIP pads, palm patch and cuff tab: sheets laid on the glove shell by rays
+(down the back of the hand, up from the palm, onto the cuff), with relief (bosses, grooves, ribs). All take
+weights from the body.
 """
 import json
 import math
@@ -26,7 +31,15 @@ PART, TAG = "Glove", "gloves"
 HAND_EASE, CUFF_EASE = 1.8, 11.0
 CUFF_LEN = 50.0                         # cuff edge, mm proximal of the wrist joint (M-Pact ~ 50)
 GUARD = {"half_w": 46.0, "half_h": 17.0, "thick": 4.5, "boss": 2.0, "back": 16.0}   # 92 x 34 x 6.5 (M-Pact 3 class: ~95 x 35 x 6)
-PAD = {"half_w": 9.0, "half_h": 8.0, "thick": 2.5}
+# round 6 (critics m20, m31, m51: "smooth rubber mannequin hands"): an M-Pact-class build. The palm and the finger
+# fronts stay where round 5's shell was (the hands are solved against the carbine with this shell as their surface);
+# the bulk goes on the back.
+BACK_PAD = (1.6, 1.0)        # extra ease on the back of the hand and on the backs of the fingers (padded knit)
+SIDE_SEAM = 0.35             # the fourchette seams along the fingers' sides and the panel seam behind the guard: grooves
+GUARD_SEG = {"boss": 3.2, "boss_r": 11.5, "groove": 1.4, "rib": 0.55, "rib_pitch": 7.0}   # segmented knuckle bosses
+PAD = {"half_w": 9.5, "half_h": 9.0, "thick": 3.0, "rib": 0.5}
+PALM_PATCH = {"half_w": 30.0, "half_h": 24.0, "thick": 0.8, "back": 52.0}   # the palm-heel reinforcement (on the palm side)
+CUFF_TAB = {"half_w": 15.0, "half_h": 22.0, "thick": 2.2, "pull": 7.0}       # the cuff's hook-and-loop closure tab
 COLOURS = {"knit": "#1e1c1b", "cuff": "#1b1c1e", "guard": "#2f2c2a", "pad": "#2a2826", "palm": "#232120"}
 # Materials round (round 5, 2026-11-15; the solid-view colours above stay): an M-Pact-class glove is a black
 # stretch-knit back, a synthetic-leather palm (the shell's faces that look out of the palm side, palm_faces()),
@@ -96,6 +109,18 @@ def build_shell(bd, side, bvh0):
     V, F, N = C.refine_on_skin(V, F, bvh0, cuts=1)
     s = (V - wr) @ d
     off = HAND_EASE + (CUFF_EASE - HAND_EASE) * (1 - smoothstep(4.0, 26.0, s))
+    # round 6: padding on the back only (the palm and the finger fronts keep round 5's ease, so the grip holds)
+    O, hx, hy, hz, _heads = hand_frame(side)
+    dz = N @ hz
+    fingers = C.weight_sum(bd, lambda n: n.startswith("finger") and not n.startswith("finger1"))
+    fv = _nearest_skin_weight(V, bd, fingers)
+    back = smoothstep(0.15, 0.55, dz) * smoothstep(4.0, 26.0, s)
+    off = off + back * (BACK_PAD[0] * (1.0 - fv) + BACK_PAD[1] * fv)
+    # the fourchette seams along the fingers' sides (where the back meets the palm) as shallow grooves
+    off = off - SIDE_SEAM * fv * (1.0 - smoothstep(0.06, 0.16, np.abs(dz)))
+    # the panel seam across the back of the hand, 22 mm behind the knuckle guard's proximal edge
+    yb = (V - O) @ hy + GUARD["back"] + GUARD["half_h"] + 22.0
+    off = off - SIDE_SEAM * (1.0 - fv) * smoothstep(0.2, 0.5, dz) * (1.0 - smoothstep(0.6, 1.6, np.abs(yb)))
     off = C.limit_by_gap(V, N, off, bvh0, share=0.5, floor=0.6)
     E = C.edges_of(F)
     off = C.smooth_field(off, E, iters=3)
@@ -110,7 +135,18 @@ def build_shell(bd, side, bvh0):
     return V1, F, face_cuff
 
 
-def plate_on(bvh, O, x, y, z, half_w, half_h, thick, bumps=(), nu=28, nv=12, edge=5.0):
+def _nearest_skin_weight(V, bd, w):
+    """The skin weight field w (per body vertex) at points V: the value of the nearest real body vertex."""
+    from mathutils import kdtree
+    ib = np.nonzero(bd["in_body"])[0]
+    kd = kdtree.KDTree(len(ib))
+    for i in ib:
+        kd.insert(tuple(bd["V"][i]), int(i))
+    kd.balance()
+    return np.array([w[kd.find(tuple(p))[1]] for p in V])
+
+
+def plate_on(bvh, O, x, y, z, half_w, half_h, thick, bumps=(), nu=28, nv=12, edge=5.0, relief=None):
     """A sheet over the glove: a grid in the (x, y) plane of the hand frame, rays down -z onto the shell,
     raised by 0.6 + thick x a flat-topped profile (+ bosses: (u, v, radius, height))."""
     from mathutils import Vector
@@ -129,6 +165,8 @@ def plate_on(bvh, O, x, y, z, half_w, half_h, thick, bumps=(), nu=28, nv=12, edg
                 rr = math.hypot(u - bu, v - bv) / br
                 if rr < 1:
                     h += bh * math.cos(rr * math.pi / 2) ** 2 * (1 - q)
+            if relief is not None:
+                h += relief(u, v) * (1 - q)
             V.append(p + z * (0.6 + h))
     V = np.array(V)
     F = []
@@ -161,8 +199,25 @@ def main():
         O, x, y, z, heads = hand_frame(side)
         # knuckle guard: centred GUARD["back"] mm proximal of the joint centres (the dorsal knuckle apex sits
         # behind the joint axis), bosses over the four knuckles
-        bumps = [(float((h - O) @ x), GUARD["back"] - 8.0, 10.0, GUARD["boss"]) for h in heads]
-        Vg, Fg = plate_on(shell_bvh, O - y * GUARD["back"], x, y, z, GUARD["half_w"], GUARD["half_h"], GUARD["thick"], bumps)
+        # round 6: a moulded guard in segments: a domed boss over each knuckle, a groove between bosses, three
+        # moulded ribs across each boss at 7 mm pitch (M-Pact class), the plate thinner between them
+        hu = [float((h - O) @ x) for h in heads]
+        bv = GUARD["back"] - 8.0
+        bumps = [(u_, bv, GUARD_SEG["boss_r"], GUARD_SEG["boss"]) for u_ in hu]
+        mids = [0.5 * (hu[i] + hu[i + 1]) for i in range(3)]
+
+        def g_relief(u, v, hu=hu, mids=mids, bv=bv):
+            r = 0.0
+            for m_ in mids:
+                r -= GUARD_SEG["groove"] * (1.0 - smoothstep(0.8, 2.4, abs(u - m_)))
+            for u_ in hu:
+                rr = math.hypot(u - u_, v - bv) / (GUARD_SEG["boss_r"] - 1.5)
+                if rr < 1.0:
+                    r += GUARD_SEG["rib"] * max(0.0, math.cos(2 * math.pi * (v - bv) / GUARD_SEG["rib_pitch"])) ** 3 * \
+                        (1.0 - rr ** 2)
+            return float(r)
+        Vg, Fg = plate_on(shell_bvh, O - y * GUARD["back"], x, y, z, GUARD["half_w"], GUARD["half_h"], GUARD["thick"],
+                          bumps, nu=46, nv=20, edge=2.2, relief=g_relief)     # round 6: a crisp moulded edge (5 mm blended)
         gd = C.mesh_object(f"Glove.{side}.Knuckle", Vg, Fg, coll, mat=mats["guard"])
         gd["sgt_clay"] = (0.30, 0.30, 0.32)
         parts = [sh, gd]
@@ -175,14 +230,37 @@ def main():
             fz = np.cross(fx, fy)
             if fz @ z < 0:
                 fz = -fz
-            Vp, Fp = plate_on(shell_bvh, pip, fx, fy, fz, PAD["half_w"], PAD["half_h"], PAD["thick"], nu=10, nv=8, edge=4.0)
+            Vp, Fp = plate_on(shell_bvh, pip, fx, fy, fz, PAD["half_w"], PAD["half_h"], PAD["thick"], nu=14, nv=12, edge=2.0,
+                              relief=lambda u, v: PAD["rib"] * max(0.0, math.cos(2 * math.pi * v / 6.0)) ** 3)
             pd = C.mesh_object(f"Glove.{side}.Pad.{k}", Vp, Fp, coll, mat=mats["pad"])
             pd["sgt_clay"] = (0.30, 0.30, 0.32)
             parts.append(pd)
+        # round 6: the palm-heel reinforcement: a 0.8 mm synthetic-leather patch laid on the palm side (rays from the
+        # palm onto the shell), so the palm front moves out under 1 mm
+        Vq, Fq = plate_on(shell_bvh, O - y * PALM_PATCH["back"], x, y, -z, PALM_PATCH["half_w"], PALM_PATCH["half_h"],
+                          PALM_PATCH["thick"] - 0.6, nu=24, nv=18, edge=4.0)
+        Vq = Vq - (-z) * 0.45                       # plate_on lifts 0.6 + thick: the sheet 0.15-0.35 over the shell
+        pp = C.mesh_object(f"Glove.{side}.PalmPatch", Vq, Fq, coll, mat=mats["palm"])
+        pp["sgt_clay"] = (0.36, 0.36, 0.38)
+        parts.append(pp)
+        # round 6: the cuff's closure: a hook-and-loop tab lying on the cuff's back (dorsal) side, its pull end raised
+        el_, wr_ = C.bone_mm(f"lowerarm01.{side}"), C.bone_mm(f"wrist.{side}")
+        da = (wr_ - el_) / np.linalg.norm(wr_ - el_)
+        zc = z - da * (z @ da)
+        zc /= np.linalg.norm(zc)
+        xc = np.cross(da, zc)
+        Vt, Ft = plate_on(shell_bvh, wr_ - da * (CUFF_LEN * 0.5 - 2.0), xc, da, zc, CUFF_TAB["half_w"], CUFF_TAB["half_h"],
+                          CUFF_TAB["thick"], nu=12, nv=16, edge=3.0,
+                          relief=lambda u, v: CUFF_TAB["pull"] * 0.25 * smoothstep(CUFF_TAB["half_h"] - 9.0, CUFF_TAB["half_h"], v))
+        tb = C.mesh_object(f"Glove.{side}.CuffTab", Vt, Ft, coll, mat=mats["cuff"])
+        tb["sgt_clay"] = (0.32, 0.32, 0.34)
+        parts.append(tb)
         for o in parts:
             C.bind(o, body, rig)
             if o is sh:
                 C.solidify(o, 1.0, inward=True)
+            elif o.name.endswith('PalmPatch'):
+                C.solidify(o, 0.6, inward=False)        # round 6: the patch's top under 1 mm over the shell
             C.subsurf(o, 1)
         objs += parts
         Vw, _ = C.evaluated_world_mm(sh)

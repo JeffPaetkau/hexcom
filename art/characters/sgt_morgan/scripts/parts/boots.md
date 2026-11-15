@@ -308,3 +308,41 @@ Still wrong (materials): the drawn boots are scuffed and creased all over, grey 
 toe caps and dull; ours read as a smooth, even satin with dust on the toe only. The crease field and polish zones
 the leather recipe reads (`crease`, `polish`) are missing on this build (spec 02 §5), so the scuff, crease and
 polish layers are off; the specular highlight stays brighter than the drawing's.
+
+## 10. Round 6 (2026-11-15): the "galosh" (critic m3)
+
+All three critics: the right boot is a seamless galosh with a hard collar seam and no laces down the vamp, next
+to a properly laced left boot.
+
+**Not a bug of mirroring, cache, binding or material.** Both boots come from the same code with their own seeds;
+the left boot seen from the lateral side (`renders/boots/boots_closeup_L_lateral.png`, round 3, and the round-5
+turnaround's threeq_L) is the same galosh. The right boot is simply the one the hero camera sees in profile, the left
+one from the front, where the lacing dominates. In profile three things read as an overshoe:
+1. **The lacing stopped 150 mm behind the toe.** E1 was meant to sit at h 86, but the throat's centre line ended
+   at h ~93 (its casts from the ankle point toward targets on the forefoot dipped out of the vamp short of them),
+   so `Throat` capped E1 at the line's end minus 20 mm: h 93, about 90 mm of bare vamp ahead of it.
+2. **The leather/Cordura edge was a level line at h 98** all round: the critics' "hard collar seam".
+3. **The toe cap stood 0.8 mm proud**, invisible in profile, and there was no panel line between it and the counter.
+
+**Changed** (geometry only; the leather/Cordura face split follows the new quarter edge, the recipes are untouched):
+- The throat line runs on to the ball + 45 mm, cast also straight up from inside the last's bottom under each
+  target (the nearer hit wins), and E1_H is 79: E1 now at h 79, s 202 (about 125 mm behind the toe tip; drawn
+  ~137), seven rows at h 199, 172, 146, 121, 104, 92, 79 (pitch 26.7 mm, was 22).
+- `quarter_h()`: the quarter's top edge h 98 behind, rising 14 mm over 60 mm toward the throat.
+- `mud_h()`: a leather mudguard 1.0 mm proud, its top edge h 92 at the heel falling to h 45 at the ball, with a
+  double stitch row along it (`mudguard_lat/med_mm` about 95 / 120 mm a side).
+- The toe cap 1.6 mm proud (TOECAP_LIFT).
+
+**Renders opened** (renders/round_06/): `boots_feet_compare` (three builds), `soldier_full_compare`, `turnaround`.
+The right boot in profile now shows lacing down the vamp to about mid-foot, the diagonal mudguard seam from the heel
+toward the ball and a visible toe-cap step; the left boot from the front laces lower on the vamp. **It still reads
+more like a sneaker than the drawn boot**: the toe box is long, low and smooth behind a thick slab rand, where the
+drawing has a high, rounded, scuffed toe cap with a wrapped bumper and a chunky stepped sole. That is section 8 item 1
+(the last's toe box), not touched this round.
+
+Stand-off check: the boots' tongues and lugs are listed as designed gaps; nothing flagged. Clashes: body in the boot
+soles 148 vertices, 10.4 mm (the designed footbed and sock, as rounds 3-5).
+
+**Still wrong, for round 7**: section 8 items 1-8 stand, with item 5 (E1) done. First the toe box (a real toe-box
+section on the last, the bumper on the toe's curve), then the outsole's slab rand (a stepped, chunkier midsole and lug
+wall).

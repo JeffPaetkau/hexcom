@@ -15,9 +15,9 @@ Build: `"$SGT_BLENDER" -b --python scripts/parts/belt.py [-- --no-render]` (abou
 | Right thigh straps | 38 x 2 at z 792 and 716 (round 2), 2.2 over the trousers; 50 x 32 x 3.5 ladder-locks on the running ends just inboard of the platform | spec 14 D10, §3.2 |
 | Twin rifle-mag carriers | 76 x 42 x 140 black, body top 15 below the platform top; tan plates 47 x 128 x 3 with three 25 x 6 slots (45, 73, 101 below the top) on a 1.6 spacer; 8 mm dome tension screw; PMAG tops 66 x 25 standing 53 proud with a 70 x 29 floor plate; 4 mm shock-cord loop over each magazine; two cord tails 52 long with 8 x 16 tan cord ends under the outer carrier; both turned 65 % toward the platform's centre normal so they face one way | HSGI polymer TACO class (spec 14 §3.4, D4, D5) |
 | Left platform | round 2: 132 x 200 x 8, top z 878, at 30 deg (round 1: 176 wide at 58 deg); strap at z 702 with its ladder-lock at the medial front (-30 deg) | spec 14 §3.5 |
-| Frag pouch | 70 x 66 x 182, bevel 9, slightly tapered; an L flap (top 73 x 70 x 7, drop 48 down the face) with a 15.5 mm snap; two 25 mm webbing rows at 95 and 133 below the top; olive | vertical double M67 footprint (spec 14 §3.6) |
-| Hard case | round 2: 52 x 46 x 178 (across, out, tall), a parting-line lip 4 mm round it 16 below its outer face, a 30 mm latch on its inboard side, two 25 mm black elastic cradle bands at 60 and 140 below its top | slim polymer utility case, sized to the drawn 51 mm cell (spec 14's Pelican 1030 at 98 x 62 made the block twice the drawn width) |
-| Holster | 60 x 50 x 190, open mouth, 2.5 walls, at 122 deg round the belt toward his right rear | Safariland 6378 ALS class for a P226 |
+| Left double mag pouch (round 6) | two flapped cells 64 x 38 x 172 side by side at u -34 / +34 on a 148 wide platform; each an L flap (lid + 48 mm drop) with a 13 mm snap and two 25 mm webbing rows; olive | drawn tall double mag pouch (replaced round 2-5's frag pouch and hard case) |
+| Right front hip pouch (round 6) | 70 x 36 x 118 flapped pouch on the belt at theta -62, hung tilted to the hip | drawn above the right thigh rig |
+| Holster | 60 x 50 x 190, open mouth, 2.5 walls, at 122 deg round the belt toward his right rear, hung tilted to the hip and mounted on the belt (round 6) | Safariland 6378 ALS class for a P226 |
 | P9 | slide 196 x 34 x 30 muzzle down in the holster, grip 105 x 48 x 32 raked 14 deg rearward above the mouth | SIG P226 class (consolidated analysis: 196 x 140 x 38) |
 
 ## 2. What the reference shows (crop_belt_hips, zoom_belt*_*)
@@ -144,3 +144,68 @@ Still wrong: the median over the belt's mask reads brighter than the reference (
 the tan plates and the dust; most of that mask lies where the drawn rigs are not (the rigs' placement differs,
 §5), so it is not a material number to chase. The drawn carriers' tan accents are small edges and flaps, ours
 whole plates.
+
+## 9. Round 6 (2026-11-15): form fixes after the first whole-soldier critic round
+
+Critic items (notes/critic/soldier_r5/tally.md): m1/m30 the rear pouch hinged into the air, m35 the stiff rods,
+m37 the empty sliders, m27 the right rig's identity, m32 the missing right-front hip pouch, m41 the left hip block.
+
+**The bugs and their causes.**
+- **The rear hip pouch was the holster with the P9** (m1, m30). It was seated 2.5 mm off a flat plane through the
+  belt AND the cargo pocket below it, standing straight down: on the curved hip it touched one point (the pocket's
+  edge) and stood 6-10 mm off the belt at rest; posed, the pocket follows the turned-out thigh and the holster,
+  rigid on `pelvis.R`, was left in the air. Now `hang_frame()` tilts it so its back lies on the belt at the top AND
+  on the hip 150 mm lower, seated 1 mm off (HOLSTER_GAP), and it and the P9 are **mounted on the belt**
+  (`gear_common.mount_bind`: every vertex takes the belt's weights averaged at the mount point, so the rigid item
+  moves as one blended transform with the belt under it).
+- **The rods** (m35) were the outer carrier's two shock-cord tails, 52 mm tubes hanging straight. Now 19 mm soft
+  tails that droop back onto the platform's face, with 12 mm cord ends.
+- **The sliders** (m37) were the thigh straps' ladder-locks, their centre 5 mm out (3-4 mm off the strap) with no
+  strap through them, rigid on the thigh bone while the straps followed the skin. Now they lie on the strap
+  (centre LOCK_T / 2 out), are mounted on their strap, and the strap's running end climbs over the centre bar and
+  runs on 70 mm as a doubled tail (`Belt.Rig.{R,L}.Strap.N.Tail`).
+- The buckle (soft-bound, sheared 4 mm off the belt by per-vertex weights) is mounted on the belt.
+
+**Identity of the right thigh rig (m27): it stays two rifle-magazine carriers.** C1 read a drop-leg holster
+platform. Looked again at `ref/zoom_belt_rcarriers_x8`, `zoom_belt_right_x6`, `zoom_belt14_rrig_grid_x6` and the
+full crop: two separate narrow units side by side, each with its own tan face plate (slot and keyhole) and its own
+magazine-shaped top, one strap set across both, a cord tail below the outer one; no trigger-guard bulge, no single
+wide shell, no pistol grip or hood. Take 1's analysis (two carriers) holds; the critic's reading is not supported.
+
+**Added and changed.**
+- m32: `Belt.Pouch.RF`, a flapped Cordura pouch 70 x 36 x 118 hanging from the belt at theta -62 (right front hip,
+  above the thigh rig), hung by `hang_frame()`, mounted on the belt (`flapped_pouch()`: body, L flap, snap, a
+  webbing row).
+- m41: the left platform's frag pouch and hard case are replaced by the drawn **double rifle-mag pouch**: two
+  flapped olive cells 64 x 38 x 172 side by side (`Belt.Rig.L.MagPouch.{1,2}`, platform 148 wide). The cells use
+  the existing `Belt.Mat.Frag` slot (olive Cordura); the Case slots are now unused. **MATERIALS table not edited.**
+  The drawn second cell reads darker grey-olive (a look item).
+
+**Renders opened** (renders/round_06/): `belt_hips_compare`, `soldier_full_compare`, `hands_rifle_cycles`,
+`turnaround` (the side and back views), `legs_knees_compare`. What they show:
+- The left hip now reads as the drawn double pouch: two tall flapped cells with snaps and webbing rows.
+- The cord tails are short soft cords curling under the outer carrier back onto the platform, with their tan ends.
+- The ladder-locks lie on the thigh straps; the running ends over them are faint at hero distance (same colour).
+- The right front hip pouch shows on the belt above the right rig, at the drawn place.
+- **The holster at the right rear hip still reads as standing off in the side views** (turnaround side_R and side_L):
+  its top leans out with the P9's raked grip above it. Better than round 5 (it no longer floats free: its nearest
+  distance to anything went from over 5 mm to touching), not solved.
+
+**Stand-off check** (`renders/round_06/standoff.md`, flagged belt objects): `Belt.Holster` (median gap 6.8 mm over its
+back), `Belt.P9` (5.1), `Belt.Pouch.RF` (6.8) and its webbing row, the two cord tails and cord ends (their droop under
+the carrier is in the air). The platforms (6 mm lift by design), hangers, shock cords and spare PMAGs are listed as
+designed gaps with their reasons. On round 5 it flags the holster and P9 (floating, over 5 mm from anything), the
+tails, the three ladder-locks (3-4 mm off their straps), the frag pouch's flap and the hard case's lip and latch.
+
+**Clashes** (`renders/round_06/clashes.md`): trousers-belt 1.8 mm (the left cargo flap at the platform's inner edge, as
+round 2). The first try of the right front pouch (mounted on the belt) went 15 mm into the trousers where the posed hip
+swells; bound by weights it no longer clashes.
+
+## 10. Still wrong, ranked for round 7
+
+1. **The holster** leans off the hip in the side views: a real paddle or belt-loop holster is drawn into the hip by the
+   belt; give it a contoured back (cast onto the hip) instead of a flat box, and a belt loop over the belt.
+2. **The right rig's place** still follows the pose's turned-out right thigh (theta -12); when the pose agent turns
+   the leg in (m16), theta must move back toward the outside (`PLATFORM['R']['theta']`).
+3. The right front pouch is a plain flapped box; the drawn one has a tan face and a dark side (a look item too).
+4. Forms are still boxes underneath (carriers solid, no PALS on the platforms, hangers straight strips).
