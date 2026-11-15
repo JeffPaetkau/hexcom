@@ -400,3 +400,132 @@ re-solved on it (scripts/stages/README.md, "Round 4").
 
 The hair cap (`Head.Hair`) has one vertex 1.97 mm inside the skin at rest on the new head (posed numbers in
 head.json); round 1's cap rules still hold elsewhere.
+
+## 10. Head shape round 3 (2026-11-15): Hunyuan3D 2 as a form prior (not wired)
+
+Developed beside round 4's wiring, on copies: `scripts/parts/head_shape_r3.py` writes `scripts/parts/head-shape-r3.target`
+(+ `head_shape_r3.json`); `head-shape.target` (round 2, loaded by base.py) is untouched. The probe is `head_hy3d.md`;
+its §8 has the FlashVDM result and what setup must download.
+
+```
+"$SGT_PYIMG" -I scripts/parts/head_shape_r3.py --prior            # ~3 min: align the seeds, the mask (cache/head_r3/prior.npz)
+"$SGT_PYIMG" -I scripts/parts/head_shape_r3.py --fit --rounds 3   # ~160 s: head-shape-r3.target, head_shape_r3.json
+"$SGT_PYIMG" -I scripts/parts/head_shape_r3.py --check r3 --check-fixed r3   # the numbers (cache/head_r3/)
+"$SGT_PYIMG" -I scripts/parts/head_shape_r3.py --render r3 --sheets          # ~60 s: renders/head/r3/
+```
+
+### 10.1 Method
+
+Round 2's transfer (§6) continued for three more rounds from round 2's target, every round-2 term unchanged (hero
+landmarks with the nuisance, the hand points, the hero and three-quarter far-cheek silhouettes, the R001 landmarks,
+the profile outline and features, the relief, bending, the held cranium, skull top and neck ring), plus a prior:
+
+1. **Six seeds** of the 50-step multi-view model on R001's front + left profile: the probe's seeds 12345 and 7 (plain
+   decoder) and seeds 1-4 with the FlashVDM decoder (`cache/hy3d/r3/`, 165 s each; same-latent difference 0.16 mm).
+2. **Alignment, each seed on its own**, to round 2's MPFB head. MediaPipe on an orthographic front clay render of each
+   (`cache/head_r3/prior/*_front.png`), 3D points by casting back onto each mesh. The brief's eye-to-chin scale did not
+   hold: on the blank-eyed Hunyuan clay MediaPipe reads eye width / (168-152) as 0.86 and mouth / (168-152) as 0.53,
+   against 0.73 / 0.43 on R001, on its Hunyuan input and on MPFB, so one distance gave 168-177 mm/unit and a face 6-8
+   mm too wide at the eyes. Used instead: a frontal-plane (x, z) similarity of 26 inner landmarks to start (the face
+   oval left out: its depth is a grazing ray), then a **scaled point-to-plane ICP** over the masked face (trimmed 12 ->
+   4 mm). Final scales 172.5-175.1 mm/unit, rotations 0.9-5.7°. On the midline the aligned prior's pronasale,
+   subnasale, labiomental fold, pogonion and menton sit within 0-4 mm of MPFB's heights.
+3. **Mask** (`renders/head/r3/prior_mask.png`, 1050 of 4361 vertices over 0.5): the face from 24-36 mm below the menton
+   (just above the prior's neck cut) to 30-40 mm above the eyes, forward of the ears. Zero on ellipsoids round each eye
+   (26 x 17 mm, ramp to 1.6x: the lids and the sides of the bridge; Hunyuan's eyes sit wider apart, and a first,
+   smaller exclusion opened the inner canthus and widened the bridge), on the lips and moustache (subnasale to below
+   the lower lip, the mouth's width + 5 mm), the ears and the neck ring.
+4. **Per round**: each masked vertex's signed distance along its normal to each seed (nearest of 2.5 M surface
+   samples; rejected beyond 10 mm, 4 mm sideways or a normal mismatch), averaged over the seeds (their spread after
+   alignment: 1.0 mm rms), lightly low-passed, then **band-passed** (less its own diffusion over ~20 mm), so the prior
+   asks for local forms and never for a broad change of the cheek's width.
+5. **Two terms**: inside the mask round 2's bending |L U|² becomes |L U − L D|² (D = mask × d × normal, sigma 0.2 mm),
+   so the field takes the prior's local curvature; and n·U = d (sigma 2.5 mm plus the seed spread, clipped 5 mm).
+6. **The R001 cameras are held after round 0.** Re-solved each round, MediaPipe's reading of the views moved with the
+   new shading, the cameras turned, and the three-quarter far cheek drifted 1.0 -> 2.6 mm over three rounds while the
+   same mesh through the previous round's cameras measured 1.25. Holding them stops the drift.
+
+Variants (three rounds each): **A** curvature at ~12 mm detail, offset term σ 3 mm not band-passed, cameras re-solved:
+3q silhouette 2.6 mm. **B** σ 2, four rounds: the most change (prior residual 1.85 -> 0.99 mm) but the inner lower lid
+opened, the bridge between the eyes widened and a notch formed at the glabella. **C** B's settings with the larger
+eye exclusion, three rounds: clean, but the hero far cheek moved about 1 mm inside the drawn line (silhouette 0.80 ->
+1.31 px) and the three-quarter's 1.03 -> 1.73 mm (kept in `cache/head_r3/variantC/`, renders in
+`renders/head/r3/variantC/`). **D (delivered)**: C plus the band-pass on the offset term; the script's defaults.
+
+### 10.2 Numbers (round 2 against round 3, D)
+
+Both dev bases built by base.py as of dca7a15 (stature 1835, `cache/stages/head_dev_r{2,3}.blend`) through round 1's
+pose snapshot, as round 2's own check; this harness reproduces §6.3's round-2 numbers. "Check" re-solves every view's
+camera on MediaPipe for each mesh alone (round 2's measure); "fixed" holds round 2's cameras (only the hero nuisance
+re-solved), which separates the shape change from MediaPipe's camera drift.
+
+| | R2 check | **R3 check** | R2 fixed | **R3 fixed** |
+|---|---|---|---|---|
+| Hero MediaPipe RMS, no nuisance, px | 1.64 | 1.68 | 1.64 | 1.68 |
+| Hero jaw oval, px | 4.67 | 4.51 | 4.18 | 3.39 |
+| Hero with nuisance, px | 0.60 | 0.66 | 0.60 | 0.66 |
+| **Hero far-cheek silhouette**, px (mean) | 0.80 (−0.13) | **1.21 (−0.30)** | 0.80 | 1.21 |
+| Front landmarks (R001), mm | 1.04 | 1.37 | 1.12 | 1.55 |
+| Three-quarter landmarks, mm | 1.18 | 1.53 | 1.18 | 1.57 |
+| **Three-quarter far-cheek silhouette**, mm (mean) | 1.04 (0.69) | 2.07 (1.56) | 1.03 (0.68) | **1.30 (0.20)** |
+| **Profile outline**, mm | 1.90 | 1.65 | 1.96 | 1.76 |
+| Profile glabella / nasion / pronasale / pogonion, mm | 0.9 / 5.3 / 3.8 / 2.5 | 4.1 / 3.1 / 1.6 / 2.1 | 0.3 / 4.7 / 3.5 / 2.5 | 4.4 / 3.3 / 1.4 / 2.2 |
+| Prior residual over the mask (band-passed), mm | 0.98 | 0.59 | | |
+
+- Hero key points (px): nose tip 2.89 -> 2.89, mouth R 0.26 -> 1.51, gonion L 5.31 -> 5.52, the rest within 0.3.
+- Shape (rest): breadth 38 mm above the menton 133.7 -> 138.1 mm (the prior's squarer, wider jaw angle), 20 mm above
+  122.9 -> 122.3; nose tip 1.4 mm forward, menton 3.2 mm back; vertex to menton 250.9 -> 249.9. Change from round 2:
+  max 9.4 mm, 95th percentile 4.4 mm.
+- So: the profile improves (the prior's bigger, straighter nose agrees with R001's outline; the glabella feature gets
+  worse, the nasion better), the hero jaw oval improves, and the far cheeks lose a little: the hero's by 0.4 px rms
+  (~0.6 mm inside the drawn line on average), the three-quarter's by 0.3 mm with the cameras held (1 mm with them
+  re-solved: MediaPipe's drift). The R001 landmark residuals rise 0.2-0.4 mm.
+
+### 10.3 Renders looked at (`renders/head/r3/`; `r2_*` and `r3_*` from the same harness, `cmp_*` side by side)
+
+- `cmp_rest_{front,side,side_L,threequarter}_{clay,cycles}.png`, `crop_r{2,3}_front_clay.png`: r3 has a straighter,
+  narrower, more projecting nasal dorsum with defined alae, a cheek plane under the zygoma and a nasolabial fold, a
+  little more brow ridge, a squarer lower jaw in the three-quarter. **It is a modest change, not the fix**: the jaw
+  still rounds softly into the neck, there is no crease under the jaw, and the face still reads broad and fleshy in the
+  front Cycles view.
+- `cmp_hero_head_face_cycles.png` (reference | r2 | r3): the nose reads straighter and the cheek flatter; the jowls and
+  the soft fullness under the jaw that make the face read heavy are still there. Placement unchanged.
+- `cmp_r001_{front,threequarter,profile}.png` (R001 | r2 | r3): the profile nose is closer to R001's prominent straight
+  nose; chin and under-jaw are still fuller than R001's sharp jaw line and receding neck.
+- `r3_zoom_g_jaw_x10_sheet.png`: the jaw is still round against the drawn angle; a small dark fold at the near mouth
+  corner is new in r3. `r3_zoom_g_eye_right_x20_sheet.png`: the red interior blob at the inner canthus is already in
+  round 2 (`r2_zoom_g_eye_right_x20_sheet.png`), a little larger in r3.
+- Diagnostics: `dbg_detect.png` (MediaPipe on the MPFB and Hunyuan clay), `dbg_prior_d_{front,side}.png` (the prior's
+  offset from round 2, before band-passing), `landmarks_r2_*.png`.
+
+### 10.4 Switching the pipeline to it
+
+1. `cp scripts/parts/head-shape-r3.target scripts/parts/head-shape.target` (base.py's `head_shape.apply` loads that
+   path; like round 2's, the file displaces the round-1 face before the height fit, so it carries to the 1844 base).
+2. As §9: rebuild base, `head.py --check` on it and `pose_solve.build_face_targets(...)` (face_targets.json is built on
+   round 2's face, and the face moved up to 9 mm), re-solve the pose, rebuild the head and the parts built on
+   base.blend, then `assemble.py`.
+3. To go back: `git checkout scripts/parts/head-shape.target`.
+
+My recommendation is to wait: the gain (nose, cheek planes) is small against a 0.4 px loss on the hero's far cheek,
+and item 1 below is where the heavy read comes from.
+
+### 10.5 Still wrong, ranked for round 4
+
+1. **The jaw and under-jaw are still soft; the face still reads heavy.** The prior's under-jaw surface sits 10-12 mm
+   higher than MPFB's at the throat (sections through the aligned prior), but the head region ends at the neck ring
+   (z 1531-1570, pinned) and Hunyuan's mesh stops at its neck cut 25-30 mm under the menton, so the crease has 20-30 mm
+   to form in and the mask fades out exactly there. Next: let the field run into the neck (a region past the head-bone
+   weights, the ring pinned lower), and extend the R001 profile outline below the throat row it stops at now.
+2. **The prior's broad shape disagrees with R001's three-quarter.** Hunyuan's cheek fronts sit 3-6 mm behind MPFB's
+   and its jaw angle 4-6 mm wider; R001's three-quarter far cheek says the cheek is fuller. Only the band-passed prior
+   is used. Which is right is a question about R001 (ChatGPT's inference) as much as the model; a back view or a
+   second three-quarter for Hunyuan (R004) would help.
+3. **MediaPipe moves with shading.** Once hollows appear its landmarks on the same face shift 0.2-0.4 mm and the R001
+   cameras turn with them. The cameras are held now; the landmark terms still chase the shading. A shading-insensitive
+   measure (outlines, or landmarks on flat normal renders) would be steadier.
+4. **The hero's far cheek is ~0.6 mm inside the drawn line on average** (silhouette 0.80 -> 1.21 px).
+5. **The inner canthus shows a red interior blob** (round 2 already; larger in r3); r3 adds a small fold at the near
+   mouth corner. Eye and mouth details, which stay MPFB's.
+6. Round 2's §7 items 2-7 stand: the head pose, hair, skin, the nasion (now 3.1-3.3 mm, was 4.7-5.3), R001 as
+   inferred, expression.

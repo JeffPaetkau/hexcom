@@ -266,3 +266,41 @@ and the code, and build the cu130 venv with the two pins above.
 - No ICP-aligned spread.
 - No transfer onto MPFB; nothing in `scripts/stages/`, base.py or assemble.py was touched, and nothing was
   committed.
+
+## 8. Round 3 additions (2026-11-15)
+
+**The FlashVDM decoder with the 50-step model works and changes nothing visible.**
+- `cache/hy3d/run_hy3d.py --model mv50 --flashvdm own` calls `pipe.enable_flashvdm(mc_algo='mc', replace_vae=False)`:
+  FlashVDM decoding with the checkpoint's own VAE. (`--flashvdm turbo` swaps in the turbo VAE; not needed, not tried.)
+- Same seed, same latents, plain decoder against FlashVDM (`seed_spread.py`): **0.16 mm rms** over the face (median
+  0.13, p95 0.27, max 0.6), for both seed 12345 and seed 7.
+- Time per shape: **164-167 s instead of 338-406 s**. The 50 DiT steps now take most of it (about 2.8 s a step, ~140
+  s); the decode takes ~25 s. Load 68 s (warm disk cache).
+- VRAM: torch peak 3.15-3.19 GiB, card peak 4.2-5.6 GB. One run (seed 2) took 714 s while the card sat at 5.9 GB with
+  another agent's render alongside; it finished correctly.
+- Seeds made for round 3: `cache/hy3d/r3/mv50fv_own_s{1,2,3,4}.glb` (front + left, octree 380), with the probe's
+  `mv50_fl_o380.glb` (seed 12345) and `mv50_fl_o380_s7.glb`: six seeds. `jobs_own.json`/`jobs_own.log` beside them.
+  Six seeds take about 20 minutes including the load.
+
+**What scripts/setup must fetch for this (round 3 uses only these).**
+
+| What | Source | Where | Size | sha256 |
+|---|---|---|---|---|
+| Code | `https://github.com/Tencent-Hunyuan/Hunyuan3D-2`, commit `f8db63096c8282cb27354314d896feba5ba6ff8a` (shallow clone, then checkout) | `assets/ai/hunyuan3d/code/` | 79 MB checked out (156 MB with .git) | (git commit) |
+| mv 50-step DiT (DINOv2-giant conditioner and VAE inside the checkpoint) | `https://huggingface.co/tencent/Hunyuan3D-2mv/resolve/main/hunyuan3d-dit-v2-mv/model.fp16.safetensors` | `assets/ai/hunyuan3d/models/tencent/Hunyuan3D-2mv/hunyuan3d-dit-v2-mv/` | 4 928 151 562 | `d36f5881bcdc56726b73e517cd444c13c60732431622da7268145355c8d38e9c` |
+| its config | `.../hunyuan3d-dit-v2-mv/config.yaml` | same | 1 608 | `315fd5bf601d1d103130b9fda202f1bd28eda495e68ed1621bc823d5519c5e5b` |
+
+- The conditioner's DINOv2 configuration is inline in `config.yaml` and its weights are in the checkpoint: nothing else
+  comes from the Hub. Run with `HY3DGEN_MODELS=assets/ai/hunyuan3d/models` and `HF_HUB_OFFLINE=1`.
+- Not needed any more: the turbo mv and mini DiTs and the two turbo VAEs (9.6 GB of the probe's 14.5 GB).
+- The venv as §2 (`cache/venv_hy3d`, Blender's Python 3.11, torch 2.14.1+cu130 from download.pytorch.org/whl/cu130),
+  with the two pins: **transformers < 5** (4.57.6) and **diffusers < 0.36** (0.35.2); the freeze is
+  `cache/hy3d/pip_freeze.txt`. No CUDA extensions.
+- The runner and its input preparation (`cache/hy3d/run_hy3d.py`, `prep_inputs.py`, with the inputs in
+  `cache/hy3d/inputs/`) are probe tools in `cache/`; for setup they should move to `scripts/` (e.g.
+  `scripts/tools/hy3d/`), since cache/ is not committed.
+
+**How round 3 used the meshes** is in head.md §10: the six seeds aligned one by one to MPFB's head (a similarity ICP
+over the masked face; MediaPipe on the blank-eyed clay reads the face 15-20 % shorter than wide, so the eye-chin
+scale alone was biased), their normal offsets averaged, and the prior's local curvature and a weak offset term added
+to round 2's transfer.
