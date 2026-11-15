@@ -26,7 +26,7 @@ frame) show up in round 1 instead of month 3, and effort goes where the whole pi
    40 years old, with MPFB's `default` skeleton (163 bones, fingers; take 1's spec 08 maps it to
    Godot's humanoid profile) and MPFB's own weights. Skin: MPFB's default skin for now.
 2. Pose: the hero pose of the reference (stance, weight and lean as the image shows them;
-   both hands on the carbine, head turned to his right), solved so that the posed body, seen
+   both hands on the carbine, head turned slightly to his left), solved so that the posed body, seen
    through the matched hero camera, lies on the reference's joints and silhouette. Posed through
    the skeleton, so the rest-pose model stays the deliverable and the pose is data.
 3. Evaluation: the hero frame rendered (Workbench clay and a quick Cycles), the reference beside

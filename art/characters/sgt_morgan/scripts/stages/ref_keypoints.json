@@ -1,0 +1,434 @@
+{
+ "doc": "2D pose keypoints of the soldier in the reference, for the hero-pose solve (round 0).",
+ "image": "ref/reference_full.png",
+ "box": [
+  520,
+  0,
+  1080,
+  941
+ ],
+ "scales": [
+  1.0,
+  1.5,
+  2.0
+ ],
+ "convention": "full-frame continuous px, x right, y down; soldier's own left/right",
+ "mediapipe": {
+  "nose": {
+   "xy": [
+    823.6,
+    94.0
+   ],
+   "sd_px": 0.9,
+   "visibility": 1.0
+  },
+  "eye_inner_l": {
+   "xy": [
+    828.5,
+    77.6
+   ],
+   "sd_px": 0.6,
+   "visibility": 1.0
+  },
+  "eye_l": {
+   "xy": [
+    833.6,
+    78.7
+   ],
+   "sd_px": 0.7,
+   "visibility": 1.0
+  },
+  "eye_outer_l": {
+   "xy": [
+    839.2,
+    79.9
+   ],
+   "sd_px": 0.9,
+   "visibility": 1.0
+  },
+  "eye_inner_r": {
+   "xy": [
+    808.4,
+    74.8
+   ],
+   "sd_px": 0.9,
+   "visibility": 1.0
+  },
+  "eye_r": {
+   "xy": [
+    800.9,
+    74.9
+   ],
+   "sd_px": 0.9,
+   "visibility": 1.0
+  },
+  "eye_outer_r": {
+   "xy": [
+    793.2,
+    75.7
+   ],
+   "sd_px": 1.0,
+   "visibility": 1.0
+  },
+  "ear_l": {
+   "xy": [
+    832.9,
+    88.1
+   ],
+   "sd_px": 0.9,
+   "visibility": 1.0
+  },
+  "ear_r": {
+   "xy": [
+    775.2,
+    87.0
+   ],
+   "sd_px": 0.6,
+   "visibility": 1.0
+  },
+  "mouth_l": {
+   "xy": [
+    829.8,
+    112.9
+   ],
+   "sd_px": 1.2,
+   "visibility": 1.0
+  },
+  "mouth_r": {
+   "xy": [
+    807.0,
+    110.8
+   ],
+   "sd_px": 1.2,
+   "visibility": 1.0
+  },
+  "shoulder_l": {
+   "xy": [
+    897.0,
+    187.9
+   ],
+   "sd_px": 2.2,
+   "visibility": 1.0
+  },
+  "shoulder_r": {
+   "xy": [
+    714.3,
+    205.5
+   ],
+   "sd_px": 0.8,
+   "visibility": 1.0
+  },
+  "elbow_l": {
+   "xy": [
+    939.7,
+    313.4
+   ],
+   "sd_px": 1.9,
+   "visibility": 0.974
+  },
+  "elbow_r": {
+   "xy": [
+    653.3,
+    322.6
+   ],
+   "sd_px": 1.4,
+   "visibility": 0.772
+  },
+  "wrist_l": {
+   "xy": [
+    899.4,
+    397.0
+   ],
+   "sd_px": 6.3,
+   "visibility": 0.962
+  },
+  "wrist_r": {
+   "xy": [
+    696.8,
+    345.3
+   ],
+   "sd_px": 1.8,
+   "visibility": 0.72
+  },
+  "pinky_l": {
+   "xy": [
+    888.7,
+    426.8
+   ],
+   "sd_px": 6.0,
+   "visibility": 0.956
+  },
+  "pinky_r": {
+   "xy": [
+    712.2,
+    371.6
+   ],
+   "sd_px": 3.3,
+   "visibility": 0.763
+  },
+  "index_l": {
+   "xy": [
+    868.5,
+    415.4
+   ],
+   "sd_px": 5.6,
+   "visibility": 0.958
+  },
+  "index_r": {
+   "xy": [
+    730.4,
+    351.8
+   ],
+   "sd_px": 3.7,
+   "visibility": 0.755
+  },
+  "thumb_l": {
+   "xy": [
+    867.9,
+    405.7
+   ],
+   "sd_px": 6.3,
+   "visibility": 0.942
+  },
+  "thumb_r": {
+   "xy": [
+    726.4,
+    344.1
+   ],
+   "sd_px": 3.2,
+   "visibility": 0.709
+  },
+  "hip_l": {
+   "xy": [
+    859.6,
+    447.1
+   ],
+   "sd_px": 1.7,
+   "visibility": 1.0
+  },
+  "hip_r": {
+   "xy": [
+    755.3,
+    452.9
+   ],
+   "sd_px": 1.8,
+   "visibility": 1.0
+  },
+  "knee_l": {
+   "xy": [
+    893.6,
+    629.9
+   ],
+   "sd_px": 1.0,
+   "visibility": 0.984
+  },
+  "knee_r": {
+   "xy": [
+    721.2,
+    624.5
+   ],
+   "sd_px": 1.8,
+   "visibility": 0.951
+  },
+  "ankle_l": {
+   "xy": [
+    935.1,
+    831.2
+   ],
+   "sd_px": 3.5,
+   "visibility": 0.987
+  },
+  "ankle_r": {
+   "xy": [
+    730.8,
+    827.1
+   ],
+   "sd_px": 5.2,
+   "visibility": 0.979
+  },
+  "heel_l": {
+   "xy": [
+    933.2,
+    860.9
+   ],
+   "sd_px": 3.6,
+   "visibility": 0.87
+  },
+  "heel_r": {
+   "xy": [
+    752.0,
+    870.6
+   ],
+   "sd_px": 7.8,
+   "visibility": 0.877
+  },
+  "foot_index_l": {
+   "xy": [
+    937.8,
+    892.3
+   ],
+   "sd_px": 2.1,
+   "visibility": 0.974
+  },
+  "foot_index_r": {
+   "xy": [
+    654.5,
+    875.8
+   ],
+   "sd_px": 3.8,
+   "visibility": 0.959
+  }
+ },
+ "hand": {
+  "skull_top": [
+   808,
+   20
+  ],
+  "eye_r": [
+   800,
+   77
+  ],
+  "eye_l": [
+   832,
+   77
+  ],
+  "nose": [
+   815,
+   90
+  ],
+  "chin": [
+   816,
+   131
+  ],
+  "ear_r": [
+   762,
+   98
+  ],
+  "shoulder_r": [
+   675,
+   200
+  ],
+  "shoulder_l": [
+   935,
+   200
+  ],
+  "elbow_r": [
+   632,
+   328
+  ],
+  "elbow_l": [
+   958,
+   352
+  ],
+  "wrist_r": [
+   698,
+   345
+  ],
+  "wrist_l": [
+   870,
+   440
+  ],
+  "hip_r_drawn": [
+   768,
+   505
+  ],
+  "hip_l_drawn": [
+   862,
+   505
+  ],
+  "knee_r": [
+   727,
+   650
+  ],
+  "knee_l": [
+   890,
+   657
+  ],
+  "ankle_r": [
+   732,
+   855
+  ],
+  "ankle_l": [
+   928,
+   858
+  ],
+  "toe_r": [
+   631,
+   884
+  ],
+  "heel_r": [
+   767,
+   892
+  ],
+  "toe_l": [
+   950,
+   907
+  ],
+  "heel_l": [
+   910,
+   897
+  ],
+  "sole_r": [
+   740,
+   895
+  ],
+  "sole_l": [
+   928,
+   907
+  ],
+  "r_index_mcp": [
+   727,
+   355
+  ],
+  "r_index_tip": [
+   750,
+   398
+  ],
+  "l_palm": [
+   840,
+   460
+  ],
+  "l_thumb_tip": [
+   846,
+   447
+  ],
+  "carbine_butt": [
+   695,
+   268
+  ],
+  "carbine_muzzle": [
+   903,
+   570
+  ],
+  "carbine_grip": [
+   740,
+   395
+  ],
+  "carbine_handguard_rear": [
+   793,
+   402
+  ],
+  "carbine_handguard_front": [
+   873,
+   512
+  ]
+ },
+ "mediapipe_vs_hand_px": {
+  "nose": 9.5,
+  "eye_l": 2.3,
+  "eye_r": 2.3,
+  "ear_r": 17.2,
+  "shoulder_l": 39.9,
+  "shoulder_r": 39.7,
+  "elbow_l": 42.7,
+  "elbow_r": 22.0,
+  "wrist_l": 52.1,
+  "wrist_r": 1.2,
+  "knee_l": 27.3,
+  "knee_r": 26.2,
+  "ankle_l": 27.7,
+  "ankle_r": 27.9,
+  "heel_l": 42.9,
+  "heel_r": 26.1
+ }
+}
