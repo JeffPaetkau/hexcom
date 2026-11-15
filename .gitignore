@@ -16,3 +16,6 @@ desktop.ini
 game/.godot/
 **/bin/
 **/obj/
+
+# local Codex config (holds the usage-meter token)
+.codex/
