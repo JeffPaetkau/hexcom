@@ -278,3 +278,26 @@ carbon soot at the muzzle.
 Look-loop renders opened: `renders/look/M*/sheet_hands_rifle_graded`, `sheet_torso_vest_graded`.
 
 Still wrong: no markings, no carbon soot at the muzzle beyond the grime, the drawn receiver's worn highlights.
+
+## 11. Round 9 (2026-11-15): tan accents, edge wear, the "zebra" rail (critics r8 m27, m38, m28)
+
+- **The zebra (m28)** was the handguard's 1913 rail: each tooth's two edges worn to bright aluminium (edge F0 0.62,
+  amount 0.4) over a flat, fairly glossy top that mirrored the key, so the teeth read as black-and-white bands.
+  `Carbine.Mat.Handguard`: edge F0 0.24, amount 0.18, radius 0.25; roughness 0.58-0.72 (0.48-0.64); F0 0.075. In the
+  in-memory hero crop the rail reads as dark ridges with soft highlights.
+- **Edge wear (m27, m38)**: `Carbine.Mat.Anodised` edge F0 0.40 (0.62), amount 0.5, radius 0.6, dust 0.3, grime 0.45.
+  Honestly, it barely shows: the metal builder's edge mask compares the Bevel normal with the SHADING normal, which these
+  weighted-normal receivers already round (the limit armour.md §11 found for the painted builder). A sharper mask (width
+  0.03) made the upper's integral rail silver stripes and still found no wear on the long edges, so it was reverted. The
+  fix is in the library: give the metal builder the painted builder's true-normal / `edge_near` band.
+- **Tan accents (m27)**: `Paint.FDE.Brushed` #857560 -> #9a8263 (mottle #a8916f), the drawn accents' #9f8060. The patches
+  are unchanged and small (stock stripe 70 x 7, upper stripe 38 x 10, the stock's QD frame, two marks on the lower, two
+  handguard patches); the reference shows tan on more of the upper and the stock.
+- The painted builder's chip threshold was fixed in `lib/mat_hard.py` (armour.md §12), so the FDE patches' chips now
+  draw their stated 6 % / 25 % cover instead of far more.
+
+Renders opened: `renders/carbine/carbine_34_cycles.png`, `carbine_receiver_R_cycles.png` (two builds), the in-memory
+hero `hands_rifle` crop (scratch).
+
+Still wrong: the gun still reads clean and uniform beside the drawn, heavily edge-worn one (needs the library's edge
+mask); the tan accents are small; no markings.

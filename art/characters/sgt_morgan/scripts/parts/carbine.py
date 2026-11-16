@@ -431,12 +431,19 @@ def make_materials():
     # round 8: the hero frame's median (with the evaluation light corrected) put the carbine at half the
     # reference's luminance: the hardcoat's F0 0.060 -> 0.080 (still a near-black metal), the polymers lighter
     # (0.095 overshot in the round-8 pose: median ratio 0.66)
+    # round 9 (critics r8 m27, m38: "one flat dark grey, no edge wear"; m28: the handguard top "zebra stripes"): the
+    # receivers' worn edges wider and greyer (ref/zoom_carbine15_whole_bright_x3: light wear on every edge), more dust;
+    # the handguard's rail teeth were the zebra: each 1913 tooth's two edges worn to bright aluminium over a flat,
+    # glossy top that mirrored the key, so the handguard's edge wear is now faint and darker and its finish rougher
     lib_material("Anodised", "Metal.Gunmetal", "#3e3a38", f0=(0.080, 0.080, 0.082), rough_range=(0.46, 0.62),
-                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.35, edge__radius_mm=0.35, dust__amount=0.15,
-                 grime__amount=0.35)
-    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.080, 0.080, 0.082), rough_range=(0.48, 0.64),
-                 aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.4, edge__radius_mm=0.35, dust__amount=0.2,
-                 grime__amount=0.4)
+                 aniso=0.0, edge__f0=(0.40, 0.40, 0.41), edge__rough=0.40, edge__amount=0.5, edge__radius_mm=0.6,
+                 dust__amount=0.3, grime__amount=0.45)
+    # (a sharper edge mask, width 0.03, made the upper's integral rail teeth silver stripes and still found no
+    # wear on the receivers' long edges: the metal builder's mask compares with the shading normal, which the
+    # weighted-normal receivers already round; the edge wear the reference shows needs the library's edge_true)
+    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.075, 0.075, 0.077), rough_range=(0.58, 0.72),
+                 aniso=0.0, edge__f0=(0.24, 0.24, 0.25), edge__rough=0.45, edge__amount=0.18, edge__radius_mm=0.25,
+                 dust__amount=0.3, grime__amount=0.45)
     # semi-gloss hardcoat: buffer tube, castle nut, light, optic
     lib_material("Hardcoat", "Metal.Gunmetal", "#2c2a29", f0=(0.060, 0.060, 0.061), rough_range=(0.32, 0.44),
                  aniso=0.0, edge__f0=ALU_F0, edge__rough=0.28, edge__amount=0.45, dust__amount=0.05,
@@ -460,7 +467,9 @@ def make_materials():
                  edge__amount=0.45, grime__amount=0.5)
     lib_material("Muzzle", "Metal.Steel.Phosphate", "#262626", f0=(0.045, 0.045, 0.046), rough_range=(0.55, 0.68),
                  edge__amount=0.55, edge__radius_mm=0.6, grime__amount=0.8, grime__oil=0.6)
-    lib_material("FDE", "Paint.FDE.Brushed", "#857560")                          # muted tan paint (round 8)
+    # round 9 (critic r8 m27: "missing the tan accents"): the tan lighter, as the drawn accents read (#9f8060 lit)
+    lib_material("FDE", "Paint.FDE.Brushed", "#9a8263", albedo_hex="#9a8263",
+                 mottle__hex="#a8916f")
     lib_material("Lens", "Glass.Optic.Coated", "#0e1418")                        # optic and light glass
 
 

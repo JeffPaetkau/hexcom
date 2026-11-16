@@ -305,3 +305,86 @@ Look-loop renders opened (`renders/look/M1`..`M6`): `sheet_arm_L_graded`, `sheet
 Still wrong: the forearm guards' many grooves give many edges, so their wear is still busier than the drawing's;
 the drawn plates' broad pale worn faces (light blue-grey on the left pauldron) are not modelled; the knee caps'
 centres lack the drawn pitting.
+
+## 12. Round 9 (2026-11-15): colour by measurement, the right cap, the elbow, the knees, the guards
+
+Critics r8: m6 / m12 (black with a uniform white salt speckle; the reference reads worn tan/olive with blue-grey faces),
+m2 (the right pauldron a fin), m5 (a thin disc edge-on off the left elbow), m31 (spikes on the right shoulder top),
+m3 (knee pads soft black pillows), m13 / m25 (the right forearm guard a short cuff at the elbow).
+
+**Colour, decided by measuring the reference** (medians over plate faces in `ref/zoom_armour_*`, sRGB 8-bit):
+
+| Crop region | Median | r/g | b/g |
+|---|---|---|---|
+| right forearm guard, main plate (key-lit) | #a99687 | 1.13 | 0.90 |
+| left forearm guard, upper plate | #89786b | 1.14 | 0.89 |
+| right knee cap, frame (top) / centre plate | #877665 / #4d443d | 1.14 / 1.13 | 0.86 / 0.90 |
+| right knee cap, upper plate | #847973 | 1.09 | 0.95 |
+| left tier 2, face (cool-lit) / its rim | #758598 / #494341 | 0.88 / 1.09 | 1.14 / 0.97 |
+| left pauldron face (cool-lit) | #595d68 | 0.96 | 1.12 |
+
+So the plates are a mid-value worn tan-grey (take 1's spec 12 §2: lit right cap #90877c, paint #837163, D1 "one colour,
+the left's blue-grey is the cool light"); only faces turned to the cool light read blue-grey, and their rims read tan.
+Round 8's dark blue-grey paint over bright steel (#313336, steel F0 0.5) was the wrong reading. Now (`ARMOUR_TAN`,
+overrides in MATERIALS; the recipe in the catalogue is unchanged): paint #6a6862, roughness 0.36, a 45 mm mottle toward
+#4d4b45 at 0.5, R005 at 0.25 and 20 % saturation; worn to a paler matte of its own tan (substrate #948a78, dielectric,
+roughness 0.70; no bare metal, no primer); dust 0.2, rub 0.15, grime 0.9. Knee caps: centre #605b52 (R005 at 0.5 for
+texture), the raised frame worn to #9a8a70, no rub. In the look loop (round 8's assembly, 24 spp, graded) the armour's
+median ratio is 0.97 (round 8 0.93) and r/g, b/g 1.24, 0.79 against the reference's 1.17, 0.91 (round 8: 1.03, 1.06):
+the value and the warm side now agree, the hue is still a little too yellow-saturated, and the blue-grey on the cool
+side is weaker than drawn (cool side r/g 1.26 against 1.12).
+
+**The speckle's real cause (m12), fixed in `lib/mat_hard.py` `build_painted`**: `K.cover_threshold()` returns a
+threshold on the RAW noise Fac (centred 0.5, its spread from NOISE_BAND), but the chips compared it with `_noise01()`, the
+same noise remapped from that band to 0-1. So a stated 0.3 % face cover drew about 6 % and the 7 % edge cover about 30 %,
+and even cover 0 drew spots (found by elimination in the look loop: edge, dust, frame and rub each set to 0 left the
+spots; chips are now compared raw). This affects only the painted builder (the armour shells and the carbine's FDE).
+With it fixed: chips 0 on the faces, 1.5 % within 4 mm of an edge (shell), none on the knee caps.
+
+**Form.**
+- **Right pauldron (m2, m31)**: `CAP_FWD` per side, R +0.30 (was -0.25 both): the cap is turned forward at rest, so in
+  the hero pose it caps the front and top of the deltoid and faces the camera instead of standing edge-on outboard like a
+  fin. The left is unchanged. **The webbing link** from the cap's top edge over the strap pad (`Tier1.Link`) is removed:
+  in the clay it rose off the right shoulder top as the critics' stray spikes.
+- **Elbow pads (m5)**: 76 x 88 (70 x 80), the cap and base **domed 13 mm** over the point of the elbow (`e_dome`, (1 -
+  r^2)^0.7), the base built on the skin with the dome as its thickness (foam fills it, no void): a cup about 20 mm deep,
+  not a disc.
+- **Knee caps (m3)**: a taller shield 156 x 184 (150 x 164), narrowing in steps to a 80 mm bottom edge (octagon lo 40 /
+  44, hi 52 / 22); crisper facets (softmin k 0.02, was 0.05) rising 26 mm (22); the frame stands 3.2 mm over the
+  recessed centre (2.0), cap wall 5.0 (3.5); the sides lifted (u / hw)^2 x 16 mm off the knee pocket (`KNEE_FLAT`) so the
+  cap is a flatter shell instead of a tube wrapping the knee, the base built on the pocket with that lift as its
+  thickness (no gap), its margin 7 mm (12); centre 12 mm below the joint (8).
+- **Forearm guards (m13, m25)**: the arcs widened, left main / wrist 210 / 200 deg (160 / 150), right 180 / 190 (210
+  put the right main shell 9.9 mm into the carbine's stock, which lies along the right forearm); with the 30 mm glove
+  cuffs (gloves.md §12) the guards reach the glove. d ranges unchanged (main 96-214, wrist 204-258).
+
+**Renders opened**: `renders/armour/armour_hero_legs_knees_pair.png` (solid view), the look loop's
+`renders/look/hk1`..`hk7` (`sheet_arm_L_graded`, `sheet_arm_R_graded`, `sheet_legs_knees_graded`, and the elimination
+tests `hk4`-`hk6`), and in-memory hero crops in Cycles (scratch, not a round): `torso_vest`, `arm_R`, `arm_L`,
+`legs_knees`. What they show, honestly:
+- The armour now reads worn tan-grey with thin paler worn rims and no speckle; next to the reference it is too clean,
+  flat and slightly olive (the drawn plates carry strong highlights, dark grime, blue-grey faces on the cool side).
+- The right pauldron caps the shoulder's front as a curved shell facing the camera: no fin. A small jagged notch shows
+  at its lower front corner in the torso crop.
+- The left elbow pad is a thick domed cap on the outer elbow.
+- The knee caps are flatter shields with a visible tan frame along the bottom and corners; the centre plate's step is
+  faint at hero distance, and they still read smoother and rounder than the drawn faceted caps.
+- The right forearm guard, seen nearly end-on, still reads as a broad cuff near the elbow: the guard does reach the
+  wrist, but the hero pose foreshortens the forearm (the drawn forearm is more side-on). A pose item, not the guard's.
+
+- The right tier 2's elastic strap is left out (in the pose it went 12 mm into the body at the armpit with the round-9
+  clothing; one ring fewer on the arm). The left one stays.
+
+Stand-off and clashes (in-memory assembly of the current caches, the other agent's round-9 clothing of 18:22-18:24, not a
+round): stand-off flags `Guard.R.Wrist.Foam` 8.9 mm (the foam under the wrist plate's lip), `Kneepad.L.LadderLock` 6.4;
+round 8's armour flags were none, and no cap, plate or pad is flagged now. Clashes: body-armour none (round 8: 4 vertices,
+1.5 mm); armour in the shirt 418 vertices, 6.7 mm (round 8: 217, 4.1; the wrist foams and the right elbow's upper strap
+under the round-9 sleeves); armour-carbine 95 / 107 vertices, 4.0 / 1.9 mm (round 8: 22 / 73, 3.9 / 1.8; the right main
+shell at the butt pad); gloves-armour 20, 0.9 mm; trousers-armour 11, 0.6 mm.
+
+### Still wrong, for round 10
+1. The look: too clean and flat beside the drawn plates (grime in recesses, broad pale worn faces, the blue-grey cool
+   faces); r/g 1.24 against 1.17.
+2. Knee caps: the facets and the stepped centre plate read weakly at hero distance; no D-slot or boss.
+3. The right forearm guard from the hero camera (pose foreshortening).
+4. The right cap's lower front corner notch; the bands on the upper arm (tier 2 strap, elbow straps) still add rings.

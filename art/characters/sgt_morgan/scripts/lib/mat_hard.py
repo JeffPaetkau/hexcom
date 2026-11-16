@@ -323,7 +323,10 @@ def build_painted(mat, rec):
     else:
         thr = K.cover_threshold(ch["cover"])
         thr_local = nb.math("MULTIPLY_ADD", edge, -0.08 * ch["edge_bias"], thr)
-    cn = _noise01(nb, ch["noise_mm"], 2.0)
+    # round 9 (the armour's "uniform speckle", critics r8 m12, m3): K.cover_threshold() is a threshold on the RAW
+    # noise Fac (centred 0.5, its sd from NOISE_BAND), but the chips compared it with _noise01()'s 0-1 remap of
+    # that band, so a recipe's 0.3 % cover drew about 6 % and its 7 % edge cover about 30 %; compared raw now
+    cn = nb.noise(obj, 1000.0 / ch["noise_mm"], detail=2.0)
     chip = nb.map_range(nb.math("SUBTRACT", cn, thr_local), -0.006, 0.006, 0.0, 1.0)
     patch = nb.smoothstep(_noise01(nb, ch["patch_mm"]), 0.42, 0.62)
     if ch.get("patch_always"):   # round 8: chips gather in patches along the edges, never in an even band

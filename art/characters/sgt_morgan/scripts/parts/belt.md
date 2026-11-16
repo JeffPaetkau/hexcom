@@ -216,3 +216,29 @@ No belt geometry or table change. Through the library: `Polymer.Black.Textured` 
 (satin) with scuffed edges; the olive frag/mag-pouch cells (`Cordura.500D.OliveBrown`) the lighter olive-coyote
 with the carrier's edge abrasion; the coyote webbing unchanged. The belt's graded median reads 0.70 of the
 reference (ours brighter), most of its mask lying where the drawn rigs are not (§8); not chased.
+
+## 12. Round 9 (2026-11-15): the battle belt, the carriers, the holster (critics r8 m36, m22, m10, m32)
+
+- **Battle belt** (m36, "a narrow flat strap"): `BELT_W, BELT_T` 44.5 x 5.5 -> **50 x 9**, a padded 2 in sleeve over the
+  1.75 in rigger belt (HSGI Sure-Grip / BFG class). Inner girth 1021 mm (987), front top z 1047 as before.
+- **Thigh mag carriers** (m22, "oversized clean boxes"): `MAG_CARRIER` 76 x 42 x 140 -> **70 x 36 x 122** (a STANAG
+  TACO), `MAG_PLATE` 47 x 3 x 128 -> 44 x 3 x 110, slots 39 / 63 / 87 below its top (45 / 73 / 101). Materials:
+  `Belt.Mat.PolyBlack` dust 0.2 -> 0.5 with paler scuffed edges (edge albedo +0.08, width 0.14); the tan plates
+  `#3e382f` -> `#554a3b` with edge albedo +0.07.
+- **Holster** (m10, m32: it jutted off the rear hip): `HOLSTER` 60 x 50 x 190 -> 54 x 42 x 182, and `conform_back()`
+  bends its back half onto the real surfaces under it (belt, trousers with pockets) by rays along its outward axis
+  (reach 22 mm, 1 mm gap, fading to nothing at its mid-plane), as a moulded kydex holster sits on the hip.
+
+**Renders opened**: `renders/belt/` (the part's own pairs) and in-memory hero crops `belt_hips`, `hands_rifle`,
+`turn_side_R` (scratch, not a round). The carriers are visibly slimmer with their tan slotted plates; the belt itself is
+hidden in the hero frame (magazine and left hand), so m36 can only be judged in the turnaround. In the side view the
+holster still leans off the rear hip with the P9's raked grip above it (the critics' "L-shaped item"): smaller, not solved.
+
+Stand-off (in-memory, after the refit to the round-9 trousers): flagged `Belt.Belt` 7.0 mm median (the stiff band takes
+the waist's widest row everywhere, so with 9 mm it stands off where the waist narrows), `Belt.Pouch.RF` 6.3 (round 8:
+7.5), the outer carrier's two cord tails and cord ends 26-37 mm (as since round 6: they droop under the carrier). The
+holster and P9 are no longer flagged. Clashes: trousers-belt 35 vertices, 1.7 mm (round 8: 38, 1.6), the straps at the
+cargo pockets' edges.
+
+Still wrong: the holster in the side views; the battle belt has no PALS, binding or inner/outer split; the cord tails;
+the belt should be fitted per row instead of the widest row everywhere.

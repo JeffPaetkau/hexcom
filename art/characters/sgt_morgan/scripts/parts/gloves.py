@@ -29,17 +29,20 @@ import common as C  # noqa: E402
 
 PART, TAG = "Glove", "gloves"
 HAND_EASE, CUFF_EASE = 1.8, 11.0
-CUFF_LEN = 50.0                         # cuff edge, mm proximal of the wrist joint (M-Pact ~ 50)
-GUARD = {"half_w": 46.0, "half_h": 17.0, "thick": 4.5, "boss": 2.0, "back": 16.0}   # 92 x 34 x 6.5 (M-Pact 3 class: ~95 x 35 x 6)
+CUFF_LEN = 30.0                         # cuff edge, mm proximal of the wrist joint (round 9, critics r8 m18 / m25: the
+                                        # reference's short cuffs end under the forearm guard; 50 read as a long gauntlet)
+GUARD = {"half_w": 46.0, "half_h": 18.0, "thick": 5.5, "boss": 2.0, "back": 16.0}   # round 9: 4.5 -> 5.5 thick, 34 -> 36 tall
+# (round 6: 92 x 34 x 6.5; M-Pact 3 class: ~95 x 35 x 6; now 92 x 36 x 7.5)
 # round 6 (critics m20, m31, m51: "smooth rubber mannequin hands"): an M-Pact-class build. The palm and the finger
 # fronts stay where round 5's shell was (the hands are solved against the carbine with this shell as their surface);
 # the bulk goes on the back.
 BACK_PAD = (1.6, 1.0)        # extra ease on the back of the hand and on the backs of the fingers (padded knit)
-SIDE_SEAM = 0.35             # the fourchette seams along the fingers' sides and the panel seam behind the guard: grooves
-GUARD_SEG = {"boss": 3.2, "boss_r": 11.5, "groove": 1.4, "rib": 0.55, "rib_pitch": 7.0}   # segmented knuckle bosses
-PAD = {"half_w": 9.5, "half_h": 9.0, "thick": 3.0, "rib": 0.5}
+SIDE_SEAM = 0.8              # the fourchette seams along the fingers' sides and the panel seam behind the guard: grooves
+GUARD_SEG = {"boss": 4.2, "boss_r": 11.5, "groove": 2.0, "rib": 0.8, "rib_pitch": 7.0}   # round 9: bolder (3.2, 1.4, 0.55)   # segmented knuckle bosses
+PAD = {"half_w": 9.5, "half_h": 9.5, "thick": 3.6, "rib": 0.7}       # round 9: 3.0 -> 3.6 thick
+PROX_PAD = {"half_w": 9.0, "half_h": 8.0, "thick": 2.4, "rib": 0.5}   # round 9: TPR pads on the proximal phalanges too
 PALM_PATCH = {"half_w": 30.0, "half_h": 24.0, "thick": 0.8, "back": 52.0}   # the palm-heel reinforcement (on the palm side)
-CUFF_TAB = {"half_w": 15.0, "half_h": 22.0, "thick": 2.2, "pull": 7.0}       # the cuff's hook-and-loop closure tab
+CUFF_TAB = {"half_w": 15.0, "half_h": 12.0, "thick": 2.2, "pull": 5.0}   # round 9: on the 30 mm cuff (half_h 22)       # the cuff's hook-and-loop closure tab
 COLOURS = {"knit": "#1e1c1b", "cuff": "#1b1c1e", "guard": "#2f2c2a", "pad": "#2a2826", "palm": "#232120"}
 # Materials round (round 5, 2026-11-15; the solid-view colours above stay): an M-Pact-class glove is a black
 # stretch-knit back, a synthetic-leather palm (the shell's faces that look out of the palm side, palm_faces()),
@@ -48,8 +51,10 @@ MATERIALS = {
     "Glove.Mat.Knit": ("Knit.Glove.Honeycomb", "Knit", {}),
     "Glove.Mat.Palm": ("Leather.Glove.Goat", "Palm", {}),
     "Glove.Mat.Cuff": ("Neoprene.Black", "Cuff", {}),
-    "Glove.Mat.Guard": ("TPR.Glove.Black", "Guard", {}),
-    "Glove.Mat.Pad": ("TPR.Glove.Black", "Pad", {"dust__amount": 0.5}),
+    # round 9 (critics r8 m9, m18): the drawn knuckles and pads carry grey worn highlights
+    "Glove.Mat.Guard": ("TPR.Glove.Black", "Guard", {"edge__albedo_add": 0.14, "edge__width": 0.16,
+                                                     "dust__amount": 1.0}),
+    "Glove.Mat.Pad": ("TPR.Glove.Black", "Pad", {"dust__amount": 0.7, "edge__albedo_add": 0.12, "edge__width": 0.16}),
 }
 
 
@@ -233,6 +238,22 @@ def main():
             Vp, Fp = plate_on(shell_bvh, pip, fx, fy, fz, PAD["half_w"], PAD["half_h"], PAD["thick"], nu=14, nv=12, edge=2.0,
                               relief=lambda u, v: PAD["rib"] * max(0.0, math.cos(2 * math.pi * v / 6.0)) ** 3)
             pd = C.mesh_object(f"Glove.{side}.Pad.{k}", Vp, Fp, coll, mat=mats["pad"])
+            pd["sgt_clay"] = (0.30, 0.30, 0.32)
+            parts.append(pd)
+            # round 9: a smaller pad on the proximal phalanx, between the knuckle guard and the PIP pad
+            p1 = C.bone_mm(f"finger{k}-1.{side}")
+            gy = pip - p1
+            ln1 = float(np.linalg.norm(gy))
+            gy /= ln1
+            gx = x - gy * (x @ gy)
+            gx /= np.linalg.norm(gx)
+            gz = np.cross(gx, gy)
+            if gz @ z < 0:
+                gz = -gz
+            Vp, Fp = plate_on(shell_bvh, p1 + gy * (0.55 * ln1), gx, gy, gz, PROX_PAD["half_w"],
+                              min(PROX_PAD["half_h"], 0.22 * ln1), PROX_PAD["thick"], nu=12, nv=10, edge=2.0,
+                              relief=lambda u, v: PROX_PAD["rib"] * max(0.0, math.cos(2 * math.pi * v / 5.0)) ** 3)
+            pd = C.mesh_object(f"Glove.{side}.Pad.{k}.Prox", Vp, Fp, coll, mat=mats["pad"])
             pd["sgt_clay"] = (0.30, 0.30, 0.32)
             parts.append(pd)
         # round 6: the palm-heel reinforcement: a 0.8 mm synthetic-leather patch laid on the palm side (rays from the

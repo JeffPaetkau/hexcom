@@ -200,3 +200,39 @@ the pose re-solved on it (scripts/stages/README.md, "Round 7"). Gloves in the ca
 left -0.38 mm; by the clash test the handguard is 5.5 mm into the left glove (99 vertices), where the solver's smoothed
 field under-reads the slotted wall (README round 7, item 2). The left hand is fitted with a new arm-and-fingers placement
 but its fingertips still stop at the lower edge of the near face instead of curling under it.
+
+## 12. Round 9 (2026-11-15): short cuffs, bolder armour (critics r8 m9, m18, m25)
+
+Critics: smooth rubber, sausage fingers, long gauntlets; the reference's have knuckle armour, seams, palm patches and
+short cuffs. The rule kept: the palm and finger fronts stay within about 1 mm of round 6's shell (the hands are solved
+against the carbine on it); everything added is on the back or is a groove.
+- **Cuff 30 mm** proximal of the wrist joint (`CUFF_LEN` 50 -> 30; the drawn cuffs end under the forearm guards, about
+  28 mm showing on the left); the closure tab 30 x 24 (`CUFF_TAB` half_h 22 -> 12, pull 5). The shirt's cuff ends 8 mm
+  past the wrist (shirt.py `CUFF_BEYOND_WRIST`), so the glove still covers it.
+- **Knuckle guard** 92 x 36 x 5.5 (+ 4.2 mm bosses, 2.0 mm grooves between them, 0.8 mm ribs; was 92 x 34 x 4.5, 3.2,
+  1.4, 0.55); **PIP pads** 19 x 19 x 3.6 (19 x 18 x 3.0) with 0.7 ribs.
+- **New: proximal-phalanx pads** `Glove.{L,R}.Pad.{2-5}.Prox`, 18 x up to 16 x 2.4 TPR with 0.5 ribs at 5 mm, centred at
+  55 % of each proximal phalanx (between the guard and the PIP pad, as on M-Pact-class gloves).
+- **Seams** `SIDE_SEAM` 0.35 -> 0.8 mm deep (the fourchettes and the panel seam behind the guard; inward, so the
+  fronts do not move out).
+- **Materials** (MATERIALS overrides, library untouched): the guard and pads' worn crests greyer (edge albedo +0.14 /
+  +0.12, edge width 0.16, guard dust 1.0), the reference's grey worn knuckles.
+
+Clearance (gloves.json, hero pose): shells 62 (L) / 19 (R) vertices inside the skin, at most 1.67 / 1.43 mm (round 7:
+14 / 18, 1.25: the deeper seams at the flexed finger joints); every pad and guard 1.8-3.0 mm clear.
+
+**Renders opened**: `renders/gloves/gloves_rest_dorsal_L.png` (the segmented guard, a pad row on the proximal phalanges
+and one on the middle ones, the short cuff with its tab), and in-memory hero crops `hands_rifle`, `torso_vest`, `arm_R`
+in Cycles (scratch, not a round): the knuckle guards and the two pad rows read on both hands; the left cuff no longer
+reads as a gauntlet. The right forearm, seen nearly end-on, still shows the dark back of the hand and wrist between the
+guard and the knuckles: that length is the pose's foreshortening, not the cuff.
+
+Stand-off (in-memory check): `Glove.{L,R}.Knuckle` flagged "stands off", median 5.6 / 5.7 mm. The guard lies on the
+shell (0.6 mm); the test measures its attachment face toward the skin through the 1.8 mm shell and the 1.6 mm back
+padding, and the thicker guard tipped it over the 5 mm threshold (not flagged in round 8). Clashes: gloves in the
+carbine 31 vertices, 1.2 mm (round 8: 30, 1.2); the handguard 5.5 mm into the left glove as round 7; gloves in the shirt
+3 vertices, 20.9 mm at the right wrist, as round 8 (an intermediate round-9 shirt had 110 vertices, 24.9 mm there; the
+shirt of 18:22 fixed it). Body-gloves 65 vertices, 1.9 mm; gloves-armour 20, 0.9 mm.
+
+Still wrong: the fingers still show the bare hand's nails and creases (fingertip ease would move the fronts); the knit
+back has no honeycomb; no stitch rows as geometry.

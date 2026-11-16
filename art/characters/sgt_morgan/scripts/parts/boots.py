@@ -50,12 +50,23 @@ UPPER_OFF = 3.5                                  # round 3: the last -> upper ou
 PAD_OFF = 6.0                                    # the ankle padding's foam over the last above h 120 (spec 02 §3.2)
 TOE_ALLOW = 2.0                                  # the last carries the toe room (15 mm ahead of the standing socked toe);
 HEEL_ALLOW = 2.5                                 # these few mm let the ends round off (a slab of points is flat-backed)
-NOSE, HEEL_END = 44.0, 38.0                      # lengths of the rounded toe and heel ends
+NOSE, HEEL_END = 40.0, 38.0                      # lengths of the rounded toe and heel ends (round 9: nose 44 -> 40,
+                                                 # with a blunter, higher nose: NOSE_H, NOSE_EXP)
+NOSE_H, NOSE_EXP, NOSE_PLAN = 24.0, 0.42, 0.50   # round 9 (critics r8 m4, "sneaker": a low pointed wedge toe): the nose
+                                                 # section keeps NOSE_H mm of height at the very tip (was 12) and rounds
+                                                 # with e ** NOSE_EXP in profile (0.5), e ** NOSE_PLAN in plan (0.6)
+TOE_PUFF = 6.0                                   # round 9: the toe box raised this much ahead of the ball (a Zephyr-class
+                                                 # boot's high rounded toe box; spec 02 §3.1 internal 73 x 27 at the hallux)
+ARCH_H = 6.0                                     # round 9: the outsole's waist recessed this much between heel breast and
+                                                 # forefoot (the drawn sole shows a heel block and a gap under the arch)
 SEC_N = 2.7                                      # superellipse exponent of the arches (2 = ellipse)
 TOE_SPRING = 15.0
 STACK_HEEL, STACK_BALL, STACK_TOE = 40.0, 21.0, 19.0   # floor -> midsole stripe top; the rand rises above it
-RAND = {"side": 10.0, "heel": 12.0, "toe": 20.0, "proud": 2.5, "lip": 0.7}
-LUG, SIDEWALL, CUP = 5.0, 3.0, 6.0               # lug height, sole grown past the upper, outsole cup wall
+RAND = {"side": 13.0, "heel": 16.0, "toe": 26.0, "proud": 3.2, "lip": 1.4}   # round 9: a taller rand and a toe bumper
+                                                 # wrapping the toe's front (was 10 / 12 / 20, proud 2.5, lip 0.7)
+LUG, SIDEWALL, CUP = 5.0, 3.0, 9.0               # lug height, sole grown past the upper, outsole cup wall (round 9:
+                                                 # cup 6 -> 9, a deeper lug wall; the teeth wrap TOOTH_WRAP up it)
+TOOTH_WRAP, TOOTH_PROUD = 8.0, 2.6               # round 9: perimeter teeth wrap 8 mm up the sidewall, 2.6 proud (3, 1.4)
 SHAFT = [(74.0, (64.0, 50.0)), (122.0, (68.0, 52.0)), (RIM_Z, C.BOOT["shaft_rim_ab"])]   # rest z: (front-back, side)
 SHAFT_ZLO = -60.0                                # the shaft runs down into the sole (tapered), so no ledge
 CROWN_R = 9.0                                    # the soft crown's radius across the instep (mm)
@@ -63,8 +74,10 @@ K_UNION = 16.0                                   # smooth-union radius (mm) wher
 NOTCH = 6.0                                      # Achilles notch at the back of the rim
 COLLAR = {"tall": 22.0, "thick": 8.0}
 LACE_PITCH, LACE_TOP = 22.5, 5.0                 # eyelet pitch along the throat, top hook below the rim
-E1_H = 79.0                                      # round 6: the lowest eyelet's height (86 put E1 151 mm behind the toe and
+E1_H = 72.0                                      # round 6: the lowest eyelet's height (86 put E1 151 mm behind the toe and
                                                  # left a 90 mm bare vamp: the critics' galosh; the drawn E1 is ~137 behind)
+                                                 # round 9: 79 -> 72 (with the throat line to the ball + 50): lower on the raised toe box (critics r8 m4);
+                                                 # 64 with the line to the ball + 62 ran the stays and laces off the nose
 QUARTER = (98.0, 14.0, 60.0)                     # round 6: the leather quarter's top edge, h 98 at the back rising 14 mm over
                                                  # 60 mm toward the throat (a straight h 98 read as a hard collar seam)
 MUD = (92.0, 45.0, 1.0)                          # round 6: the leather mudguard's top edge, h 92 behind falling to 45 at the
@@ -149,6 +162,11 @@ class FootFrame:
         spring = TOE_SPRING * np.clip((s - self.s_ball) / (self.tip - self.s_ball), 0, 1) ** 2
         return z + spring
 
+    def arch(self, s):
+        """Round 9: the outsole's waist recess (0 under the heel block and the forefoot)."""
+        s = np.asarray(s, float)
+        return ARCH_H * smoothstep(68.0, 84.0, s) * smoothstep(self.s_ball - 52.0, self.s_ball - 72.0, s)
+
     def stack(self, s):
         return np.interp(s, [0.0, 60.0, self.s_ball, self.tip], [STACK_HEEL, STACK_HEEL, STACK_BALL, STACK_TOE])
 
@@ -221,11 +239,12 @@ class Last:
         for i in range(i_n, len(st)):
             q = min(max((st[i] - sn) / NOSE, 0.0), 1.0)
             e = math.sqrt(max(1 - q * q, 0.0))
-            Hn = 12.0 + (H0 + 3.0 - 12.0) * e ** 0.5       # round 3: a domed toe puff (was e ** 1.1, a wedge)
+            Hn = NOSE_H + (H0 + 3.0 - NOSE_H) * e ** NOSE_EXP   # round 3: a domed toe puff (was e ** 1.1, a wedge);
+                                                                # round 9: higher and blunter (12, e ** 0.5)
             f = max(Hn - zk[0], 1.0) / max(H0 - zk[0], 1.0)
             zz = zk[0] + (zk - zk[0]) / f
-            WM[i] = np.maximum(WM_req[i], np.interp(zz, zk, WM[jn], right=0.0) * e ** 0.6)
-            WL[i] = np.maximum(WL_req[i], np.interp(zz, zk, WL[jn], right=0.0) * e ** 0.6)
+            WM[i] = np.maximum(WM_req[i], np.interp(zz, zk, WM[jn], right=0.0) * e ** NOSE_PLAN)
+            WL[i] = np.maximum(WL_req[i], np.interp(zz, zk, WL[jn], right=0.0) * e ** NOSE_PLAN)
             if not have[i]:
                 tc[i] = tc[i_n]
         # the rounded heel: half-ellipse in plan
@@ -241,6 +260,7 @@ class Last:
         # envelope (nothing of the toes or the arch shows through); a section's widths never grow upward, so
         # a higher top keeps every point inside
         H_req = np.array([top_of(WM[i], WL[i]) for i in range(len(st))]) + 1.0
+        H_req += TOE_PUFF * smoothstep(ff.s_ball + 5.0, ff.s_ball + 45.0, st)   # round 9: the high toe box
         eta = np.linspace(0.0, 1.0, 41)
         EM, EL = np.zeros((len(st), len(eta))), np.zeros((len(st), len(eta)))
         for i in range(len(st)):
@@ -785,7 +805,7 @@ class Throat:
         zz = np.arange(RIM_Z - 1.0, z_m, -2.0)
         Os = ff.xyz(np.interp(zz, last.zs, last.cs), np.interp(zz, last.zs, last.ct), zz)
         Q1, _ = last.cast(Os, np.repeat(ff.u[None], len(zz), 0))
-        sl = ff.s_ball + 45.0          # past E1, so the stays' lower ends and the bottom bar have line under them
+        sl = ff.s_ball + 50.0          # past E1, so the stays' lower ends and the bottom bar have line under them
                                        # (round 6: +45, was +30: the line ended above h 79 and capped E1 at h 93)
         low = ff.xyz(sl, np.interp(sl, last.st, last.tc), np.interp(sl, last.st, last.zb + last.h) + 6.0)
         mid = Q1[-1] + ff.u * 6.0
@@ -1201,7 +1221,8 @@ def build_sole(last, ff):
     nrm = plan_normals(P)
     Pw = P + nrm * SIDEWALL
     s = ff.s_of(Pw)
-    zb = ff.z_bottom(s) + LUG                                # the sole's base; the lugs stand below it
+    zb = ff.z_bottom(s) + LUG + ff.arch(s)                   # the sole's base; the lugs stand below it (round 9:
+                                                             # recessed under the arch)
     zt = ff.z_top(s)
     axis = ff.xyz(s, np.interp(s, last.st, last.tc), 0.0)[:, :2]
     rings = []
@@ -1271,9 +1292,9 @@ def point_in_poly(pt, poly):
 
 def build_lugs(last, ff, outline, nrm_out):
     """Perimeter teeth wrapping 3 mm up the sidewall, forefoot chevrons, waist bars and heel blocks."""
-    zbase = lambda s: ff.z_bottom(s) + LUG + 0.8              # sunk into the base
+    zbase = lambda s: ff.z_bottom(s) + LUG + 0.8 + ff.arch(s)  # sunk into the base
     zfloor = lambda s: ff.z_bottom(s)
-    zwaist = lambda s: ff.z_bottom(s) + 2.0                   # the waist bars stand 3 mm (raised arch)
+    zwaist = lambda s: ff.z_bottom(s) + 2.0 + ff.arch(s)      # the waist bars stand 3 mm (raised arch)
     O_st = np.column_stack([ff.s_of(outline), ff.t_of(outline)])
     inner = O_st.mean(0) + (O_st - O_st.mean(0)) * 0.9
     pieces = []
@@ -1294,12 +1315,12 @@ def build_lugs(last, ff, outline, nrm_out):
         nn = np.array([nrm_out[i, :2] @ ff.u[:2], nrm_out[i, :2] @ ff.t[:2]])
         nn /= max(np.linalg.norm(nn), 1e-9)
         sv = float(p[0])
-        if 128.0 > sv > 78.0:                          # the waist: no teeth under the arch
+        if 128.0 > sv > 78.0 or ff.arch(sv) > 1.0:     # the waist: no teeth under the arch (round 9: nor its recess)
             continue
-        ln = 11.0 if sv > ff.s_ball - 50 else 18.0
-        poly = [p - tg * ln / 2 + nn * 1.4, p + tg * ln / 2 + nn * 1.4, p + tg * ln / 2 * 0.8 - nn * 9.0,
-                p - tg * ln / 2 * 0.8 - nn * 9.0]
-        V, F = prism(poly, ff, lambda s: ff.z_bottom(s) + LUG + 3.0, zfloor, draft=0.9)
+        ln = 12.0 if sv > ff.s_ball - 50 else 19.0
+        poly = [p - tg * ln / 2 + nn * TOOTH_PROUD, p + tg * ln / 2 + nn * TOOTH_PROUD, p + tg * ln / 2 * 0.8 - nn * 10.0,
+                p - tg * ln / 2 * 0.8 - nn * 10.0]
+        V, F = prism(poly, ff, lambda s: ff.z_bottom(s) + LUG + TOOTH_WRAP, zfloor, draft=1.2)
         pieces.append((V, F))
     # forefoot chevrons, two per row, pointing toward the toe
     tcen = lambda s: float(np.interp(s, last.st, last.tc))

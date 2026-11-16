@@ -32,7 +32,9 @@ from lib import gear_hardware as GH  # noqa: E402
 
 PART, TAG = "Belt", "belt"
 
-BELT_W, BELT_T = 44.5, 5.5                       # 1.75 in, two plies
+BELT_W, BELT_T = 50.0, 9.0                       # round 9 (critic r8 m36: "a narrow flat strap"): a padded battle belt,
+                                                 # 50 x 9 (a 2 in sleeve over the 1.75 in rigger belt; HSGI Sure-Grip /
+                                                 # Blue Force Gear class), was the bare rigger belt 44.5 x 5.5
 WAIST_PLANE = ((0.0, 0.0, 1072.0), (0.0, -0.15, 1.0))   # the trousers' waist plane (trousers.py WAIST)
 BELT_TOP_BELOW = 3.0                             # belt top 3 mm under the waistband's top edge
 BUCKLE = (38.0, 10.0, 58.0)                      # along the belt, thick, across (Cobra FC45: 58 x 38 x 10)
@@ -46,8 +48,8 @@ PLATFORM_T, PLATFORM_LIFT = 8.0, 6.0             # laminate thickness; inner fac
 STRAP_W, STRAP_T, STRAP_LIFT = 38.0, 2.0, 2.2
 CARRIER_DROP = 15.0                              # carrier body top below the platform's top edge
 HANGER_W, HANGER_T = 38.0, 1.6
-MAG_CARRIER = (76.0, 42.0, 140.0)                # HSGI polymer TACO class, broad side out
-MAG_PLATE = (47.0, 3.0, 128.0)
+MAG_CARRIER = (70.0, 36.0, 122.0)                # HSGI polymer TACO class, broad side out (round 9, critic r8 m22: "oversized
+MAG_PLATE = (44.0, 3.0, 110.0)                   # boxes": 76 x 42 x 140 -> 70 x 36 x 122, a STANAG TACO; plate 47 x 128)
 PMAG_PROUD, PMAG = 53.0, (66.0, 25.0)
 MAG_POUCH = (64.0, 38.0, 172.0)                  # round 6: one cell of the left hip's double rifle-mag pouch (drawn: two
                                                  # tall flapped olive cells side by side; round 1-5 built a frag pouch and
@@ -60,7 +62,9 @@ LOCK_T = 3.5                                     # the ladder-locks' frame thick
 HOLSTER_THETA = -122.0                           # deg round the belt: right rear hip
 HOLSTER_GAP = 1.0                                # round 6: its back 1 mm off the belt and trousers (2.5, plus a pelvis-bone
                                                  # bind while the belt followed the thigh, left it hinged into the air)
-HOLSTER = (60.0, 50.0, 190.0)                    # along the belt, out, tall (Safariland 6378 ALS class, P226)
+HOLSTER = (54.0, 42.0, 182.0)                    # along the belt, out, tall (Safariland 6378 ALS class, P226); round 9:
+                                                 # slimmer (60 x 50 x 190) and its back conformed to the hip (critics r8
+                                                 # m10, m32: it jutted off the rear hip)
 P9_SLIDE = (34.0, 30.0, 196.0)                   # P226: slide length 196, height about 34, width 30
 P9_GRIP = (105.0, 32.0, 48.0)                    # grip length, width, depth
 
@@ -79,12 +83,14 @@ MATERIALS = {
     "Belt.Mat.HangerTan": ("Webbing.Nylon.Coyote", "HangerTan", {}),
     "Belt.Mat.Platform": ("Cordura.500D.Black", "Platform", dict(_KIT)),
     "Belt.Mat.Frag": ("Cordura.500D.OliveBrown", "Frag", {}),
-    "Belt.Mat.PolyBlack": ("Polymer.Black.Textured", "PolyBlack", {"dust__amount": 0.2}),
+    # round 9 (critic r8 m22: "black plastic too clean against the worn kit"): scuffed paler edges, more dust
+    "Belt.Mat.PolyBlack": ("Polymer.Black.Textured", "PolyBlack", {"dust__amount": 0.5, "edge__albedo_add": 0.08,
+                                                                   "edge__width": 0.14}),
     "Belt.Mat.Holster": ("Polymer.Black.Textured", "Holster", {}),
     "Belt.Mat.Pmag": ("Polymer.Black.Textured", "Pmag", {"albedo_hex": "#2e2d2b"}),
     "Belt.Mat.Case": ("Polymer.Black.Textured", "Case", {"albedo_hex": "#34383a"}),
     "Belt.Mat.CaseDark": ("Polymer.Black.Textured", "CaseDark", {}),
-    "Belt.Mat.PolyTan": ("Polymer.Tan.Moulded", "PolyTan", {"albedo_hex": "#3e382f"}),
+    "Belt.Mat.PolyTan": ("Polymer.Tan.Moulded", "PolyTan", {"albedo_hex": "#554a3b", "edge__albedo_add": 0.07}),
     "Belt.Mat.TanMetal": ("Polymer.Tan.Moulded", "TanMetal", {"rough": 0.45}),
     "Belt.Mat.Buckle": ("Metal.Gunmetal", "Buckle", {}),
     "Belt.Mat.Metal": ("Metal.Gunmetal", "Metal", {}),
@@ -116,7 +122,7 @@ def slotted_plate():
     w, h, t = MAG_PLATE[0], MAG_PLATE[2], MAG_PLATE[1]
     xs = [-w / 2, -12.5, 12.5, w / 2]
     ys = [-h / 2]
-    for c in (101.0, 73.0, 45.0):
+    for c in (87.0, 63.0, 39.0):           # round 9: on the 110 mm plate (128: 101, 73, 45)
         yc = h / 2 - c
         ys += [yc - 3.0, yc + 3.0]
     ys.append(h / 2)
@@ -199,6 +205,35 @@ def settle(M, size, bvh, gap, grid=7):
         if allh:
             M[:3, 3] = M[:3, 3] - M[:3, 1] * (min(allh) - gap)
     return M
+
+
+def conform_back(ob, M, size, bvh, gap, reach=22.0):
+    """Round 9: bend a hanging box's back onto the real surface under it (a kydex holster is moulded to sit on the
+    hip, not a flat box touching it at two points): every vertex in the back half moves along -y (the frame's
+    outward axis) until it lies `gap` (plus its own depth into the box) off the surface, if that is within `reach`
+    mm; the move fades to nothing at the box's mid-plane."""
+    xx, dd, ax, c = M[:3, 0], M[:3, 1], M[:3, 2], M[:3, 3]
+    me = ob.data
+    V = np.array([v.co for v in me.vertices]) * 1000.0
+    moved = 0
+    for i, p in enumerate(V):
+        y = float(np.dot(p - c, dd))
+        depth = y + size[1] / 2.0                     # 0 on the back face, size[1] on the front
+        w = 1.0 - G.smoothstep(depth, 2.0, size[1] / 2.0)
+        if w <= 0.0:
+            continue
+        q = p - dd * depth                            # its foot on the back plane
+        h = bvh.ray_cast(Vector(q + dd * 30.0), Vector(-dd), 30.0 + reach)
+        if h[0] is None:
+            continue
+        shift = (h[3] - 30.0) - gap                   # + : the surface lies further in than the back plane
+        if shift > 0.0:
+            V[i] = p - dd * shift * w
+            moved += 1
+    for v, p in zip(me.vertices, V):
+        v.co = p / 1000.0
+    me.update()
+    return moved
 
 
 def belt_frame():
@@ -469,6 +504,7 @@ def main(render=True):
     Mh = settle(Mh, HOLSTER, real, HOLSTER_GAP)
     fwd, d, up = Mh[:3, 0], Mh[:3, 1], Mh[:3, 2]           # +x on his right side runs toward the front
     hol = G.rbox("Belt.Holster", coll, HOLSTER, Mh, M["holster"], bevel_mm=6.0)
+    conform_back(hol, Mh, HOLSTER, real, HOLSTER_GAP)
     # open the holster's mouth (the top face) so the pistol sits inside it, and give it walls
     import bmesh
     bm = bmesh.new()

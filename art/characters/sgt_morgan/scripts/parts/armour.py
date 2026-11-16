@@ -52,15 +52,27 @@ COL = {"shell": "#7b7064", "knee": "#6a6158", "black": "#1d1c1b", "emblem": "#a9
 # rims and in chips (the reference's knee caps and pauldrons), the knee caps the most worn; neoprene sleeves,
 # bases and straps; the emblem plate brushed blue-grey anodised with R003's mark (UV.Decal, decal_uv()); the
 # strobe's frosted lens; gunmetal rivets, a brighter cam buckle, a red TPR tab, coyote strap tails.
+# Round 9 (critics r8 m6, m12, m3): the reference's plates MEASURED (ref/zoom_armour_*: medians over plate faces,
+# sRGB): the right guard's lit plate #a99687 (r/g 1.13, b/g 0.90), the left guard's upper plate #89786b (1.14, 0.89),
+# the right knee cap's frame #877665 (1.14, 0.86) and centre #4d443d (1.13, 0.90); only faces turned to the cool
+# light read blue-grey (the left tier 2 #758598, 0.88 / 1.14; the left pauldron #595d68). So: worn tan-grey moulded
+# shells, mid value, not black paint over bright steel; the blue-grey is the cool light on the same colour. Wear:
+# a paler matte of the same tan on edges and corners (no bare metal), low contrast, dust and grime in recesses.
+ARMOUR_TAN = {"albedo_hex": "#6a6862", "rough": 0.36, "rough_span": 0.16,
+              "mottle__hex": "#4d4b45", "mottle__amount": 0.5, "mottle__noise_mm": 45.0,
+              "paint_image__saturation": 0.2, "paint_image__amount": 0.25, "paint_image__max": 1.08,
+              "substrate__f0": None, "substrate__hex": "#948a78", "substrate__rough": 0.70,
+              "substrate__primer": 0.0, "chips__cover": 0.0, "chips__edge_cover": 0.015,
+              "dust__amount": 0.2, "rub__amount": 0.15, "grime__amount": 0.9}
 MATERIALS = {
-    "Armour.Mat.Shell": ("Polymer.Painted.Armour", "Shell", {}),
-    # round 8: the knee caps keep round 5's tan moulding under the paint (the drawn caps' frames are worn to tan,
-    # not to steel like the pauldrons' rims), chips near the edges and frames, not over the faces
-    "Armour.Mat.Knee": ("Polymer.Painted.Armour", "Knee", {"edge__radius_mm": 3.5, "edge__width": 0.06,
-                                                           "chips__cover": 0.01, "chips__edge_cover": 0.10,
-                                                           "chips__noise_mm": 5.0, "dust__amount": 0.45,
-                                                           "substrate__f0": None, "substrate__hex": "#7a705e",
-                                                           "substrate__rough": 0.62, "substrate__primer": 0.0}),
+    "Armour.Mat.Shell": ("Polymer.Painted.Armour", "Shell", dict(ARMOUR_TAN)),
+    # the knee caps: a darker brown-grey centre, the raised frame worn to a paler tan (`paint_wear`)
+    "Armour.Mat.Knee": ("Polymer.Painted.Armour", "Knee", dict(ARMOUR_TAN, **{"rub__amount": 0.0,
+        "albedo_hex": "#605b52", "mottle__hex": "#47433c", "edge__radius_mm": 1.2, "edge__width": 0.06,
+        "paint_image__amount": 0.5,
+        "chips__cover": 0.0, "chips__edge_cover": 0.0, "chips__noise_mm": 5.0, "dust__amount": 0.25,
+        "frame__break": 0.25, "frame__noise_mm": 25.0,
+        "substrate__hex": "#9a8a70", "substrate__rough": 0.62})),
     "Armour.Mat.Black": ("Neoprene.Black", "Black", {}),
     "Armour.Mat.Emblem": ("Decal.Emblem", "Emblem", {}),
     "Armour.Mat.Foam": ("Foam.ClosedCell.Black", "Foam", {}),
@@ -128,8 +140,11 @@ CAP_Q = (-40.0, 50.0)         # deg from the cap's centre direction: top flange 
 CAP_SMOOTH = 4                # round 6: the cap field's smoothing (10 flattened the cup into a plank)
 CAP_LINK = 0.42               # rad above the cap's top edge: the webbing link up over the carrier's strap pad
 CAP_UP = 1.3                  # the cap's centre: CAP_UP x up + down the arm (+ CAP_FWD x front), at rest
-CAP_FWD = -0.25               # turned back at rest (round 1: 0.45 forward): the hero pose turns the upper arm
-                              # in, so posed the cap faces out and up on the outside of the shoulder, as drawn
+CAP_FWD = {"L": -0.25, "R": 0.30}   # turned back at rest (round 1: 0.45 forward): the hero pose turns the upper arm
+                              # in, so posed the cap faces out and up on the outside of the shoulder, as drawn.
+                              # Round 9 (critics r8 m2, all three: the right cap "a fin" seen edge-on on the outside of
+                              # the shoulder): the right cap turned forward (+0.30, was -0.25) so it caps the front of the
+                              # deltoid and faces the camera as the drawn one does; the left one is unchanged
 CAP_STRAP_CLEAR = 2.0         # over the carrier's shoulder-strap pads
 EMBLEM_W, EMBLEM_H, EMBLEM_R = 58.0, 70.0, 10.0   # round 8 (m34): the drawn rounded-square emblem plate (was a 50 x 95 shield)
 TIER2_S, TIER2_ARC = (76.0, 166.0), 140.0     # s along the arm below the joint; arc (mm) about the lateral line
@@ -144,25 +159,39 @@ SLEEVE_FLEX_EXTRA = 40.0      # the sleeve's proximal edge 40 mm lower on the fl
 GUARD_FOAM = 4.0
 # built distal first, the proximal plate laps over the next with a flared lip
 # (name, d range, arc deg, wall, unused, edge curve mm: the proximal edge recedes this much at the plate's sides)
-GUARD = [("Wrist", (204.0, 258.0), 150.0, 2.5, "lowerarm02", 8.0),
-         ("Main", (96.0, 214.0), 160.0, 3.0, "lowerarm01", 30.0)]
+# round 9 (critics r8 m13, m25: from the hero camera the right guard read as a short cuff at the elbow, the forearm's
+# camera-facing side bare under a long glove cuff): the arcs widened to 210 / 200 deg (160 / 150), so the shell wraps
+# both sides of the forearm down to the (now 30 mm) glove cuff
+GUARD = [("Wrist", (204.0, 258.0), 200.0, 2.5, "lowerarm02", 8.0),
+         ("Main", (96.0, 214.0), 210.0, 3.0, "lowerarm01", 30.0)]
+GUARD_ARC_R = {"Main": 180.0, "Wrist": 190.0}   # round 9: the right arm's arcs (210 / 200 put the main shell 9.9 mm
+                                                # into the carbine's stock, which lies along the right forearm)
 GUARD_STRAP_W = 25.0
 GUARD_STRAP_D = (122.0, 240.0)   # strap centres: on the main shell well below the elbow fold, on the wrist plate
 # Elbow pad (round 6; the reference has one on the left elbow, m22): a domed hard cap on the point of the elbow
 # over a neoprene base, held by straps round the upper arm and the forearm; the cap rides the skin's weights there
-ELBOW_PAD = {"w": 70.0, "h": 80.0, "pad": 5.0, "base_t": 4.0, "t": 3.0, "lat": 0.35, "strap_up": 52.0,
-             "strap_dn": 74.0, "strap_w": 18.0}
+ELBOW_PAD = {"w": 76.0, "h": 88.0, "pad": 5.0, "base_t": 4.0, "t": 3.0, "lat": 0.35, "strap_up": 52.0,
+             "strap_dn": 74.0, "strap_w": 18.0, "dome": 13.0}
+# round 9 (critics r8 m5, all three: "a thin disc edge-on off the elbow"): the cap and its padded base domed 13 mm over
+# the point of the elbow (a moulded cup about 20 mm deep with the base), 76 x 88 (was 70 x 80, flat on the skin)
 # Knee pad: unrolled octagon (u across, + lateral; v up), round 6: a faceted domed cap 150 x 164 (was 160 x 190
 # in two lames, a tall flat plate whose upper lame gaped) with a flat central plate, on a padded base 12 larger
-KNEE_HW, KNEE_HH = 75.0, 82.0
-KNEE_BASE_T, KNEE_CAP_T, KNEE_DOME = 7.0, 3.5, 22.0
+# Round 9 (critics r8 m3, all three: "soft black pillows"; ref/zoom_armour_rknee_x8): a tall faceted shield,
+# 156 x 184 (take 1 measured 160 x 190), narrowing in steps to the bottom, crisp facets (softmin k 0.02, was 0.05)
+# rising 26 mm to the central plate, a 12 mm tan frame standing 3.2 mm over the recessed centre (was 2), the black
+# base showing 7 mm round it (was 12)
+KNEE_HW, KNEE_HH = 78.0, 92.0
+KNEE_BASE_T, KNEE_CAP_T, KNEE_DOME = 7.0, 5.0, 26.0
+KNEE_K, KNEE_RECESS, KNEE_MB = 0.02, 3.2, 7.0
+KNEE_FLAT = 16.0              # round 9: the sides lifted (u / hw)^2 x this off the knee pocket, so the cap is a flatter
+                              # shell over a thicker foam base and stops wrapping the knee like a tube (the "pillow")
 KNEE_FACET = (34.0, 26.0, 36.0)   # the facets' runs (mm) from the outline to the central plate: sides, top, bottom
 KNEE_BASE_OFF = 1.6           # over the trousers' knee pocket
-KNEE_DZ = -8.0                # cap centre relative to the knee joint (the pocket's centre)
+KNEE_DZ = -12.0               # cap centre relative to the knee joint (the pocket's centre)
 
 
 
-def octagon_hw(v, hw=KNEE_HW, hh=KNEE_HH, lo=(52.0, 24.0), hi=(46.0, 24.0)):
+def octagon_hw(v, hw=KNEE_HW, hh=KNEE_HH, lo=(40.0, 44.0), hi=(52.0, 22.0)):
     """Half width of the knee cap's octagon at height v (centre 0): bottom edge lo[0] wide rising over
     lo[1] to the full width, top edge hi[0] over hi[1]."""
     if v < -hh + lo[1]:
@@ -332,9 +361,14 @@ def main(render=True):
         rigid.append((ob, f"upperarm01.{side}"))
         h2r = half2 / r2
         sm2 = 0.5 * (t2_v0 + t2_v1) + 10.0
-        ob = G.slab(f"Pauldron.{side}.Tier2.Strap", coll, arm.surf(0.6), lambda v, a=h2r: (a - 0.12, 2 * math.pi - a + 0.12),
-                    sm2 - 10.0, sm2 + 10.0, 1.6, M["black"], nu=24, nv=4, bevel_mm=0.5)
-        soft.append((ob, None))
+        # round 9: the right tier 2's elastic strap round the inner arm is left out: in the hero pose the adducted arm
+        # presses it 12 mm into the body at the armpit (round-9 clothing), and the critics read the arm's many bands
+        # as rings (§10 item 3); tier 2 is rigid on the arm bone and needs no strap to stay
+        if side == "L":
+            ob = G.slab(f"Pauldron.{side}.Tier2.Strap", coll, arm.surf(0.6),
+                        lambda v, a=h2r: (a - 0.12, 2 * math.pi - a + 0.12),
+                        sm2 - 10.0, sm2 + 10.0, 1.6, M["black"], nu=24, nv=4, bevel_mm=0.5)
+            soft.append((ob, None))
         if side == "L":
             # IR strobe 30 x 45 x 18 on the plate's outer face, toward its rear edge (as drawn)
             th = -0.5 * half2 / r2
@@ -376,7 +410,7 @@ def main(render=True):
 
         # ------------------------------------------------ pauldron tier 1: the cap, on the outside of the shoulder
         up = np.array([0.0, 0.0, 1.0])
-        c = G.unit(CAP_UP * up + d_up + CAP_FWD * f_up)     # over the deltoid's top, on the outside
+        c = G.unit(CAP_UP * up + d_up + CAP_FWD[side] * f_up)     # over the deltoid's top, on the outside
         e1 = G.unit(f_up - c * np.dot(f_up, c))    # across: toward the front
         e2 = G.unit(d_up - c * np.dot(d_up, c))    # down the arm
         qa, qb = math.radians(CAP_Q[0]), math.radians(CAP_Q[1])
@@ -399,21 +433,14 @@ def main(render=True):
         ob = G.slab(f"Pauldron.{side}.Tier1.Cap", coll, cap.surf(CAP_PAD), lambda q: (-cap_hw(q), cap_hw(q)), qa, qb,
                     CAP_T, M["shell"], nu=60, nv=70, bevel_mm=0.8, t_field_fn=cap_field)
         rigid.append((ob, f"upperarm01.{side}"))
-        # round 6: the foam liner under the cap, and a webbing link from its top edge up over the strap pad
+        # round 6: the foam liner under the cap
         ins = 5.0 / r_cap
         ob = G.slab(f"Pauldron.{side}.Tier1.Foam", coll, cap.surf(CAP_PAD - CAP_FOAM + 0.2),
                     lambda q: (-cap_hw(q) + ins, cap_hw(q) - ins), qa + ins, qb - ins, CAP_FOAM - 0.4, M["foam"],
                     nu=30, nv=30, bevel_mm=1.2)
         rigid.append((ob, f"upperarm01.{side}"))
-        qs_l = np.linspace(qa + 12.0 / r_cap, qa - CAP_LINK, 14)
-        lift_l = [CAP_PAD + CAP_T + 0.3 if q > qa + 1.0 / r_cap else 0.6 for q in qs_l]
-        pts = [cap.surf(lf)(0.0, q) for q, lf in zip(qs_l, lift_l)]
-        path = np.array([pp for pp, _ in pts])
-        for k_ in range(1, len(path) - 1):
-            path[k_] = 0.25 * path[k_ - 1] + 0.5 * path[k_] + 0.25 * path[k_ + 1]
-        ob = G.strip(f"Pauldron.{side}.Tier1.Link", coll, path, [nn_ for _, nn_ in pts], 25.0, 1.6, M["black"],
-                     bevel_mm=0.4)
-        rigid.append((ob, f"upperarm01.{side}"))
+        # round 9: the webbing link up over the strap pad is gone (critic r8 m31: it rose off the shoulder top as a
+        # stray spike in the clay; the cap is rigid on the arm bone and needs no visible link)
         # two dome rivets (the drawn studs): on the top facet and low on the outer face
         for k, (pp, qq) in enumerate(((0.12, qa + 0.25 * (qb - qa)), (-0.06, qb - 16.0 / r_cap))):
             pt, nt = cap.surf(CAP_PAD + CAP_T + 0.1)(pp, qq)
@@ -461,6 +488,7 @@ def main(render=True):
         built = {}          # name -> (StraightSurf, offset fn, wall, half arc mm, d range) of the plates built so far
         S["guard"] = {}
         for k, drng, arc, wall, bone, curve in GUARD:
+            arc = GUARD_ARC_R.get(k, arc) if side == "R" else arc
             ss = StraightSurf(under_fa, el, d_fa, dors, e1f, drng[0] - 4.0, drng[1] + 4.0)
             half = math.radians(arc / 2.0) * ss.r_nom
             # lap over the plate below (built before) with a flared lip: the plate keeps base_off and only its
@@ -557,15 +585,30 @@ def main(render=True):
             t = abs(q) / hh
             return hw * math.sqrt(max(0.0, 1.0 - max(0.0, t - 0.55) ** 2 / 0.45 ** 2 * 0.6))
 
+        def e_dome(p, q):
+            rr = min(1.0, math.hypot(p / max(e_hw(q), 1e-6), q / hh_e))
+            return E["dome"] * (1.0 - rr * rr) ** 0.7
+
+        def e_surf(off, domed=True):
+            def f(p, q):
+                h = e_dome(p, q) if domed else 0.0
+                pt = ecap.point(p, q, off + h)
+                n = numeric_normal(lambda uu, vv: ecap.point(uu, vv, off + (e_dome(uu, vv) if domed else 0.0)), p, q,
+                                   ecap.dirv(p, q))
+                return pt, n
+            return f
+
         def e_field(p, q, r=r_e + E["pad"]):
             e = min((e_hw(q) - abs(p)) * r, (hh_e - abs(q)) * r)
             return E["t"] + G.edge_profile(e, 1.0, 3.0, 1.5) - 1.2 * G.smoothstep(e, 10.0, 12.0)
         # soft-bound, both: a cap mounted as one piece on the elbow skin rotated with half the 107 deg fold and stood
         # off the flexed right elbow at its ends (first try of round 6); per-vertex weights let it wrap the point
-        ob = G.slab(f"ElbowPad.{side}.Base", coll, ecap.surf(0.6), lambda q: (-e_hw(q) - 0.08, e_hw(q) + 0.08),
-                    -hh_e - 0.08, hh_e + 0.08, E["base_t"], M["black"], nu=20, nv=22, bevel_mm=1.5)
+        # round 9: the base is the foam under the dome: from the skin up to the cap's underside (no void)
+        ob = G.slab(f"ElbowPad.{side}.Base", coll, e_surf(0.6, domed=False), lambda q: (-e_hw(q) - 0.08, e_hw(q) + 0.08),
+                    -hh_e - 0.08, hh_e + 0.08, E["base_t"], M["black"], nu=20, nv=22, bevel_mm=1.5,
+                    t_field_fn=lambda p, q: E["base_t"] + e_dome(p, q))
         soft.append((ob, None))
-        ob = G.slab(f"ElbowPad.{side}.Cap", coll, ecap.surf(0.6 + E["base_t"] + 0.3), lambda q: (-e_hw(q), e_hw(q)),
+        ob = G.slab(f"ElbowPad.{side}.Cap", coll, e_surf(0.6 + E["base_t"] + 0.3), lambda q: (-e_hw(q), e_hw(q)),
                     -hh_e, hh_e, E["t"], M["shell"], nu=40, nv=44, bevel_mm=0.7, t_field_fn=e_field)
         soft.append((ob, None))
         # the straps: round the upper arm above the joint and round the forearm below it
@@ -607,9 +650,9 @@ def main(render=True):
             es = max(0.0, octagon_hw(v) - abs(u)) / KNEE_FACET[0]
             et = max(0.0, KNEE_HH - v) / KNEE_FACET[1]
             eb = max(0.0, v + KNEE_HH) / KNEE_FACET[2]
-            k = 0.05
+            k = KNEE_K
             m = -k * math.log(math.exp(-es / k) + math.exp(-et / k) + math.exp(-eb / k) + math.exp(-1.0 / k))
-            return KNEE_DOME * max(0.0, m)
+            return KNEE_DOME * max(0.0, m) + KNEE_FLAT * min(1.0, abs(u) / KNEE_HW) ** 2
 
         def kvs(off, domed=False):
             base_f = leg.surf(off, r0=r_k)
@@ -629,7 +672,7 @@ def main(render=True):
             def f(u, v):
                 e = min(octagon_hw(v) - abs(u), v - v0, v1 - v)
                 t = wall + G.edge_profile(e, 1.2, 2.5, 1.5)
-                t -= 2.0 * G.smoothstep(e, 11.0, 13.5)                 # the centre panel, 2 mm below the frame
+                t -= KNEE_RECESS * G.smoothstep(e, 11.0, 13.0)         # the centre panel, below the frame
                 if ridge and e > 13.5:
                     t += 1.6 * (1.0 - G.smoothstep(abs(u), 4.0, 8.0))  # the moulded centre ridge
                 # round 6: the frame's slots (the drawn dark holes): three a side, 18 x 5, 1.6 deep
@@ -640,11 +683,19 @@ def main(render=True):
                                 (1.0 - G.smoothstep(e, 8.0, 10.0))
                 return t
             return f
-        mb = 12.0
+        mb = KNEE_MB
         # round 6: the padded base fills the cap's dome (the foam a hard cap sits on), so the cap lies on it
-        ob = G.slab(f"Kneepad.{side}.Base", coll, kvs(KNEE_BASE_OFF, True),
+        # round 9: built on the knee pocket itself with the dome as its thickness (the foam fills from the pocket up to
+        # the cap, so the lifted sides never leave a gap under the base), easing off over the margin
+        def base_t(u, v):
+            hw = octagon_hw(max(-KNEE_HH, min(KNEE_HH, v)))
+            uc = max(-hw, min(hw, u))
+            vc = max(-KNEE_HH, min(KNEE_HH, v))
+            out_ = max(abs(u) - hw, abs(v) - KNEE_HH, 0.0)
+            return KNEE_BASE_T + dome(uc, vc) * (1.0 - 0.6 * G.smoothstep(out_, 0.0, mb))
+        ob = G.slab(f"Kneepad.{side}.Base", coll, kvs(KNEE_BASE_OFF, False),
                     lambda v: (-octagon_hw(v) - mb, octagon_hw(v) + mb), -KNEE_HH - mb, KNEE_HH + mb, KNEE_BASE_T,
-                    M["black"], nu=24, nv=28, bevel_mm=3.0, segments=3)
+                    M["black"], nu=32, nv=34, bevel_mm=3.0, segments=3, t_field_fn=base_t)
         soft.append((ob, None))                    # padded neoprene: follows the knee pocket
         cap_off = KNEE_BASE_OFF + KNEE_BASE_T + 0.8
         v0m, v1m = -KNEE_HH, KNEE_HH

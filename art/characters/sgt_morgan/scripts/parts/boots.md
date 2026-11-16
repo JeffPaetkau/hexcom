@@ -346,3 +346,42 @@ soles 148 vertices, 10.4 mm (the designed footbed and sock, as rounds 3-5).
 **Still wrong, for round 7**: section 8 items 1-8 stand, with item 5 (E1) done. First the toe box (a real toe-box
 section on the last, the bumper on the toe's curve), then the outsole's slab rand (a stepped, chunkier midsole and lug
 wall).
+
+## 11. Round 9 (2026-11-15): away from the sneaker (critics r8 m4, all three)
+
+All three critics: smooth wrapped uppers, thin wedge soles, no toe cap, laces only at the ankle; a Zephyr-class boot
+laces from the toe box, has a defined toe cap, a deep lugged sole with a heel breast and a high rounded toe. Round 8's
+own list (§8 items 1, 2, 5) said the same. Constants only, in `boots.py` (the last, the sock and the upper's method are
+unchanged):
+- **Toe box** (`NOSE_H, NOSE_EXP, NOSE_PLAN`, `TOE_PUFF`): the nose section keeps 24 mm of height at the very tip (was 12)
+  and rounds as e^0.42 in profile (0.5) and e^0.50 in plan (0.6) over a 40 mm nose (44); the toe box is raised 6 mm
+  ahead of the ball (ramped from the ball + 5 to + 45). Top of the upper (rest z) at s 240 / 260 / 280: 47 / 51 / 56
+  (round 8: 45 / 46 / 49).
+- **Rand and bumper** (`RAND`): side 13, heel 16, toe 26 (10 / 12 / 20), 3.2 proud (2.5) with a 1.4 lip (0.7). A first
+  try at toe 32 folded the bumper's top rows into a black visor over the nose (`boots_closeup_L_lateral`, first build).
+- **Outsole** (`CUP`, `TOOTH_WRAP`, `TOOTH_PROUD`, `ARCH_H`): the cup wall 9 mm (6); the perimeter teeth wrap 8 mm up the
+  sidewall (3), stand 2.6 proud (1.4), 12 / 19 long (11 / 18), drafted 1.2; the waist recessed 6 mm between the heel block
+  (s < 68) and the forefoot (from the ball - 52), so the heel breast shows (`FootFrame.arch()`; no teeth in the recess).
+  Lug depth is still the real 5 mm under the forefoot.
+- **Lacing lower** (`E1_H` 79 -> 72, the throat line to the ball + 50, was + 45): E1 at h 72.0 / 71.9. A first try at
+  h 64 with the line to the ball + 62 ran the stays and laces off the nose (the line passes the toe box's crown there).
+- Measured (`boots.json`): outsole 310.0 x 146.7 max, 135.0 at the ball (L; R 140.9 / 130.8): wider than round 8's
+  141 / 133 by the prouder rand and teeth (real ~116-125; see below).
+
+**Renders opened**: `renders/boots/boots_closeup_L_lateral.png` and `_R_front34.png` (two builds), the hero
+`boots_feet` crop in Cycles from an in-memory assembly (not a round; scratch). What they show, honestly: from the side
+the boot now has a chunky sole with a lug wall, a heel block and a visible arch recess, and a taller rubber toe; the toe
+box is higher and blunter. From the front the toe reads as a wide square rubber cap, boxier than the drawn rounded one,
+and the vamp is still one smooth leather surface with the round-6 mudguard line: in the hero frame the right boot
+(profile) reads more like a boot than in round 8, but still smooth and plain beside the drawn creased, panelled one.
+
+Clashes (in-memory assembly with the other agent's round-9 clothing): body in the boot soles 125 vertices, 7.5 mm
+(round 8: 152, 10.4; designed); socks in the skin as before. New: the trousers' hems 12-14 mm into the boot tongues and
+uppers (trousers in boots: the round-9 hems, not a boot change; the tongue tops stand 10 mm above the rim as since round 2).
+
+### Still wrong, for round 10
+1. The toe reads boxy and square from the front (the bumper is a slab on a flat-topped toe box): round the toe box's
+   crown across (the last's square toe-box corners, §8 item 1) and give the bumper a curved top edge.
+2. Width: 141-147 mm max with the prouder rand and teeth; real ~116-125. Thin `SIDEWALL` / `TOOTH_PROUD` at the ball.
+3. The upper is still smooth: no quarter/vamp overlay seams that read at hero scale, no scuffs or crease field.
+4. Lacing still starts at h 72, about 110 mm behind the toe; the throat line cannot go further without leaving the vamp.
