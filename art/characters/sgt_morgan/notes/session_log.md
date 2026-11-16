@@ -3,6 +3,45 @@
 Newest first. One entry per working session: what was done, what is next, anything a fresh
 session must know. Take 1's log is `archive/v1/notes/session_log.md`.
 
+## 2026-11-15 (evening) — round 9: cloth and mass, the hard kit
+
+Two lanes in parallel, each committed on its own:
+- **Cloth and mass (22204a1).** The trousers were rewritten: a per-slice hull of the body plus ease, a gusset and
+  cloth-simulated drape on the rest body (`scripts/parts/cloth.py`, cached in `cache/cloth/`), with blousing
+  over the boots. Brown field dust comes from an optional dust colour in `mat_groups.weather`. Shirt sleeves have
+  27-29 mm of ease and simulated folds above the elbow. The carrier's bags, pouches and pads are thicker.
+- **Hard kit (ae0ea44).** The armour colour was measured from the zoom crops: worn tan-grey, with no bare
+  steel. A `mat_hard` bug made the painted chip threshold draw ~6 % chips at a stated 0.3 %. The right shoulder
+  cap now sits forward, the elbow pads are domed and the knee caps faceted. The gloves gained a knuckle guard
+  and pads. The boots have a taller toe, a rand and a chunkier sole (now 141-147 mm wide, too wide). The belt
+  is a padded band, and the carbine's rail zebra stripes were toned down.
+- **Critic round 9 (`notes/critic/soldier_r9/`): 6, 6, 4** (round 8: 4, 5, 4), 0 blocking, 53 items. Worst:
+  - the right boot reads as a galosh (all three critics);
+  - the armour reads as clean pale plastic;
+  - the seat still shows the cleft from behind;
+  - the shins carry even foil-like lumps where real cloth folds in a few large planes;
+  - the forearm guards read as a cone or drum;
+  - the holster lid stands off the hip;
+  - the face is waxy, and the hair a hard cap;
+  - the pauldrons are slabs with ragged stair-stepped top edges;
+  - the upper-arm bands are too bright;
+  - the carrier front is plain;
+  - the left hand grips overhand;
+  - the head turns too little;
+  - the trouser legs differ in value from each other and from thigh to shin.
+
+**Next (round 10, worst first).**
+- Boots: lace to the toe, panel seams, a narrower sole.
+- Armour: grime, contrast and darker plates; fix the pauldrons' ragged edges.
+- Trousers:
+  - smooth the seat;
+  - fold the shins in larger planes;
+  - raise the base colour about 1.4 x;
+  - make the camo even across both legs.
+- Forearm guards: taper them.
+- The pose: the left hand cradling from below, the head turned further.
+- The head's skin and hair.
+
 ## 2026-11-15 — round 8: the look (grade, material separation, wear)
 
 **The evaluation's colour, decided by measurement** (`scripts/tools/look_stats.py`: per-part medians and
