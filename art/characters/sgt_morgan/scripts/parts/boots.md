@@ -385,3 +385,66 @@ uppers (trousers in boots: the round-9 hems, not a boot change; the tongue tops 
 2. Width: 141-147 mm max with the prouder rand and teeth; real ~116-125. Thin `SIDEWALL` / `TOOTH_PROUD` at the ball.
 3. The upper is still smooth: no quarter/vamp overlay seams that read at hero scale, no scuffs or crease field.
 4. Lacing still starts at h 72, about 110 mm behind the toe; the throat line cannot go further without leaving the vamp.
+
+## 12. Round 10 (2026-11-15): a Zephyr-class upper (critics r9 m1, all three; G1 D9, D10)
+
+All three critics: the right boot (seen in profile) reads as a galosh: a smooth moulded lower, a long flat wedge toe, a
+squared bumper, laces that stop at the instep. G1: a stretched wedge toe with a straight front bumper (right), a squared flat
+bumper and a slab sole front (left). The brief: eyelets down toward the toe, a rounded protective toe cap with a rubber rand,
+stitched suede and textile panels over the vamp and quarters with visible seams, a flex crease across the vamp, a sole
+116-125 wide, both boots made the same way (they are: one code path, two seeds).
+
+**The width, and round 9's figure.** `outsole_width_max_mm` (141-147 in round 9) was the outline's whole extent across the
+foot frame's axis, which the sole's own slant (a few degrees off the heel-toe landmark line) inflates by 15-20 mm; the new
+`outsole_section_width_max_mm` is the widest 10 mm station across the foot (the old key is kept for comparison). The real
+excess came from the last: take 1's last grown 3.5 mm reached 128.6 across the forefoot. Now no station of the upper is
+wider than `UPPER_W_MAX` 119 mm (113 was tried: it cut into the 5th metatarsal head), `SIDEWALL` 3 -> 1.5, `TOOTH_PROUD`
+2.6 -> 1.4, the rand 3.2 -> 2.0 proud. Widest sole section now 123.5 (L) / 123.2 (R), 123.5 / 122.6 at the ball, length 307
+(round 9 not measured this way; from its 128.6 last and 3 mm sidewalls about 137). The old key reads 137.0 / 130.1.
+
+**The toe (D9, D10).** Take 1's last has a stretched-sock toe box, square in plan and flat-topped; the nose kept its corners.
+Now the nose's sections may lie up to `NOSE_RELAX` 16 mm (times their share of the nose) inside that last, over a longer,
+rounder nose (`NOSE` 40 -> 52, `NOSE_PLAN` 0.5 -> 0.8), and the forefoot's sections round over to the crown above 40 % of
+their height (`TOE_ROUND`, an elliptical shoulder, up to `TOE_RELAX` 12 mm inside the last's corners): the toe is round in
+plan and domed across. **The rubber toe cap** is now an overlay moulded on the toe box (`RUBBER_TOE`: 60 mm back from the tip,
+its top edge 30 mm over the stripe at the tip curving down into the rand along the sides, 1.8 mm proud, `Rubber.Rand.Black`
+on face index 3), and the rand is a low strip (toe 26 -> 14 mm, `toe_exp` 4: it wraps the toe's front and sides). Round 9's
+26 mm rand wall with a lip was the "squared bumper".
+
+**The panels (m1).** `vamp_s()`: a suede vamp ahead of a seam slanting back from the mudguard behind the ball (s_ball - 12 at
+h 50) up to the stays; Cordura quarter panels behind it down to the mudguard (round 9: smooth leather all round below h 98);
+the mudguard suede; the toe cap and counter smooth leather (the drawing's highlights, Q14). Suede is `Boot.Mat.Leather.Suede`
+(Leather.Boot.FullGrain made matte: #4a4642, roughness 0.90, the grain flattened, no polish, dust 1.4). The overlays step
+0.8-1.0 mm over the textile; a double stitch row runs along the vamp seam (26-30 mm a side; the rest of the seam lies under
+the stays). The vamp's dominant flex folds are deeper (2.6-3.6 mm, was 1.5-2.4), with fewer fine wrinkles.
+
+**Lacing.** E1 sits where the throat comes down to `E1_H` 62 or forward to s_ball + `E1_DS` 12, whichever is first (the raised,
+rounded toe box keeps the crown above h 70 ahead of the ball, so a height alone ran E1 onto the nose, first try); the line runs
+to s_ball + 62. E1 at s 235, h 71-72 (round 9: s 218, h 72), about 64 mm behind the toe tip; rows at s 124-235.
+
+**The sock.** The narrower upper came close enough to the forefoot that the sock (its Solidify grows outward 2.2-3.0 mm) poked
+through as a lump at the 5th metatarsal head; the upper now clears the skin by `SOCK_CLEAR` 4.2 mm (281 / 267 vertices moved),
+the moved patch Taubin-smoothed over 4 rings and pushed again. A small dot remains on the left boot's lateral forefoot.
+
+**Numbers, final build** (`cache/parts/boots.json`; clashes from a scratch in-memory assembly of the final caches, not a
+round; round 9 in brackets): outsole section 123.5 / 123.2 mm (about 137); E1 h 71.3 / 72.2 at s 235 (h 72 at s 218); posed
+lug bottoms -1.3 / -1.4 mm. Body in the boot soles 81 vertices, 6.6 mm (125, 7.5; designed: the footbed and the sock); socks
+in the skin 2175, 3.0 (as before, designed); trousers in the boots 112, 14.1 (113, 14.1: the round-9 hems in the tongues, a
+trousers item); nothing else. Whole boots mask (`look_stats.py`, graded, `renders/look/r10_base` -> `r10_final`): median ratio
+1.76 -> 1.52 (render #181819 -> #1a1a1a against #222220), b/g 1.06 -> 1.00 against 0.90.
+
+**Renders opened**: clay zooms in the hero pose from scratch in-memory assemblies (`zoom_bootR_side`, `zoom_bootL_front`,
+`zoom_bootL_lat`, `zoom_bootL_top` for each build), and the graded Cycles `sheet_boots_feet` of `renders/look/r10_base`,
+`r10_d1`, `r10_final`. What they show: in clay the toe is round in plan and domed, lower, with a moulded rubber cap whose top
+edge arcs down into a low rand; the vamp carries the suede panel step, the mudguard line and deeper flex folds; the lacing
+runs onto the forefoot; the sole is narrower. In Cycles at hero scale the right boot's toe reads shorter and rounder, but the
+panels and seams barely separate in value: the boot still reads smoother than the drawn one.
+
+### Still wrong, for round 11
+1. At hero scale the panels hardly read: suede, textile and leather are all near-black under this light; the drawn boot's
+   structure comes from dust in the creases, scuffs and highlights on creased leather. Next: the dust and crease wear masks
+   (spec 02 §5, `crease` / `polish` are written but faint), stronger seam shading.
+2. The boots are still darker than drawn (ratio 1.52) and slightly cool (b/g 1.00 against 0.90).
+3. The vamp seam's stitch rows are short (22-30 mm a side): the seam's upper half lies under the stays.
+4. A small dot remains on the left boot's lateral forefoot (where the sock clearance was smoothed).
+5. The tongue tops stand 10 mm above the rim and the trousers' hems pass 14 mm into them (round 9's item; the hems').

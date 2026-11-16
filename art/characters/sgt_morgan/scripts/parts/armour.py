@@ -1,12 +1,12 @@
-"""Armour, round 6: the hard shells. Per side: a three-lame pauldron (cap and mid plate on foam liners, the cap
-linked by webbing up over the carrier's strap pad, an elastic strap round the mid plate, the bicep band with its
-elastic and a flat ladder-lock), a gauntlet-style forearm guard (a padded sleeve, a long shaped main shell over the
-outer forearm from below the elbow and a wrist plate under its lip, rolled rims, a rib and grooves, foam under
-each, two straps with ladder-locks), an elbow pad (a domed cap on a neoprene base on the point of the elbow,
-straps round the upper arm and the forearm), and a faceted hard-cap knee pad (a padded base filling the dome, a
-domed cap with a flat central plate, a stepped frame with slots, strap with a ladder-lock and a tan tail on the
-medial side, the red tab on the lateral facet). Left only: the shield emblem plate on the cap and the IR strobe
-on the mid plate. Notes: scripts/parts/armour.md.
+"""Armour, round 10: the hard shells. Per side: a pauldron (a domed cap on a foam liner over a long outer upper-arm
+plate on its own liner, held by a coyote webbing strap round the arm with a flat ladder-lock), a forearm guard (a
+padded sleeve, two shingled dorsal shells tapering from below the elbow to the glove cuff, rolled rims, a rib and
+grooves, foam under each, two straps with ladder-locks), an elbow pad (a domed cap on a neoprene base on the point of
+the elbow, straps round the upper arm and the forearm), and a faceted hard-cap knee pad (a padded base filling the
+dome, a domed cap with a patella dome on its central plate, a stepped frame with slots, strap with a ladder-lock and
+a tan tail on the medial side, the red tab on the lateral facet). Left only: the emblem plate on the cap and the IR
+strobe on the upper-arm plate. The arm straps and the guard shells are cleared of the posed sleeve (posed_clear).
+Notes: scripts/parts/armour.md.
 
   "$SGT_BLENDER" -b --python scripts/parts/armour.py [-- --no-render]
   -> cache/parts/armour.blend (Part.Armour), cache/parts/armour.json, renders/armour/*.png
@@ -20,10 +20,10 @@ a plate is a straight shell, not a cone that flares with the sleeve. Rims, ribs,
 a thickness field over each slab (gear_common.edge_profile). The shoulder cap also clears the carrier's
 shoulder-strap pads (cache/parts/carrier.blend, when it exists).
 
-Rigging: the pauldron pieces are skinned 100 % to one bone (cap, its foam, link, rivets, emblem, tier 2 and
+Rigging: the pauldron pieces are skinned 100 % to one bone (cap, its foam, rivets, emblem, tier 2 and
 strobe: upperarm01 (the cap is turned back at rest, CAP_FWD, so the pose's inward-turned upper arm brings it
-to the outside of the shoulder; bound to shoulder01 it stood off the adducted arm like a wing); bicep
-band: upperarm02). Round 6: the guard plates, their foam and ladder-locks, the knee caps, tabs and ladder-locks
+to the outside of the shoulder; bound to shoulder01 it stood off the adducted arm like a wing); round 10: the
+upper-arm strap (Tier3.Strap) by weights from the body, its ladder-lock mounted on the skin). Round 6: the guard plates, their foam and ladder-locks, the knee caps, tabs and ladder-locks
 are MOUNTED on the skin at their centre (gear_common.mount_bind on Body.Mesh: the skin's weights there on every
 vertex, one blended transform), so a knee cap follows the kneecap however the knee bends or the shin twists, and
 a guard follows the forearm's twist. The guard sleeves and straps are bound by weights from the body with the
@@ -47,7 +47,7 @@ PART, TAG = "Armour", "armour"
 
 COL = {"shell": "#7b7064", "knee": "#6a6158", "black": "#1d1c1b", "emblem": "#a9b3bd", "mark": "#e6ebef",
        "strobe": "#9fb0bf", "strobe_body": "#333537", "tan": "#8a7560", "metal": "#5b5a58",
-       "silver": "#9a948c", "red": "#a0545c", "foam": "#2a2927"}   # solid-view colours; Cycles uses MATERIALS
+       "silver": "#9a948c", "red": "#a0545c", "foam": "#2a2927", "band": "#4a4034"}   # solid-view colours; Cycles uses MATERIALS
 # Materials round (round 5, 2026-11-15): FDE-moulded shells painted dark grey, worn through to the tan on the
 # rims and in chips (the reference's knee caps and pauldrons), the knee caps the most worn; neoprene sleeves,
 # bases and straps; the emblem plate brushed blue-grey anodised with R003's mark (UV.Decal, decal_uv()); the
@@ -58,21 +58,31 @@ COL = {"shell": "#7b7064", "knee": "#6a6158", "black": "#1d1c1b", "emblem": "#a9
 # light read blue-grey (the left tier 2 #758598, 0.88 / 1.14; the left pauldron #595d68). So: worn tan-grey moulded
 # shells, mid value, not black paint over bright steel; the blue-grey is the cool light on the same colour. Wear:
 # a paler matte of the same tan on edges and corners (no bare metal), low contrast, dust and grime in recesses.
-ARMOUR_TAN = {"albedo_hex": "#6a6862", "rough": 0.36, "rough_span": 0.16,
-              "mottle__hex": "#4d4b45", "mottle__amount": 0.5, "mottle__noise_mm": 45.0,
-              "paint_image__saturation": 0.2, "paint_image__amount": 0.25, "paint_image__max": 1.08,
-              "substrate__f0": None, "substrate__hex": "#948a78", "substrate__rough": 0.70,
-              "substrate__primer": 0.0, "chips__cover": 0.0, "chips__edge_cover": 0.015,
-              "dust__amount": 0.2, "rub__amount": 0.15, "grime__amount": 0.9}
+# Round 10 (critics r9 m2, m8, m25, m45, m48: "uniformly pale, clean plastic"; the drawn plates darker in places,
+# scratched and grimed, with worn tan edges). The plates' MEDIAN was not the fault: under a shell-only mask the round-9
+# plates measured Y 0.21 (arm_L), 0.24 (arm_R) graded, against the reference plates' 0.11-0.23 and 0.32 (§12). What
+# was missing is texture-scale contrast: here a fine dark grime mottle (14 mm, toward #2e2b27 at 0.65), R005's
+# scratches at 0.9 on a 90 mm tile with the bright ones up to 2 x, broad tan worn rims (#b09c7c over 4 mm), chips
+# near the edges, more grime in the recesses, and a less glossy paint (roughness 0.36 -> 0.50, the "plastic" sheen)
+ARMOUR_TAN = {"albedo_hex": "#6a655c", "rough": 0.50, "rough_span": 0.20,
+              "mottle__hex": "#2e2b27", "mottle__amount": 0.65, "mottle__noise_mm": 14.0,
+              "paint_image__saturation": 0.3, "paint_image__amount": 0.9, "paint_image__max": 2.0,
+              "paint_image__tile_mm": 90.0,
+              "substrate__f0": None, "substrate__hex": "#b09c7c", "substrate__rough": 0.65,
+              "substrate__primer": 0.0, "chips__cover": 0.004, "chips__edge_cover": 0.05,
+              "edge__band_mm": 4.0, "edge__noise_amount": 0.3,
+              "dust__amount": 0.2, "rub__amount": 0.15, "grime__amount": 1.4, "grime__cavity": 1.2}
 MATERIALS = {
     "Armour.Mat.Shell": ("Polymer.Painted.Armour", "Shell", dict(ARMOUR_TAN)),
     # the knee caps: a darker brown-grey centre, the raised frame worn to a paler tan (`paint_wear`)
+    # round 10 (m14, m25, D21: glossy toy plastic with smeared highlights; the drawn caps matte with a tan rim): matte
+    # (0.62), the centre a grimed brown-grey, the frame worn to tan (#a08a68) and broken by the paint left on it
     "Armour.Mat.Knee": ("Polymer.Painted.Armour", "Knee", dict(ARMOUR_TAN, **{"rub__amount": 0.0,
-        "albedo_hex": "#605b52", "mottle__hex": "#47433c", "edge__radius_mm": 1.2, "edge__width": 0.06,
-        "paint_image__amount": 0.5,
-        "chips__cover": 0.0, "chips__edge_cover": 0.0, "chips__noise_mm": 5.0, "dust__amount": 0.25,
-        "frame__break": 0.25, "frame__noise_mm": 25.0,
-        "substrate__hex": "#9a8a70", "substrate__rough": 0.62})),
+        "albedo_hex": "#746a5e", "mottle__hex": "#2e2a25", "mottle__amount": 0.6, "rough": 0.62,
+        "edge__radius_mm": 1.2, "edge__width": 0.06,
+        "chips__cover": 0.0, "chips__edge_cover": 0.0, "chips__noise_mm": 5.0, "dust__amount": 0.3,
+        "frame__break": 0.35, "frame__noise_mm": 20.0,
+        "substrate__hex": "#a08a68", "substrate__rough": 0.7})),
     "Armour.Mat.Black": ("Neoprene.Black", "Black", {}),
     "Armour.Mat.Emblem": ("Decal.Emblem", "Emblem", {}),
     "Armour.Mat.Foam": ("Foam.ClosedCell.Black", "Foam", {}),
@@ -82,6 +92,8 @@ MATERIALS = {
     "Armour.Mat.Red": ("Polymer.Black.Smooth", "Red", {"albedo_hex": "#7a3f42", "rough": 0.55}),
     "Armour.Mat.Strobe": ("Lens.Strobe.Polycarbonate", "Strobe", {}),
     "Armour.Mat.Tan": ("Webbing.Nylon.Coyote", "Tan", {}),
+    # round 10: the upper-arm strap (was the pale moulded tier-3 band): coyote webbing, dirtied darker
+    "Armour.Mat.Band": ("Webbing.Nylon.Coyote", "Band", {"albedo_hex": "#3d3329"}),
 }
 
 
@@ -103,6 +115,92 @@ def frame_wear(ob, urange, v0, v1, nu, nv, hw_fn, inner=(9.0, 12.5)):
     att = me.attributes.get("paint_wear") or me.attributes.new("paint_wear", "FLOAT", "POINT")
     att.data.foreach_set("value", np.concatenate([W, W]))
     return round(float(W.mean()), 3)
+
+
+def posed_clear(objs, rig, unders, clear=1.0, iters=4, reach=30.0, cap=6.0, deep=12.0, log=None):
+    """Round 10 (G1 D1, blocking: the right elbow pad's upper strap broke into floating pieces where it met the
+    sleeve). A strap is a ring fitted to the REST sleeve; the round-9 sleeves have 27-29 mm of ease and simulated
+    folds, and in the hero pose the sleeve and the strap deform differently, so the sleeve's folds came up through
+    the strap in patches (the strap read as pieces). Here, in the hero pose, every strap vertex pair (inner face,
+    outer face: gear_common.slab's layout) is tested against the posed surfaces it lies on (`unders`: the shirt's
+    outer face, which is the shell without Solidify, as the clash test sees it, and any plate it crosses); where
+    its inner face is less than `clear` mm outside, the pair is pushed out at rest along its own thickness
+    direction by the shortfall, spread smoothly to its neighbours. Linear skinning is locally near-rigid, so a
+    push at rest moves the posed strap by about the same. A vertex needing more than `deep` mm on the first pass lies
+    in a fold the strap cannot bridge (the crease of the flexed elbow, where the strap's ends lie by design) and is
+    left; no vertex moves more than `cap` mm in all. Then the rest pose again. Returns {name: max push mm}."""
+    import bpy
+    from mathutils import Vector
+    C.apply_hero_pose(rig)
+    out = {}
+    try:
+        Vs, Fs, n = [], [], 0
+        for o in unders:
+            V, F = C.evaluated_world_mm(o, disable=("SOLIDIFY", "SUBSURF", "BEVEL"))
+            if not len(V) or not F:
+                continue
+            Vs.append(V)
+            Fs += [tuple(i + n for i in f) for f in F]
+            n += len(V)
+        bvh = C.bvh_from(np.concatenate(Vs), Fs)
+        for ob in objs:
+            me = ob.data
+            nv = len(me.vertices)
+            half = nv // 2
+            R0 = np.empty(nv * 3)
+            me.vertices.foreach_get("co", R0)
+            R0 = R0.reshape(-1, 3).copy()
+            drest = R0[half:] - R0[:half]
+            drest /= np.maximum(np.linalg.norm(drest, axis=1, keepdims=True), 1e-9)
+            E = np.array([(e.vertices[0], e.vertices[1]) for e in me.edges if e.vertices[0] < half and e.vertices[1] < half])
+            total = np.zeros(half)
+            skip = np.zeros(half, bool)
+            for _it in range(iters):
+                Vp, _F = C.evaluated_world_mm(ob, disable=tuple(m.type for m in ob.modifiers if m.type != "ARMATURE"))
+                if len(Vp) != nv:
+                    break
+                inner, outer = Vp[:half], Vp[half:]
+                dpos = outer - inner
+                dpos /= np.maximum(np.linalg.norm(dpos, axis=1, keepdims=True), 1e-9)
+                need = np.zeros(half)
+                for i in range(half):
+                    loc, nrm, _idx, dist = bvh.find_nearest(Vector(inner[i]), reach)
+                    if loc is None:
+                        continue
+                    nn = np.array(nrm)
+                    if nn @ dpos[i] < 0:
+                        nn = -nn
+                    sd = float((inner[i] - np.array(loc)) @ nn)
+                    need[i] = max(0.0, clear - sd)
+                if _it == 0:
+                    skip = need > deep
+                need[skip] = 0.0
+                need = np.minimum(need, cap - total)
+                if need.max() < 0.1:
+                    break
+                if len(E):                      # spread each push to its neighbours, never below the raw need
+                    sm = need.copy()
+                    for _ in range(4):
+                        acc = np.zeros(half)
+                        deg = np.zeros(half)
+                        np.add.at(acc, E[:, 0], sm[E[:, 1]])
+                        np.add.at(acc, E[:, 1], sm[E[:, 0]])
+                        np.add.at(deg, E[:, 0], 1)
+                        np.add.at(deg, E[:, 1], 1)
+                        sm = np.maximum(need, 0.85 * acc / np.maximum(deg, 1))
+                    need = np.minimum(sm, cap - total)
+                step = need[:, None] * drest * C.MM            # rest coordinates are metres
+                R0[:half] += step
+                R0[half:] += step
+                total += need
+                me.vertices.foreach_set("co", R0.ravel())
+                me.update()
+            out[ob.name] = round(float(total.max()), 1)
+    finally:
+        C.rest_pose(rig)
+    if log:
+        log("posed_clear (mm pushed out at rest):", json.dumps(out))
+    return out
 
 
 def decal_uv(ob, uv="UV.Decal"):
@@ -137,37 +235,55 @@ CAP_T = 3.0
 CAP_W_TOP, CAP_W_BOT = 150.0, 122.0
 CAP_Q = (-40.0, 50.0)         # deg from the cap's centre direction: top flange .. bottom lip (round 6: the flange
                               # stops short of the carrier's strap pad, -54 lifted the whole cap over it)
-CAP_SMOOTH = 4                # round 6: the cap field's smoothing (10 flattened the cup into a plank)
+CAP_SMOOTH = 10               # round 6: the cap field's smoothing (10 flattened the cup into a plank); round 10: 4 -> 10
+                              # with the dome (CAP_DOME) carrying the curvature
 CAP_LINK = 0.42               # rad above the cap's top edge: the webbing link up over the carrier's strap pad
-CAP_UP = 1.3                  # the cap's centre: CAP_UP x up + down the arm (+ CAP_FWD x front), at rest
-CAP_FWD = {"L": -0.25, "R": 0.30}   # turned back at rest (round 1: 0.45 forward): the hero pose turns the upper arm
+CAP_UP = {"L": 1.3, "R": 1.0}  # the cap's centre: CAP_UP x up + down the arm (+ CAP_FWD x front), at rest.
+                              # Round 10 (critics r9 m17, D7: the right cap perched flat and high by the collar, standing
+                              # off the arm; the drawn one a curved shell low on the outer deltoid): R 1.3 -> 1.0
+CAP_DOME = 9.0                # round 10 (m31): the cap domed this much (mm) over the fitted shoulder at its centre
+CAP_FWD = {"L": -0.25, "R": 0.12}   # turned back at rest (round 1: 0.45 forward): the hero pose turns the upper arm
                               # in, so posed the cap faces out and up on the outside of the shoulder, as drawn.
                               # Round 9 (critics r8 m2, all three: the right cap "a fin" seen edge-on on the outside of
                               # the shoulder): the right cap turned forward (+0.30, was -0.25) so it caps the front of the
                               # deltoid and faces the camera as the drawn one does; the left one is unchanged
 CAP_STRAP_CLEAR = 2.0         # over the carrier's shoulder-strap pads
 EMBLEM_W, EMBLEM_H, EMBLEM_R = 58.0, 70.0, 10.0   # round 8 (m34): the drawn rounded-square emblem plate (was a 50 x 95 shield)
-TIER2_S, TIER2_ARC = (76.0, 166.0), 140.0     # s along the arm below the joint; arc (mm) about the lateral line
-TIER3_S, TIER3_DEG = (190.0, 238.0), 200.0
+TIER2_S, TIER2_ARC = (78.0, 228.0), 112.0     # s along the arm below the joint; arc (mm) about the lateral line.
+                              # Round 10 (m31, m8: the drawn upper arm carries a long second plate on its outer face, its
+                              # lower half held by a dark strap; ours a short square plate and a pale ring): 76-166 x 140
+                              # -> a long outer-arm plate 78-228 x 112 with chamfered lower corners
+TIER2_CHAMFER = 16.0
+TIER3_S, TIER3_DEG = (148.0, 186.0), 200.0    # round 10: the bicep band is now a 38 mm coyote webbing strap round the
+                                              # arm and over tier 2 (Tier3.Strap), 0.4 mm over the sleeve: it bears on
+                                              # the cloth instead of standing proud as a pale moulded ring (m8, m20);
+                                              # across the plate's lower middle, as drawn, the plate showing below it
+STRAP_DARK = "#4a4034"        # the strap's webbing, darker than the plates (the drawn band reads brown-grey)
 SHELL_PAD = 4.5               # round 6: over a 4 mm foam liner (6 with no liner stood off as a card)
 SHELL_FOAM = 4.0
 # Forearm guard: d from the elbow axis (mm). Round 6: a gauntlet, not rings: one long shaped main shell over the
 # outer half of the forearm from below the elbow (d 96) and a wrist plate under its lower lip to the glove cuff,
 # over a padded sleeve; nothing above d 84, so nothing crosses the elbow crease; the elbow carries its own pad.
-SLEEVE_D, SLEEVE_T = (84.0, 258.0), 4.0
+SLEEVE_D, SLEEVE_T = (84.0, 258.0), 2.5   # round 10: 4 -> 2.5 and the foam 4 -> 3 (critics r9 m4, m15, D5, D6:
+                                          # the guards a cone or drum with air round the wrist: 9 mm of padding under
+                                          # every plate; a real guard's liner is about 5-6 mm)
 SLEEVE_FLEX_EXTRA = 40.0      # the sleeve's proximal edge 40 mm lower on the flexor side (clears the fold)
-GUARD_FOAM = 4.0
+GUARD_FOAM = 3.0
 # built distal first, the proximal plate laps over the next with a flared lip
 # (name, d range, arc deg, wall, unused, edge curve mm: the proximal edge recedes this much at the plate's sides)
 # round 9 (critics r8 m13, m25: from the hero camera the right guard read as a short cuff at the elbow, the forearm's
 # camera-facing side bare under a long glove cuff): the arcs widened to 210 / 200 deg (160 / 150), so the shell wraps
 # both sides of the forearm down to the (now 30 mm) glove cuff
-GUARD = [("Wrist", (204.0, 258.0), 200.0, 2.5, "lowerarm02", 8.0),
-         ("Main", (96.0, 214.0), 210.0, 3.0, "lowerarm01", 30.0)]
-GUARD_ARC_R = {"Main": 180.0, "Wrist": 190.0}   # round 9: the right arm's arcs (210 / 200 put the main shell 9.9 mm
-                                                # into the carbine's stock, which lies along the right forearm)
+# round 10 (m4, m13, m15, m27, D5, D6: a cone with a stack of wrist rings, a flared drum): two dorsal shells, as
+# drawn (a long upper plate and a lower plate to the glove cuff, ref/zoom_armour_lguard_x10), each hugging the
+# tapering forearm (StraightSurf hug: the line is the upper hull of the samples, not one raised over the fattest),
+# on thinner padding, so the guard tapers from the elbow to the wrist; a third plate (tried first) read as rings
+GUARD = [("Lower", (178.0, 256.0), 160.0, 2.5, "lowerarm02", 8.0),
+         ("Main", (96.0, 186.0), 176.0, 3.0, "lowerarm01", 26.0)]
+GUARD_ARC_R = {"Main": 172.0, "Lower": 160.0}   # the right arm (round 9: wider arcs put the main shell into the
+                                                # carbine's stock, which lies along the right forearm)
 GUARD_STRAP_W = 25.0
-GUARD_STRAP_D = (122.0, 240.0)   # strap centres: on the main shell well below the elbow fold, on the wrist plate
+GUARD_STRAP_D = (128.0, 222.0)   # strap centres: on the upper and the lower shell
 # Elbow pad (round 6; the reference has one on the left elbow, m22): a domed hard cap on the point of the elbow
 # over a neoprene base, held by straps round the upper arm and the forearm; the cap rides the skin's weights there
 ELBOW_PAD = {"w": 76.0, "h": 88.0, "pad": 5.0, "base_t": 4.0, "t": 3.0, "lat": 0.35, "strap_up": 52.0,
@@ -180,18 +296,22 @@ ELBOW_PAD = {"w": 76.0, "h": 88.0, "pad": 5.0, "base_t": 4.0, "t": 3.0, "lat": 0
 # 156 x 184 (take 1 measured 160 x 190), narrowing in steps to the bottom, crisp facets (softmin k 0.02, was 0.05)
 # rising 26 mm to the central plate, a 12 mm tan frame standing 3.2 mm over the recessed centre (was 2), the black
 # base showing 7 mm round it (was 12)
-KNEE_HW, KNEE_HH = 78.0, 92.0
-KNEE_BASE_T, KNEE_CAP_T, KNEE_DOME = 7.0, 5.0, 26.0
-KNEE_K, KNEE_RECESS, KNEE_MB = 0.02, 3.2, 7.0
-KNEE_FLAT = 16.0              # round 9: the sides lifted (u / hw)^2 x this off the knee pocket, so the cap is a flatter
+# Round 10 (critics r9 m14, m25, m37, D4, D21: oversized, boxy, glossy, smeared highlights; the drawn cap narrower,
+# faceted, with a domed patella and a tan rim): 156 x 184 -> 132 x 176, the facets rising 18 mm (26) to the central
+# plate with a 7 mm patella dome on it (KNEE_PATELLA), the side lift 16 -> 8 mm, crisper facets (k 0.012)
+KNEE_HW, KNEE_HH = 66.0, 88.0
+KNEE_BASE_T, KNEE_CAP_T, KNEE_DOME = 6.0, 4.5, 18.0
+KNEE_K, KNEE_RECESS, KNEE_MB = 0.012, 3.0, 6.0
+KNEE_PATELLA = 7.0            # round 10: a dome over the patella on the central plate (mm at its centre)
+KNEE_FLAT = 8.0               # round 9: the sides lifted (u / hw)^2 x this off the knee pocket, so the cap is a flatter
                               # shell over a thicker foam base and stops wrapping the knee like a tube (the "pillow")
-KNEE_FACET = (34.0, 26.0, 36.0)   # the facets' runs (mm) from the outline to the central plate: sides, top, bottom
+KNEE_FACET = (26.0, 24.0, 32.0)   # the facets' runs (mm) from the outline to the central plate: sides, top, bottom
 KNEE_BASE_OFF = 1.6           # over the trousers' knee pocket
 KNEE_DZ = -12.0               # cap centre relative to the knee joint (the pocket's centre)
 
 
 
-def octagon_hw(v, hw=KNEE_HW, hh=KNEE_HH, lo=(40.0, 44.0), hi=(52.0, 22.0)):
+def octagon_hw(v, hw=KNEE_HW, hh=KNEE_HH, lo=(32.0, 40.0), hi=(44.0, 20.0)):
     """Half width of the knee cap's octagon at height v (centre 0): bottom edge lo[0] wide rising over
     lo[1] to the full width, top edge hi[0] over hi[1]."""
     if v < -hh + lo[1]:
@@ -208,9 +328,11 @@ Field, LimbSurf, numeric_normal = G.Field, G.LimbSurf, G.numeric_normal
 
 class CapSurf:
     """The shoulder cap's surface: directions from the shoulder joint g, gnomonic about the centre direction
-    c with e1 across (front-back) and e2 down the arm; P(p, q) = g + dir (R + off)."""
+    c with e1 across (front-back) and e2 down the arm; P(p, q) = g + dir (R + off). Round 10: dome(p, q) mm is
+    added to the radius (a domed shell rather than one that only follows the shoulder), and a ray that starts
+    inside something (its hit at the ray's start, rmax) is dropped instead of read as a 240 mm radius."""
 
-    def __init__(self, under, g, c, e1, e2, p_rng, q_rng, n=30, rmax=240.0, smooth=10):
+    def __init__(self, under, g, c, e1, e2, p_rng, q_rng, n=30, rmax=240.0, smooth=10, dome=None):
         self.g, self.c, self.e1, self.e2 = np.asarray(g, float), c, e1, e2
         ps = np.linspace(p_rng[0], p_rng[1], n)
         qs = np.linspace(q_rng[0], q_rng[1], n)
@@ -221,13 +343,17 @@ class CapSurf:
                 hit, _n = under.hit(self.g + dr * rmax, -dr, rmax)
                 if hit is not None:
                     raw[j, i] = float(np.dot(hit - self.g, dr))
+        raw[raw > rmax - 3.0] = np.nan
+        self.raw = raw
         self.F = Field(raw, ps, qs, smooth)
+        self.dome = dome
 
     def dirv(self, p, q):
         return G.unit(self.c + math.tan(p) * self.e1 + math.tan(q) * self.e2)
 
     def point(self, p, q, off):
-        return self.g + self.dirv(p, q) * (self.F(p, q) + off)
+        d = self.dome(p, q) if self.dome is not None else 0.0
+        return self.g + self.dirv(p, q) * (self.F(p, q) + off + d)
 
     def surf(self, off):
         def f(u, v):
@@ -243,7 +369,7 @@ class StraightSurf:
     lies outside it; the line coefficients are smoothed round theta (and the bound re-applied). u is arc mm at
     the nominal radius r_nom, v = s."""
 
-    def __init__(self, under, a, d, e0, e1, s0, s1, nth=72, ns=16, rmax=200.0):
+    def __init__(self, under, a, d, e0, e1, s0, s1, nth=72, ns=16, rmax=200.0, hug=False):
         self.a, self.d, self.e0, self.e1 = np.asarray(a, float), d, e0, e1
         ths = np.linspace(-math.pi, math.pi, nth, endpoint=False)
         ss = np.linspace(s0, s1, ns)
@@ -251,6 +377,22 @@ class StraightSurf:
         raw = G.fill_nan(raw)
         A = np.vstack([np.ones(ns), ss]).T
         coef, *_ = np.linalg.lstsq(A, raw, rcond=None)          # (2, nth)
+        if hug:
+            # round 10: per angle, the line of least area above every sample (the upper hull's edge over the middle
+            # of the range), so a plate tapers with the forearm instead of keeping the least-squares slope raised
+            # over the fattest sample (the round-9 guards stood off the wrist: "air round the glove cuff")
+            sm = 0.5 * (s0 + s1)
+            for j in range(nth):
+                H = []
+                for x, y in zip(ss, raw[:, j]):
+                    while len(H) >= 2 and (H[-1][0] - H[-2][0]) * (y - H[-2][1]) - (H[-1][1] - H[-2][1]) * (x - H[-2][0]) >= 0:
+                        H.pop()
+                    H.append((x, y))
+                for (x0, y0), (x1, y1) in zip(H[:-1], H[1:]):
+                    if x0 <= sm <= x1:
+                        k = (y1 - y0) / max(x1 - x0, 1e-9)
+                        coef[:, j] = (y0 - k * x0, k)
+                        break
         for _ in range(3):
             coef[0] += np.max(raw - A @ coef, axis=0)
             # smooth round theta (circular), slopes and intercepts alike
@@ -293,10 +435,10 @@ def plate_t(wall, half_u, v0, v1, rib=False, grooves=False, bead=0.9):
             if end > 0:
                 h = 2.5 * G.smoothstep(end, 0.0, 7.0)
                 t += h * (1.0 - G.smoothstep(abs(u), 7.0, 9.5))
-        if grooves:
+        if grooves:   # round 10: shallower, softer (1.2 deep over 1.2 mm walls read as edges: pale worn flutes)
             for g0 in (-22.0, 22.0):
                 if min(v - v0, v1 - v) > 12.0:
-                    t -= 1.2 * (1.0 - G.smoothstep(abs(u - g0), 1.0, 2.2))
+                    t -= 0.8 * (1.0 - G.smoothstep(abs(u - g0), 1.5, 4.5))
         return t
     return f
 
@@ -327,6 +469,7 @@ def main(render=True):
     rigid = []      # (object, bone)
     soft = []       # (object, collapse map or None)
     mounts = []     # round 6: (object, rest point mm): mounted on the skin there (gear_common.mount_bind on Body.Mesh)
+    buckles = []    # round 10: (buckle, its strap's name, rest point mm, outward): moved with the strap by posed_clear
 
     for side, sgn in (("L", 1.0), ("R", -1.0)):
         S = {}
@@ -342,37 +485,37 @@ def main(render=True):
         half2 = TIER2_ARC / 2.0
         t2_v0, t2_v1 = TIER2_S
 
+        def hw2(v, h=half2):
+            # round 10: the long outer-arm plate's lower corners chamfered TIER2_CHAMFER at 45 deg
+            return h - max(0.0, TIER2_CHAMFER - (t2_v1 - v))
+
         def t2_field(u, v):
-            e = min(half2 - abs(u), v - t2_v0, t2_v1 - v)
+            e = min(hw2(v) - abs(u), v - t2_v0, t2_v1 - v)
             t = CAP_T + G.edge_profile(e, 0.9)
-            # the recessed panel 70 x 28, 1.5 deep, 32 below the top edge
-            du, dv = abs(u) - 35.0, abs(v - (t2_v0 + 32.0)) - 14.0
-            if du < 0 and dv < 0:
-                t -= 1.5 * G.smoothstep(min(-du, -dv), 0.0, 1.5)
+            # round 10: no recessed panel (round 2-9: 70 x 28, 1.5 deep): its rim's wear drew a pale square outline on
+            # the plate, "a pale square patch" (critic m31), and ramped over 5 mm it still did
+            # round 10: two vent slots 6 x 18 along the rear edge below the strap (the drawn plate's dark slots)
+            ur = -hw2(v) + 11.0
+            for vk in (t2_v0 + 118.0, t2_v0 + 140.0):            # below the strap
+                if abs(u - ur) < 4.0 and abs(v - vk) < 10.0:
+                    t -= 1.4 * (1.0 - G.smoothstep(abs(u - ur), 2.2, 3.4)) * (1.0 - G.smoothstep(abs(v - vk), 7.5, 9.5))
             return t
-        ob = G.slab(f"Pauldron.{side}.Tier2.Plate", coll, arm.surf(SHELL_PAD, r0=r2), lambda v: (-half2, half2),
-                    t2_v0, t2_v1, CAP_T, M["shell"], nu=56, nv=40, bevel_mm=0.8, t_field_fn=t2_field)
+        ob = G.slab(f"Pauldron.{side}.Tier2.Plate", coll, arm.surf(SHELL_PAD, r0=r2), lambda v: (-hw2(v), hw2(v)),
+                    t2_v0, t2_v1, CAP_T, M["shell"], nu=52, nv=72, bevel_mm=0.8, t_field_fn=t2_field)
         rigid.append((ob, f"upperarm01.{side}"))
         tier2 = ob
-        # round 6: the foam liner under the plate (fills the stand-off), and an elastic strap round the inner arm
+        # round 6: the foam liner under the plate (fills the stand-off)
         ob = G.slab(f"Pauldron.{side}.Tier2.Foam", coll, arm.surf(SHELL_PAD - SHELL_FOAM + 0.2, r0=r2),
-                    lambda v: (-half2 + 4.0, half2 - 4.0), t2_v0 + 4.0, t2_v1 - 4.0, SHELL_FOAM - 0.4, M["foam"],
-                    nu=24, nv=8, bevel_mm=1.0)
+                    lambda v: (-hw2(v) + 4.0, hw2(v) - 4.0), t2_v0 + 4.0, t2_v1 - 4.0, SHELL_FOAM - 0.4, M["foam"],
+                    nu=24, nv=16, bevel_mm=1.0)
         rigid.append((ob, f"upperarm01.{side}"))
         h2r = half2 / r2
-        sm2 = 0.5 * (t2_v0 + t2_v1) + 10.0
-        # round 9: the right tier 2's elastic strap round the inner arm is left out: in the hero pose the adducted arm
-        # presses it 12 mm into the body at the armpit (round-9 clothing), and the critics read the arm's many bands
-        # as rings (§10 item 3); tier 2 is rigid on the arm bone and needs no strap to stay
-        if side == "L":
-            ob = G.slab(f"Pauldron.{side}.Tier2.Strap", coll, arm.surf(0.6),
-                        lambda v, a=h2r: (a - 0.12, 2 * math.pi - a + 0.12),
-                        sm2 - 10.0, sm2 + 10.0, 1.6, M["black"], nu=24, nv=4, bevel_mm=0.5)
-            soft.append((ob, None))
+        # round 10: round 6's elastic strap round the inner arm at mid tier 2 is gone: the Tier3 strap below holds the
+        # long plate (one ring fewer on the arm, critics r9 m8, m20)
         if side == "L":
             # IR strobe 30 x 45 x 18 on the plate's outer face, toward its rear edge (as drawn)
             th = -0.5 * half2 / r2
-            sm = (TIER2_S[0] + TIER2_S[1]) / 2.0 + 8.0
+            sm = t2_v0 + 46.0
             p = arm.point(th, sm, SHELL_PAD + CAP_T + 0.4)
             n = arm.dirv(th)
             Ms = G.frame(p + n * 9.0, np.cross(d_up, n) * -1.0, n)
@@ -380,44 +523,60 @@ def main(render=True):
             Ms2[:3, 0], Ms2[:3, 1], Ms2[:3, 2], Ms2[:3, 3] = Ms[:3, 0], -d_up, n, Ms[:3, 3]
             ob = G.rbox("Pauldron.L.Tier2.Strobe", coll, (30.0, 45.0, 18.0), Ms2, M["strobe"], bevel_mm=3.0)
             rigid.append((ob, "upperarm01.L"))
-        half3 = math.radians(TIER3_DEG / 2.0)
-        r3 = float(arm.F(0.0, 0.5 * (TIER3_S[0] + TIER3_S[1]))) + 2.5
-        t3_v0, t3_v1, h3mm = TIER3_S[0], TIER3_S[1], half3 * r3
+        # round 10 (critics r9 m8, m20: the pale moulded bicep bands were the brightest marks on the figure and stood
+        # proud of the sleeve): a 38 mm coyote webbing strap round the arm, 0.4 mm over the sleeve, lifted over the
+        # long tier-2 plate where it crosses it (the strap holds the plate, as drawn), soft-bound so it follows the
+        # sleeve, then cleared of the posed sleeve (posed_clear)
+        t3_v0, t3_v1 = TIER3_S
+        over = SHELL_PAD + CAP_T + 0.9 + 0.5
 
-        def t3_field(u, v):
-            e = min(h3mm - abs(u * r3), v - t3_v0, t3_v1 - v)
-            t = 2.5 + G.edge_profile(e, 0.8, 2.5)
-            vm = 0.5 * (t3_v0 + t3_v1)
-            return t - 1.0 * (1.0 - G.smoothstep(abs(v - vm), 1.0, 2.2))      # the mid groove
-        ob = G.slab(f"Pauldron.{side}.Tier3.Band", coll, arm.surf(2.5), lambda v: (-half3, half3),
-                    t3_v0, t3_v1, 2.5, M["shell"], nu=64, nv=24, bevel_mm=0.6, t_field_fn=t3_field)
-        rigid.append((ob, f"upperarm02.{side}"))
-        ob = G.slab(f"Pauldron.{side}.Tier3.Elastic", coll, arm.surf(0.6),
-                    lambda v: (half3 - 0.05, 2 * math.pi - half3 + 0.05), TIER3_S[0] + 6, TIER3_S[1] - 6, 1.8,
-                    M["black"], nu=20, nv=4, bevel_mm=0.5)
-        rigid.append((ob, f"upperarm02.{side}"))
-        # cam buckle at the band's anterior end (where the elastic runs in): frame 36 x 30 x 11, lever on top
-        # round 6: a flat gunmetal ladder-lock lying on the band's end, the elastic through it (the silver cam buckle
-        # block stood 3-4 mm off the band and read as a loose clip)
-        th_b = half3 - 0.10                                   # +theta is toward the front (e1 = f_up)
-        sb = 0.5 * (TIER3_S[0] + TIER3_S[1])
-        pb_ = arm.point(th_b, sb, 2.5 + 2.5 + 0.8 + 0.2)
+        def st_lift(th, v):
+            th = (th + math.pi) % (2 * math.pi) - math.pi
+            a = hw2(v) / r2
+            return 0.4 + over * G.smoothstep(a + 0.14 - abs(th), 0.0, 0.14)
+
+        def st_point(th, v, off=0.0):
+            return arm.point(th, v, st_lift(th, v) + off)
+
+        def st_surf(u, v):
+            return st_point(u, v), G.numeric_normal(lambda uu, vv: st_point(uu, vv), u, v, arm.dirv(u), h=0.01)
+        if side == "R":
+            # the right arm is pressed to the body in the hero pose: a full ring went 2-3 mm into the torso and the
+            # shirt at the armpit (as round 9's tier-2 strap did), so the right strap leaves out the medial 100 deg
+            # (its ends lie in the armpit's fold)
+            ob = G.slab(f"Pauldron.{side}.Tier3.Strap", coll, st_surf, lambda v: (-(math.pi - 0.87), math.pi - 0.87),
+                        t3_v0, t3_v1, 1.6, M["band"], nu=80, nv=5, bevel_mm=0.5)
+        else:
+            ob = G.slab(f"Pauldron.{side}.Tier3.Strap", coll, st_surf, None, t3_v0, t3_v1, 1.6, M["band"], nu=96, nv=5,
+                        bevel_mm=0.5, closed_u=True)
+        soft.append((ob, None))
+        # the strap's flat ladder-lock on the front of the arm, in front of the plate (round 6's position)
+        th_b = h2r + 0.32                                     # +theta is toward the front (e1 = f_up)
+        sb = 0.5 * (t3_v0 + t3_v1)
+        pb_ = st_point(th_b, sb, 1.6 + 0.3)
         nb = arm.dirv(th_b)
-        ob = G.hw_object(f"Pauldron.{side}.Tier3.Buckle", coll, GH.ladder_lock(30.0, 24.0, 3.0, 2.6, 2),
+        ob = G.hw_object(f"Pauldron.{side}.Tier3.Buckle", coll, GH.ladder_lock(44.0, 26.0, 3.0, 2.6, 2),
                          G.frame(pb_ + nb * 1.3, -d_up, nb), M["metal"])
-        rigid.append((ob, f"upperarm02.{side}"))
+        buckles.append((ob, f"Pauldron.{side}.Tier3.Strap", pb_, nb))     # mounted on its strap after posed_clear
         S["tier2_radius_mm"] = round(r2, 1)
 
         # ------------------------------------------------ pauldron tier 1: the cap, on the outside of the shoulder
         up = np.array([0.0, 0.0, 1.0])
-        c = G.unit(CAP_UP * up + d_up + CAP_FWD[side] * f_up)     # over the deltoid's top, on the outside
+        c = G.unit(CAP_UP[side] * up + d_up + CAP_FWD[side] * f_up)     # over the deltoid, on the outside
         e1 = G.unit(f_up - c * np.dot(f_up, c))    # across: toward the front
         e2 = G.unit(d_up - c * np.dot(d_up, c))    # down the arm
         qa, qb = math.radians(CAP_Q[0]), math.radians(CAP_Q[1])
         pw = math.radians(60.0)
         under_cap = G.Under(list(under_a.layers) + list(under_t.layers) + strap_layer +
                             [(G.objects_bvh([tier2]), 1.5 - CAP_PAD)])
-        cap = CapSurf(under_cap, gh, c, e1, e2, (-pw, pw), (qa - CAP_LINK - 0.05, qb + 0.05), smooth=CAP_SMOOTH)
+        qm, qh = 0.5 * (qa + qb), 0.5 * (qb - qa)
+
+        def cap_dome(p, q, pw_=math.radians(40.0)):
+            # round 10 (m31: "a domed shell"): CAP_DOME mm at the centre, 0 at the cap's outline
+            x, y = min(1.0, abs(p) / pw_), min(1.0, abs(q - qm) / qh)
+            return CAP_DOME * (1.0 - x * x) * (1.0 - y * y)
+        cap = CapSurf(under_cap, gh, c, e1, e2, (-pw, pw), (qa - 0.05, qb + 0.05), smooth=CAP_SMOOTH, dome=cap_dome)
+        S["cap_raw_mm"] = [round(float(x), 1) for x in np.nanpercentile(cap.raw, (0, 50, 100))]
         r_cap = float(np.nanmean(cap.F.R)) + CAP_PAD
 
         def cap_hw(q, r=r_cap):
@@ -489,7 +648,7 @@ def main(render=True):
         S["guard"] = {}
         for k, drng, arc, wall, bone, curve in GUARD:
             arc = GUARD_ARC_R.get(k, arc) if side == "R" else arc
-            ss = StraightSurf(under_fa, el, d_fa, dors, e1f, drng[0] - 4.0, drng[1] + 4.0)
+            ss = StraightSurf(under_fa, el, d_fa, dors, e1f, drng[0] - 4.0, drng[1] + 4.0, hug=True)
             half = math.radians(arc / 2.0) * ss.r_nom
             # lap over the plate below (built before) with a flared lip: the plate keeps base_off and only its
             # distal end rises, over 10 mm, to clear the lower plate's outer face, bead and 0.7 mm
@@ -520,7 +679,7 @@ def main(render=True):
                     return ss.point(uu / r, d, offf(d))
                 return f(u, w), numeric_normal(f, u, w, ss.dirv(u / r), h=0.02)
 
-            rib = k == "Main"
+            rib = k in ("Main", "Lower")
             tf = plate_t(wall, half, drng[0], drng[1], rib=rib, grooves=rib)
 
             def tfield(u, w, tf=tf, dmap=dmap, drng=drng, half=half, curve=curve):
@@ -551,7 +710,7 @@ def main(render=True):
         # the two straps: 25 mm webbing round the flexor side over the sleeve, below the elbow fold (the upper
         # one under the upper plate's edges, the lower one on the wrist band), each through a ladder-lock
         # riveted on the plate's edge
-        for k, dm in (("Main", GUARD_STRAP_D[0]), ("Wrist", GUARD_STRAP_D[1])):
+        for k, dm in (("Main", GUARD_STRAP_D[0]), ("Lower", GUARD_STRAP_D[1])):
             ss, offf, wall, half, drng = built[k]
             th_e = half / ss.r_nom
             ring = fa.surf(0.5 + SLEEVE_T + 0.3)
@@ -652,7 +811,10 @@ def main(render=True):
             eb = max(0.0, v + KNEE_HH) / KNEE_FACET[2]
             k = KNEE_K
             m = -k * math.log(math.exp(-es / k) + math.exp(-et / k) + math.exp(-eb / k) + math.exp(-1.0 / k))
-            return KNEE_DOME * max(0.0, m) + KNEE_FLAT * min(1.0, abs(u) / KNEE_HW) ** 2
+            # round 10: the patella dome on the central plate (a rounded rise, 0 where the facets begin)
+            pr = math.hypot(u / max(octagon_hw(v) - KNEE_FACET[0], 10.0), v / (KNEE_HH - 28.0))
+            pat = KNEE_PATELLA * max(0.0, 1.0 - pr * pr) ** 1.5
+            return KNEE_DOME * max(0.0, m) + pat + KNEE_FLAT * min(1.0, abs(u) / KNEE_HW) ** 2
 
         def kvs(off, domed=False):
             base_f = leg.surf(off, r0=r_k)
@@ -677,7 +839,7 @@ def main(render=True):
                     t += 1.6 * (1.0 - G.smoothstep(abs(u), 4.0, 8.0))  # the moulded centre ridge
                 # round 6: the frame's slots (the drawn dark holes): three a side, 18 x 5, 1.6 deep
                 if 3.5 < e < 10.0 and abs(u) > octagon_hw(v) - 11.0:
-                    for vk in (-42.0, -4.0, 34.0):
+                    for vk in (-40.0, -4.0, 32.0):
                         if abs(v - vk) < 9.0:
                             t -= 1.6 * (1.0 - G.smoothstep(abs(v - vk), 7.0, 9.0)) * G.smoothstep(e, 3.5, 5.0) * \
                                 (1.0 - G.smoothstep(e, 8.0, 10.0))
@@ -720,7 +882,7 @@ def main(render=True):
         ob = G.slab(f"Kneepad.{side}.Strap", coll, ring.surf(1.4), lambda v: (th0, 2 * math.pi - th0 - 0.30),
                     s_st - 19.0, s_st + 19.0, 2.0, M["black"], nu=30, nv=3, bevel_mm=0.5)
         soft.append((ob, None))
-        thl = -(th0 + 0.17)
+        thl = -(th0 + 0.42)          # round 10: on the strap's end (at -(th0 + 0.17) it hung in the gap past it: "floats")
         pl, nl = ring.surf(1.4 + 2.0 + 0.2)(thl, s_st)
         ob = G.hw_object(f"Kneepad.{side}.LadderLock", coll, GH.ladder_lock(50.0, 32.0, 4.0, 3.5, 2),
                          G.frame(pl + nl * 1.8, d_k, nl), M["metal"])
@@ -742,7 +904,36 @@ def main(render=True):
         G.rigid_bind(ob, rig, bone)
     for ob, collapse in soft:
         G.soft_bind(ob, body, rig, collapse=collapse)
+    # round 10 (G1 D1): the arm straps cleared of the posed sleeve (and the upper-arm strap of the posed tier-2 plate)
+    sleeve = [o for k in ("shirt", "gloves") if k in clothing for o in clothing[k].all_objects if o.type == "MESH"]
+    straps = [ob for ob, _c in soft if ".Strap" in ob.name and not ob.name.startswith("Kneepad.")]
+    t2 = [o for o in coll.all_objects if o.name.endswith(".Tier2.Plate")]
     out["mounted"] = {ob.name: G.mount_bind(ob, rig, body, pt, k=8) for ob, pt in mounts}
+    out["posed_clear"] = posed_clear([o for o in straps if ".Tier3." in o.name], rig, sleeve + t2, clear=0.8, log=G.say)
+    out["posed_clear"].update(posed_clear([o for o in straps if ".Tier3." not in o.name], rig, sleeve, clear=0.8,
+                                          log=G.say))
+    # and the forearm guard's shells and their foam (mounted, so after mount_bind): in the hero pose the left sleeve
+    # bunches at the wrist and stood 6-7 mm through the lower plate (round 9: through the wrist plate)
+    plates = [o for o in coll.all_objects if o.name.startswith("Guard.") and o.name.split(".")[2] in ("Main", "Lower")
+              and ".Strap" not in o.name]
+    out["posed_clear"].update(posed_clear(plates, rig, sleeve, clear=0.8, log=G.say))
+    # the upper-arm straps' ladder-locks follow their strap's push (left at the strap's rest place one went 3 mm into the
+    # posed sleeve): each moved along its outward direction by the push of the strap's outer face under it (+ 0.8 mm for
+    # the flat frame over the strap's curve), then mounted on the strap (its weights there), as the knee locks are
+    for bk, sname, p0, n0 in buckles:
+        st_ob = bpy.data.objects[sname]
+        Vs = np.empty(len(st_ob.data.vertices) * 3)
+        st_ob.data.vertices.foreach_get("co", Vs)
+        Vs = Vs.reshape(-1, 3)[len(st_ob.data.vertices) // 2:] * 1000.0           # its outer face, mm
+        k = int(np.argmin(np.linalg.norm(Vs - p0, axis=1)))
+        dz = max(0.0, float((Vs[k] - p0) @ n0) + 0.3) + 0.8                       # p0 was 0.3 over the outer face
+        if dz > 0.05:
+            Vb = np.empty(len(bk.data.vertices) * 3)
+            bk.data.vertices.foreach_get("co", Vb)
+            bk.data.vertices.foreach_set("co", (Vb.reshape(-1, 3) + n0 * dz * C.MM).ravel())
+            bk.data.update()
+        out.setdefault("buckle_lift_mm", {})[bk.name] = round(dz, 1)
+        out["mounted"][bk.name] = G.mount_bind(bk, rig, st_ob, p0 + n0 * dz, k=8)
     out["rigid"] = {ob.name: bone for ob, bone in rigid}
     out["soft"] = [ob.name for ob, _c in soft]
     G.say(json.dumps({k: v for k, v in out.items() if k in ("L", "R")}))

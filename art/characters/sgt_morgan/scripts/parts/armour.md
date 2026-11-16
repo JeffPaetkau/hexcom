@@ -388,3 +388,105 @@ shell at the butt pad); gloves-armour 20, 0.9 mm; trousers-armour 11, 0.6 mm.
 2. Knee caps: the facets and the stepped centre plate read weakly at hero distance; no D-slot or boss.
 3. The right forearm guard from the hero camera (pose foreshortening).
 4. The right cap's lower front corner notch; the bands on the upper arm (tier 2 strap, elbow straps) still add rings.
+
+## 13. Round 10 (2026-11-15): the broken strap, the look by texture, a long arm plate, two-plate guards, smaller caps
+
+Critics r9 (`notes/critic/soldier_r9/tally.md`, `G1_compare.md`): G1 D1 (blocking: the right elbow pad's upper strap in
+floating pieces), m2 / m25 / m45 / m48 (pale clean plastic), m8 / m20 (the pale upper-arm bands, the brightest marks on
+the figure, standing proud), m12 / m16 / m17 / m31 / m35 / m39 / D7 (pauldrons: ragged edges, the right one high and flat,
+the left wants a dome and a second outer-arm plate), m4 / m13 / m15 / m27 / D5 / D6 (guards: a cone with wrist rings, a
+flared drum), m14 / m25 / m37 / D4 / D21 (knee caps oversized, boxy, glossy).
+
+**D1, the strap in pieces: why.** The straps are rings fitted to the REST sleeve (`LimbSurf`, 0.6 mm over it) and bound by
+the body's weights. The round-9 sleeve has 27-29 mm of ease and simulated folds and deforms by its own weights, so in the
+hero pose its folds above the flexed right elbow came up through the strap in patches (clash test: `ElbowPad.R.Strap.Up`
+52 vertices, 5.4 mm inside the shirt). **Fix: `posed_clear()`** (armour.py). In the hero pose each strap's inner/outer
+vertex pairs are tested against the posed sleeve's outer face (for the upper-arm strap also the posed tier-2 plate); where
+the inner face is less than 0.8 mm outside, the pair is pushed out at rest along its own thickness by the shortfall, spread
+to its neighbours, at most 6 mm a vertex. A vertex needing more than 12 mm on the first pass lies in the elbow's crease
+(where the right strap's ends lie by design) and is left. Pushed (mm, final build): right elbow straps 6.0 / 6.0 (the cap),
+left 2.5; upper-arm straps 2.6 / 6.0. After mounting it also clears the guard shells: `Guard.L.Lower` and its foam 6.0 (the
+left sleeve bunches at the wrist), `Guard.R.Lower` 1.4. In clay (`zoom_elbowR_side`, scratch) the right strap is one
+continuous band.
+
+**The look (m2 and the rest): measured, then by texture.** `look_stats.py` over the whole armour mask (graded; crops
+torso_vest, arm_R, arm_L, legs_knees, boots_feet) gave a median ratio (reference / render) of 0.35 for round 9 (render
+#6a645e, Y 0.131, against the reference's #403c3a, Y 0.046); see the final numbers below. That mask misleads for the plates:
+it holds the black sleeves and straps too, and the drawn arms lie a little elsewhere, so under our mask the reference is
+largely dark shirt. A shell-only mask (scratch `shellmask.py` / `shellstats.py`: the objects carrying Armour.Mat.Shell or
+.Knee, graded render, eroded 2 px) gives the plates' own value, against §12's measured reference plates:
+
+| Crop | Round 9 plates, Y median (p10-p90) | Round 10 | Reference plates (§12) |
+|---|---|---|---|
+| arm_L | 0.210 (0.023-0.345) | 0.178 (0.021-0.275) | 0.198 / 0.228 / 0.110 (guard, tier 2, pauldron) |
+| arm_R | 0.240 (0.049-0.424) | 0.216 (0.057-0.358) | 0.320 (lit guard) |
+| legs_knees | 0.050 (0.019-0.159) | 0.071 (0.026-0.185) | 0.190 frame, 0.060 centre, 0.198 upper plate |
+| torso_vest | 0.225 (0.031-0.382) | 0.197 (0.030-0.328) | |
+
+So the round-9 plates were not too pale in value; their fault was uniformity: no texture-scale contrast, a glossy sheen,
+thin bright rims. A darker paint was tried first (`renders/look/r10_m1`, albedo #4f4c46): it matched the whole-mask median
+better (ratio 0.69) but put the plates at Y 0.12-0.14, near black beside the drawn mid-tone plates; rejected. Now
+(`ARMOUR_TAN`): paint #6a655c, roughness 0.50 (0.36), a fine grime mottle (14 mm, toward #2e2b27 at 0.65), R005's scratches
+at 0.9 on a 90 mm tile with the bright ones up to 2 x, worn rims over 4 mm to a tan-gold #b09c7c, chips within 4 mm of the
+edges at 5 % (0.4 % on the faces), grime 1.4 in the recesses. Knee caps (`Armour.Mat.Knee`): matte (0.62), the centre
+#746a5e grimed, the frame worn to #a08a68 and broken (0.35).
+
+**Upper arm (m8, m20, m31).** Tier 2 is a long outer-arm plate, s 78-228 x 112 mm with chamfered lower corners and two vent
+slots below the strap; its recessed panel is gone (the panel's worn rim drew a pale outline on the plate, "the pale square
+patch"; ramped over 5 mm it still did). The
+pale moulded bicep band (tier 3) is gone: a 38 mm coyote webbing strap (`Pauldron.*.Tier3.Strap`, `Armour.Mat.Band`,
+Webbing.Nylon.Coyote at #3d3329) runs round the arm 0.4 mm over the sleeve at s 148-186, across the plate's lower middle as
+drawn, lifted over the plate where it crosses it, soft-bound, with a flat 44 x 26 ladder-lock in front of the plate, moved with its strap's push and mounted
+on the strap (left on the skin it went 2.8-3.2 mm into the posed sleeve); the right strap leaves out the medial 100 deg
+(a full ring went 2.1 mm into the torso at the armpit, as round 9's tier-2 strap did). Round 6's
+elastic strap round mid tier 2 is gone (one ring fewer).
+
+**Pauldrons (m12, m16, m17, m31, m35, m39, D7).** The ragged top edges were not geometry: in clay (round 9's `zoom_paulL`,
+`zoom_paulR`) the edges are clean. In Cycles the thin bright worn band along them, broken by its noise, read as torn card; the
+broader, softer rim (4 mm, noise 0.3) replaces it. The caps are domed (`CAP_DOME` 9 mm at the centre over the fitted shoulder,
+0 at the outline; `CAP_SMOOTH` 4 -> 10, the dome carrying the curvature), and rays that start inside the arm are dropped. The
+right cap sits lower on the outer deltoid (`CAP_UP` R 1.3 -> 1.0, `CAP_FWD` R 0.30 -> 0.12). A cubic polynomial fit of the cap
+(tried first, for smooth edges) had to be raised 8-32 mm to clear the samples and stood off; dropped.
+
+**Forearm guards (m4, m13, m15, m27, D5, D6).** Two shingled dorsal shells instead of a main shell and a wrist plate: Main d
+96-186 (176 deg, right 172), Lower d 178-256 (160 deg) reaching the glove cuff; a three-plate version (tried) read as rings.
+`StraightSurf(hug=True)`: per angle the line is the upper hull of the clothed samples over the middle of its range (the
+least-area line above every sample), so a plate tapers with the forearm instead of keeping the least-squares slope raised
+over its fattest sample (the "air round the glove cuff"). Padding 9 -> 6.5 mm (sleeve 4 -> 2.5, foam 4 -> 3). Straps at d 128
+and 222. Grooves 1.2 -> 0.8 mm with soft walls (they drew pale worn flutes).
+
+**Knee caps (m14, m25, m37, D4, D21).** 156 x 184 -> 132 x 176 (`KNEE_HW` 66, `KNEE_HH` 88, octagon lo (32, 40), hi (44, 20));
+facets rising 18 mm (26), crisper (k 0.012); a 7 mm patella dome on the central plate (`KNEE_PATELLA`); side lift 16 -> 8;
+base 6 mm, margin 6. The knee ladder-locks sat in the gap past their strap's end ("floats" in the stand-off test since round
+9); now on the strap's end (`thl = -(th0 + 0.42)`).
+
+**Numbers, final build** (scratch in-memory assembly of the final caches with the other agent's carrier of 21:44, not a
+round; round 9's figures in brackets, same method on round 9's caches):
+- Whole armour mask (`look_stats.py`, graded, crops torso_vest, arm_R, arm_L, legs_knees, boots_feet; `renders/look/r10_base`
+  -> `r10_final`): median ratio 0.35 -> 0.42 (render #6a645e -> #685c53 against #403c3a); Y p90 0.347 -> 0.302 (reference
+  0.244); p10 0.010 -> 0.010 (0.006); r/g, b/g 1.13, 0.88 -> 1.29, 0.81 against 1.10, 0.94. The shell-only figures are in the
+  table above; the plates' hue is r/g 1.11-1.24, b/g 0.81-0.88 against the reference plates' 1.09-1.14 / 0.86-0.95: a little
+  warm, the left side's cool blue-grey weaker than drawn.
+- Clashes: armour in shirt 66 vertices, 2.6 mm (418, 6.7; the deepest now `Pauldron.R.Tier2.Foam`, hidden under its plate);
+  shirt in armour 31, 1.7 (42, 1.7); armour in carbine 47, 3.4 (95, 4.0); carbine in armour 72, 1.2 (107, 1.9); gloves in
+  armour 20, 0.9 (20, 0.9); armour in body none (none); trousers in armour none (11, 0.6).
+- Stand-off: `Guard.R.Lower.Foam` 10.5 mm, the foam under the main shell's lapping lip (round 9's `Guard.R.Wrist.Foam` 8.9,
+  the same design); `Kneepad.L.LadderLock` (6.4 in round 9) no longer flagged; nothing else.
+
+**Renders opened**: clay zooms in the hero pose from scratch in-memory assemblies (round 9's caches and each build of this
+round): `zoom_elbowR_side`, `zoom_paulL`, `zoom_paulR`, `zoom_armL`, `zoom_knees`, `turn_side_R` (G1's D1 box cropped:
+`d1_after.png`), `turn_front`; Cycles look-loop sheets (graded) `renders/look/r10_base`, `r10_m1`, `r10_m2`, `r10_m3`, `r10_d1`,
+`r10_final`, `r10_final2`: `sheet_arm_L`, `sheet_arm_R`, `sheet_legs_knees`, `sheet_torso_vest`. What they show: the right
+elbow's upper strap is one band; the left upper arm reads as the drawn stack (domed cap with emblem, long plate with the strobe,
+a dark strap across it); the plates carry grime, scratches and tan worn rims instead of an even pale grey; the knee caps are
+smaller matte shields with a tan frame; the forearm guards are two tapered shells.
+
+### Still wrong, for round 11
+1. The right forearm guard from the hero camera still reads as a broad cuff (seen end-on: the pose's foreshortening, §12).
+2. The plates are a little warm and the left side's cool blue-grey is weak; the grime reads as soft blotches, not the drawn
+   streaks and scuffs (a directional grime or scratch map would help); worn rims are uniform round every edge.
+3. The knee caps sit higher than the drawn ones (the accepted thigh length) and their sides are smooth; no D-slot or boss.
+4. The right pauldron shows a shallow crease where its field crosses the tier-2 plate's top edge (the cap's field takes the
+   plate as a step).
+5. `Guard.R.Lower.Foam` stands off 10.5 mm under the main shell's lip (hidden; designed). The right elbow pad's straps were
+   pushed the full 6 mm cap in places; the lower one shows as a thin arc in the crease from the side.

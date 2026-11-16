@@ -50,23 +50,38 @@ UPPER_OFF = 3.5                                  # round 3: the last -> upper ou
 PAD_OFF = 6.0                                    # the ankle padding's foam over the last above h 120 (spec 02 §3.2)
 TOE_ALLOW = 2.0                                  # the last carries the toe room (15 mm ahead of the standing socked toe);
 HEEL_ALLOW = 2.5                                 # these few mm let the ends round off (a slab of points is flat-backed)
-NOSE, HEEL_END = 40.0, 38.0                      # lengths of the rounded toe and heel ends (round 9: nose 44 -> 40,
+NOSE, HEEL_END = 52.0, 38.0                      # lengths of the rounded toe and heel ends (round 9: nose 44 -> 40,
                                                  # with a blunter, higher nose: NOSE_H, NOSE_EXP)
-NOSE_H, NOSE_EXP, NOSE_PLAN = 24.0, 0.42, 0.50   # round 9 (critics r8 m4, "sneaker": a low pointed wedge toe): the nose
+NOSE_H, NOSE_EXP, NOSE_PLAN = 24.0, 0.42, 0.80   # round 9 (critics r8 m4, "sneaker": a low pointed wedge toe): the nose
                                                  # section keeps NOSE_H mm of height at the very tip (was 12) and rounds
                                                  # with e ** NOSE_EXP in profile (0.5), e ** NOSE_PLAN in plan (0.6)
 TOE_PUFF = 6.0                                   # round 9: the toe box raised this much ahead of the ball (a Zephyr-class
                                                  # boot's high rounded toe box; spec 02 §3.1 internal 73 x 27 at the hallux)
 ARCH_H = 6.0                                     # round 9: the outsole's waist recessed this much between heel breast and
                                                  # forefoot (the drawn sole shows a heel block and a gap under the arch)
+SOCK_CLEAR = 4.2                                 # round 10: the upper's outer face this far off the skin at least
+                                                 # (sock 0.3 + its 2.2 outward Solidify + the upper's 1.6 inward)
+UPPER_W_MAX = 119.0                              # round 10: the upper's widest section (mm; was 128.6); 113 cut into the
+                                                 # 5th metatarsal head and robust_push left a lump there
+NOSE_RELAX = 16.0                                # round 10: the nose's sections may lie this much (x its share of the
+                                                 # nose) inside take 1's square toe box, so the toe rounds in plan
+TOE_ROUND, TOE_RELAX = 0.40, 12.0                 # round 10: the forefoot's sections round over above 45 % of their
+                                                 # height, up to 6 mm inside take 1's square toe-box corners
 SEC_N = 2.7                                      # superellipse exponent of the arches (2 = ellipse)
 TOE_SPRING = 15.0
 STACK_HEEL, STACK_BALL, STACK_TOE = 40.0, 21.0, 19.0   # floor -> midsole stripe top; the rand rises above it
-RAND = {"side": 13.0, "heel": 16.0, "toe": 26.0, "proud": 3.2, "lip": 1.4}   # round 9: a taller rand and a toe bumper
-                                                 # wrapping the toe's front (was 10 / 12 / 20, proud 2.5, lip 0.7)
-LUG, SIDEWALL, CUP = 5.0, 3.0, 9.0               # lug height, sole grown past the upper, outsole cup wall (round 9:
-                                                 # cup 6 -> 9, a deeper lug wall; the teeth wrap TOOTH_WRAP up it)
-TOOTH_WRAP, TOOTH_PROUD = 8.0, 2.6               # round 9: perimeter teeth wrap 8 mm up the sidewall, 2.6 proud (3, 1.4)
+RAND = {"side": 12.0, "heel": 16.0, "toe": 14.0, "proud": 2.0, "lip": 0.8, "toe_exp": 4.0}   # round 10: a low strip
+                                                 # (round 9: side 13, toe 26, proud 3.2, lip 1.4 with cos^10 at the toe)
+RUBBER_TOE = (60.0, 30.0, 1.8)                   # round 10 (D9, D10: a squared bumper wall): the rubber toe cap is an
+                                                 # overlay moulded on the toe box itself, RUBBER_TOE[0] mm back from the
+                                                 # tip, its top edge RUBBER_TOE[1] mm over the stripe at the tip curving
+                                                 # down into the rand along the sides, RUBBER_TOE[2] mm proud; the rand is
+                                                 # a low strip (round 9: a 26 mm wall with a lip, read as a slab)
+LUG, SIDEWALL, CUP = 5.0, 1.5, 9.0               # lug height, sole grown past the upper, outsole cup wall (round 9:
+                                                 # cup 6 -> 9, a deeper lug wall; the teeth wrap TOOTH_WRAP up it;
+                                                 # round 10: sidewall 3 -> 1.5, the sole 116-125 wide as a real one)
+TOOTH_WRAP, TOOTH_PROUD = 8.0, 1.4               # round 9: perimeter teeth wrap 8 mm up the sidewall (3); round 10: 1.4
+                                                 # proud (round 9: 2.6)
 SHAFT = [(74.0, (64.0, 50.0)), (122.0, (68.0, 52.0)), (RIM_Z, C.BOOT["shaft_rim_ab"])]   # rest z: (front-back, side)
 SHAFT_ZLO = -60.0                                # the shaft runs down into the sole (tapered), so no ledge
 CROWN_R = 9.0                                    # the soft crown's radius across the instep (mm)
@@ -74,7 +89,9 @@ K_UNION = 16.0                                   # smooth-union radius (mm) wher
 NOTCH = 6.0                                      # Achilles notch at the back of the rim
 COLLAR = {"tall": 22.0, "thick": 8.0}
 LACE_PITCH, LACE_TOP = 22.5, 5.0                 # eyelet pitch along the throat, top hook below the rim
-E1_H = 72.0                                      # round 6: the lowest eyelet's height (86 put E1 151 mm behind the toe and
+E1_DS = 12.0                                     # round 10: E1 no further forward than s_ball + 12 (about 64 mm behind
+                                                 # the toe tip; round 9: s_ball - 5, 80 behind)
+E1_H = 62.0                                      # round 6: the lowest eyelet's height (86 put E1 151 mm behind the toe and
                                                  # left a 90 mm bare vamp: the critics' galosh; the drawn E1 is ~137 behind)
                                                  # round 9: 79 -> 72 (with the throat line to the ball + 50): lower on the raised toe box (critics r8 m4);
                                                  # 64 with the line to the ball + 62 ran the stays and laces off the nose
@@ -82,11 +99,17 @@ QUARTER = (98.0, 14.0, 60.0)                     # round 6: the leather quarter'
                                                  # 60 mm toward the throat (a straight h 98 read as a hard collar seam)
 MUD = (92.0, 45.0, 1.0)                          # round 6: the leather mudguard's top edge, h 92 behind falling to 45 at the
                                                  # ball, standing 1.0 proud (the drawn boot's diagonal panel line)
+VAMP = (12.0, 0.95)                              # round 10: vamp_s(): s_ball - 12 at h 50, slanting back 0.95 mm per mm up
+SUEDE = {"albedo_hex": "#4a4642", "rough": 0.90, "rough_span": 0.08, "normal_strength": 0.12,
+         "polish__rough": 0.90, "polish__coat": 0.0, "sheen_mottle__rough": 0.02, "edge__amount": 0.3,
+         "dust__amount": 1.4}
+                                                 # round 10: the suede vamp and mudguard (Leather.Boot.FullGrain made
+                                                 # matte, its grain flattened, no polish): Boot.Mat.Suede
 TOECAP_LIFT = 1.6                                # round 6: the toe cap's step over the vamp (0.8 did not read in profile)
 GAP = (30.0, 44.0)                               # throat gap between the stays at E1 and at the top
 STAY_W, STAY_PROUD = 22.0, 2.4
 LACE_R = 2.0
-COLOURS = {"leather": "#201e1c", "cordura": "#1c1b1a", "collar": "#1b1b1c", "midsole": "#262a30",
+COLOURS = {"leather": "#201e1c", "cordura": "#1c1b1a", "suede": "#2a2826", "collar": "#1b1b1c", "midsole": "#262a30",
            "outsole": "#121212", "rubber": "#151515", "metal": "#3c3937", "lace": "#333129"}
 CLAY = {"Upper": (0.36, 0.36, 0.37), "Stays": (0.30, 0.30, 0.31), "Tongue": (0.33, 0.33, 0.34),
         "Collar": (0.30, 0.30, 0.31), "Rand": (0.22, 0.22, 0.23), "Sole": (0.25, 0.25, 0.26),
@@ -243,8 +266,10 @@ class Last:
                                                                 # round 9: higher and blunter (12, e ** 0.5)
             f = max(Hn - zk[0], 1.0) / max(H0 - zk[0], 1.0)
             zz = zk[0] + (zk - zk[0]) / f
-            WM[i] = np.maximum(WM_req[i], np.interp(zz, zk, WM[jn], right=0.0) * e ** NOSE_PLAN)
-            WL[i] = np.maximum(WL_req[i], np.interp(zz, zk, WL[jn], right=0.0) * e ** NOSE_PLAN)
+            # round 10: up to NOSE_RELAX mm inside take 1's last there (its toe box is a stretched sock, square in plan,
+            # whose corners ahead of the toes are empty: the nose kept them and the toe read as a square slab, D9, D10)
+            WM[i] = np.maximum(WM_req[i] - NOSE_RELAX * q, np.interp(zz, zk, WM[jn], right=0.0) * e ** NOSE_PLAN)
+            WL[i] = np.maximum(WL_req[i] - NOSE_RELAX * q, np.interp(zz, zk, WL[jn], right=0.0) * e ** NOSE_PLAN)
             if not have[i]:
                 tc[i] = tc[i_n]
         # the rounded heel: half-ellipse in plan
@@ -277,6 +302,28 @@ class Last:
         for i in range(len(st)):                          # never wider higher up
             EM[i] = np.minimum.accumulate(EM[i])
             EL[i] = np.minimum.accumulate(EL[i])
+        # round 10 (critics r9 m1, D9, D10: a galosh with a long flat wedge toe and a squared bumper; the sole 141-147
+        # wide against a real 116-125): (1) no station of the upper wider than UPPER_W_MAX (the cloud is take 1's last
+        # grown 3.5 mm, whose forefoot hull reached 128; the skin is held 2.5 mm inside by robust_push in main());
+        # (2) the forefoot sections round over to the crown above TOE_ROUND of their height (an elliptical shoulder,
+        # the toe box domed across instead of flat-topped and square-cornered), cutting at most TOE_RELAX mm into
+        # take 1's square toe-box corners
+        for i in range(len(st)):
+            wmax = EM[i, 0] + EL[i, 0]
+            if wmax > UPPER_W_MAX:
+                f = UPPER_W_MAX / wmax
+                EM[i] *= f
+                EL[i] *= f
+            k = smoothstep(ff.s_ball - 40.0, ff.s_ball + 5.0, st[i])
+            if k <= 0.0:
+                continue
+            zz = zk[0] + eta * (H[i] - zk[0])
+            rm = np.interp(zz, zk, WM_req[i]) - TOE_RELAX
+            rl = np.interp(zz, zk, WL_req[i]) - TOE_RELAX
+            x = np.clip((eta - TOE_ROUND) / (1.0 - TOE_ROUND), 0.0, 1.0)
+            ell = np.sqrt(np.maximum(1.0 - x * x, 0.0))
+            EM[i] = np.maximum(np.minimum(rm, EM[i]), (1 - k) * EM[i] + k * np.minimum(EM[i], EM[i, 0] * ell))
+            EL[i] = np.maximum(np.minimum(rl, EL[i]), (1 - k) * EL[i] + k * np.minimum(EL[i], EL[i, 0] * ell))
         # round 3: the smoothing along the foot and the never-wider rule carried the heel's full width to its very
         # back (a flat-backed box, the sole's heel square in plan): the rear HEEL_END mm are capped again to a
         # half-ellipse in plan, never inside what the last requires at that height fraction
@@ -707,6 +754,13 @@ def quarter_h(last, s):
     return QUARTER[0] + QUARTER[1] * smoothstep(s0, s0 + QUARTER[2], s)
 
 
+def vamp_s(ff, h):
+    """Round 10 (critics r9 m1: "stitched suede and textile panels over the vamp and quarters, with visible panel
+    seams"): the suede vamp's back edge at height h, a seam slanting back from the mudguard behind the ball up to the
+    lace stays (the Zephyr-class pattern: a suede vamp and toe, Cordura quarter panels behind it)."""
+    return ff.s_ball - VAMP[0] - VAMP[1] * (np.asarray(h, float) - 50.0)
+
+
 def mud_h(ff, s):
     """Round 6: the mudguard's top edge at s: high at the heel, falling to MUD[1] at the ball."""
     return MUD[0] + (MUD[1] - MUD[0]) * smoothstep(60.0, ff.s_ball - 10.0, s)
@@ -730,9 +784,18 @@ def decorate_upper(last, ff, P, F, throat, side="L"):
     dback = np.abs(t - last.rim_c[1])
     backstrap = smoothstep(11.0, 9.0, dback) * smoothstep(last.rim_c[0] - 20.0, last.rim_c[0] - 40.0, s)
     qh = quarter_h(last, s)
-    cordura = smoothstep(qh - 1.0, qh + 1.0, h) * (1 - backstrap) * (1 - counter)
     mud = smoothstep(mud_h(ff, s) + 1.0, mud_h(ff, s) - 1.0, h) * (1 - toecap) * (1 - counter)
-    lift = 0.8 * (1 - cordura) + TOECAP_LIFT * toecap + 0.8 * counter + MUD[2] * mud
+    # round 10: the suede vamp ahead of its slanting seam (vamp_s), the Cordura quarter panels behind it down to the
+    # mudguard (round 9: smooth leather all round below h 98, the critics' galosh)
+    vamp = smoothstep(-1.0, 1.0, s - vamp_s(ff, h)) * (1 - toecap) * (1 - mud)
+    quarter_tx = (1 - vamp) * (1 - mud) * (1 - toecap) * (1 - counter) * (1 - backstrap) * smoothstep(40.0, 50.0, h)
+    cordura = np.maximum(smoothstep(qh - 1.0, qh + 1.0, h) * (1 - backstrap) * (1 - counter), quarter_tx)
+    # round 10: the rubber toe cap (RUBBER_TOE), its top edge an arc falling from the tip into the rand
+    xb = np.maximum(last.s_tip - sc, 0.0)
+    hs = P[:, 2] - ff.z_top(s)
+    rt_top = RAND["side"] + (RUBBER_TOE[1] - RAND["side"]) * np.clip(1.0 - xb / RUBBER_TOE[0], 0.0, 1.0) ** 1.4
+    rubber = smoothstep(rt_top + 0.8, rt_top - 0.8, hs) * smoothstep(RUBBER_TOE[0] + 2.0, RUBBER_TOE[0] - 2.0, xb)
+    lift = 0.8 * (1 - cordura) + TOECAP_LIFT * toecap + 0.8 * counter + MUD[2] * mud + 0.2 * vamp + RUBBER_TOE[2] * rubber
     # the vamp's flex folds along the metatarsal heads' line (oblique: the 5th head lies behind the 1st)
     lm = FootFrame.LANDMARKS or C.base_json()["landmarks"]
     m1 = np.array(lm[f"mt1_{side}"]["rest_mm"])
@@ -749,8 +812,9 @@ def decorate_upper(last, ff, P, F, throat, side="L"):
     w_half = np.maximum(np.interp(s, last.st, last.w), 1.0)
     on_vamp = smoothstep(30.0, 46.0, h) * smoothstep(0.98, 0.7, np.abs(t - tc) / w_half) * (1 - toecap * 0.85)
     hc = np.zeros(len(P))
-    for d0, dep, wa, wl, ph, fade, f0 in _folds(rng, int(rng.integers(2, 4)), (9.0, 16.0), (1.5, 2.4),
-                                                int(rng.integers(5, 9))):
+    # round 10 (m1: "a flex crease across the vamp"): the dominant folds deeper (1.5-2.4 -> 2.6-3.6 mm), fewer fine ones
+    for d0, dep, wa, wl, ph, fade, f0 in _folds(rng, int(rng.integers(2, 4)), (9.0, 16.0), (2.6, 3.6),
+                                                int(rng.integers(3, 6))):
         x = d_line - d0 - wa * np.sin(u_line / wl + ph)
         uu = np.clip(u_line / max(width, 1.0), -0.3, 1.3)
         fd = np.ones(len(P)) if fade == 0 else (smoothstep(f0 + 0.35, f0, uu) if fade > 0 else smoothstep(1 - f0 - 0.35, 1 - f0, uu))
@@ -787,10 +851,13 @@ def decorate_upper(last, ff, P, F, throat, side="L"):
     disp = lift + hc + ab + pad + cw - tongue
     V = P + N * disp[:, None]
     fc = np.array([cordura[list(f)].mean() for f in F])
+    fs = np.array([np.maximum(vamp, mud)[list(f)].mean() for f in F])
+    fr = np.array([rubber[list(f)].mean() for f in F])
+    fmat = np.where(fr > 0.5, 3, np.where(fc > 0.5, 1, np.where(fs > 0.5, 2, 0)))   # 0 leather, 1 Cordura, 2 suede, 3 rubber
     crease = smoothstep(0.15, 0.6, -(hc + ab + cw))
-    return V, (fc > 0.5).astype(int), {"crease": crease, "zones": {"toecap": toecap, "counter": counter,
-                                                                   "cordura": cordura, "backstrap": backstrap,
-                                                                   "mudguard": mud}}
+    return V, fmat, {"crease": crease, "zones": {"toecap": toecap, "counter": counter, "cordura": cordura,
+                                                 "backstrap": backstrap, "mudguard": mud, "vamp": vamp,
+                                                 "rubber_toe": rubber}}
 
 
 class Throat:
@@ -805,7 +872,7 @@ class Throat:
         zz = np.arange(RIM_Z - 1.0, z_m, -2.0)
         Os = ff.xyz(np.interp(zz, last.zs, last.cs), np.interp(zz, last.zs, last.ct), zz)
         Q1, _ = last.cast(Os, np.repeat(ff.u[None], len(zz), 0))
-        sl = ff.s_ball + 50.0          # past E1, so the stays' lower ends and the bottom bar have line under them
+        sl = ff.s_ball + 62.0          # past E1, so the stays' lower ends and the bottom bar have line under them
                                        # (round 6: +45, was +30: the line ended above h 79 and capped E1 at h 93)
         low = ff.xyz(sl, np.interp(sl, last.st, last.tc), np.interp(sl, last.st, last.zb + last.h) + 6.0)
         mid = Q1[-1] + ff.u * 6.0
@@ -844,7 +911,9 @@ class Throat:
             lat = -lat
         self.T, self.lat = T, lat                                   # lat points lateral (+t)
         hq = ff.h_of(Q)
-        below = np.nonzero((hq <= E1_H) & (g > LACE_TOP + 6 * 15.0))[0]
+        # round 10: E1 where the throat comes down to E1_H or forward to s_ball + E1_DS, whichever comes first (the
+        # raised, rounded toe box keeps the crown above h 70 ahead of the ball, so a height alone ran E1 onto the nose)
+        below = np.nonzero(((hq <= E1_H) | (ff.s_of(Q) >= ff.s_ball + E1_DS)) & (g > LACE_TOP + 6 * 15.0))[0]
         i1 = int(below[0]) if len(below) else len(g) - 1      # E1: where the throat comes down to E1_H
         self.e1_L = float(min(g[i1], g[-1] - 20.0))
         self.pitch = (self.e1_L - LACE_TOP) / 6.0
@@ -1178,7 +1247,8 @@ def plan_normals(P):
 
 
 def rand_height(psi):
-    toe = np.clip(np.cos(psi), 0, 1) ** 10
+    toe = np.clip(np.cos(psi), 0, 1) ** RAND.get("toe_exp", 10.0)   # round 10: 10 -> 4, a toe cap wrapping the
+                                                                     # toe's front and sides with a curved top edge
     heel = np.clip(-np.cos(psi), 0, 1) ** 4
     return RAND["side"] + (RAND["toe"] - RAND["side"]) * toe + (RAND["heel"] - RAND["side"]) * heel
 
@@ -1567,6 +1637,14 @@ def build_stitches(S, S_stays, Vu, Fu, last, ff, throat, zones, coll, side):
             path = GS.seam_path(S, ordered(P, ff.s_of(P)), step=1.0)
             out.append(_rows_toward(GS, path, S, (1.6, 5.4), lambda p: -ff.h_of(p)[0], sd + 20 + int(sgn > 0)))
             info[f"mudguard_{'lat' if sgn > 0 else 'med'}_mm"] = round(float(path.s[-1]), 1)
+    # round 10: the suede vamp's back edge (vamp_s), two rows on the vamp, each side, from the mudguard up to the stays
+    for sgn in (1.0, -1.0):
+        keep = above & gapm & (h > mud_h(ff, s) + 1.0) & (h < 112.0) & (sc < last.s_tip - 84.0) & (sgn * (t - tc) > 0)
+        P = iso_points(Vu, Fu, s - vamp_s(ff, h), keep)
+        if len(P) > 8:
+            path = GS.seam_path(S, ordered(P, ff.h_of(P)), step=1.0)
+            out.append(_rows_toward(GS, path, S, (1.6, 5.4), lambda p: ff.s_of(p)[0], sd + 30 + int(sgn > 0)))
+            info[f"vamp_{'lat' if sgn > 0 else 'med'}_mm"] = round(float(path.s[-1]), 1)
     # the stays: one row 1.8 from the throat edge, two near the back edge
     Ls = np.linspace(2.0, throat.e1_L + 8.0, 40)
     for sgn in (1.0, -1.0):
@@ -1646,6 +1724,10 @@ def apply_library(built, side, ff, last, upper_info, say):
     att.data.foreach_set("value", polish.astype(np.float32))
     M.assign(up, "Leather.Boot.FullGrain", part="Boot", faces=np.nonzero(fm == 0)[0])
     M.assign(up, "Cordura.500D.Black", part="Boot", faces=np.nonzero(fm == 1)[0])
+    if (fm == 3).any():   # round 10: the rubber toe cap moulded on the toe box
+        M.assign(up, "Rubber.Rand.Black", part="Boot", faces=np.nonzero(fm == 3)[0])
+    if (fm == 2).any():   # round 10: the suede vamp and mudguard
+        M.assign(up, "Leather.Boot.FullGrain", part="Boot", faces=np.nonzero(fm == 2)[0], variant="Leather.Suede", **SUEDE)
     zones = {"toe": smoothstep(last.s_tip - 85.0, last.s_tip - 60.0, s) * smoothstep(85.0, 70.0, h),
              "vamp": smoothstep(last.s_tip - 140.0, last.s_tip - 110.0, s) * smoothstep(48.0, 62.0, h),
              "quarters": smoothstep(100.0, 90.0, h), "shaft_sides": smoothstep(90.0, 100.0, h),
@@ -1911,13 +1993,33 @@ def main():
             say(f"{side}: {int((d0 < 0).sum())} upper vertices read inside the skin: s {np.round(np.percentile(ff.s_of(bv), [0, 50, 100]), 0).tolist()}, "
                 f"t {np.round(np.percentile(ff.t_of(bv), [0, 50, 100]), 0).tolist()}, h {np.round(np.percentile(ff.h_of(bv), [0, 50, 100]), 0).tolist()}")
         Vu2 = robust_push(Vu2, bvh0, 2.5)
+        # round 10: the narrower upper (UPPER_W_MAX, NOSE_RELAX) came close enough to the forefoot that the sock (its
+        # Solidify grows outward to 2.2-3.0 mm) poked through the upper's inner face as a lump at the 5th metatarsal
+        # head: clear the skin by SOCK_CLEAR there, then smooth the pushed patch (Taubin, 3 rings round it) and push
+        # again, so the clearance shows as a soft swell, not a bump
+        V0 = Vu2.copy()
+        Vu2 = robust_push(Vu2, bvh0, SOCK_CLEAR)
+        moved = np.linalg.norm(Vu2 - V0, axis=1) > 0.05
+        if moved.any():
+            reg = moved.copy()
+            for _ in range(4):
+                g = reg.copy()
+                g[E2[:, 0]] |= reg[E2[:, 1]]
+                g[E2[:, 1]] |= reg[E2[:, 0]]
+                reg = g
+            Vu2 = C.taubin(Vu2, E2, iters=8, lam=0.5, mu=-0.53, pin=~reg)
+            Vu2 = robust_push(Vu2, bvh0, SOCK_CLEAR)
+        say(f"{side}: {int(moved.sum())} upper vertices cleared to {SOCK_CLEAR} mm of the skin (the sock), "
+            f"{int(reg.sum()) if moved.any() else 0} smoothed")
         # and the last inside the upper's inner face (the upper is 1.6 thick inward): clearance from the last
         lf = lasts[side]["faces"] if lasts[side]["frame"].s > 0 else [tuple(reversed(q)) for q in lasts[side]["faces"]]
         bl = C.bvh_from(lasts[side]["G_w"].reshape(-1, 3), lf)
         dl, _ = C.signed_dist(Vu2, bl)
         say(f"{side}: upper {len(Vu2)} verts; {int((d0 < 2.5).sum())} pushed out to 2.5 mm from the skin (min was "
             f"{d0.min():.1f}); upper outer face to the last: min {dl.min():.1f}, 1st percentile {np.percentile(dl, 1):.1f} mm")
-        up = C.mesh_object(f"Boot.{side}.Upper", Vu2, F2, coll, mats=[mats["leather"], mats["cordura"]], face_mat=fm2)
+        up = C.mesh_object(f"Boot.{side}.Upper", Vu2, F2, coll, mats=[mats["leather"], mats["cordura"], mats["suede"],
+                                                                                  mats["rubber"]],
+                           face_mat=fm2)
         crease = attrs["crease"][used]
         att = up.data.attributes.new("crease", "FLOAT", "POINT")
         att.data.foreach_set("value", crease.astype(np.float32))
@@ -1996,7 +2098,14 @@ def main():
         W = float(np.ptp(ff.t_of(outline)))
         s_line = ff.s_ball
         near = np.abs(ff.s_of(outline) - s_line) < 6.0
+        # round 10: the widest SECTION across the foot (10 mm stations); round 9's "outsole_width_max_mm" (141-147)
+        # was the outline's whole extent across the foot frame's axis, which the sole's own slant (a few degrees off
+        # the heel-toe landmark line) inflates by about 15-20 mm; kept under its old key for comparison
+        so_s, so_t = ff.s_of(outline), ff.t_of(outline)
+        sec = [float(np.ptp(so_t[np.abs(so_s - x) < 5.0])) for x in np.arange(so_s.min() + 5.0, so_s.max() - 5.0, 5.0)
+               if (np.abs(so_s - x) < 5.0).sum() >= 2]
         meas[side] = {"outsole_length_mm": round(L + 3.0, 1), "outsole_width_max_mm": round(W + 3.0, 1),
+                      "outsole_section_width_max_mm": round(max(sec) + 3.0, 1),
                       "outsole_width_at_ball_mm": round(float(np.ptp(ff.t_of(outline[near]))) + 3.0, 1) if near.any() else None,
                       "upper_length_mm": round(last.s_tip - last.s_back, 1),
                       "foot_length_mm": round(lasts[side]["measure"]["foot_length_mm"], 1), "s_ball_mm": round(ff.s_ball, 1),
