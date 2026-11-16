@@ -29,7 +29,8 @@ Mesh, per object of the assembled soldier, in the REST pose (Morgan.Rig pose_pos
     applied, the Armature modifier is kept (skinning);
   - the carbine's objects (children of Carbine.Root, which is bone-parented to wrist.R) are skinned 100 % to
     wrist.R instead, so the glTF carries one skinned mesh; it stays where the rest-pose right hand puts it;
-  - decimated (collapse) to a per-part triangle budget (PARTS below, times --budget);
+  - decimated (collapse) to a per-part triangle budget (PARTS below, times --budget), but no object of 300 or
+    more triangles below FLOOR_TRIS (so thin straps keep their shape; the part goes over budget by that much);
   - one new UV map per part (Smart UV Project over all the part's objects together), and the part's own
     materials baked through it with Cycles into three textures: base colour, roughness and metallic
     (each BSDF in each node tree is swapped for an Emission of the input in question and baked as EMIT, so
@@ -90,6 +91,8 @@ PARTS = {
     "Belt": (["Part.Belt"], 1024, 8000),
     "Carbine": (["Part.Carbine"], 1024, 9000),
 }
+# No object of 300 or more triangles is decimated below this (straps, ladder locks, foam): see decimate().
+FLOOR_TRIS = 150
 DROP_PREFIX = ("Scene.", "Foot.", "Sock.", "Body.Eyebrows", "Body.Eyelashes")
 STRIP = {"SUBSURF", "SOLIDIFY", "BEVEL", "WEIGHTED_NORMAL", "NODES"}
 
@@ -258,7 +261,9 @@ def decimate(groups, budget):
                     continue
                 m = o.modifiers.new("Decimate", "DECIMATE")
                 m.decimate_type = "COLLAPSE"
-                m.ratio = ratio
+                # One ratio for all crushed a 492-triangle kneepad strap to 23 triangles in round 9, a band
+                # that then fell inside the trousers; small objects keep FLOOR_TRIS, the part goes over budget.
+                m.ratio = min(1.0, max(ratio, FLOOR_TRIS / tris(o)))
                 m.use_collapse_triangulate = True
                 with override([o], o):
                     bpy.ops.object.modifier_apply(modifier=m.name)

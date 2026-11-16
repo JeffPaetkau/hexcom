@@ -10,8 +10,13 @@ the Godot humanoid bone map and LODs.
 
 ```bash
 source cache/env.sh
-"$SGT_BLENDER" -b --python scripts/export_godot.py -- --stage all --src cache/assembled_snapshot_godot.blend
+"$SGT_BLENDER" -b --python scripts/export_godot.py -- --stage all --src cache/assembled_snapshot_godot_r9.blend
 ```
+
+Then, from `game/`: delete the old extracted textures (`characters/morgan/morgan_Morgan*.png` and their `.import`
+files, gitignored) so nothing stale survives, `dotnet build Hexcom.Game.csproj`, `"$GODOT" --headless --path .
+--import` (it reports "Unrecognized UID" once for each deleted texture; harmless), then capture (README). The
+import re-creates `.uid` files beside some committed scripts and shaders; they are not committed, so delete them.
 
 `--src` defaults to `cache/assembled.blend`; give a copy when other agents are rebuilding (the first
 look was made from `cache/assembled_snapshot_godot.blend`, the 14:14 build of 2026-11-15). Keep the
@@ -33,9 +38,13 @@ RTX 3050, almost all of it Cycles bakes) writes `cache/godot/morgan_mesh.blend` 
 - **Carbine:** its objects (children of Carbine.Root, bone-parented to wrist.R) are skinned 100 % to
   wrist.R. In the rest pose and in the walk it stays where the hero pose's right-hand grip puts it,
   so he carries it by the pistol grip, muzzle down, swinging with the arm.
-- **Decimation** (collapse) to a budget per part: 103,805 triangles in all (body 16.0k, hair 3.0k,
-  trousers 12.0k, shirt 9.0k, boots 10.6k from 329k, gloves 6.0k, carrier 14.3k, armour 10.5k from
-  196k, belt 9.6k, carbine 12.8k). The boots and armour lose the most and it shows close up.
+- **Decimation** (collapse) to a budget per part, one ratio per part, but no object of 300 or more triangles
+  below `FLOOR_TRIS` (150; since round 9: one ratio took the 492-triangle kneepad straps to 23 triangles, and
+  the crushed band fell inside the roomier round-9 trousers, a jagged ledge behind each knee; the elbow-pad
+  and forearm-guard straps went the same way). Round 9: 111,582 triangles in all (body 16.0k, hair 3.0k,
+  trousers 12.0k from 64.6k, shirt 9.0k, boots 11.6k from 329k, gloves 8.6k, carrier 14.5k, armour 14.3k
+  from 207k, belt 9.8k, carbine 12.9k); the floor costs about 6k over the budgets. The boots and armour
+  lose the most and it shows close up.
 - **Materials:** each part gets one new UV map (Smart UV Project over all its objects together)
   and its own node trees baked through it with Cycles: every BSDF (also inside node groups) is
   swapped for an Emission of its Base Color, Roughness or Metallic input and baked as EMIT, so the
@@ -109,4 +118,47 @@ loop).
 - The turns are 1.4 m arcs walked with the straight cycle; his feet slide a little through them.
   Walk to idle is a 0.35 s crossfade with no stopping step, so he glides to a halt.
 - The skeleton is exported as MPFB's 163 bones with their own names; no Godot humanoid bone map yet.
-- The current .glb is round 8 (`cache/assembled_snapshot_godot_r8.blend`, commit 8a905e9: head round 4, round 7's pose, round 8's materials), 103,828 triangles; the earlier captures (no suffix) are the 14:14 build, the `_r8` ones this one.
+- Round 8's .glb was `cache/assembled_snapshot_godot_r8.blend` (commit 8a905e9: head round 4, round 7's pose, round 8's materials), 103,828 triangles; the earlier captures (no suffix) are the 14:14 build, the `_r8` ones that one.
+
+## Round 9 (2026-11-15, evening)
+
+The current .glb is round 9: `cache/assembled_snapshot_godot_r9.blend`, a copy of the 18:48 `cache/assembled.blend`
+(commits ae0ea44 to 04d9736: the hard kit, the cloth-simulated trousers and upper sleeves, the carrier's bulk),
+111,582 triangles, 28.4 MB. The trousers and shirt need nothing new from the exporter: the cloth solve is baked
+into their meshes at rest and they are bound by weights (Armature, Solidify, Subdivision, as before). Walk:
+planted-foot speed 1.282 m/s, slide worst 4.9 cm, mean 3.9 cm (round 8: 4.8 and 3.3; round 9's boots, from which the soles' contact points are read, changed).
+The export's 12 glTF warnings are round 8's (two meshes "not valid", more than four joint influences, extra image
+nodes).
+
+Captures in `renders/godot/`, all `_r9.png`: `rest_front`, `rest_three` (rest pose), `hero_three`, `hero_close`
+(hero pose), `front`, `walk_side_a`, `walk_side_b`, `feet_side_a`..`e`, `feet_front`, `feet_front_b` (walk),
+`feet_rest`, `feet_hero`, `behind`. `--at` is not frame-exact (two runs at `--at 9.2` landed about 0.15 s apart in
+the cycle), so name a walk capture by what it shows, not by its time.
+
+What was checked beyond the pictures (Workbench renders of `cache/godot/morgan_anim.blend` with each part a flat
+colour, the body red, from four sides at walk frames 4, 12 and 28):
+- **The knees do not come through the trousers**: no skin anywhere on the legs in any walk frame, front, side or
+  back, including the swing leg at full flexion (`feet_side_d`). The cloth folds at the back of the bent knee
+  by skinning alone and looks acceptable at game distance. A nearest-surface count reports body vertices
+  "outside" the trousers at the crotch and seat (up to 5 cm), but the renders show none: the test is fooled
+  where the gusset bridges the legs.
+- **Fixed in the exporter: the kneepad straps.** With one decimation ratio for the armour (0.048) each
+  492-triangle kneepad strap became 23 triangles, a crumpled band that dropped inside the roomier round-9
+  trousers and showed as a jagged ledge behind each knee, at rest too. The floor (above) keeps them at 150;
+  they now wrap the leg cleanly, standing and walking. The elbow-pad and forearm-guard straps had the same
+  treatment and are fixed the same way.
+
+What is wrong, and whose it is:
+- **The blousing (trousers.py).** Over the boot collars the stacked hem reads in the game as a ragged crown of
+  thin, spiky flaps rather than a soft roll, worst from the side (`feet_side_b`, `feet_side_e`). The flaps are in
+  the part's own cloth-solve mesh (`Trousers.Shell` at rest, without modifiers, has them); in Blender the
+  Solidify and Subdivision modifiers round them off, and the export, which drops both, shows them as they are.
+  Not an exporter fault; trousers.md section 9 already plans to free the cuff ring after the push.
+- **Skin at both shoulder tops** (the shirt and body near the collar; `hero_close`, red in the Workbench front
+  view at rest and in the walk): as in round 8, now on both sides; decimation of `Shirt.Shell` (20.8k to 5.7k)
+  against the body's 16k. Exporter territory (a later fix: shrink the body under the shirt, or delete the covered
+  body faces before decimation).
+- The belt's thigh-rig straps (5184 triangles each, ratio 0.18) come out lumpy in the Workbench views; at game
+  distance they read as webbing. The boots (329k to 11.6k) are still faceted close up.
+- Everything else in the round-2 list above still stands (carbine in the rest pose, the crossfade into the hero
+  pose, the idle's bowed head, no normal maps, the turns).
