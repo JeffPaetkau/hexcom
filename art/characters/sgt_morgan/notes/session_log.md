@@ -3,6 +3,39 @@
 Newest first. One entry per working session: what was done, what is next, anything a fresh
 session must know. Take 1's log is `archive/v1/notes/session_log.md`.
 
+## 2026-11-15 (late) — round 10, first pair; paused at 22:30 for the night
+
+- **ChatGPT as a fourth critic (R006, round 9).** Overall 4, 22 defects. It caught a broken elbow strap (D1)
+  that the three Claude critics missed. Recorded in `notes/critic/soldier_r9/G1_compare.md`.
+- **Soft gear (52be96e, 3accada).**
+  - Carrier and pouches rebuilt as Cordura over plates and magazines (new `scripts/parts/softgear.py`).
+  - Front buckles and admin panel; shoulder pads rest on the shirt and land on the rear bag; the belt is fitted
+    per section.
+  - Outer-thigh leg rig; radio on the rear bag; tan antenna.
+  - A hood over the holstered pistol, on a compact frame (belt.md §14, under Decision 2).
+- **Armour and boots (d1ac212).**
+  - Straps cleared from the posed sleeve (D1 fixed); worn, grimy plates; upper-arm plates on webbing.
+  - Tapered two-plate forearm guards; smaller faceted knee caps.
+  - Boots with a toe cap, a suede vamp, panels and a 123 mm sole.
+- **Round 10 rendered** (`renders/round_10/`, packet sha 4e199da4).
+  - I looked at the hero frame myself. The armour's new grime reads as big, soft, pale camouflage blotches (a
+    regression: the plates look like fabric pads), and the right boot still reads smooth at hero scale.
+  - Critic C1 was running when Jeff paused; C2 and C3 have not run.
+  - R007 (ChatGPT's review of round 10) is `taken`, but ChatGPT ran out of tokens.
+
+**Resume.**
+1. If `renders/round_10/critic/results/C1.json` exists, run C2 and then C3; otherwise start with C1. Tally,
+   copy to `notes/critic/soldier_r10/`, commit.
+2. R007 when ChatGPT is back.
+3. Round 10's second pair:
+   - Trousers and shirt: seat, shin folds, base colour 1.4 x, even camo, hems out of the boots, a soft roll in
+     place of the spiky blousing.
+   - The hold and the head: the left hand under the handguard, the head turned further, the stock against the
+     carrier, face skin and hair.
+   - Armour's grime as scratches, streaks and edge wear rather than blotches, and the boots' panels lighter so
+     they read.
+4. Then the Godot re-export.
+
 ## 2026-11-15 (evening) — round 9: cloth and mass, the hard kit
 
 Two lanes in parallel, each committed on its own:
