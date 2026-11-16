@@ -78,7 +78,11 @@ HOLSTER = (54.0, 42.0, 182.0)                    # along the belt, out, tall (Sa
                                                  # slimmer (60 x 50 x 190) and its back conformed to the hip (critics r8
                                                  # m10, m32: it jutted off the rear hip)
 P9_SLIDE = (34.0, 30.0, 196.0)                   # P226: slide length 196, height about 34, width 30
-P9_GRIP = (105.0, 32.0, 48.0)                    # grip length, width, depth
+P9_GRIP = (86.0, 32.0, 48.0)                     # grip length, width, depth; round 10b: a compact frame (P229 class),
+                                                 # its rearward run 86 (105), so the hooded grip ends near the buttock
+HOOD_WALL, HOOD_IN = 3.0, 0.6                    # round 10b: the hood's moulded wall over the grip and slide; on the side
+                                                 # toward the body only this much (it lies close to the hip)
+HOOD_DOWN = 34.0                                 # round 10b: the hood blends down the holster's top this far
 P9_RAKE = 8.0                                    # round 10: the grip's rise above horizontal (round 6-9: 14)
 GRIP_CLEAR = 4.0                                 # round 10: the grip's end this far off the hip (its side face)
 HOLSTER_DROP = 32.0                              # round 10: the holster hangs this much lower (a mid-ride drop, as a
@@ -270,6 +274,46 @@ def conform_back(ob, M, size, bvh, gap, reach=22.0):
         v.co = p / 1000.0
     me.update()
     return moved
+
+
+def hood_shell(name, coll, Mh, Mg, Ms, mat):
+    """Round 10b: the holster's hood: the convex hull of the grip box (grown HOOD_WALL, HOOD_IN on the body's side), the
+    slide's rear end (grown HOOD_WALL) and the holster's rim HOOD_DOWN below its mouth (grown HOOD_WALL), made with
+    bmesh's convex hull and rounded by a Bevel."""
+    import bmesh
+    pts = []
+
+    def corners(M, size, grow_out, grow_in, z_lo=None, z_hi=None):
+        xa, ya, za, c = M[:3, 0], M[:3, 1], M[:3, 2], M[:3, 3]
+        out = []
+        for i in (-1, 1):
+            for j in (-1, 1):
+                for k in (-1, 1):
+                    gy = grow_out if j > 0 else grow_in
+                    hz = size[2] / 2.0
+                    zz = (z_hi if k > 0 else z_lo) if z_lo is not None else k * (hz + HOOD_WALL)
+                    out.append(c + xa * i * (size[0] / 2.0 + HOOD_WALL) + ya * j * (size[1] / 2.0 + gy) + za * zz)
+        return out
+    # the grip, in its own frame (x along it, y outward, z across)
+    pts += corners(Mg, P9_GRIP, HOOD_WALL, HOOD_IN)
+    # the slide's rear end above the mouth (x along the belt, y outward, z up)
+    hz = P9_SLIDE[2] / 2.0
+    pts += corners(Ms, P9_SLIDE, HOOD_WALL, HOOD_IN, z_lo=hz - 30.0, z_hi=hz + HOOD_WALL)
+    # the holster's rim, HOOD_DOWN below its mouth
+    pts += corners(Mh, HOLSTER, 0.8, -0.5, z_lo=HOLSTER[2] / 2.0 - HOOD_DOWN, z_hi=HOLSTER[2] / 2.0)
+    me_pts = np.array(pts)
+    ob = C.mesh_object(name, me_pts, [], coll, mat=mat)
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.convex_hull(bm, input=bm.verts[:], use_existing_faces=False)
+    loose = [v for v in bm.verts if not v.link_faces]
+    if loose:
+        bmesh.ops.delete(bm, geom=loose, context="VERTS")
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(ob.data)
+    bm.free()
+    ob.data.update()
+    return G._finish(ob, bevel_mm=5.0, segments=3, angle=50.0)
 
 
 def belt_frame():
@@ -608,9 +652,16 @@ def main(render=True):
     # round 6: bound by weights like the belt and the trousers under it (rigid on pelvis.R, round 1-5, it stayed while
     # the hip under it followed the turned-out thigh; mounted on the belt, the first try, its lower half still met
     # the hip or left it): the kydex bends a little over the hip in the pose, hidden at the rear
+    # round 10b (coordinator, after round 10's m5 fix: "an L with the grip block sticking out"): a Safariland ALS/SLS
+    # class hood, moulded in the holster's polymer, over the slide's rear and the whole grip, its underside sloping from
+    # the grip's end down onto the holster's rear face; the side toward the body only HOOD_IN off the grip, so the hood
+    # lies close to the hip. One convex moulding: the side view shows holster and hood as one shape.
+    hood = hood_shell("Belt.Holster.Hood", coll, Mh, Mg, Ms, M["holster"])
     soft.append(hol)
     soft.append(p9)
+    soft.append(hood)
     out["holster"] = {"theta_deg": HOLSTER_THETA, "centre": [round(float(v)) for v in Mh[:3, 3]], "bind": "weights",
+                      "hood": "convex moulding over the slide's rear and the grip (round 10b)",
                       "grip_turn_deg": float(turn), "grip_tip_gap_mm": None if best[1] is None else round(float(best[1]), 1)}
 
     # ---------------------------------------------------------------- round 6: the right front hip pouch on the belt

@@ -76,7 +76,8 @@ POUCH_X = (-20.0, 46.0, 112.0)          # three, as drawn; the carbine stock lie
 RADIO_POUCH = (70.0, 52.0, 220.0)        # Fight Light class pouch for a PRC-152 class radio (66 x 38 x 165 body,
                                          # 70 wide for its 2.6 in width; round 1-9: 76 x 57 x 229)
 ANTENNA = (100.0, 34.0, 12.0)            # round 10 (m42, zoom_carrier13_antenna_x14): tan tube, yellow end, flat black cap
-ANTENNA_LEAN = 14.0                      # deg out toward his left (the drawn antenna rises outside the strap)
+ANTENNA_LEAN = 20.0                      # deg out toward his left (the drawn antenna rises outside the strap); round 10b:
+                                         # 14 -> 20 with the pouch 18 mm further in
 RADIO_THETA = 128.0                      # round 1-9: deg round the torso (unused since round 10)
 PISTOL_POUCH = (100.0, 38.0, 105.0)      # double pistol-magazine polymer carrier
 UTIL_POUCH = (50.0, 30.0, 70.0)
@@ -89,14 +90,17 @@ PALS_W, PALS_T, PALS_COL, PALS_PITCH = 25.4, 1.3, 38.1, 50.8     # MIL-spec PALS
 BIND_R = 7.0                             # bound edge: 25 mm tape folded over the 14 mm margin
 ROOT_X = 105.0                           # front strap roots reach the bag at |x| (the panel's ends)
 REAR_PALS = (5, 6)                       # round 10: rows x cells on the rear bag
-RADIO_X = 74.0                           # round 10: the radio pouch on the rear bag's PALS at x (his left), top 40 below the
-RADIO_TOP_DROP = 40.0                    # rear bag's top (m44: it hung off the bag's edge at 128 deg, on nothing)
+RADIO_X = 56.0                           # round 10: the radio pouch on the rear bag's PALS at x (his left), top 55 below the
+RADIO_TOP_DROP = 55.0                    # rear bag's top (m44: it hung off the bag's edge at 128 deg, on nothing); round 10b:
+                                         # x 74 -> 56 and 40 -> 55 below, clear of the converged strap end (PAD_REAR_IN)
 LOCK = (52.0, 44.0, 4.0, 6.0)            # 38 mm ladder-lock: width, length, bar, thickness (spec 13 §3.6)
 CAM = (56.0, 58.0, 5.0, 7.0)             # round 10: the drawn strap adjuster, a broad metal-framed buckle (zoom_vest_strap_left)
 KEEPERS = 5                              # round 10: webbing loops across the strap run below it
 PAD_CLEAR = 2.2                          # round 10: the pad's underside over the shirt (round 2-9: 3; it is loaded)
 PAD_REAR_ON = 32.0                       # round 10: the pad runs this far down onto the rear bag's face
+PAD_END_REAR = 60.0                      # round 10b: at the rear end, over the bag, it thins to 25 % over 60 mm
 PAD_END = 36.0                           # round 10: the padding thins to 40 % over its last 36 mm at each end
+PAD_REAR_IN = 30.0                       # round 10b: the pad's rear run converges this far toward the centre (x 140 -> 110)
 PAD_SLOPE_K = 15                         # round 10: stations of the smoothing of the pad's cross-slope (round 2-9: 9)
 
 COL = {
@@ -378,17 +382,19 @@ def ladder_lock(name, coll, origin, across, normal, mat, dims=None):
     return flat(ob, mat)
 
 
-def strap_profile(under, x, sgn, c, phis, width, clear=3.0, flat_back_z=None):
+def strap_profile(under, x, sgn, c, phis, width, clear=3.0, flat_back_z=None, shift=None):
     """The pad's underside over the shoulder in the plane x: for each station angle phi (in the y-z plane round
     c, 0 = straight up, + toward the back) the surface under the pad's whole width is sampled; the pad's
     cross-section tilts to the surface's slope across it (least squares, smoothed along the strap) and rides
-    on the highest sample. Returns centre points, pad normals and the slope per station."""
+    on the highest sample. Returns centre points, pad normals and the slope per station. shift(phi) (round 10b): an
+    offset in x per station (the rear run converging inward onto the bag)."""
     dxs = np.linspace(-width / 2.0, width / 2.0, 7)
     R = np.full((len(phis), len(dxs)), np.nan)
+    sh = np.array([shift(ph) if shift is not None else 0.0 for ph in phis])
     for k, ph in enumerate(phis):
         dv = np.array([0.0, math.sin(ph), math.cos(ph)])
         for j, dx in enumerate(dxs):
-            cc = c + np.array([sgn * dx, 0.0, 0.0])
+            cc = c + np.array([sgn * dx + sh[k], 0.0, 0.0])
             p, _n = under.hit(cc + dv * 350.0, -dv, 350.0)
             if p is not None:
                 R[k, j] = float(np.dot(p - cc, dv))
@@ -416,9 +422,9 @@ def strap_profile(under, x, sgn, c, phis, width, clear=3.0, flat_back_z=None):
     rh = np.maximum(rs, r0)
     pts, nrm = [], []
     xa = np.array([sgn, 0.0, 0.0])
-    for ph, r, b in zip(phis, rh, slope):
+    for ph, r, b, s_ in zip(phis, rh, slope, sh):
         dv = np.array([0.0, math.sin(ph), math.cos(ph)])
-        pts.append(c + dv * r)
+        pts.append(c + dv * r + np.array([s_, 0.0, 0.0]))
         nrm.append(G.unit(dv - b * xa))
     return np.array(pts), np.array(nrm), slope
 
@@ -748,7 +754,15 @@ def main(render=True):
         # air 15 mm above the bag and handing over to a root that ramped out to the bag's face over a gap
         under_pad = G.Under([(G.objects_bvh([bag_r, pals_r]), 0.0)] + under_t.layers)
         ztop_r = zt_r - max(0.0, abs(x) - (BAG_W / 2 - CORNER_CLIP))
-        pts, nrm, slope = strap_profile(under_pad, x, sgn, c, phis, PAD_W, clear=PAD_CLEAR, flat_back_z=ztop_r + 30.0)
+        # round 10b (coordinator: "the rear ends read as angled blocks"): at x +-140 the pad's outer 30 mm hung past the rear
+        # bag's side edge (half width 142) over its clipped corner; the rear run now converges PAD_REAR_IN toward the
+        # centre as it goes down the back, so the pad lands inside the bag's width, as a JPC's strap meets the bag's top
+        def shift(ph, sgn=sgn):
+            return -sgn * PAD_REAR_IN * G.smoothstep(math.degrees(ph), 15.0, 75.0)
+        x_r = x - sgn * PAD_REAR_IN
+        ztop_r = zt_r - max(0.0, abs(x_r) - (BAG_W / 2 - CORNER_CLIP))
+        pts, nrm, slope = strap_profile(under_pad, x, sgn, c, phis, PAD_W, clear=PAD_CLEAR, flat_back_z=ztop_r + 30.0,
+                                        shift=shift)
         # the pad: from 45 mm above the front bag's top (room for the adjuster) over to PAD_REAR_ON down the rear bag's face
         keep = (((pts[:, 1] < c[1]) & (pts[:, 2] > zt_f + 45.0)) |
                 ((pts[:, 1] >= c[1]) & (pts[:, 2] > ztop_r - PAD_REAR_ON)))
@@ -757,7 +771,9 @@ def main(render=True):
         arc, an = pts[idx], nrm[idx]
         sarc = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(arc, axis=0), axis=1))])
         # the padding thins out over its last PAD_END mm at both ends (the foam's sewn-down ends), no square block end
-        thick = np.array([PAD_T * (0.4 + 0.6 * G.smoothstep(min(s, sarc[-1] - s), 0.0, PAD_END)) for s in sarc])
+        thick = np.array([PAD_T * (0.4 + 0.6 * G.smoothstep(s, 0.0, PAD_END)) *
+                          (0.25 + 0.75 * G.smoothstep(sarc[-1] - s, 0.0, PAD_END_REAR)) / 1.0 for s in sarc])
+        thick = np.maximum(thick, 3.0)
         pad = split_across(taper_strip(f"Carrier.Strap.{side}.Pad", coll, arc, an, PAD_W, thick, M["pad"],
                                        bevel_mm=PAD_BEVEL))
         # the 38 mm webbing sewn down the pad's centre
@@ -819,7 +835,7 @@ def main(render=True):
         ze = float(arc[-1][2])
         rr = [arc[-1] - an[-1] * 0.4]
         for z in np.linspace(ze - 6.0, ze - 50.0, 6):
-            rr.append(rear.point(x, z, tf_r(x, z) + 0.6)[0])
+            rr.append(rear.point(x_r, z, tf_r(x_r, z) + 0.6)[0])
         rr = np.array(rr)
         rrn = [an[-1]] + [rear.point(p[0], min(p[2], ztop_r), 0.0)[1] for p in rr[1:]]
         G.strip(f"Carrier.Strap.{side}.RearRoot", coll, rr, rrn, ROOT_W, ROOT_T, M["webbing"], bevel_mm=0.5)

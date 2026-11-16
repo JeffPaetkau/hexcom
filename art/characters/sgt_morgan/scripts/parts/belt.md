@@ -322,3 +322,37 @@ Renders opened:
    cells' drawn tan accents are not built.
 3. The cord tails hang free (flagged).
 4. The battle belt still has no PALS, binding or inner/outer split.
+
+## 14. Round 10b (2026-11-15): the holster's hood
+
+**Decision, under PLAN.md Decision 2** ("the P9 holster stays hidden at the right rear hip"): the holster is a hooded
+duty holster, Safariland ALS/SLS class, and the P9 is a compact frame (P229 class).
+- Why: in the side views the holstered pistol's grip read as an L, a block sticking rearward off the hip (round 9 m5,
+  still so after round 10).
+- The hood is moulded in the holster's polymer (`Belt.Holster.Hood`, `Belt.Mat.Holster`). It covers the slide's rear and
+  the whole grip, its top and its rear.
+- It lies close to the body: on the hip's side it is only 0.6 mm (`HOOD_IN`) off the grip, which round 10 already turned
+  toward the hip.
+- Its underside slopes from the grip's end down onto the holster's rear face, 34 mm below the mouth (`HOOD_DOWN`).
+- Holster and hood read as one shape.
+- The grip's rearward run is shortened, 105 -> 86 mm (`P9_GRIP`), rather than raising the turn search's 30 deg limit. With
+  it the hood ends at the buttock's line in the right side view instead of passing it.
+
+Build: `hood_shell()` is the convex hull (bmesh) of three point sets, rounded by a 5 mm Bevel and bound by weights like
+the holster:
+- the grip box, grown 3 mm (`HOOD_WALL`), 0.6 on the body's side;
+- the slide's last 30 mm, grown the same;
+- the holster's rim from the mouth to 34 below it.
+
+Checks (in-memory assembly of 21:54, belt cache 21:47, carrier 21:44):
+- trousers-belt: 53 vertices, 2.6 mm (unchanged, the left cargo flap);
+- no clash of the hood with the body, trousers or carrier;
+- stand-off: `Belt.Holster.Hood` 9.0 mm median, contact 0.19 (its sloped underside spans the hollow above the buttock);
+  `Belt.P9` 14.5, now inside the hood.
+
+Renders opened: `renders/scratch_r10cb/{b1,final2}/close_holster.png` (right rear), `close_belt_back.png`, `turn_side_R.png`,
+`turn_back.png`, and the part's own `renders/belt/belt_hero_belt_hips_pair.png` after the final build.
+
+Still wrong: the hood is a convex block with no moulded detail. A real one has a rotating hood with a pivot boss, a
+belt-loop or UBL mount and a thumb-release tab. The hood's sloped underside stands a little off the hip below the belt
+(the flag above).

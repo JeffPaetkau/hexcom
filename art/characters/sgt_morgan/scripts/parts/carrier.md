@@ -368,3 +368,32 @@ Renders opened:
    still meets the gaiter 7.8 mm deep in the pose; that is skinning, the pad taking its weights from Shirt.Shell.
 4. The carbine's butt stays 5.0 mm into the bag's upper right (the hold, a pose item).
 5. The pistol-magazine carrier's magazines and the utility pouch are still boxes; there are no bar tacks.
+
+## 13. Round 10b (2026-11-15): the pads' rear ends
+
+The coordinator's follow-up: "soften the rear ends where they fold over the rear bag's clipped corners, so they don't read
+as angled blocks".
+- **Cause.** At x +-140 the pad's outer 30 mm hung past the rear bag's side edge (half width 142) over its clipped corner.
+  Half the pad lay on the bag and half in the air, so its end read as two angled blocks.
+- **Fix: the pad's rear run converges toward the centre** (`PAD_REAR_IN` 30 mm, x 140 -> 110). The convergence runs over
+  15-75 deg of the profile behind the shoulder top (`strap_profile(..., shift=)`), so the pad comes down the upper back
+  and lands inside the bag's width, as a JPC's strap meets the bag's top.
+  - The rear root follows at x +-110.
+  - The rear end thins to 25 % over its last 60 mm (`PAD_END_REAR`); the front end still thins to 40 % over 36 mm.
+  - 20 mm over 30-80 deg was tried: both pads were flagged as standing off where their outer edge still overhung the bag.
+- **The radio pouch made room.** It moved from x +74 to +56 and from 40 to 55 mm below the bag's top. The antenna leans
+  20 deg out (14) so its top stays outside the strap: rest base at [93, 207, 1468], top at [155, 222, 1623].
+- **The right pad in the gaiter is a weights problem; left as it is.** It goes 7.8 mm deep at the back of the shoulder,
+  [-221, 105, 1609]. It was 7.5 in round 9 and 7.8 in round 10, whatever the pad's rest clearance
+  (2.2-3 mm) or its rear run. In rest the pad clears the shirt and gaiter. The posed gaiter comes up through the pad,
+  which takes its weights from Shirt.Shell while the gaiter has its own.
+
+Checks (in-memory assembly of 21:54, carrier cache 21:44:35):
+- shirt-carrier: 753 vertices, 7.8 mm (round 10: 890, 7.8);
+- carbine: 129 vertices, 5.0 mm (unchanged);
+- stand-off: `Carrier.Strap.R.Pad` 11.1 mm median, contact 0.13 (new: the converging run crosses the hollow over the right
+  shoulder blade); `Carrier.Radio.Pouch` 10.5, contact 0.02 (new at its lower place). The left pad is not flagged.
+
+Renders opened: `renders/scratch_r10cb/{b1,b3,final2}/close_shoulders_back.png`, `close_shoulders_R.png`, `close_radio.png`,
+and the part's own `renders/carrier/carrier_rest_back.png` and `carrier_rest_side.png` after the final build. The pads'
+ends now come down onto the bag inside its outline, with no angled blocks.
