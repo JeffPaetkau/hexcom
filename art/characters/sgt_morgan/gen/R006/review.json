@@ -1,0 +1,358 @@
+{
+  "part": "18",
+  "round": 9,
+  "critic": "G1",
+  "lens": "all",
+  "model": "GPT-6 (Codex)",
+  "packet_sha": "9d03382bcb89f52182a52d91641cd9e88d40e6df1b99c4b269c7feb1fe76b003",
+  "questions": [
+    {
+      "id": "Q1",
+      "score": 6,
+      "note": "Stature and the corrected leg lengths are plausible. The upper arms and shoulder kit make the build look heavier and squarer than the reference. The declared parametric face and default skin are excluded."
+    },
+    {
+      "id": "Q2",
+      "score": 5,
+      "note": "The spread stance and downward carbine diagonal broadly agree. The raised right shoulder, thick arm protection, squared boots and bulky knee silhouettes weaken the match. Rifle size and the prescribed right-hand displacement are not penalised."
+    },
+    {
+      "id": "Q3",
+      "score": 4,
+      "note": "Most named kit is present in the right general region. Knee caps, forearm guards, thigh cases and carrier pouches have over-simple, bulky envelopes. The anatomically higher belt, rigs and knees are accepted."
+    },
+    {
+      "id": "Q4",
+      "score": 4,
+      "note": "Shoulder straps bridge above the shirt, the belt reads as a loose hoop, and the right elbow sleeve has a visible broken/pinched strip. Several rigid cuffs have excessive clearance. Hidden contacts cannot be established from these images."
+    },
+    {
+      "id": "Q5",
+      "score": 4,
+      "note": "Soft equipment repeatedly reads as hard boxes; the upper arms are cylindrical, knee caps overfull and the trouser hems inflated. The figure is recognisable as the intended soldier but does not yet carry believable material-dependent bulk."
+    },
+    {
+      "id": "Q6",
+      "score": 5,
+      "note": "The right index finger is sensibly outside the trigger and both hands meet the rifle region. The left fingers look draped rather than securely wrapped. The real carbine proportions are accepted; exact palm contact is partly occluded."
+    }
+  ],
+  "overall": 4,
+  "defects": [
+    {
+      "id": "D1",
+      "severity": "blocking",
+      "preset": "pair_turn_side_R.png",
+      "box_px": [
+        201,
+        322,
+        258,
+        358
+      ],
+      "what": "The sleeve at the right elbow has a broken, triangular pinched strip between the upper-arm band and elbow protection.",
+      "fix": "Restore a continuous sleeve surface and resolve collisions through the bend before fitting the armour straps."
+    },
+    {
+      "id": "D2",
+      "severity": "major",
+      "preset": "pair_torso_vest_cycles.png",
+      "box_px": [
+        1175,
+        0,
+        1734,
+        198
+      ],
+      "what": "Both carrier shoulder pads bridge above the shoulders with open gaps and abrupt ends rather than sitting on the shirt.",
+      "fix": "Drape the padded straps onto the trapezius and route continuous webbing through the adjusters under load."
+    },
+    {
+      "id": "D3",
+      "severity": "major",
+      "preset": "pair_torso_vest_cycles.png",
+      "box_px": [
+        1236,
+        376,
+        1685,
+        649
+      ],
+      "what": "The magazine pouches read as deep, straight rectangular boxes with flat lids, making the carrier rigid and bulky.",
+      "fix": "Fit fabric shells around magazine volumes; soften corners and let the closure flaps curve and compress over their contents."
+    },
+    {
+      "id": "D4",
+      "severity": "major",
+      "preset": "pair_legs_knees_cycles.png",
+      "box_px": [
+        1084,
+        88,
+        1860,
+        408
+      ],
+      "what": "The knee caps are broad, deep rounded boxes; the reference has narrower, shaped shields with a distinct frame and inset face.",
+      "fix": "Rebuild a shallow curved cap following the knee, with the reference's angular perimeter and separate frame; retain the declared higher knee position."
+    },
+    {
+      "id": "D5",
+      "severity": "major",
+      "preset": "pair_arm_R_cycles.png",
+      "box_px": [
+        558,
+        371,
+        842,
+        556
+      ],
+      "what": "The right forearm guard reads as a flared cylindrical cuff with a large dark clearance at its wrist-side opening.",
+      "fix": "Shape a fitted dorsal shell around the forearm taper, with a close padded backing and straps; preserve wrist clearance without a wide open tube."
+    },
+    {
+      "id": "D6",
+      "severity": "major",
+      "preset": "pair_arm_L_cycles.png",
+      "box_px": [
+        466,
+        493,
+        730,
+        767
+      ],
+      "what": "The left forearm guard and wrist rings form a heavy cylindrical stack instead of the reference's flatter tapered segmented protection.",
+      "fix": "Reduce the shell's radial bulk, flatten its dorsal face and fit the padding and attachment bands to the clothed arm."
+    },
+    {
+      "id": "D7",
+      "severity": "major",
+      "preset": "pair_soldier_full_cycles.png",
+      "box_px": [
+        998,
+        247,
+        1199,
+        440
+      ],
+      "what": "The soldier's right pauldron sits markedly higher and farther outward than the reference, making that shoulder look raised and broad.",
+      "fix": "Fit the cap over the actual shoulder and lower its outer crest to match the reference's shoulder slope; adjust the support strap with it."
+    },
+    {
+      "id": "D8",
+      "severity": "major",
+      "preset": "pair_soldier_full_cycles.png",
+      "box_px": [
+        1415,
+        300,
+        1639,
+        611
+      ],
+      "what": "The left upper arm is a broad, straight padded column, losing the reference's narrower shoulder-to-elbow taper.",
+      "fix": "Refit sleeve and armour volumes together around a tapered upper arm, retaining cloth ease without expanding the whole arm uniformly."
+    },
+    {
+      "id": "D9",
+      "severity": "major",
+      "preset": "pair_boots_feet_cycles.png",
+      "box_px": [
+        1053,
+        234,
+        1389,
+        384
+      ],
+      "what": "The soldier's right boot has a low, stretched wedge-shaped toe and a straight front bumper rather than the reference's rounded protective toe box.",
+      "fix": "Build a rounded toe cap around realistic toe clearance, then blend the vamp and curved rubber bumper into the outsole."
+    },
+    {
+      "id": "D10",
+      "severity": "major",
+      "preset": "pair_boots_feet_cycles.png",
+      "box_px": [
+        1718,
+        274,
+        1927,
+        416
+      ],
+      "what": "The soldier's left boot terminates in a squared, flat bumper with a slab-like sole frontage.",
+      "fix": "Round the plan and vertical sections of the toe bumper and integrate the tread into a continuous curved outsole."
+    },
+    {
+      "id": "D11",
+      "severity": "major",
+      "preset": "pair_torso_vest_cycles.png",
+      "box_px": [
+        1265,
+        190,
+        1597,
+        354
+      ],
+      "what": "The carrier's upper chest is one broad plain rectangular slab, losing the reference's shaped plate-bag outline and distinct upper flap.",
+      "fix": "Shape the plate bag around its plate, with clipped upper corners and the large flap/panel divisions visible in the reference."
+    },
+    {
+      "id": "D12",
+      "severity": "major",
+      "preset": "pair_belt_hips_cycles.png",
+      "box_px": [
+        1100,
+        111,
+        1360,
+        463
+      ],
+      "what": "The soldier's right thigh rig is two thick rectangular cases on a large flat backing, reading as a rigid assembly rather than compact fitted kit.",
+      "fix": "Wrap the backing around the thigh and model the actual carrier volumes and closures with rounded edges; keep the declared raised placement."
+    },
+    {
+      "id": "D13",
+      "severity": "major",
+      "preset": "pair_turn_back.png",
+      "box_px": [
+        204,
+        222,
+        360,
+        396
+      ],
+      "what": "The rear carrier looks like a thick, smooth hard suitcase and does not convincingly read as a fabric plate bag.",
+      "fix": "Use a plate-shaped core inside a thinner fabric shell with edge binding, soft corners and visible strap integration."
+    },
+    {
+      "id": "D14",
+      "severity": "major",
+      "preset": "pair_turn_threeq_L.png",
+      "box_px": [
+        273,
+        419,
+        426,
+        480
+      ],
+      "what": "The waist belt forms an open rigid hoop with visible clearance behind the body rather than a tensioned belt resting on clothing.",
+      "fix": "Fit the belt to the clothed waist and support the holster and drop straps from continuous, contacting attachment points."
+    },
+    {
+      "id": "D15",
+      "severity": "major",
+      "preset": "pair_turn_back.png",
+      "box_px": [
+        198,
+        448,
+        362,
+        625
+      ],
+      "what": "The trousers cling around the seat and upper thighs with vertical dents, while the reference reads as looser combat trousers.",
+      "fix": "Add pattern ease at seat and thigh and let the cloth settle under the belt and leg straps; do not shorten the anatomically correct thighs."
+    },
+    {
+      "id": "D16",
+      "severity": "major",
+      "preset": "pair_soldier_full_cycles.png",
+      "box_px": [
+        1094,
+        1290,
+        1621,
+        1570
+      ],
+      "what": "The trouser calves end in thick, rolled, lumpy cuffs rather than the reference's irregular fabric gathered over the boot tops.",
+      "fix": "Let the hem fall and bunch against the boot collar with thin folded cloth, removing the inflated ring-like cuff mass."
+    },
+    {
+      "id": "D17",
+      "severity": "major",
+      "preset": "pair_hands_rifle_cycles.png",
+      "box_px": [
+        1454,
+        465,
+        1719,
+        703
+      ],
+      "what": "The support hand's fingers hang along the handguard and read as a loose drape rather than a weight-bearing wrap.",
+      "fix": "Close the finger pads around the handguard underside with opposing thumb pressure, preserving natural knuckle spacing and the real rifle dimensions."
+    },
+    {
+      "id": "D18",
+      "severity": "major",
+      "preset": "pair_hands_rifle_cycles.png",
+      "box_px": [
+        1114,
+        276,
+        1392,
+        481
+      ],
+      "what": "The gloves have broad smooth palms and repeated cylindrical finger segments, giving the hands a mechanical silhouette.",
+      "fix": "Fit glove fabric to anatomical knuckle and finger taper, with thin flexible joints and separate dorsal protection rather than uniform ring segments."
+    },
+    {
+      "id": "D19",
+      "severity": "major",
+      "preset": "pair_soldier_full_cycles.png",
+      "box_px": [
+        1229,
+        0,
+        1413,
+        124
+      ],
+      "what": "The hair reads as a solid cap with isolated sharp spikes, changing the head silhouette into a stylised helmet.",
+      "fix": "Replace the cap outline with layered short hair masses and a broken hairline that follows the reference's swept textured shape."
+    },
+    {
+      "id": "D20",
+      "severity": "major",
+      "preset": "pair_soldier_full_cycles.png",
+      "box_px": [
+        1089,
+        518,
+        1473,
+        1118
+      ],
+      "what": "The carrier pouches and upper trousers fall into near-uniform black, losing the reference's readable olive-brown masses and separation.",
+      "fix": "Tune broad material values and roughness under the matched lighting so adjacent fabric, webbing and trousers remain legible without adding dirt detail."
+    },
+    {
+      "id": "D21",
+      "severity": "major",
+      "preset": "pair_legs_knees_cycles.png",
+      "box_px": [
+        1084,
+        90,
+        1857,
+        385
+      ],
+      "what": "The knee faces have smeared vertical highlights and pooled-looking dark lower edges, making the shells appear melted rather than deliberately moulded.",
+      "fix": "Rebuild clean cap curvature and surface normals, then use roughness that reveals the planar and curved sections without stretched highlights."
+    },
+    {
+      "id": "D22",
+      "severity": "minor",
+      "preset": "pair_head_face_cycles.png",
+      "box_px": [
+        1024,
+        545,
+        1508,
+        850
+      ],
+      "what": "The gaiter's upper edge is a thick open lip and its folds are evenly stacked bands rather than loose fabric resting around the neck.",
+      "fix": "Use a thin folded opening and irregular fabric drape supported by neck and carrier, with local contact rather than a uniform collar gap."
+    }
+  ],
+  "ranked": [
+    "[D3] Soft pouches read as hard boxes. This is a large-form and material-behaviour problem, not missing stitching or fine dirt.",
+    "[D4] The knee caps dominate as thick rectangular cups; rebuilding their shallow shaped shells would improve the full-body read immediately.",
+    "[D2] The shoulder suspension does not feel loaded: straps bridge over empty space rather than resting on the shirt.",
+    "[D1] The right elbow sleeve has a visible broken/pinched strip. Resolve the surface and collision failure before judging its drape.",
+    "[D5] The right forearm guard is a flared tube with excessive clearance, not fitted dorsal protection.",
+    "[D6] The left forearm and wrist are too heavily encased in concentric cylindrical forms.",
+    "[D7] The high, outward right pauldron changes the shoulder slope and the pose.",
+    "[D8] The left upper-arm assembly is too uniformly broad; it lacks the reference's taper.",
+    "[D9] The right boot's low wedge toe and straight bumper lose the protective rounded boot shape.",
+    "[D10] The left boot is similarly squared at the front; the full-body silhouette notices this before small surface detail.",
+    "[D11] The chest bag loses its shaped envelope and large panel divisions in a single plain slab.",
+    "[D12] The right thigh rig needs to conform to the leg and separate actual containers from their backing.",
+    "[D13] The rear plate bag reads as a suitcase. Fabric over a plate should not have the same form language as a hard armour shell.",
+    "[D14] The belt floats as a rigid hoop rather than carrying the attached load against the waist.",
+    "[D15] The upper trousers cling and dent around the seat instead of carrying combat-trouser ease.",
+    "[D16] The lower trouser cuffs are inflated rolls rather than thin cloth gathered against boots.",
+    "[D17] Give the support hand an unmistakable load-bearing wrap around the handguard.",
+    "[D18] Repeated finger rings and smooth mitten-like palms give the gloves a robotic appearance.",
+    "[D19] The solid spiked hair cap is a silhouette-level stylisation, not merely absent fine strands.",
+    "[D20] Large dark cloth areas merge into black and obscure the distinct kit layers visible in the reference.",
+    "[D21] The knee caps' smeared highlights reinforce the impression of malformed shells.",
+    "[D22] The gaiter opening and stacked folds need thinner, less regular fabric behaviour.",
+    "The comparison heat maps include the intentionally different background and geometry. Their brightness alone is not evidence of a defect.",
+    "The declared face treatment, real thigh lengths, real M4 proportions, absent joint-driven folds and omitted fine detail were not scored as faults."
+  ],
+  "verified_claims": [],
+  "pass": false,
+  "confidence": 0.85
+}

@@ -199,3 +199,35 @@ between neighbours); made seamless on our side (`gen/R005/armour_paint_steel_wor
 scripts/tools/seamless.py). Used as the armour paint's surface in place of R004 (`Polymer.Painted.Armour`,
 box-projected at 150 mm, over its own mean at 60 %, greyed to 30 % saturation); the rims, chips near the edges
 and the bare steel come from the geometry.
+
+## R006 — act as a fourth, independent critic of round 9 (a review, not an image)
+
+Status: done
+Requested by: Claude, 2026-11-15 (Jeff asked for ChatGPT as a critic)
+Purpose: three Claude critics scored round 9 of the whole soldier. A critic from a different model family
+catches what they share as blind spots. This request asks for a written review and no image. Judge
+independently: do not open `renders/round_09/critic/results/`, `notes/critic/`, `notes/session_log.md`, the
+parts' notes or anything else in the repository that discusses the model's faults. Use only the packet and the
+two files named below.
+Inputs to read (local paths in this repository; nothing to attach):
+- `art/characters/sgt_morgan/renders/round_09/critic/brief.md`: the scope, the declared differences (known
+  departures that are not defects; don't score them), the image list with sizes, what "perfect" looks like, and
+  the questions Q1-Q6 to score.
+- Every image `brief.md` lists, in `art/characters/sgt_morgan/renders/round_09/critic/`. In the `pair_` images
+  the reference crop is on the left and the render on the right; the `turn_` views are the render alone.
+- `art/characters/sgt_morgan/scripts/eval/critic/prompts/C1.md`: how the Claude critics work (steps, scoring
+  scale, severities, boxes). Follow it, except: your lens is all three at once (fidelity: is this the man and
+  kit of the reference; reality: would a soldier or a gear specialist accept it; craft: computer-graphics flaws).
+Task:
+> Review the packet as a blind critic. Open every listed image before scoring. Score Q1-Q6 and an overall score
+> on the scale C1.md gives, with a short note for each. List every defect you see (severity, the image, a box
+> [x0, y0, x1, y1] in that image's pixels, what is wrong, and the real-world fix), most important first. Then,
+> in a few sentences: the three things that most give the render away as computer-made, and what you would
+> change first if you could change one thing.
+Output: `art/characters/sgt_morgan/gen/R006/review.json`, in the shape of
+`art/characters/sgt_morgan/scripts/eval/critic/schema.json` with `"critic": "G1"`, `"lens": "all"` and `"model"`
+set to the model you are; take `packet_sha` from `renders/round_09/critic/packet.sha256`. Keep every note
+field to 400 characters or fewer. Put the closing sentences in `gen/R006/summary.md`.
+
+Result:
+Saved `R006/review.json` and `R006/summary.md`. Independently inspected all 34 packet images; did not open other critic results or fault notes. Overall 4/10, not a pass; 22 located defects with fixes, all six question scores and a ranked list. Declared differences excluded. Used requested critic G1 and lens all, intentional exceptions to the existing schema enums; model labelled GPT-6 (Codex).
