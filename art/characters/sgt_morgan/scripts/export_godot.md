@@ -109,4 +109,4 @@ loop).
 - The turns are 1.4 m arcs walked with the straight cycle; his feet slide a little through them.
   Walk to idle is a 0.35 s crossfade with no stopping step, so he glides to a halt.
 - The skeleton is exported as MPFB's 163 bones with their own names; no Godot humanoid bone map yet.
-- This is the 14:14 build of 2026-11-15 (`cache/assembled_snapshot_godot.blend`), before round 7.
+- The current .glb is round 8 (`cache/assembled_snapshot_godot_r8.blend`, commit 8a905e9: head round 4, round 7's pose, round 8's materials), 103,828 triangles; the earlier captures (no suffix) are the 14:14 build, the `_r8` ones this one.
