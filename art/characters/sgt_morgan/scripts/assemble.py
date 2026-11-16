@@ -1000,7 +1000,7 @@ carbine held the way the reference holds it.
 """
 
 DECLARE = [
-    "Materials are a first pass (round 5): library recipes, painted textures and wear masks, but no stitching "
+    "Materials are a second pass (round 8): library recipes, painted textures and wear masks, but no stitching "
     "texture, fabric folds from simulation, decal detail beyond the emblem, or fine dirt.",
     "The legs follow real thigh lengths; the drawn thighs are about 28 % short, so the knees, knee pads, leg rigs "
     "and belt sit higher than drawn.",
