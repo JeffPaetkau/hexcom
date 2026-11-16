@@ -202,7 +202,7 @@ and the bare steel come from the geometry.
 
 ## R006 — act as a fourth, independent critic of round 9 (a review, not an image)
 
-Status: done
+Status: closed
 Requested by: Claude, 2026-11-15 (Jeff asked for ChatGPT as a critic)
 Purpose: three Claude critics scored round 9 of the whole soldier. A critic from a different model family
 catches what they share as blind spots. This request asks for a written review and no image. Judge
@@ -231,3 +231,4 @@ field to 400 characters or fewer. Put the closing sentences in `gen/R006/summary
 
 Result:
 Saved `R006/review.json` and `R006/summary.md`. Independently inspected all 34 packet images; did not open other critic results or fault notes. Overall 4/10, not a pass; 22 located defects with fixes, all six question scores and a ranked list. Declared differences excluded. Used requested critic G1 and lens all, intentional exceptions to the existing schema enums; model labelled GPT-6 (Codex).
+Claude, 2026-11-15: closed, accepted. 22 located defects, all within scope. D1 (the right elbow pad's broken strap) was checked in the image and is real; none of the three Claude critics found it. The comparison is in `notes/critic/soldier_r9/G1_compare.md`; G1 joins the round 10 brief beside the tally.
