@@ -4,6 +4,10 @@ cummerbund, the padded shoulder straps (pad, centre webbing, 38 mm ladder-lock, 
 front, a root on the rear), the hard admin panel, three single rifle-magazine pouches (flap, pull tab), a double
 pistol-magazine carrier on the right flank, a small utility pouch on the left flank, and the radio pouch with
 the radio top, its knobs, the bungee and the antenna behind the left shoulder. Notes: scripts/parts/carrier.md.
+Round 10: the pouches are soft Cordura round their magazines (softgear.soft_pouch), the bags roll over the plates'
+edges with a padded unevenness, the rear bag carries PALS, a drag handle and the radio pouch, the straps rest on the
+shirt and run onto the rear bag, broad metal buckles and webbing loops on the front runs, a detailed admin panel, the
+drawn tan antenna, and the olive toned and worn further by measurement.
 
   "$SGT_BLENDER" -b --python scripts/parts/carrier.py [-- --no-render]
   -> cache/parts/carrier.blend (Part.Carrier), cache/parts/carrier.json, renders/carrier/*.png
@@ -32,6 +36,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as C  # noqa: E402
 import gear_common as G  # noqa: E402
+import softgear as SG  # noqa: E402  (round 10: pouches as fabric round their contents)
 from shirt import STRAP  # noqa: E402  (the strap corridor the gaiter is pressed flat in)
 from lib import gear_hardware as GH, gear_webbing as GW, sweep as SW  # noqa: E402
 
@@ -43,7 +48,10 @@ PLATE_R_LAT, PLATE_R_LONG = 254.0, 457.0  # multi-curve
 BAG_W, BAG_H = 285.0, 340.0              # plate + about 22 per side; top 8 above the plate
 BAG_T = 37.0                             # round 9 (m8, m33: "a thin slab"): back panel and foam 7 + plate 25 + front
                                          # laminate and PALS backing 5 (round 2: 31); 18 at the margin
-BAG_MARGIN_T = 18.0                      # the bag's soft margin outside the plate (round 2: 14)
+BAG_MARGIN_T = 16.0                      # the bag's soft margin outside the plate (round 2: 14, round 9: 18)
+BAG_ROLL = 18.0                          # round 10 (G1 D3, D13: "a hard suitcase"): the fabric rolls over the plate's edge
+                                         # over this width, rounded at both ends (round 9: a straight 16 mm ramp)
+BAG_NOISE = (1.0, 60.0)                  # round 10: the padded face's soft unevenness, mm and feature size (outer face only)
 CORNER_CLIP = 50.0                       # shooter's-cut corners, 45 deg
 FLAP_W, FLAP_H, FLAP_T = 255.0, 34.0, 6.0          # JPC class flap carrying one PALS row; round 4: 42 -> 34 (see flap_to_waist)
 REAR_RAISE = -25.0                       # rear bag top relative to the throat point (round 1: +15); 50 above the front
@@ -59,12 +67,17 @@ PAD_BRIDGE = 9                           # stations of the moving average the pa
 ROOT_W, ROOT_T = 38.0, 2.0
 PANEL = (175.0, 90.0, 12.0)              # hard admin panel (drawn), canted 2.6 deg, right end up; round 9: 12 thick
 PANEL_CANT = 2.6
-POUCH = (64.0, 38.0, 178.0)              # round 9 (m8: "tall flapped pouches"): a single 5.56 pouch holding a 30-round
-                                         # STANAG (178 tall body, 38 deep with its padding); round 2: 62 x 32 x 158
+POUCH = (64.0, 38.0, 184.0)              # round 9 (m8: "tall flapped pouches"): a single 5.56 pouch holding a 30-round
+                                         # STANAG (178 tall body, 38 deep with its padding); round 2: 62 x 32 x 158;
+                                         # round 10: 184 (the soft flap crowns 10 over it, round 9's box lid 16)
 POUCH_FLAP_TOP, POUCH_FLAP_DOWN = 18.0, 54.0   # the flap over the magazine top (rounded, the magazine's top inside it)
+POUCH_BULGE, POUCH_DOME = 4.5, 7.0          # round 10: the magazine's bulge down the front, the flap's crown over its top
 POUCH_X = (-20.0, 46.0, 112.0)          # three, as drawn; the carbine stock lies where a fourth would be
-RADIO_POUCH = (76.0, 57.0, 229.0)        # Fight Light class pouch for a PRC-152 class radio
-RADIO_THETA = 128.0                      # deg around the torso from the front toward his left
+RADIO_POUCH = (70.0, 52.0, 220.0)        # Fight Light class pouch for a PRC-152 class radio (66 x 38 x 165 body,
+                                         # 70 wide for its 2.6 in width; round 1-9: 76 x 57 x 229)
+ANTENNA = (100.0, 34.0, 12.0)            # round 10 (m42, zoom_carrier13_antenna_x14): tan tube, yellow end, flat black cap
+ANTENNA_LEAN = 14.0                      # deg out toward his left (the drawn antenna rises outside the strap)
+RADIO_THETA = 128.0                      # round 1-9: deg round the torso (unused since round 10)
 PISTOL_POUCH = (100.0, 38.0, 105.0)      # double pistol-magazine polymer carrier
 UTIL_POUCH = (50.0, 30.0, 70.0)
 CLR = 2.0                                # bag inner face over the shirt
@@ -75,14 +88,24 @@ POUCH_LIFT = 32.0                        # mag pouch bottoms above the bag botto
 PALS_W, PALS_T, PALS_COL, PALS_PITCH = 25.4, 1.3, 38.1, 50.8     # MIL-spec PALS (spec 13 §3.3)
 BIND_R = 7.0                             # bound edge: 25 mm tape folded over the 14 mm margin
 ROOT_X = 105.0                           # front strap roots reach the bag at |x| (the panel's ends)
+REAR_PALS = (5, 6)                       # round 10: rows x cells on the rear bag
+RADIO_X = 74.0                           # round 10: the radio pouch on the rear bag's PALS at x (his left), top 40 below the
+RADIO_TOP_DROP = 40.0                    # rear bag's top (m44: it hung off the bag's edge at 128 deg, on nothing)
 LOCK = (52.0, 44.0, 4.0, 6.0)            # 38 mm ladder-lock: width, length, bar, thickness (spec 13 §3.6)
+CAM = (56.0, 58.0, 5.0, 7.0)             # round 10: the drawn strap adjuster, a broad metal-framed buckle (zoom_vest_strap_left)
+KEEPERS = 5                              # round 10: webbing loops across the strap run below it
+PAD_CLEAR = 2.2                          # round 10: the pad's underside over the shirt (round 2-9: 3; it is loaded)
+PAD_REAR_ON = 32.0                       # round 10: the pad runs this far down onto the rear bag's face
+PAD_END = 36.0                           # round 10: the padding thins to 40 % over its last 36 mm at each end
+PAD_SLOPE_K = 15                         # round 10: stations of the smoothing of the pad's cross-slope (round 2-9: 9)
 
 COL = {
     "cordura": "#463e34", "pouch": "#3b342b", "flap": "#51473a", "webbing": "#6d5f50", "pad": "#4f463b",
     "binding": "#1c1915", "panel": "#7d705c", "cummerbund": "#2f2a24", "hardware": "#4c4943",
     "radio_pouch": "#3a342c", "radio": "#1d1e1f", "brass": "#8a7550", "steel": "#777f85", "cap": "#151718",
     "poly_black": "#24211e", "poly_tan": "#816f5f", "mag": "#1e1d1c",
-    "webbing_pals": "#4d4438", "webbing_cb": "#2a2520", "brass_dark": "#4a3f2c",
+    "webbing_pals": "#4d4438", "webbing_cb": "#2a2520", "brass_dark": "#4a3f2c", "metal_hw": "#55534e",
+    "antenna": "#8a7a5a", "antenna_tip": "#c9a227",
 }
 # Materials round (round 5, 2026-11-15; COL stays the solid-view colour): R000's olive 500D Cordura (made
 # seamless) on the bag, flap, pads and cummerbund, 1000D on the pouches, matching olive webbing, black binding,
@@ -95,8 +118,17 @@ COL = {
 # linear light by TONE (luminance x 0.80, b/g x 0.96) and the abraded edges' colour by ABRADE_TONE, here and not in
 # the catalogue (the belt and the armour share those recipes). The rest of "pale slab" is form: the darks of the
 # reference are the PALS, the pouches' shadows and the bag's thickness, which round 9 also adds.
-TONE = (0.80, 0.80, 0.77)
+TONE = (0.745, 0.76, 0.77)  # round 10: measured with look_stats (eroded part mask, graded torso_vest): round 9's
+                             # (0.80, 0.80, 0.77) gave median Y 0.0304 / p90 0.211 against the reference's 0.0330 / 0.193,
+                             # b/g 0.75 against 0.79; a trial at (0.70, 0.70, 0.66) 0.0293 / 0.161, b/g 0.71 (too dark in
+                             # the lights, too yellow); (0.76, 0.76, 0.75) 0.0318 / 0.172, r/g 1.24, b/g 0.75: this one
+                             # moves r/g and b/g half way to the reference (1.20, 0.79)
 ABRADE_TONE = (0.85, 0.85, 0.81)
+# round 10 (m11, D11: "a grey-khaki with little value range; the reference's warm coyote-olive has grime and scuffs"): the
+# same recipe with more of its own variation: the R000 print's contrast, the soiling mottle, grime in the cavities and
+# seams, and the abraded pale edges (overrides here, not in the catalogue: the belt and the armour share these recipes)
+WEAR = {"print__contrast": 1.4, "mottle__amount": 0.42, "mottle__noise_mm": 55.0, "grime__amount": 1.0,
+        "grime__cavity": 1.2, "abrade__share": 0.6}
 
 
 def _tone(hexcol, k=TONE):
@@ -114,7 +146,7 @@ def _tone(hexcol, k=TONE):
 
 def _olive(hexcol, **more):
     return dict({"albedo_hex": _tone(hexcol), "abrade__hex": _tone("#8d887a", ABRADE_TONE),
-                 "rub__hex": _tone("#7a7566", ABRADE_TONE)}, **more)
+                 "rub__hex": _tone("#7a7566", ABRADE_TONE)}, **WEAR, **more)
 
 
 _CB = _olive("#4a4741")   # round 8: the lighter olive-coyote (was #3a362f); round 9 toned
@@ -131,11 +163,14 @@ MATERIALS = {
     "Carrier.Mat.WebbingCb": ("Webbing.Nylon.OliveBrown", "WebbingCb", {"albedo_hex": _tone("#4a4741")}),
     "Carrier.Mat.Binding": ("Webbing.Nylon.Black", "Binding", {"wear": "cordura.top"}),
     "Carrier.Mat.Hardware": ("Polymer.Black.Smooth", "Hardware", {}),
+    "Carrier.Mat.MetalHw": ("Metal.Gunmetal", "MetalHw", {}),
     "Carrier.Mat.PolyBlack": ("Polymer.Black.Textured", "PolyBlack", {}),
     "Carrier.Mat.PolyTan": ("Polymer.Tan.Moulded", "PolyTan", {}),
     "Carrier.Mat.Mag": ("Polymer.Black.Textured", "Mag", {"albedo_hex": "#2e2d2b"}),
     "Carrier.Mat.Radio": ("Polymer.Black.Textured", "Radio", {}),
     "Carrier.Mat.Brass": ("Metal.Brass.Aged", "Brass", {}),
+    "Carrier.Mat.Antenna": ("Polymer.Tan.Moulded", "Antenna", {"albedo_hex": "#76654a"}),
+    "Carrier.Mat.AntennaTip": ("Polymer.Tan.Moulded", "AntennaTip", {"albedo_hex": "#a8822c"}),
     "Carrier.Mat.BrassDark": ("Metal.Brass.Aged", "BrassDark", {"f0": (0.22, 0.18, 0.11)}),
     "Carrier.Mat.Steel": ("Metal.Gunmetal", "Steel", {"f0": (0.40, 0.41, 0.42), "aniso": 0.0}),
     "Carrier.Mat.Cap": ("Rubber.Moulded.Black", "Cap", {}),
@@ -265,6 +300,29 @@ def split_across(ob, longer=30.0, cuts=6):
     return ob
 
 
+def taper_strip(name, coll, path, normals, width, thick, material, bevel_mm=0.6):
+    """gear_common.strip with a thickness per path point (round 10: the pads' padding thins out at their ends)."""
+    P = np.asarray(path, float)
+    Nn = np.array([G.unit(v) for v in normals])
+    n = len(P)
+    V = []
+    for i in range(n):
+        T = G.unit(P[min(i + 1, n - 1)] - P[max(i - 1, 0)])
+        Ni = G.unit(Nn[i] - T * np.dot(Nn[i], T))
+        B = G.unit(np.cross(T, Ni))
+        h = width / 2.0
+        V += [P[i] - B * h, P[i] + B * h, P[i] + B * h + Ni * thick[i], P[i] - B * h + Ni * thick[i]]
+    F = []
+    for i in range(n - 1):
+        for k in range(4):
+            a, b = i * 4 + k, i * 4 + (k + 1) % 4
+            F.append((a, (i + 1) * 4 + k, (i + 1) * 4 + (k + 1) % 4, b))
+    F.append((0, 1, 2, 3))
+    e = (n - 1) * 4
+    F.append((e + 3, e + 2, e + 1, e))
+    return G.new_mesh(name, np.array(V), F, coll, material, bevel_mm=bevel_mm, segments=1)
+
+
 def flat(ob, mat):
     ob.data.materials.clear()
     ob.data.materials.append(mat)
@@ -309,10 +367,10 @@ def pals(name, coll, target_ob, rows, ncell, mat, seed=0, start=0.0):
     return ob, res
 
 
-def ladder_lock(name, coll, origin, across, normal, mat):
+def ladder_lock(name, coll, origin, across, normal, mat, dims=None):
     """The 38 mm ladder-lock (lib.gear_hardware.ladder_lock 52 x 44 x 6, slots across) at origin, its width
     along `across`, its run along normal x across, standing on the surface with the given normal."""
-    w, ln, bar, t = LOCK
+    w, ln, bar, t = dims or LOCK
     piece = GH.ladder_lock(w, ln, bar, t, 2, end_bar=15.0)
     Mx = G.frame(np.asarray(origin, float) + G.unit(normal) * (t / 2.0), across, normal)
     ob = GH.to_object(name, piece, matrix=Mx, material=None, coll=coll)
@@ -320,7 +378,7 @@ def ladder_lock(name, coll, origin, across, normal, mat):
     return flat(ob, mat)
 
 
-def strap_profile(under, x, sgn, c, phis, width, clear=3.0):
+def strap_profile(under, x, sgn, c, phis, width, clear=3.0, flat_back_z=None):
     """The pad's underside over the shoulder in the plane x: for each station angle phi (in the y-z plane round
     c, 0 = straight up, + toward the back) the surface under the pad's whole width is sampled; the pad's
     cross-section tilts to the surface's slope across it (least squares, smoothed along the strap) and rides
@@ -339,8 +397,14 @@ def strap_profile(under, x, sgn, c, phis, width, clear=3.0):
         ok = ~np.isnan(R[k])
         if ok.sum() >= 3:
             slope[k] = np.polyfit(dxs[ok], R[k, ok], 1)[0]
-    ker = np.ones(9) / 9.0
-    slope = np.convolve(np.pad(slope, 4, mode="edge"), ker, mode="valid")
+        # round 10: where the pad lies on the rear bag (behind, below flat_back_z) the face is flat across the pad: no
+        # cross-slope (the bag's clipped corner under half the pad's width twisted its end)
+        if flat_back_z is not None and phis[k] > 0 and ok.any():
+            zk = (c + np.array([0.0, math.sin(phis[k]), math.cos(phis[k])]) * np.nanmax(R[k]))[2]
+            if zk < flat_back_z:
+                slope[k] = 0.0
+    ker = np.ones(PAD_SLOPE_K) / float(PAD_SLOPE_K)       # round 10: 15 (9): the pad crosses the rear bag's clipped top edge
+    slope = np.convolve(np.pad(slope, PAD_SLOPE_K // 2, mode="edge"), ker, mode="valid")
     slope = np.clip(slope, -PAD_TILT, PAD_TILT)
     r0 = np.nanmax(R - slope[:, None] * dxs[None, :], axis=1) + clear
     # along its length the pad bridges small hollows only (round 9: a moving average, not round 2's convex hull, which
@@ -452,7 +516,9 @@ def main(render=True):
             # shooter's cut: the plate's corners are clipped like the bag's
             ec = max((abs(u) + (v - zt + 8.0)) - (PLATE_W / 2.0 - CORNER_CLIP + 2.0), 0.0) / math.sqrt(2)
             e = max(ex, ez, ec)
-            return BAG_T - (BAG_T - BAG_MARGIN_T) * min(e / 16.0, 1.0)
+            # round 10: a rounded roll over the plate's edge (the fabric wrapping a plate: a cosine, flat at both ends;
+            # a quarter round put the outer face 6 mm further out at the edge, into the carbine's butt), then the margin
+            return BAG_MARGIN_T + (BAG_T - BAG_MARGIN_T) * 0.5 * (1.0 + math.cos(math.pi * min(e / BAG_ROLL, 1.0)))
         return f
     bag_f = G.slab("Carrier.Front.Bag", coll, front.surf(), hw_f, zb_f, zt_f, BAG_T, M["cordura"], nu=36, nv=40,
                    bevel_mm=6.0, segments=3, t_field_fn=taper(zt_f))
@@ -471,6 +537,11 @@ def main(render=True):
     flap = G.slab("Carrier.Front.Flap", coll, front.surf(), lambda v: (-FLAP_W / 2, FLAP_W / 2), hem, zb_f + 15.0,
                   FLAP_T, M["cordura"], nu=24, nv=6, bevel_mm=2.5, post=flap_follow)
     bag_f = G.join(bag_f, [flap])               # the flap is sewn under the bag's bottom edge: one item
+    # round 10: the padded faces are not planks: a low, soft unevenness on the outer faces only (never toward the shirt)
+    SG.fabric_noise(bag_f, BAG_NOISE[0], BAG_NOISE[1], seed=31, outward=(0.0, -1.0, 0.0),
+                    mask=lambda V: 1.0 - np.clip((-V[:, 0] - 60.0) / 30.0, 0, 1) * np.clip((V[:, 2] - 1250.0) / 30.0, 0, 1))
+    # (none at the bag's upper right, where the posed carbine's butt rests: round 9's clash, 6.5 mm)
+    SG.fabric_noise(bag_r, BAG_NOISE[0], BAG_NOISE[1], seed=32, outward=(0.0, 1.0, 0.0))
     tf_f, tf_r = taper(zt_f), taper(zt_r)
     # bound edges: the bags' outlines and the flap's hem (black tape)
     binding("Carrier.Front.Binding", coll, front, bag_outline(zt_f, zb_f, lambda v: bag_halfw(v, zt_f)), tf_f,
@@ -505,6 +576,24 @@ def main(render=True):
     pals_fl, _ = pals("Carrier.Front.Flap.PALS", coll, bag_f, [flap_row], 6, M["webbing_pals"], seed=12, start=2.0)
     out["pals_front"] = {"rows_z": [round(z) for z in pals_rows_z], "flap_row_z": round(flap_z), "cells": [7, 6],
                          "webbing": [PALS_W, PALS_T], "column_pitch": PALS_COL, "row_pitch": PALS_PITCH}
+    # round 10 (G1 D13: "the rear bag a smooth hard suitcase"; m44: the radio pouch attached to nothing): a JPC's back
+    # carries a PALS field, 5 rows x 6 cells from 25 above its bottom, and a drag handle at the top
+    rear_rows_z = [zb_r + 25.0 + PALS_PITCH * k for k in range(REAR_PALS[0])]
+    half_r = REAR_PALS[1] / 2.0 * PALS_COL
+
+    def rear_row(z, hw, n=22):
+        return [rear.point(u, z, tf_r(u, z))[0] for u in np.linspace(-hw - 2.0, hw + 2.0, n)]
+    pals_r, _ = pals("Carrier.Rear.PALS", coll, bag_r, [rear_row(z, half_r) for z in rear_rows_z], REAR_PALS[1],
+                     M["webbing_pals"], seed=13, start=2.0)
+    out["pals_rear"] = {"rows_z": [round(z) for z in rear_rows_z], "cells": REAR_PALS[1]}
+    hz = zt_r - 32.0
+    hp, hn = [], []
+    for u in np.linspace(-66.0, 26.0, 25):          # off centre toward his right, clear of the radio pouch
+        lift = 16.0 * max(0.0, 1.0 - ((u + 20.0) / 36.0) ** 2) ** 0.7 if abs(u + 20.0) < 36.0 else 0.0
+        p0, n0 = rear.point(u, hz, tf_r(u, hz) + 0.4)
+        hp.append(p0 + n0 * lift)
+        hn.append(n0)
+    G.strip("Carrier.Rear.Handle", coll, np.array(hp), hn, 38.0, 2.2, M["webbing"], bevel_mm=0.6)
 
     # ---------------------------------------------------------------- cummerbund (left and right halves)
     zc0, zc1 = hem + 2.0, hem + 2.0 + CB_H
@@ -582,16 +671,46 @@ def main(render=True):
 
     def panel_surf(u, v):
         return sf_out(pxc + u * ca - v * sa, pzc + u * sa + v * ca)
-    G.slab("Carrier.Front.Panel", coll, panel_surf, lambda v: (-pw / 2, pw / 2), -ph / 2, ph / 2, pt, M["panel"],
-           nu=16, nv=8, bevel_mm=3.0, segments=2)
-    out["panel"] = {"centre_xz": [pxc, round(pzc)], "size": PANEL, "cant_deg": PANEL_CANT}
+    panel_ob = G.slab("Carrier.Front.Panel", coll, panel_surf, lambda v: (-pw / 2, pw / 2), -ph / 2, ph / 2, pt,
+                      M["panel"], nu=16, nv=8, bevel_mm=3.0, segments=2)
+    # round 10 (m10, D11: "a pale plain board"): what the drawn panel carries: a dark name-tape field (hook-and-loop) off
+    # centre, a horizontal slot below it, two domed studs at its left end (his right) and a bound rim (drawn, spec 13 §3.4)
+    sf_face = front.surf(BAG_T + 0.3 + pt)
+
+    def on_panel(u, v, off=0.0):
+        p, nn = sf_face(pxc + u * ca - v * sa, pzc + u * sa + v * ca)
+        xa = G.unit(np.array([ca, 0.0, sa]) - nn * np.dot([ca, 0.0, sa], nn))
+        Mx = np.eye(4)
+        Mx[:3, :3] = np.column_stack([xa, nn, np.cross(xa, nn) * -1.0])
+        Mx[:3, 3] = p + nn * off
+        return Mx, p, nn
+    extras = []
+    Mt, _, _ = on_panel(14.0, 16.0, 0.6)
+    extras.append(G.rbox("Carrier.Front.Panel.Tape", coll, (92.0, 2.0, 24.0), Mt, M["webbing_cb"], bevel_mm=0.6))
+    Ms, _, _ = on_panel(10.0, -22.0, 0.4)
+    extras.append(G.rbox("Carrier.Front.Panel.Slot", coll, (64.0, 1.6, 6.0), Ms, M["binding"], bevel_mm=0.6))
+    for k, (u, v) in enumerate(((-72.0, 26.0), (-72.0, -26.0), (70.0, 30.0))):
+        _, ps, ns = on_panel(u, v, 0.0)
+        extras.append(G.cyl(f"Carrier.Front.Panel.Stud.{k + 1}", coll, ps - ns * 0.5, ns, 4.2, 1.6, M["steel"], n=16,
+                            bevel_mm=0.4, dome=1.6))
+    rim = [sf_out(pxc + u * ca - v * sa, pzc + u * sa + v * ca) for (u, v) in
+           [(x, -ph / 2 + 1.5) for x in np.linspace(-pw / 2 + 1.5, pw / 2 - 1.5, 30)] +
+           [(pw / 2 - 1.5, y) for y in np.linspace(-ph / 2 + 1.5, ph / 2 - 1.5, 14)[1:]] +
+           [(x, ph / 2 - 1.5) for x in np.linspace(pw / 2 - 1.5, -pw / 2 + 1.5, 30)[1:]] +
+           [(-pw / 2 + 1.5, y) for y in np.linspace(ph / 2 - 1.5, -ph / 2 + 1.5, 14)[1:-1]]]
+    extras.append(tube("Carrier.Front.Panel.Rim", coll, [p + nn * (pt * 0.5) for p, nn in rim], pt * 0.5 + 0.6,
+                       M["webbing"], closed=True, sides=8))
+    G.join(panel_ob, extras)
+    out["panel"] = {"centre_xz": [pxc, round(pzc)], "size": PANEL, "cant_deg": PANEL_CANT,
+                    "details": "name tape 92 x 24, slot 64 x 6, three studs, bound rim (round 10)"}
 
     # ---------------------------------------------------------------- magazine pouches
     # each: the body, the flap (over the top and 44 down the front) and the pull tab down its centre; standing
     # on the PALS
     pz0 = zb_f + POUCH_LIFT
     pcz = pz0 + POUCH[2] / 2.0
-    lift = BAG_T + PALS_T + 3.5 + 0.5          # over the webbing and its sag
+    lift = BAG_T + PALS_T + 1.5                # on the webbing (round 10; round 2-9: over its 3.5 sag + 0.5, so the
+                                               # pouches stood 5 mm off: stand-off "floats")
     for i, x in enumerate(POUCH_X):
         p, n = front.point(x, pcz, lift)
         up = G.unit(np.array([0.0, 0.0, 1.0]) - n * n[2])
@@ -604,18 +723,15 @@ def main(render=True):
             Mx[:3, 3] = c
             return Mx
         bw, bd, bh = POUCH
-        body_m = Mat(p + n * bd / 2.0)
-        ft, fd = POUCH_FLAP_TOP, POUCH_FLAP_DOWN
-        top = Mat(p + n * (bd / 2.0 + 1.0) + up * (bh / 2.0 + ft / 2.0 - 2.0))           # flap over the magazine top
-        front_fl = Mat(p + n * (bd + 2.5) + up * (bh / 2.0 + ft - 4.0 - fd / 2.0))        # flap down the front
-        G.boxes(f"Carrier.Pouch.{i + 1}", coll, [(POUCH, body_m), ((bw + 3.0, bd + 6.0, ft), top),
-                                                 ((bw + 3.0, 5.0, fd), front_fl)], M["pouch"], bevel_mm=6.0)
-        ob = bpy.data.objects[f"Carrier.Pouch.{i + 1}"]
-        # pull tab: webbing from the flap top down its front to 22 below the flap edge
-        tab = [p + n * (bd + 6.0) + up * (bh / 2.0 + ft - 4.0), p + n * (bd + 5.6) + up * (bh / 2.0 - 4.0),
-               p + n * (bd + 5.3) + up * (bh / 2.0 + ft - 4.0 - fd), p + n * (bd + 3.0) + up * (bh / 2.0 + ft - 26.0 - fd)]
-        tb = G.strip(f"Carrier.Pouch.{i + 1}.Tab", coll, np.array(tab), [n] * 4, 20.0, 2.4, M["webbing"], bevel_mm=0.6)
-        G.join(ob, [tb])
+        # round 10 (G1 D3, m28, m33: "deep straight boxes with flat lids"): Cordura round a magazine (softgear.soft_pouch):
+        # a soft section, the bulge of the magazine at mid-height, a rounded bottom, the flap crowned over the magazine's
+        # top and draped down the front over the body's own rounded corners, a bound flap edge, piped front seams, the
+        # pull tab with its slide-lock plate at the hem (drawn)
+        res = SG.soft_pouch(f"Carrier.Pouch.{i + 1}", coll, POUCH, Mat(p + n * bd / 2.0), M["pouch"],
+                            bind_mat=M["webbing"], tab_mat=M["webbing"], plate_mat=M["hardware"], drop=POUCH_FLAP_DOWN,
+                            bulge=POUCH_BULGE, dome=POUCH_DOME, seed=40 + i)
+        ob = res["body"]
+        G.join(ob, [o for k, o in res.items() if k not in ("body", "hem_z") and o is not None])
     out["mag_pouches"] = {"x": POUCH_X, "z": [round(pz0), round(pz0 + POUCH[2] + 11)], "body": POUCH,
                           "flap": f"over the top ({POUCH_FLAP_TOP:.0f} thick), {POUCH_FLAP_DOWN:.0f} down the front, 20 mm pull tab to 22 below its edge"}
 
@@ -627,20 +743,30 @@ def main(render=True):
         x = sgn * STRAP_X
         c = np.array([x, 0.0, nz_mid - 60.0])
         phis = np.radians(np.linspace(-115, 115, 116))
-        pts, nrm, slope = strap_profile(under_t, x, sgn, c, phis, PAD_W)
+        # round 10 (G1 D2, r8 m29: "the pads bridge open gaps above the shoulders and end abruptly"): the pad lies on the
+        # shirt AND runs on over the rear bag's top onto its face (it is sewn to the bag there), instead of ending in the
+        # air 15 mm above the bag and handing over to a root that ramped out to the bag's face over a gap
+        under_pad = G.Under([(G.objects_bvh([bag_r, pals_r]), 0.0)] + under_t.layers)
         ztop_r = zt_r - max(0.0, abs(x) - (BAG_W / 2 - CORNER_CLIP))
-        # the pad: from 45 mm above the front bag's top (room for the adjuster) over to 15 above the rear bag's
-        keep = ((pts[:, 1] < c[1]) & (pts[:, 2] > zt_f + 45.0)) | ((pts[:, 1] >= c[1]) & (pts[:, 2] > ztop_r + 15.0))
+        pts, nrm, slope = strap_profile(under_pad, x, sgn, c, phis, PAD_W, clear=PAD_CLEAR, flat_back_z=ztop_r + 30.0)
+        # the pad: from 45 mm above the front bag's top (room for the adjuster) over to PAD_REAR_ON down the rear bag's face
+        keep = (((pts[:, 1] < c[1]) & (pts[:, 2] > zt_f + 45.0)) |
+                ((pts[:, 1] >= c[1]) & (pts[:, 2] > ztop_r - PAD_REAR_ON)))
         idx = np.nonzero(keep)[0]
         idx = np.arange(idx.min(), idx.max() + 1)
         arc, an = pts[idx], nrm[idx]
-        pad = split_across(G.strip(f"Carrier.Strap.{side}.Pad", coll, arc, an, PAD_W, PAD_T, M["pad"], bevel_mm=PAD_BEVEL))
+        sarc = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(arc, axis=0), axis=1))])
+        # the padding thins out over its last PAD_END mm at both ends (the foam's sewn-down ends), no square block end
+        thick = np.array([PAD_T * (0.4 + 0.6 * G.smoothstep(min(s, sarc[-1] - s), 0.0, PAD_END)) for s in sarc])
+        pad = split_across(taper_strip(f"Carrier.Strap.{side}.Pad", coll, arc, an, PAD_W, thick, M["pad"],
+                                       bevel_mm=PAD_BEVEL))
         # the 38 mm webbing sewn down the pad's centre
-        web = G.strip(f"Carrier.Strap.{side}.Web", coll, arc + an * PAD_T, an, ROOT_W, 1.5, M["webbing"], bevel_mm=0.5)
+        web = G.strip(f"Carrier.Strap.{side}.Web", coll, arc + an * thick[:, None], an, ROOT_W, 1.5, M["webbing"],
+                      bevel_mm=0.5)
         # front: webbing from the pad's end down the upper chest to the bag's top edge at ROOT_X and down the
         # bag face (the root, sewn into the bag) to 95 below the bag's top; laid on the outermost surface
         x_end = sgn * ROOT_X
-        p_end = arc[0] + an[0] * (PAD_T * 0.5)
+        p_end = arc[0] + an[0] * (thick[0] * 0.5)
         zs = np.linspace(p_end[2] - 6.0, zt_f - 95.0, 34)
         path, pn = [p_end], [an[0]]
         for z in zs:
@@ -667,32 +793,38 @@ def main(render=True):
         kl = max(int(np.searchsorted(seg, 30.0)), 1)
         tl = G.unit(path[min(kl + 1, len(path) - 1)] - path[kl - 1])
         nl = G.unit(pn[kl] - tl * np.dot(pn[kl], tl))
+        # round 10 (m10: "the strap webbing and buckles down each side"): the drawn adjuster is a broad metal-framed
+        # buckle (gunmetal, bright worn edges), not a small black ladder-lock
         ladder_lock(f"Carrier.Strap.{side}.LadderLock", coll, path[kl] + nl * ROOT_T, np.cross(tl, nl), nl,
-                    M["hardware"])
+                    M["metal_hw"], dims=CAM)
         # the loose tail: out of the lock, down over the root for 110 mm, through two keepers
         kt = min(int(np.searchsorted(seg, seg[kl] + 110.0)), len(path) - 1)
         tail_p = path[kl:kt + 1] + np.array(pn[kl:kt + 1]) * (ROOT_T + 0.4)
-        tail_p[0] = tail_p[0] + nl * (LOCK[3] - 1.0)
+        tail_p[0] = tail_p[0] + nl * (CAM[3] - 1.0)
         tail = G.strip(f"Carrier.Strap.{side}.Tail", coll, tail_p, pn[kl:kt + 1], ROOT_W - 2.0, 1.5, M["webbing"],
                        bevel_mm=0.5)
         keepers = []
-        for kk, at in enumerate((seg[kl] + 62.0, seg[kl] + 98.0)):
+        # round 10: the drawn run below the buckle is crossed by a ladder of webbing loops, KEEPERS 10 mm bands at 20 mm
+        # (round 2-9: two broad keepers)
+        for kk, at in enumerate(seg[kl] + 46.0 + 20.0 * np.arange(KEEPERS)):
             j = min(max(int(np.searchsorted(seg, at)), 1), len(path) - 2)
             tj = G.unit(path[j + 1] - path[j - 1])
             nj = G.unit(pn[j] - tj * np.dot(pn[j], tj))
             Mk = G.frame(path[j] + nj * (ROOT_T + 1.5 + 1.2), np.cross(tj, nj), nj)
-            keepers.append(G.rbox(f"Carrier.Strap.{side}.Keeper.{kk + 1}", coll, (ROOT_W + 6.0, 16.0, 2.4), Mk,
+            keepers.append(G.rbox(f"Carrier.Strap.{side}.Keeper.{kk + 1}", coll, (ROOT_W + 8.0, 10.0, 2.6), Mk,
                                   M["webbing"], bevel_mm=0.8))
         G.join(root, [tail] + keepers)
         # rear root down the rear bag face
-        rr = [arc[-1]]
-        for z in np.linspace(ztop_r - 6.0, zt_r - 70.0, 6):
+        # (round 10: from the pad's end, which now lies on the bag's face, 50 mm on down it)
+        ze = float(arc[-1][2])
+        rr = [arc[-1] - an[-1] * 0.4]
+        for z in np.linspace(ze - 6.0, ze - 50.0, 6):
             rr.append(rear.point(x, z, tf_r(x, z) + 0.6)[0])
         rr = np.array(rr)
         rrn = [an[-1]] + [rear.point(p[0], min(p[2], ztop_r), 0.0)[1] for p in rr[1:]]
         G.strip(f"Carrier.Strap.{side}.RearRoot", coll, rr, rrn, ROOT_W, ROOT_T, M["webbing"], bevel_mm=0.5)
         G.join(pad, [web])
-        strap_out[side] = {"pad_top_z": round(float((arc + an * PAD_T)[:, 2].max())),
+        strap_out[side] = {"pad_top_z": round(float((arc + an * thick[:, None])[:, 2].max())),
                            "slope_over_top": round(float(slope[len(slope) // 2]), 3),
                            "lock_centre": [round(float(v)) for v in path[kl]]}
     out["straps"] = {"x": STRAP_X, "pad": [PAD_W, PAD_T], "root": [ROOT_W, ROOT_T], "root_x": ROOT_X,
@@ -729,35 +861,53 @@ def main(render=True):
         Mx = G.seat(lay_side, Mx, size)
         return Mx, p, n, xa
 
-    # radio pouch behind the left shoulder, radio top with knobs, the bungee over it, and the antenna
-    rz = nz_mid + 15.0 - BAG_H + 125.0      # the radio stays at round 1's height (the antenna as drawn)
-    Mr, pr, nr, xr = on_side(RADIO_THETA, rz, RADIO_POUCH)
-    pouch = G.rbox("Carrier.Radio.Pouch", coll, RADIO_POUCH, Mr, M["radio_pouch"], bevel_mm=8.0)
-    top = Mr[:3, 3] + np.array([0.0, 0.0, RADIO_POUCH[2] / 2.0])
+    # radio pouch, radio top with knobs, the bungee over it, and the antenna. Round 10 (m44: "hangs off the back plate's
+    # edge, attached to nothing"): the pouch stands on the rear bag's PALS at RADIO_X (his left), its top RADIO_TOP_DROP
+    # below the bag's top, a soft Cordura pouch round the radio; (m42: "black with a ball tip") the antenna is the drawn
+    # tan tube with a yellow end and a short flat black cap, its base at the pouch's outer top corner, leaning out 14 deg
+    # and back 5 so it rises behind the left shoulder as drawn
+    lay_rear = G.Under([(G.objects_bvh([bag_r, pals_r]), 0.6)])
+    rw, rd, rh = RADIO_POUCH
+    rzc = zt_r - RADIO_TOP_DROP - rh / 2.0
+    pr, nr = rear.point(RADIO_X, rzc, tf_r(RADIO_X, rzc) + PALS_T + 3.5)
+    up_r = G.unit(np.array([0.0, 0.0, 1.0]) - nr * nr[2])
+    xr = G.unit(np.cross(up_r, nr))
+    if xr[0] < 0:                                   # +x toward his left, the pouch's outer side
+        xr = -xr
+    Mr = np.eye(4)
+    Mr[:3, :3] = np.column_stack([xr, nr, up_r])
+    Mr[:3, 3] = pr + nr * rd / 2.0
+    Mr = G.seat(lay_rear, Mr, RADIO_POUCH, gap=0.3)
+    resr = SG.soft_pouch("Carrier.Radio.Pouch", coll, RADIO_POUCH, Mr, M["radio_pouch"], bind_mat=M["webbing"],
+                         flap=False, bulge=2.0, side_bulge=0.8, pf=4.0, noise=0.6, seed=51)
+    pouch = resr["body"]
+    top = Mr[:3, 3] + up_r * (rh / 2.0)
     Mtop = Mr.copy()
-    Mtop[:3, 3] = top + np.array([0.0, 0.0, 9.0])
+    Mtop[:3, 3] = top + up_r * 9.0
     G.rbox("Carrier.Radio.Body", coll, (66.0, 40.0, 18.0), Mtop, M["radio"], bevel_mm=4.0)
-    fwd = 1 if xr[1] < 0 else -1
-    base = top + np.array([0.0, 0.0, 18.0]) + xr * 18.0 * fwd
+    base = top + up_r * 18.0 + xr * 20.0
     for kk, (du, dd) in enumerate(((-16.0, -6.0), (2.0, 8.0))):       # volume and channel knobs
-        G.cyl(f"Carrier.Radio.Knob.{kk + 1}", coll, top + np.array([0.0, 0.0, 18.0]) + xr * du * fwd + Mr[:3, 1] * dd,
-              np.array([0.0, 0.0, 1.0]), 8.0, 12.0, M["radio"], n=16)
-    bung = [Mr[:3, 3] + Mr[:3, 1] * (RADIO_POUCH[1] / 2.0 + 1.5) + xr * u + np.array([0.0, 0.0, RADIO_POUCH[2] / 2.0 + h])
-            for u, h in ((-34, -30), (-20, 4), (0, 12), (20, 4), (34, -30))]
+        G.cyl(f"Carrier.Radio.Knob.{kk + 1}", coll, top + up_r * 18.0 - xr * (du + 22.0) + nr * dd, up_r, 8.0, 12.0,
+              M["radio"], n=16)
+    bung = [Mr[:3, 3] + nr * (rd / 2.0 + 2.5) + xr * u + up_r * (rh / 2.0 + h)
+            for u, h in ((-30, -30), (-18, 4), (0, 12), (18, 4), (30, -30))]
     tube("Carrier.Radio.Bungee", coll, bung, 2.0, M["binding"], sides=8)
-    ax = G.unit(np.array([0.0, math.sin(math.radians(5.0)), math.cos(math.radians(5.0))]))
-    G.cyl("Carrier.Radio.Antenna.Steel", coll, base, ax, 13.0, 60.0, M["steel"])
-    G.cyl("Carrier.Radio.Antenna.Brass", coll, base + ax * 60.0, ax, 15.0, 38.0, M["brass"])
-    G.cyl("Carrier.Radio.Antenna.Groove", coll, base + ax * 98.0, ax, 14.2, 2.0, M["brass_dark"])
-    G.cyl("Carrier.Radio.Antenna.Brass2", coll, base + ax * 100.0, ax, 15.0, 15.0, M["brass"])
-    G.cyl("Carrier.Radio.Antenna.Cap", coll, base + ax * 115.0, ax, 16.0, 22.0, M["cap"], dome=16.0)
-    ant_top = base + ax * 153.0
-    G.join(pouch, [bpy.data.objects[n] for n in (
-        "Carrier.Radio.Body", "Carrier.Radio.Knob.1", "Carrier.Radio.Knob.2", "Carrier.Radio.Bungee",
-        "Carrier.Radio.Antenna.Steel", "Carrier.Radio.Antenna.Brass", "Carrier.Radio.Antenna.Groove",
-        "Carrier.Radio.Antenna.Brass2", "Carrier.Radio.Antenna.Cap")])
+    lean = math.radians(ANTENNA_LEAN)
+    ax = G.unit(up_r * math.cos(lean) + xr * math.sin(lean) + nr * math.sin(math.radians(5.0)))
+    G.cyl("Carrier.Radio.Antenna.Steel", coll, base, ax, 9.0, 22.0, M["steel"], n=20)
+    G.cyl("Carrier.Radio.Antenna.Tube", coll, base + ax * 22.0, ax, 13.0, ANTENNA[0], M["antenna"], n=24)
+    G.cyl("Carrier.Radio.Antenna.Tip", coll, base + ax * (22.0 + ANTENNA[0]), ax, 13.0, ANTENNA[1], M["antenna_tip"],
+          n=24, bevel_mm=0.8)
+    G.cyl("Carrier.Radio.Antenna.Cap", coll, base + ax * (22.0 + ANTENNA[0] + ANTENNA[1]), ax, 12.0, ANTENNA[2],
+          M["cap"], n=24, bevel_mm=1.6)
+    ant_top = base + ax * (22.0 + sum(ANTENNA))
+    G.join(pouch, [o for k, o in resr.items() if k not in ("body", "hem_z") and o is not None] +
+           [bpy.data.objects[n] for n in (
+               "Carrier.Radio.Body", "Carrier.Radio.Knob.1", "Carrier.Radio.Knob.2", "Carrier.Radio.Bungee",
+               "Carrier.Radio.Antenna.Steel", "Carrier.Radio.Antenna.Tube", "Carrier.Radio.Antenna.Tip",
+               "Carrier.Radio.Antenna.Cap")])
     out["radio"] = {"pouch_centre": [round(float(v)) for v in Mr[:3, 3]], "antenna_base": [round(float(v)) for v in base],
-                    "antenna_top": [round(float(v)) for v in ant_top], "theta_deg": RADIO_THETA}
+                    "antenna_top": [round(float(v)) for v in ant_top], "on": "rear bag PALS", "x": RADIO_X}
     G.say("radio", out["radio"])
 
     # double pistol-magazine carrier on the right flank, on the cummerbund's rows (round 1 hung it below

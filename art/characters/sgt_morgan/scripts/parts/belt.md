@@ -8,17 +8,17 @@ Build: `"$SGT_BLENDER" -b --python scripts/parts/belt.py [-- --no-render]` (abou
 
 | Item | Built (mm) | Class / source |
 |---|---|---|
-| Rigger belt | 44.5 x 5.5, inner girth 987, top 3 mm under the trousers' waistband top (front z 1047), in the trousers' tilted waist plane | HSGI Cobra 1.75 in class (spec 14 §3.1) |
+| Rigger belt | round 9: a 50 x 9 padded battle-belt sleeve over the 44.5 x 5.5 rigger belt; round 10: cinched, each of its 5 rows on its own section's hull 0.6 over the trousers (inner girth 968; 1021 when every row took the widest), top 3 mm under the trousers' waistband top (front z 1047), in the trousers' tilted waist plane | HSGI Cobra 1.75 in class (spec 14 §3.1) |
 | Buckle | 38 x 10 x 58, 30 mm to his right of centre front | AustriAlpin Cobra FC45 (datasheet 58 x 38 x 10) |
 | Hangers | 38 x 1.6 webbing, coyote (right), black (left) | spec 14 §3.2, D11 |
-| Right platform | round 2: 158 x 180 x 8, corners r 15, a 12 mm bound edge, top z 832 (rest), 6 over the trousers, centred on the thigh 12 deg from its front toward the INSIDE (round 1: 28 deg outside) | HSGI / Blackhawk Omega class leg rig (spec 14 §3.3) |
+| Right platform | round 10: 144 x 158 x 8 on the OUTER front of the thigh, 26 deg from its front toward the outside (round 2-9: 158 x 180 at 12 deg inside; round 1: 28 outside), corners r 15, a 12 mm bound edge, top z 832 (rest), 6 over the trousers; straps at z 796 and 728 | HSGI / Blackhawk Omega class leg rig (spec 14 §3.3) |
 | Right thigh straps | 38 x 2 at z 792 and 716 (round 2), 2.2 over the trousers; 50 x 32 x 3.5 ladder-locks on the running ends just inboard of the platform | spec 14 D10, §3.2 |
-| Twin rifle-mag carriers | 76 x 42 x 140 black, body top 15 below the platform top; tan plates 47 x 128 x 3 with three 25 x 6 slots (45, 73, 101 below the top) on a 1.6 spacer; 8 mm dome tension screw; PMAG tops 66 x 25 standing 53 proud with a 70 x 29 floor plate; 4 mm shock-cord loop over each magazine; two cord tails 52 long with 8 x 16 tan cord ends under the outer carrier; both turned 65 % toward the platform's centre normal so they face one way | HSGI polymer TACO class (spec 14 §3.4, D4, D5) |
+| Twin rifle-mag carriers | round 10: Cordura bodies 68 x 34 x 122 (soft, `softgear.soft_pouch`: open top with a bound mouth, the magazine's 2 mm bulge, piped seams; charcoal 500D) at u -36 / +36; round 9: 70 x 36 x 122 polymer boxes, round 2: 76 x 42 x 140; body top 15 below the platform top; tan plates 47 x 128 x 3 with three 25 x 6 slots (45, 73, 101 below the top) on a 1.6 spacer; 8 mm dome tension screw; PMAG tops 66 x 25 standing 53 proud with a 70 x 29 floor plate; 4 mm shock-cord loop over each magazine; two cord tails 52 long with 8 x 16 tan cord ends under the outer carrier; both turned 65 % toward the platform's centre normal so they face one way | HSGI polymer TACO class (spec 14 §3.4, D4, D5) |
 | Left platform | round 2: 132 x 200 x 8, top z 878, at 30 deg (round 1: 176 wide at 58 deg); strap at z 702 with its ladder-lock at the medial front (-30 deg) | spec 14 §3.5 |
-| Left double mag pouch (round 6) | two flapped cells 64 x 38 x 172 side by side at u -34 / +34 on a 148 wide platform; each an L flap (lid + 48 mm drop) with a 13 mm snap and two 25 mm webbing rows; olive | drawn tall double mag pouch (replaced round 2-5's frag pouch and hard case) |
-| Right front hip pouch (round 6) | 70 x 36 x 118 flapped pouch on the belt at theta -62, hung tilted to the hip | drawn above the right thigh rig |
-| Holster | 60 x 50 x 190, open mouth, 2.5 walls, at 122 deg round the belt toward his right rear, hung tilted to the hip and mounted on the belt (round 6) | Safariland 6378 ALS class for a P226 |
-| P9 | slide 196 x 34 x 30 muzzle down in the holster, grip 105 x 48 x 32 raked 14 deg rearward above the mouth | SIG P226 class (consolidated analysis: 196 x 140 x 38) |
+| Left double mag pouch (round 6) | two flapped cells 64 x 38 x 172 side by side at u -34 / +34 on a 148 wide platform; round 10: soft Cordura round the magazine (3.5 mm bulge, rounded bottom), the flap draped over the magazine top and 48 down the front with a bound edge, a tab with a dark plate, two 25 mm webbing bands following the face (round 6-9: an L flap of two blocks, a snap, flat rows); olive | drawn tall double mag pouch (replaced round 2-5's frag pouch and hard case) |
+| Right front hip pouch (round 6) | 70 x 36 x 118 flapped pouch on the belt at theta -62, hung tilted to the hip; round 10 soft, as the left cells, one band | drawn above the right thigh rig |
+| Holster | 54 x 42 x 182 (round 9), open mouth, 2.5 walls; round 10: at 115 deg round the belt (122 before), hung 32 mm lower (a mid-ride drop), its back bent onto the hip within 34 mm (22); hung tilted to the hip, bound by weights | Safariland 6378 ALS class for a P226 |
+| P9 | slide 196 x 34 x 30 muzzle down in the holster, grip 105 x 48 x 32 rearward above the mouth, raked 8 deg (14 before) and turned toward the body about the holster's axis until its middle and end lie nearest the hip (round 10: 30 deg, the search's limit) | SIG P226 class (consolidated analysis: 196 x 140 x 38) |
 
 ## 2. What the reference shows (crop_belt_hips, zoom_belt*_*)
 
@@ -40,7 +40,8 @@ thigh; on the left a narrow olive/grey block at the hip; no pistol or holster an
   thigh matches the drawing's relative to the knee.
 - **The hard case is a slim 52 x 46 x 178 case**, not a Pelican 1030 (98 x 62 x 191): either way round the 1030
   made the left block twice as wide as drawn (round 1 laid it flat on a 176 mm platform). The drawn cell is 51 wide.
-- **The right rig sits on the front of the thigh, 12 deg toward the inside of its anatomical front** (round 2),
+- **Superseded in round 10** (the rig is now on the outer front, 26 deg outside, as drawn; see §13). Rounds 2-9: **the right
+  rig sat on the front of the thigh, 12 deg toward the inside of its anatomical front** (round 2),
   because the hero pose turns the right thigh out by 43 deg: posed, the platform faces the camera (33 deg off it),
   as drawn. In rest it looks too far inboard; a rig on the thigh's outside would face sideways in the hero frame.
   If the pose agent turns the thigh in, theta must follow (`PLATFORM['R']['theta']`).
@@ -242,3 +243,82 @@ cargo pockets' edges.
 
 Still wrong: the holster in the side views; the battle belt has no PALS, binding or inner/outer split; the cord tails;
 the belt should be fitted per row instead of the widest row everywhere.
+
+## 13. Round 10 (2026-11-15): a cinched belt, the right rig on the outer thigh, soft pouches, the holster (G1 D12, D14; m5, m23, m28)
+
+- **Belt, fitted per section** (G1 D14, round 9's stand-off 7.0-7.4 mm: "a rigid hoop standing off at the back").
+  - Each of the band's 5 rows lies on its own section's convex hull, 0.6 mm over the trousers (`BELT_LIFT`; 1.0 over the
+    widest row before).
+  - Across the band the rows are eased a quarter of the way toward their mean, but never inside their own hull: a 50 mm
+    padded sleeve does not crease to every section.
+  - The rows sit 0 to 13 mm inside the widest one (median per row). Inner girth 968 (1021).
+  - `belt_point` follows the middle row.
+- **Right leg rig on the outer thigh** (m23, D12: "two thick square boxes on a large flat backing on the front of the
+  thigh").
+  - The platform sits 26 deg from the thigh's front toward the outside (12 deg inside before). It is narrower and shorter:
+    144 x 158 (158 x 180). The straps are at z 796 and 728.
+  - In the hero frame the rig now stands at the silhouette's edge where the drawn carriers are, seen obliquely. The
+    `belt_hips` overlay puts it on the drawn carriers.
+  - §3's round-2 reasoning (the thigh turned out 43 deg, so a rig on the outside faces sideways) held for the face but not
+    for the place. The drawing shows them at the edge.
+- **Right carriers in Cordura** (m28: "hard grey plastic, unlike the olive fabric pouches"). The real HSGI TACO is a nylon
+  pouch round a polymer insert.
+  - The bodies are soft, from `softgear.soft_pouch`: open top with a bound mouth, the magazine's 2 mm bulge, piped seams,
+    68 x 34 x 122 at u -36 / +36. They are charcoal 500D: `Belt.Mat.CarrierBody`, Cordura.500D.Black at #383632, dust 0.8,
+    inside the lint's textile_black band.
+  - The tan slotted plates, spacers, screws, PMAGs and shock cords stay, moved out over the bulge.
+- **Left double mag pouch and right-front hip pouch**, now soft (`soft_flapped`):
+  - bodies round their magazines, 3.5 mm bulge, rounded bottoms;
+  - flaps crowned 5 mm and draped 48 mm (40 on the hip pouch), with a bound edge, piped seams and a tab with a dark plate;
+  - webbing bands that follow the face (`softgear.face_band`).
+  The flat snap, the block flaps and the flat rows are gone. The tab plates were gunmetal at first and read as bright white
+  squares in the hero frame; they are now the black strap material.
+- **Holster** (m5: "its top angled ~40 deg off the body, like an open lid"):
+  - The angled top was the P9's grip. It was laid along the belt's tangent, raked 14 deg, at belt-top height, where the
+    lumbar curve leaves the back 40 mm and more away.
+  - The holster now hangs 32 mm lower (`HOLSTER_DROP`, a mid-ride drop), so the grip lies beside the belt.
+  - It moved from 122 to 115 deg round the belt, where the hip is flatter, and its back may bend 34 mm onto the hip
+    (`HOLSTER_REACH`; 22).
+  - The grip is raked 8 deg (`P9_RAKE`) and turned toward the body about the holster's axis. The search
+    (`GRIP_CLEAR`, nearest-surface distance at the grip's middle and end) stops at its 30 deg limit, with the grip's end
+    about 26 mm off the hip.
+
+**Checks** (the in-memory assembly of 21:20 described in carrier.md §12, belt cache of 21:07; the final rebuild at 21:23
+changed only the left pouches' tab-plate material):
+
+| Check | Round 9 | Round 10 | What |
+|---|---|---|---|
+| trousers-belt | 60 verts, 2.6 mm | 53 verts, 2.6 mm | the left cargo flap at the platform's inner edge, as since round 2 |
+| body-belt | none | none | |
+| belt-carbine | none | none | |
+| belt-carrier | none | none | |
+
+Stand-off, round 9 -> round 10:
+- Gone: `Belt.Belt` (7.4).
+- `Belt.Holster` is not flagged. `Belt.P9` is new at 15.5: the grip's end, 26 mm off the hip.
+- New: the soft carriers `Belt.Rig.R.Carrier.1/.2` at 12.1 and 16.3, `Belt.Rig.L.MagPouch.2` at 9.6 and `Belt.Pouch.RF` at
+  7.8. These are rounded sides and bottoms facing the skin over the platform's edge, an artefact of the heuristic on
+  rounded bodies; their backs lie on the platform and belt (contact 0.01-0.33).
+- Worse: the outer carrier's cord tails 26-37 -> 46-53. With the rig turned out they hang free below the carrier, as the
+  drawn tails do.
+
+**Colour** (look_stats, belt_hips, eroded mask, graded): the belt's median Y fell from 0.0179 (equal to the reference's)
+to 0.0120 against 0.0195. The mask moved with the rig, and the carriers are now fabric, not scuffed satin polymer. Not
+chased further.
+
+Renders opened:
+- the part's own `renders/belt/belt_hero_belt_hips_pair.png`;
+- in `renders/scratch_r10cb/{c2,final}/`: `belt_hips_cycles`, `soldier_full_cycles`, `turn_side_R`, `turn_back`,
+  `close_holster`, `close_belt_back`, `close_rig_R`;
+- `renders/look/r10cb_final/sheet_belt_hips_graded.png`.
+
+**Still wrong, for round 11:**
+1. In the side view the holstered P9 still reads as an L. The grip is a straight 105 mm block running rearward past the
+   buttock, and it stops at the turn search's 30 deg limit. Options for Jeff:
+   - a hood over the grip's front (an ALS hood);
+   - the holster further forward;
+   - the P9 left out, since the image shows none (Decision 2).
+2. The carriers and pouches are darker and plainer than drawn. The drawn right carriers have grey worn highlights; the left
+   cells' drawn tan accents are not built.
+3. The cord tails hang free (flagged).
+4. The battle belt still has no PALS, binding or inner/outer split.

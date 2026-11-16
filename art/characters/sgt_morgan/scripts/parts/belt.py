@@ -4,6 +4,9 @@ to face forward in the hero pose, twin open-top polymer rifle-magazine carriers 
 screws, shock cord over the spare PMAGs, soft cord tails); on the left thigh the drawn double rifle-mag pouch (two
 flapped olive cells); a flapped pouch on the belt at the right front hip; and a mid-ride belt holster at the right
 rear hip with the P9 sidearm (a P226-class pistol), hung tilted to the hip. Notes: scripts/parts/belt.md.
+Round 10: the belt cinched per section; the right rig on the outer thigh, narrower, its carriers Cordura TACOs
+(softgear.soft_pouch); the left cells and the right front pouch soft Cordura round their magazines; the holster
+dropped, nearer the hip's side, its pistol grip turned to follow the hip.
 
   "$SGT_BLENDER" -b --python scripts/parts/belt.py [-- --no-render]
   -> cache/parts/belt.blend (Part.Belt), cache/parts/belt.json, renders/belt/*.png
@@ -28,6 +31,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as C  # noqa: E402
 import gear_common as G  # noqa: E402
+import softgear as SG  # noqa: E402  (round 10: Cordura pouches round their magazines)
 from lib import gear_hardware as GH  # noqa: E402
 
 PART, TAG = "Belt", "belt"
@@ -37,29 +41,37 @@ BELT_W, BELT_T = 50.0, 9.0                       # round 9 (critic r8 m36: "a na
                                                  # Blue Force Gear class), was the bare rigger belt 44.5 x 5.5
 WAIST_PLANE = ((0.0, 0.0, 1072.0), (0.0, -0.15, 1.0))   # the trousers' waist plane (trousers.py WAIST)
 BELT_TOP_BELOW = 3.0                             # belt top 3 mm under the waistband's top edge
+BELT_LIFT = 0.6                                  # round 10: the cinched band's inner face over the trousers (rounds 1-9: 1.0
+                                                 # over the widest row, so up to 7 mm off where the waist narrows)
 BUCKLE = (38.0, 10.0, 58.0)                      # along the belt, thick, across (Cobra FC45: 58 x 38 x 10)
 BUCKLE_THETA = -9.0                              # deg: about 30 mm to his right of centre front
 # Round 2: the right rig 40 deg (about 7 cm) inboard so its carriers face forward in the hero pose (the posed
 # right thigh is turned out 43 deg); the carriers lower so the straps cross them at a third and three quarters
 # of their height, as drawn; the left block narrower (130 wide platform, slim case on its narrow face).
-PLATFORM = {"R": {"theta": -12.0, "top": 832.0, "h": 180.0, "w": 158.0, "straps": (792.0, 716.0)},
+# Round 10 (m23, D12: "two thick square boxes on a large flat backing on the front of the thigh"; the drawn rig sits on
+# the outer thigh): the right platform at 26 deg toward the outside of the thigh's front (round 2-9: 12 deg inside),
+# narrower and shorter, just carrying the two carriers.
+PLATFORM = {"R": {"theta": 26.0, "top": 832.0, "h": 158.0, "w": 144.0, "straps": (796.0, 728.0)},
             "L": {"theta": 30.0, "top": 878.0, "h": 200.0, "w": 148.0, "straps": (702.0,)}}
 PLATFORM_T, PLATFORM_LIFT = 8.0, 6.0             # laminate thickness; inner face over the trousers (straps under)
 STRAP_W, STRAP_T, STRAP_LIFT = 38.0, 2.0, 2.2
 CARRIER_DROP = 15.0                              # carrier body top below the platform's top edge
 HANGER_W, HANGER_T = 38.0, 1.6
-MAG_CARRIER = (70.0, 36.0, 122.0)                # HSGI polymer TACO class, broad side out (round 9, critic r8 m22: "oversized
+MAG_CARRIER = (68.0, 34.0, 122.0)                # HSGI TACO class, broad side out (round 9, critic r8 m22: "oversized
 MAG_PLATE = (44.0, 3.0, 110.0)                   # boxes": 76 x 42 x 140 -> 70 x 36 x 122, a STANAG TACO; plate 47 x 128)
 PMAG_PROUD, PMAG = 53.0, (66.0, 25.0)
 MAG_POUCH = (64.0, 38.0, 172.0)                  # round 6: one cell of the left hip's double rifle-mag pouch (drawn: two
                                                  # tall flapped olive cells side by side; round 1-5 built a frag pouch and
                                                  # a hard case there, which the critics read as "a box beside a block")
 MAG_POUCH_U = (-34.0, 34.0)                      # the two cells' centres across the left platform
+CARRIER_U = (-36.0, 36.0)                        # round 10: the right carriers' centres across the 144 platform (was +-39)
+CARRIER_BULGE = 2.0                              # round 10: the magazine's bulge in the carriers' Cordura face
 FLAP_DROP = 48.0                                 # a flap's drop down the pouch face
 RF_POUCH = (70.0, 36.0, 118.0)                   # round 6: the right front hip's flapped pouch on the belt (drawn there,
 RF_THETA = -62.0                                 # above the thigh rig; missing until round 6)
 LOCK_T = 3.5                                     # the ladder-locks' frame thickness (GH.ladder_lock(..., 3.5, ...))
-HOLSTER_THETA = -122.0                           # deg round the belt: right rear hip
+HOLSTER_THETA = -115.0                           # deg round the belt: right rear hip (round 10: -122 -> -115, where
+                                                 # the hip is flatter and the grip can follow it)
 HOLSTER_GAP = 1.0                                # round 6: its back 1 mm off the belt and trousers (2.5, plus a pelvis-bone
                                                  # bind while the belt followed the thigh, left it hinged into the air)
 HOLSTER = (54.0, 42.0, 182.0)                    # along the belt, out, tall (Safariland 6378 ALS class, P226); round 9:
@@ -67,11 +79,18 @@ HOLSTER = (54.0, 42.0, 182.0)                    # along the belt, out, tall (Sa
                                                  # m10, m32: it jutted off the rear hip)
 P9_SLIDE = (34.0, 30.0, 196.0)                   # P226: slide length 196, height about 34, width 30
 P9_GRIP = (105.0, 32.0, 48.0)                    # grip length, width, depth
+P9_RAKE = 8.0                                    # round 10: the grip's rise above horizontal (round 6-9: 14)
+GRIP_CLEAR = 4.0                                 # round 10: the grip's end this far off the hip (its side face)
+HOLSTER_DROP = 32.0                              # round 10: the holster hangs this much lower (a mid-ride drop, as a
+                                                 # Safariland UBL mid-ride; the grip then lies beside the belt, not above it
+                                                 # where the lumbar curve leaves it 40 mm off the back)
+HOLSTER_REACH = 34.0                             # round 10: how far conform_back may bend the back onto the hip (round 9: 22)
 
 COL = {"belt": "#2a2724", "buckle": "#1b1b1c", "hanger_tan": "#736054", "hanger_black": "#1e1c1a",
        "platform": "#24221f", "strap": "#161515", "poly_black": "#24211e", "poly_tan": "#816f5f",
        "pmag": "#1e1d1c", "frag": "#463e34", "case": "#3a3e40", "holster": "#1f1d1c", "slide": "#4f5050",
-       "frame": "#2c2c2c", "metal": "#3b3a38", "steel": "#8d8a85", "tan_metal": "#8a7350", "case_dark": "#232526"}
+       "frame": "#2c2c2c", "metal": "#3b3a38", "steel": "#8d8a85", "tan_metal": "#8a7350", "case_dark": "#232526",
+       "carrier_body": "#232220"}
 # Materials round (round 5, 2026-11-15; COL stays the solid-view colour): black nylon rigger belt and straps,
 # black Cordura platforms, textured black polymer carrier bodies, holster and case, the magazine carriers' tan
 # moulded plates, gunmetal hardware, coyote and black hangers, olive Cordura frag pouch. The left rig dustier.
@@ -82,6 +101,9 @@ MATERIALS = {
     "Belt.Mat.HangerBlack": ("Webbing.Nylon.Black", "HangerBlack", dict(_KIT)),
     "Belt.Mat.HangerTan": ("Webbing.Nylon.Coyote", "HangerTan", {}),
     "Belt.Mat.Platform": ("Cordura.500D.Black", "Platform", dict(_KIT)),
+    "Belt.Mat.CarrierBody": ("Cordura.500D.Black", "CarrierBody", dict(_KIT, albedo_hex="#383632", dust__amount=0.8)),
+    # round 10: the TACOs' nylon bodies, a worn charcoal (the drawn carriers show grey highlights; at the platform's
+    # #282624 the belt's median over its mask fell to 0.55 of the reference's)
     "Belt.Mat.Frag": ("Cordura.500D.OliveBrown", "Frag", {}),
     # round 9 (critic r8 m22: "black plastic too clean against the worn kit"): scuffed paler edges, more dust
     "Belt.Mat.PolyBlack": ("Polymer.Black.Textured", "PolyBlack", {"dust__amount": 0.5, "edge__albedo_add": 0.08,
@@ -151,6 +173,20 @@ def flapped_pouch(nm, coll, size, Mf, mat, snap_mat, strap_mat, rows=(), drop=FL
         out.append(G.rbox(f"{nm}.PALS.{j + 1}", coll, (w * 0.97 + 1.0, 1.6, 25.0),
                           _frame(top + nn * (d / 2.0 * 0.98 + 0.5) - up * zr, xa, nn, up), strap_mat, bevel_mm=0.5))
     return out
+
+
+def soft_flapped(nm, coll, size, Mf, M, rows=(), drop=FLAP_DROP, seed=0):
+    """Round 10: a flapped Cordura pouch built by softgear.soft_pouch (body round its contents, draped flap, bound edge,
+    piped seams, a snap tab) with webbing bands across its face `rows` mm below its top. Returns the objects, joined
+    into one (the body's name)."""
+    res = SG.soft_pouch(nm, coll, size, Mf, M["frag"], bind_mat=M["frag"], tab_mat=M["frag"], plate_mat=M["strap"],
+                        drop=drop, bulge=3.5, dome=5.0, seed=seed, tab_below=10.0)
+    parts = [o for k, o in res.items() if k not in ("body", "hem_z") and o is not None]
+    for j, zr in enumerate(rows):
+        parts.append(SG.face_band(f"{nm}.PALS.{j + 1}", coll, size, Mf, size[2] / 2.0 - zr, 25.0, 1.6, M["strap"],
+                                  bulge=3.5))
+    ob = G.join(res["body"], parts)
+    return [ob]
 
 
 def hang_frame(p, d, t, n, size, top_off, under, drop=None):
@@ -285,22 +321,31 @@ def main(render=True):
         ang = np.arctan2(-np.cos(ths), np.sin(ths))
         R.append(G.convex_radii(0.0, 0.0, Q, ang))
     R = G.fill_nan(np.array(R))
-    rmax_row = R.max(0)                                  # a stiff belt: the widest row everywhere
-    Pin = np.array([[centre + n * v + dir_b(th) * (r + 1.0) for th, r in zip(ths, rmax_row)] for v in vs])
-    Pout = np.array([[centre + n * v + dir_b(th) * (r + 1.0 + BELT_T) for th, r in zip(ths, rmax_row)] for v in vs])
+    rmax_row = R.max(0)                                  # rounds 1-9: a stiff belt, the widest row everywhere
+    # round 10 (G1 D14, stand-off 7.0-7.4 mm: "a rigid hoop standing off the body at the back"): the belt is cinched, so
+    # each row of the band lies on its own section's hull, BELT_LIFT over the trousers; across the band's width the
+    # rows are eased a little toward each other (a 50 mm padded sleeve does not crease to every section)
+    Rfit = 0.75 * R + 0.25 * R.mean(0)[None, :]
+    Rfit = np.maximum(Rfit, R)
+    Pin = np.array([[centre + n * v + dir_b(th) * (r + BELT_LIFT) for th, r in zip(ths, Rrow)] for v, Rrow in zip(vs, Rfit)])
+    Pout = np.array([[centre + n * v + dir_b(th) * (r + BELT_LIFT + BELT_T) for th, r in zip(ths, Rrow)]
+                     for v, Rrow in zip(vs, Rfit)])
+    rmid_row = Rfit[len(vs) // 2]
     V, F = G.slab_from_grid(Pin, np.zeros_like(Pin), 0.0, closed_u=True, outer=Pout)
     belt = G.new_mesh("Belt.Belt", V, F, coll, M["belt"], bevel_mm=1.5)
     soft.append(belt)
     girth = float(np.sum(np.linalg.norm(np.diff(np.vstack([Pin[2], Pin[2][:1]]), axis=0), axis=1)))
     out["belt"] = {"inner_girth_mm": round(girth), "front_top_z": round(float((centre + n * (vc + BELT_W / 2) +
-                                                                               dir_b(0) * rmax_row[0])[2]))}
+                                                                               dir_b(0) * Rfit[-1][0])[2])),
+                   "fit": "per row (round 10)", "lift_mm": BELT_LIFT,
+                   "rows_vs_widest_mm": [round(float(np.median(rmax_row - r)), 1) for r in Rfit]}
 
     def belt_point(th_deg, v=vc, off=0.0):
         th = math.radians(th_deg)
-        r = float(np.interp(th % (2 * math.pi), np.append(ths, 2 * math.pi), np.append(rmax_row, rmax_row[0])))
+        r = float(np.interp(th % (2 * math.pi), np.append(ths, 2 * math.pi), np.append(rmid_row, rmid_row[0])))
         d = dir_b(th)
         t = math.cos(th) * ex + math.sin(th) * ey         # tangent toward +theta
-        return centre + n * v + d * (r + 1.0 + BELT_T + off), d, t
+        return centre + n * v + d * (r + BELT_LIFT + BELT_T + off), d, t
 
     # buckle
     p, d, t = belt_point(BUCKLE_THETA, off=BUCKLE[1] / 2.0 + 0.4)
@@ -389,20 +434,27 @@ def main(render=True):
             Mx[:3, 3] = p + nn * size[1] / 2.0
             return G.seat(plat_under, Mx, size, gap=0.5)
         if side == "R":
-            for k, u in enumerate((-39.0, 39.0)):
+            for k, u in enumerate(CARRIER_U):
                 nm = f"Belt.Rig.R.Carrier.{k + 1}"
                 s_c = s_top + CARRIER_DROP + MAG_CARRIER[2] / 2.0
                 Mc = on_plat(u, s_c, MAG_CARRIER, square=0.65)
                 xa, nn, up, ctr = Mc[:3, 0], Mc[:3, 1], Mc[:3, 2], Mc[:3, 3]
-                ob = G.rbox(nm, coll, MAG_CARRIER, Mc, M["poly_black"], bevel_mm=5.0)
+                # round 10 (m28: "hard grey plastic boxes, unlike the olive fabric pouches"): the real HSGI TACO is a
+                # Cordura pouch round a polymer insert, so the body is soft fabric (softgear, open top with a bound
+                # mouth, the magazine's bulge in its face); the tan slotted plate stays on its face as drawn
+                res = SG.soft_pouch(nm, coll, MAG_CARRIER, Mc, M["carrier_body"], bind_mat=M["strap"], flap=False,
+                                    bulge=CARRIER_BULGE, side_bulge=0.8, pf=3.6, noise=0.6, seed=60 + k, rim=True,
+                                    piping=True)
+                ob = res["body"]
+                G.join(ob, [o for kk, o in res.items() if kk not in ("body", "hem_z") and o is not None])
                 rigid.append((ob, bone))
-                # tan face plate 47 x 128 x 3 with three 25 x 6 slots, standing 1.5 proud on its spacer
-                py = MAG_CARRIER[1] / 2.0 + 1.5 + MAG_PLATE[1] / 2.0
+                # tan face plate 44 x 110 x 3 with three 25 x 6 slots, standing 1.5 proud on its spacer
+                py = MAG_CARRIER[1] / 2.0 + CARRIER_BULGE + 1.5 + MAG_PLATE[1] / 2.0
                 pc = ctr + nn * py + up * (MAG_CARRIER[2] / 2.0 - 6.0 - MAG_PLATE[2] / 2.0)
                 ob = G.hw_object(f"{nm}.Plate", coll, slotted_plate(), plate_frame(pc, xa, up, nn), M["poly_tan"])
                 rigid.append((ob, bone))
                 ob = G.rbox(f"{nm}.Spacer", coll, (MAG_PLATE[0] - 4.0, 1.6, MAG_PLATE[2] - 4.0),
-                            _frame(ctr + nn * (MAG_CARRIER[1] / 2.0 + 0.7) + up * (MAG_CARRIER[2] / 2.0 - 6.0 - MAG_PLATE[2] / 2.0), xa, nn, up),
+                            _frame(ctr + nn * (MAG_CARRIER[1] / 2.0 + CARRIER_BULGE + 0.7) + up * (MAG_CARRIER[2] / 2.0 - 6.0 - MAG_PLATE[2] / 2.0), xa, nn, up),
                             M["poly_black"], bevel_mm=0.6)
                 rigid.append((ob, bone))
                 # tension screw (dome, 8 mm) 25 below the plate top
@@ -447,8 +499,10 @@ def main(render=True):
             # round 6: the drawn double rifle-mag pouch: two tall flapped olive cells side by side on the platform
             for k, u in enumerate(MAG_POUCH_U):
                 Mf = on_plat(u, s_top + 6.0 + MAG_POUCH[2] / 2.0, MAG_POUCH, square=0.5)
-                for ob in flapped_pouch(f"Belt.Rig.L.MagPouch.{k + 1}", coll, MAG_POUCH, Mf, M["frag"], M["steel"],
-                                        M["strap"], rows=(96.0, 134.0)):
+                # round 10 (D3, D12): soft Cordura cells round their magazines (softgear), flap draped over the
+                # magazine top, a snap tab, two webbing bands across the face
+                for ob in soft_flapped(f"Belt.Rig.L.MagPouch.{k + 1}", coll, MAG_POUCH, Mf, M, rows=(96.0, 134.0),
+                                       drop=FLAP_DROP, seed=70 + k):
                     rigid.append((ob, bone))
             hanger_mat = M["hanger_black"]
         # ladder-locks on the thigh straps, on the running end at the platform's medial edge (right) or at the
@@ -496,7 +550,7 @@ def main(render=True):
 
     # ---------------------------------------------------------------- holster and P9 at the right rear hip
     p, d, t = belt_point(HOLSTER_THETA, off=0.0)
-    top_off = BELT_W / 2.0 + 3.0
+    top_off = BELT_W / 2.0 + 3.0 - HOLSTER_DROP     # round 10: a mid-ride drop, so the grip rides at the belt
     under_h = G.Under([(G.objects_bvh([belt]), 0.6)] + list(under_w.layers) + list(under_l.layers))
     Mh = hang_frame(p, d, t, n, HOLSTER, top_off, under_h)
     Mh = G.seat(under_h, Mh, HOLSTER, gap=HOLSTER_GAP)
@@ -504,7 +558,7 @@ def main(render=True):
     Mh = settle(Mh, HOLSTER, real, HOLSTER_GAP)
     fwd, d, up = Mh[:3, 0], Mh[:3, 1], Mh[:3, 2]           # +x on his right side runs toward the front
     hol = G.rbox("Belt.Holster", coll, HOLSTER, Mh, M["holster"], bevel_mm=6.0)
-    conform_back(hol, Mh, HOLSTER, real, HOLSTER_GAP)
+    conform_back(hol, Mh, HOLSTER, real, HOLSTER_GAP, reach=HOLSTER_REACH)
     # open the holster's mouth (the top face) so the pistol sits inside it, and give it walls
     import bmesh
     bm = bmesh.new()
@@ -523,10 +577,31 @@ def main(render=True):
     Ms = np.eye(4)
     Ms[:3, :3] = np.column_stack([fwd, d, up])
     Ms[:3, 3] = slide_c
-    g_ax = G.unit(-fwd * math.cos(math.radians(14.0)) + up * math.sin(math.radians(14.0)))   # rearward, raked
     g_base = slide_c + up * (P9_SLIDE[2] / 2.0 + 10.0) - fwd * 6.0
+    # round 10 (m5: "its top angled ~40 deg off the body, like an open lid"): the grip runs rearward from the slide; on
+    # the rounded rear hip a grip laid along the belt's tangent ends 30-40 mm off the body. A real holster is worn
+    # canted so the grip follows the hip: turn it toward the body (about the holster's up axis) until its end clears
+    # the buttock by GRIP_CLEAR, and lower its rake
+    near_objs = [belt, body] + [o for k in ("trousers", "shirt") if k in clothing for o in clothing[k].all_objects]
+    near = G.objects_bvh(near_objs)
+    cands = []
+    for deg in np.arange(-30.0, 31.0, 1.0):
+        h = G.unit(-fwd * math.cos(math.radians(deg)) - d * math.sin(math.radians(deg)))
+        ga = G.unit(h * math.cos(math.radians(P9_RAKE)) + up * math.sin(math.radians(P9_RAKE)))
+        gaps = []
+        for f in (0.5, 1.0):                       # the grip's middle and its end, measured to the nearest surface
+            q = near.find_nearest(Vector(g_base + ga * (f * P9_GRIP[0] + 4.0)))
+            gaps.append((q[3] if q[0] is not None else 99.0) - P9_GRIP[1] / 2.0)
+        cands.append((max(gaps), min(gaps), float(deg)))
+    ok = [c for c in cands if c[1] >= 1.0]          # never into the hip or the back
+    pick = min(ok or cands, key=lambda c: (abs(c[0] - GRIP_CLEAR), abs(c[2])))
+    best = (pick[2], pick[0])
+    turn = best[0]
+    h = G.unit(-fwd * math.cos(math.radians(turn)) - d * math.sin(math.radians(turn)))
+    g_ax = G.unit(h * math.cos(math.radians(P9_RAKE)) + up * math.sin(math.radians(P9_RAKE)))
     Mg = np.eye(4)
-    Mg[:3, :3] = np.column_stack([g_ax, d, np.cross(g_ax, d)])
+    dg = G.unit(d - g_ax * np.dot(d, g_ax))
+    Mg[:3, :3] = np.column_stack([g_ax, dg, np.cross(g_ax, dg)])
     Mg[:3, 3] = g_base + g_ax * (P9_GRIP[0] / 2.0 + 4.0)
     p9 = G.boxes("Belt.P9", coll, [((P9_SLIDE[0], P9_SLIDE[1], P9_SLIDE[2]), Ms), (P9_GRIP, Mg)], M["slide"],
                  bevel_mm=3.0)
@@ -535,7 +610,8 @@ def main(render=True):
     # the hip or left it): the kydex bends a little over the hip in the pose, hidden at the rear
     soft.append(hol)
     soft.append(p9)
-    out["holster"] = {"theta_deg": HOLSTER_THETA, "centre": [round(float(v)) for v in Mh[:3, 3]], "bind": "weights"}
+    out["holster"] = {"theta_deg": HOLSTER_THETA, "centre": [round(float(v)) for v in Mh[:3, 3]], "bind": "weights",
+                      "grip_turn_deg": float(turn), "grip_tip_gap_mm": None if best[1] is None else round(float(best[1]), 1)}
 
     # ---------------------------------------------------------------- round 6: the right front hip pouch on the belt
     p, d, t = belt_point(RF_THETA, off=0.0)
@@ -543,8 +619,7 @@ def main(render=True):
     Mr = hang_frame(p, d, t, n, RF_POUCH, BELT_W / 2.0 + 4.0, under_r)
     Mr = G.seat(under_r, Mr, RF_POUCH, gap=0.6)
     Mr = settle(Mr, RF_POUCH, real, 0.6)
-    for ob in flapped_pouch("Belt.Pouch.RF", coll, RF_POUCH, Mr, M["frag"], M["steel"], M["strap"], rows=(52.0,),
-                            drop=40.0):
+    for ob in soft_flapped("Belt.Pouch.RF", coll, RF_POUCH, Mr, M, rows=(62.0,), drop=40.0, seed=80):
         soft.append(ob)              # a Cordura pouch over the hip: weights, so the hip never pushes into it
     out["pouch_rf"] = {"theta_deg": RF_THETA, "centre": [round(float(v)) for v in Mr[:3, 3]], "bind": "weights"}
 
