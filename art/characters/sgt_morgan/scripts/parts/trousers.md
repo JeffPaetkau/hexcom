@@ -170,3 +170,29 @@ Still wrong (materials):
 2. The drawn trousers carry larger pale scuffed patches on the thighs and shins (wear plus dust); ours are
    evener. A wear mask (scuffs at the knees and the shin fronts) is the next step.
 3. Under the evaluation's warm key everything dark reads brown; see the session log.
+
+## 7. Round 8 (2026-11-15): the look (critics m26, m40, m9, m48, m12, m52)
+
+- **The camouflage's square steps on the shins (m26, m40) were not texture resolution**: R002 at 750 mm is 0.6 mm a
+  texel, finer than the shin crop's pixel. The print sat on `UV.Real` (Smart UV Project), whose islands are a
+  few mm across in the hem rolls and folds, so every island sampled a different part of the print: a patchwork of
+  small squares. Now the print is **box-projected on the rest mesh** (`print.projection: rest_box`, blend 0.35;
+  the point attribute `rest_pos` = the unposed vertex positions, written by `common.library_pass` through
+  `materials.rest_position()`, carried through Armature, Solidify and Subdivision), so it is continuous over the
+  whole shell and does not swim with the pose. The fine weave and the 6 mm ripstop grid stay on `UV.Real` (an
+  island seam in a 6 mm grid does not show at hero scale).
+- **Matte ripstop** (m48): roughness 0.74 -> 0.82, specular 0.42 -> 0.36, sheen 0.06 -> 0.04.
+- **Albedo** #363533 -> #474644: with the evaluation light corrected (scene.py, round 8) the trousers' median
+  rendered 1.36 x too dark against the reference's; now 1.05 (graded).
+- **Wear by edges and contact** (`mat_groups.abrasion`): `abrade` along the shell's own edges (the hems, pocket
+  and flap edges: `edge_near`, `materials.edge_distance()`, an 8 mm band) toward a paler abraded #5e5b55; `rub`
+  where the leg rigs' straps and the knee pads lie on the cloth (occlusion by other objects within 12 mm). The
+  height dust zones and the hem grime are as round 5.
+
+Look-loop renders opened (`renders/look/M1`..`M5`, the round-6 caches re-materialled in memory,
+`scripts/tools/look_loop.py`): `sheet_legs_knees_graded`, `sheet_boots_feet_graded`, the shin zoom. The print is
+continuous over the shins and the hem roll; no steps.
+
+Still wrong: the drawn trousers are near-black with pale grey scuffed patches; ours read as a grey-brown mottle,
+the dust drift still the brightest element on the shins. The knee and shin scuffs of the drawing (large pale worn
+patches) are not modelled as such; `abrade` follows edges only.

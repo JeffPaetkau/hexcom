@@ -209,3 +209,10 @@ swells; bound by weights it no longer clashes.
    the leg in (m16), theta must move back toward the outside (`PLATFORM['R']['theta']`).
 3. The right front pouch is a plain flapped box; the drawn one has a tan face and a dark side (a look item too).
 4. Forms are still boxes underneath (carriers solid, no PALS on the platforms, hangers straight strips).
+
+## 11. Round 8 (2026-11-15): the look
+
+No belt geometry or table change. Through the library: `Polymer.Black.Textured` #272624 -> #262625 at roughness 0.48
+(satin) with scuffed edges; the olive frag/mag-pouch cells (`Cordura.500D.OliveBrown`) the lighter olive-coyote
+with the carrier's edge abrasion; the coyote webbing unchanged. The belt's graded median reads 0.70 of the
+reference (ours brighter), most of its mask lying where the drawn rigs are not (§8); not chased.

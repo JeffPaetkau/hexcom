@@ -265,3 +265,43 @@ right elbow; the right upper strap now leaves out the crease (its ends lie in th
    plates and keep the bicep band as the only visible ring.
 4. The elbow pad is soft-bound: it follows the skin, so the cap bends a little over the flexed right elbow.
 5. Tier 2's vents, the strobe's clip and the emblem's outer outline are as round 5 left them.
+
+## 11. Round 8 (2026-11-15): the look (critics m9, m49, m50, m12, m23, m52, m34)
+
+**Painted steel, blue-grey, semi-gloss, worn grey at the edges** (`Polymer.Painted.Armour`, LIB_VERSION 16.4):
+- Paint #454648 -> #313336, roughness 0.58 -> 0.44 (semi-gloss: below §3.1's paint band on purpose, the drawn
+  plates carry a clear key highlight), the mottle grey (#3d3f42, was tan #5a564c). With the evaluation light
+  corrected (scene.py: key 5800 K) the shells' hue is neutral grey; they read blue-grey on the cool side, as drawn.
+- **Where the paint is gone, bare steel** (`substrate.f0` (0.50, 0.51, 0.53), metallic, roughness 0.30, a 35 %
+  grey primer ring #6c6e70 between paint and metal): the worn rims catch the key brightly instead of going tan.
+- **The speckle (m12, m23, m52) is gone from the faces.** It had three sources: R004's tan specks (R004 is replaced by
+  **R005**, a worn blue-grey paint over steel with fine light scratches and no tan, requested and delivered this
+  round, made seamless, 60 % strength, 30 % saturation, scratches clipped at 1.3 x the mean), the dust's drift map box-projected over every open
+  face (now amount 0.3, off the open faces, into the recesses: open 0.15, shelter 1.4 over 10 mm, 60 mm patches),
+  and the chips' noise. Chips are now **where paint chips: within 4 mm of an edge** (the part's own edge distance
+  along its surface, the point attribute `edge_near`, `materials.edge_distance()`: boundary edges and edges whose
+  faces meet at more than 30 deg), 7 % cover there, 0.3 % on the faces, always gathered in 40 mm patches. A Bevel
+  node cannot find that band on these shells: wider than half the 3 mm thickness it reaches the inner face and
+  marked the whole plate (a first try, round 8, put chips everywhere). The rims are the Bevel mask at 1.2 mm
+  plus a 3 mm band of `edge_near`, broken by a noise.
+- **Rubbing** where something else lies on the shell (`rub`: occlusion by other objects within 12 mm, AO over all
+  objects less AO over the plate alone), 35 %.
+- The knee caps keep a tan moulding under the paint (the drawn caps' frames are worn tan): `Armour.Mat.Knee`
+  overrides `substrate__f0` None, #7a705e; chips 1 % / 10 % near the edges; dust 0.45.
+
+**Emblem (m34)**: the plate is a **58 x 70 rounded square, corners r 10** (`EMBLEM_W/H/R`; it was a 50 x 95 shield
+tapering to a point), and the decal prints **only R003's inner mark** (the X under the chevron):
+`gen/R003/emblem_mask_inner.png`, made by `scripts/tools/emblem_inner.py` (R003's light pixels inside the
+triangle outline's inner edge, polygon shrunk 5 px, plus the chevron), GEN_TEXTURES `R003.emblem_inner`; the mark
+44 mm wide (76 % of the plate), centred (`Decal.Emblem` mask box (0.2046, 0.2612, 0.7934, 0.9718)). The plate's
+height is laid out on its own radius (r_cap + pad + shell + 1.4 mm; on r_cap the first rebuild made it 80 mm tall):
+built 56.5 x 68.4 (`emblem_decal_uv`). Seen in round 8 (`renders/round_08/arm_L_cycles.png`, zoomed): a light
+blue-grey rounded-square plate with the X under the chevron, no outline; at hero scale the mark reads as a small
+star-like X.
+
+Look-loop renders opened (`renders/look/M1`..`M6`): `sheet_arm_L_graded`, `sheet_torso_vest_graded`,
+`sheet_legs_knees_graded`, the diagnostics `renders/look/scratch/diag*.png`.
+
+Still wrong: the forearm guards' many grooves give many edges, so their wear is still busier than the drawing's;
+the drawn plates' broad pale worn faces (light blue-grey on the left pauldron) are not modelled; the knee caps'
+centres lack the drawn pitting.

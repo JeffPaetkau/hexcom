@@ -3,6 +3,32 @@
 Newest first. One entry per working session: what was done, what is next, anything a fresh
 session must know. Take 1's log is `archive/v1/notes/session_log.md`.
 
+## 2026-11-15 — round 8: the look (grade, material separation, wear)
+
+**The evaluation's colour, decided by measurement** (`scripts/tools/look_stats.py`: per-part medians and
+chromaticity over each part's exact mask, the lit and shaded bands, the key and cool sides). At spec 17's 4500 K
+key the neutral gain onto the reference's neutrals (shirt, gloves, carbine, boots) was (0.73, 1, 1.28) / G in the
+lit AND the shaded band, and the key side split from the cool side 1.24 x in r/g against the reference's 1.04 x.
+A grade scales both sides alike, so the light's colour was changed: `scripts/eval/scene.py` key 5800 K, the cool
+light (0.55, 0.76, 1.00) -> (0.66, 0.82, 1.00). Ungraded neutral gain then (0.96, 1, 0.98). `grade.json`: lift and
+gain neutral and no black crush (the reference's darks are neutral to warm, not teal; spec 17's grade pushed the
+shadows blue), saturation 0.92 kept. Graded neutral gain (1.01, 1, 1.00). `assemble.py` now grades every Cycles
+panel (`<label>_cycles.png` graded over the backdrop, `_cycles_ungraded.png` 16-bit beside it), and the critic
+packet says graded.
+
+**Look loop** (`scripts/tools/look_loop.py`): re-materials a copy of `cache/assembled.blend` in memory (catalogue,
+part tables, the carbine's material function), sets the lights, renders the hero crops and flat part masks into
+`renders/look/<run>/`; no cache is written. Library 16.4 and the parts' changes: see each part's notes, round 8.
+
+**Round 8 rendered** (`renders/round_08/`, on round 7's pose; every part rebuilt): graded neutral gain (1.03, 1, 0.94)
+/ G (lit 1.01, 1, 0.94; shaded 1.08, 1, 0.91). Per-part graded median ratio (reference / render) and r/g, b/g against
+the reference's: trousers 1.57 (1.14, 0.94 vs 1.05, 0.89), shirt 0.97 (1.04, 0.96 vs 1.12, 0.92), gloves 1.15,
+carrier 1.00 (1.17, 0.75 vs 1.21, 0.78), armour 0.93 (1.03, 1.06 vs 1.16, 0.91), belt 0.76, carbine 0.83, boots 1.95
+(not touched). The real rebuild showed two things the in-memory copies could not: the emblem plate laid out on the
+cap's radius came out 80 mm tall (now on its own radius: 56.5 x 68.4), and in round 7's pose the carbine read
+brighter (ratio 0.66 at hardcoat F0 0.095; now 0.080). `--packet` is refused by packet.py for rounds past 5
+(spec 18 §8.1.5); its console print no longer crashes on a redirected cp1252 stdout.
+
 ## 2026-11-15 — round 5: materials for the whole soldier (head and skin aside)
 
 **Done (uncommitted, for Jeff's review).**

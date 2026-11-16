@@ -31,8 +31,10 @@ world from scripts/eval/. Saved as cache/assembled.blend.
 Evaluation, renders/round_NN/:
   <label>_clay.png, <label>_cycles.png, <label>_parts.png   every ref.* preset of scripts/eval/presets/ref.json
       (full = the 1672 x 941 hero frame, soldier_full, head_face, torso_vest, arm_R, arm_L, hands_rifle,
-      belt_hips, legs_knees, boots_feet): Workbench clay, quick Cycles (64 spp, OIDN, AgX, ungraded) and
-      Workbench with one flat colour per part (which layer is where)
+      belt_hips, legs_knees, boots_feet): Workbench clay, quick Cycles (64 spp, OIDN, AgX, then the display
+      grade of scripts/eval/grade.py over the flat backdrop: the image the critics and the sheets see, round 8;
+      the 16-bit ungraded render beside it as <label>_cycles_ungraded.png) and Workbench with one flat colour
+      per part (which layer is where)
   <label>_compare.png       reference crop | clay | parts | Cycles
   <label>_overlay.png       reference and Cycles at 50 % | the reference alone; both with the render's
                             silhouette edge in cyan
@@ -685,7 +687,7 @@ def blender_main(argv):
     import numpy as np
     from mathutils import Matrix
     import common as C
-    from eval import camera, camproj, render as R, scene as S
+    from eval import camera, camproj, grade as GR, render as R, scene as S
     ap = argparse.ArgumentParser()
     ap.add_argument("--round", type=int, required=True)
     ap.add_argument("--samples", type=int, default=64)
@@ -768,7 +770,11 @@ def blender_main(argv):
         floor.hide_render = False
         tt = time.perf_counter()
         bpy.ops.render.render()
-        R._save(sc, path, "PNG", "8", "RGBA")
+        # round 8 (PLAN.md Decision 6): the evaluation's grade is applied here, so every sheet, overlay and
+        # critic packet shows the graded frame; the ungraded render is kept beside it
+        ung = path[:-4] + "_ungraded.png"
+        R._save(sc, ung, "PNG", "16", "RGBA")
+        GR.grade_file(ung, path)
         times[os.path.basename(path)] = round(time.perf_counter() - tt, 2)
 
     def part_colour(o):
@@ -829,7 +835,7 @@ def blender_main(argv):
     info = {"round": a.round, "pose": used, "pose_check": pchk, "carbine": carb_check, "parts_loaded": list(loaded),
             "bound": bound, "inputs_at_load": stamps, "assembled": rel(ASSEMBLED),
             "posed_bbox_mm": {"lo": [round(float(v) * 1000) for v in lo], "hi": [round(float(v) * 1000) for v in hi]},
-            "cycles": None if a.no_cycles else {"samples": a.samples, "denoiser": "OIDN (HIGH)", "view": "AgX Medium High Contrast, ungraded",
+            "cycles": None if a.no_cycles else {"samples": a.samples, "denoiser": "OIDN (HIGH)", "view": "AgX Medium High Contrast, graded (eval/grade.py)",
                                                 "lights": f"scene.py x {LIGHT_SCALE}"},
             "render_seconds": times, "seconds": T, "total_seconds": round(time.perf_counter() - t0, 1)}
     with open(os.path.join(out, "assembly_blender.json"), "w", encoding="utf-8") as f:
@@ -897,7 +903,7 @@ def compose(n):
             panels.append(label(SH.flat(Image.open(parts_p)), "parts (one colour per part)"))
         cyc = SH.flat(Image.open(cyc_p)) if os.path.exists(cyc_p) else None
         if cyc is not None:
-            panels.append(label(cyc.copy(), "Cycles 64 spp, ungraded"))
+            panels.append(label(cyc.copy(), "Cycles 64 spp, graded"))
         row(panels, os.path.join(out, f"{lab}_compare.png"))
         over = Image.blend(ref, cyc if cyc is not None else SH.flat(clay), 0.5)
         oa = np.array(over)
@@ -1001,9 +1007,9 @@ DECLARE = [
     "The carbine is a real M4-pattern carbine at real size (855 mm): the drawn gun is shorter, with an oversized "
     "receiver, a rail far above the bore and several muzzle tubes. The right hand is on a real pistol grip, about "
     "110 mm behind the drawn one.",
-    "The scene is only the matched camera, the key, side and world lights and a plain floor: no hangar, haze, depth "
-    "of field or colour grade. The ungraded key renders every neutral surface with a warm cast; judge hue "
-    "relative to the rest of the frame.",
+    "The scene is only the matched camera, the key, side and world lights and a plain floor: no hangar, haze or "
+    "depth of field. The Cycles views are colour-graded so that neutral surfaces match the reference's neutrals "
+    "(a warm key and a cooler side light); judge hue and value against the reference directly.",
     "The face is a parametric head fitted toward the reference; skin is a default material.",
 ]
 
@@ -1030,7 +1036,7 @@ def make_packet(n, head_loaded):
         sc = {"preset": pid, "label": p["label"], "tier": tier, "engine": engine, "scene": "hero",
               "samples": 64 if engine == "CYCLES" else None,
               "view_transform": ["AgX", "AgX - Medium High Contrast"] if engine == "CYCLES" else ["Standard"],
-              "graded": False}
+              "graded": True}
         with open(os.path.splitext(dst)[0] + ".json", "w", encoding="utf-8") as fh:
             json.dump(sc, fh, indent=1)
         renders.append(dst)
@@ -1064,7 +1070,9 @@ def make_packet(n, head_loaded):
     for d in declare:
         argv += ["--declare", d]
     r = subprocess.run(argv, cwd=PROJECT, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    print((r.stdout + r.stderr).strip()[-1500:], flush=True)
+    out = (r.stdout + r.stderr).strip()[-1500:]
+    enc = getattr(sys.stdout, "encoding", None) or "utf-8"     # a redirected stdout on Windows is cp1252 (round 8)
+    print(out.encode(enc, "replace").decode(enc, "replace"), flush=True)
     if r.returncode:
         print(f"[assemble] packet.py failed (exit {r.returncode})", flush=True)
         return None

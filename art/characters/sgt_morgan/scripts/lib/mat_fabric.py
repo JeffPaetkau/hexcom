@@ -102,6 +102,7 @@ def build_cordura(mat, rec):
         n = nb.map_range(nb.noise(uv, 1000.0 / sc["noise_mm"], detail=2.0), lo, hi, 0.0, 1.0)
         col = nb.mix(nb.math("MULTIPLY", nb.math("MULTIPLY", n, sc["share"]), K.sock(pg, "Mask", out=True)),
                      col, C.hex_to_linear(sc["hex"]))
+    col, r, _ = G.abrasion(nb, rec, col, r, uv)
     w = G.weather(nb, rec, col, r, rec["spec"], vector=uv)
     _finish(nb, rec, base, w, nmap.outputs["Normal"], weave)
 
@@ -129,6 +130,7 @@ def build_webbing(mat, rec):
     e = G.edge_mask(nb, {"radius_mm": sv["radius_mm"], "width": sv["width"], "noise_mm": 2.0, "noise_amount": 0.6})
     col = nb.vmath("SCALE", base, scale=nb.math("MULTIPLY_ADD", e, sv["lift"], 1.0))
     r = nb.mix(e, r, sv["rough"], kind="FLOAT")
+    col, r, _ = G.abrasion(nb, rec, col, r, uv)
     w = G.weather(nb, rec, col, r, rec["spec"], edge=e, vector=uv)
     _finish(nb, rec, base, w, nmap.outputs["Normal"], weave)
 
@@ -260,7 +262,18 @@ def build_printed(mat, rec):
     uv = nb.uv(rec["uv"])
     pr = rec["print"]
     st = C.GEN_TEXTURES[pr["image"]]["stats"]
-    img = antirepeat(nb, pr["image"], "color", uv, pr["tile_mm"])
+    if pr.get("projection") == "rest_box":
+        # round 8 (critics m26, m40): on a garment, Smart-UV islands are a few mm across in the folds and hem
+        # rolls, so a print on UV.Real jumped at every island: square steps on the shins. Here the print is
+        # box-projected on the rest positions (the point attribute `rest_pos`, materials.rest_position(): the
+        # unposed mesh, so it does not swim with the pose), one sample, blend `blend`; the fine weave and the
+        # ripstop stay on UV.Real, where an island seam does not show
+        nd = K.image_node(nb, K.texture(pr["image"], "color"),
+                          nb.vmath("SCALE", nb.attr("rest_pos", out="Vector"), scale=1000.0 / pr["tile_mm"]), box=True)
+        nd.projection_blend = pr.get("blend", 0.35)
+        img = nd.outputs["Color"]
+    else:
+        img = antirepeat(nb, pr["image"], "color", uv, pr["tile_mm"])
     ratio = nb.vmath("DIVIDE", img, tuple(st["mean_lin"]))
     lum = nb.node("ShaderNodeRGBToBW", inputs={"Color": img}).outputs[0]
     k = nb.math("POWER", nb.math("MAXIMUM", nb.math("DIVIDE", lum, st["lum_mean"]), 1e-4), pr["contrast"] - 1.0)
@@ -282,6 +295,7 @@ def build_printed(mat, rec):
         r = nb.math("MULTIPLY_ADD", m, rec["ripstop"]["rough_add"], r)
     nm = rec.get("normal")
     normal = _photo_normal(nb, nm["texture"], uv, nm["tile_mm"], nm["strength"], rec["uv"]) if nm else None
+    col, r, _ = G.abrasion(nb, rec, col, r, uv)
     w = G.weather(nb, rec, col, r, rec["spec"], vector=uv)
     _finish(nb, rec, base, w, normal, height)
 
@@ -312,6 +326,7 @@ def build_cloth(mat, rec):
         m, height = _ripstop(nb, uv, rec["ripstop"])
         r = nb.math("MULTIPLY_ADD", m, rec["ripstop"]["rough_add"], r)
     normal = _photo_normal(nb, cl["texture"], uv, tile, cl["normal"], rec["uv"])
+    col, r, _ = G.abrasion(nb, rec, col, r, uv)
     w = G.weather(nb, rec, col, r, rec["spec"], vector=uv)
     _finish(nb, rec, base, w, normal, height)
 

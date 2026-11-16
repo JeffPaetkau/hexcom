@@ -428,10 +428,13 @@ def make_materials():
     # brushed FDE, soot-dark bronze).
     # Type III hardcoat anodise (receivers, handguard): read as a near-black metal with a broad sheen;
     # edges worn to bare aluminium. The reference reads #413c3b lit (weapon analysis §3.15).
-    lib_material("Anodised", "Metal.Gunmetal", "#3e3a38", f0=(0.060, 0.060, 0.061), rough_range=(0.50, 0.66),
+    # round 8: the hero frame's median (with the evaluation light corrected) put the carbine at half the
+    # reference's luminance: the hardcoat's F0 0.060 -> 0.080 (still a near-black metal), the polymers lighter
+    # (0.095 overshot in the round-8 pose: median ratio 0.66)
+    lib_material("Anodised", "Metal.Gunmetal", "#3e3a38", f0=(0.080, 0.080, 0.082), rough_range=(0.46, 0.62),
                  aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.35, edge__radius_mm=0.35, dust__amount=0.15,
                  grime__amount=0.35)
-    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.062, 0.061, 0.061), rough_range=(0.52, 0.68),
+    lib_material("Handguard", "Metal.Gunmetal", "#393532", f0=(0.080, 0.080, 0.082), rough_range=(0.48, 0.64),
                  aniso=0.0, edge__f0=ALU_F0, edge__rough=0.32, edge__amount=0.4, edge__radius_mm=0.35, dust__amount=0.2,
                  grime__amount=0.4)
     # semi-gloss hardcoat: buffer tube, castle nut, light, optic
@@ -439,19 +442,25 @@ def make_materials():
                  aniso=0.0, edge__f0=ALU_F0, edge__rough=0.28, edge__amount=0.45, dust__amount=0.05,
                  grime__amount=0.25)
     # glass-filled nylon / polymer: stock, grip and trigger guard, magazine (Stealth Gray PMAG)
-    lib_material("Polymer", "Polymer.Black.Smooth", "#3d3733", albedo_hex="#2e2d2b", rough=0.58,
+    lib_material("Polymer", "Polymer.Black.Smooth", "#3d3733", albedo_hex="#333231", rough=0.52,
                  rough_span=0.14, dust__amount=0.12)
-    lib_material("PolymerDark", "Polymer.Black.Smooth", "#1f1d1c", albedo_hex="#222120", rough=0.52,
+    lib_material("PolymerDark", "Polymer.Black.Smooth", "#1f1d1c", albedo_hex="#2a2a29", rough=0.48,
                  rough_span=0.12, dust__amount=0.08)
-    lib_material("Magazine", "Polymer.Black.Smooth", "#423e3a", albedo_hex="#403f3d", rough=0.62,
+    lib_material("Magazine", "Polymer.Black.Smooth", "#423e3a", albedo_hex="#434240", rough=0.56,
                  rough_span=0.14, dust__amount=0.15)
     lib_material("Rubber", "Rubber.Moulded.Black", "#141211", rough=0.78, rough_range=(0.72, 0.85))   # butt pad
     lib_material("MagBase", "Polymer.Black.Smooth", "#4a4644", albedo_hex="#33312f", rough=0.6, dust__amount=0.2)
     lib_material("Steel", "Metal.Steel.Phosphate", "#2f2e2e")                    # bolt carrier, gas block, pins
     lib_material("SteelBright", "Metal.Gunmetal", "#8a8a8a", f0=(0.45, 0.45, 0.46), rough_range=(0.28, 0.38),
                  aniso=0.0)                                                         # mag release, polished parts
-    lib_material("Bronze", "Coating.Cerakote.BurntBronze", "#5f4c3e")            # barrel and A2 (take 1 D3)
-    lib_material("FDE", "Paint.FDE.Brushed", "#9a7a58")                          # tan paint (#a68869 .. #d4a271 lit)
+    # round 8 (critic m5): the barrel and the A2 were Burnt Bronze Cerakote (take 1 D3) and read as bare copper
+    # against the black gun; the reference's muzzle is dark like the rest of it. Now manganese-phosphate steel
+    # (the barrel) and black-phosphate steel (the flash hider, sooty, its tines' edges worn to grey steel)
+    lib_material("Barrel", "Metal.Steel.Phosphate", "#2f2e2e", f0=(0.055, 0.055, 0.057), rough_range=(0.50, 0.62),
+                 edge__amount=0.45, grime__amount=0.5)
+    lib_material("Muzzle", "Metal.Steel.Phosphate", "#262626", f0=(0.045, 0.045, 0.046), rough_range=(0.55, 0.68),
+                 edge__amount=0.55, edge__radius_mm=0.6, grime__amount=0.8, grime__oil=0.6)
+    lib_material("FDE", "Paint.FDE.Brushed", "#857560")                          # muted tan paint (round 8)
     lib_material("Lens", "Glass.Optic.Coated", "#0e1418")                        # optic and light glass
 
 
@@ -925,7 +934,7 @@ def build_stock_and_tube(report):
 def build_barrel():
     st = [(D["bolt_face"], 12.5), (R(14.0), 12.5), (R(14.0), 8.55), (R(60.0), 7.95), (D["barrel_step"], 7.95),
           (D["barrel_journal"], 9.525), (D["thread"], 9.525), (D["thread"], 6.35), (D["crown"], 6.35)]
-    obj("Barrel", lathe_x(st, 40), "Bronze", real="16 in government-profile barrel, mid-length gas",
+    obj("Barrel", lathe_x(st, 40), "Barrel", real="16 in government-profile barrel, mid-length gas",
         density=7.85, fill=0.93)
     gb = obj("GasBlock", lathe_x([(D["gas_block"][0], 13.5), (D["gas_block"][1], 13.5)], 40), "Steel",
              real="0.750 in low-profile gas block", density=7.85, fill=0.8)
@@ -935,7 +944,7 @@ def build_barrel():
         "Steel", real="mid-length gas tube", density=7.85, fill=0.4)
     a2 = [(D["a2_rear"] - 1.2, 10.4), (D["a2_rear"] - 0.6, 10.9), (D["muzzle"] - 0.6, 10.9), (D["muzzle"], 10.3),
           (D["muzzle"], 7.6), (R(405.0), 7.6), (R(405.0), 3.4), (D["a2_rear"] - 1.2, 6.4)]
-    muzzle = obj("Muzzle", lathe_x(a2, 40, loop=True), "Bronze", real="A2 birdcage flash hider (burnt bronze)",
+    muzzle = obj("Muzzle", lathe_x(a2, 40, loop=True), "Muzzle", real="A2 birdcage flash hider (black phosphate)",
                  density=7.85)
     cuts = Geo()
     for ang in (0, 60, 120, -60, -120):       # five slots with rounded ends, the bottom sector closed

@@ -167,3 +167,35 @@ left-right, 3.6 top-bottom against 3.4 between neighbours); made seamless on our
 (`gen/R004/armour_paint_worn_seamless.png`, scripts/tools/seamless.py). Used as the armour paint's surface
 (`Polymer.Painted.Armour`, box-projected at 150 mm, its colour over its own mean at 60 % strength); the rims,
 chips and the knee caps' bare frames come from the geometry.
+
+## R005 — worn blue-grey paint over bare steel, tileable (the armour plates, round 8 onward)
+
+Status: closed
+Requested by: Claude, 2026-11-15
+Purpose: the critics of round 5 read the armour plates as "brown with tan flecks": R004's tan specks came out as
+an even speckle at hero scale. The reference's pauldrons and forearm guards read as blue-grey painted steel with
+grey wear and bright worn rims. The model now builds the rims, the chips near the edges and the rubbing from the
+geometry (bare steel where the paint is gone); this swatch replaces R004 on the flat faces: the paint's own
+surface (uneven cover, fine scratches, scuffs), with no tan anywhere.
+Inputs to attach: `art/characters/sgt_morgan/ref/zoom_armour_lpauldron_x8.png`,
+`art/characters/sgt_morgan/ref/zoom_armour_rguard_x10.png` (for the colours and the kind of wear only; the
+swatch is a flat surface, not a plate).
+Prompt:
+> A seamless, tileable, top-down photograph of a flat steel surface spray-painted a dark blue-grey (semi-gloss,
+> like gunmetal-grey enamel), worn like the armour plates in the attached pictures: the paint's slightly uneven
+> cover, many fine light-grey scratches in random directions (short, thin, a few longer), faint scuff marks
+> where the paint is polished smoother, and a few tiny chips showing bright bare steel (silver-grey, under 3 %
+> of the area, no tan, brown or orange anywhere). Faint pale dust in a few places. Flat, even, shadowless
+> lighting, no perspective, no edges, no text, no objects, no rivets. The texture must tile seamlessly on all
+> four edges. Square, about 15 cm of surface across the image.
+Output: `art/characters/sgt_morgan/gen/R005/armour_paint_steel_worn.png`, square, 2048×2048 if possible
+(1024×1024 is fine).
+
+Result:
+Saved `R005/armour_paint_steel_worn.png` using built-in imagegen. Visually checked: cool dark blue-grey surface, fine light-grey scratches, sparse silver-grey chips, subtle scuffs, no visible tan/brown/orange or plate geometry. Prompt as requested, with requested resolution and explicit instruction that the cool palette overrides warm colours in the references; excluded plate shapes, rims and emblem. Chip coverage and seamless repeat have not been measured; check the tiled swatch before production use, as with prior materials. This is a colour surface reference, not separate roughness/metalness maps.
+Claude, 2026-11-15: closed, accepted. 1254 × 1254, mean (62, 72, 79): the cool dark blue-grey asked for, fine light
+scratches and scuffs, no tan. It tiled almost cleanly (edge differences 4.6 left-right, 3.4 top-bottom against 3.6
+between neighbours); made seamless on our side (`gen/R005/armour_paint_steel_worn_seamless.png`,
+scripts/tools/seamless.py). Used as the armour paint's surface in place of R004 (`Polymer.Painted.Armour`,
+box-projected at 150 mm, over its own mean at 60 %, greyed to 30 % saturation); the rims, chips near the edges
+and the bare steel come from the geometry.

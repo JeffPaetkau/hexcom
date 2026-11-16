@@ -42,6 +42,14 @@ gives `Armour.Mat.KneeCap` (the variant replaces the ID in the name; the materia
 variant, and lint checks the name against both). Parts that swap their round-1 flat colours for library
 materials do it through scripts/parts/common.py library_pass().
 
+Round 8, the look (2026-11-15, LIB_VERSION 16.4): wear where it happens. Two mesh attributes the library writes
+(common.library_pass does it for every object whose material reads them): `edge_near` (edge_distance(): how near
+each point is to the part's own edges along its surface, for chips and worn rims near edges and abraded cloth edges;
+a Bevel node cannot find a band wider than half a thin part's thickness) and `rest_pos` (rest_position(): the unposed
+positions, so a print can be box-projected on the body instead of on UV islands). In the builders: mat_groups.
+abrasion() (edges and contact for cloth), the painted builder's near-edge chips in patches, rubbing by other objects'
+occlusion and bare-steel substrate, the printed builder's `projection: rest_box`.
+
 Everything else of §7.2 raises NotBuilt with its section: the chips group, crest, the camouflage generator,
 bakes and the wear-source switch.
 """
@@ -314,6 +322,97 @@ def wear_zones(obj, preset, zones, attribute="wear_dust"):
     obj["wear_zones"] = 1
     obj["wear_preset"] = preset
     return w
+
+
+def rest_position(obj, attribute="rest_pos"):
+    """Round 8: the mesh's own (unposed, pre-modifier) vertex positions as a FLOAT_VECTOR point attribute in
+    object space (metres), for maps projected on the body instead of on UV islands (the printed builder's
+    `projection: rest_box`). Modifiers (Armature, Solidify, Subdivision) carry a point attribute through, so the
+    rendered surface reads the rest position of each point and the print stays on the cloth in any pose.
+    Idempotent; returns the attribute."""
+    me = obj.data
+    a = me.attributes.get(attribute)
+    if a is not None and (a.domain != "POINT" or a.data_type != "FLOAT_VECTOR"):
+        me.attributes.remove(a)
+        a = None
+    if a is None:
+        a = me.attributes.new(attribute, "FLOAT_VECTOR", "POINT")
+    co = np.empty(len(me.vertices) * 3, np.float32)
+    me.vertices.foreach_get("co", co)
+    a.data.foreach_set("vector", co)
+    return a
+
+
+EDGE_NEAR_MM = 50.0
+
+
+def edge_distance(obj, attribute="edge_near", angle_deg=30.0, cap_mm=EDGE_NEAR_MM, max_edge_mm=6.0):
+    """Round 8: how near each point is to an edge of the part, along its surface, as a point attribute
+    `edge_near` = 1 - min(d / cap_mm, 1) (1 on an edge, 0 at cap_mm or more; a missing attribute reads 0, i.e.
+    "far from every edge", so wear driven by it switches off cleanly). Edges are the mesh's boundary edges (a
+    garment's hems, a pocket's or a flap's free edge before Solidify) and the edges whose faces meet at more than
+    angle_deg (a plate's rims, a box pouch's corners). d is the shortest path along the mesh's edges (Dijkstra
+    from every edge vertex), in mm of the object's own units (metres). Shader masks cannot do this on thin parts:
+    a Bevel node wider than half the part's thickness reaches the far face and marks the whole surface (the
+    painted shells are 3 mm thick). Returns the number of edge vertices."""
+    import heapq
+    me = obj.data
+    nv = len(me.vertices)
+    co = np.empty(nv * 3)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3) * 1000.0
+    ne = len(me.edges)
+    ev = np.empty(ne * 2, np.int64)
+    me.edges.foreach_get("vertices", ev)
+    ev = ev.reshape(-1, 2)
+    if ne == 0 or np.median(np.linalg.norm(co[ev[:, 0]] - co[ev[:, 1]], axis=1)) > max_edge_mm:
+        # a low-poly box (a pouch, a block): every vertex is a corner, so a point attribute would mark whole
+        # faces; no attribute (reads 0, no band) and the material's Bevel mask finds its edges instead
+        a = me.attributes.get(attribute)
+        if a is not None:
+            me.attributes.remove(a)
+        return 0
+    # faces per edge, and the dihedral angle between the first two
+    fn = np.empty(len(me.polygons) * 3)
+    me.polygons.foreach_get("normal", fn)
+    fn = fn.reshape(-1, 3)
+    ek = {}
+    for p in me.polygons:
+        for k in p.edge_keys:
+            ek.setdefault(k, []).append(p.index)
+    src = np.zeros(nv, bool)
+    cos_t = np.cos(np.radians(angle_deg))
+    for a, b in ev:
+        fs = ek.get((min(a, b), max(a, b)), [])
+        if len(fs) == 1 or (len(fs) >= 2 and float(fn[fs[0]] @ fn[fs[1]]) < cos_t):
+            src[a] = src[b] = True
+    adj = [[] for _ in range(nv)]
+    L = np.linalg.norm(co[ev[:, 0]] - co[ev[:, 1]], axis=1)
+    for (a, b), l in zip(ev.tolist(), L.tolist()):
+        adj[a].append((b, l))
+        adj[b].append((a, l))
+    d = np.full(nv, cap_mm)
+    h = [(0.0, int(i)) for i in np.nonzero(src)[0]]
+    for _, i in h:
+        d[i] = 0.0
+    heapq.heapify(h)
+    while h:
+        di, i = heapq.heappop(h)
+        if di > d[i]:
+            continue
+        for j, l in adj[i]:
+            dj = di + l
+            if dj < d[j] and dj < cap_mm:
+                d[j] = dj
+                heapq.heappush(h, (dj, j))
+    a = me.attributes.get(attribute)
+    if a is not None and (a.domain != "POINT" or a.data_type != "FLOAT"):
+        me.attributes.remove(a)
+        a = None
+    if a is None:
+        a = me.attributes.new(attribute, "FLOAT", "POINT")
+    a.data.foreach_set("value", (1.0 - np.minimum(d / cap_mm, 1.0)).astype(np.float32))
+    return int(src.sum())
 
 
 def set_lod(mats, lod):

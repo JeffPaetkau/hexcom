@@ -80,17 +80,17 @@ COL = {
 # seamless) on the bag, flap, pads and cummerbund, 1000D on the pouches, matching olive webbing, black binding,
 # the admin panel a lighter, dustier Cordura, polymer buckles, the radio's textured polymer, the brass antenna
 # with its rubber cap, olive magazines' black PMAGs.
-_CB = {"albedo_hex": "#3a362f"}
+_CB = {"albedo_hex": "#4a4741"}   # round 8: the lighter olive-coyote (was #3a362f)
 MATERIALS = {
     "Carrier.Mat.Cordura": ("Cordura.500D.OliveBrown", "Cordura", {}),
-    "Carrier.Mat.Flap": ("Cordura.500D.OliveBrown", "Flap", {"albedo_hex": "#524a3f"}),
-    "Carrier.Mat.Pad": ("Cordura.500D.OliveBrown", "Pad", {"albedo_hex": "#4a443a"}),
-    "Carrier.Mat.Panel": ("Cordura.500D.OliveBrown", "Panel", {"albedo_hex": "#5a5244", "dust__amount": 1.1}),
-    "Carrier.Mat.Cummerbund": ("Cordura.500D.OliveBrown", "Cummerbund", {"albedo_hex": "#403b33"}),
+    "Carrier.Mat.Flap": ("Cordura.500D.OliveBrown", "Flap", {"albedo_hex": "#686156"}),
+    "Carrier.Mat.Pad": ("Cordura.500D.OliveBrown", "Pad", {"albedo_hex": "#5e594f"}),
+    "Carrier.Mat.Panel": ("Cordura.500D.OliveBrown", "Panel", {"albedo_hex": "#726b5c", "dust__amount": 1.1}),
+    "Carrier.Mat.Cummerbund": ("Cordura.500D.OliveBrown", "Cummerbund", {"albedo_hex": "#524e46"}),
     "Carrier.Mat.Pouch": ("Cordura.1000D.OliveBrown", "Pouch", {}),
-    "Carrier.Mat.RadioPouch": ("Cordura.1000D.OliveBrown", "RadioPouch", {"albedo_hex": "#413b33"}),
+    "Carrier.Mat.RadioPouch": ("Cordura.1000D.OliveBrown", "RadioPouch", {"albedo_hex": "#555148"}),
     "Carrier.Mat.Webbing": ("Webbing.Nylon.OliveBrown", "Webbing", {}),
-    "Carrier.Mat.WebbingPals": ("Webbing.Nylon.OliveBrown", "WebbingPals", {"albedo_hex": "#464036"}),
+    "Carrier.Mat.WebbingPals": ("Webbing.Nylon.OliveBrown", "WebbingPals", {"albedo_hex": "#59544a"}),
     "Carrier.Mat.WebbingCb": ("Webbing.Nylon.OliveBrown", "WebbingCb", dict(_CB)),
     "Carrier.Mat.Binding": ("Webbing.Nylon.Black", "Binding", {"wear": "cordura.top"}),
     "Carrier.Mat.Hardware": ("Polymer.Black.Smooth", "Hardware", {}),

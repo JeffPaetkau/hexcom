@@ -54,9 +54,13 @@ COL = {"shell": "#7b7064", "knee": "#6a6158", "black": "#1d1c1b", "emblem": "#a9
 # strobe's frosted lens; gunmetal rivets, a brighter cam buckle, a red TPR tab, coyote strap tails.
 MATERIALS = {
     "Armour.Mat.Shell": ("Polymer.Painted.Armour", "Shell", {}),
+    # round 8: the knee caps keep round 5's tan moulding under the paint (the drawn caps' frames are worn to tan,
+    # not to steel like the pauldrons' rims), chips near the edges and frames, not over the faces
     "Armour.Mat.Knee": ("Polymer.Painted.Armour", "Knee", {"edge__radius_mm": 3.5, "edge__width": 0.06,
-                                                           "chips__cover": 0.04, "chips__noise_mm": 5.0,
-                                                           "dust__amount": 0.6}),
+                                                           "chips__cover": 0.01, "chips__edge_cover": 0.10,
+                                                           "chips__noise_mm": 5.0, "dust__amount": 0.45,
+                                                           "substrate__f0": None, "substrate__hex": "#7a705e",
+                                                           "substrate__rough": 0.62, "substrate__primer": 0.0}),
     "Armour.Mat.Black": ("Neoprene.Black", "Black", {}),
     "Armour.Mat.Emblem": ("Decal.Emblem", "Emblem", {}),
     "Armour.Mat.Foam": ("Foam.ClosedCell.Black", "Foam", {}),
@@ -127,6 +131,7 @@ CAP_UP = 1.3                  # the cap's centre: CAP_UP x up + down the arm (+ 
 CAP_FWD = -0.25               # turned back at rest (round 1: 0.45 forward): the hero pose turns the upper arm
                               # in, so posed the cap faces out and up on the outside of the shoulder, as drawn
 CAP_STRAP_CLEAR = 2.0         # over the carrier's shoulder-strap pads
+EMBLEM_W, EMBLEM_H, EMBLEM_R = 58.0, 70.0, 10.0   # round 8 (m34): the drawn rounded-square emblem plate (was a 50 x 95 shield)
 TIER2_S, TIER2_ARC = (76.0, 166.0), 140.0     # s along the arm below the joint; arc (mm) about the lateral line
 TIER3_S, TIER3_DEG = (190.0, 238.0), 200.0
 SHELL_PAD = 4.5               # round 6: over a 4 mm foam liner (6 with no liner stood off as a card)
@@ -417,15 +422,20 @@ def main(render=True):
             rigid.append((ob, f"upperarm01.{side}"))
         S["cap_radius_mm"] = round(r_cap, 1)
         if side == "L":
-            # shield emblem: a 50 x 95 plate 1 mm proud on the cap's outer face, centred low on the cap
+            # the emblem: a rounded-square plate 1 mm proud on the cap's outer face, centred low on the cap.
+            # Round 8 (critic m34): EMBLEM_W x EMBLEM_H with corners of EMBLEM_R, as drawn
+            # (ref/zoom_armour_emblem_x16); it was a 50 x 95 shield tapering to a point, which with R003's
+            # triangle outline read as "a pointed V or crown tab"
             qe = qa + (qb - qa) * 0.60
-            he = 47.5 / r_cap
+            r_emb = r_cap + CAP_PAD + CAP_T + 1.4      # the plate's own radius (round 8: r_cap made it 80 mm tall)
+            he = 0.5 * EMBLEM_H / r_emb
 
-            def emb_hw(q, r=r_cap, q0=qe - he, q1=qe + he):
-                t = (q - q0) / (q1 - q0)               # 0 top .. 1 bottom point
-                return (25.0 * (1.0 - 0.75 * max(0.0, t - 0.55) / 0.45)) / r
+            def emb_hw(q, r=r_cap, q0=qe - he, q1=qe + he, re=r_emb):
+                d = min(q - q0, q1 - q) * re           # mm from the nearer end (top or bottom edge)
+                k = EMBLEM_R - min(max(d, 0.0), EMBLEM_R)
+                return (0.5 * EMBLEM_W - EMBLEM_R + float(np.sqrt(max(EMBLEM_R ** 2 - k ** 2, 0.0)))) / r
             ob = G.slab("Pauldron.L.Tier1.Emblem", coll, cap.surf(CAP_PAD + CAP_T + 1.4),
-                        lambda q: (-emb_hw(q), emb_hw(q)), qe - he, qe + he, 1.0, M["emblem"], nu=8, nv=10,
+                        lambda q: (-emb_hw(q), emb_hw(q)), qe - he, qe + he, 1.0, M["emblem"], nu=10, nv=18,
                         bevel_mm=0.4)
             S["emblem_decal_uv"] = decal_uv(ob)
             rigid.append((ob, "upperarm01.L"))

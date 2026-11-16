@@ -35,12 +35,19 @@ OUT_BLEND = env.path("cache", "scene_eval.blend")
 HDRI = env.path("assets", "hdri", "empty_warehouse_01_2k.hdr")
 SCENE_NAME, CHAR_COLL = "Hero", "Character"
 OWNED = ("Scene.", "Cal.Proxy", "Cal.Mat.Proxy")
-# §4.4, the lights in scope: positions from chest (0, 0, 1.30) + d (sin az cos el, -cos az cos el, sin el)
+# §4.4, the lights in scope: positions from chest (0, 0, 1.30) + d (sin az cos el, -cos az cos el, sin el).
+# Take 2, round 8 (PLAN.md Decision 6; scripts/tools/look_stats.py over the hero crops): at spec 17's 4500 K key
+# every neutral surface rendered warm (the linear gain onto the reference's neutrals, shirt, gloves, carbine and
+# boots, was (0.73, 1, 1.28) / G), in the lit AND the shaded band (the key feeds the bounce too), and the key side
+# against the cool side split 1.24 x in r/g where the reference splits 1.04 x. A grade scales both sides alike, so it
+# could not fix the split; the light's colour could. Key 5800 K and the cool light from (0.55, 0.76, 1.00) to
+# (0.66, 0.82, 1.00) bring the neutral gain to (0.96, 1, 0.98) (lit 0.98, 1, 0.94; shade 0.94, 1, 0.92) and the split
+# to about 1.06-1.13 x: the reference's own warm key and cool side, with the display grade left neutral in colour.
 LIGHTS = {
     "Scene.Light.R.Key": {"size": 1.50, "loc": (-1.70, -2.00, 3.60), "target": (0.0, 0.0, 1.25), "energy": 800.0,
-                          "temperature": 4500.0, "color": (1.0, 1.0, 1.0), "spread": 180.0, "group": "key"},
+                          "temperature": 5800.0, "color": (1.0, 1.0, 1.0), "spread": 180.0, "group": "key"},
     "Scene.Light.L.Cool": {"size": 3.00, "loc": (3.20, 0.60, 3.60), "target": (0.0, 0.0, 1.00), "energy": 600.0,
-                           "temperature": None, "color": (0.55, 0.76, 1.00), "spread": 180.0, "group": "cool"},
+                           "temperature": None, "color": (0.66, 0.82, 1.00), "spread": 180.0, "group": "cool"},
 }
 # §3.4 and §5.1 without joints, slabs or wear: the reflectance that gives contact shadows, boot reflections
 # and bounce. Albedo 0.12 is calibration's start value (D8), slightly cool.

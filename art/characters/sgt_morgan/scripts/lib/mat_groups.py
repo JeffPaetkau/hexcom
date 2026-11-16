@@ -196,8 +196,10 @@ def build_antirepeat(ng):
     v, tile = K.sock(gi, "Vector", out=True), K.sock(gi, "Tile mm", out=True)
     tile_m = nb.math("MULTIPLY", tile, 0.001)
     a = nb.vmath("SCALE", v, scale=nb.math("DIVIDE", 1.0, tile_m))
-    x, y, _ = nb.separate(a)
-    turned = nb.mix(K.sock(gi, "Turn", out=True), a, nb.combine(nb.math("MULTIPLY", y, -1.0), x, 0.0), kind="VECTOR")
+    x, y, z = nb.separate(a)
+    # round 8: z is kept through the turn (it was set to 0, which smeared sample B of every box-projected map
+    # along z on the object's x- and y-facing planes; UV vectors have z = 0, so cloth is unchanged)
+    turned = nb.mix(K.sock(gi, "Turn", out=True), a, nb.combine(nb.math("MULTIPLY", y, -1.0), x, z), kind="VECTOR")
     b = nb.vmath("ADD", turned, (0.37, 0.61, 0.0))
     n = nb.noise(v, nb.math("DIVIDE", 1.0, nb.math("MULTIPLY", tile_m, 3.0)), detail=2.0)
     blend = nb.smoothstep(n, 0.3, 0.7)
@@ -575,6 +577,72 @@ def edge_mask(nb, spec, zone=1.0):
                                        "Noise mm": spec.get("noise_mm", 0.6),
                                        "Noise Amount": spec.get("noise_amount", 0.5), "Zone": zone})
     return K.sock(g, "Edge", out=True)
+
+
+def edge_true(nb, radius_mm, width, floor=0.015, samples=8):
+    """An edge mask against the TRUE normal (take 2, round 8): the Bevel node's rounded normal at radius_mm
+    against the facet's own, d = 1 - dot, smoothstepped over [floor, floor + width]. A subdivided garment or a
+    bevelled, weighted-normal plate already rounds its shading normal over its edges, so MG.Mask.EdgeBevel
+    (which compares with the shading normal) sees nothing there; facets of a curved face differ from the
+    bevel's normal by less than `floor`."""
+    bev = nb.node("ShaderNodeBevel", samples=samples, inputs={"Radius": radius_mm * 0.001})
+    d = nb.math("SUBTRACT", 1.0, nb.vmath("DOT_PRODUCT", bev.outputs["Normal"], nb.geometry("True Normal")))
+    return nb.map_range(d, floor, floor + width, 0.0, 1.0, "SMOOTHSTEP")
+
+
+EDGE_NEAR_MM = 50.0   # materials.EDGE_NEAR_MM: the scale of the `edge_near` attribute
+
+
+def edge_band(nb, band_mm, soft=0.35):
+    """1 on the part's edges falling to 0 at band_mm along the surface, from the point attribute `edge_near`
+    (materials.edge_distance(); missing reads 0 = far from every edge, so the band is off). Unlike a Bevel mask
+    it works on thin shells and plates and can be wider than the part is thick."""
+    d = nb.math("MULTIPLY", nb.math("SUBTRACT", 1.0, nb.attr("edge_near")), EDGE_NEAR_MM)
+    return nb.math("SUBTRACT", 1.0, nb.map_range(d, soft * band_mm, band_mm, 0.0, 1.0, "SMOOTHSTEP"))
+
+
+def contact(nb, distance_mm, lo=0.05, hi=0.45):
+    """Occlusion by OTHER objects only (round 8): AO over this object alone less AO over all objects, at
+    distance_mm, mapped lo-hi to 0-1. High where a strap, the carbine, a pouch or the next plate lies on or
+    close to the surface: where real kit rubs. A material's own folds and slots do not count."""
+    ao_all = nb.node("ShaderNodeAmbientOcclusion", samples=8, inside=False, only_local=False,
+                     inputs={"Distance": distance_mm * 0.001}).outputs["AO"]
+    ao_own = nb.node("ShaderNodeAmbientOcclusion", samples=8, inside=False, only_local=True,
+                     inputs={"Distance": distance_mm * 0.001}).outputs["AO"]
+    return nb.map_range(nb.math("SUBTRACT", ao_own, ao_all), lo, hi, 0.0, 1.0)
+
+
+def abrasion(nb, rec, color, rough, vector=None):
+    """Round 8 (critics m12, m52): wear where cloth and moulded kit really wear, before grime and dust.
+    `abrade` {radius_mm, width, hex, share, rough_add, noise_mm}: edges, seams and corners (edge_true) scuffed
+    toward a paler, greyer abraded fibre, rougher; `rub` {distance_mm, hex, share, rough_add}: where another
+    object lies on the surface (contact()), polished or abraded the same way. Both broken by a noise on
+    `vector` (UV.Real for cloth; the object's coordinates otherwise). Returns (color, rough, mask)."""
+    m = 0.0
+    vec = vector if vector is not None else nb.coords("Object")
+    lo_b, hi_b = K.NOISE_BAND
+    ab = rec.get("abrade")
+    if ab:
+        # the part's edges along its surface (`edge_near`, band_mm wide) where it has them, else a Bevel mask
+        # (only for parts thicker than twice its radius: on a thin shell a Bevel reaches the far face)
+        e = edge_band(nb, ab["band_mm"]) if ab.get("band_mm") else 0.0
+        if ab.get("radius_mm"):
+            et = edge_true(nb, ab["radius_mm"], ab.get("width", 0.12), ab.get("floor", 0.02))
+            e = et if isinstance(e, float) else nb.math("MAXIMUM", e, et)
+        n = nb.map_range(nb.noise(vec, 1000.0 / ab.get("noise_mm", 3.0), detail=3.0), lo_b, hi_b, 0.0, 1.0)
+        e = nb.math("MULTIPLY", e, nb.smoothstep(n, 0.25, 0.75))
+        color = nb.mix(nb.math("MULTIPLY", e, ab["share"]), color, C.hex_to_linear(ab["hex"]))
+        rough = nb.math("MULTIPLY_ADD", e, ab.get("rough_add", 0.06), rough, clamp=True)
+        m = e
+    rb = rec.get("rub")
+    if rb:
+        c = contact(nb, rb["distance_mm"])
+        n = nb.map_range(nb.noise(vec, 1000.0 / rb.get("noise_mm", 8.0), detail=2.0), lo_b, hi_b, 0.3, 1.0)
+        c = nb.math("MULTIPLY", c, n)
+        color = nb.mix(nb.math("MULTIPLY", c, rb["share"]), color, C.hex_to_linear(rb["hex"]))
+        rough = nb.math("MULTIPLY_ADD", c, rb.get("rough_add", -0.05), rough, clamp=True)
+        m = c if isinstance(m, float) else nb.math("MAXIMUM", m, c)
+    return color, rough, m
 
 
 def weather(nb, rec, color, rough, spec, edge=None, vector=None, box=False):

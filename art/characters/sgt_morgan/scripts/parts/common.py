@@ -710,12 +710,17 @@ def library_pass(coll, part, table, side_dust=None, say_tag=None):
             lm = M.get(rid, part, var, **(over or {}))
             ob.data.materials[i] = lm
             swapped.setdefault(lm.name, []).append(ob.name)
-        reads = set()
+        reads, attrs = set(), set()
         for m in ob.data.materials:
             if m is not None and m.get("reads"):
                 reads.update(json.loads(m["reads"]).get("uv", []))
+                attrs.update(json.loads(m["reads"]).get("attributes", []))
         if "UV.Real" in reads and ob.data.uv_layers.get("UV.Real") is None:
             uv_done[ob.name] = U.real_project(ob)
+        if "rest_pos" in attrs:          # round 8: a print projected on the rest mesh (materials.rest_position)
+            M.rest_position(ob)
+        if "edge_near" in attrs:         # round 8: wear by the part's own edges (materials.edge_distance)
+            M.edge_distance(ob)
     # the flat colours no object uses any more (also those made for keys no object took, and those still held
     # only by orphan meshes left from joins) go, so lint sees the part's own materials alone
     used = {m.name for o in bpy.data.objects if o.type == "MESH" for m in o.data.materials if m is not None}

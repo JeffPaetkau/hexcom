@@ -193,3 +193,17 @@ Renders opened: `renders/round_05/torso_vest_compare.png`, `arm_L_compare.png`, 
 Still wrong (materials): the shirt renders brighter than the reference's median (ratio 0.78) although the albedo
 is at the textile floor: the dust and sheen lift it and the warm key browns it (session log); the sleeve has no
 elbow wear, no seams or panels to break it up; the sleeve/torso split is a plane, not the real raglan seam.
+
+## 10. Round 8 (2026-11-15): the look (critics m9, m50, m48)
+
+- **Near-black, neutral** (m9, m50): the shirt read brown-grey under spec 17's 4500 K key; with the evaluation
+  light corrected (scene.py, key 5800 K) the same black reads neutral. Jersey and ripstop #252525 -> #272727 (the
+  graded median sat at ratio 1.17 against the reference; now about 1.1), dust 0.25-0.3 -> 0.15 (it greyed the black).
+- **Matte** (m48): ripstop roughness 0.70 -> 0.82, specular 0.30, sheen 0.03; jersey 0.86, sheen 0.03.
+- **Wear** on the sleeves (`mat_groups.abrasion`): a 6 mm band along the sleeve's own edges (cuffs, panel edges:
+  `edge_near`) toward #3c3c3b, and rubbing where the armour's straps and bands lie on the sleeve (contact AO).
+
+Look-loop renders opened (`renders/look/M1`..`M6`): `sheet_torso_vest_graded`, `sheet_arm_L_graded`.
+
+Still wrong: no elbow wear or seams to break up the sleeve; the drawn sleeve shows fold highlights and a ripstop
+sheen we do not have at this roughness.

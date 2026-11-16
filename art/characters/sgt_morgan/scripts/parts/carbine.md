@@ -261,3 +261,20 @@ little dark), warm under the key like everything else.
 
 Still wrong (materials): no markings, no bead-blast micro-structure (spec 16's MG.Anodise is not built), no
 carbon soot at the muzzle.
+
+## 10. Round 8 (2026-11-15): the look (critic m5)
+
+- **The muzzle device and barrel are dark** (m5): round 5's Burnt Bronze Cerakote (take 1 D3) read as bare copper
+  against the black gun. The slots are now `Carbine.Mat.Barrel` (manganese-phosphate steel, F0 0.055, edges worn
+  45 %) and `Carbine.Mat.Muzzle` (black phosphate, F0 0.045, rougher, sooty grime, its tines' edges worn to grey
+  steel); the round-5 `Bronze` slot is gone.
+- **The tan stripes are muted** (`Paint.FDE.Brushed` #8a6a48 -> #857560, roughness 0.70, chips denser within 4 mm
+  of the stripes' edges): the reference's accents read #9f8060 lit under its warm key, not orange.
+- **The gun is a dark grey with a sheen, not flat black**: the hardcoat's F0 0.060 -> 0.080 (roughness 0.46-0.62),
+  polymer #2e2d2b -> #333231, the PMAG #403f3d -> #434240. In the look loop (round-6 pose) F0 0.095 gave a graded
+  median ratio of 1.14 (1.95 before, with the light corrected); in round 8's pose the same values read 0.66 (the
+  gun turned more to the key), so they were brought back to 0.080.
+
+Look-loop renders opened: `renders/look/M*/sheet_hands_rifle_graded`, `sheet_torso_vest_graded`.
+
+Still wrong: no markings, no carbon soot at the muzzle beyond the grime, the drawn receiver's worn highlights.

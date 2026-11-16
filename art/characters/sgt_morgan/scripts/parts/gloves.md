@@ -181,3 +181,22 @@ inside the skin, at most 1.25 mm (round 4: 9 / 18, 1.48).
    knit back's honeycomb; the guard's edges could stand prouder.
 2. The thumb-web fold (section 6 item 1) and fingertip ease are unchanged.
 3. Re-export the contact surface and re-solve the pose with the new shell when the pose agent next solves.
+
+## 11. Round 8 (2026-11-15): the look (critics m9, m48)
+
+- **Black, neutral, slightly lighter** (the graded median was 1.30 x too dark with the light corrected): knit back
+  #282624 -> #31302f, matte (roughness 0.84, specular 0.32); synthetic-leather palm #2a2826 -> #302f2e with a
+  leather's soft gloss (roughness 0.52 -> 0.44) and its edges abraded toward #4a4846 (a 4 mm `edge_near` band);
+  the TPR guard and pads satin (0.50) with greyer worn crests (edge albedo +0.06). Graded median ratio now 1.15.
+
+Look-loop renders opened: `renders/look/M*/sheet_hands_rifle_graded`, `sheet_torso_vest_graded`.
+
+Still wrong: the drawn gloves carry grey worn highlights on the knuckles and finger pads; ours are clean black.
+
+## 11. Round 7 (2026-11-15, the pose agent)
+
+Section 10 item 3 done: the contact surface was re-exported from the round-6 shell (after the head round-4 rebuild) and
+the pose re-solved on it (scripts/stages/README.md, "Round 7"). Gloves in the carbine by the solver: right -0.32 mm,
+left -0.38 mm; by the clash test the handguard is 5.5 mm into the left glove (99 vertices), where the solver's smoothed
+field under-reads the slotted wall (README round 7, item 2). The left hand is fitted with a new arm-and-fingers placement
+but its fingertips still stop at the lower edge of the near face instead of curling under it.

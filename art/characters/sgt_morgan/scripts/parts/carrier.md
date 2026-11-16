@@ -213,3 +213,25 @@ Still wrong (materials):
    (pouch and flap edges, the panel's stains) are the next step; a painted panel swatch could carry them.
 2. The admin panel's hook-and-loop field, patches and name tape are not built.
 3. Under the evaluation's warm key the olive reads brown (session log, round 5).
+
+## 10. Round 8 (2026-11-15): the look (critics m9, m50, m48, m12, m52)
+
+- **Worn olive-coyote, not chocolate** (m9, m50): with the evaluation light corrected (scene.py, key 5800 K) the
+  carrier's median rendered 2.1 x too dark and too red. `Cordura.500D.OliveBrown` #4d473d -> #605d50,
+  `Cordura.1000D.OliveBrown` #474138 -> #5b594c, `Webbing.Nylon.OliveBrown` #4b453b -> #5d5a4e; the per-use
+  overrides in `MATERIALS` scaled by the same per-channel factor (flap #686156, pads #5e594f, admin panel #726b5c,
+  cummerbund #524e46, radio pouch #555148, PALS #59544a, cummerbund webbing `_CB` #4a4741). Graded median now
+  ratio 1.16, chromaticity (1.17, 0.73) against the reference's (1.21, 0.78).
+- **Response** (m48): Cordura roughness 0.78 -> 0.84, a faint sheen 0.08; webbing 0.70 with sheen 0.08; the
+  polymers satin (`Polymer.Black.Smooth` 0.38, `.Textured` 0.48 and #262625, scuffed edges +0.035).
+- **Wear** (m12, m52; `mat_groups.abrasion`): pouch and flap edges and corners abraded toward #8d887a (45 %, broken
+  by a 7 mm noise; the 4 mm `edge_near` band on finely meshed panels, the 2 mm Bevel mask on the low-poly box
+  pouches, which `materials.edge_distance()` skips); rubbing where straps, arms and the carbine lie on it (contact
+  within 14 mm); dust off the open faces into the seams (open 0.35, shelter 1.2), grime in the cavities.
+
+Look-loop renders opened (`renders/look/M1`..`M6`): `sheet_torso_vest_graded`, `sheet_hands_rifle_graded`. The
+carrier now reads lighter than the shirt and olive-grey, the layering the reference shows.
+
+Still wrong: the drawn carrier has strong light and dark scuffing, dark stains on the panel and dust in the PALS
+slots; ours is still too even and a little grey (the drawn olive has more yellow-green); the edge abrasion is faint
+at hero distance on the box pouches.

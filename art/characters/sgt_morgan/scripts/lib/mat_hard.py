@@ -28,6 +28,10 @@ Take 2's materials round (2026-11-15):
   bump; the paint wears through to the substrate on the edges (MG.Mask.EdgeBevel at a wide radius, broken by
   a noise) and in chips (a noise above a cover threshold, gathered in patches, the threshold lowered near the
   edges), a small step down where it is gone; grime and dust last, by box projection.
+  Round 8: `substrate.f0` makes the bare substrate metal (painted steel: bright worn rims); `edge.band_mm` adds a
+  broad rim from the part's edge distance (`edge_near`); `chips.near_mm` puts the chips in a band along the edges
+  (`edge_cover` there, `cover` on the faces, `patch_always` gathers them in patches); `rub` thins the paint where
+  other objects lie close (their occlusion only); `paint_image.max` and `.saturation` tame a swatch's bright specks.
 * `lens`: a clear or frosted polymer or glass (transmission, roughness, an optional coat), no wear.
 * `decal`: a brushed anodised plate (metal F0, edge wear to bare metal like `metal`) with a mark from a
   painted mask (GEN_TEXTURES, thresholded) on the object's 0-1 `UV.Decal`, the mark a dielectric paint mixed
@@ -281,6 +285,11 @@ def build_painted(mat, rec):
         st_i = C.GEN_TEXTURES[pi["image"]]["stats"]
         img = G.antirepeat(nb, pi["image"], "color", obj, pi["tile_mm"], box=True)
         ratio = nb.vmath("DIVIDE", img, tuple(st_i["mean_lin"]))
+        if pi.get("max"):   # round 8: the swatch's bright specks clipped (they read as an even speckle at hero scale)
+            ratio = nb.vmath("MINIMUM", ratio, (pi["max"],) * 3)
+        if pi.get("saturation", 1.0) < 1.0:   # round 8: R004's tan specks read as a uniform tan speckle; grey them
+            lum = _bw(nb, ratio)
+            ratio = nb.mix(pi["saturation"], nb.combine(lum, lum, lum), ratio)
         ratio = nb.vmath("ADD", nb.vmath("SCALE", ratio, scale=pi["amount"]), (1.0 - pi["amount"],) * 3)
         col = nb.vmath("MULTIPLY", col, ratio)
     # where the paint is gone: the worn edges and the chips. The rims are found against the TRUE normal: the
@@ -294,29 +303,74 @@ def build_painted(mat, rec):
     edge = nb.map_range(d, fl, fl + ed["width"], 0.0, 1.0, "SMOOTHSTEP")
     lo_b, hi_b = K.NOISE_BAND
     en = nb.map_range(nb.noise(obj, 1000.0 / ed["noise_mm"], detail=2.0), lo_b, hi_b, 0.3, 1.0)
+    if ed.get("band_mm"):
+        # round 8: broad worn rims (the drawn plates' pale rims are wider than any Bevel radius a 3 mm shell
+        # allows): the part's edge distance (`edge_near`) over band_mm, broken harder by the same noise
+        band = nb.math("MULTIPLY", G.edge_band(nb, ed["band_mm"]), nb.smoothstep(en, 0.45, 0.85))
+        edge = nb.math("MAXIMUM", edge, band)
     edge = nb.math("MULTIPLY", edge, nb.math("MULTIPLY_ADD", en, ed["noise_amount"], 1.0 - ed["noise_amount"]))
     ch = rec["chips"]
-    thr = K.cover_threshold(ch["cover"])
-    thr_local = nb.math("MULTIPLY_ADD", edge, -0.08 * ch["edge_bias"], thr)
+    near = None
+    if ch.get("near_mm"):
+        # round 8 (critics m12, m23, m52): chips where real paint chips, near the edges and corners: a band
+        # near_mm wide along every edge carries `edge_cover`, the open faces `cover`, so the faces stay nearly
+        # clean instead of carrying one even speckle
+        # the band is the part's own edge distance (`edge_near`, materials.edge_distance()): a Bevel node this
+        # wide reaches the far face of a 3 mm shell and marked every face
+        near = nb.math("MAXIMUM", G.edge_band(nb, ch["near_mm"]), edge)
+        thr_local = nb.mix(near, K.cover_threshold(ch["cover"]), K.cover_threshold(ch.get("edge_cover", ch["cover"])),
+                           kind="FLOAT")
+    else:
+        thr = K.cover_threshold(ch["cover"])
+        thr_local = nb.math("MULTIPLY_ADD", edge, -0.08 * ch["edge_bias"], thr)
     cn = _noise01(nb, ch["noise_mm"], 2.0)
     chip = nb.map_range(nb.math("SUBTRACT", cn, thr_local), -0.006, 0.006, 0.0, 1.0)
     patch = nb.smoothstep(_noise01(nb, ch["patch_mm"]), 0.42, 0.62)
-    chip = nb.math("MULTIPLY", chip, nb.math("MAXIMUM", patch, edge))
+    if ch.get("patch_always"):   # round 8: chips gather in patches along the edges, never in an even band
+        chip = nb.math("MULTIPLY", chip, patch)
+    else:
+        chip = nb.math("MULTIPLY", chip, nb.math("MAXIMUM", patch, edge if near is None else near))
     worn = nb.math("MAXIMUM", nb.math("MULTIPLY", edge, ed["amount"]), chip, clamp=True)
+    rb = rec.get("rub")
+    if rb:
+        # round 8: rubbing where something else touches or lies close (straps, the carbine, the next plate):
+        # the occlusion by OTHER objects only (AO over all objects less AO over this object alone), so the
+        # plate's own folds and slots do not count; the paint there is thinned toward the substrate
+        ao_all = nb.node("ShaderNodeAmbientOcclusion", samples=8, inside=False, only_local=False,
+                         inputs={"Distance": rb["distance_mm"] * 0.001}).outputs["AO"]
+        ao_own = nb.node("ShaderNodeAmbientOcclusion", samples=8, inside=False, only_local=True,
+                         inputs={"Distance": rb["distance_mm"] * 0.001}).outputs["AO"]
+        other = nb.map_range(nb.math("SUBTRACT", ao_own, ao_all), 0.15, 0.55, 0.0, 1.0)
+        rn = nb.map_range(_noise01(nb, rb.get("noise_mm", 6.0), 2.0), 0.2, 0.8, 0.3, 1.0)
+        worn = nb.math("MAXIMUM", worn, nb.math("MULTIPLY", nb.math("MULTIPLY", other, rn), rb["amount"]), clamp=True)
     fr = rec.get("frame")
     if fr:   # a part's own wear zone (the knee caps' raised frames, worn bare in the reference): a point attribute
         fw = nb.math("MULTIPLY", nb.attr(fr["attribute"]), nb.map_range(_noise01(nb, fr["noise_mm"]), 0.25, 0.6,
                                                                         1.0 - fr["break"], 1.0))
         worn = nb.math("MAXIMUM", worn, nb.math("MULTIPLY", fw, fr["amount"]), clamp=True)
     sub = rec["substrate"]
-    col = nb.mix(worn, col, C.hex_to_linear(sub["hex"]))
-    r = nb.mix(worn, r, sub["rough"], kind="FLOAT")
+    metal = 0.0
+    if sub.get("f0"):
+        # round 8: painted steel. Where the paint is gone the bare metal shows: metallic, its F0 the colour, a
+        # brighter, smoother edge than the paint (the reference's bright worn rims); a thin `primer` ring of
+        # the substrate hex lies between the paint and the bare metal
+        pr = sub.get("primer", 0.0)
+        bare = nb.map_range(worn, pr, 1.0, 0.0, 1.0) if pr > 0.0 else worn
+        col = nb.mix(worn, col, C.hex_to_linear(sub["hex"]))
+        col = nb.mix(bare, col, tuple(sub["f0"]))
+        r = nb.mix(bare, nb.mix(worn, r, sub["rough"], kind="FLOAT"), sub.get("metal_rough", 0.3), kind="FLOAT")
+        metal = bare
+    else:
+        col = nb.mix(worn, col, C.hex_to_linear(sub["hex"]))
+        r = nb.mix(worn, r, sub["rough"], kind="FLOAT")
     pe = rec["peel"]
     h = nb.math("ADD", nb.math("MULTIPLY", nb.noise_signed(obj, 1000.0 / pe["noise_mm"], detail=1.0), 0.5 * pe["height_mm"] * 0.001),
                 nb.math("MULTIPLY", worn, -sub["step_mm"] * 0.001))
     w = G.weather(nb, rec, col, r, rec["spec"], edge=edge)
     n = nb.bump(nb.math("ADD", nb.math("MULTIPLY", h, w["damp"]), w["height"]))
-    p = K.principled(nb, base=w["color"], rough=w["rough"], ior=rec["ior"], spec=w["spec"], normal=n)
+    if not isinstance(metal, float) and not isinstance(w["coverage"], float):
+        metal = nb.math("MULTIPLY", metal, nb.math("SUBTRACT", 1.0, w["coverage"]))   # dust is never metallic
+    p = K.principled(nb, base=w["color"], rough=w["rough"], ior=rec["ior"], spec=w["spec"], normal=n, metal=metal)
     _out(nb, p.outputs[0])
 
 
