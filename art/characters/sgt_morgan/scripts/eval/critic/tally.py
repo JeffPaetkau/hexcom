@@ -347,7 +347,9 @@ def tally(folder, packet, sha, results, attempt):
         decision = "repeat" if attempt == 1 else "ask Jeff"
     elif passed:
         decision = "accept"
-    elif packet["round"] >= 5:
+    elif packet["round"] >= 5 and str(packet["part"]) != "18":
+        # take 1's five-round limit per part; take 2's whole-soldier rounds (part 18) are breadth
+        # rounds numbered globally and go on until Jeff accepts (PLAN.md)
         decision = "escalate"
     else:
         decision = "revise"

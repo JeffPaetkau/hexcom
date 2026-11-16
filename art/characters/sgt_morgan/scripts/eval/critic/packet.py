@@ -292,8 +292,10 @@ def parse(argv):
     a = ap.parse_args(argv)
     if not re.fullmatch(r"0[1-9]|1[0-8]", a.part):
         die("--part is two digits, 01 to 18")
-    if not 1 <= a.round <= 5:
-        die("--round is 1 to 5 (§8.1.5: at most five rounds)")
+    if a.round < 1:
+        die("--round starts at 1")
+    # Take 1's rule (spec 18 §8.1.5: at most five rounds, then escalate) is enforced by tally.py's
+    # decision, not here: take 2 numbers its whole-soldier rounds globally (PLAN.md), past five.
     return a
 
 
