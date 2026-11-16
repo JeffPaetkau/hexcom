@@ -1000,8 +1000,9 @@ carbine held the way the reference holds it.
 """
 
 DECLARE = [
-    "Materials are a second pass (round 8): library recipes, painted textures and wear masks, but no stitching "
-    "texture, fabric folds from simulation, decal detail beyond the emblem, or fine dirt.",
+    "Materials are a second pass (round 8; round 9 drapes the trousers and the upper sleeves by cloth simulation): "
+    "library recipes, painted textures and wear masks, but no stitching "
+    "texture, folds driven by the joints (elbow crooks, knee bends), decal detail beyond the emblem, or fine dirt.",
     "The legs follow real thigh lengths; the drawn thighs are about 28 % short, so the knees, knee pads, leg rigs "
     "and belt sit higher than drawn.",
     "The carbine is a real M4-pattern carbine at real size (855 mm): the drawn gun is shorter, with an oversized "
