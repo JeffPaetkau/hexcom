@@ -8,7 +8,7 @@
   "additionalProperties": false,
   "properties": {
     "part": {"type": "string", "pattern": "^(0[1-9]|1[0-8])$"},
-    "round": {"type": "integer", "minimum": 1, "maximum": 5},
+    "round": {"type": "integer", "minimum": 1},
     "critic": {"enum": ["C1", "C2", "C3"]},
     "lens": {"enum": ["fidelity", "reality", "craft"]},
     "model": {"type": "string"},
