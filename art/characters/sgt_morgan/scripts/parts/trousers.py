@@ -1,28 +1,27 @@
-"""Trousers, round 2: Crye G3 class combat trousers as one offset shell from the rest body that hangs like
-cloth (seat room, thigh and knee ease, the articulated knee's back folds and seam band), with the knee-pad
-pockets, bellows thigh cargo pockets and calf pockets as sheets on it, a waistband, and the hems stacked
-in soft irregular rolls over the boot collars. Notes: scripts/parts/trousers.md.
+"""Trousers, round 9: Crye G3 class combat trousers cut as a garment and draped by Blender's cloth solver on the
+rest body, with the knee-pad pockets, bellows thigh cargo pockets and calf pockets as sheets on it, a waistband,
+and the lower legs bloused onto the boot tops. Notes: scripts/parts/trousers.md (section 8 for this method).
 
-  "$SGT_BLENDER" -b --python scripts/parts/trousers.py [-- --no-render]
+  "$SGT_BLENDER" -b --python scripts/parts/trousers.py [-- --no-render] [--no-sim]
   -> cache/parts/trousers.blend (Part.Trousers: Trousers.Shell, Trousers.{L,R}.Pocket.*),
-     cache/parts/trousers.json (measurements, clearance), renders/trousers/*.png
+     cache/parts/trousers.json (measurements, ease, clearance), renders/trousers/*.png,
+     cache/cloth/trousers_<hash>.npz (the solve, reused while its inputs are unchanged)
 
-Method: the body's skin from just above the ankles to above the hips (arms and head excluded by bone
-weight) is copied, each vertex pushed out along its normal by an ease field (mm, by height, more over the
-seat), the push capped where the skin faces itself (the crotch). Then the cloth's hang, in three steps:
-(1) above the crotch the whole section moves toward its convex hull (the seat spans the gluteal cleft);
-(2) below it each leg's sections move toward their convex hulls (the cloth spans the hollows between the
-muscles); (3) a drape envelope per leg: in cylindrical coordinates round the leg's bone chain, at every
-angle except the inner thigh, the radius may fall going down the leg by no more than a cloth's slope (0.24
-from the seat to the knee, 0.08 below it), so the cloth falls from the buttock's crest past the gluteal
-fold and from the knee past the calf instead of following them. The knee gets the G3's back-of-knee folds
-and the seam band above the knee panel as small radial reliefs. The lower legs take the hem stack: from
-300 mm down the radius is the boot shaft's ellipse (common.BOOT) plus 8 mm of cloth plus three rolls whose
-height, crest and size vary round the leg. The shell is cut at the waist plane and the hem plane, Taubin-
-smoothed, and pushed out to a minimum clearance (more at the lower back for the tucked shirt tail). Bound to
-Morgan.Rig by weight transfer from Body.Mesh, then the shell's weights are smoothed round the waist and
-seat, so the outer layer does not pinch where the spine extends. Idempotent: it starts from base.blend
-every time.
+Method (round 9). (1) The cut, as a signed distance field (cut_field, CUT): per horizontal slice of the rest body,
+the convex hull of the skin's section grown by the ease; above the crotch one hull round the whole section (the
+seat spans the cleft), below it one per leg, the legs joined by a smooth union whose width is the gusset (the
+crotch seam bridges the hollows about 25-40 mm under the perineum, not following it); hull points carried down the
+back from the seat's crest and all round from the knee (the cloth falls instead of following the body in); toward
+the hem the leg blends into the boot shaft's ellipse. Meshed by surface nets (cloth.surface_nets, 8 mm cells), cut
+at the waist plane and well below the cuff, smoothed. (2) The drape (cloth.simulate, SIM): NYCO ripstop at a G3's
+weight on the rest body and the boot shafts; the waistband held, the hips and seat on a soft goal, the legs free;
+each leg's bottom ring held and pushed up to the cuff (BLOUSE), so the 75-85 mm of surplus length buckles and
+collapses onto the boot top, differently on each leg. The solve is on the rest body and the result weight-bound,
+not solved in the hero pose and baked: the one mesh then serves the hero pose and the walk alike, and the folds
+that gravity and the blousing make in a standing man are the hero pose's too (he stands). (3) Pockets on a smoothed
+copy of the drape; everything bound to Morgan.Rig by weight transfer from Body.Mesh, the shell's weights smoothed
+round the seat and crotch so the gusset follows both legs' mean motion. Idempotent: it starts from base.blend every
+time.
 """
 import math
 import os
@@ -31,14 +30,11 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import cloth as K  # noqa: E402
 import common as C  # noqa: E402
 
 PART, TAG = "Trousers", "trousers"
 
-# Ease (outward offset from the skin, mm) by rest height: snug waistband over the shirt, roomy G3 legs.
-EASE_Z = [(1100, 9.0), (1040, 11.0), (960, 15.0), (880, 17.0), (700, 20.0), (540, 22.0), (400, 24.0), (300, 24.0),
-          (100, 24.0)]
-SEAT_EASE = 10.0           # more at the back from the waistband to under the seat (a G3's seat room)
 WAIST = {"co": (0.0, 0.0, 1072.0), "no": (0.0, -0.15, 1.0)}     # top edge: 1052 front, 1087 back
 HEM = {"co": (0.0, 0.0, 152.0), "no": (0.0, 0.0, 1.0)}          # hem edge 24 mm below the boot rim (rest)
 WAISTBAND_MM, WAISTBAND_PROUD = 45.0, 3.0
@@ -55,19 +51,55 @@ POCKETS = {
     "Calf": {"theta": 96.0, "z": 335.0, "w": 42.0, "h": 72.0, "depth": 11.0, "edge": 5.0},
     "CalfFlap": {"theta": 96.0, "z": 394.0, "w": 46.0, "h": 23.0, "depth": 14.0, "edge": 3.5},
 }
-# The hem stack over the boot (take 1 spec 09 section 2.1: crests at floor h 293 / 254 / 212, i.e. rest z
-# 257 / 218 / 184 with the 36 mm heel seat): (crest z, size mm, sigma mm, phase); each roll's crest wanders
-# 7 mm and its size about 25 % round the leg, as stacked cloth does.
-ROLLS = [(257.0, 13.0, 11.0, 0.3), (218.0, 17.0, 10.0, 2.1), (184.0, 19.0, 9.0, 4.0)]
-STACK_TOP = 300.0
-DRAPE = {"upper": 0.24, "lower": 0.08, "inner_half_deg": 58.0}
-KNEE_FOLDS = {"amp": 1.8, "pitch": 24.0, "half": 46.0, "seam_dz": 118.0, "seam": 1.8}
+# Round 9: the cut as a signed distance field (cut_field), mm. Per slice the hull of the skin's section grown by the
+# ease: above the crotch one hull round the whole section (whole_ease, more behind: seat_back), below it one per
+# leg (leg_out outward, front and back; leg_in on the medial side), the two legs joined by a smooth union of width
+# gusset_k (the gusset: the crotch seam bridges the hollows about 25-40 mm under the perineum instead of following
+# it), blended into the whole section over `blend`. Hull points are carried down the back from the seat's crest
+# (slope drape_seat: 0.18 mm in per mm down, from seat_carry_from; 0.3 left the buttocks' lower curve showing) and all round from the knee (drape_knee); below
+# lower_from the leg blends into the boot shaft's ellipse + CUFF["over"] (+ flare going up). G3 class targets
+# (take 1 spec 09 section 3.3): thigh 600-650 garment girth on a 546 thigh; knee about 500 for the shell; leg
+# opening about 460.
+CUT = {"cell": 8.0, "z_lo": 40.0, "z_hi": 1112.0,
+       "whole_ease": [(1100, 9.0), (1045, 11.0), (990, 16.0), (930, 20.0)],
+       "seat_back": 8.0, "seat_carry_from": 1000.0,
+       "leg_out": [(940, 22.0), (860, 26.0), (700, 27.0), (560, 24.0), (470, 20.0), (380, 18.0)],
+       "leg_in": [(940, 8.0), (880, 9.0), (800, 14.0), (650, 18.0), (540, 18.0), (440, 14.0)],
+       "gusset_k": [(930, 60.0), (880, 56.0), (840, 40.0), (790, 0.0)],
+       "blend": (CROTCH_Z - 45.0, CROTCH_Z + 35.0),
+       "drape_seat": 0.18, "drape_knee": 0.12, "lower_from": 400.0, "lower_to": 240.0}
+# The cuff: cut at z (rest; 16 mm under the boot's collar rim, outside the shaft), over the shaft's ellipse by
+# `over` mm, the tube flaring by `flare` toward lower_from. Held there in the solve, as a G3's hem is drawn in
+# round the boot top. Round 9's first evaluation had the hems 12-14 mm into the boot tongues and uppers in the pose
+# (`over` 8 and proxies at the shaft's rim ellipse): now over 13, and the proxies grown by proxy_grow for the tongue
+# and collar padding the ellipse leaves out.
+CUFF = {"z": 160.0, "over": 13.0, "flare": 22.0, "proxy_grow": 5.0}
+# The blousing: each leg is cut long, down to cut_z (inside the boot's height, outside its shaft), and in the solve its
+# bottom ring is held and pushed up by lift[side] over the first 25 frames to the cuff (L 150, R 160), so the lower
+# leg, 75-85 mm longer than its final span, buckles under gravity and self-collision and collapses onto the boot top
+# (critics m21, m42); the start carries smooth radial bumps of seed_mm below seed_below, so the two stacks differ.
+BLOUSE = {"cut_z": 75.0, "lift": {"L": 75.0, "R": 85.0}, "seed": 9, "seed_mm": 4.0, "seed_below": 360.0}
+# The solve (cloth.simulate): NYCO ripstop (cloth.RIPSTOP) on the rest body and the boot proxies. The vertex mass is
+# set so the whole shell weighs about what a G3 pair does (0.6-0.7 kg over about 22k vertices); with cloth.RIPSTOP's
+# 0.12 the first solve hung 2.6 kg from the waistband, which stretched the seat onto the buttocks and gathered the
+# thighs like a skirt. The hips and seat carry a soft goal (seat_goal): the cut there is the shape the hip bones
+# and the buttocks' crest hold out; below the crotch the cloth is free.
+SIM = {"frames": 60, "seat_goal": 0.3, "cloth": {"mass": 0.03, "tension": 80.0, "compression": 60.0, "shear": 20.0,
+                                                 "bending": 4.0}}
 COLOURS = {"camo": "#2a2723", "knee": "#232325"}   # the solid-view colours (round 1); Cycles uses MATERIALS
 # Materials round (round 5, 2026-11-15): the library's recipes (scripts/lib/materials.py) per flat material:
 # the shell the R002 camouflage print on NYCO ripstop, the knee-pad pockets black 500D Cordura. Dust is held on
 # the cloth's sides too (up_low), by height zones (lower legs dusty, the seat least) and the left leg dustier.
 MATERIALS = {
-    "Trousers.Mat.Camo": ("NYCO.Ripstop.Camo", "Camo", {}),
+    # Round 9 (critics m16, m35, m19; measured on round 8's graded legs_knees crop under the trousers' mask: the
+    # render's median luminance 1.25 x the reference's, b/g 0.96 against 0.86, saturation 0.24 against 0.32, and its
+    # brightest tenth 1.8 x the reference's, the pale lower legs): darker and warmer charcoal, the dust as brown dirt
+    # (thin #6e5f4f to crust #8f7a62) at half the amount instead of the hangar's pale grey film, the abraded edges
+    # brownish; the weave photo's normal (Fabric061, its physical 64 mm tile, which lint holds) at a quarter of its
+    # strength: it read as coarse burlap in the full view; the 6 mm ripstop grid carries the fine texture.
+    "Trousers.Mat.Camo": ("NYCO.Ripstop.Camo", "Camo",
+                          {"albedo_hex": "#43403b", "dust__amount": 0.6, "abrade__hex": "#57503f", "abrade__share": 0.32,
+                           "rub__hex": "#544c40", "normal__strength": 0.06}),
     "Trousers.Mat.KneePocket": ("Cordura.500D.Black", "KneePocket",
                                 {"wear": "cloth.thigh", "dust__amount": 0.8, "dust__up_low": -0.4,
                                  "dust__up_high": 0.9, "dust__up_power": 1.0}),
@@ -85,12 +117,6 @@ def dust_zones(ob):
     zones = {"shin": (1.0 - s(380.0, 560.0)) * side, "knee": s(380.0, 480.0) * (1.0 - s(560.0, 660.0)) * side,
              "thigh": s(560.0, 680.0) * (1.0 - s(820.0, 900.0)) * side, "seat": s(820.0, 900.0) * side}
     return M.wear_zones(ob, "cloth.thigh", zones)
-CONVEX_K = 0.9             # how far the leg shell moves out to its sectional convex hull (cloth spans hollows)
-
-
-def ease_z(z):
-    zs, es = zip(*sorted(EASE_Z))
-    return np.interp(z, zs, es)
 
 
 def smoothstep(e0, e1, x):
@@ -98,187 +124,217 @@ def smoothstep(e0, e1, x):
     return t * t * (3 - 2 * t)
 
 
-def leg_cyl(V, side):
-    """Cylindrical coordinates round the leg's bone chain: axis point per vertex (at its height), the angle
-    (degrees, 0 = front, +90 = outward, -90 = medial) and the radius in the horizontal plane."""
-    sg = 1.0 if side == "L" else -1.0
-    hip = C.bone_mm(f"upperleg01.{side}")
-    A = np.array([C.leg_axis_point(side, min(z, hip[2] - 1.0))[0] for z in V[:, 2]])
-    d = V[:, :2] - A[:, :2]
-    r = np.linalg.norm(d, axis=1)
-    th = np.degrees(np.arctan2(d[:, 0] * sg, -d[:, 1]))
-    return A, th, r, d / np.maximum(r, 1e-9)[:, None]
+def interp(table, z):
+    zs, vs = zip(*sorted(table))
+    return np.interp(z, zs, vs)
 
 
-def drape(V1, sel, side, knee_z):
-    """The drape envelope (module doc, step 3) on the selected vertices of one leg."""
-    idx = np.nonzero(sel)[0]
-    if not len(idx):
-        return V1
-    P = V1[idx]
-    A, th, r, u = leg_cyl(P, side)
-    z = P[:, 2]
-    tb = np.arange(-180.0, 180.1, 10.0)
-    zt = np.arange(z.max(), z.min() - 6.0, -6.0)                 # going down
-    R = np.full((len(tb), len(zt)), np.nan)
-    ti = np.clip(np.round((th + 180.0) / 10.0).astype(int), 0, len(tb) - 1)
-    zi = np.clip(np.round((zt[0] - z) / 6.0).astype(int), 0, len(zt) - 1)
-    for a, b, rr in zip(ti, zi, r):
-        if np.isnan(R[a, b]) or rr > R[a, b]:
-            R[a, b] = rr
-    R[0] = np.where(np.isnan(R[0]), R[-1], R[0])                  # -180 and +180 are one column
-    R[-1] = R[0]
-    for a in range(len(tb)):
-        col = R[a]
-        ok = ~np.isnan(col)
-        R[a] = np.interp(np.arange(len(zt)), np.nonzero(ok)[0], col[ok]) if ok.sum() >= 2 else 0.0
-    # smooth round the leg (circular), so the 10 degree bins leave no vertical stripes
-    k = np.exp(-0.5 * (np.arange(-3, 4) / 1.3) ** 2)
-    k /= k.sum()
-    Rc = R[:-1]
-    R[:-1] = np.maximum(Rc * 0.0, sum(w * np.roll(Rc, sh, axis=0) for w, sh in zip(k, range(-3, 4))))
-    R[-1] = R[0]
-    D = R.copy()
-    for b in range(1, len(zt)):
-        slope = DRAPE["upper"] if zt[b] > knee_z + 20.0 else DRAPE["lower"]
-        D[:, b] = np.maximum(R[:, b], D[:, b - 1] - slope * 6.0)
-    ft = np.clip((th + 180.0) / 10.0, 0, len(tb) - 1.001)
-    fz = np.clip((zt[0] - z) / 6.0, 0, len(zt) - 1.001)
-    a0, b0 = ft.astype(int), fz.astype(int)
-    wa, wb = ft - a0, fz - b0
-    tgt = ((D[a0, b0] * (1 - wb) + D[a0, b0 + 1] * wb) * (1 - wa)
-           + (D[a0 + 1, b0] * (1 - wb) + D[a0 + 1, b0 + 1] * wb) * wa)
-    med = np.abs(((th + 90.0 + 180.0) % 360.0) - 180.0)          # degrees from the medial direction
-    w = smoothstep(DRAPE["inner_half_deg"], DRAPE["inner_half_deg"] + 25.0, med)   # not the inner thigh
-    rn = r + np.maximum(tgt - r, 0.0) * w
-    V1 = V1.copy()
-    V1[idx, :2] = A[:, :2] + u * rn[:, None]
-    return V1
+def largest_piece(V, F):
+    """The largest connected piece of a mesh (mm arrays)."""
+    n = len(V)
+    parent = np.arange(n)
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+    for f in F:
+        r0 = find(f[0])
+        for v in f[1:]:
+            r = find(v)
+            if r != r0:
+                parent[r] = r0
+    roots = np.array([find(i) for i in range(n)])
+    vals, cnt = np.unique(roots, return_counts=True)
+    Vn, Fn, _ = C.submesh(V, F, roots == vals[np.argmax(cnt)])
+    return Vn, Fn
 
 
-def subdivide_below(V, F, ex, z_low, z_knee_hi, z_knee_lo):
-    """Split the edges of faces below z_low or in the knee band once (grid fill), carrying the extra
-    per-vertex columns along (interpolated)."""
-    import bmesh
-    bm = C.arrays_to_bm(V, F)
-    lay = [bm.verts.layers.float.new(f"x{k}") for k in range(ex.shape[1])]
-    bm.verts.ensure_lookup_table()
-    for i, v in enumerate(bm.verts):
-        for k, Ly in enumerate(lay):
-            v[Ly] = float(ex[i, k])
-    zf = lambda f: [v.co.z for v in f.verts]
-    faces = [f for f in bm.faces if min(zf(f)) < z_low or (z_knee_lo < min(zf(f)) and max(zf(f)) < z_knee_hi)]
-    edges = list({e for f in faces for e in f.edges})
-    bmesh.ops.subdivide_edges(bm, edges=edges, cuts=1, use_grid_fill=True)
-    bm.verts.index_update()
-    V2, F2 = C.bm_to_arrays(bm)
-    ex2 = np.array([[v[Ly] for Ly in lay] for v in bm.verts])
-    bm.free()
-    return V2, F2, ex2
-
-
-def build(body, rig):
-    bd = C.body_data(body)
-    V0 = bd["V"]
+def skin_edges(bd):
+    """The skin's edges (mm endpoints), arms and head left out: plane sections of the body."""
     arm = C.weight_sum(bd, C.is_arm)
     head = C.weight_sum(bd, C.is_head)
-    keep = bd["in_body"] & (arm < 0.05) & (head < 0.05) & (V0[:, 2] > 105.0) & (V0[:, 2] < 1130.0)
-    V, F, idx = C.submesh(V0, F=bd["F"], keep=keep)
-    bvh0 = C.skin_bvh(bd)
-    V, F, N = C.refine_on_skin(V, F, bvh0, cuts=1)
-    C.say(TAG, f"skin region: {len(V)} verts, {len(F)} faces (refined)")
+    ok = bd["in_body"] & (arm < 0.05) & (head < 0.05)
+    E = C.edges_of([f for f in bd["F"] if ok[list(f)].all()])
+    V = bd["V"]
+    return V[E[:, 0]], V[E[:, 1]]
 
-    sgn = np.where(V[:, 0] >= 0, 1.0, -1.0)
-    off = ease_z(V[:, 2])
-    # seat room: more ease at the back from the waistband down past the gluteal fold
-    behind_n = smoothstep(-0.1, 0.5, N[:, 1])                     # normals facing +Y (behind)
-    off += SEAT_EASE * behind_n * smoothstep(740.0, 860.0, V[:, 2]) * (1 - smoothstep(1030.0, 1070.0, V[:, 2]))
-    # waistband: a 45 mm band standing 3 mm proud at the top
-    wn = np.array(WAIST["no"]) / np.linalg.norm(WAIST["no"])
-    below_top = -((V - np.array(WAIST["co"])) @ wn)            # mm below the waist plane
-    off += WAISTBAND_PROUD * (1 - smoothstep(WAISTBAND_MM - 6, WAISTBAND_MM + 2, below_top)) * (below_top > -20)
 
-    off = C.limit_by_gap(V, N, off, bvh0, share=0.5, floor=1.5)
-    E = C.edges_of(F)
-    off = C.smooth_field(off, E, iters=6, lam=0.5)
-    V1 = V + N * off[:, None]
-    # (1) the seat: above the crotch the section spans the cleft
-    # (the back only: in front the lower belly keeps round 1's snug waist, which the carrier's flap clears)
-    seat = (V[:, 2] > CROTCH_Z + 8.0) & (V[:, 2] < 1040.0) & (V[:, 1] > -10.0)
-    V1 = C.convexify_along(V1, seat, np.zeros(3), np.array([0.0, 0.0, 1.0]), slab=8.0, k=1.0, centre=np.zeros(2))
-    seam = (V[:, 2] > CROTCH_Z - 10.0) & (V[:, 2] < CROTCH_Z + 40.0) & (V[:, 1] > 0.0)   # the back seam to the crotch
-    V1 = C.convexify_along(V1, seam, np.zeros(3), np.array([0.0, 0.0, 1.0]), slab=8.0, k=1.0, centre=np.zeros(2))
+def section(Ea, Eb, z):
+    """Points where the skin's edges cross the plane at height z (x, y in mm)."""
+    za, zb = Ea[:, 2] - z, Eb[:, 2] - z
+    m = (za * zb) < 0
+    t = za[m] / (za[m] - zb[m])
+    return Ea[m, :2] + t[:, None] * (Eb[m, :2] - Ea[m, :2])
+
+
+def axis_xy(side, z):
+    hip = C.bone_mm(f"upperleg01.{side}")
+    return C.leg_axis_point(side, min(z, hip[2] - 1.0))[0][:2]
+
+
+def leg_angles(P, a, side):
+    """Angle round the leg axis a (deg, 0 = front, +90 = outward, -90 = medial) of 2-D points P."""
+    sg = 1.0 if side == "L" else -1.0
+    d = P - a
+    return np.degrees(np.arctan2(d[:, 0] * sg, -d[:, 1]))
+
+
+def carry(points, a0, a1, slope, dz):
+    """The drape: hull points of the slice above carried down dz mm, moving toward the axis by slope x dz (cloth
+    falls from a crest instead of following the body back in)."""
+    if not len(points):
+        return points
+    d = points - a0
+    r = np.linalg.norm(d, axis=1)
+    rn = r - slope * dz
+    keep = rn > 25.0
+    return a1 + d[keep] * (rn[keep] / np.maximum(r[keep], 1e-9))[:, None]
+
+
+def cut_field(bd):
+    """The trousers' cut as a signed distance field (mm, negative inside the cloth's outer surface) on a regular
+    grid (module doc). Returns field, origin, cell."""
+    Ea, Eb = skin_edges(bd)
+    h = CUT["cell"]
+    (xs, ys, zs), origin = K.grid((-330.0, -230.0, CUT["z_lo"]), (330.0, 250.0, CUT["z_hi"]), h)
+    GX, GY = np.meshgrid(xs, ys, indexing="ij")
+    P2 = np.column_stack([GX.ravel(), GY.ravel()])
+    field = np.empty((len(xs), len(ys), len(zs)))
     knee_z = C.bone_mm("lowerleg01.L")[2]
-    for side, sg in (("L", 1.0), ("R", -1.0)):
-        # (2) the legs hang: below the crotch each leg's shell moves out towards its sectional convex hull
-        hip, ankle = C.bone_mm(f"upperleg01.{side}"), C.bone_mm(f"foot.{side}")
-        sel = (sgn == sg) & (V[:, 2] < CROTCH_Z - 10.0)
-        V1 = C.convexify_along(V1, sel, ankle, hip - ankle, slab=8.0, k=CONVEX_K)
-        # (3) the drape envelope, from the seat's crest down
-        sel = (sgn == sg) & (V[:, 2] < 1000.0)
-        V1 = drape(V1, sel, side, knee_z)
-
-    # cut the waist and the hem, smooth, push out to a minimum clearance
-    V1, F1, ex = C.bisect(V1, F, WAIST["co"], WAIST["no"], keep="below", extra=off[:, None])
-    V1, F1, ex = C.bisect(V1, F1, HEM["co"], HEM["no"], keep="above", extra=ex)
-    # the lower legs and knees get finer faces (MPFB's shin faces are long) for the reliefs and the stack
-    for _ in range(2):
-        V1, F1, ex = subdivide_below(V1, F1, ex, STACK_TOP + 60.0, knee_z + 170.0, knee_z - 170.0)
-    E1 = C.edges_of(F1)
-    pin = C.boundary_verts(F1, len(V1))
-    V1 = C.taubin(V1, E1, iters=26, lam=0.5, mu=-0.53, pin=pin)
-    sgn1 = np.where(V1[:, 0] >= 0, 1.0, -1.0)
-    # the knee: G3 back-of-knee folds and the seam band above the knee panel (radial reliefs)
-    for side, sg in (("L", 1.0), ("R", -1.0)):
-        sel = np.nonzero((sgn1 == sg) & (np.abs(V1[:, 2] - knee_z) < 160.0))[0]
-        A, th, r, u = leg_cyl(V1[sel], side)
-        rel = V1[sel, 2] - knee_z
-        backw = smoothstep(130.0, 160.0, np.abs(th))
-        win = np.clip(1 - (rel / KNEE_FOLDS["half"]) ** 2, 0, 1) ** 1.5
-        folds = (KNEE_FOLDS["amp"] * np.sin(2 * np.pi * rel / KNEE_FOLDS["pitch"] + 0.6 * np.sin(np.radians(th) * 2))
-                 * win * backw)
-        frontw = smoothstep(110.0, 80.0, np.abs(th))
-        seam = KNEE_FOLDS["seam"] * np.exp(-((rel - KNEE_FOLDS["seam_dz"]) / 3.0) ** 2) * frontw
-        V1[sel, :2] = A[:, :2] + u * (r + folds + seam)[:, None]
-
-    # lower legs: the hem stack over the boot shaft (ellipse centred on the leg's skin section)
+    b_lo, b_hi = CUT["blend"]
     a_y, a_x = C.BOOT["shaft_rim_ab"]
     rim = C.BOOT["rim_z_rest"]
-    low = V1[:, 2] < STACK_TOP + 40.0
-    for s, sg in (("L", 1.0), ("R", -1.0)):
-        sel = np.nonzero(low & (sgn1 == sg))[0]
-        if not len(sel):
-            continue
-        sec = C.leg_section(bd, s, rim - 5.0, half=12.0)
-        C.say(TAG, f"leg section {s} at rest z {rim - 5:.0f}: centre {sec['c'].round(1)}, half {sec['half'].round(1)}")
-        c = sec["c"]
-        for i in sel:
-            z = V1[i, 2]
-            r = V1[i, :2] - c
-            rl = np.linalg.norm(r)
-            if rl < 1e-6:
-                continue
-            u = r / rl
-            th = math.atan2(u[0] * sg, -u[1])
-            re = 1.0 / math.sqrt((u[0] / a_x) ** 2 + (u[1] / a_y) ** 2)
-            stack = 0.0
-            for zr, size, sig, ph in ROLLS:
-                zc = zr + 9.0 * math.sin(th + ph) + 4.0 * math.sin(2 * th + 3.1 * ph)
-                amp = size * (0.72 + 0.30 * math.sin(2 * th + 1.3 * ph) + 0.18 * math.sin(3 * th + ph * 2.7))
-                stack += amp * math.exp(-0.5 * ((z - zc) / sig) ** 2)
-            base = re + 8.0                                        # cloth over the shaft and its 10 mm collar
-            want = base + stack
-            if z < ROLLS[-1][0]:                                   # the hem edge rests open on the boot,
-                want = max(want, base + 0.75 * ROLLS[-1][1])       # not gathered like a jogger's cuff
-            blend = 1.0 - smoothstep(STACK_TOP - 20.0, STACK_TOP + 35.0, z)
-            target = rl + (max(want, min(rl, base + 6.0)) - rl) * blend
-            V1[i, :2] = c + u * max(target, base if z < STACK_TOP else 0.0)
+    sec_c = {s: C.leg_section(bd, s, rim - 5.0, half=12.0)["c"] for s in ("L", "R")}
+    ax_rim = {s: axis_xy(s, rim - 5.0) for s in ("L", "R")}
+    car = {"W": np.zeros((0, 2)), "L": np.zeros((0, 2)), "R": np.zeros((0, 2))}
+    prev_a = {"L": axis_xy("L", zs[-1]), "R": axis_xy("R", zs[-1]), "W": np.zeros(2)}
+    dW = None
+    for k in range(len(zs) - 1, -1, -1):           # top down, so the drape carries
+        z = zs[k]
+        S = section(Ea, Eb, z)
+        a = {"L": axis_xy("L", z), "R": axis_xy("R", z), "W": np.zeros(2)}
+        if z >= b_lo:
+            car["W"] = carry(car["W"], prev_a["W"], a["W"], CUT["drape_seat"], h)
+            Hw = C.hull2d(np.vstack([S, car["W"]]))
+            back = smoothstep(-20.0, 60.0, P2[:, 1])
+            e = (interp(CUT["whole_ease"], z)
+                 + CUT["seat_back"] * back * smoothstep(860.0, 900.0, z) * (1 - smoothstep(1030.0, 1070.0, z)))
+            dW = K.convex_sd(P2, Hw) - e
+            if z <= CUT["seat_carry_from"]:
+                car["W"] = Hw[Hw[:, 1] > 10.0]          # the back half of the seat's hull falls on down
+        if z <= b_hi:
+            dl = {}
+            for s, sg in (("L", 1.0), ("R", -1.0)):
+                mine = S[(S[:, 0] * sg) > 0]
+                cw = car["W"][(car["W"][:, 0] * sg) > -8.0] if z >= b_lo - 3 * h else np.zeros((0, 2))
+                slope = CUT["drape_seat"] if z > knee_z + 60.0 else CUT["drape_knee"]
+                car[s] = carry(car[s], prev_a[s], a[s], slope, h)
+                pts = np.vstack([mine, car[s], cw])
+                if len(pts) < 3:
+                    dl[s] = np.full(len(P2), 1e3)
+                    continue
+                H = C.hull2d(pts)
+                th = leg_angles(P2, a[s], s)
+                med = np.abs(((th + 90.0 + 180.0) % 360.0) - 180.0)       # degrees from medial
+                w_in = smoothstep(70.0, 20.0, med)
+                e = interp(CUT["leg_out"], z) * (1 - w_in) + interp(CUT["leg_in"], z) * w_in
+                d = K.convex_sd(P2, H) - e
+                if z < CUT["lower_from"]:
+                    c = sec_c[s] + (a[s] - ax_rim[s])
+                    q = P2 - c
+                    r = np.linalg.norm(q, axis=1)
+                    u = q / np.maximum(r, 1e-9)[:, None]
+                    re = 1.0 / np.sqrt((u[:, 0] / a_x) ** 2 + (u[:, 1] / a_y) ** 2)
+                    de = r - (re + CUFF["over"] + CUFF["flare"] * smoothstep(CUFF["z"], CUT["lower_from"], z))
+                    w = smoothstep(CUT["lower_from"], CUT["lower_to"], z)
+                    d = d * (1 - w) + de * w
+                dl[s] = d
+                thH = leg_angles(H, a[s], s)
+                if z > knee_z + 60.0:
+                    car[s] = H[np.abs(thH) > 100.0]       # behind the thigh, from the seat down
+                elif z < knee_z + 40.0:
+                    car[s] = H                            # all round, from the knee down
+            fl = K.smin(dl["L"], dl["R"], interp(CUT["gusset_k"], z))
+            t = smoothstep(b_lo, b_hi, z)
+            f = fl if z < b_lo else (fl * (1 - t) + dW * t)
+        else:
+            f = dW
+        field[:, :, k] = f.reshape(len(xs), len(ys))
+        prev_a = a
+    return field, origin, h
 
-    behind = smoothstep(20.0, 80.0, V1[:, 1])
-    clear = (np.maximum(0.55 * ex[:, 0], 4.0) + 3.0 * (V1[:, 2] > 940.0)
-             + 5.0 * behind * smoothstep(930.0, 960.0, V1[:, 2]))      # room for the tucked shirt tail
-    V1 = C.push_out(V1, bvh0, clear)
-    return V1, F1, ex, bd
+
+def boot_proxy(bd):
+    """Collision proxies of the boots in the rest frame: the shaft as an elliptic tube (common.BOOT, centred on the
+    leg's section at the rim) from the ankle to the collar, closed over the top by an inward ring."""
+    a_y, a_x = C.BOOT["shaft_rim_ab"]
+    rim = C.BOOT["rim_z_rest"]
+    V, F = [], []
+    n = 48
+    for s in ("L", "R"):
+        c0 = C.leg_section(bd, s, rim - 5.0, half=12.0)["c"]
+        a_r = axis_xy(s, rim - 5.0)
+        rings = []
+        for z, sc in [(z, 1.0) for z in np.arange(40.0, rim + 0.1, 12.0)] + [(rim + 4.0, 0.72)]:
+            c = c0 + (axis_xy(s, z) - a_r)
+            base = len(V)
+            for i in range(n):
+                t = 2 * np.pi * i / n
+                g_ = CUFF["proxy_grow"] if sc == 1.0 else 0.0
+                V.append((c[0] + (a_x + g_) * sc * np.sin(t), c[1] - (a_y + g_) * sc * np.cos(t), z))
+            rings.append(base)
+        for r0, r1 in zip(rings[:-1], rings[1:]):
+            for i in range(n):
+                j = (i + 1) % n
+                F.append((r0 + i, r0 + j, r1 + j, r1 + i))
+    return np.array(V), F
+
+
+def build(body, rig, sim=True):
+    """Round 9 (module doc): the cut as a field, meshed, then draped by the cloth solver on the rest body.
+    Returns the draped shell (V, F), the cut before the drape, and the body data."""
+    bd = C.body_data(body)
+    bvh0 = C.skin_bvh(bd)
+    field, origin, h = cut_field(bd)
+    V, F = K.surface_nets(field, origin, h)
+    C.say(TAG, f"cut: {len(V)} verts, {len(F)} quads from the field {field.shape}, cell {h} mm")
+    V, F = C.bisect(V, F, WAIST["co"], WAIST["no"], keep="below")
+    V, F = C.bisect(V, F, (0.0, 0.0, BLOUSE["cut_z"]), (0.0, 0.0, 1.0), keep="above")
+    V, F = largest_piece(V, F)
+    E = C.edges_of(F)
+    V = C.taubin(V, E, iters=12, lam=0.5, mu=-0.53, pin=C.boundary_verts(F, len(V)))
+    V = C.push_out(V, bvh0, 4.0)
+    Vcut = V.copy()
+    if not sim:
+        return V, F, Vcut, bd
+    # the solve: the waistband held, the hips and seat on a soft goal, the bottom ring held and pushed up to the cuff
+    # (BLOUSE), from an uneven start per leg
+    wn = np.array(WAIST["no"]) / np.linalg.norm(WAIST["no"])
+    below_top = -((V - np.array(WAIST["co"])) @ wn)
+    ring = V[:, 2] < BLOUSE["cut_z"] + 6.0
+    pin = np.maximum(1.0 - smoothstep(22.0, 40.0, below_top), ring.astype(float))
+    pin = np.maximum(pin, SIM["seat_goal"] * smoothstep(CROTCH_Z - 20.0, CROTCH_Z + 40.0, V[:, 2]))
+    move = np.zeros_like(V)
+    rng = np.random.default_rng(BLOUSE["seed"])
+    noise = C.smooth_field(rng.normal(0.0, 1.0, len(V)), E, iters=5, lam=0.5)
+    noise /= max(np.abs(noise).max(), 1e-9)
+    for s, sg in (("L", 1.0), ("R", -1.0)):
+        side = np.sign(V[:, 0]) == sg
+        move[ring & side, 2] = BLOUSE["lift"][s]
+        for i in np.nonzero(side & ~ring & (V[:, 2] < BLOUSE["seed_below"]))[0]:
+            a = axis_xy(s, V[i, 2])
+            d = V[i, :2] - a
+            V[i, :2] += d / max(np.linalg.norm(d), 1e-9) * noise[i] * BLOUSE["seed_mm"]
+    Vb, Fb = boot_proxy(bd)
+    skinF = [f for f in bd["F"] if bd["in_body"][list(f)].all()]
+    Vs = K.simulate("trousers", V, F, colliders=[(bd["V"], skinF), (Vb, Fb)], pin=pin, move=move,
+                    frames=SIM["frames"], cloth=SIM["cloth"], self_group=(V[:, 2] < 560.0).astype(float))
+    behind = smoothstep(20.0, 80.0, Vs[:, 1])
+    clear = 3.0 + 1.0 * (Vs[:, 2] > 940.0) + 4.0 * behind * smoothstep(930.0, 960.0, Vs[:, 2])   # the shirt tail
+    Vs = C.push_out(Vs, bvh0, clear)
+    return Vs, F, Vcut, bd
 
 
 def smooth_weights(ob, select, iters=12, lam=0.5):
@@ -309,7 +365,7 @@ def smooth_weights(ob, select, iters=12, lam=0.5):
             g.add(nz[q == val].tolist(), float(val), "REPLACE")
 
 
-def measure(ob, bd, ex):
+def measure(ob, bd):
     """Garment girths at a few heights (rest), the outseam and the stack."""
     V, F = C.evaluated_world_mm(ob)
     out = {}
@@ -326,11 +382,31 @@ def measure(ob, bd, ex):
             Q = P[o]
             per = float(np.linalg.norm(np.diff(np.vstack([Q, Q[:1]]), axis=0), axis=1).sum())
             out[f"{label}_{s}_girth_mm"] = round(per, 1)
+            H = C.hull2d(P)      # round 9: the tape-measure girth (the folds' perimeter is in the line above)
+            out[f"{label}_{s}_girth_hull_mm"] = round(float(np.linalg.norm(np.diff(np.vstack([H, H[:1]]), axis=0),
+                                                                           axis=1).sum()), 1)
             out[f"{label}_{s}_width_x_mm"] = round(float(np.ptp(P[:, 0])), 1)
             out[f"{label}_{s}_depth_y_mm"] = round(float(np.ptp(P[:, 1])), 1)
     out["waist_top_z_mm"] = [round(float(V[:, 2].max()), 1)]
     out["hem_z_min_mm"] = round(float(V[:, 2].min()), 1)
     out["outseam_rest_mm"] = round(float(V[:, 2].max() - V[:, 2].min()), 1)
+    return out
+
+
+def ease_report(ob, bd):
+    """Ease made visible (rest): the shell's distance from the skin (mm), median and 10th-90th percentiles, by
+    band (seat and hips, thigh, knee, calf, the blousing above the cuff), front and back halves of the leg."""
+    V, F = C.evaluated_world_mm(ob)
+    d, _n = C.signed_dist(V, C.skin_bvh(bd))
+    out = {}
+    knee = C.bone_mm("lowerleg01.L")[2]
+    for label, lo, hi in (("hips", 930, 1040), ("seat_crotch", 860, 930), ("thigh", 640, 820),
+                          ("knee", knee - 60, knee + 60), ("calf", 300, 440), ("blouse", 165, 300)):
+        for half, m in (("front", V[:, 1] < 0), ("back", V[:, 1] >= 0)):
+            sel = (V[:, 2] >= lo) & (V[:, 2] < hi) & m & (d < 200)
+            if sel.sum() > 10:
+                q = np.percentile(d[sel], [10, 50, 90])
+                out[f"{label}_{half}"] = [round(float(x), 1) for x in q]
     return out
 
 
@@ -375,24 +451,29 @@ def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     body, rig = C.open_base()
     coll = C.part_collection(PART)
-    V, F, ex, bd = build(body, rig)
+    V, F, Vcut, bd = build(body, rig, sim="--no-sim" not in args)
     mats = {"camo": C.flat_material("Trousers.Mat.Camo", COLOURS["camo"], 0.85),
             "knee": C.flat_material("Trousers.Mat.KneePocket", COLOURS["knee"], 0.6)}
     ob = C.mesh_object("Trousers.Shell", V, F, coll, mat=mats["camo"])
     ob["sgt_clay"] = (0.52, 0.48, 0.42)
-    pk = pockets(V, F, coll, mats)
+    # round 9: the pockets lie on a smoothed copy of the draped shell (a bellows pocket is a stiff panel; laid on the
+    # folds it crumpled with them)
+    Vsm = C.taubin(V, C.edges_of(F), iters=40, lam=0.5, mu=-0.53, pin=C.boundary_verts(F, len(V)))
+    pk = pockets(Vsm, F, coll, mats)
     for o in [ob] + pk:
         C.bind(o, body, rig)
         C.solidify(o, 1.5 if o is ob else 1.2, inward=True)
         C.subsurf(o, 1)
     Vr = np.array([tuple(v.co) for v in ob.data.vertices]) * 1000.0
-    smooth_weights(ob, Vr[:, 2] > 860.0, iters=14)
+    # the seat, and (round 9) the gusset between the legs, which takes both thighs' mean motion
+    smooth_weights(ob, (Vr[:, 2] > 860.0) | ((Vr[:, 2] > 740.0) & (np.abs(Vr[:, 0]) < 70.0)), iters=14)
     for o in [ob] + pk:
         dust_zones(o)
     lib = C.library_pass(coll, "Trousers", MATERIALS, say_tag=TAG)
     rest = C.clearance([ob] + pk, body, "rest")
-    meas = measure(ob, bd, ex)
+    meas = measure(ob, bd)
     meas["seat_standoff_mm"] = seat_standoff(ob, bd)
+    meas["ease_mm"] = ease_report(ob, bd)
     C.say(TAG, meas)
     used = C.apply_hero_pose(rig)
     posed = C.clearance([ob] + pk, body, "hero pose")

@@ -207,3 +207,54 @@ Look-loop renders opened (`renders/look/M1`..`M6`): `sheet_torso_vest_graded`, `
 
 Still wrong: no elbow wear or seams to break up the sleeve; the drawn sleeve shows fold highlights and a ripstop
 sheen we do not have at this roughness.
+
+## 11. Round 9 (2026-11-15): sleeves with ease and folds, the back off the shoulder blades (critics m11, m17, m39)
+
+- **Ease** (`SLEEVE`): 16 at the shoulder, 27-29 on the upper arm, 24 at the elbow (round 2: 12-19), then round 2's
+  forearm (16 mid forearm, 5.5 at the cuff): a G3-class sleeve is cut full, and the reference's upper arms carry bulk;
+  the forearm lies under the guards and the gauntlets (a fuller forearm put the cuff over the gloves: below).
+- **The elbow step** (section 6 item 6): the upper-arm and forearm hulls met in a step; the sleeve is relaxed over arm
+  parameter 0.70-1.35 (`ELBOW_RELAX`, 40 Taubin passes) before the cuts.
+- **The back** (`BACK_SPAN`): above the tuck and below the collar, behind y 15, each section moves out to its convex hull
+  plus 3 mm, so the shirt hangs from the shoulder blades instead of showing them.
+- **Folds by the cloth solver** (`sleeve_solve`, `SLEEVE_SIM`, `scripts/parts/cloth.py`): each cuff is extended 26 mm along
+  the forearm (four rings), and in the solve the extension's end ring is held and pushed back to the cuff line while
+  every sleeve vertex carries a weak goal (0.12) whose target slides toward the shoulder by the share of the surplus its
+  arm parameter has passed; torso held, shoulder seam half held; colliders the rest skin without the hands; gravity 0.25
+  (the rest arm hangs differently from the hero pose's), bending 0.35, friction 15. After the solve the forearm is
+  blended back to the unsolved sleeve over arm parameter 1.15-1.45 and the extension dropped, so the solved bunching is
+  kept from the shoulder to the elbow only. About 45 s, cached in `cache/cloth/shirt_sleeves_<hash>.npz`; `--no-sim`
+  builds without it.
+  - Tried: springs' rest lengths from a longer shape key (no effect in Blender 4.5); the end ring alone pushed back 44
+    and 34 mm (the forearm tube slid up the arm and telescoped into one ring at the elbow); bending 1.5 (one balloon);
+    the whole sleeve solved (round 9's first evaluation: the bunched forearm and cuff came out over the forearm guards,
+    256 guard vertices to 24.9 mm inside the sleeve, and over the glove gauntlets, 110 vertices to 24.9 mm).
+  - Result, honestly: the surplus gathers as a soft fullness above the elbow with one or two broad folds and a ridge at
+    the crook, not the reference's several crisp compression folds; the forearm is the smooth cut tube.
+
+**Girths and ease** (rest, his left arm; girth = hull of the section across the segment; ease p10 / median / p90 mm):
+
+| | Round 9 | Round 8 |
+|---|---|---|
+| Upper arm girth (mid humerus) | 468 | 423 |
+| Elbow girth (body 260) | 427 | 390 |
+| Mid-forearm girth | 274 | 272 |
+| Upper arm ease | 24 / 28 / 29 | 17 / 18 / 18 |
+| Elbow ease | 11 / 20 / 32 | 18 / 20 / 23 |
+| Forearm ease | 15 / 16 / 17 | 15 / 16 / 16 |
+| Upper back ease (z 1300-1450, abs(x) < 140) | 7 / 9 / 19 | 5 / 5 / 6 |
+
+Chest girth (hull, z 1360) 1060 (1048); waist 818 (780). Clearance: rest minimum 1.4 mm, nothing inside; hero pose 44
+vertices inside, to 16.5 mm, at the right armpit (posed (-248, 137, 1440); round 8: 23 to 14 mm there), the round-4
+problem (section 7), a little worse with the fuller upper sleeve.
+
+Renders opened: `renders/shirt/shirt_rest_threequarter.png` and `shirt_hero_arm_L_pair.png` after each solve, and the
+`--no-sim` build (which showed the elbow step was the hulls', not the solver's).
+
+**Round 9's evaluation** (`renders/round_09/`: `soldier_full_compare`, `torso_vest_compare`, `turnaround`): the upper arms
+now carry the bulk the reference shows and the back no longer shows the shoulder blades; the sleeves are still smooth
+at hero scale (the bunching above the elbow is soft and mostly under the armour's bands), so m17 "no folds at elbow or
+shoulder" is only partly answered. Clashes back to round 8's after the forearm fix: gloves in shirt 3 vertices (round 8:
+3), shirt-armour 476 to 6.7 mm (232 to 4.1; the guards' foam on the fuller elbow end), body-shirt 33 to 16.5 at the right
+armpit (14 to 14.1). Next: the elbow-crook folds by a pose-driven corrective (solve the sleeve once in the hero arm pose
+and store the difference as a shape key on the elbow angle), and the armpit (section 7).

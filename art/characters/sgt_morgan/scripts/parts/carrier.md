@@ -14,15 +14,15 @@ have.
 | Item | Built (mm) | Source / class |
 |---|---|---|
 | Plates | SAPI Medium 241 x 318, multi-curve R 254 across, R 457 along | SAPI sizing chart (9.5 x 12.5 in); curvatures spec 13 §3.2 |
-| Front and rear bags | 285 x 340, shooter's-cut corners 50 at 45 deg, 31 thick over the plate tapering to 14 at the margin; every edge bound (a 7 mm radius roll, black) | plate + about 22 per side; build-up spec 13 §3.2 (5 back panel and foam + 25 plate + 1 front); 25 mm binding tape folded (spec 13 §3.2) |
+| Front and rear bags | 285 x 340, shooter's-cut corners 50 at 45 deg, 37 thick over the plate (round 9; 31 before) tapering to 18 at the margin; every edge bound (a 7 mm radius roll, black) | plate + about 22 per side; build-up spec 13 §3.2 (5 back panel and foam + 25 plate + 1 front); 25 mm binding tape folded (spec 13 §3.2) |
 | Front bag position (round 2) | top at z 1453, 52 below the suprasternal notch (1505, the clavicles' sternal ends); plate top 60 below it; rear bag top 1503 | drawn (see §3) |
 | Front flap | 255 x 34 x 6 (round 4; 42 before), below the front bag (one object with the bag); lies on the belly where it stands proud of the plate; bound hem; one PALS row of 6 cells | JPC class, spec 13 §3.2 |
 | PALS (round 2) | Type III 25.4 x 1.3 webbing, bar-tack columns at 38.1, rows at 50.8: front bag 5 rows x 7 cells from 25 above its bottom up to the panel, flap 1 x 6, cummerbund 3 x 6 a side; 3 mm sag between columns | MIL-spec PALS, spec 13 §3.3; `lib/gear_webbing.pals_rows` |
 | Cummerbund | 150 tall x 20 thick, from 25 mm behind the front bag's edge to 25 mm behind the rear bag's; rises 45 toward the back (over the belt and the trousers' waist there) | JPC/6094 class, 3 PALS rows (spec 13 §3.8) |
-| Shoulder pads | 64 x 8, centre lines at x +-140 (`shirt.STRAP`), tilted to the trapezius; 38 x 1.5 webbing down their centre | spec 13 §3.7 (70 wide, 6-10 pad); the drawn pads sit at the gaiter's outer edge |
+| Shoulder pads | 64 x 15 (round 9; 8 before), 5.5 mm rounded edges, centre lines at x +-140 (`shirt.STRAP`), tilted to the trapezius; 38 x 1.5 webbing down their centre | spec 13 §3.7 (70 wide, 6-10 pad); the drawn pads sit at the gaiter's outer edge |
 | Front strap roots | 38 x 2 webbing from the pad's end down the chest to the bag's top edge at x +-105 and down the bag face to 95 below its top; 38 mm ladder-lock 52 x 44 x 6 (two slots, `gear_hardware.ladder_lock`) 30 mm down the run; a 110 mm loose tail through two keepers 16 x 44 | spec 13 §3.6-3.7 |
-| Admin panel | 175 x 90 x 8 moulded to the bag face, canted 2.6 deg (right end up) | drawn (spec 13 D5) |
-| Rifle-mag pouches | three, body 62 x 32 x 158; flap over the top (12 thick) and 44 down the front; 20 mm pull tab to 22 below the flap's edge; at x -20, +46, +112, bottoms 48 above the bag's bottom, standing on the PALS | slim single 5.56 pouch (Esstac KYWI single class); STANAG 25 thick + walls |
+| Admin panel | 175 x 90 x 12 (round 9) moulded to the bag face, canted 2.6 deg (right end up) | drawn (spec 13 D5) |
+| Rifle-mag pouches | three, body 64 x 38 x 178 (round 9; 62 x 32 x 158 before); flap 18 thick over the magazine top and 54 down the front; 20 mm pull tab; at x -20, +46, +112, bottoms 32 above the bag's bottom, standing on the PALS | single 5.56 pouch holding a 30-round STANAG (Esstac KYWI single class) |
 | Pistol-mag carrier, right flank | 100 x 38 x 105 black body, two tan plates 40 x 92, two magazine bases | Blade-Tech/HSGI double pistol TACO class (spec 14 §3.8) |
 | Utility pouch, left flank | 50 x 30 x 70 | spec 13 D9 |
 | Radio pouch | 76 x 57 x 229 on the back-left at 128 deg round the torso, radio top 66 x 40 x 18 | Fight Light class pouch, PRC-152 class radio (spec 13 §3.9) |
@@ -235,3 +235,42 @@ carrier now reads lighter than the shirt and olive-grey, the layering the refere
 Still wrong: the drawn carrier has strong light and dark scuffing, dark stains on the panel and dust in the PALS
 slots; ours is still too even and a little grey (the drawn olive has more yellow-green); the edge abrasion is faint
 at hero distance on the box pouches.
+
+## 11. Round 9 (2026-11-15): thickness, bulk and colour (critics m8, m41, m30, m15, m29, m33, m34)
+
+- **Plate bags** 31 -> 37 mm over the plate (back panel and foam 7 + plate 25 + front laminate 5), margins 14 -> 18
+  (`BAG_T`, `BAG_MARGIN_T`).
+- **Mag pouches** 62 x 32 x 158 -> 64 x 38 x 178 (a pouch that holds a 30-round STANAG to its shoulder), bottoms 48 -> 32
+  above the bag's bottom so they reach toward the belt as drawn, the flap over the magazine top 12 -> 18 thick and down
+  the front 44 -> 54, bevels 4 -> 6 (`POUCH`, `POUCH_FLAP_TOP`, `POUCH_FLAP_DOWN`, `POUCH_LIFT`).
+- **Admin panel** 8 -> 12 thick.
+- **Shoulder pads** 8 -> 15 thick (12 foam + 3 fabric) with 5.5 mm rounded edges (`PAD_T`, `PAD_BEVEL`); along their
+  length they now bridge only short dips (a 9-station moving average, `PAD_BRIDGE`) instead of the convex hull of the
+  centre line, which stood the pad off the trapezius (m15, m29: "kinks up, daylight under it").
+  The cross-section's tilt to the trapezius is capped at 0.55 (`PAD_TILT`; 0.9 before), which stood the pad's inner
+  corner up beside the neck (m29, also flagged by the hard-kit lane).
+- **Colour** (`TONE`, `ABRADE_TONE`, `_olive()`): measured on round 8's graded torso_vest crop under the carrier's mask
+  taken from the Workbench parts panel, the render's median luminance was 1.44 x the reference's at the same r/g (1.24),
+  b/g 0.82 against 0.79; round 8's look_stats (eroded flat masks) had the median at 1.00. The step is taken half way:
+  every olive Cordura and webbing albedo of the carrier x 0.80 in linear light with b/g x 0.96, the abraded edges' and
+  rubbed colours x 0.85 (overrides in `MATERIALS`, not the catalogue: the belt and the armour share those recipes).
+
+Not done this round: PALS rows on the cummerbund existed already (3 x 6 a side, round 2); no magazine baseplates or
+bungees on the pouches, no placard hook-and-loop field, no frayed edges.
+
+Checks (`carrier_check.json`): no overlap with the body, rest or posed. Carbine against the thicker bag: 34-38 stock and
+butt-pad triangles and 166 PALS triangles cross in the pose (the bag's face moved 6 mm out, the pouches 6 deeper); see
+round 9's clash report.
+
+Renders opened: `renders/carrier/carrier_hero_torso_vest_pair.png`, `carrier_rest_side.png`. Round 9's evaluation: below.
+
+**Round 9's evaluation** (`renders/round_09/`: `torso_vest_compare`, `soldier_full_compare`, `turnaround`): the carrier is
+visibly thicker from the side and the pouches are taller and reach toward the belt; the pads lie on the shoulders with
+thickness. Colour (my measure, graded torso_vest crop under the carrier's parts mask; round 8 in brackets): median
+luminance 1.16 x the reference's (1.46), r/g 1.26 against 1.19 (1.24 / 1.24), b/g 0.75 against 0.76 (0.82 / 0.79). It still
+reads cleaner and flatter than the drawn one: the plate-bag face is one plain field above the pouches (the PALS show as
+one row), the admin panel is a pale plain board, and the drawn vest's dark seams, stains and busy webbing are missing.
+Clashes: carrier-carbine 111 vertices to 6.5 mm (round 8: 56 to 2.3; the butt pad against the thicker bag), strap pads in
+the gaiter 7.5 mm (round 8: 6.4). Next: PALS slots and rows visible on the bag face above and between the pouches,
+magazine baseplates and bungee on the pouches, the placard's hook-and-loop field and darker stained panel, and the hold
+re-solved against the thicker bag.

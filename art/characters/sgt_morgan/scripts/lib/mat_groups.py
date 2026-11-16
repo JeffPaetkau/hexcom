@@ -687,7 +687,12 @@ def weather(nb, rec, color, rough, spec, edge=None, vector=None, box=False):
                                      "Zone": dust_zone(nb) if "wear_dust" in rec.get("reads", {}).get("attributes", ())
                                      else 1.0,
                                      "Edge": edge if edge is not None else 0.0,
-                                     "Dust Roughness": du.get("rough", 0.88), "Drift": drift})
+                                     "Dust Roughness": du.get("rough", 0.88), "Drift": drift,
+                                     # round 9 (critic m16, m35): a recipe may give its own dust colours (the
+                                     # trousers' brown dirt instead of the hangar's pale grey film); None keeps
+                                     # the group's DUST_THIN / DUST_THICK
+                                     "Thin": C.hex_to_linear(du["thin"]) if du.get("thin") else None,
+                                     "Thick": C.hex_to_linear(du["thick"]) if du.get("thick") else None})
     out.update(color=K.sock(d, "Color", out=True), rough=K.sock(d, "Roughness", out=True),
                spec=K.sock(d, "Specular", out=True), coverage=K.sock(d, "Coverage", out=True),
                damp=K.sock(d, "Bump Damp", out=True), height=K.sock(d, "Height", out=True))

@@ -528,7 +528,10 @@ NYCO_RIPSTOP_CAMO = dict(
     # as two thin waves on UV.Real)
     ripstop={"grid_mm": 6.0, "line": 0.10, "height_mm": 0.05, "rough_add": -0.05},
     # cloth holds dust on its sides too: the up-facing band widened and its power softened (mat_groups.weather)
-    dust={"amount": 1.2, "rough": 0.85, "up_low": -0.55, "up_high": 0.9, "up_power": 1.0, "noise_mm": 90.0},
+    # round 9 (m16, m35): the trousers' dust is brown field dirt, not the hangar's pale grey film (mat_groups DUST_THIN
+    # / DUST_THICK), which washed the lower legs grey
+    dust={"amount": 1.2, "rough": 0.85, "up_low": -0.55, "up_high": 0.9, "up_power": 1.0, "noise_mm": 90.0,
+          "thin": "#6e5f4f", "thick": "#8f7a62"},
     # round 8: wear by edges and contact (mat_groups.abrasion): fold crests, seams and pocket edges scuffed
     # paler; rubbed where the leg rigs' straps and the knee pads lie on the cloth
     abrade={"band_mm": 8.0, "hex": "#5e5b55", "share": 0.40, "rough_add": 0.05, "noise_mm": 4.0},

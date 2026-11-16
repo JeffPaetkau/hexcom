@@ -196,3 +196,88 @@ continuous over the shins and the hem roll; no steps.
 Still wrong: the drawn trousers are near-black with pale grey scuffed patches; ours read as a grey-brown mottle,
 the dust drift still the brightest element on the shins. The knee and shin scuffs of the drawing (large pale worn
 patches) are not modelled as such; `abrade` follows edges only.
+
+## 8. Round 9 (2026-11-15): a real cut, draped by the cloth solver (critics m1, m13, m6, m21, m42, m16, m35, m19)
+
+**Method** (trousers.py module doc; shared helpers `scripts/parts/cloth.py`):
+1. **The cut as a field** (`cut_field`, `CUT`): per 8 mm slice of the rest body, the convex hull of the skin's exact plane
+   section (the skin's edges cut by the plane) grown by the ease. Above the crotch one hull round the whole section, 8 mm
+   more behind (the seat); below it one per leg (`leg_out` 22-27 outward, front and back; `leg_in` 8-18 on the medial
+   side). The legs are joined by a smooth union (`gusset_k` 60 at the crotch to 0 at z 790): the **gusset**, so the
+   crotch seam bridges the hollows instead of following the perineum. Hull points are carried down the back from the
+   seat's crest (0.18 mm in per mm down) and all round below the knee (0.12): the cloth falls from crests. Below z 400 the
+   leg blends into the boot shaft's ellipse + 8 (flaring 24 going up). Meshed by surface nets (`cloth.surface_nets`),
+   cut at the waist plane and at z 75, Taubin-smoothed.
+2. **The drape** (`cloth.simulate`, `SIM`; Blender 4.5 cloth, 60 frames, about 2 min for 24k vertices on 8 threads;
+   cached in `cache/cloth/trousers_<hash>.npz`): NYCO ripstop at a G3's weight (vertex mass 0.03: the first solve at
+   0.12 hung 2.6 kg from the waistband, stretched the seat onto the buttocks and gathered the thighs like a skirt),
+   tension 80, bending 4, self-collision below z 560; colliders the rest skin and two boot-shaft proxies; the waistband
+   held, the hips and seat on a soft goal (0.3), the legs free.
+3. **The blousing** (`BLOUSE`): each leg is cut long (down to z 75) and in the solve its bottom ring is held and pushed
+   up over 25 frames, 75 mm on the left, 85 on the right, to the cuff (z 150 / 160, 16-26 mm under the boot collar's
+   rim, outside the shaft). The surplus length buckles under gravity and self-collision and folds down over the cuff;
+   the start carries smooth radial bumps (seed 9, 4 mm), so the legs stack differently.
+   - Cloth's `rest_shape_key` (springs' rest lengths from a longer shape key) was tried first and does nothing in 4.5
+     headless (a test tube gave identical vertices with and without it); moving held vertices does work (`cloth.py`).
+4. **Rest-solved and weight-bound, not hero-solved and baked**: the one mesh serves the hero pose and the walk; a
+   standing man's folds are gravity's and the blousing's, which a rest solve gives. The cost: no knee-bend folds from
+   the pose (skinning only) and none at the hip crease when the thigh lifts. The gusset and seat weights are smoothed
+   (`smooth_weights`, z > 860 and the inner thighs above z 740, |x| < 70), so the gusset takes both thighs' motion.
+5. Pockets lie on a heavily smoothed copy of the drape (laid on the folds they crumpled with them). The procedural knee
+   folds, seam band and hem rolls of round 2 are gone.
+
+**Ease and girths** (rest; girth = convex hull of the section, a tape measure; ease = shell to skin, p10 / median /
+p90 mm; round 8 in brackets):
+
+| | Round 9 | Round 8 |
+|---|---|---|
+| Thigh girth z 820 (body 524) | L 723, R 723 | 689 |
+| Knee girth (body 310) | 513 | 529 |
+| Calf girth z 420 (body 374) | 519 | 556 |
+| At z 218 (the stack / blousing) | L 475, R 466 | 499 |
+| Ease, seat and crotch, back | 21 / 30 / 47 | 26 / 34 / 50 |
+| Ease, blousing above the cuff (z 165-300) | 12 / 28 / 44 | 17-20 / 33-36 / 46-48 |
+| Ease, seat and crotch, front | 17 / 20 / 31 | 11 / 17 / 20 |
+| Ease, thigh front / back | 16 / 21 / 27 ; 16 / 25 / 39 | 20 / 21 / 22 ; 20 / 21 / 22 |
+| Ease, knee front / back | 12 / 21 / 35 ; 15 / 21 / 27 | 22 / 24 / 27 ; 22 / 25 / 29 |
+| Ease, calf front / back | 10 / 24 / 40 ; 14 / 19 / 25 | 24 / 24 / 35 ; 23 / 24 / 27 |
+| Seat standoff straight behind, z 930 / 880 / 840 | 31 / 49 / 61 | 30 / 44 / 31 |
+
+The round-8 shell held a near-constant 20-24 mm everywhere (an offset from the skin, so every form showed through); the
+draped one varies from 13 to 48, which is what reads as cloth. Clearance: rest minimum 3.0 mm, hero pose 3.0, nothing
+inside.
+
+**Materials** (critics m16, m35, m19; measured on round 8's graded legs_knees crop under the trousers' mask: median
+luminance 1.25 x the reference's, b/g 0.96 against 0.86, saturation 0.24 against 0.32, the brightest tenth 1.8 x): albedo
+#474644 -> #43403b (darker, warmer), dust amount 1.2 -> 0.6 and **brown dust** (the camo recipe's new `dust.thin` /
+`dust.thick` #6e5f4f / #8f7a62, read by `mat_groups.weather`; the library's grey hangar film is the default elsewhere),
+abraded edges #57503f at 32 %, the weave photo's normal (Fabric061, lint holds its physical 64 mm tile) at 0.06 instead
+of 0.25 so it no longer reads as burlap; the 6 mm ripstop grid carries the fine texture.
+
+Renders opened: `renders/trousers/trousers_rest_{front,back,side,threequarter}.png` and `trousers_hero_soldier_full_pair`
+after each solve (four solves: the soft-and-heavy one, the rest-key one that did nothing, the moving-cuff one, the
+fuller-leg one kept). Round 9's evaluation: section 9 below.
+
+## 9. Round 9's evaluation (renders/round_09/) and what is still wrong
+
+Opened: `soldier_full_compare`, `legs_knees_compare`, `boots_feet_compare`, `torso_vest_compare`, `turnaround`.
+- **No longer tights**: front and three-quarter views show even ease from hip to cuff, the crotch bridged by the gusset
+  (hidden by the carbine in the hero frame), soft drape folds on the thighs and shins.
+- **The blousing** reads as cloth bunched over the boot tops, different on the two legs, but more like a gathered
+  elastic cuff than the reference's loose break: the held cuff ring is a tidy band round the collar with the puff above
+  it. Next: let the cuff ring go free after the push (hold it only by a soft goal) so the hem drops and opens over the
+  collar, or push it down onto the boot instead of holding it at a fixed ring.
+- **Seat from behind**: the cleft is spanned and the buttocks' lower curve is softer, but the two forms still read in the
+  back view and a small dip remains where the back seam meets the gusset.
+- **Colour** (my measure, graded legs_knees crop under the trousers' mask; round 8 in brackets): median luminance
+  0.45 x the reference's (1.25 x), brightest tenth 0.97 x (1.8 x), b/g 0.88 against 0.87 (0.96), saturation 0.27
+  against 0.32 (0.24). The pale wash and the grey cast are gone, the hue matches, but the median is now too dark: the
+  roomier cloth self-shadows more than the offset shell did. Next round: albedo up about 1.4 x (#43403b -> about
+  #504c46) with the brown dust kept.
+- **Clashes** (`clashes.md`): the first round-9 build had boots-trousers 194 vertices to 14.2 mm (the cuff ring in the
+  right boot's tongue and collar in the pose). Fixed in the same round: the cuff 13 mm over the shaft's ellipse (was 8)
+  and the solve's boot proxies grown 5 mm for the tongue and collar padding (`CUFF["over"]`, `CUFF["proxy_grow"]`);
+  the final round-9 numbers are in `renders/round_09/clashes.md`. Trousers-belt (1.7 mm) and trousers-armour (0.6) as
+  before.
+- Not touched this round: pockets are still pillows on sheets (no bellows gussets, flap hardware); waistband plain;
+  knee-bend and hip-crease folds come from skinning only (the solve is at rest).

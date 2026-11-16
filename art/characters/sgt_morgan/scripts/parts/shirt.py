@@ -2,7 +2,7 @@
 ripstop sleeves to hook-and-loop cuffs at the wrist) as an offset shell from the rest body, and a fleece
 neck gaiter (280 mm tube, 3 mm wall) worn pushed down into three rolls. Notes: scripts/parts/shirt.md.
 
-  "$SGT_BLENDER" -b --python scripts/parts/shirt.py [-- --no-render]
+  "$SGT_BLENDER" -b --python scripts/parts/shirt.py [-- --no-render] [--no-sim]
   -> cache/parts/shirt.blend (Part.Shirt: Shirt.Shell, Shirt.Gaiter), cache/parts/shirt.json, renders/shirt/
 
 Shell: the torso, neck and arm skin (legs, head and hands excluded by bone weight) copied and refined,
@@ -21,12 +21,33 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import cloth as K  # noqa: E402
 import common as C  # noqa: E402
 
 PART, TAG = "Shirt", "shirt"
 TORSO_EASE = 5.0
 TUCK_EASE = 2.0      # under the trousers' waistband the knit is pressed to the skin (round 1: 3.5, it showed through)
-SLEEVE = [(0.0, 12.0), (0.5, 18.0), (0.95, 19.0), (1.05, 18.0), (1.5, 16.0), (1.72, 11.0), (1.84, 5.5), (2.0, 5.0)]  # arm param: 0 shoulder, 1 elbow, 2 wrist
+# Sleeve ease (mm off the skin) by arm parameter (0 shoulder, 1 elbow, 2 wrist). Round 9 (critics m11, m17, m39:
+# "painted on"): a G3-class sleeve is cut full, about 20-30 mm of ease on the upper arm where the reference's arm
+# carries its bulk, 24 at the elbow; it then draws in to the cuff inside the glove. Round 2's was 12-19.
+SLEEVE = [(0.0, 16.0), (0.3, 27.0), (0.7, 29.0), (0.95, 27.0), (1.1, 24.0), (1.35, 19.0), (1.5, 16.0), (1.72, 11.0),
+          (1.84, 5.5), (2.0, 5.0)]     # the forearm as round 2's: it lies under the guards and the gauntlets
+# Round 9: the back spans the shoulder blades (m11: the scapulae showed through from behind): above the tuck and
+# below the collar, behind the spine's line (y > BACK_SPAN["y0"]), each horizontal section moves out to its convex
+# hull, plus a little ease, as a woven-backed shirt hangs from the shoulder blades.
+ELBOW_RELAX = (0.70, 1.35, 40)    # round 9: arm-parameter band and Taubin passes that blend the two hulls at the elbow
+BACK_SPAN = {"z": (1080.0, 1520.0), "y0": 15.0, "ease": 3.0}
+# Round 9: the sleeves' folds from the cloth solver (cloth.simulate) on the rest body. A real sleeve is cut longer
+# than the arm (it must reach the wrist with the arm straight and reaching) and the surplus bunches at the crook and
+# stacks above the cuff. Here each sleeve is extended past its cuff by `lift` mm (rings along the forearm, flaring a
+# little), and in the solve that end ring is held and pushed back up the forearm to the cuff line over the first
+# frames, so the sleeve, `lift` longer than its span, buckles under a light gravity and self-collision; the torso is
+# held. Gravity is low because the rest arm hangs differently from the hero pose's: the folds should come from the
+# surplus, not from the rest pose's sag. The hands are left out of the colliders (the extension passes through them
+# at the start).
+SLEEVE_SIM = {"lift": 26.0, "rings": 4, "flare": 0.5, "frames": 50, "goal": 0.12, "spread": (0.35, 1.95), "keep_forearm": (1.15, 1.45),
+              "cloth": {"gravity": 0.25, "bending": 0.35, "mass": 0.03, "tension": 60.0, "compression": 40.0,
+                        "shear": 12.0, "friction": 15.0, "pin_stiffness": 1.0}}
 COLLAR = {"co": (0.0, -60.0, 1542.0), "no": (0.0, -0.35, 1.0)}    # collar top: 1542 front, ~1584 back (under the gaiter)
 HEM_Z = 930.0                                                     # tucked hem, inside the trousers
 CUFF_BEYOND_WRIST = 8.0                                           # the cuff edge past the wrist joint (mm)
@@ -162,7 +183,7 @@ def elbow_blend(shell):
     return out
 
 
-def build_shell(bd, bvh0):
+def build_shell(bd, bvh0, sim=True):
     V0 = bd["V"]
     leg = C.weight_sum(bd, lambda n: n.startswith(("upperleg", "lowerleg", "foot", "toe")))
     head = C.weight_sum(bd, lambda n: C.is_head(n) and not n.startswith("neck"))
@@ -200,6 +221,26 @@ def build_shell(bd, bvh0):
         for (a, b, lo, hi) in ((sh, el, 0.15, 1.0), (el, wr, 1.0, 1.72)):
             sel = m & (t >= lo) & (t < hi) & (w_arm > 0.7)
             V1 = C.convexify_along(V1, sel, a, b - a, slab=8.0, k=0.85)
+    # round 9: the two segments' hulls met in a step at the elbow (the forearm's hull, which takes in the
+    # olecranon, starts wider than the upper arm's ends: notes section 6 item 6); the sleeve is relaxed over the joint
+    tt = np.full(len(V), -1.0)
+    for side, sg in (("L", 1.0), ("R", -1.0)):
+        m = np.sign(V[:, 0]) == sg
+        tt[m] = arm_param(V[m], side)
+    band = (tt > ELBOW_RELAX[0]) & (tt < ELBOW_RELAX[1]) & (w_arm > 0.7)
+    V1 = C.taubin(V1, C.edges_of(F), iters=ELBOW_RELAX[2], lam=0.5, mu=-0.53, pin=~band)
+    # round 9: the back spans the shoulder blades
+    zb0, zb1 = BACK_SPAN["z"]
+    back = (V[:, 1] > BACK_SPAN["y0"]) & (V[:, 2] > zb0) & (V[:, 2] < zb1) & (w_arm < 0.3)
+    Vh = C.convexify_along(V1, back, np.zeros(3), np.array([0.0, 0.0, 1.0]), slab=8.0, k=1.0,
+                           centre=np.array([0.0, 20.0]))
+    grow = (Vh - V1)[:, :2]
+    moved = np.linalg.norm(grow, axis=1) > 0.05
+    wz = smoothstep(zb0, zb0 + 60.0, V[:, 2]) * (1 - smoothstep(zb1 - 80.0, zb1, V[:, 2]))
+    V1[:, :2] += grow * wz[:, None]
+    if moved.any():
+        dirn = grow[moved] / np.linalg.norm(grow[moved], axis=1)[:, None]
+        V1[np.nonzero(moved)[0], :2] += dirn * (BACK_SPAN["ease"] * wz[moved])[:, None]
     # cuts: collar line, tucked hem, wrists
     V1, F = C.bisect(V1, F, COLLAR["co"], COLLAR["no"], keep="below")
     V1, F = C.bisect(V1, F, (0, 0, HEM_Z), (0, 0, 1), keep="above")
@@ -213,6 +254,8 @@ def build_shell(bd, bvh0):
     pin = C.boundary_verts(F, len(V1))
     V1 = C.taubin(V1, E, iters=10, lam=0.5, mu=-0.53, pin=pin)
     V1 = C.push_out(V1, bvh0, np.where(V1[:, 2] < 1060.0, TUCK_EASE - 0.3, 3.0))
+    if sim:
+        V1, F = sleeve_solve(V1, F, bd, bvh0)
     # the tail under the trousers lies on the skin at TUCK_EASE (smoothing bridged the lumbar hollow, so the
     # trousers, which hug it, came through the shirt at the lower back: round 1's clash 13)
     w = 1.0 - smoothstep(1040.0, 1080.0, V1[:, 2])
@@ -220,6 +263,99 @@ def build_shell(bd, bvh0):
     d, n = C.signed_dist(V1[sel], bvh0)
     V1[sel] += n * ((TUCK_EASE - d) * w[sel])[:, None]
     return V1, F
+
+
+def sleeve_solve(V, F, bd, bvh0):
+    """Round 9: the sleeves buckled by the cloth solver (SLEEVE_SIM): each cuff extended along the forearm by `lift`,
+    the extension's end ring held and pushed back to the cuff line, the torso (little arm weight) held, the sleeve
+    free. Returns V, F (the extension stays: it is the sleeve's end after the push)."""
+    from mathutils.kdtree import KDTree
+    g = SLEEVE_SIM
+    V0 = bd["V"]
+    V = np.array(V, float)
+    F = list(F)
+    n0, nf0 = len(V), len(F)
+    Vpre = V.copy()
+    move = []
+    ends = []
+    for loop in C.boundary_loops(F):
+        P = V[loop]
+        cz = P.mean(0)
+        for side in ("L", "R"):
+            el, wr = C.bone_mm(f"lowerarm01.{side}"), C.bone_mm(f"wrist.{side}")
+            if np.linalg.norm(cz - wr) > 45.0:
+                continue
+            d = (wr - el) / np.linalg.norm(wr - el)
+            step = g["lift"] / g["rings"]
+            prev = list(loop)
+            for k in range(1, g["rings"] + 1):
+                rad = P - cz
+                rad -= np.outer(rad @ d, d)
+                rn = rad / np.maximum(np.linalg.norm(rad, axis=1), 1e-9)[:, None]
+                Q = P + d * step * k + rn * g["flare"] * k
+                ids = list(range(len(V), len(V) + len(Q)))
+                V = np.vstack([V, Q])
+                m = len(loop)
+                for j in range(m):
+                    a, b = prev[j], prev[(j + 1) % m]
+                    F.append((a, b, ids[(j + 1) % m], ids[j]))
+                prev = ids
+            ends.append((prev, -d * g["lift"]))
+    # face orientation of the added rings follows the loop's order; make them agree with their neighbours
+    import bmesh
+    bm = C.arrays_to_bm(V, F)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    V, F = C.bm_to_arrays(bm)
+    bm.free()
+    kd = KDTree(len(V0))
+    for i, v in enumerate(V0):
+        kd.insert(v, i)
+    kd.balance()
+    near = np.array([kd.find(v)[1] for v in V[:n0]])
+    w_arm = np.ones(len(V))
+    w_arm[:n0] = C.weight_sum(bd, lambda n: n.startswith(("upperarm", "lowerarm", "wrist")))[near]
+    pin = np.where(w_arm > 0.5, 0.0, 1.0)
+    mv = np.zeros_like(V)
+    for ids, dv in ends:
+        pin[ids] = 1.0
+        mv[ids] = dv
+    for side, sg in (("L", 1.0), ("R", -1.0)):
+        m = np.nonzero((np.sign(V[:n0, 0]) == sg) & (w_arm[:n0] > 0.5))[0]
+        t = arm_param(V[m], side)
+        pin[m[t < 0.12]] = 1.0
+        pin[m[(t >= 0.12) & (t < 0.22)]] = 0.4                       # the shoulder seam eases in
+        # the surplus spread along the sleeve: a weak goal on every sleeve vertex whose target slides toward the
+        # shoulder by the share of `lift` its arm parameter has passed (the first try, the end ring alone, slid the
+        # whole forearm tube up the arm and telescoped it into one ring at the elbow)
+        sh, el, wr = C.bone_mm(f"upperarm01.{side}"), C.bone_mm(f"lowerarm01.{side}"), C.bone_mm(f"wrist.{side}")
+        d1, d2 = (el - sh) / np.linalg.norm(el - sh), (wr - el) / np.linalg.norm(wr - el)
+        free = (t >= 0.22)
+        frac = smoothstep(g["spread"][0], g["spread"][1], t)
+        dirs = np.where((t < 1.0)[:, None], d1[None], d2[None])
+        mv[m[free]] = -dirs[free] * (g["lift"] * frac[free])[:, None]
+        pin[m[free]] = g["goal"]
+    for ids, dv in ends:                                          # the extension: all of the lift
+        ring_all = [i for i in range(n0, len(V)) if np.linalg.norm(V[i] - V[ids[0]]) < 80.0]
+        pin[ring_all] = np.maximum(pin[ring_all], g["goal"])
+        mv[ring_all] = dv
+        pin[ids] = 1.0
+    hand = C.weight_sum(bd, C.is_hand)
+    skinF = [f for f in bd["F"] if bd["in_body"][list(f)].all() and (hand[list(f)] < 0.5).all()]
+    Vs = K.simulate("shirt_sleeves", V, F, colliders=[(V0, skinF)], pin=pin, move=mv, frames=g["frames"],
+                    cloth=g["cloth"], self_group=(pin < 0.5).astype(float))
+    C.say(TAG, f"sleeve solve: {len(ends)} cuffs extended {g['lift']:.0f} mm and pushed back; {int((pin < 0.5).sum())} "
+               f"free vertices; moved median {np.median(np.linalg.norm(Vs - V, axis=1)[pin < 0.5]):.1f} mm")
+    # the forearm keeps its cut shape (round 9's first evaluation: the bunched forearm and cuff ballooned over the
+    # forearm guards, 25 mm, and over the glove gauntlets, which must cover the cuff): the solved folds are kept from
+    # the shoulder to the elbow, blended back to the unsolved sleeve over keep_forearm, and the extension is dropped
+    Vs = Vs[:n0].copy()
+    F = F[:nf0]
+    for side, sg in (("L", 1.0), ("R", -1.0)):
+        m = np.nonzero((np.sign(Vpre[:, 0]) == sg) & (w_arm[:n0] > 0.5))[0]
+        t = arm_param(Vpre[m], side)
+        k = smoothstep(g["keep_forearm"][0], g["keep_forearm"][1], t)
+        Vs[m] = Vs[m] * (1 - k)[:, None] + Vpre[m] * k[:, None]
+    return C.push_out(Vs, bvh0, np.where(Vs[:, 2] < 1060.0, TUCK_EASE - 0.3, 3.0)), F
 
 
 def largest_piece(V, F):
@@ -446,7 +582,7 @@ def main():
     coll = C.part_collection(PART)
     bd = C.body_data(body)
     bvh0 = C.skin_bvh(bd)
-    Vs, Fs = build_shell(bd, bvh0)
+    Vs, Fs = build_shell(bd, bvh0, sim="--no-sim" not in args)
     shell = C.mesh_object("Shirt.Shell", Vs, Fs, coll, mat=C.flat_material("Shirt.Mat.Shirt", COLOURS["shirt"], 0.85))
     shell["sgt_clay"] = (0.44, 0.47, 0.52)
     Vg, Fg = build_gaiter(bvh0)
