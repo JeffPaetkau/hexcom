@@ -1,0 +1,48 @@
+{
+ "part": "18",
+ "round": 10,
+ "critic": "C2",
+ "lens": "reality",
+ "model": "claude-opus-5-5",
+ "packet_sha": "4e199da49d59fddd6a9e2a96891cce0e67bdf312edce1fb530c324065ec9072e",
+ "questions": [
+  {"id": "Q1", "score": 6, "note": "Stature and head size fit (about 7.3 heads in the front turnaround; chin and skull top land on the drawn lines). But the shoulders sit high and square, as if shrugged, the neck reads short, and the upper arms are heavy, so the trunk reads stockier than the reference man's sloped trapezius and lean V-taper. Limb lengths are otherwise plausible; the legs follow the declared real thighs."},
+  {"id": "Q2", "score": 6, "note": "The stance width, foot turn-out and the carbine's diagonal (about 55 deg, stock at the right elbow, muzzle by the left hip) match. The torso stands square to the camera and level, so the reference's slight lean and dropped right shoulder are missing, and the right pauldron sticks up and out past the drawn shoulder line (the onion shows it clearly)."},
+  {"id": "Q3", "score": 7, "note": "Every listed item is present and in the right zone: gaiter, carrier with three mag pouches, antenna over the left shoulder, both pauldrons, forearm guards, gloves, belt, right drop-leg panel, left hip pouches, knee pads, boots. Sizes are believable by eye at about 1 px/mm (head breadth 170 px). Off: the right pauldron rides high, and the forearm guards are oversized cuffs."},
+  {"id": "Q4", "score": 6, "note": "The order is right (shirt, trousers bloused over boots, gloves under guards, carrier, belt, plates on webbing, carbine in hand) and I see no interpenetration. But the right pauldron stands proud of the deltoid with a shadow gap, the forearm guards hover off the forearm like loose tubes, and from behind the trousers cling to the seat like tights instead of hanging off it."},
+  {"id": "Q5", "score": 5, "note": "The man reads heavier in the arms and shoulders than the reference; the kit reads lighter. The carrier front is a flat, thin bag with slim pouches where the drawing's is deep and loaded; the plates are flat sheets. The trousers are tight at the seat but baggy and crinkled at the shins. Together the balance of body to kit bulk is off."},
+  {"id": "Q6", "score": 7, "note": "This is a believable low-ready: the right hand wraps the pistol grip with the index finger laid straight along the receiver above the trigger guard, and the left hand rides over the handguard. The carbine reads real-size. But the stock butt seems to ride free beside the right forearm rather than resting on it as in the reference, and the left fingers hang straight down instead of curling under."}
+ ],
+ "overall": 6,
+ "defects": [
+  {"id": "D1", "severity": "major", "preset": "pair_arm_R_cycles.png", "box_px": [600, 0, 820, 285], "what": "The right pauldron is a flat rectangular slab that stands out from the deltoid with a shadow gap under its lower edge, and its top juts above the shoulder line, so it reads as floating rather than worn.", "fix": "Cup the plate over the deltoid's curve and hang it from the carrier shoulder strap or a sleeve mount so it lies on the arm, top edge under the strap line.", "spec_ref": "Pass criteria 3, 4"},
+  {"id": "D2", "severity": "major", "preset": "pair_arm_L_cycles.png", "box_px": [470, 500, 720, 740], "what": "The left forearm guard is a near-cylindrical cuff much wider than the forearm; its rim stands off the sleeve at the wrist end with a visible hollow. The right guard repeats this.", "fix": "Shape the guard as a tapered shell following the forearm's flattened oval, strapped close at the wrist and below the elbow, with no gap at the rim.", "spec_ref": "Pass criteria 4"},
+  {"id": "D3", "severity": "major", "preset": "pair_soldier_full_clay.png", "box_px": [980, 230, 1630, 520], "what": "The shoulders are high, square and level, and the upper arms are bulky, which shortens the neck and makes the trunk read stockier than the reference's sloped trapezius and lean build.", "fix": "Drop the shoulder girdle to a relaxed carry with the trapezius sloping from neck to acromion, and slim the upper-arm girth toward the drawing's lean V-taper.", "spec_ref": "Pass criteria 1"},
+  {"id": "D4", "severity": "major", "preset": "pair_turn_back.png", "box_px": [200, 440, 375, 545], "what": "From behind, the trousers wrap the buttocks skin-tight with a deep cleft crease, like tights; combat trousers hang off the seat in loose folds.", "fix": "Give the seat the trousers' real ease: fabric bridging the gluteal cleft, slack folds under the seat and at the back of the thigh.", "spec_ref": "Pass criteria 4"},
+  {"id": "D5", "severity": "major", "preset": "pair_boots_feet_cycles.png", "box_px": [1070, 130, 1375, 375], "what": "The right boot reads as a seamless rubber overshoe: smooth vamp, low wedge toe and a thin forefoot sole, with no visible toe cap, quarter panels or welt line.", "fix": "A Zephyr-class boot shows a scuffed rubber toe cap, separate suede and textile panels with seams, and a lugged sole of visible depth all the way round the toe.", "spec_ref": "Pass criteria 3"},
+  {"id": "D6", "severity": "major", "preset": "pair_head_face_cycles.png", "box_px": [1065, 0, 1485, 265], "what": "The hair is a hard-edged shell like a skullcap, with an abrupt rim on the forehead and stray spikes on top; it reads as a helmet, not a short taper cut.", "fix": "A short taper cut thins gradually to skin at the hairline and temples, with an irregular front edge and short, dense strands rather than a closed cap.", "spec_ref": "Pass criteria 1"},
+  {"id": "D7", "severity": "minor", "preset": "pair_hands_rifle_cycles.png", "box_px": [1100, 60, 1310, 280], "what": "The buttstock seems to ride free in the gap between the right forearm guard and the chest, bearing on nothing; the reference rests it on the forearm.", "fix": "Lay the stock on the top of the right forearm near the elbow, or pin it lightly between arm and carrier, so the hold carries the gun's weight.", "spec_ref": "Pass criteria 2"},
+  {"id": "D8", "severity": "minor", "preset": "pair_hands_rifle_cycles.png", "box_px": [1480, 460, 1690, 700], "what": "The left fingers hang straight down the near side of the handguard, barely curled, so the hand reads as resting on the gun rather than closing round it.", "fix": "Curl the fingers under the handguard with the pads pressed to its underside and the thumb over the top or along the side.", "spec_ref": "Pass criteria 2"},
+  {"id": "D9", "severity": "minor", "preset": "pair_legs_knees_cycles.png", "box_px": [1110, 110, 1280, 370], "what": "The knee-pad caps are flat-faced slabs with a raised rim, not domed over the patella, so they sit on the knee like tiles.", "fix": "AirFlex-class caps are domed and wrap the front and sides of the knee, with a continuous curvature from top to bottom edge.", "spec_ref": "Pass criteria 3"},
+  {"id": "D10", "severity": "minor", "preset": "pair_soldier_full_clay.png", "box_px": [1090, 1330, 1320, 1580], "what": "The lower trouser legs are covered in fine crinkled lumps, like wet paper, instead of the few larger, crisp folds of ripstop above a bloused cuff.", "fix": "Stiffer cloth: a few long, soft folds down the shin and a stacked fold where the cuff is bloused over the boot.", "spec_ref": "Pass criteria 4"}
+ ],
+ "ranked": [
+  "[D3] The body reads stockier than the reference: shoulders shrugged high and level, short neck, bulky upper arms. The reference man is lean with a sloped trapezius line, so the whole figure reads like a different build.",
+  "[D1] The right pauldron is a flat slab standing off the deltoid and jutting above the shoulder; it looks hung in the air, not worn. Real pauldrons cup the shoulder and hang from the carrier strap.",
+  "The torso stands square and level to the camera; the reference's slight lean, dropped right shoulder and turned head are lost, which makes the pose stiff and mannequin-like.",
+  "[D2] The forearm guards are oversized tubes with gaps at the rim; they read as loose cuffs. Real guards are tapered shells strapped close to the forearm.",
+  "The kit reads too light for the man: the carrier is a flat, thin bag with slim pouches and flat plates, where the drawing's carrier is deep, loaded and worn.",
+  "[D5] The right boot reads like a rubber galosh: seamless vamp, low wedge toe, thin forefoot sole. A Zephyr-class boot shows a toe cap, panels and seams, and a deep lugged sole.",
+  "[D6] The hair is a closed shell with a hard rim on the forehead and stray spikes on top; it reads as a cap, not a taper cut.",
+  "[D4] From behind, the trousers cling to the buttocks like tights; real combat trousers bridge the cleft and hang off the seat.",
+  "[D7] The buttstock seems to float beside the right forearm instead of resting on it, so the gun's weight looks carried by nothing but the hands.",
+  "[D8] The left hand drapes over the handguard with straight, hanging fingers; it does not visibly close round the gun.",
+  "[D10] The lower trouser legs crinkle in fine lumps like wet paper instead of falling in a few crisp ripstop folds.",
+  "The trouser camouflage is large, high-contrast pale blotches that read as stains rather than a printed pattern under grime; the reference's trousers are darker and more even.",
+  "[D9] The knee-pad caps are flat tiles with a rim rather than domed shells over the patella.",
+  "The plates (pauldrons, forearm guards, knee caps) are all uniform sheet thickness with sharp, unbevelled corners, which reads more like cut card than moulded polymer."
+ ],
+ "verified_claims": [],
+ "pass": false,
+ "confidence": 0.6
+}

@@ -1,0 +1,268 @@
+# Tally: part 18, round 10
+
+Packet `renders/round_10/critic/`, sha 4e199da49d59. Scope: the whole soldier: proportions, silhouette, placement, layering, the hold, and the first materials (values, colours, wear) against the reference; ignore fine surface detail.
+
+**FAIL**, decision **revise**: median 6 (C1 fidelity 6, C2 reality 6, C3 craft 4; spread 2), 0 blocking, metrics none in the packet.
+
+| Question | C1 | C2 | C3 | Min | Mean |
+|---|---|---|---|---|---|
+| Q1 | 6 | 6 | 5 | 5 | 5.7 |
+| Q2 | 7 | 6 | 5 | 5 | 6.0 |
+| Q3 | 6 | 7 | 5 | 5 | 6.0 |
+| Q4 | 7 | 6 | 4 | 4 | 5.7 |
+| Q5 | 6 | 5 | 4 | 4 | 5.0 |
+| Q6 | 6 | 7 | 4 | 4 | 5.7 |
+| Overall | 6 | 6 | 4 | 4 | 5.3 |
+
+## Major
+
+- **m1** [C1, C2, C3] The right boot reads like a rubber galosh: seamless vamp, low wedge toe, thin forefoot sole. A Zephyr-class boot shows a toe cap, panels and seams, and a deep lugged sole.
+  - at C1 major `pair_boots_feet_cycles.png` [1070, 80, 1910, 410]; C2 major `pair_boots_feet_cycles.png` [1070, 130, 1375, 375]; C3 major `pair_boots_feet_cycles.png` [1070, 230, 1370, 380]
+  - ranked C1 #7, C2 #6, C3 #10
+  - fix: A mid-cut Zephyr-class boot: matte scuffed leather and suede panels, a rounded toe cap, and the shaft hidden under the trouser hem.
+  - fix: A Zephyr-class boot shows a scuffed rubber toe cap, separate suede and textile panels with seams, and a lugged sole of visible depth all the way round the toe.
+  - fix: A worn leather boot creases across the ball of the foot. The toe cap and panels are separated by stitched seams, and the leather shows scuffs and dust.
+  - spec Q3, Pass criteria 3
+  - also: The boots are tall, slick and rubber-like with pointed toes; the reference has mid-cut, scuffed, round-toed leather boots.
+  - also: The boots have tall shafts and a smooth, slick, rubber-like upper with a low, pointed toe. The reference boots are mid-cut, scuffed leather and suede, with a rounded bulbous toe cap and a chunky lugged sole.
+  - also: The right boot reads as a seamless rubber overshoe: smooth vamp, low wedge toe and a thin forefoot sole, with no visible toe cap, quarter panels or welt line.
+  - also: The right boot's toe is a smooth wedge like a galosh, with uniform satin leather: no flex creases, toe cap seam or scuffs.
+  - also: The right boot's forefoot is a smooth, flat-topped wedge like a rubber galosh. It has a uniform satin finish with no creasing at the flex line and no scuffs, stitching or panel edges.
+- **m2** [C1, C2] The body reads stockier than the reference: shoulders shrugged high and level, short neck, bulky upper arms. The reference man is lean with a sloped trapezius line, so the whole figure reads like a different build.
+  - at C1 major `pair_soldier_full_clay.png` [980, 240, 1640, 640]; C2 major `pair_soldier_full_clay.png` [980, 230, 1630, 520]
+  - ranked C1 #2, C2 #1
+  - fix: Narrow the shoulder span to the drawn width and slim the sleeve volume to a fitted combat shirt over the arm.
+  - fix: Drop the shoulder girdle to a relaxed carry with the trapezius sloping from neck to acromion, and slim the upper-arm girth toward the drawing's lean V-taper.
+  - spec Q1, Pass criteria 1
+  - also: The upper body is too broad and puffy: square shoulders and inflated sleeves make him heavier than the lean, tapered man in the reference.
+  - also: The shoulders and upper arms are broader and squarer than drawn, and the sleeves are inflated, so the upper body reads bulkier than the reference's lean V-taper.
+  - also: The shoulders are high, square and level, and the upper arms are bulky, which shortens the neck and makes the trunk read stockier than the reference's sloped trapezius and lean build.
+- **m3** [C1, C2] The left hand lies over the handguard instead of wrapping under it, so the hold no longer reads as the reference's ready grip.
+  - at C1 major `pair_hands_rifle_cycles.png` [1490, 470, 1700, 700]; C2 minor `pair_hands_rifle_cycles.png` [1480, 460, 1690, 700]
+  - ranked C1 #5, C2 #10
+  - fix: A support-hand grip from below: palm under the handguard, fingers curled up around the far side, thumb over the top, all in contact.
+  - fix: Curl the fingers under the handguard with the pads pressed to its underside and the thumb over the top or along the side.
+  - spec Q6, Pass criteria 2
+  - also: The left hand rests over the top of the handguard with nearly straight fingers draped down the near side, not gripping. The reference wraps the hand under the handguard with the fingers curled around it.
+  - also: The left hand drapes over the handguard with straight, hanging fingers; it does not visibly close round the gun.
+  - also: The left fingers hang straight down the near side of the handguard, barely curled, so the hand reads as resting on the gun rather than closing round it.
+- **m4** [C1, C2] The knee pads are flat slabs with pale faces, missing the faceted hex centre plate and the dark face inside the tan rim.
+  - at C1 major `pair_legs_knees_cycles.png` [1110, 110, 1820, 370]; C2 minor `pair_legs_knees_cycles.png` [1110, 110, 1280, 370]
+  - ranked C1 #11, C2 #13
+  - fix: A cap with a raised faceted inner plate, a dark face and a tan rim, its lower edge tapering over the top of the shin.
+  - fix: AirFlex-class caps are domed and wrap the front and sides of the knee, with a continuous curvature from top to bottom edge.
+  - spec Q3, Pass criteria 3
+  - also: The knee pads are flat rounded-rectangle slabs with pale mottled faces. The reference caps are dark charcoal, with a raised faceted hexagonal centre plate inside a tan rim and a lower lobe over the shin.
+  - also: The knee-pad caps are flat tiles with a rim rather than domed shells over the patella.
+  - also: The knee-pad caps are flat-faced slabs with a raised rim, not domed over the patella, so they sit on the knee like tiles.
+- **m5** [C2, C3] The lower trouser legs crinkle in fine lumps like wet paper instead of falling in a few crisp ripstop folds.
+  - at C2 minor `pair_soldier_full_clay.png` [1090, 1330, 1320, 1580]; C3 major `pair_soldier_full_clay.png` [1090, 1340, 1650, 1560]
+  - ranked C2 #11, C3 #15
+  - fix: Stiffer cloth: a few long, soft folds down the shin and a stacked fold where the cuff is bloused over the boot.
+  - fix: Bloused trousers form a handful of large stacked folds above the boot top and hang smoothly above them.
+  - spec Pass criteria 4
+  - also: The lower trouser legs are covered in fine crinkled lumps, like wet paper, instead of the few larger, crisp folds of ripstop above a bloused cuff.
+  - also: The lower trouser legs carry an even, crumpled noise instead of a few large blousing folds.
+  - also: The lower trouser legs carry an even, high-frequency crinkle over their whole surface, like crumpled foil. It reads as noise, not the few large blousing folds of trousers over boots.
+- **m6** [C1] The right pauldron is a raised flat slab sticking up past the shoulder; it is the first thing that breaks the drawn outline. The real thing is a curved shell seated on the deltoid.
+  - at C1 major `pair_soldier_full_cycles.png` [990, 260, 1140, 490]
+  - ranked C1 #1
+  - fix: A domed shell about the size of the deltoid with a second articulated plate below, strapped flush to the upper arm; its top no higher than the carrier strap.
+  - spec Q3
+  - also: The right pauldron is an oversized flat slab tilted up and out. It stands above and outboard of the shoulder line, where the reference has a smaller curved shell with articulated plates seated on the deltoid.
+- **m7** [C2] The right pauldron is a flat slab standing off the deltoid and jutting above the shoulder; it looks hung in the air, not worn. Real pauldrons cup the shoulder and hang from the carrier strap.
+  - at C2 major `pair_arm_R_cycles.png` [600, 0, 820, 285]
+  - ranked C2 #2
+  - fix: Cup the plate over the deltoid's curve and hang it from the carrier shoulder strap or a sleeve mount so it lies on the arm, top edge under the strap line.
+  - spec Pass criteria 3, 4
+  - also: The right pauldron is a flat rectangular slab that stands out from the deltoid with a shadow gap under its lower edge, and its top juts above the shoulder line, so it reads as floating rather than worn.
+- **m8** [C3] [D17] The shirt and trousers are shrink-wrapped: sleeves like a wetsuit over bloated upper arms, back muscles and buttocks showing through. Real combat clothing has slack, gathers and drape.
+  - at C3 major `pair_torso_vest_cycles.png` [1640, 80, 1920, 620]
+  - ranked C3 #2
+  - fix: A combat shirt sleeve has slack: it gathers under the armpit and in the elbow crook, and bags slightly between the armour bands.
+  - also: The shirt sleeve is shrink-wrapped and featureless over an inflated upper arm: no folds at the armpit or elbow crook, and a uniform matte surface like neoprene.
+- **m9** [C1] [D5] Both forearm guards are short bands. The drawn bulky segmented gauntlets reaching the gloves are a signature of the silhouette, and their absence changes the arms.
+  - at C1 major `pair_arm_R_cycles.png` [560, 340, 800, 560]
+  - ranked C1 #3
+  - fix: Make the guard run from just below the elbow to the glove cuff in overlapping segments, with an elbow cap, as drawn.
+  - spec Q3
+  - also: The right forearm guard is a short double band at mid-forearm and the elbow is bare sleeve. The reference has a long segmented gauntlet from elbow to glove cuff, over a padded elbow.
+- **m10** [C3] The hair is a smooth shell with a hard hairline and polygon shards at the crown. A short crop needs strands, a fade at the temples and a broken outline.
+  - at C3 major `pair_head_face_cycles.png` [1060, 0, 1480, 260]
+  - ranked C3 #3
+  - fix: A short crop has thousands of short strands, a soft fade into the skin at the temples and nape, and a broken outline against the background.
+  - also: Hair is a single smooth shell with a hard painted hairline and a few jagged polygon tufts at the crown. The clay views show the crown as scattered shards; there are no strands, no fade at the sides and no breakup at the edge.
+- **m11** [C1] The plates (pauldrons, guards, knee pads) are pale beige-grey camo mottle instead of dark blue-grey worn steel tones with tan edge chipping, so the armour reads like plastic.
+  - at C1 major `pair_soldier_full_cycles.png` [990, 270, 1630, 800]
+  - ranked C1 #4
+  - fix: Darken the plates to a desaturated blue-grey, with localised wear on the edges and corners instead of an all-over mottle.
+  - also: The pauldrons and forearm guards read pale beige-grey with a soft camo mottle. The reference plates are darker blue-grey steel tones, worn, with tan edge chipping.
+- **m12** [C2] The forearm guards are oversized tubes with gaps at the rim; they read as loose cuffs. Real guards are tapered shells strapped close to the forearm.
+  - at C2 major `pair_arm_L_cycles.png` [470, 500, 720, 740]
+  - ranked C2 #4
+  - fix: Shape the guard as a tapered shell following the forearm's flattened oval, strapped close at the wrist and below the elbow, with no gap at the rim.
+  - spec Pass criteria 4
+  - also: The left forearm guard is a near-cylindrical cuff much wider than the forearm; its rim stands off the sleeve at the wrist end with a visible hollow. The right guard repeats this.
+- **m13** [C3] The pauldrons are thin cards with ragged outlines and a grey blotch noise. The forearm guards and knee caps carry the identical noise, so the same procedural pattern repeats on every plate.
+  - at C3 major `pair_arm_R_cycles.png` [600, 0, 820, 280]
+  - ranked C3 #5
+  - fix: A moulded shoulder plate is domed with a crisp, even edge thickness. Wear concentrates on the edges and high points as scuffs and chips.
+  - also: The right pauldron reads as a thin flat card with a wavy, ragged outline and a raised rim. It is filled with a soft grey blotch noise that has no relation to its edges or form.
+- **m14** [C1] The hair is a cap shell with a straight, high hairline and spikes. Identity suffers even with the declared parametric face.
+  - at C1 major `pair_head_face_cycles.png` [1070, 0, 1480, 260]
+  - ranked C1 #6
+  - fix: Strand or card hair: faded sides, about 3 to 5 cm on top swept up and back, and a hairline that dips lower at the temples with a soft edge.
+  - also: The hair is a solid cap shell with a hard, straight, high hairline and spikes poking out on top. The reference has short textured hair, longer and swept up on top, with faded sides and a natural hairline.
+- **m15** [C3] The left hand does not close on the handguard: its fingers drape over the top in the hero view, and it is open beside it in the three-quarter left view.
+  - at C3 major `pair_turn_threeq_L.png` [215, 440, 295, 515]
+  - ranked C3 #6
+  - fix: A support hand closes round the handguard: thumb over the top or side, fingers wrapped underneath, the palm in contact.
+  - also: The left hand is open beside the handguard, palm up, with its fingers not wrapped round it. In the hero view the fingers only drape over the top of the rail.
+- **m16** [C2] The hair is a closed shell with a hard rim on the forehead and stray spikes on top; it reads as a cap, not a taper cut.
+  - at C2 major `pair_head_face_cycles.png` [1065, 0, 1485, 265]
+  - ranked C2 #7
+  - fix: A short taper cut thins gradually to skin at the hairline and temples, with an irregular front edge and short, dense strands rather than a closed cap.
+  - spec Pass criteria 1
+  - also: The hair is a hard-edged shell like a skullcap, with an abrupt rim on the forehead and stray spikes on top; it reads as a helmet, not a short taper cut.
+- **m17** [C3] The shoulder-strap tops by the gaiter end in torn, sawtooth polygons on both sides, which reads as mesh tearing.
+  - at C3 major `pair_head_face_cycles.png` [1580, 600, 1700, 770]
+  - ranked C3 #7
+  - fix: Shoulder straps are continuous padded webbing with sewn, rounded ends that run over the shoulder to the back panel.
+  - also: The carrier shoulder-strap tops beside the gaiter end in torn, sawtooth polygon edges, as if the mesh were clipped or has tearing. The other side, at about x 850 to 1010, does the same.
+- **m18** [C1] The bloused cuffs over exposed boot shafts change the ankles; the reference's trousers fall over the boots.
+  - at C1 major `pair_soldier_full_cycles.png` [1100, 1480, 1660, 1680]
+  - ranked C1 #8
+  - fix: Let the hem drop over the boot collar, with a soft break at the front and no elastic cuff.
+  - also: The trouser legs are bloused tight in a bunched cuff above an exposed boot shaft. In the reference the trouser legs fall loose over the boot collars.
+- **m19** [C2] From behind, the trousers cling to the buttocks like tights; real combat trousers bridge the cleft and hang off the seat.
+  - at C2 major `pair_turn_back.png` [200, 440, 375, 545]
+  - ranked C2 #8
+  - fix: Give the seat the trousers' real ease: fabric bridging the gluteal cleft, slack folds under the seat and at the back of the thigh.
+  - spec Pass criteria 4
+  - also: From behind, the trousers wrap the buttocks skin-tight with a deep cleft crease, like tights; combat trousers hang off the seat in loose folds.
+- **m20** [C3] The trouser weave is a coarse grid far too large for ripstop, and the camo is soft fog with no printed edges. Together they give the trousers a projected-texture look.
+  - at C3 major `pair_belt_hips_cycles.png` [1160, 150, 1560, 600]
+  - ranked C3 #8
+  - fix: Ripstop's grid is a few millimetres and barely visible at this distance. Printed camo has defined edges that break with the weave and fade at the wear points.
+  - also: The trouser fabric shows a coarse linen-like grid at least five times too large for ripstop. The camo is soft foggy blobs floating over it, with no printed edge and no interaction with the weave.
+- **m21** [C1] The carrier front is underbuilt: short open pouches and narrow straps where the reference has tall flapped pouches and broad padded straps.
+  - at C1 major `pair_torso_vest_cycles.png` [1330, 380, 1670, 520]
+  - ranked C1 #9
+  - fix: Taller flapped pouches reaching about the navel, a central admin pouch, and wide padded shoulder straps with webbing loops.
+  - spec Q3
+  - also: The front holds three short open-topped pouches. The reference carries taller flapped magazine and admin pouches that hang well below the plate bag, and broad padded shoulder straps with ladder webbing.
+- **m22** [C3] The knee caps are puffy cushions with a tan rim, not stiff moulded shells, and are larger than the reference's.
+  - at C3 major `pair_legs_knees_cycles.png` [1115, 115, 1290, 365]
+  - ranked C3 #9
+  - fix: A knee cap is a stiff moulded shell with defined facets and a sharp rim. Scuffing and dirt collect on the front face and edges.
+  - also: The knee pad caps read as puffy cushions with a tan rim and a soft grey blotch fill. There is no hard-plastic sheen, the edges are not crisp, and the wear follows no logic.
+- **m23** [C1] The carrier is a flat grey-olive with almost no wear, against the reference's warm, scuffed coyote-olive.
+  - at C1 major `pair_torso_vest_cycles.png` [1220, 30, 1680, 380]
+  - ranked C1 #10
+  - fix: Shift the hue toward olive-coyote, raise saturation a little, and add edge abrasion and grime to the plate bag, straps and pouches.
+  - also: The carrier's Cordura is a flat grey-olive with almost no wear. The reference carrier is a warmer coyote-olive, heavily scuffed, with pale edge wear and grime.
+- **m24** [C3] The carbine is a single satin grey with razor edges. It has no anodised wear, no polymer and steel contrast and no dust, so the most-looked-at prop reads most like CG.
+  - at C3 major `pair_hands_rifle_cycles.png` [1180, 80, 1800, 960]
+  - ranked C3 #11
+  - fix: A used M4 shows anodised aluminium wearing silver on the edges. The polymer furniture is matter, the barrel and muzzle device are a darker phosphate, and there is dust in the recesses.
+  - also: The carbine is one flat, satin dark grey throughout, with razor-sharp edges, no edge wear, and no difference between the anodised receiver, the polymer furniture and the steel barrel.
+- **m25** [C1] The gloves are thin and smooth with sausage fingers; the reference wears bulky knuckle-armoured impact gloves.
+  - at C1 major `pair_hands_rifle_cycles.png` [1170, 300, 1370, 470]
+  - ranked C1 #12
+  - fix: Mechanix M-Pact class: a raised moulded knuckle bar, padded finger segments, a thicker palm and a velcro cuff.
+  - spec Q5
+  - also: The gloves are thin and smooth, with long sausage-like fingers and no knuckle armour, finger pads or cuff. The reference gloves are bulky impact gloves with moulded knuckle guards.
+- **m26** [C3] The carrier and pouches are flat blocks without weave, wear or magazine bulge. The front panel's dark rectangles read as boolean cuts.
+  - at C3 major `pair_torso_vest_cycles.png` [1230, 180, 1680, 480]
+  - ranked C3 #12
+  - fix: A used Cordura carrier has visible weave, faded high points, dirt in the seams, and pouches that bulge round the magazines.
+  - also: The carrier and its pouches are clean, flat-coloured blocks with no wear, edge darkening, stitching, fabric texture at this scale, or bulge from the magazines inside.
+- **m27** [C1] The emblem is a pale star; the reference shows a dark panel with a crossed-X device.
+  - at C1 major `pair_arm_L_cycles.png` [630, 40, 715, 145]
+  - ranked C1 #13
+  - fix: Reproduce the drawn device: a dark blue-grey panel with the light crossed-X mark, set into the pauldron shell.
+  - spec Q3
+  - also: The emblem is a pale star-like mark. The reference shows a dark steel-blue inset panel with a light crossed-X device, so the identity mark is wrong.
+- **m28** [C3] Above each knee pad there is a straight seam where the trouser texture stops and gives way to a plain black band.
+  - at C3 major `pair_legs_knees_cycles.png` [1140, 60, 1430, 140]
+  - ranked C3 #13
+  - fix: Trousers carry the same fabric into the knee-pad pocket. Any neoprene sleeve is tucked under the cloth, not showing as a clean band.
+  - also: Above each knee pad the trouser texture stops at a straight line and gives way to a flat, untextured black band. The same happens on the other leg at about x 1560 to 1900, y 30 to 110.
+- **m29** [C1] The left pauldron is flat cards, not a domed shell with a raised emblem panel.
+  - at C1 major `pair_arm_L_cycles.png` [560, 10, 760, 340]
+  - ranked C1 #14
+  - fix: A curved cap that follows the deltoid, with a raised inset panel for the emblem, and a separate lower plate with the side box.
+  - spec Q3
+  - also: The left pauldron is two flat cards. The reference has a domed shoulder shell with a raised emblem panel, and below it a segmented plate carrying a small box.
+- **m30** [C3] The left elbow sleeve steps in hard horizontal ridges where it should fold softly.
+  - at C3 major `pair_arm_L_cycles.png` [500, 370, 790, 460]
+  - ranked C3 #14
+  - fix: Cloth over a bent elbow forms soft compression folds on the inside and stretches smoothly over the point.
+  - also: Above the left elbow the sleeve breaks in hard, stepped horizontal ridges, like two shells meeting. The clay full view shows the same rings at the elbow.
+- **m31** [C1] The left forearm guard sits about 60 px high and is short, leaving bare sleeve between it and the glove. The reference guard covers the forearm down to the glove cuff.
+  - at C1 major `pair_arm_L_cycles.png` [470, 500, 720, 740]
+  - fix: Lengthen the guard and move it down so it overlaps the glove cuff, leaving no sleeve exposed at the wrist.
+  - spec Q3
+- **m32** [C3] From behind, the shirt shows the back muscles and the trousers show the buttocks as if painted on. The cloth follows the anatomy exactly, with no slack or drape.
+  - at C3 major `pair_turn_back.png` [200, 190, 420, 520]
+  - fix: A combat shirt and trousers hang off the shoulder blades and the seat, bridging the hollows with a few drape folds.
+
+## Minor
+
+- **m33** [C2] The buttstock seems to float beside the right forearm instead of resting on it, so the gun's weight looks carried by nothing but the hands.
+  - at C2 minor `pair_hands_rifle_cycles.png` [1100, 60, 1310, 280]
+  - ranked C2 #9
+  - fix: Lay the stock on the top of the right forearm near the elbow, or pin it lightly between arm and carrier, so the hold carries the gun's weight.
+  - spec Pass criteria 2
+  - also: The buttstock seems to ride free in the gap between the right forearm guard and the chest, bearing on nothing; the reference rests it on the forearm.
+- **m34** [C1] The gaiter is a smooth cone sitting low on the neck; the reference bunches up under the jaw.
+  - at C1 minor `pair_head_face_cycles.png` [1030, 540, 1500, 760]
+  - ranked C1 #15
+  - fix: A thicker, looser tube with stacked folds, its top edge at the jawline.
+  - also: The gaiter is a smooth cone whose top sits low, exposing neck. The reference gaiter bunches in thick folds right up under the jaw.
+- **m35** [C1] The trousers have hard-edged printed blotches where the reference shows diffuse dust and grime on a charcoal base.
+  - at C1 minor `pair_legs_knees_cycles.png` [1660, 380, 1900, 700]
+  - ranked C1 #16
+  - fix: A darker base with soft, wear-driven dust gradients instead of printed blotches.
+  - also: The trousers carry hard-edged pale camo blotches. The reference trousers are dark charcoal with diffuse dust and grime, heavier on the thighs and shins.
+- **m36** [C3] The elbow pad is a tiny puck stuck on the outside of the elbow, visibly proud of the sleeve.
+  - at C3 minor `pair_arm_L_cycles.png` [755, 450, 805, 575]
+  - ranked C3 #17
+  - fix: An elbow pad cups the point of the elbow, sits tight to the sleeve, and has a visible strap or sleeve.
+  - also: The elbow pad is a small puck stuck to the outside of the elbow, apparently floating proud of the sleeve, with no strap visible holding it.
+- **m37** [C3] The buckle hardware where the strap meets the carrier piles into intersecting folded plates.
+  - at C3 minor `pair_arm_R_cycles.png` [840, 90, 920, 210]
+  - ranked C3 #18
+  - fix: A strap buckle is a single ladder-lock or cobra buckle with the webbing threaded through it.
+  - also: Where the shoulder strap meets the carrier, the buckle hardware stacks into a pile of folded, overlapping plates that seem to intersect each other.
+- **m38** [C3] The laces are uniform wires in a perfect X, floating above the tongue.
+  - at C3 minor `pair_boots_feet_cycles.png` [1180, 140, 1340, 300]
+  - ranked C3 #19
+  - fix: Laces are flat braided cord that bends over the eyelets, lies on the tongue, and varies in tension.
+  - also: The laces are thin uniform wires in a perfectly regular X, floating above the tongue with no flattening, slack or shadow under them.
+- **m39** [C3] A thin hook dangles from the bottom of the right-thigh pouch, attached to nothing readable.
+  - at C3 minor `pair_belt_hips_cycles.png` [1075, 410, 1115, 475]
+  - ranked C3 #20
+  - fix: Any lanyard or retention loop is visible webbing or cord, attached at both ends.
+  - also: At the bottom of the right-thigh pouch hangs a thin, wire-like hook or loop that does not attach to anything readable.
+
+## Unrated: free-form, no located defect
+
+- **m40** [C3] Overall the figure reads as a clean game-asset blockout. Every surface has the same even roughness, and nothing has the dirt, fading, seams or stitching the reference shows on every item.
+  - ranked C3 #1
+- **m41** [C2] The torso stands square and level to the camera; the reference's slight lean, dropped right shoulder and turned head are lost, which makes the pose stiff and mannequin-like.
+  - ranked C2 #3
+- **m42** [C3] The skin's orange waxy finish is declared, but it dominates the head view and hides whether the face form is right. Even so, the eye sockets read dark and dead and there is no stubble.
+  - ranked C3 #4
+- **m43** [C2] The kit reads too light for the man: the carrier is a flat, thin bag with slim pouches and flat plates, where the drawing's carrier is deep, loaded and worn.
+  - ranked C2 #5
+- **m44** [C2] The trouser camouflage is large, high-contrast pale blotches that read as stains rather than a printed pattern under grime; the reference's trousers are darker and more even.
+  - ranked C2 #12
+- **m45** [C2] The plates (pauldrons, forearm guards, knee caps) are all uniform sheet thickness with sharp, unbevelled corners, which reads more like cut card than moulded polymer.
+  - ranked C2 #14
+- **m46** [C3] Gloves: the fingers are smooth rubbery cylinders and the knuckle pads are blocky, with no stitching or seam lines. The cuff merges into the sleeve with no edge.
+  - ranked C3 #16
+- **m47** [C1] Overall the render is cleaner and lower in contrast than the reference: wear is spread evenly rather than concentrated on edges and contact points.
+  - ranked C1 #17
+- **m48** [C3] The light is consistent across the views and with the shadows, but the contact shadows under the boots are weak, so the feet sit lightly on the floor.
+  - ranked C3 #21
