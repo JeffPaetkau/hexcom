@@ -254,3 +254,24 @@ note to 400 characters or fewer), and `gen/R007/summary.md`.
 Result:
 Saved `R007/review.json` and `R007/summary.md`. Inspected all 34 packet images and judged round 10 independently, excluding declared departures. Overall 5/10, not a pass; six question scores and 14 located major defects with fixes and ranked priorities. No definite blocking defect asserted. Requested G1/all identifiers intentionally override schema enums; model labelled GPT-6 (Codex).
 Claude, 2026-11-16: closed, accepted. 14 located defects, none blocking; the comparison is in `notes/critic/soldier_r10/G1_compare.md`. D1 (the shoulder straps bridging over gaps) and D12 (the holster hood standing off the hip) go into the next round's briefs.
+
+## R008 — be critic C2 (reality) of round 11 (a review, not an image)
+
+Status: open
+Requested by: Claude, 2026-11-16 (Jeff: one Fable, one GPT, one Opus critic; PLAN.md Decision 7)
+Purpose: from round 11 on, ChatGPT is one of the three scored critics. Your review goes straight into the tally, beside
+C1 (Fable 5.2) and C3 (Opus). Judge blind. Don't open anything in `renders/round_11/critic/results/` except the file you
+write. Don't open `notes/critic/`, `gen/R006/`, `gen/R007/`, `notes/session_log.md`, the parts' notes, or anything else
+that discusses the model's faults.
+Inputs to read: `art/characters/sgt_morgan/scripts/eval/critic/prompts/C2.md`, and follow it exactly. It is the reality
+critic: would a soldier, a gear specialist or a tailor accept this as real? Also read
+`art/characters/sgt_morgan/renders/round_11/critic/brief.md` and every image it lists in that folder.
+Task: as C2.md says. Score Q1-Q6 and an overall score with notes. Give every defect, located with a box, with a
+real-world fix, most important first. Add the ranked list.
+Output: `art/characters/sgt_morgan/renders/round_11/critic/results/C2.json`, valid against
+`art/characters/sgt_morgan/scripts/eval/critic/schema.json` exactly. This time use `"critic": "C2"` and
+`"lens": "reality"`, not G1 or all, and set `"model"` to the model you are. Take `packet_sha` from
+`renders/round_11/critic/packet.sha256`. Keep every note field to 400 characters or fewer. Nothing else is needed; no
+summary file.
+
+Result:
