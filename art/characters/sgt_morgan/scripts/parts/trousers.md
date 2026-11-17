@@ -281,3 +281,119 @@ Opened: `soldier_full_compare`, `legs_knees_compare`, `boots_feet_compare`, `tor
   before.
 - Not touched this round: pockets are still pillows on sheets (no bellows gussets, flap hardware); waistband plain;
   knee-bend and hip-crease folds come from skinning only (the solve is at rest).
+
+## 10. Round 10 (2026-11-16): hems over the boots, the seat, the print (critics m5, m18, m19, m32, m20, m35, m44, m28)
+
+**The hem falls over the real boots** (m18, m5; `HEM`, `BootHulls`, `drape10`). Round 9's blousing (a held cuff ring pushed
+up 75-85 mm) read as a gathered elastic cuff over bare boot shafts, crinkled the shins into even foil-like lumps, and gave
+the Godot export its spiky crown; it is kept behind `--blouse` only.
+- `BootHulls` reads `cache/parts/boots.blend` in the rest frame (upper, collar, tongue, hooks, laces, strap, buckle, keepers,
+  tacks, stays, eyelets) and keeps their convex section every 6 mm. The loaded data are removed again, so nothing of the
+  boots is saved with the trousers.
+- Below z 400 each leg blends into a tube round the boot's section at that height and at the collar, plus 12 mm (the G3's
+  460 opening over a 385 collar), flaring 22 going up. It is cut by a plane tilted forward, z 76 at y +80 rising to z 118 at
+  y -70 (rest). The first cut, 88 / 138, still showed the shaft from the hooks down.
+- The solve: no held ring. The hem carries a soft goal (0.18) pushed up 30 / 38 mm, the waist is held, and the colliders are
+  the rest skin and the boots' sections (grown 2.5 mm) instead of round 9's elliptic stand-ins. Bending stiffness is
+  4 -> 12 (`SIM10`), for crisper, larger folds.
+- After the solve the shell is pushed out of the boots, then out of the skin. Below the boot top it takes the weights of the
+  nearest vertex of the boot's upper, blended back over 40 mm above it (`boot_weights`), so the hem rides on the boot in the
+  pose.
+- The hem at rest, front / back: left 136 / 95, right 135 / 97 (172 / 131 above the floor; round 9's cuff was a level ring
+  at 150 / 160). Hem girth: left 497, right 510 (target 460).
+- Rest shell vertices inside the boots' sections: 0. In the hero pose: 0 inside the posed boot sections on either leg; the
+  least clearance is 3.4 mm left, 3.7 right (scratch check against the posed upper, collar, tongue, stays, hooks, laces,
+  strap and buckle).
+
+**The seat** (m19, m32). The per-slice hull of the cut already bridged the cleft at rest. The round 9 solve let the bridged
+cloth sag back under a soft 0.3 goal, and the posed hips folded it in through the seat's weights.
+- In the solve the centre back (|x| < 85, from the crotch to the waistband) now carries a firm 0.85 goal on the cut.
+- The seat behind (z 860-1070, y > 20) gets 26 more passes of weight smoothing. The first try smoothed the whole hips
+  40 times; that also moved the front waistband's weights, which the carrier's front flap and bag copy.
+- New metric, `seat_concavity` (how deep the back profile dips below its convex hull within 60 mm of the middle, in the
+  slab's own frame):
+  - rest: 0.1 mm at z 1040 / 1000 / 960, 0.6 at 920;
+  - hero pose: 1.4 / 2.2 / 2.7 / 11.4 mm;
+  - 37 mm at z 890 is the gap between the legs, not the seat.
+- Round 9 was not measured this way. Its turnaround showed a deep cleft; the new back view shows the two buttocks' lower
+  curves softened and a shallow line at the back seam.
+
+**Knee pocket** (m28): the pocket's top stood 28 mm above round 10's smaller knee cap as a plain black band. It is now
+centre -19 below the knee joint, half height 101 (was -8, 112), so its top lies 6 mm above the cap and its bottom where it
+was.
+
+**Print and dust** (m20, m35, m44). Measured with `look_loop.py` on in-memory assembly copies and `look_stats.py`
+(graded, under the trousers' mask, reference / render).
+
+| | Round 10 (round 9's table) | Final |
+|---|---|---|
+| legs_knees median | 1.85 | 0.96 |
+| legs_knees p90 | 1.34 | 1.31 |
+| legs_knees b/g, ref vs render | 0.90 vs 0.94 | 0.86 vs 0.86 |
+| boots_feet median (the hems) | - | 0.66 |
+
+What changed in the table:
+- albedo #43403b -> #4c4843;
+- the print's spread `contrast` 2.0 -> 0.8 (the soft high-contrast pale blotches);
+- mottle 0.15 -> 0.10;
+- dust 0.6 -> 1.25, in 170 mm drifts (was 90) of a lighter tan (#85725a / #a08a6c);
+- the ripstop grid 6 -> 5 mm at a quarter of its relief (0.05 -> 0.012 mm, rough_add -0.05 -> -0.015): the coarse grid;
+- dust zones evened (`dust_zones`): thigh 0.45 -> 0.8 and seat 0.25 -> 0.45 of the shin, the right leg 0.8 -> 0.9 of the
+  left. The preset's table caps each zone's mask, so the profile is written as one mask on the shin's weight.
+
+The loop's variants and why the table ended where it did:
+- an olive-grey version matched the median chroma but read green;
+- a cool charcoal one read right but measured too blue;
+- the first table on the new cut (#53514d, dust 1.5) went too bright (legs_knees 0.85, the hems 0.54), because the straight
+  legs self-shadow less.
+
+**Girths and ease** (rest; hull girths; ease p10 / median / p90 mm). Round 9 is in brackets.
+- Girths: thigh 733 (723), knee 513 (512), calf 518 (518).
+- At z 218: 516 (475). The tube now goes round the boot, so the "blouse" band's ease, 31 / 43 / 50 front (12 / 28 / 44),
+  counts the boot under it.
+- Ease, seat and crotch, back: 23 / 30 / 47 (21 / 30 / 47).
+- Ease, thigh front: 16 / 25 / 26 (16 / 21 / 27).
+- Ease, calf front: 15 / 24 / 37 (10 / 24 / 40).
+- Seat standoff straight behind at z 930 / 880 / 840: 31.5 / 49.9 / 61.8 (31 / 49 / 61).
+
+**Clearance.**
+- Rest: 2 shell vertices at the back of the right hem (-223, 80, 87) read 28 mm inside the skin, 7 in the pose (to 31 mm at
+  (-202, 312, 136)). This is where the body's heel already comes through the boot's counter (the boots' body-boots clash);
+  pushing out of the skin after the boots did not move them.
+- Elsewhere the minimum is 10 mm (p01).
+
+**Integration** (scratch assembly of the caches, `clash_report` and `standoff_report` as `assemble.py` runs them; round 10 in
+brackets):
+- boots-trousers: 70 vertices to 25.0 mm in `Boot.L.Stays` (112 to 14.1 in five boot objects). Checked: these are hem
+  vertices at the left boot's front-medial corner, 10-24 mm OUTSIDE the posed boot's sections. No trouser vertex lies inside
+  either posed boot. The open-shell test reads the cloth over the shaft's opening as inside. The real round 9 problem (the
+  hem in the tongues) is gone.
+- trousers-belt: 66 to 2.1 mm (53 to 2.6).
+- The carrier, armour and belt rebuilt on the new caches.
+- Stand-offs: 27 flagged (28).
+  - Cleared: `Carrier.Front.Bag`, `Carrier.Strap.R.Pad`.
+  - New: `Belt.Rig.L.MagPouch.1`, median 16.7 mm, for the belt's owner. The thigh hull girth went 723 -> 733.
+
+**Renders opened**:
+- `renders/trousers/trousers_rest_{back,hem_side}.png` and `trousers_hero_legs_knees_pair.png` after the first solve;
+- the scratch turnarounds (back, three-quarter, side);
+- `renders/look/tr10_base`, `tr10_a` to `tr10_d`, `tr10_new` and `tr10_final`: `sheet_legs_knees_graded`,
+  `sheet_boots_feet_graded`.
+
+## 11. Still wrong, ranked for round 11
+
+1. **The lower legs are now plain, almost smooth tubes.** The lumps are gone, but so are most folds. The reference has a few
+   big diagonal pulls from the knee and a loose break over the boot. The hem's soft goal lifted it about 20 mm at the back
+   and 7 at the front, so the break is a straight edge, not the drawn roll.
+   - Next: a longer cut below the hem (more surplus) with the hem free to land on the laces, or a short hero-pose settle of
+     the lower legs only.
+2. **The hems still sit a little high at the front** (172 above the floor): the boots_feet crop shows the top of the lacing
+   between hem and vamp. The drawn hem covers the collar and rolls onto the laces.
+3. **The seat** shows a shallow back-seam line and the buttocks' lower curves in the posed back view (11 mm dip at z 920).
+4. **The print** reads as a brown-grey with soft khaki drifts. The drawn trousers are blue-black with tan patches that are
+   crisper and larger on the shins and thighs. Dust is still placed by height and up-facing only (no knee or shin scuffs).
+   The boots_feet crop's hems render 1.5 x the reference's median; the reference's hems sit in deep shadow.
+5. **The hem against the heel**: 2 rest / 7 posed vertices in the right heel's skin. The boots part's heel and the body
+   clash there (boots-body).
+6. Not touched: pockets are still pillows on sheets; the waistband is plain; there are no knee-bend folds from the pose
+   (rest solve).

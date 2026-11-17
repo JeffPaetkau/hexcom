@@ -258,3 +258,81 @@ shoulder" is only partly answered. Clashes back to round 8's after the forearm f
 3), shirt-armour 476 to 6.7 mm (232 to 4.1; the guards' foam on the fuller elbow end), body-shirt 33 to 16.5 at the right
 armpit (14 to 14.1). Next: the elbow-crook folds by a pose-driven corrective (solve the sleeve once in the hero arm pose
 and store the difference as a shape key on the elbow angle), and the armpit (section 7).
+
+## 12. Round 10 (2026-11-16): slack instead of inflation, the back, the gaiter (critics m8, m2, m32, m30, m34)
+
+**Sleeves** (m8: "a wetsuit over bloated upper arms"; m2: stockier than the lean drawn man).
+- Round 9's 27-29 mm of even ease read as inflation. `SLEEVE` now runs 14 at the shoulder, 20-21 on the upper arm and 21 at
+  the elbow (round 9's table is kept as `SLEEVE9`).
+- The slack is shown as gathers instead (`SLEEVE_FOLDS`, `sleeve_folds()`, after the solve). Ridges run every 30 mm along
+  the upper arm, tilted round it (9 mm drift with the angle, plus two harmonics of wobble), with Gaussian crests and the
+  mean taken back out so they do not inflate. They are 4.2 mm deep at the crook and 1.4 on the outer arm under the armour,
+  faded in from the shoulder (arm parameter 0.28-0.46) and out into the elbow (0.96-1.08). The two arms are phased
+  differently.
+- The solve's lift is 26 -> 20 mm. With the slimmer upper sleeve the 26 mm surplus gathered at the elbow instead and pushed
+  the right sleeve 10 mm out through the elbow pad's lower strap (`ElbowPad.R.Strap.Down` in the shirt, 44 vertices,
+  10.1 mm). At 20 it is gone.
+- Ease (rest, his left arm, shell to skin, p10 / median / p90 mm; new `sleeve_measure`). Round 9's figures from section 11
+  are in brackets:
+  - upper arm 12 / 18 / 24 (24 / 28 / 29);
+  - elbow 23 / 30 / 37 (11 / 20 / 32);
+  - forearm 15 / 16 / 17 (15 / 16 / 17).
+  - The elbow band measured here (arm parameter 0.96-1.04, all round) takes in the bunching at the crook, so the two
+    rounds' elbow figures are not quite the same measure.
+- The girths `sleeve_measure` prints (upper arm 466, forearm 335) are NOT comparable with section 11's 468 / 274. Its
+  selection (within 85 mm of the bone axis) still takes in torso vertices beside the hanging rest arm; fix it before using
+  it.
+
+**m30, the left elbow's "hard horizontal ridges"**: in `renders/round_10/arm_L_parts.png` these are the armour's elbow-pad
+straps (`ElbowPad.L.Strap.Up` / `.Down`), black like the sleeve, not the sleeve. It is the armour's to fix (a lighter or
+thinner strap, or one that sinks into the cloth). The sleeve under them folds softly.
+
+**The back** (m8, m32: the back muscles show through). `BACK_SPAN`:
+- the hull span starts at z 1085, just over the trousers' waistband top at the back, ramped over 50 mm (was 1080 over 60);
+- ease 3 -> 6 mm;
+- the spanned back is relaxed with 24 Taubin passes, so the lats and the spine's columns stop showing as relief;
+- the tuck below 1060 is laid on the skin as before.
+- A first try from 1050 stood 4.5 mm proud of the trousers' waistband: 84 vertices of the trousers inside the shirt in the
+  pose. That clash is gone now.
+- Ease (rest, |x| < 140, behind): upper back z 1300-1450 9 / 12 / 22 (round 9: 7 / 9 / 19); lower back z 1090-1200
+  6 / 18 / 23.
+- The scratch back view shows the lower back between the carrier and the belt smooth; the spine's groove is gone.
+
+**The gaiter** (m34: a smooth cone sitting low; the reference bunches up under the jaw).
+- The top edge is higher: front, side and back 18 / 40 / 62 -> 33 / 54 / 68 mm of arc above the neck's base ring.
+- The rolls are bigger: lip 26 / 20 / 16 -> 30 / 24 / 16; main roll 52 / 36 / 24 -> 60 / 44 / 26 and 30 -> 32 wide; lower
+  roll 18 / 14 / 8 -> 24 / 18 / 9.
+- The rolls are less even: wobble harmonics 0.24 / 0.14 / 0.07 -> 0.30 / 0.20 / 0.10.
+- Height 1473-1666 (1473-1660). Clearance to the skin: 9.0 rest, 7.9 posed, nothing inside.
+
+**Integration** (scratch assembly, `clash_report` / `standoff_report`; round 10 in brackets):
+- body-shirt: 49 vertices to 14.6 mm at the right armpit's front, (-250, 137, 1440) (33 to 16.5). The round-4 problem
+  (section 7); the count rose with the slimmer sleeve root.
+- shirt-carrier: the gaiter in the strap pads 6.7 (6.4) and the right pad in the gaiter 8.0 (7.8), both the carrier's.
+  - A new flag, `Carrier.Front.Bag` in `Shirt.Shell`, 44 vertices to 23.3 at (-5, -71, 1318), is false: the bag's inner
+    face lies 20-23 mm OUTSIDE the posed shirt there (signed distance +23.3 to the shirt, +29 to the skin). Round 10's
+    assembled file has the same geometry at that spot.
+- shirt-armour: 101 to 1.9 (97 to 2.6).
+- shirt-gloves: 3 to 20.9 (the same).
+- shirt-trousers: none.
+- The carrier and armour rebuilt on the new shirt.
+
+**Renders opened**:
+- `renders/shirt/shirt_hero_arm_L_pair.png`, `shirt_hero_torso_vest_pair.png`;
+- the scratch turnarounds;
+- `renders/look/tr10_new`, `tr10_final`: `sheet_arm_L_graded`, `sheet_arm_R_graded`, `sheet_torso_vest_graded`,
+  `head_face_cycles` (the head there is the head agent's work in progress).
+
+What they show: the upper sleeves are slimmer, and the gaiter rises to the jaw in a bunched roll. The new gathers do NOT
+read at hero scale: 2.5 mm crests on matte near-black cloth under the armour bands.
+
+## 13. Still wrong, ranked for round 11
+
+1. **The sleeves still read smooth.** The gathers need 2-3 x the depth, or real buckling from a hero-arm solve (a pose
+   corrective; section 11's plan). The sleeves also need the ripstop's sheen on the crests to show them.
+2. **The right armpit in the pose** (49 to 14.6 mm): share the shoulder's weights with the clavicle and spine (section 7).
+3. **The torso front** is still shrink-wrapped over the pectorals and abdomen (hidden by the carrier, but not in the
+   turnaround's sides).
+4. **The gaiter** is a procedural profile. It is higher and fuller now, but its rolls do not overhang or fold over each other
+   as the drawn fleece does.
+5. The sleeve girth measure (section 12) takes in torso vertices.

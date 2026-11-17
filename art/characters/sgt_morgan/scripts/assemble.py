@@ -87,9 +87,10 @@ HERO_JSON = os.path.join(SCRIPTS, "stages", "hero_pose.json")
 REF_PRESETS = os.path.join(SCRIPTS, "eval", "presets", "ref.json")
 SEARCH = (SCRIPTS, os.path.join(SCRIPTS, "parts"), os.path.join(SCRIPTS, "stages"))
 
-PARTS = ("trousers", "shirt", "boots", "gloves", "carrier", "armour", "belt", "carbine", "head")
+PARTS = ("boots", "trousers", "shirt", "gloves", "carrier", "armour", "belt", "carbine", "head")
 # what each part fits to besides the base body (the caches its script reads while building)
-DEPS = {"trousers": ["base"], "shirt": ["base"], "boots": ["base"], "gloves": ["base"],
+DEPS = {"trousers": ["base", "boots"],  # round 10: the hems fall round the real boots
+        "shirt": ["base"], "boots": ["base"], "gloves": ["base"],
         "carrier": ["base", "shirt", "trousers"], "armour": ["base", "shirt", "gloves", "trousers", "carrier"],
         "belt": ["base", "trousers"], "carbine": [], "head": ["base"]}
 LAYER = {"body": "body", "trousers": "clothing", "shirt": "clothing", "boots": "clothing", "gloves": "clothing",

@@ -30,13 +30,33 @@ TUCK_EASE = 2.0      # under the trousers' waistband the knit is pressed to the 
 # Sleeve ease (mm off the skin) by arm parameter (0 shoulder, 1 elbow, 2 wrist). Round 9 (critics m11, m17, m39:
 # "painted on"): a G3-class sleeve is cut full, about 20-30 mm of ease on the upper arm where the reference's arm
 # carries its bulk, 24 at the elbow; it then draws in to the cuff inside the glove. Round 2's was 12-19.
-SLEEVE = [(0.0, 16.0), (0.3, 27.0), (0.7, 29.0), (0.95, 27.0), (1.1, 24.0), (1.35, 19.0), (1.5, 16.0), (1.72, 11.0),
-          (1.84, 5.5), (2.0, 5.0)]     # the forearm as round 2's: it lies under the guards and the gauntlets
+SLEEVE9 = [(0.0, 16.0), (0.3, 27.0), (0.7, 29.0), (0.95, 27.0), (1.1, 24.0), (1.35, 19.0), (1.5, 16.0), (1.72, 11.0),
+           (1.84, 5.5), (2.0, 5.0)]    # the forearm as round 2's: it lies under the guards and the gauntlets
+# Round 10 (m8, m2: "a wetsuit over bloated upper arms", the figure stockier than the lean drawn man): round 9's 27-29 mm
+# all round read as inflation, not slack. The upper sleeve comes back to 20-21 mm and the slack is shown as folds
+# instead (SLEEVE_FOLDS): a real sleeve's surplus lies in gathers above the crook, not in an even balloon.
+SLEEVE = [(0.0, 14.0), (0.3, 20.0), (0.7, 21.0), (0.95, 21.0), (1.1, 21.0), (1.35, 18.0), (1.5, 16.0), (1.72, 11.0),
+          (1.84, 5.5), (2.0, 5.0)]
+# Round 10: the upper sleeve's gathers, displaced after the solve along the arm's radial direction. Ridges every `pitch`
+# mm along the arm (arm parameter t_lo..t_hi, faded in over `fade_in` from the shoulder and out over `fade_out` into the
+# elbow), each tilted round the arm (a ridge's position along the arm drifts by tilt x sin of the angle, plus two
+# harmonics of wobble, so they read as diagonal, broken folds and not rings), crisp crests (a Gaussian `crest` wide in
+# phase) on shallow troughs, the mean taken back out so the sleeve does not inflate; deepest on the crook side (amp_in),
+# shallow on the outer arm under the armour (amp_out). Each side has its own phase so the arms differ.
+SLEEVE_FOLDS = {"t": (0.28, 1.08), "fade_in": 0.18, "fade_out": 0.12, "pitch": 30.0, "tilt": 9.0,
+                "wobble": ((2, 5.0), (3, 3.0)), "crest": 0.16, "amp_in": 4.2, "amp_out": 1.4,
+                "phase": {"L": 0.1, "R": 0.55}}
 # Round 9: the back spans the shoulder blades (m11: the scapulae showed through from behind): above the tuck and
 # below the collar, behind the spine's line (y > BACK_SPAN["y0"]), each horizontal section moves out to its convex
 # hull, plus a little ease, as a woven-backed shirt hangs from the shoulder blades.
 ELBOW_RELAX = (0.70, 1.35, 40)    # round 9: arm-parameter band and Taubin passes that blend the two hulls at the elbow
-BACK_SPAN = {"z": (1080.0, 1520.0), "y0": 15.0, "ease": 3.0}
+BACK_SPAN9 = {"z": (1080.0, 1520.0), "y0": 15.0, "ease": 3.0, "ramp": 60.0, "smooth": 0}
+# Round 10 (m8, m32: the back muscles show through from behind): the span starts lower (the lower back between the
+# carrier and the waistband shows), with more ease, and the spanned back is relaxed (Taubin) so the lats and the spine's
+# columns stop showing as relief; the tuck below 1060 is laid back on the skin as before.
+# (first try from 1050 over 40: the spanned lower back stood 4.5 mm proud of the trousers' waistband, 84 vertices of
+# the trousers inside the shirt in the pose; now from just over the waistband's top at the back, 1087)
+BACK_SPAN = {"z": (1085.0, 1520.0), "y0": 15.0, "ease": 6.0, "ramp": 50.0, "smooth": 24}
 # Round 9: the sleeves' folds from the cloth solver (cloth.simulate) on the rest body. A real sleeve is cut longer
 # than the arm (it must reach the wrist with the arm straight and reaching) and the surplus bunches at the crook and
 # stacks above the cuff. Here each sleeve is extended past its cuff by `lift` mm (rings along the forearm, flaring a
@@ -45,11 +65,13 @@ BACK_SPAN = {"z": (1080.0, 1520.0), "y0": 15.0, "ease": 3.0}
 # held. Gravity is low because the rest arm hangs differently from the hero pose's: the folds should come from the
 # surplus, not from the rest pose's sag. The hands are left out of the colliders (the extension passes through them
 # at the start).
-SLEEVE_SIM = {"lift": 26.0, "rings": 4, "flare": 0.5, "frames": 50, "goal": 0.12, "spread": (0.35, 1.95), "keep_forearm": (1.15, 1.45),
+SLEEVE_SIM = {"lift": 20.0, "rings": 4, "flare": 0.5, "frames": 50, "goal": 0.12, "spread": (0.35, 1.95), "keep_forearm": (1.15, 1.45),
               "cloth": {"gravity": 0.25, "bending": 0.35, "mass": 0.03, "tension": 60.0, "compression": 40.0,
                         "shear": 12.0, "friction": 15.0, "pin_stiffness": 1.0}}
 COLLAR = {"co": (0.0, -60.0, 1542.0), "no": (0.0, -0.35, 1.0)}    # collar top: 1542 front, ~1584 back (under the gaiter)
 HEM_Z = 930.0                                                     # tucked hem, inside the trousers
+# Round 10: the solve's lift 26 -> 20. With the slimmer upper sleeve the 26 mm surplus gathered at the elbow instead
+# (elbow ease median 28, round 9 20) and pushed the right sleeve 10 mm out through the elbow pad's lower strap.
 CUFF_BEYOND_WRIST = 8.0                                           # the cuff edge past the wrist joint (mm)
 # Round 4, the elbow in the pose (91 deg between the segments, 44 deg more flexion than the rest arm's bend). The
 # sleeve took the skin's weights there (forearm 0.9 to 1.0 right past the joint), so the sleeve's inside at the
@@ -66,15 +88,17 @@ ELBOW_FRONT = (0.0, 0.5)     # the blend acts on the crook side only: smoothstep
 # The gaiter (round 2): a fleece cowl bunched round the neck. s = arc length along the skin's meridian, 0 at
 # the ring h_ref up the neck axis (on the neck all round), + up. Triples are (front, side, back).
 GAITER = {"h_c": 60.0, "h_ref": 100.0, "fan_deg": 70.0,      # fan centre for the skirt's rays; s origin
-          "s_top": (18.0, 40.0, 62.0),                       # top edge: under the chin, behind the jaw, occiput
+          # round 10 (m34: a smooth cone sitting low; the reference bunches up under the jaw): the top edge 14-16 mm
+          # higher at the front and sides (round 9: 18, 40, 62), the rolls bigger and less even (below)
+          "s_top": (33.0, 54.0, 68.0),                       # top edge: under the chin, behind the jaw, occiput
           "tilt_side": 12.0,                                 # top edge and folds higher on his left (drawn)
           "s_bot": (-120.0, -88.0, -48.0),                   # skirt edge: under the bag top, under the straps
           "base_neck": 11.0, "base_skirt": 10.0,             # shirt collar / shirt plus air under the fleece
           # folds: (depth below s_top, half-width, proud above the base)
-          "rolls": [((9.0, 10.0, 10.0), 16.0, (26.0, 20.0, 16.0)),        # lip at the top edge
-                    ((44.0, 47.0, 50.0), 30.0, (52.0, 36.0, 24.0)),       # main roll under the jaw
-                    ((90.0, 88.0, 90.0), 24.0, (18.0, 14.0, 8.0))],       # lower roll falling over the collar
-          "wobble": [(2, 0.24), (3, 0.14), (5, 0.07)],       # fold height variation round the neck (harmonic, amp)
+          "rolls": [((9.0, 10.0, 10.0), 16.0, (30.0, 24.0, 16.0)),        # lip at the top edge
+                    ((44.0, 47.0, 50.0), 32.0, (60.0, 44.0, 26.0)),       # main roll under the jaw
+                    ((92.0, 90.0, 90.0), 26.0, (24.0, 18.0, 9.0))],       # lower roll falling over the collar
+          "wobble": [(2, 0.30), (3, 0.20), (5, 0.10)],       # fold height variation round the neck (harmonic, amp)
           "pleat": (65.0, 14.0, 0.55),                       # crease on his left front: phi deg, width deg, depth
           "drape": 7.0,                                      # vertical drapes of the skirt over the chest
           "strap_clear": 4.0,                                # flat this far inside the strap's inner edge
@@ -236,11 +260,14 @@ def build_shell(bd, bvh0, sim=True):
                            centre=np.array([0.0, 20.0]))
     grow = (Vh - V1)[:, :2]
     moved = np.linalg.norm(grow, axis=1) > 0.05
-    wz = smoothstep(zb0, zb0 + 60.0, V[:, 2]) * (1 - smoothstep(zb1 - 80.0, zb1, V[:, 2]))
+    wz = smoothstep(zb0, zb0 + BACK_SPAN["ramp"], V[:, 2]) * (1 - smoothstep(zb1 - 80.0, zb1, V[:, 2]))
     V1[:, :2] += grow * wz[:, None]
     if moved.any():
         dirn = grow[moved] / np.linalg.norm(grow[moved], axis=1)[:, None]
         V1[np.nonzero(moved)[0], :2] += dirn * (BACK_SPAN["ease"] * wz[moved])[:, None]
+    if BACK_SPAN["smooth"]:
+        relax = back & (wz > 0.05)
+        V1 = C.taubin(V1, C.edges_of(F), iters=BACK_SPAN["smooth"], lam=0.5, mu=-0.53, pin=~relax)
     # cuts: collar line, tucked hem, wrists
     V1, F = C.bisect(V1, F, COLLAR["co"], COLLAR["no"], keep="below")
     V1, F = C.bisect(V1, F, (0, 0, HEM_Z), (0, 0, 1), keep="above")
@@ -256,6 +283,7 @@ def build_shell(bd, bvh0, sim=True):
     V1 = C.push_out(V1, bvh0, np.where(V1[:, 2] < 1060.0, TUCK_EASE - 0.3, 3.0))
     if sim:
         V1, F = sleeve_solve(V1, F, bd, bvh0)
+    V1 = sleeve_folds(V1, bd)
     # the tail under the trousers lies on the skin at TUCK_EASE (smoothing bridged the lumbar hollow, so the
     # trousers, which hug it, came through the shirt at the lower back: round 1's clash 13)
     w = 1.0 - smoothstep(1040.0, 1080.0, V1[:, 2])
@@ -356,6 +384,75 @@ def sleeve_solve(V, F, bd, bvh0):
         k = smoothstep(g["keep_forearm"][0], g["keep_forearm"][1], t)
         Vs[m] = Vs[m] * (1 - k)[:, None] + Vpre[m] * k[:, None]
     return C.push_out(Vs, bvh0, np.where(Vs[:, 2] < 1060.0, TUCK_EASE - 0.3, 3.0)), F
+
+
+def sleeve_folds(V, bd):
+    """Round 10 (SLEEVE_FOLDS): the upper sleeve's gathers as a radial displacement (see SLEEVE_FOLDS)."""
+    g = SLEEVE_FOLDS
+    V = np.array(V, float)
+    near_arm = C.weight_sum(bd, lambda n: n.startswith(("upperarm", "lowerarm")))
+    from mathutils.kdtree import KDTree
+    kd = KDTree(len(bd["V"]))
+    for i, v in enumerate(bd["V"]):
+        kd.insert(v, i)
+    kd.balance()
+    w_arm = np.array([near_arm[kd.find(v)[1]] for v in V])
+    t_lo, t_hi = g["t"]
+    for side, sg in (("L", 1.0), ("R", -1.0)):
+        m = np.nonzero((np.sign(V[:, 0]) == sg) & (w_arm > 0.5))[0]
+        t = arm_param(V[m], side)
+        sh, el = C.bone_mm(f"upperarm01.{side}"), C.bone_mm(f"lowerarm01.{side}")
+        d = (el - sh) / np.linalg.norm(el - sh)
+        L = float(np.linalg.norm(el - sh))
+        rr = V[m] - (sh + np.outer(np.clip((V[m] - sh) @ d, 0, L), d))
+        rad = rr / np.maximum(np.linalg.norm(rr, axis=1), 1e-9)[:, None]
+        _el, back = elbow_back(side)
+        bperp = back - d * (back @ d)
+        bperp /= np.linalg.norm(bperp)
+        ax2 = np.cross(d, bperp)
+        ang = np.arctan2(rad @ ax2, rad @ bperp)             # 0 at the point of the elbow, pi at the crook
+        inner = 0.5 - 0.5 * np.cos(ang)                       # 1 at the crook
+        s = t * L                                             # mm along the upper arm
+        s = s + g["tilt"] * np.sin(ang) + sum(a * np.sin(k * ang + 1.7 * k + 3.1 * g["phase"][side])
+                                              for k, a in g["wobble"])
+        ph = (s / g["pitch"] + g["phase"][side]) % 1.0
+        crest = np.exp(-0.5 * ((ph - 0.5) / g["crest"]) ** 2)
+        crest -= g["crest"] * np.sqrt(2 * np.pi)              # the profile's mean over a period: no net inflation
+        env = smoothstep(t_lo, t_lo + g["fade_in"], t) * (1 - smoothstep(t_hi - g["fade_out"], t_hi, t))
+        amp = g["amp_out"] + (g["amp_in"] - g["amp_out"]) * inner
+        V[m] += rad * (amp * env * crest)[:, None]
+    return V
+
+
+def sleeve_measure(shell, bd):
+    """Round 10: his left sleeve's girths (hull of the section across the segment) and ease (shell to skin, p10 /
+    median / p90 mm) at mid humerus, the elbow and mid forearm, and the back's ease; rest."""
+    V, _ = C.evaluated_world_mm(shell)
+    d_skin, _n = C.signed_dist(V, C.skin_bvh(bd))
+    out = {}
+    sh, el, wr = C.bone_mm("upperarm01.L"), C.bone_mm("lowerarm01.L"), C.bone_mm("wrist.L")
+    m = V[:, 0] > 0
+    t = np.full(len(V), -9.0)
+    t[m] = arm_param(V[m], "L")
+    for label, t0, a, b in (("upper_arm", 0.5, sh, el), ("elbow", 1.0, sh, el), ("forearm", 1.5, el, wr)):
+        d = (b - a) / np.linalg.norm(b - a)
+        ax_d = np.linalg.norm((V - a) - np.outer((V - a) @ d, d), axis=1)
+        sel = (np.abs(t - t0) < 0.04) & (ax_d < 85.0)          # the sleeve, not the torso beside it
+        if sel.sum() < 8:
+            continue
+        P = V[sel] - (V[sel] @ d)[:, None] * d[None]
+        e1 = np.cross(d, [0.0, 0.0, 1.0])
+        if np.linalg.norm(e1) < 1e-6:
+            e1 = np.cross(d, [1.0, 0.0, 0.0])
+        e1 /= np.linalg.norm(e1)
+        e2 = np.cross(d, e1)
+        H = C.hull2d(np.column_stack([P @ e1, P @ e2]))
+        out[f"{label}_girth_mm"] = round(float(np.linalg.norm(np.diff(np.vstack([H, H[:1]]), axis=0), axis=1).sum()), 1)
+        out[f"{label}_ease_mm"] = [round(float(x), 1) for x in np.percentile(d_skin[sel], [10, 50, 90])]
+    for label, lo, hi in (("upper_back", 1300.0, 1450.0), ("lower_back", 1090.0, 1200.0)):
+        sel = (V[:, 2] > lo) & (V[:, 2] < hi) & (np.abs(V[:, 0]) < 140) & (V[:, 1] > 0)
+        out[f"{label}_ease_mm"] = [round(float(x), 1) for x in np.percentile(d_skin[sel], [10, 50, 90])]
+    return out
 
 
 def largest_piece(V, F):
@@ -602,6 +699,7 @@ def main():
     rest = C.clearance([shell, gaiter], body, "rest")
     lay_rest = C.clearance_between(gaiter, shell, "rest")
     meas = measure(shell, gaiter)
+    meas.update(sleeve_measure(shell, bd))
     C.say(TAG, json.dumps(meas))
     used = C.apply_hero_pose(rig)
     posed = C.clearance([shell, gaiter], body, "hero pose")
