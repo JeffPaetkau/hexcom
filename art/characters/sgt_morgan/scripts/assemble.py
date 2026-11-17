@@ -169,6 +169,10 @@ def items():
     ]
     for p in PARTS:
         s = os.path.join(SCRIPTS, "parts", f"{p}.py")
+        if p == "head" and os.path.exists(os.path.join(SCRIPTS, "parts", "head_build.py")):
+            # head round 10: the part's build is head_build.py; head.py is in base.py's import closure (through
+            # head_skin.py), so building from it would call the base stale at every edit of the head
+            s = os.path.join(SCRIPTS, "parts", "head_build.py")
         if p == "head" and not os.path.exists(s):
             continue
         out.append({"name": p, "script": s, "out": os.path.join(CACHE, "parts", f"{p}.blend"), "data": [],
@@ -712,7 +716,16 @@ def blender_main(argv):
             continue
         loaded[p] = c
         bound[p] = bound_report(c, rig)
-        groups[p] = [o for o in c.all_objects if o.type == "MESH"]
+        # render-only fuzz (the head's stubble strands and tear lines: ob["sgt_role"] == "render") is rooted in the
+        # skin by design and stays out of the clash and stand-off reports
+        groups[p] = [o for o in c.all_objects if o.type == "MESH" and o.get("sgt_role") != "render"]
+    head_look = None
+    if "head" in loaded and os.path.exists(os.path.join(SCRIPTS, "parts", "head_look.py")):
+        # head round 10 (head.md §13): the head part's skin goes on Body.Mesh, base.py's eyes and brow and lash
+        # cards give way to the part's, and its hair curves are parented to the head bone
+        import head_look as HLK
+        head_look = HLK.on_assemble(body, rig, loaded["head"])
+        print("[assemble] head look:", json.dumps(head_look), flush=True)
     used = C.apply_hero_pose(rig)
     carb, carb_check = place_carbine(rig, hero)
     if carb is not None:
@@ -833,7 +846,7 @@ def blender_main(argv):
         T["standoff"] = so["seconds"]
         print(f"[assemble] stand-off: {len(so['standing_off'])} objects over {STANDOFF_MM:g} mm", flush=True)
     info = {"round": a.round, "pose": used, "pose_check": pchk, "carbine": carb_check, "parts_loaded": list(loaded),
-            "bound": bound, "inputs_at_load": stamps, "assembled": rel(ASSEMBLED),
+            "bound": bound, "head_look": head_look, "inputs_at_load": stamps, "assembled": rel(ASSEMBLED),
             "posed_bbox_mm": {"lo": [round(float(v) * 1000) for v in lo], "hi": [round(float(v) * 1000) for v in hi]},
             "cycles": None if a.no_cycles else {"samples": a.samples, "denoiser": "OIDN (HIGH)", "view": "AgX Medium High Contrast, graded (eval/grade.py)",
                                                 "lights": f"scene.py x {LIGHT_SCALE}"},

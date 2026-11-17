@@ -1,0 +1,190 @@
+{
+ "params": {
+  "hood_mm": 4.5,
+  "hood_sx": 15.0,
+  "hood_sz": 4.8,
+  "lid_mm": 0.3,
+  "hollow_mm": 3.2,
+  "hollow_sigma": 13.0,
+  "chin_k": 0.16,
+  "chin_sz": 16.0,
+  "jaw_up_mm": 4.0,
+  "jaw_in_mm": 3.0,
+  "jaw_sigma": 11.0,
+  "taper_mm": 2.4,
+  "taper_sz": 20.0,
+  "crease_iters": 8,
+  "crease_sigma": 7.0,
+  "smooth_iters": 2
+ },
+ "delta": {
+  "hood": {
+   "max_mm": 4.49,
+   "verts": 218
+  },
+  "lid": {
+   "max_mm": 0.26,
+   "verts": 55
+  },
+  "hollow": {
+   "max_mm": 3.2,
+   "verts": 300
+  },
+  "chin": {
+   "max_mm": 4.9,
+   "verts": 228
+  },
+  "jaw": {
+   "max_mm": 4.82,
+   "verts": 206
+  },
+  "taper": {
+   "max_mm": 2.4,
+   "verts": 196
+  },
+  "crease": {
+   "max_mm": 3.68,
+   "verts": 575
+  },
+  "total": {
+   "max_mm": 6.67,
+   "verts": 1588,
+   "asymmetry_mm": "symmetric by construction (fields of |x|)"
+  }
+ },
+ "base": "cache/stages/base.blend (round 4's face, stature 1844), scripts/stages/hero_pose.json",
+ "r4": {
+  "tag": "r4",
+  "far_cheek_px": {
+   "rms": 1.16,
+   "mean": 0.59,
+   "rows": 94,
+   "by_band_mean": {
+    "68-82": 0.61,
+    "82-96": 0.21,
+    "96-110": 0.37,
+    "110-124": 1.17
+   }
+  },
+  "landmarks_px": {
+   "rms": 0.87,
+   "n": 402
+  },
+  "rigid_head_fit": {
+   "rms_px": 0.86,
+   "yaw_more_deg": 0.03,
+   "pitch_up_more_deg": -0.06,
+   "rotvec_deg": [
+    0.06,
+    -0.34,
+    0.03
+   ]
+  },
+  "head_yaw_deg": {
+   "now": 17.45,
+   "face_wants": 17.49
+  },
+  "jaw_band_px": {
+   "top": {
+    "mean": 0.49,
+    "per_mark": [
+     -0.39,
+     3.06,
+     -0.99,
+     1.04,
+     2.71,
+     3.13,
+     5.03,
+     -9.69
+    ]
+   },
+   "bottom": {
+    "mean": 11.63,
+    "per_mark": [
+     14.44,
+     11.89,
+     11.56,
+     13.47,
+     15.67,
+     9.53,
+     10.82,
+     5.69
+    ]
+   },
+   "note": "model - drawn, full-frame px, + = lower in the image; near side (his right) first"
+  },
+  "breadth_mm": {
+   "10mm_above_menton": 101.9,
+   "20mm_above_menton": 102.8,
+   "38mm_above_menton": 139.5
+  }
+ },
+ "flipped_vs_r4": 0,
+ "applied_max_mm": 6.67,
+ "r5": {
+  "tag": "r5",
+  "far_cheek_px": {
+   "rms": 1.03,
+   "mean": 0.41,
+   "rows": 94,
+   "by_band_mean": {
+    "68-82": 0.62,
+    "82-96": 0.21,
+    "96-110": 0.27,
+    "110-124": 0.54
+   }
+  },
+  "landmarks_px": {
+   "rms": 0.83,
+   "n": 402
+  },
+  "rigid_head_fit": {
+   "rms_px": 0.82,
+   "yaw_more_deg": -0.01,
+   "pitch_up_more_deg": -0.06,
+   "rotvec_deg": [
+    0.06,
+    -0.37,
+    -0.01
+   ]
+  },
+  "head_yaw_deg": {
+   "now": 17.45,
+   "face_wants": 17.44
+  },
+  "jaw_band_px": {
+   "top": {
+    "mean": 0.97,
+    "per_mark": [
+     -1.65,
+     -0.39,
+     0.2,
+     2.59,
+     -3.07,
+     3.04,
+     4.24,
+     2.83
+    ]
+   },
+   "bottom": {
+    "mean": 10.58,
+    "per_mark": [
+     14.04,
+     11.61,
+     11.34,
+     13.41,
+     15.62,
+     9.2,
+     5.72,
+     3.72
+    ]
+   },
+   "note": "model - drawn, full-frame px, + = lower in the image; near side (his right) first"
+  },
+  "breadth_mm": {
+   "10mm_above_menton": 100.5,
+   "20mm_above_menton": 98.7,
+   "38mm_above_menton": 131.7
+  }
+ }
+}

@@ -191,6 +191,13 @@ def prepare(src):
         o.hide_set(False)
         if o.type == "MESH" and o.data.users > 1:
             o.data = o.data.copy()
+    # head round 10 (head.md section 13): hair curves and render-only strands (ob["sgt_role"] == "render") stay in
+    # Blender; the mesh proxy made for engines (ob["sgt_role"] == "export", hidden from Cycles) is taken instead
+    for o in list(bpy.data.objects):
+        if o.type == "CURVES" or o.get("sgt_role") == "render":
+            bpy.data.objects.remove(o, do_unlink=True)
+        elif o.get("sgt_role") == "export":
+            o.hide_render = False
     for o in list(bpy.data.objects):
         if o.name.startswith(DROP_PREFIX) or o.type in {"CAMERA", "LIGHT"} or (o.type == "MESH" and o.hide_render):
             bpy.data.objects.remove(o, do_unlink=True)

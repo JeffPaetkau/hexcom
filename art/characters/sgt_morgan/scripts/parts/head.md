@@ -741,3 +741,256 @@ In the hero render it still reads closer to frontal than the drawing (stages REA
 drawing's (§11.7 item 1) is what would let the face term turn it further.
 
 The hair cap: `Head.Hair` one vertex 0.2 mm inside the skin at rest (round 4: 1.97).
+
+## 13. Round 10 (2026-11-16): the skin, the eyes, the hair; shape round 5 (not wired)
+
+Critics, round 9: "a waxy, pink, uniform mannequin: dark empty sockets, no stubble, no skin breakup" (m7, the worst item
+on the figure); the hair "a hard-edged dark cap" with a straight high hairline (m9, m22, m52); the head turned too little
+(m19, m24); and §11.7 item 1. Take 1 never built a head (specs 06 and 07 are plans). This round builds from its zone
+tables (spec 07 §3.2-§3.4: hair lengths, stubble densities), its direction field (§4.4), its hair materials (§5.1-§5.2)
+and the analysis's colours (analysis §5-§9).
+
+### 13.1 What the part is now
+
+`head_build.py` builds the part on the rest body; `"$SGT_PYIMG" -I scripts/assemble.py --rebuild head` rebuilds it
+alone (82 s). It is a script of its own, and `head.py` is left as committed, because base.py imports head_skin.py,
+which imports head.py: an edit to head.py (or to anything it imports) makes assemble.py call base.blend stale, and a
+base rebuild rebuilds every part. assemble.py builds the head item from head_build.py when it exists.
+
+| Object | What | By |
+|---|---|---|
+| `Head.Mat.Skin` (in `cache/parts/head_look.blend`) | the skin, put on Body.Mesh at assembly | `head_look.py` |
+| `Head.Eyes`, `Head.Eyes.Wet` | the eyeballs (Body.Eyes' mesh and weights, new materials) and their wet shell | `head_look.py` |
+| `Head.Tearline` | a wet tube on the lower lid margin | `head_look.py` |
+| `Head.Hair`, `Head.Brows`, `Head.Lashes` | Blender hair curves (Curves objects), riding the head bone | `head_groom.py` |
+| `Head.Stubble` | about 16 000 three-sided mesh strands, skinned | `head_groom.py` |
+| `Head.Hair.Proxy` | a 1 392-triangle mesh of the hair for engines, hidden from Cycles | `head_groom.py` |
+
+**How it reaches the soldier without touching base.py.** The skin and the eyes live on base.blend's objects, and the
+base was not to be rebuilt. So `assemble.py` now calls `head_look.on_assemble(body, rig, Part.Head)` after loading the
+parts. assemble.py is not an input of any part, so nothing went stale. The hook:
+- appends `Head.Mat.Skin` from `cache/parts/head_look.blend` and puts it in Body.Mesh's slot;
+- hides `Body.Eyes`, `Body.Eyebrows` and `Body.Eyelashes` (the part carries its own);
+- parents the curves to the head bone with the bone's rest inverse (`ob["sgt_bone"]`).
+
+Objects carry `ob["sgt_role"]`: `render` (stubble, tear line, wet shell, the curves: Cycles only, and left out of
+assemble's clash and stand-off reports) or `export` (the proxy). base.py's round-2 skin (`head_skin.py`) is still built
+into base.blend; it no longer shows. Rounds 1-2's cap (`head.py build_hair`, and `head.py`'s own `bl_build`) is no
+longer what the pipeline builds.
+
+**The loop.** `scripts/tools/head_look_loop.py` rebuilds the part in memory on a copy of `cache/assembled.blend` and
+renders the hero head crop, graded, beside the reference: about 100 s to build and 35 s a crop. `--r5` puts shape round
+5 on the copy first. A base-only look (body and head alone through the hero pose) takes 50-110 s and gave the same skin
+numbers to within 2 %, so most of the tuning ran there (`renders/head/r10/v1`-`v6`).
+
+### 13.2 Skin (`head_look.py`)
+
+- **One Principled BSDF** with random-walk (skin) subsurface.
+  - First tried at real mean free paths (3.67 / 1.37 / 0.68 mm, weight 1): the lit skin matched, but every half-lit zone
+    went orange (jaw saturation 0.56 against the drawing's 0.38), as rounds 1 and 2 found.
+  - Kept: weight 0.5, radii 2.0 / 0.9 / 0.6 mm, IOR 1.4.
+- **Albedo**: MPFB's diffuse times a tone, (0.557, 0.354, 0.291) linear, calibrated on the lit cheek and nose (§13.6).
+- **Three mask textures** (2048², MPFB's UVs, packed; the head gets only 1.66 px/mm there). They are rasterised from
+  per-vertex zone fields, placed by MediaPipe's landmarks on the model (`scripts/stages/face_targets.json`):
+  - A: stubble density, grey share, the hair's cover of the scalp;
+  - B: redness (nose tip and alae, cheeks, ears), oil (forehead centre, dorsum, nose tip, zygoma), pale (forehead);
+  - C: under-eye, lips, and a **wrinkle height map**: 15 lines drawn in UV space as Gaussian grooves (three forehead
+    creases 0.14-0.24 mm deep, the glabellar pair 0.42, three crow's feet a side, the lower-lid crease, the nasolabial
+    folds 0.5).
+- **Colour chain**: a 10 mm mottle (redder or yellower, ±8 %); then each zone as a multiply (red 1.07 / 0.86 / 0.84,
+  under-eye 0.86 / 0.76 / 0.78, lips desaturated, the beard shadow 0.76 / 0.86 / 0.98, darker and bluer, the scalp
+  under hair 0.50 / 0.46 / 0.46); then the stubs as 0.8 mm dots of hair colour, greyed 45 % on the chin.
+- **Roughness** 0.44; -0.18 on the oil zone (0.26 on the T-zone), +0.16 under stubble, -0.10 on the lips, ±0.09 noise.
+- **Normal**: the wrinkle map, a 2.5 mm mottle (0.35 mm high), Voronoi pores at 0.4 mm (0.12 mm high). Procedural, in
+  object space.
+- Every tunable is a named node (`Skin.<key>`). Nothing downloaded, nothing paid, no image requests.
+
+### 13.3 Eyes (`head_look.py`)
+
+- **Why the sockets were black.** Three causes:
+  - round 2's black veil (alpha 0.25) over the whole eye;
+  - base.py's lash and brow cards;
+  - above all, geometry. The brow's lower edge stands 11 mm in front of the lid plane, and the key comes from 37° up and
+    56° to his right (measured in the head's frame). The brow's shadow therefore reaches 8 mm down, to the pupil, and
+    the upper lid faces away from the light. This is the face's shape (§13.5's hood) and the scene's light, not a
+    material.
+- **The ball** (`Head.Mat.Eye`): iris, limbal ring, pupil and sclera from one radial ramp on a new UV map (`IrisUV`,
+  planar about the iris axis, so it survives export).
+  - Iris 12.2 mm: grey-hazel #5b4a3e, #7a6a55 round the pupil, limbal ring #2a201b, radial fibres. Analysis §5 found not
+    one blue pixel in the drawing's irises; they read light through the cornea's reflection, and so do these.
+  - Sclera #b9aea8, reddening to #96766e at the canthi, with faint veins.
+  - The iris axis is base.py's pupil mark. `gaze_deg` (8° to his right, 14° down) turns the iris on the ball so that it
+    sits in the fissure: MPFB's iris centre is 2.7 mm above the fissure's middle, and with the head turned 17° to his
+    left a straight-ahead iris leaves a wide white on the camera's side. At 9° down and 4° left (a2-a5) the eyes read
+    rolled up and away. The eye bones stay unposed.
+- **The wet shell** (`Head.Mat.Cornea` on MPFB's outer layer, the object `Head.Eyes.Wet`): a sharp glossy by Fresnel
+  (IOR 1.376) over transparent, and transparent to shadow rays, so light reaches the iris and the cornea reflects.
+- **The tear line**: a 0.42 mm wet tube along the lower lid's margin. The margin is the zero crossing of the skin's
+  signed distance to the eye shell (`lid_lines`: 28-33 crossings a lid). The same crossing is the check that **the lids
+  meet the eyeball**: the skin crosses the shell all the way round, so there is no gap to close.
+- **Lashes and brows** are curves. `Head.Lashes`: 95 upper and 34 lower a lid, on the same lid lines. `Head.Brows`: 950
+  a side, 5-8.5 mm, on a band from 0.7 below to 0.15 above MediaPipe's lower brow row (the drawn brows are low-set), each
+  point kept clear of the convex ridge. MPFB's cards are hidden.
+
+### 13.4 Hair (`head_groom.py`): what was chosen and why
+
+**Blender's hair curves (Curves objects), generated strand by strand in numpy.** Not particle hair, and not an
+interactive geometry-nodes groom: the build stays a script, every strand is a function of fields on the scalp, and
+Cycles renders them with the Principled Hair BSDF.
+
+**For glTF, a mesh proxy** (`Head.Hair.Proxy`): a thin cap over the haired scalp plus one flat tapered blade per clump
+along its guide, 1 392 triangles (export_godot's budget for the hair is 3 000). A mesh and not alpha cards, because the
+exporter bakes base colour, roughness and metallic only; cards would export as opaque ribbons until it bakes alpha.
+`export_godot.py` now drops curves and `render` objects and takes `export` ones. **That change was not run this
+round**: the assembled file has not been rebuilt with the new part.
+
+- **Roots**: 64 400 strands by a density field.
+  - In front: a soft, arched hairline 44 mm above the glabella, 7 mm lower at |x| 58, thinned 88 % at the temple
+    corners (the drawing's bare temple).
+  - Sides and back: MPFB's scalp group.
+  - 70 roots/cm² on top, 110 on the sides; thicker strands stand in for the real 200.
+- **Length**: top 27-36 mm (median 29.5), upper sides to 10, a fade to 0.6 mm at the ear top and the nape (side median
+  2.4); 23 800 strands are under 6 mm. The analysis's 35-45 mm stood 49 mm over the skull in round 1.
+- **Lie**: swept up, forward and to his right on top (spec 07 §4.4's vectors), back-left strands up and back, the sides
+  down and back; lift 28° at the sides to 58° on top.
+- **Clumps**: 173 centres 10.5 mm apart on the top. Each strand leans to its centre's guide by 0.92 t^1.3, so clumps end
+  in points; 14 % of the guides are 1.35 times as long and steeper (25 spikes); 5 % of strands are flyaways.
+- **Colour**: melanin 0.76, redness 0.05, tips 30 % lighter. Redness 0.28-0.55 rendered ginger.
+- **Stubble** is a mesh: three-sided strands 2.4-3.9 mm long, 0.07 mm in radius, weights from the body. A mesh because
+  the jaw and under-jaw blend into the neck bones and curves cannot be skinned. 30 /cm² at full density, 2.3 times that
+  on the moustache and chin pad; 16 % grey, on the chin.
+
+### 13.5 Shape round 5 (`head_shape_r5.py`, `head-shape-r5.target`, `head_shape_r5.json`; not wired)
+
+Not a fit: seven explicit displacement fields on round 4's face, symmetric, skin vertices only (1 588 moved, at most
+6.7 mm, no triangle flipped against round 4). No helper geometry and no joint cube moves, so the rig, the eye bones and
+the MHCLO fits come out unchanged. Developed in memory as a shape key on an opened base.blend; `head-shape.target` and
+base.py are untouched.
+
+```
+"$SGT_BLENDER" -b --python scripts/parts/head_shape_r5.py -- --measure --write   # the numbers below, the target
+```
+
+| Field | What | Largest move |
+|---|---|---|
+| hood | the skin between brow and upper lid comes forward (analysis §5: hooded), strongest laterally | 4.5 mm |
+| lid | the upper lid margin comes down over the eyeball | 0.3 mm |
+| hollow | the cheek under the zygoma sits in along the normal (sigma 13 mm) | 3.2 mm |
+| chin | the chin narrows (x scaled 16 % towards the midline) | 4.9 mm |
+| jaw | the mandible's lower border, chin to angle, rises 4 mm and tucks in 3 | 4.8 mm |
+| taper | the lower cheek and jaw come in towards the midline | 2.4 mm |
+| crease | round 4's hard groove from beside the nose to the mouth corner, relaxed | 3.7 mm |
+
+Measured on `cache/stages/base.blend` through the current hero pose (`cache/head_r5/measure.json`):
+
+| | Round 4 | Round 5 |
+|---|---|---|
+| Hero far-cheek outline, rms (mean; + = outside the drawn line), 94 rows | 1.16 (+0.59) px | **1.03 (+0.41) px** |
+| The same, rows 110-124 (mouth to chin) | +1.17 px | **+0.54 px** |
+| The same, rows 68-82 / 82-96 / 96-110 | +0.61 / +0.21 / +0.37 px | +0.62 / +0.21 / +0.27 px |
+| Face landmarks at fixed mesh points (face_targets.json), rms | 0.87 px | 0.83 px |
+| Breadth 38 / 20 / 10 mm above the menton, in front of the ears | 139.5 / 102.8 / 101.9 mm | **131.7 / 98.7 / 100.5 mm** |
+| Head yaw now / the yaw a rigid head turn on the landmarks asks for | 17.45° / 17.49° | 17.45° / **17.44°** |
+
+- The far-cheek measure is `head_shape.sil_hero`'s (the reference's last pixel brighter than 70 from the right). On this
+  pose it reads round 4 at 1.16 px; §11.3's harness (round 1's pose) read 1.08. The breadths are this script's own
+  slices, not §11.3's.
+- **The yaw.** Round 7's question, asked the same way of both faces: hold the body and turn the head rigidly about the
+  head bone to best fit the 402 landmarks. Round 4 asks for +0.03° over the solved 17.45°; round 5 for -0.01°. So the
+  face term would **not** turn the head further with this shape. (Round 7's 18.2° was measured from round 4's pose at
+  14.9°; the solve has since taken it.) The correspondences are fixed mesh points, not a fresh MediaPipe detection, and
+  the sculpt hardly moves them. The turn the critics miss will not come from the face term.
+- **The near jaw line.** A hero jaw-line measure was tried: the first under-jaw face (normal turned down) in each of
+  head_jaw_marks.json's eight columns. It scatters ±3 px between neighbouring marks on both faces (means +0.5 and
+  +1.0 px) and does not resolve a 4 mm change. It is in measure.json and is not evidence; the jaw is judged by eye below.
+
+### 13.6 Numbers and renders looked at
+
+Region means in the graded hero crop against `ref/crop_head_face.png` (hex, HSV saturation; boxes from analysis §7's
+table). Round 10 is `renders/round_10/head_face_cycles.png` (the old part); "new" is `renders/head/r10/a2_r4face/`
+(the new part on round 4's face, in the assembled scene).
+
+| Region | Reference | Round 10 | New |
+|---|---|---|---|
+| Forehead | #b88878, 0.35 | #bd9184, 0.30 | #c58b74, 0.41 |
+| Near cheek, lit | #c58f7d, 0.36 | #c7a69c, 0.22 | #cc9684, 0.35 |
+| Nose dorsum | #cd9480, 0.37 | #ca9d92, 0.28 | #d29986, 0.36 |
+| Chin pad (stubble) | #78584c, 0.37 | #81665f, 0.26 | #7b5042, 0.47 |
+| Moustache | #735146, 0.39 | #93746d, 0.26 | #8e6051, 0.43 |
+| Near jaw (stubble, half lit) | #a87d66, 0.39 | #8c5a4a, 0.47 | #a16145, 0.57 |
+| Under the eye | #a17265, 0.37 | #a66d5d, 0.44 | #aa6046, 0.59 |
+| Ear | #c78772, 0.43 | #9f695a, 0.43 | #ac684f, 0.54 |
+| Temple fade (hair over scalp) | #7b604f | #443630 | #855742 |
+| Hair top | #543c32, 0.41 | #443935, 0.21 | #512c1f, 0.62 |
+
+So: the lit skin's colour is on the drawing (it was 0.14 short of its saturation); the stubble zones are as dark as
+drawn on the chin and still light on the moustache; the fade reads as hair over scalp instead of a dark cap; and every
+half-lit zone (near jaw, under-eye, ear) is over-saturated by 0.1-0.2, as is the hair top.
+
+Renders opened (`renders/head/r10/`):
+- `v1`-`v6/hero_head_face_pair.png` (base-only looks; reference | model | 50 %): the steps. v1 the skin alone on a bald
+  head, the orbit a black band; v2 the first groom, with the export proxy showing by mistake; v3-v6 the tuning.
+- `v6/zoom_g_eye_right_x20_sheet.png`: the brow is strands along the ridge; the iris, grey sclera and tear line show;
+  the upper lid under the brow is in deep orange shadow; no key highlight on the cornea (the brow shadows it).
+- `v6/zoom_g_jaw_x10_sheet.png`: the stubble reads as hairs with a greyer chin; the lips are fuller and pinker than
+  drawn; the moustache is thinner than drawn.
+- `a1/head_face_pair.png`: the first look in the assembled scene (gaiter and carrier on); the same skin numbers as the
+  base-only look.
+- `a2_r4face/head_face_pair.png`, `a4_r4face/head_face_pair.png`: the new part on round 4's face, which is what a
+  re-assembly gives now (a4 with the final gaze and brow tail).
+- `a3_r5face/`, `a5_r5face/` and `a6_r5face/` (`head_face_pair.png`, `zoom_*_pair.png`; a3 also
+  `soldier_full_pair.png`): the same on shape round 5. **a6 is the final part** (the gaze of §13.3); a2-a5 differ from
+  it only in the gaze and the brow's tail.
+- `a6_r5face/zoom_z_head_x8_pair.png`: the irises sit nearer the middle of each fissure than in a5; a white still
+  shows under them from the low camera.
+
+What they show, honestly:
+- It no longer reads as a mannequin: skin with a lit, slightly oily forehead and nose, a beard shadow with real stubs,
+  brows of hair, eyes with an iris, short lifted hair with a soft hairline, a bare temple and a fade.
+- **The eyes are still the weakest thing.** The band between brow and eye is a dark, saturated shadow, taller than the
+  drawn brow by about 4 mm, and the eyes sit in it. The hood made the lid visible; it did not light it.
+- The hair is lifted and piecey in the fringe but smoother and more orange in the key than the drawing's, which has
+  chunkier, darker separations.
+- Round 5 against round 4 at hero scale is a small change: a narrower chin and lower cheek, a softer nose-side crease.
+  The face is still fuller and squarer below the cheekbones than the drawing's, and the near jaw angle still sits low.
+
+### 13.7 Switching the pipeline to round 5
+
+Cheaper than §11.6, because no bone, helper or joint cube moves:
+
+1. `cp scripts/parts/head-shape-r5.target scripts/parts/head-shape.target`. The file is the displacement of the
+   round-1 face (round 4's plus the sculpt), as base.py's `head_shape.apply` expects.
+2. Rebuild the base (`"$SGT_PYIMG" -I scripts/assemble.py --rebuild base`, 20 s). Check in `cache/stages/base.json`
+   that the stature is still 1844.07 mm and the bones are unchanged; the pose should not need a re-solve
+   (`pose_needs_solve` will say). The solved landmarks (pupils, nose tip, chin) should move under 0.5 mm.
+3. Every part goes stale by the base's date. Only the head depends on the face's skin, and the sculpt stops above the
+   neck, so the gaiter is not affected; but assemble.py will rebuild them all (`--rebuild` with no names).
+4. Optional, for the next pose solve: `head.py --check r10` on the new base and
+   `pose_solve.build_face_targets("r10")`. The zone masks and brows read `face_targets.json`; the sculpt moves its
+   points little (0.87 -> 0.83 px), so they work unrefreshed.
+5. `assemble.py --round N`. Compare `head_face_compare.png` with `renders/head/r10/a6_r5face/head_face_pair.png`.
+6. To go back: `git checkout scripts/parts/head-shape.target`.
+
+### 13.8 Still wrong, ranked for round 11
+
+1. **The orbit and the gaze.** The irises still sit high in the fissure with a white under them (a6); the lids are
+   wider open than the drawn, narrowed eyes (aspect 0.28). The brow shadows the whole upper lid and the eye under the scene's key (§13.3). The shape can go
+   further (a shallower orbit, a lower brow ridge: the drawing's brows sit about 4 mm nearer the eyes), or the
+   evaluation light can gain a fill; the drawing has one. The shadow is also too saturated: skin albedo inter-reflected
+   in a hollow, not subsurface (weight 0.35 and 0.5 gave the same 0.60).
+2. **Half-lit skin is over-saturated** (near jaw 0.57 against 0.39, ear 0.54 against 0.43). The same cause; a cooler,
+   stronger fill or a less saturated albedo with a redder subsurface colour would address it.
+3. **The face below the cheekbones** is still fuller and squarer than drawn, the near jaw angle low, the lips full and
+   pink where the drawing's are thin and pressed (no lip sculpt this round), the expression neutral.
+4. **The head's turn and the level chin** (m19, m24) are untouched: the pose was not re-solved, and §13.5 shows the
+   face term will not turn it. It needs a pose decision (a yaw prior from the drawing's ~20°, a chin-up prior).
+5. **Hair**: the top reads smoother than the drawing's clumps at hero scale and orange in the key; the hairline's
+   baby hairs are sparse; the crown and back were not looked at (no rear render this round).
+6. **The moustache** is lighter than drawn (#8e6051 against #735146).
+7. **Export is untested**: the proxy, the `sgt_role` handling in export_godot.py, the bake of `Head.Mat.Skin` (object-
+   space procedural detail bakes in the rest pose; the wet shell and the curves are dropped). The proxy's blade roots
+   were lifted 2.5 mm after 130 of its vertices sat up to 1.35 mm inside the skin; `cache/parts/head.json` has the
+   current clearance.
+8. `scripts/tools/look_loop.py`'s part mask colours meshes only: hair curves keep their own colour in its mask pass.
+9. The wrinkle map is 1.66 px/mm: the lines are soft at zoom. A head-only UV tile or a 4096² mask would sharpen them.
+10. §11.7 items 2-6 stand (R001's jaw angle, the chin-neck crease, camera dependence, the relief term, 12 flips).
