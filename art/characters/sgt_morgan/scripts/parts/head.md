@@ -1069,3 +1069,170 @@ chin stubble #785144; moustache #8a6053; near jaw 0.55; under-eye 0.54; ear 0.52
 4. Thin crease lines remain at the lateral orbital rim in the grey render (7 edges over 35°).
 5. Nothing here was seen on round 4's face after the tone and hair changes: the cached part is built on it, but the
    last look on it (a4) predates them.
+
+## 14. Round 11b (2026-11-16): the brows, the hairline, the crop, the tan; shape round 6 (not wired)
+
+Round 11 wired round 5's face and §13's part, and the blind critics rated the face blocking: "another man: broad,
+flat and square with a heavy brow bar, small eyes and orange skin" (m2), a scowl under low brows and a boxy head
+(m17), orange waxy skin with painted-on brows (m7, m14), a mohawk over shaved sides (m5, m20).
+
+### 14.1 What was measured first (`scripts/tools/head_face_measure.py`)
+
+A new tool: MediaPipe on any head crop, 2D ratios in the image's own pixels (so the hero crop of the model compares
+directly with `ref/crop_head_face.png`), the hairline by a luminance scan up the face's own axis at three places, and
+skin colour at landmark patches (`colour_main`). Numbers in `cache/head_r6/face_measures.json` and `skin_patches.json`.
+
+**§13.9 item 1 was wrong.** It called the drawn brows "low, straight" and ours "higher and more arched". Measured, the
+drawn brow's lower row stands 0.43 / 0.48 eye widths over the upper lid (near / far eye) and round 11's 0.26 / 0.29:
+ours were 11-12 crop px (about 5 mm) too LOW at the head and the middle and 4 px (2 mm) at the tail. MediaPipe's
+`browDown` blendshape reads 0.05 / 0.19 on the drawing and 0.78 / 0.76 on round 11: the scowl. On the mesh the lower
+brow row is only 5.2 / 8.8 / 6.3 mm over the pupil (in / mid / out). The eye aperture was already the drawn one
+(0.33 / 0.34 against 0.32 / 0.36): the eyes read small because of the bar over them, not because of the lids.
+
+**The outline is not too wide; the features and the hair are.** MediaPipe put the model's outline points 9-13 crop
+px a side outside the drawing's (face width over height 0.917 against 0.878). But the render's silhouette lies on the
+drawn one (`renders/round_11/head_face_overlay.png`; the far cheek +0.42 px, 1.3 mm, outside). MediaPipe extrapolates
+its outline from the features. A first `narrow` of 6.5 % put the far cheek 1.8 px INSIDE the drawn line and was
+dropped. What reads broad and square is the low straight hairline over a wide bare forehead (the temple hair's front
+edge stood about 49 mm lateral of the brow's tail; the drawn one 17 mm), the brow bar, and flat light on the cheeks.
+
+**The hairline** sat at 0.316 of brow-to-chin above the brow (drawn 0.374 mid, 0.391 far, 0.307 near).
+
+### 14.2 The part (`head_groom.py`, `head_look.py`; rebuilt, `cache/parts/head.blend`)
+
+- **Brows**: the band is raised to a target, the lower row's height over the pupil (`BROW["row_above_pupil"]` 10.7 /
+  13.8 / 8.3 mm; on round 5's face that is +5.5 / +5.0 / +2.0), so a face whose ridge is already there (round 6) gets
+  no raise. 1 050 strands a side, radius 0.066, melanin 0.97 (they must be darker than the shadow under them).
+- **Hairline**: one polyline by azimuth about the head's centre. Centre 54 mm over the glabella (was 44), 10 mm lower
+  at the corner (azimuth 30), then nearly straight down the temple's front edge to the temple point (azimuth 42, 3 mm
+  over the brow's top row), back to eye level at azimuth 60 and to the sideburn's end before the ear (azimuth 74).
+  Before, the front rule and MPFB's scalp group blended between azimuth 60 and 85 and left the temple bare.
+- **Sides and back**: 2.5 mm at the ear top and the nape rising to 13 (was 0.6 to 10, power 1.7 -> 1.0); the temple
+  thinning 0.88 -> 0.35. Side median 7.3 mm (was 2.4).
+- **Top**: 21-27 mm (was 27-36, median 22.8), lift 24 + 24 s (was 28 + 30 s), clumps 8.5 mm apart leaning 0.78 (was
+  10.5, 0.92), 5 % tall guides at 1.2 x (was 14 % at 1.35 x), guide lift capped at 66 degrees (was 88).
+- **Proxy**: built from the same fields and guides, 1 740 triangles.
+- **Stubble**: moustache and chin pad boost 1.3 -> 2.0, grey share 0.45 -> 0.28 (the drawn chin is dark).
+- **Skin**: tone (0.485, 0.372, 0.335); an HSV node on the whole chain, saturation 0.92; subsurface weight 0.35,
+  radii 1.6 / 0.88 / 0.64 mm (less red in the half-light); roughness 0.50 with a 2 cm patch noise (+-0.08) and the
+  fine noise +-0.13, the oil zone -0.22; sparse 3 mm sun blotches (`Skin.Weather`).
+
+### 14.3 Shape round 6 (`head_shape_r6.py`, `head-shape-r6.target`, `head_shape_r6.json`; not wired)
+
+Fields on round 5's face, symmetric, skin only, no helper or joint cube: 3 178 vertices, at most 6.2 mm, no triangle
+flipped. `"$SGT_BLENDER" -b --python scripts/parts/head_shape_r6.py -- --measure --write`.
+
+| Field | What | Largest move |
+|---|---|---|
+| narrow | the sides come in: x scaled 1.5 % at the zygoma, 3.5 % at the jaw, ears and skull behind too | 2.9 mm |
+| temple | the temporal fossa sits in | 1.5 mm |
+| hollow | the cheek under the zygoma sits in further | 3.5 mm |
+| gonial | the mandible's angle in and up | 2.3 mm |
+| chin | the chin drops (it sat 3 mm short under the mouth) | 2.5 mm |
+| browlift | the ridge and the skin under it rise: 5.5 / 5.0 / 2.0 mm (in / mid / out); the lid margin stays | 5.5 mm |
+| brow_back, hood | the ridge goes back 3.5 mm, the skin under it forward 2 mm: a steeper slope the key can reach | 3.5 mm |
+
+| | Round 5 (wired) | Round 6 |
+|---|---|---|
+| Rest breadth at the zygoma / the gonia (this script's slices) | 172.0 / 120.5 mm | 169.0 / 115.8 mm |
+| Breadth 38 / 20 / 10 mm over the menton | 131.7 / 98.7 / 100.5 | 126.9 / 97.5 / 99.9 |
+| Hero far-cheek outline, rms (mean) | 0.94 (+0.42) px | 0.98 (-0.47) px |
+| Fixed-point landmarks, rms | 0.87 px | 0.99 px |
+| Yaw the landmarks ask for / solved | 16.91 / 16.90 | 16.93 / 16.90 |
+
+The landmark rms rises because face_targets.json's brow points are where MediaPipe found round 7's brow CARDS, and
+they now move up with the ridge; refresh face_targets after wiring (recipe, step 4).
+
+### 14.4 Before and after, in the assembled scene (hero crop, MediaPipe)
+
+`b4_r5` is the rebuilt part on the wired face (what a re-assembly gives now); `b4_r6` the same on round 6.
+
+| Measure | Reference | Round 11 | b4_r5 | b4_r6 | R001 front |
+|---|---|---|---|---|---|
+| Face width over height | 0.878 | 0.917 | 0.901 | 0.884 | 0.852 |
+| Width over brow-to-chin | 1.032 | 1.139 | 1.079 | 1.067 | 1.050 |
+| Bigonial over bizygomatic | 0.846 | 0.834 | 0.842 | 0.833 | 0.830 |
+| Brow-to-hairline over brow-to-chin, mid / near / far | 0.374 / 0.307 / 0.391 | 0.316 / 0.298 / 0.320 | 0.366 / 0.321 / 0.373 | 0.366 / 0.311 / 0.388 | 0.396 / 0.419 / 0.421 |
+| Eye aperture, near / far | 0.321 / 0.361 | 0.332 / 0.338 | 0.318 / 0.351 | 0.329 / 0.345 | 0.284 / 0.287 |
+| Lower brow row over the lid, near / far (eye widths) | 0.430 / 0.482 | 0.264 / 0.290 | 0.472 / 0.474 | 0.423 / 0.466 | 0.342 / 0.364 |
+| Brow arch, near / far | 0.194 / 0.284 | 0.165 / 0.211 | 0.200 / 0.262 | 0.194 / 0.255 | 0.190 / 0.199 |
+| Brow tilt (tail over head), near / far | -0.107 / -0.191 | +0.025 / -0.068 | -0.029 / -0.158 | -0.036 / -0.118 | +0.048 / +0.025 |
+| `browDown`, his left / right | 0.05 / 0.19 | 0.78 / 0.76 | 0.18 / 0.21 | 0.28 / 0.26 | 0.55 / 0.58 |
+
+The width ratios are MediaPipe's and move mostly with the brows and the hair (see §14.1); the silhouette is the
+honest width measure.
+
+Skin, landmark patches (hex, HSV saturation, value):
+
+| Patch | Reference | Round 11 | b4_r5 |
+|---|---|---|---|
+| Forehead | #bd8d7c 0.34 0.74 | #bc836d 0.42 0.74 | #b88d7a 0.34 0.72 |
+| Near cheek, lit | #c99582 0.36 0.79 | #c28872 0.41 0.76 | #bd8f7c 0.34 0.74 |
+| Near zygoma (highlight) | #dbad96 0.32 0.86 | #cea190 0.30 0.81 | #c9a595 0.26 0.79 |
+| Near temple | #e1baa8 0.25 0.88 | #c88c71 0.43 0.79 | #bf917b 0.35 0.75 |
+| Under the near eye | #b38172 0.36 0.70 | #bf8672 0.41 0.75 | #ba8c7a 0.35 0.73 |
+| Near lower cheek, half lit | #b48870 0.38 0.70 | #ae6e52 0.53 0.68 | #a6745c 0.45 0.65 |
+| Near jaw, half lit | #5a402f 0.48 0.35 | #553121 0.61 0.33 | #432b1f 0.54 0.26 |
+| Chin pad | #52372a 0.49 0.32 | #5d3f34 0.44 0.36 | #513b31 0.39 0.32 |
+| Under the near brow | #6c4839 0.47 0.42 | #210c07 0.80 0.13 | #3a1f14 0.65 0.23 (b4_r6 #563222 0.60 0.34) |
+| Under the far brow | #583d31 0.44 0.34 | #150b09 0.55 0.08 | #1a1210 0.41 0.10 (b4_r6 #261d1b 0.29 0.15) |
+| Far cheek (shadow side) | #a9989a 0.10 0.66 | #82635d 0.29 0.51 | #7a6460 0.21 0.48 |
+
+Hue: the reference's patches run 12-24 degrees, ours 13-19; the half-lit zones are still 4 degrees redder.
+
+### 14.5 Renders opened (`renders/head/r11b/`, each `head_face_pair.png`: reference | model | 50 %)
+
+- `b1_r6`: the first groom and skin on the first round 6 (no brow fields). Raised brow hair exposed the shelf under
+  it as a dark orange band; the temple bare back to the ear; skin still orange.
+- `b2_r6`: `browlift` added, the first azimuth hairline, saturation 0.80: the skin pale and grey-pink (forehead 0.26),
+  the forehead a wide bare rectangle with a vertical temple edge 35 mm too far back.
+- `b3_r6`: `brow_back` and `hood`, the temple edge forward, saturation 0.92: the forehead narrow as drawn; the band
+  under the brow lighter but there; the brow hairs lighter than the band, so the band still read as the brow.
+- `b4_r6`: darker, denser brows and stubble. The best state: a tan face, a taller and narrower forehead with the
+  drawn corner at the temple, haired sides, a short tousled top, brows that read as brows over a shadowed lid.
+- `b4_r5`: the same part on the wired face: the same hair, skin and brow height; the band under the brow darker
+  (0.23 against 0.34) because the shelf is still there.
+
+### 14.6 Switching the pipeline to round 6
+
+As §13.7 (no bone, helper or joint cube moves):
+
+1. `cp scripts/parts/head-shape-r6.target scripts/parts/head-shape.target` (the file is round 1's displacement:
+   round 5's plus the sculpt; `head_shape_r6.py --write` refuses unless head-shape.target is round 5's).
+2. `"$SGT_PYIMG" -I scripts/assemble.py --rebuild base`. Check in `cache/stages/base.json` that the stature is still
+   1844.07 mm and the bones unchanged; the pupils, nose tip and chin marks move under 0.5 mm except the chin (2.5 mm
+   down), so `pose_needs_solve` may ask for a solve.
+3. Every part goes stale by the base's date; assemble.py rebuilds them. The sculpt stops above the neck (the narrow
+   field fades out 5 mm under the menton), so the gaiter is not affected. The head part needs no edit: the brow raise
+   is to a target and becomes about zero on round 6's ridge.
+4. Refresh the face landmarks before the next pose solve: `head.py --check r11b` on the new base and
+   `pose_solve.build_face_targets("r11b")`. Unrefreshed, the brow points sit 5 mm higher than the drawing's and the
+   face term would pitch the head (it asks for 0.11 degrees now).
+5. `assemble.py --round N`; compare `head_face_compare.png` with `renders/head/r11b/b4_r6/head_face_pair.png`.
+6. To go back: `cp scripts/parts/head-shape-r5.target scripts/parts/head-shape.target`.
+
+### 14.7 Still wrong, ranked (what still makes it another man)
+
+1. **The band under the brows.** Even on round 6 the skin between brow and lid is darker and far more saturated than
+   drawn on the far side (#261d1b against #583d31) and a hard-edged orange-brown on the near side. The key stands 37
+   degrees up and 56 to his right, so any skin under the ridge faces away from it, and nothing fills it. The shape can
+   go a little further (the ridge back another 2 mm), but the rest is light: §13.9's proposal stands (a third more
+   cool side light or world, or a low frontal fill, in `scripts/eval/scene.py`; the coordinator's call). The far
+   cheek says the same: value 0.48 and warm against the drawn 0.66 and neutral.
+2. **Flat light on the form.** The drawn face is modelled by shading: a dark hollow under the cheekbone, a lit
+   cheekbone and temple (value 0.86-0.88), a shaded jaw. Ours is evenly lit from brow to jaw (zygoma 0.79), so round
+   6's 3.5 mm hollow hardly shows and the face still reads fuller and flatter than its outline is.
+3. **The lower face.** The lips are fuller and pinker than the drawn thin, pressed mouth, and read slightly parted; the
+   drawn moustache and chin beard are a denser, longer, darker mass (a short boxed beard, not stubble); the nose is
+   broader at the tip with a harder shadow side. No lip or nose sculpt was made in rounds 5-6.
+4. **The features span about 5 % more than drawn** inside a matching outline (eye corner to eye corner 12 crop px on
+   217, mouth corners 9 on 126). Moving the eyes moves the eye bones and joint cubes: a base change, not a sculpt.
+5. **The head's turn** (16.9 degrees; the drawing nearer 20) and the level chin: a pose decision, as §13.8 item 4.
+6. **Hair**: the top is smooth, rounded clumps where the drawing has separate lighter-tipped spikes over a darker
+   under-layer; the forelock still leaves the top of the crop; the near-side fade starts higher in the drawing. The
+   back and crown were not rendered this round. The proxy was rebuilt but not exported.
+7. **Skin**: the half-lit zones are still over-saturated (lower cheek 0.45 against 0.38, jaw 0.54 against 0.48) and
+   the highlights weaker than drawn (near zygoma 0.79 against 0.86): the drawing's skin is shinier on the cheekbone,
+   temple and forehead than ours, not duller. Pores and wrinkles do not show at hero scale.
+8. The expression: `browDown` 0.18-0.28 against 0.05-0.19; `eyeSquint` on his left 0.34-0.37 against 0.29. Close, and
+   no longer a scowl by the measure; by eye the shadow band still gives a stern look.

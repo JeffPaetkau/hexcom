@@ -1,0 +1,239 @@
+{
+ "params": {
+  "narrow_k": 0.015,
+  "narrow_k_jaw": 0.035,
+  "narrow_x0": 40.0,
+  "narrow_x1": 66.0,
+  "narrow_eye_r0": 11.0,
+  "narrow_eye_r1": 23.0,
+  "chin_mm": 2.5,
+  "chin_sz": 14.0,
+  "hollow_mm": 3.5,
+  "hollow_sigma": 14.0,
+  "temple_mm": 1.5,
+  "temple_sigma": 13.0,
+  "gonial_in_mm": 2.0,
+  "gonial_up_mm": 2.0,
+  "gonial_sigma": 12.0,
+  "browlift_mm": [
+   [
+    0.0,
+    3.5
+   ],
+   [
+    13.0,
+    5.5
+   ],
+   [
+    41.5,
+    5.0
+   ],
+   [
+    55.7,
+    2.0
+   ],
+   [
+    70.0,
+    0.0
+   ]
+  ],
+  "browlift_above": 32.0,
+  "brow_back_mm": 3.5,
+  "brow_back_sz": 5.0,
+  "hood_mm": 2.0,
+  "smooth_iters": 2
+ },
+ "delta": {
+  "narrow": {
+   "max_mm": 2.89,
+   "verts": 1521
+  },
+  "temple": {
+   "max_mm": 1.5,
+   "verts": 253
+  },
+  "chin": {
+   "max_mm": 2.5,
+   "verts": 139
+  },
+  "hollow": {
+   "max_mm": 3.5,
+   "verts": 414
+  },
+  "gonial": {
+   "max_mm": 2.28,
+   "verts": 34
+  },
+  "browlift": {
+   "max_mm": 5.49,
+   "verts": 671
+  },
+  "brow_back": {
+   "max_mm": 3.5,
+   "verts": 956
+  },
+  "hood": {
+   "max_mm": 2.0,
+   "verts": 413
+  },
+  "total": {
+   "max_mm": 6.17,
+   "verts": 3178
+  }
+ },
+ "base": "cache/stages/base.blend (round 5's face wired), scripts/stages/hero_pose.json",
+ "r5_rest": {
+  "bizygomatic": 172.0,
+  "bigonial": 120.5,
+  "bitemporal_at_brow": 162.0,
+  "head_breadth_max": 227.9,
+  "glabella_to_menton": 150.8,
+  "subnasale_to_menton": 80.6,
+  "bizyg_over_glabella_menton": 1.141,
+  "bigonial_over_bizyg": 0.701
+ },
+ "r5": {
+  "tag": "r5",
+  "far_cheek_px": {
+   "rms": 0.94,
+   "mean": 0.42,
+   "rows": 94,
+   "by_band_mean": {
+    "68-82": 0.44,
+    "82-96": 0.36,
+    "96-110": 0.3,
+    "110-124": 0.59
+   }
+  },
+  "landmarks_px": {
+   "rms": 0.87,
+   "n": 402
+  },
+  "rigid_head_fit": {
+   "rms_px": 0.86,
+   "yaw_more_deg": 0.02,
+   "pitch_up_more_deg": -0.05,
+   "rotvec_deg": [
+    0.05,
+    -0.31,
+    0.02
+   ]
+  },
+  "head_yaw_deg": {
+   "now": 16.9,
+   "face_wants": 16.91
+  },
+  "jaw_band_px": {
+   "top": {
+    "mean": 0.61,
+    "per_mark": [
+     -1.97,
+     -5.11,
+     0.07,
+     2.36,
+     0.17,
+     3.08,
+     4.0,
+     2.3
+    ]
+   },
+   "bottom": {
+    "mean": 9.69,
+    "per_mark": [
+     13.19,
+     10.78,
+     10.51,
+     12.59,
+     15.17,
+     8.18,
+     4.75,
+     2.32
+    ]
+   },
+   "note": "model - drawn, full-frame px, + = lower in the image; near side (his right) first"
+  },
+  "breadth_mm": {
+   "10mm_above_menton": 100.5,
+   "20mm_above_menton": 98.7,
+   "38mm_above_menton": 131.7
+  }
+ },
+ "flipped_vs_r5": 0,
+ "applied_max_mm": 6.17,
+ "r6_rest": {
+  "bizygomatic": 169.0,
+  "bigonial": 115.8,
+  "bitemporal_at_brow": 159.5,
+  "head_breadth_max": 227.9,
+  "glabella_to_menton": 150.8,
+  "subnasale_to_menton": 80.6,
+  "bizyg_over_glabella_menton": 1.121,
+  "bigonial_over_bizyg": 0.685
+ },
+ "r6": {
+  "tag": "r6",
+  "far_cheek_px": {
+   "rms": 0.98,
+   "mean": -0.47,
+   "rows": 94,
+   "by_band_mean": {
+    "68-82": -0.24,
+    "82-96": -0.32,
+    "96-110": -0.75,
+    "110-124": -0.56
+   }
+  },
+  "landmarks_px": {
+   "rms": 0.99,
+   "n": 402
+  },
+  "rigid_head_fit": {
+   "rms_px": 0.99,
+   "yaw_more_deg": 0.03,
+   "pitch_up_more_deg": -0.11,
+   "rotvec_deg": [
+    0.11,
+    -0.21,
+    0.03
+   ]
+  },
+  "head_yaw_deg": {
+   "now": 16.9,
+   "face_wants": 16.93
+  },
+  "jaw_band_px": {
+   "top": {
+    "mean": 1.01,
+    "per_mark": [
+     -3.74,
+     -1.68,
+     0.28,
+     3.09,
+     0.94,
+     2.37,
+     4.79,
+     2.03
+    ]
+   },
+   "bottom": {
+    "mean": 9.75,
+    "per_mark": [
+     13.18,
+     10.78,
+     10.56,
+     12.99,
+     15.17,
+     8.18,
+     4.72,
+     2.38
+    ]
+   },
+   "note": "model - drawn, full-frame px, + = lower in the image; near side (his right) first"
+  },
+  "breadth_mm": {
+   "10mm_above_menton": 99.9,
+   "20mm_above_menton": 97.5,
+   "38mm_above_menton": 126.9
+  }
+ }
+}

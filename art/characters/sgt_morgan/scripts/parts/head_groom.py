@@ -28,20 +28,33 @@ if HERE not in sys.path:
 MM = 0.001
 HEAD_CENTRE = np.array([0.0, -25.0, 1735.0])      # between the ears at about the ear top (rest, mm): head.py's
 HAIR = {
-    "trichion_above_glabella": 44.0,   # mm: the reference's central hairline (24 px above the glabella)
-    "arch": 7.0,                       # the hairline drops this much from the centre to the temple corner (|x| 58)
-    "temple_x": 60.0, "temple_thin": 0.88, "temple_sigma": 19.0, "temple_dz": -12.0,
-    "top_front": 36.0, "top_back": 27.0,
-    "side_max": 10.0, "side_min": 0.6,
+    # round 11b: the hairline 13 mm higher (brow-to-hairline over brow-to-chin was 0.32 against the drawn 0.37, and
+    # the brows rose 5 mm), M-shaped; haired sides with a fade at the ear top and the nape only; a lower top
+    "trichion_above_glabella": 54.0,   # mm: the central hairline
+    "arch": 10.0,                      # the hairline drops this much from the centre to its corner
+    # the hairline by azimuth about HEAD_CENTRE: the corner at corner_az, then down the temple's front edge to the
+    # temple point (temple_az, temple_dz above the brow's top row), then down to the sideburn's end before the ear
+    # The drawn forehead is narrow: the temple's front edge stands 17 mm lateral of the brow's tail (the tail is at
+    # azimuth 27), nearly vertical from the corner down to brow level, then runs back to the ear.
+    "corner_az": 30.0, "temple_az": 42.0, "temple_dz_brow": 3.0, "eye_az": 60.0, "sideburn_az": 74.0, "sideburn_dz_ear": 5.0,
+    "temple_x": 60.0, "temple_thin": 0.35, "temple_sigma": 13.0, "temple_dz": -12.0,
+    "top_front": 27.0, "top_back": 21.0,
+    "side_max": 13.0, "side_min": 2.5, "side_power": 1.0,
+    "lift_side": 24.0, "lift_top": 24.0, "spike_len": 1.2, "spike_lift": 8.0, "guide_lift_max": 66.0, "guide_scatter": 0.6,
     "density_top": 105.0, "density_side": 110.0,      # roots / cm2 (real ~200; thicker strands stand in)
     "radius_root": 0.060, "radius_tip": 0.018,       # mm
-    "clump_gap": 10.5, "clump_max": 0.92, "spike_share": 0.14, "flyaway": 0.05,
+    "clump_gap": 8.5, "clump_max": 0.78, "spike_share": 0.05, "flyaway": 0.05,
     "points": 7,
     "melanin": 0.88, "redness": 0.05, "roughness": 0.36, "tip_lighten": 0.30,
 }
-BROW = {"below": 0.70, "above": 0.15, "n": 950, "length": (5.0, 8.5), "radius": 0.065, "melanin": 0.92, "redness": 0.25}
+# round 11b: MediaPipe on the hero crops put the model's brow 11-12 crop px (5 mm) under the drawn one at the head
+# and the middle and 4 px (2 mm) at the tail, so the band is raised by `raise` (in, mid, out; mm); fewer, thinner
+# strands so that skin shows between them
+# The raise is to a target: the lower row's height over the pupil (in, mid, out; round 5's face has 5.2, 8.8, 6.3),
+# so that a face whose brow ridge is already there (shape round 6's `browlift`) gets no raise.
+BROW = {"below": 0.70, "above": 0.15, "row_above_pupil": (10.7, 13.8, 8.3), "raise_max": 8.0, "n": 1050, "length": (5.0, 8.0), "radius": 0.066, "melanin": 0.97, "redness": 0.12}
 LASH = {"upper": 95, "lower": 34, "len_upper": 5.0, "len_lower": 2.0, "radius": 0.045, "melanin": 0.95}
-STUBBLE = {"centre_boost": 1.3, "density": 30.0, "length": (2.4, 3.9), "radius": 0.070, "hex": "#33241c", "grey_hex": "#9a938c", "grey_share": 0.45}
+STUBBLE = {"centre_boost": 2.0, "density": 30.0, "length": (2.4, 3.9), "radius": 0.070, "hex": "#33241c", "grey_hex": "#9a938c", "grey_share": 0.28}
 
 
 def _ss(a, b, x):
@@ -55,7 +68,7 @@ def _unit(v):
 
 # =========================================================================== fields and sampling
 
-def scalp_fields(C, bd, L):
+def scalp_fields(C, bd, L, ear_z=1707.6):
     """Per-vertex hair density (0..1), length (mm), top-ness s (0 sides .. 1 top), on Body.Mesh."""
     import head as H
     V, N, g = bd["V"], bd["N"], bd["groups"]
@@ -67,9 +80,14 @@ def scalp_fields(C, bd, L):
     aaz = np.abs(az)
     front = np.clip(np.cos(np.radians(az)), 0, 1)
     z0 = L["glabella"][2] + HAIR["trichion_above_glabella"]
-    zh = z0 - HAIR["arch"] * (np.abs(V[:, 0]) / 58.0) ** 2
-    frontish = _ss(85.0, 60.0, aaz)
-    inside = frontish * _ss(-3.0, 3.0, V[:, 2] - zh) + (1 - frontish) * (g["scalp"] > 0.5)
+    z_corner = z0 - HAIR["arch"]
+    z_temple = L["brow_mid_top"][2] + HAIR["temple_dz_brow"]
+    z_burn = ear_z + HAIR["sideburn_dz_ear"]
+    zh = np.interp(aaz, [0.0, HAIR["corner_az"], HAIR["temple_az"], HAIR["eye_az"], HAIR["sideburn_az"]],
+                   [0.0, 0.0, z_temple - z_corner, L["pupil"][2] - z_corner, z_burn - z_corner])
+    zh = zh + z0 - HAIR["arch"] * np.clip(aaz / HAIR["corner_az"], 0, 1) ** 2
+    frontish = _ss(104.0, 92.0, aaz)
+    inside = np.maximum(frontish * _ss(-3.0, 3.0, V[:, 2] - zh), (aaz > 88.0) * (g["scalp"] > 0.5))
     inside = inside * region
     sm = np.clip(C.smooth_field(inside.astype(float), E, iters=2, lam=0.5), 0, 1) * region
     dens = _ss(0.25, 0.8, sm)
@@ -82,7 +100,7 @@ def scalp_fields(C, bd, L):
     s = _ss(el_lo, el_lo + 28.0, el)
     l_top = HAIR["top_back"] + (HAIR["top_front"] - HAIR["top_back"]) * front
     e = _ss(-22.0, el_lo + 6.0, el)
-    l_side = HAIR["side_min"] + (HAIR["side_max"] - HAIR["side_min"]) * e ** 1.7
+    l_side = HAIR["side_min"] + (HAIR["side_max"] - HAIR["side_min"]) * e ** HAIR["side_power"]
     length = (l_side + (l_top - l_side) * s) * (0.3 + 0.7 * _ss(0.3, 0.95, sm))
     cover = dens * _ss(0.2, 3.5, length)
     return {"dens": dens, "length": length, "s": s, "az": az, "el": el, "front": front, "cover": cover, "z0": z0}
@@ -198,9 +216,9 @@ def hair_material(name, melanin, redness, roughness=0.34, tip_lighten=0.0, rando
 
 # =========================================================================== scalp hair
 
-def build_hair(C, bd, coll, L, seed=11):
+def build_hair(C, bd, coll, L, seed=11, ear_z=1707.6):
     V, N = bd["V"], bd["N"]
-    Fd = scalp_fields(C, bd, L)
+    Fd = scalp_fields(C, bd, L, ear_z=ear_z)
     rng = np.random.default_rng(seed)
     T = tris_of(bd, bd["in_body"] & (Fd["dens"] > 0.01))
     # density per cm2 varies from the sides to the top: fold it into the field
@@ -218,7 +236,7 @@ def build_hair(C, bd, coll, L, seed=11):
     side = np.array([0.0, 0.55, -0.83])
     raw = _unit(side[None] * (1 - s[:, None]) + sweep * s[:, None] + rng.normal(0, 0.12, (n, 3)))
     tang = _unit(raw - (raw * Nn).sum(1, keepdims=True) * Nn)
-    lift = 28.0 + 30.0 * s + rng.normal(0, 8.0, n)
+    lift = HAIR["lift_side"] + HAIR["lift_top"] * s + rng.normal(0, 8.0, n)
     bend = 0.35 + 0.75 * s
     K = HAIR["points"]
     S = strands(P, Nn, tang, lift, length, bend, K, rng)
@@ -236,11 +254,11 @@ def build_hair(C, bd, coll, L, seed=11):
         m = len(centres)
         gl = length[centres] * rng.uniform(0.9, 1.2, m)
         tall = rng.random(m) < HAIR["spike_share"]
-        gl[tall] *= 1.35
+        gl[tall] *= HAIR["spike_len"]
         spikes = int(tall.sum())
-        graw = _unit(tang[centres] + rng.normal(0, 0.45, (m, 3)))
+        graw = _unit(tang[centres] + rng.normal(0, HAIR["guide_scatter"], (m, 3)))
         gt = _unit(graw - (graw * Nn[centres]).sum(1, keepdims=True) * Nn[centres])
-        glift = np.clip(lift[centres] + rng.normal(0, 16.0, m) + 16.0 * tall, 22.0, 88.0)
+        glift = np.clip(lift[centres] + rng.normal(0, 16.0, m) + HAIR["spike_lift"] * tall, 18.0, HAIR["guide_lift_max"])
         G = strands(P[centres], Nn[centres], gt, glift, gl, bend[centres] * rng.uniform(0.4, 1.1, m), K, rng, frizz=0.0)
         top = np.where(s > 0.3)[0]
         D = np.linalg.norm(P[top][:, None, :] - P[centres][None, :, :], axis=2)
@@ -252,7 +270,7 @@ def build_hair(C, bd, coll, L, seed=11):
     rad = HAIR["radius_root"] + (HAIR["radius_tip"] - HAIR["radius_root"]) * (np.arange(K) / (K - 1))[None, :] ** 1.5
     rad = np.repeat(rad, n, 0)
     short = length < 6.0
-    rad[short] = np.linspace(0.045, 0.034, K)[None, :]
+    rad[short] = np.linspace(0.055, 0.036, K)[None, :]
     mat = hair_material("Head.Mat.Hair", HAIR["melanin"], HAIR["redness"], HAIR["roughness"], HAIR["tip_lighten"])
     ob = curves_object("Head.Hair", S, rad, coll, mat)
     top_z = float(S[:, :, 2].max())
@@ -281,8 +299,9 @@ def build_brows(C, bd, coll, L, surf_bvh, seed=5):
         hi0 = [L["brow_in_top"] * m, L["brow_mid_top"] * m, L["brow_out_top"] * m]
         # the drawn brows are low-set: the band is centred on MediaPipe's lower row (its upper row lies on the
         # forehead above the brow), BROW["below"] of the rows' gap under it and BROW["above"] over it
-        lo = [a - BROW["below"] * (b - a) for a, b in zip(lo0, hi0)]
-        hi = [a + BROW["above"] * (b - a) for a, b in zip(lo0, hi0)]
+        up_ = [np.array([0.0, 0.0, float(np.clip(t - (a[2] - L["pupil"][2]), 0.0, BROW["raise_max"]))]) for t, a in zip(BROW["row_above_pupil"], lo0)]
+        lo = [a - BROW["below"] * (b - a) + r for a, b, r in zip(lo0, hi0, up_)]
+        hi = [a + BROW["above"] * (b - a) + r for a, b, r in zip(lo0, hi0, up_)]
         n = BROW["n"]
         u = rng.random(n) ** 0.9
         v = rng.random(n)
@@ -484,7 +503,7 @@ def build(C, bd, coll, body, rig, marks, L, lids, stubble_fields=None, proxy=Tru
     from mathutils.bvhtree import BVHTree
     import head as H
     info = {}
-    hair, info["hair"], Fd, guides = build_hair(C, bd, coll, L)
+    hair, info["hair"], Fd, guides = build_hair(C, bd, coll, L, ear_z=float(marks["ear_R"]["rest_mm"][2]))
     region = H.head_region(bd)
     T = tris_of(bd, region)
     bvh = BVHTree.FromPolygons([tuple(v) for v in bd["V"]], [tuple(int(i) for i in t) for t in T])

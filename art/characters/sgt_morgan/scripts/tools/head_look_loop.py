@@ -3,12 +3,13 @@ copy of the assembled soldier and render the hero head crop, without touching an
 
   cp cache/assembled.blend cache/look_head.blend
   "$SGT_BLENDER" -b cache/look_head.blend --python scripts/tools/head_look_loop.py -- --out renders/head/r10/a1
-      [--r5] [--samples 64] [--crops head_face,soldier_full] [--keep-part] [--zooms]
+      [--r5 | --r6] [--samples 64] [--crops head_face,soldier_full] [--keep-part] [--zooms]
 
 Open a COPY of cache/assembled.blend beside it in cache/ (never the build artifact, never saved). The rig goes
 to rest, the copy's Part.Head objects are removed and the part is built again from scripts/parts/head_look.py
 and head_groom.py (so an edit there shows without a rebuild); --r5 first puts head_shape_r5.py's sculpt on
-Body.Mesh as a shape key (the part is then built on that face); --keep-part skips the rebuild and renders the
+Body.Mesh as a shape key (the part is then built on that face; since round 11 the wired face IS round 5's, so
+--r5 is obsolete), --r6 head_shape_r6.py's on the wired round-5 face; --keep-part skips the rebuild and renders the
 part the copy holds. Then the hero pose again and each crop in Cycles as assemble.py renders it, graded, beside
 the reference (<crop>_pair.png).
 """
@@ -36,6 +37,7 @@ def main(argv):
     ap.add_argument("--samples", type=int, default=64)
     ap.add_argument("--crops", default="head_face")
     ap.add_argument("--r5", action="store_true")
+    ap.add_argument("--r6", action="store_true")
     ap.add_argument("--keep-part", action="store_true")
     ap.add_argument("--zooms", action="store_true")
     a = ap.parse_args(argv)
@@ -54,6 +56,12 @@ def main(argv):
             import head_shape_r5 as R5
             D5, info["r5"], _ = R5.delta(C, bd, marks)
             R5.apply_dev(body, D5)
+            bd = C.body_data(body)
+        if a.r6:
+            import head_shape_r6 as R6
+            import head_shape_r5 as R5
+            D6, info["r6"], _ = R6.delta(C, bd, marks)
+            R5.apply_dev(body, D6, name="head-shape-r6-dev")
             bd = C.body_data(body)
         coll = C.part_collection("Head")
         import head_groom as HG

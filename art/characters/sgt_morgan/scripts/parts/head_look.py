@@ -34,13 +34,14 @@ SIZE = 2048
 
 # ---- the skin's numbers (calibrated against ref/crop_head_face.png through the hero camera: head.md §13)
 SKIN = {
-    "tone": (0.516, 0.364, 0.316),       # x MPFB's diffuse (linear)
-    "sss_weight": 0.5,
-    "sss_scale": 0.0020,                 # m: the red radius
-    "sss_radius": (1.0, 0.45, 0.30),     # x scale
+    "tone": (0.485, 0.372, 0.335),       # x MPFB's diffuse (linear); round 11b: a further 30 % less saturated
+    "sat": 0.92, "hue": 0.503,           # round 11b: the whole chain's saturation, and a little towards yellow
+    "sss_weight": 0.35,
+    "sss_scale": 0.0016,                 # m: the red radius
+    "sss_radius": (1.0, 0.55, 0.40),     # x scale
     "sss_ior": 1.4, "sss_anisotropy": 0.8,
     "ior": 1.4,
-    "rough": 0.44, "rough_oil": -0.18, "rough_stubble": 0.16, "rough_lips": -0.10,
+    "rough": 0.50, "rough_noise": 0.26, "rough_patch": 0.16, "weather_rgb": (0.84, 0.78, 0.74), "weather_k": 0.55, "rough_oil": -0.22, "rough_stubble": 0.16, "rough_lips": -0.10,
     "red_rgb": (1.07, 0.86, 0.84), "red_k": 0.75,
     "pale_rgb": (1.0, 0.99, 1.02), "pale_k": 0.8,
     "undereye_rgb": (0.86, 0.76, 0.78), "undereye_k": 0.8,
@@ -492,9 +493,16 @@ def skin_material(images, P=SKIN, name="Head.Mat.Skin"):
     col = n.mix("MULTIPLY", 1.0, alb.outputs["Color"], n.rgb(P["tone"], "Skin.tone"))
     mott = noise(95.0, 3.0, 0.55, "Skin.Mottle")                   # ~10 mm blotches: redder / yellower
     col = n.mix("MULTIPLY", 1.0, col, n.mix("MIX", mott, (1.10, 0.93, 0.91), (0.93, 1.04, 1.06)))
+    # weathering: 3 mm sun blotches, browner and darker, sparse
+    wth = n.math("POWER", noise(330.0, 4.0, 0.65, "Skin.Weather"), 2.0)
+    col = n.mix("MULTIPLY", n.math("MULTIPLY", wth, n.value(P["weather_k"], "Skin.weather_k"), clamp=True), col, n.rgb(P["weather_rgb"], "Skin.weather_rgb"))
     for key, fac in (("red", red), ("pale", pale), ("undereye", under), ("lips", lips), ("beard", stub), ("scalp", scalp)):
         col = n.mix("MULTIPLY", n.math("MULTIPLY", fac, n.value(P[key + "_k"], f"Skin.{key}_k"), clamp=True),
                     col, n.rgb(P[key + "_rgb"], f"Skin.{key}_rgb"))
+    hs = n.new("ShaderNodeHueSaturation", "Skin.HSV")
+    hs.inputs["Hue"].default_value, hs.inputs["Saturation"].default_value = P["hue"], P["sat"]
+    nt.links.new(col, hs.inputs["Color"])
+    col = hs.outputs["Color"]
     # the stubs: dots of hair colour, greyed on the chin; on the scalp the same dots stand for the clipped fade
     dots = noise(P["stubble_dots_scale"], 1.0, 0.5, "Skin.StubbleDots")
     ramp = n.new("ShaderNodeValToRGB")
@@ -511,7 +519,8 @@ def skin_material(images, P=SKIN, name="Head.Mat.Skin"):
     r = n.math("MULTIPLY_ADD", oil, n.value(P["rough_oil"], "Skin.rough_oil"), n.value(P["rough"], "Skin.rough"))
     r = n.math("MULTIPLY_ADD", stub, n.value(P["rough_stubble"], "Skin.rough_stubble"), r)
     r = n.math("MULTIPLY_ADD", lips, n.value(P["rough_lips"], "Skin.rough_lips"), r)
-    r = n.math("ADD", r, n.math("MULTIPLY_ADD", noise(260.0, 2.0, 0.6, "Skin.RoughNoise"), 0.18, -0.09), clamp=True)
+    r = n.math("ADD", r, n.math("MULTIPLY_ADD", noise(260.0, 2.0, 0.6, "Skin.RoughNoise"), P["rough_noise"], -0.5 * P["rough_noise"]), clamp=True)
+    r = n.math("ADD", r, n.math("MULTIPLY_ADD", noise(45.0, 2.0, 0.5, "Skin.RoughPatch"), P["rough_patch"], -0.5 * P["rough_patch"]), clamp=True)   # 2 cm patches: the sheen is not uniform
     nt.links.new(r, bsdf.inputs["Roughness"])
     # normal: the wrinkle height map, a coarse mottle, the pores
     b1 = n.new("ShaderNodeBump", "Skin.Bump.Wrinkles")
