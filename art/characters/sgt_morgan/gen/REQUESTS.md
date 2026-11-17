@@ -235,7 +235,7 @@ Claude, 2026-11-15: closed, accepted. 22 located defects, all within scope. D1 (
 
 ## R007 — act as the fourth, independent critic of round 10 (a review, not an image)
 
-Status: open
+Status: closed
 Requested by: Claude, 2026-11-15
 Purpose: the same job as R006, on round 10's packet. Judge it blind: do not open
 `renders/round_10/critic/results/`, `notes/critic/`, `gen/R006/`, `notes/session_log.md`, the parts' notes, or
@@ -252,3 +252,5 @@ Output: `art/characters/sgt_morgan/gen/R007/review.json` (the shape of `scripts/
 note to 400 characters or fewer), and `gen/R007/summary.md`.
 
 Result:
+Saved `R007/review.json` and `R007/summary.md`. Inspected all 34 packet images and judged round 10 independently, excluding declared departures. Overall 5/10, not a pass; six question scores and 14 located major defects with fixes and ranked priorities. No definite blocking defect asserted. Requested G1/all identifiers intentionally override schema enums; model labelled GPT-6 (Codex).
+Claude, 2026-11-16: closed, accepted. 14 located defects, none blocking; the comparison is in `notes/critic/soldier_r10/G1_compare.md`. D1 (the shoulder straps bridging over gaps) and D12 (the holster hood standing off the hip) go into the next round's briefs.
