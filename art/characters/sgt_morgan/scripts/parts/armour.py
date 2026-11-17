@@ -1,4 +1,4 @@
-"""Armour, round 10: the hard shells. Per side: a pauldron (a domed cap on a foam liner over a long outer upper-arm
+"""Armour, round 10 (10b: rolled rims, a compact right cap, hex knee plates): the hard shells. Per side: a pauldron (a domed cap on a foam liner over a long outer upper-arm
 plate on its own liner, held by a coyote webbing strap round the arm with a flat ladder-lock), a forearm guard (a
 padded sleeve, two shingled dorsal shells tapering from below the elbow to the glove cuff, rolled rims, a rib and
 grooves, foam under each, two straps with ladder-locks), an elbow pad (a domed cap on a neoprene base on the point of
@@ -64,27 +64,37 @@ COL = {"shell": "#7b7064", "knee": "#6a6158", "black": "#1d1c1b", "emblem": "#a9
 # was missing is texture-scale contrast: here a fine dark grime mottle (14 mm, toward #2e2b27 at 0.65), R005's
 # scratches at 0.9 on a 90 mm tile with the bright ones up to 2 x, broad tan worn rims (#b09c7c over 4 mm), chips
 # near the edges, more grime in the recesses, and a less glossy paint (roughness 0.36 -> 0.50, the "plastic" sheen)
-ARMOUR_TAN = {"albedo_hex": "#6a655c", "rough": 0.50, "rough_span": 0.20,
-              "mottle__hex": "#2e2b27", "mottle__amount": 0.65, "mottle__noise_mm": 14.0,
-              "paint_image__saturation": 0.3, "paint_image__amount": 0.9, "paint_image__max": 2.0,
-              "paint_image__tile_mm": 90.0,
-              "substrate__f0": None, "substrate__hex": "#b09c7c", "substrate__rough": 0.65,
-              "substrate__primer": 0.0, "chips__cover": 0.004, "chips__edge_cover": 0.05,
-              "edge__band_mm": 4.0, "edge__noise_amount": 0.3,
-              "dust__amount": 0.2, "rub__amount": 0.15, "grime__amount": 1.4, "grime__cavity": 1.2}
+# Round 10b (critics r10 m11, m13, D3: round 10's 14 mm dark mottle at 0.65 and R005's soft clouds at 0.9 read as big,
+# pale camouflage blotches, "stone", the same noise on every plate): the faces keep one even, slightly cooler worn paint
+# (#666460; a faint 60 mm aerosol unevenness at 0.10, R005 at 0.65 on its catalogue tile (150 mm, lint L6) for its fine scratches, the roughness span
+# 0.20 -> 0.10), and the wear goes where wear happens: a narrow (1.8 mm), hard-broken worn rim at 0.55 (the rolled rims below made the Bevel mask fire all round), chips to tan in the
+# 3.5 mm along the edges (22 % there, none on the faces), rubbing under straps and the next plate, grime in the recesses
+# and along each plate's lower edges (`low_grime`), every plate in its own texture space (`object_jitter`)
+ARMOUR_TAN = {"albedo_hex": "#666460", "rough": 0.46, "rough_span": 0.10,
+              "mottle__hex": "#4c4a46", "mottle__amount": 0.10, "mottle__noise_mm": 60.0,
+              "paint_image__saturation": 0.25, "paint_image__amount": 0.65, "paint_image__max": 2.6,
+              "paint_image__tile_mm": 150.0,
+              "substrate__f0": None, "substrate__hex": "#a8936f", "substrate__rough": 0.68,
+              "substrate__primer": 0.0, "chips__cover": 0.0, "chips__edge_cover": 0.22, "chips__near_mm": 3.5,
+              "chips__noise_mm": 2.0, "chips__patch_mm": 25.0,
+              "edge__band_mm": 1.8, "edge__noise_amount": 0.95, "edge__noise_mm": 3.0, "edge__amount": 0.55,
+              "dust__amount": 0.2, "rub__amount": 0.35, "grime__amount": 1.6, "grime__cavity": 1.6,
+              "object_jitter": 1.0, "low_grime__amount": 0.9, "low_grime__band_mm": 10.0}
 MATERIALS = {
     "Armour.Mat.Shell": ("Polymer.Painted.Armour", "Shell", dict(ARMOUR_TAN)),
     # the knee caps: a darker brown-grey centre, the raised frame worn to a paler tan (`paint_wear`)
     # round 10 (m14, m25, D21: glossy toy plastic with smeared highlights; the drawn caps matte with a tan rim): matte
     # (0.62), the centre a grimed brown-grey, the frame worn to tan (#a08a68) and broken by the paint left on it
+    # round 10b (m4, m22, D2: pale mottled faces; the drawn cap a dark face inside a tan rim): the face #565049, no mottle
     "Armour.Mat.Knee": ("Polymer.Painted.Armour", "Knee", dict(ARMOUR_TAN, **{"rub__amount": 0.0,
-        "albedo_hex": "#746a5e", "mottle__hex": "#2e2a25", "mottle__amount": 0.6, "rough": 0.62,
+        "albedo_hex": "#524f4b", "mottle__hex": "#3a3836", "mottle__amount": 0.10, "rough": 0.58,
         "edge__radius_mm": 1.2, "edge__width": 0.06,
         "chips__cover": 0.0, "chips__edge_cover": 0.0, "chips__noise_mm": 5.0, "dust__amount": 0.3,
-        "frame__break": 0.35, "frame__noise_mm": 20.0,
+        "frame__break": 0.25, "frame__noise_mm": 20.0, "low_grime__amount": 0.4,
         "substrate__hex": "#a08a68", "substrate__rough": 0.7})),
     "Armour.Mat.Black": ("Neoprene.Black", "Black", {}),
-    "Armour.Mat.Emblem": ("Decal.Emblem", "Emblem", {}),
+    # round 10b (m27: "a pale star"; the drawn emblem a dark steel-blue panel with a light crossed X): a dark plate
+    "Armour.Mat.Emblem": ("Decal.Emblem", "Emblem", {"f0": (0.045, 0.055, 0.072), "rough": 0.55}),
     "Armour.Mat.Foam": ("Foam.ClosedCell.Black", "Foam", {}),
     "Armour.Mat.Metal": ("Metal.Gunmetal", "Metal", {}),
     "Armour.Mat.Silver": ("Metal.Gunmetal", "Silver", {"f0": (0.42, 0.42, 0.43), "rough_range": (0.30, 0.42),
@@ -232,16 +242,22 @@ CAP_PAD = 7.0                 # round 6: shirt to the cap's inner face, filled b
                               # liner read as a card standing off the shoulder over a dark gap)
 CAP_FOAM = 6.0
 CAP_T = 3.0
-CAP_W_TOP, CAP_W_BOT = 150.0, 122.0
-CAP_Q = (-40.0, 50.0)         # deg from the cap's centre direction: top flange .. bottom lip (round 6: the flange
-                              # stops short of the carrier's strap pad, -54 lifted the whole cap over it)
+CAP_W = {"L": (150.0, 122.0), "R": (126.0, 106.0)}   # top, bottom widths (round 10b: the right cap compact)
+CAP_Q = {"L": (-40.0, 50.0), "R": (-30.0, 38.0)}     # deg from the cap's centre direction: top flange .. bottom lip
+                              # (round 6: the flange stops short of the carrier's strap pad, -54 lifted the whole cap
+                              # over it). Round 10b (critics r10 m6, m7, D7: the right cap "a long, flat slab rising above
+                              # the shoulder line and standing off the deltoid"): the right one 126/106 wide over
+                              # -30..38 deg (about 110 mm, was 150/122 over 145 mm), domed more, lower on the deltoid
+CAP_CORNER = (16.0, 24.0)     # round 10b: the cap's upper and lower corners ROUNDED to these radii (were 45-deg chamfers,
+                              # m45: "sharp, unbevelled corners ... cut card")
 CAP_SMOOTH = 10               # round 6: the cap field's smoothing (10 flattened the cup into a plank); round 10: 4 -> 10
                               # with the dome (CAP_DOME) carrying the curvature
 CAP_LINK = 0.42               # rad above the cap's top edge: the webbing link up over the carrier's strap pad
-CAP_UP = {"L": 1.3, "R": 1.0}  # the cap's centre: CAP_UP x up + down the arm (+ CAP_FWD x front), at rest.
+CAP_UP = {"L": 1.3, "R": 0.85}  # the cap's centre: CAP_UP x up + down the arm (+ CAP_FWD x front), at rest.
                               # Round 10 (critics r9 m17, D7: the right cap perched flat and high by the collar, standing
                               # off the arm; the drawn one a curved shell low on the outer deltoid): R 1.3 -> 1.0
-CAP_DOME = 9.0                # round 10 (m31): the cap domed this much (mm) over the fitted shoulder at its centre
+CAP_DOME = {"L": 13.0, "R": 15.0}   # round 10 (m31): the cap domed this much (mm) over the fitted shoulder at its
+                              # centre (9 both); round 10b (m29, m7): more, so each reads as a shell cupping the deltoid
 CAP_FWD = {"L": -0.25, "R": 0.12}   # turned back at rest (round 1: 0.45 forward): the hero pose turns the upper arm
                               # in, so posed the cap faces out and up on the outside of the shoulder, as drawn.
                               # Round 9 (critics r8 m2, all three: the right cap "a fin" seen edge-on on the outside of
@@ -253,7 +269,10 @@ TIER2_S, TIER2_ARC = (78.0, 228.0), 112.0     # s along the arm below the joint;
                               # Round 10 (m31, m8: the drawn upper arm carries a long second plate on its outer face, its
                               # lower half held by a dark strap; ours a short square plate and a pale ring): 76-166 x 140
                               # -> a long outer-arm plate 78-228 x 112 with chamfered lower corners
-TIER2_CHAMFER = 16.0
+TIER2_CHAMFER = 16.0          # round 10b: now the radius of the rounded lower corners (were 45-deg chamfers)
+RIM = {"bead": 1.3, "w": 4.5, "lip": 0.65}   # round 10b (m45: "uniform sheet thickness ... cut card"): a ROLLED rim on
+                              # every shell (rolled()): the shell thins to `lip` x its wall at the very edge and swells
+                              # `bead` mm over the `w` mm band inside it, so the edge reads moulded and rounded
 TIER3_S, TIER3_DEG = (148.0, 186.0), 200.0    # round 10: the bicep band is now a 38 mm coyote webbing strap round the
                                               # arm and over tier 2 (Tier3.Strap), 0.4 mm over the sleeve: it bears on
                                               # the cloth instead of standing proud as a pale moulded ring (m8, m20);
@@ -278,16 +297,21 @@ GUARD_FOAM = 3.0
 # drawn (a long upper plate and a lower plate to the glove cuff, ref/zoom_armour_lguard_x10), each hugging the
 # tapering forearm (StraightSurf hug: the line is the upper hull of the samples, not one raised over the fattest),
 # on thinner padding, so the guard tapers from the elbow to the wrist; a third plate (tried first) read as rings
-GUARD = [("Lower", (178.0, 256.0), 160.0, 2.5, "lowerarm02", 8.0),
-         ("Main", (96.0, 186.0), 176.0, 3.0, "lowerarm01", 26.0)]
-GUARD_ARC_R = {"Main": 172.0, "Lower": 160.0}   # the right arm (round 9: wider arcs put the main shell into the
+# round 10b (critics r10 m9, m12, m31, D10: flared tubes with gaps at the rim; the left guard ~60 px high, bare sleeve above
+# the glove): narrower dorsal shells (160 / 150 deg) that hug the forearm, the lower one on to the glove cuff (d 264), the
+# main shell's lap over it a gentle 18 mm ramp (was a 10 mm flared lip)
+GUARD = [("Lower", (174.0, 264.0), 150.0, 2.5, "lowerarm02", 8.0),
+         ("Main", (92.0, 182.0), 160.0, 3.0, "lowerarm01", 22.0)]
+GUARD_ARC_R = {"Main": 158.0, "Lower": 150.0}   # the right arm (round 9: wider arcs put the main shell into the
                                                 # carbine's stock, which lies along the right forearm)
 GUARD_STRAP_W = 25.0
 GUARD_STRAP_D = (128.0, 222.0)   # strap centres: on the upper and the lower shell
 # Elbow pad (round 6; the reference has one on the left elbow, m22): a domed hard cap on the point of the elbow
 # over a neoprene base, held by straps round the upper arm and the forearm; the cap rides the skin's weights there
-ELBOW_PAD = {"w": 76.0, "h": 88.0, "pad": 5.0, "base_t": 4.0, "t": 3.0, "lat": 0.35, "strap_up": 52.0,
-             "strap_dn": 74.0, "strap_w": 18.0, "dome": 13.0}
+ELBOW_PAD = {"w": 94.0, "h": 100.0, "pad": 5.0, "base_t": 3.0, "t": 3.0, "lat": 0.35, "strap_up": 56.0,
+             "strap_dn": 78.0, "strap_w": 18.0, "dome": 8.0}
+# round 10b (critic r10 m36: "a tiny puck proud of the sleeve"): wider and taller (94 x 100, was 76 x 88), so it wraps the
+# point and both sides of the elbow, and flatter (dome 8, base 3: 11 mm over the sleeve at the point, was 17)
 # round 9 (critics r8 m5, all three: "a thin disc edge-on off the elbow"): the cap and its padded base domed 13 mm over
 # the point of the elbow (a moulded cup about 20 mm deep with the base), 76 x 88 (was 70 x 80, flat on the skin)
 # Knee pad: unrolled octagon (u across, + lateral; v up), round 6: a faceted domed cap 150 x 164 (was 160 x 190
@@ -299,10 +323,15 @@ ELBOW_PAD = {"w": 76.0, "h": 88.0, "pad": 5.0, "base_t": 4.0, "t": 3.0, "lat": 0
 # Round 10 (critics r9 m14, m25, m37, D4, D21: oversized, boxy, glossy, smeared highlights; the drawn cap narrower,
 # faceted, with a domed patella and a tan rim): 156 x 184 -> 132 x 176, the facets rising 18 mm (26) to the central
 # plate with a 7 mm patella dome on it (KNEE_PATELLA), the side lift 16 -> 8 mm, crisper facets (k 0.012)
-KNEE_HW, KNEE_HH = 66.0, 88.0
-KNEE_BASE_T, KNEE_CAP_T, KNEE_DOME = 6.0, 4.5, 18.0
-KNEE_K, KNEE_RECESS, KNEE_MB = 0.012, 3.0, 6.0
-KNEE_PATELLA = 7.0            # round 10: a dome over the patella on the central plate (mm at its centre)
+# Round 10b (critics r10 m4, m22, D2: flat slabs, puffy cushions or deep bowls with pale faces; the drawn cap a dark face
+# inside a tan rim with a faceted, hex-like centre plate): 124 x 164 (132 x 176), the face only 1.2 mm under the frame (3:
+# the "bowl"), a raised hexagonal centre plate with chamfered flanks in place of the ridge and the patella dome (the
+# "cushion"), the facets rising 15 mm (18)
+KNEE_HW, KNEE_HH = 62.0, 82.0
+KNEE_BASE_T, KNEE_CAP_T, KNEE_DOME = 6.0, 4.5, 15.0
+KNEE_K, KNEE_RECESS, KNEE_MB = 0.012, 1.2, 6.0
+KNEE_PATELLA = 0.0            # round 10: a dome over the patella on the central plate (7 mm); round 10b: none
+KNEE_HEX = (24.0, 34.0, 5.0, 8.0)   # round 10b: the centre plate: half width, half height (to its points), rise, flank mm
 KNEE_FLAT = 8.0               # round 9: the sides lifted (u / hw)^2 x this off the knee pocket, so the cap is a flatter
                               # shell over a thicker foam base and stops wrapping the knee like a tube (the "pillow")
 KNEE_FACET = (26.0, 24.0, 32.0)   # the facets' runs (mm) from the outline to the central plate: sides, top, bottom
@@ -311,7 +340,32 @@ KNEE_DZ = -12.0               # cap centre relative to the knee joint (the pocke
 
 
 
-def octagon_hw(v, hw=KNEE_HW, hh=KNEE_HH, lo=(32.0, 40.0), hi=(44.0, 20.0)):
+def rolled(e, wall, bead=None, w=None, lip=None):
+    """Round 10b: a moulded shell's rolled rim at distance e (mm) inside its outline: `lip` x wall at the edge, the
+    rim swelling `bead` mm over the `w` mm band (a half sine), the plain wall beyond."""
+    bead = RIM["bead"] if bead is None else bead
+    w = RIM["w"] if w is None else w
+    lip = RIM["lip"] if lip is None else lip
+    if e >= w:
+        return wall
+    x = max(0.0, e) / w
+    return wall * (lip + (1.0 - lip) * min(1.0, 2.5 * x)) + bead * math.sin(math.pi * x)
+
+
+def round_corner_hw(d, half, r):
+    """Half width at distance d (mm) from a straight end of a panel `half` wide with corners rounded to r."""
+    k = r - min(max(d, 0.0), r)
+    return half - r + math.sqrt(max(r * r - k * k, 0.0))
+
+
+def hex_dist(u, v, hx, hy):
+    """Round 10b: distance (mm, approximate) inside a hexagon with flat sides at +-hx and points at +-hy (v)."""
+    k = hy - hx * 0.5                       # the slanted sides start at |v| = k at the full half width
+    slant = (hy - abs(v)) - abs(u) * (hy - k) / hx
+    return min(hx - abs(u), slant * hx / math.hypot(hx, hy - k))
+
+
+def octagon_hw(v, hw=KNEE_HW, hh=KNEE_HH, lo=(30.0, 36.0), hi=(40.0, 18.0)):
     """Half width of the knee cap's octagon at height v (centre 0): bottom edge lo[0] wide rising over
     lo[1] to the full width, top edge hi[0] over hi[1]."""
     if v < -hh + lo[1]:
@@ -429,7 +483,7 @@ def plate_t(wall, half_u, v0, v1, rib=False, grooves=False, bead=0.9):
     plate's ends) and two grooves 1.2 deep at +-22 mm."""
     def f(u, v):
         e = min(half_u - abs(u), v - v0, v1 - v)
-        t = wall + G.edge_profile(e, bead)
+        t = rolled(e, wall)                      # round 10b (m45): a rolled rim (was wall + a flat 0.9 bead)
         if rib:
             end = min(v - v0, v1 - v) - 8.0
             if end > 0:
@@ -486,12 +540,13 @@ def main(render=True):
         t2_v0, t2_v1 = TIER2_S
 
         def hw2(v, h=half2):
-            # round 10: the long outer-arm plate's lower corners chamfered TIER2_CHAMFER at 45 deg
-            return h - max(0.0, TIER2_CHAMFER - (t2_v1 - v))
+            # round 10: the long outer-arm plate's lower corners chamfered TIER2_CHAMFER at 45 deg; round 10b: rounded
+            # (radius TIER2_CHAMFER below, 8 above)
+            return min(round_corner_hw(t2_v1 - v, h, TIER2_CHAMFER), round_corner_hw(v - t2_v0, h, 8.0))
 
         def t2_field(u, v):
             e = min(hw2(v) - abs(u), v - t2_v0, t2_v1 - v)
-            t = CAP_T + G.edge_profile(e, 0.9)
+            t = rolled(e, CAP_T)
             # round 10: no recessed panel (round 2-9: 70 x 28, 1.5 deep): its rim's wear drew a pale square outline on
             # the plate, "a pale square patch" (critic m31), and ramped over 5 mm it still did
             # round 10: two vent slots 6 x 18 along the rear edge below the strap (the drawn plate's dark slots)
@@ -563,9 +618,10 @@ def main(render=True):
         # ------------------------------------------------ pauldron tier 1: the cap, on the outside of the shoulder
         up = np.array([0.0, 0.0, 1.0])
         c = G.unit(CAP_UP[side] * up + d_up + CAP_FWD[side] * f_up)     # over the deltoid, on the outside
+        CAP_W_TOP, CAP_W_BOT = CAP_W[side]
         e1 = G.unit(f_up - c * np.dot(f_up, c))    # across: toward the front
         e2 = G.unit(d_up - c * np.dot(d_up, c))    # down the arm
-        qa, qb = math.radians(CAP_Q[0]), math.radians(CAP_Q[1])
+        qa, qb = math.radians(CAP_Q[side][0]), math.radians(CAP_Q[side][1])
         pw = math.radians(60.0)
         under_cap = G.Under(list(under_a.layers) + list(under_t.layers) + strap_layer +
                             [(G.objects_bvh([tier2]), 1.5 - CAP_PAD)])
@@ -574,21 +630,22 @@ def main(render=True):
         def cap_dome(p, q, pw_=math.radians(40.0)):
             # round 10 (m31: "a domed shell"): CAP_DOME mm at the centre, 0 at the cap's outline
             x, y = min(1.0, abs(p) / pw_), min(1.0, abs(q - qm) / qh)
-            return CAP_DOME * (1.0 - x * x) * (1.0 - y * y)
+            return CAP_DOME[side] * (1.0 - x * x) * (1.0 - y * y)
         cap = CapSurf(under_cap, gh, c, e1, e2, (-pw, pw), (qa - 0.05, qb + 0.05), smooth=CAP_SMOOTH, dome=cap_dome)
         S["cap_raw_mm"] = [round(float(x), 1) for x in np.nanpercentile(cap.raw, (0, 50, 100))]
         r_cap = float(np.nanmean(cap.F.R)) + CAP_PAD
 
-        def cap_hw(q, r=r_cap):
+        def cap_hw(q, r=r_cap, wt=CAP_W_TOP, wb=CAP_W_BOT):
             t = (q - qa) / (qb - qa)
-            w = CAP_W_TOP + (CAP_W_BOT - CAP_W_TOP) * t
-            ch = max(0.0, 28.0 - (qb - q) * r)           # lower corners chamfered 28 at 45 deg
-            ct = max(0.0, 14.0 - (q - qa) * r)           # upper corners rounded off 14
-            return (w / 2.0 - ch - ct) / r
+            w = wt + (wb - wt) * t
+            # round 10b (m45): rounded corners (were a 28 mm chamfer below and a 14 mm one above, at 45 deg)
+            h = min(round_corner_hw((qb - q) * r, w / 2.0, CAP_CORNER[1]),
+                    round_corner_hw((q - qa) * r, w / 2.0, CAP_CORNER[0]))
+            return h / r
 
         def cap_field(p, q, r=r_cap):
             e = min((cap_hw(q) - abs(p)) * r, (q - qa) * r, (qb - q) * r)
-            return CAP_T + G.edge_profile(e, 1.1, 4.0, 2.0)
+            return rolled(e, CAP_T, bead=1.5, w=5.0)
         ob = G.slab(f"Pauldron.{side}.Tier1.Cap", coll, cap.surf(CAP_PAD), lambda q: (-cap_hw(q), cap_hw(q)), qa, qb,
                     CAP_T, M["shell"], nu=60, nv=70, bevel_mm=0.8, t_field_fn=cap_field)
         rigid.append((ob, f"upperarm01.{side}"))
@@ -620,9 +677,10 @@ def main(render=True):
                 d = min(q - q0, q1 - q) * re           # mm from the nearer end (top or bottom edge)
                 k = EMBLEM_R - min(max(d, 0.0), EMBLEM_R)
                 return (0.5 * EMBLEM_W - EMBLEM_R + float(np.sqrt(max(EMBLEM_R ** 2 - k ** 2, 0.0)))) / r
+            # round 10b (m29: "a raised emblem panel"): 2.2 mm thick (1.0)
             ob = G.slab("Pauldron.L.Tier1.Emblem", coll, cap.surf(CAP_PAD + CAP_T + 1.4),
-                        lambda q: (-emb_hw(q), emb_hw(q)), qe - he, qe + he, 1.0, M["emblem"], nu=10, nv=18,
-                        bevel_mm=0.4)
+                        lambda q: (-emb_hw(q), emb_hw(q)), qe - he, qe + he, 2.2, M["emblem"], nu=10, nv=18,
+                        bevel_mm=0.6)
             S["emblem_decal_uv"] = decal_uv(ob)
             rigid.append((ob, "upperarm01.L"))
 
@@ -665,7 +723,7 @@ def main(render=True):
                                     - base_off)
 
             def offf(v, lo=lo, extra=extra):
-                return base_off + extra * G.smoothstep(v, lo - 10.0, lo)
+                return base_off + extra * G.smoothstep(v, lo - 18.0, lo)
 
             def dmap(u, w, drng=drng, half=half, curve=curve):
                 d0 = drng[0] + curve * (u / half) ** 2          # the elbow band's edge recedes at its sides
@@ -759,7 +817,7 @@ def main(render=True):
 
         def e_field(p, q, r=r_e + E["pad"]):
             e = min((e_hw(q) - abs(p)) * r, (hh_e - abs(q)) * r)
-            return E["t"] + G.edge_profile(e, 1.0, 3.0, 1.5) - 1.2 * G.smoothstep(e, 10.0, 12.0)
+            return rolled(e, E["t"], bead=1.0, w=4.0) - 1.2 * G.smoothstep(e, 10.0, 12.0)
         # soft-bound, both: a cap mounted as one piece on the elbow skin rotated with half the 107 deg fold and stood
         # off the flexed right elbow at its ends (first try of round 6); per-vertex weights let it wrap the point
         # round 9: the base is the foam under the dome: from the skin up to the cap's underside (no void)
@@ -833,10 +891,12 @@ def main(render=True):
         def knee_field(v0, v1, wall, ridge=True):
             def f(u, v):
                 e = min(octagon_hw(v) - abs(u), v - v0, v1 - v)
-                t = wall + G.edge_profile(e, 1.2, 2.5, 1.5)
-                t -= KNEE_RECESS * G.smoothstep(e, 11.0, 13.0)         # the centre panel, below the frame
-                if ridge and e > 13.5:
-                    t += 1.6 * (1.0 - G.smoothstep(abs(u), 4.0, 8.0))  # the moulded centre ridge
+                t = rolled(e, wall, bead=1.2, w=4.0)
+                t -= KNEE_RECESS * G.smoothstep(e, 11.0, 13.0)         # the face, below the frame
+                if ridge:
+                    # round 10b: the raised hexagonal centre plate (points up and down), chamfered flanks
+                    hx, hy, rise, fl = KNEE_HEX
+                    t += rise * G.smoothstep(hex_dist(u, v - 4.0, hx, hy), 0.0, fl)
                 # round 6: the frame's slots (the drawn dark holes): three a side, 18 x 5, 1.6 deep
                 if 3.5 < e < 10.0 and abs(u) > octagon_hw(v) - 11.0:
                     for vk in (-40.0, -4.0, 32.0):

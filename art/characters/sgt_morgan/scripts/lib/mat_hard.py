@@ -274,12 +274,26 @@ def build_painted(mat, rec):
     nb = K.new_tree(mat)
     st = C.TILE_PERIODS[rec["texture"]]["stats"]
     obj = nb.coords("Object")
+    if rec.get("object_jitter"):
+        # round 10b (critic r10 m13: "the same procedural pattern repeats on every plate"): every object's own
+        # texture space, turned, scaled and shifted by its Object Info random value, so no two plates carry the
+        # same noise at the same scale and orientation; 0 (the default) keeps the plain object coordinates
+        j = float(rec["object_jitter"])
+        rnd = nb.node("ShaderNodeObjectInfo").outputs["Random"]
+        r3 = [nb.math("FRACT", nb.math("MULTIPLY", rnd, k)) for k in (1.0, 7.31, 13.77)]
+        rot = nb.combine(*[nb.math("MULTIPLY", r, 6.2832 * j) for r in r3])
+        vr = nb.node("ShaderNodeVectorRotate", rotation_type="EULER_XYZ")
+        nb.link(obj, vr.inputs["Vector"])
+        nb.link(rot, vr.inputs["Rotation"])
+        sc_ = nb.math("ADD", 1.0, nb.math("MULTIPLY", nb.math("SUBTRACT", r3[2], 0.5), 0.5 * j))
+        obj = nb.vmath("ADD", nb.vmath("MULTIPLY", vr.outputs["Vector"], nb.combine(sc_, sc_, sc_)),
+                       nb.combine(*[nb.math("MULTIPLY", r, 0.9 * j) for r in r3]))
     rmap = _bw(nb, G.antirepeat(nb, rec["texture"], "roughness", obj, rec["tile_mm"], box=True))
     r = nb.math("ADD", rec["rough"] - 0.5 * rec["rough_span"],
                 nb.math("MULTIPLY", _band01(nb, rmap, st["rough_p2"], st["rough_p98"]), rec["rough_span"]))
     base = C.hex_to_linear(rec["albedo_hex"])
     mo = rec["mottle"]
-    col = nb.mix(nb.math("MULTIPLY", _noise01(nb, mo["noise_mm"], 3.0), mo["amount"]), base, C.hex_to_linear(mo["hex"]))
+    col = nb.mix(nb.math("MULTIPLY", _noise01(nb, mo["noise_mm"], 3.0, vector=obj), mo["amount"]), base, C.hex_to_linear(mo["hex"]))
     pi = rec.get("paint_image")
     if pi:   # a painted swatch (GEN_TEXTURES) by box projection: its colour over its own mean, times the paint's
         st_i = C.GEN_TEXTURES[pi["image"]]["stats"]
@@ -328,7 +342,7 @@ def build_painted(mat, rec):
     # that band, so a recipe's 0.3 % cover drew about 6 % and its 7 % edge cover about 30 %; compared raw now
     cn = nb.noise(obj, 1000.0 / ch["noise_mm"], detail=2.0)
     chip = nb.map_range(nb.math("SUBTRACT", cn, thr_local), -0.006, 0.006, 0.0, 1.0)
-    patch = nb.smoothstep(_noise01(nb, ch["patch_mm"]), 0.42, 0.62)
+    patch = nb.smoothstep(_noise01(nb, ch["patch_mm"], vector=obj), 0.42, 0.62)
     if ch.get("patch_always"):   # round 8: chips gather in patches along the edges, never in an even band
         chip = nb.math("MULTIPLY", chip, patch)
     else:
@@ -344,13 +358,25 @@ def build_painted(mat, rec):
         ao_own = nb.node("ShaderNodeAmbientOcclusion", samples=8, inside=False, only_local=True,
                          inputs={"Distance": rb["distance_mm"] * 0.001}).outputs["AO"]
         other = nb.map_range(nb.math("SUBTRACT", ao_own, ao_all), 0.15, 0.55, 0.0, 1.0)
-        rn = nb.map_range(_noise01(nb, rb.get("noise_mm", 6.0), 2.0), 0.2, 0.8, 0.3, 1.0)
+        rn = nb.map_range(_noise01(nb, rb.get("noise_mm", 6.0), 2.0, vector=obj), 0.2, 0.8, 0.3, 1.0)
         worn = nb.math("MAXIMUM", worn, nb.math("MULTIPLY", nb.math("MULTIPLY", other, rn), rb["amount"]), clamp=True)
     fr = rec.get("frame")
     if fr:   # a part's own wear zone (the knee caps' raised frames, worn bare in the reference): a point attribute
-        fw = nb.math("MULTIPLY", nb.attr(fr["attribute"]), nb.map_range(_noise01(nb, fr["noise_mm"]), 0.25, 0.6,
+        fw = nb.math("MULTIPLY", nb.attr(fr["attribute"]), nb.map_range(_noise01(nb, fr["noise_mm"], vector=obj), 0.25, 0.6,
                                                                         1.0 - fr["break"], 1.0))
         worn = nb.math("MAXIMUM", worn, nb.math("MULTIPLY", fw, fr["amount"]), clamp=True)
+    lg = rec.get("low_grime") or {}
+    if lg.get("amount", 0.0) > 0.0:
+        # round 10b (critics r10 m11, m13, D3: wear where real wear happens): grime along a plate's LOWER edges
+        # (the rest mesh's generated z, low in the object's own box: what hangs lowest collects the dirt) within
+        # band_mm of an edge, broken by a noise; darkens the paint toward `hex`. Off (amount 0) by default
+        gz = nb.separate(nb.coords("Generated"))[2]
+        low = nb.math("SUBTRACT", 1.0, nb.map_range(gz, lg.get("below", 0.15), lg.get("above", 0.55), 0.0, 1.0,
+                                                     "SMOOTHSTEP"))
+        gb = nb.math("MULTIPLY", G.edge_band(nb, lg.get("band_mm", 8.0)), low)
+        gn = nb.map_range(_noise01(nb, lg.get("noise_mm", 10.0), 2.0, vector=obj), 0.25, 0.75, 0.25, 1.0)
+        col = nb.mix(nb.math("MULTIPLY", nb.math("MULTIPLY", gb, gn), lg["amount"], clamp=True), col,
+                     C.hex_to_linear(lg.get("hex", "#2a2622")))
     sub = rec["substrate"]
     metal = 0.0
     if sub.get("f0"):

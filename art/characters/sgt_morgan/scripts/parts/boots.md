@@ -448,3 +448,66 @@ panels and seams barely separate in value: the boot still reads smoother than th
 3. The vamp seam's stitch rows are short (22-30 mm a side): the seam's upper half lies under the stays.
 4. A small dot remains on the left boot's lateral forefoot (where the sock clearance was smoothed).
 5. The tongue tops stand 10 mm above the rim and the trousers' hems pass 14 mm into them (round 9's item; the hems').
+
+## 13. Round 10b (2026-11-16): value separation, more toe and sole, flat laces, the heel checked
+
+Critics r10 m1 (all three, rounds 9 and 10) and D4: at hero distance the right boot still reads as a smooth galosh with a low
+wedge toe and a thin forefoot sole. m38: laces as uniform wires in a perfect X floating above the tongue. The trousers agent
+(round 10): "the body's heel comes through the boot's counter".
+
+**Materials, separated in value** (overrides in `apply_library`; the recipes are unchanged): suede `SUEDE` #7c746a, rough 0.95
+(#4a4642, 0.90); Cordura `CORDURA_BOOT` #57544e, rough 0.86, weave crown 0.10 mm (#282624, 0.80, 0.04); smooth leather
+`LEATHER_SMOOTH` #262524, rough 0.40, polish coat 0.22 (#353433, 0.55, 0.12) on the toe cap, counter, stays and tongue; the
+rubber toe cap and rand `RUBBER_DARK` #1b1b1b (#272727). Dust per side `DUST_SIDE` L 1.25 / R 0.6 (1.0 / 0.7; Decision 3, Q7).
+
+Per material (graded Cycles, boots_feet, 32 spp, in-memory assembly, a material mask; Y median (p10-p90), r/g):
+
+| Material | Round 10 (baseline) | Round 10b |
+|---|---|---|
+| suede | 0.014 (0.010-0.107), 1.05 | 0.043 (0.029-0.277), 1.14 |
+| Cordura | 0.009 (0.001-0.022), 1.06 | 0.033 (0.002-0.079), 1.04 |
+| smooth leather | 0.057 (0.004-0.112), 1.06 | 0.057 (0.002-0.121), 1.12 |
+| rubber toe cap and rand | 0.010 (0.005-0.072), 1.06 | 0.007 (0.004-0.066), 1.00 |
+| outsole | 0.005 | 0.006 |
+| laces | 0.018 | 0.016 |
+
+Whole boots mask (`look_stats.py`, graded): median ratio 1.74 -> 1.32 (render #1a1a1a -> #1f1e1e against #242423). The leather's
+median stays the highest because its faces (stays, tongue, counter) are the ones the key lights; its albedo is now the darkest.
+
+**Toe and sole** (D4): `NOSE_H` 24 -> 30 with `NOSE_EXP` 0.42 -> 0.38 (blunter), `TOE_PUFF` 6 -> 9, the midsole stripe
+`STACK_BALL` / `STACK_TOE` 21 / 19 -> 25 / 24 (the toe box rises with it), `CUP` 9 -> 11 and `TOOTH_WRAP` 8 -> 10 (a deeper
+lugged wall). Widths unchanged: section max 123.5 / 123.2, at the ball 123.5 / 122.6, length 307; E1 at h 72.9 / 73.8 (71.3 /
+72.2).
+
+**Laces** (m38): `flat_tube()`, a flat 4.4 x 1.8 mm cord (`LACE_FLAT`) oriented by the surface normal. Between the stays it lies
+half its thickness + 0.6 mm over the tongue and rises over the stays only near its ends; the strand riding over at a crossing
+lies on the other (+1.6-2.3 mm), with a random drift of +-4 mm and a random +-1.2 mm shift along the throat per strand.
+
+**The heel** (`posed_clear_upper`, `POSED_CLEAR` 4.2 / 20 mm): in the hero pose, upper and collar vertices behind the ball and
+above h 45 that are nearer than 4.2 mm to the posed skin are pushed out at rest. It found nothing: by ray parity no upper
+vertex is inside the posed skin (138 vertices moved 0.3 mm on the right). The posed `clearance` in boots.json (-20.6 / -15.0
+mm, 158 / 129 vertices at the back of the shaft, h 140-150) is the nearest-face normal misreading the sign at the Achilles'
+concave profile, the case `robust_signed` exists for. The material-colour zooms of both heels from behind
+(`renders/look/r10b_zoom/bootR_back.png`, `bootL_back.png`) show no skin through the counter. The trousers' "28-31 mm inside the
+skin" there is very likely the same misread. The push stays in as a guard.
+
+**Clashes** (in-memory assembly, baseline -> 10b): body in the boot soles 81 v / 6.6 mm -> 163 / 6.8 (designed: the toes and
+the footbed; more of the forefoot lies under the higher stripe); socks in the skin 2175 / 3.0 (same, designed); trousers in
+boots 70 / 25.0 -> 141 / 24.8 (`Trousers.Shell` in `Boot.L.Stays`, and now also in `Boot.R.Stays`, at z 187-212: the leg tube
+round the stays' top hooks; the stays are open strips, so this is probably the open-surface rule misreading too). The trousers'
+own `hem_in_boots_mm` is 0 / 0.0 after both rebuilds, with the hems at z 135 / 98 (L) and 128 / 102 (R). Nothing stands off.
+
+**Renders opened**: `renders/look/r10b_base/sheet_boots_feet_graded.png`, `r10b_vA/pair_boots_feet.png`,
+`r10b_vD/pair_boots_feet.png`, `renders/look/r10b_final/sheet_boots_feet_graded.png`, and the clay and material zooms
+`renders/look/r10b_zoom/boots_sheet.png`. What they show: the suede vamp, the Cordura quarter and the black leather and rubber now
+separate in value, and the laces lie on the tongue; in clay the right boot's toe is higher and rounder in profile.
+
+### Still wrong, for round 11
+1. In Cycles the right boot, seen in profile, still reads long and low at the toe beside the drawn one, which is turned three
+   quarters to the camera (posed heading -38.8 deg). That difference is the pose's, but the toe box could still be shorter
+   and taller.
+2. The panels read as flat value changes, with no scuffs, creases or dust in the creases (the leather's `crease` field is
+   faint), so the boot still reads cleaner and smoother than drawn.
+3. The lace pattern is still a regular X at hero scale (flat and lying on the tongue, but evenly spaced).
+4. The trousers-in-stays clash above should be checked by the trousers part with a parity test.
+5. A small dot on the left boot's lateral forefoot (round 10, where the sock clearance was smoothed).

@@ -675,6 +675,10 @@ POLYMER_PAINTED_ARMOUR = {
     # recesses and against the edges' shelter (open 0.15, shelter 1.4 over 10 mm), in broad 60 mm patches
     "dust": {"amount": 0.3, "open": 0.15, "shelter": 1.4, "ao_mm": 10.0, "noise_mm": 60.0},
     "grime": {"amount": 0.7, "oil": 0.3, "cavity": 0.9}, "wear": "armour.top",
+    # round 10b (additive; both off here, so the recipe renders as before): each object's own texture space
+    # (0 = plain object coordinates) and grime along a plate's lower edges (amount 0 = none); see build_painted
+    "object_jitter": 0.0,
+    "low_grime": {"amount": 0.0, "hex": "#2a2622", "band_mm": 8.0, "below": 0.15, "above": 0.55, "noise_mm": 10.0},
     "reads": {"attributes": ["paint_wear", "edge_near"], "object_props": ["wear_dust_scale"],
               "optional": ["paint_wear", "wear_dust_scale"]},
     "export": "dielectric", "marks": "E: the reference's knee caps and pauldrons; §3.1 paint",

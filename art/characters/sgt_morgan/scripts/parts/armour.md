@@ -490,3 +490,84 @@ smaller matte shields with a tan frame; the forearm guards are two tapered shell
    plate as a step).
 5. `Guard.R.Lower.Foam` stands off 10.5 mm under the main shell's lip (hidden; designed). The right elbow pad's straps were
    pushed the full 6 mm cap in places; the lower one shows as a thin arc in the crease from the side.
+
+## 14. Round 10b (2026-11-16): the grime regression, rolled rims, a compact right cap, hex knee plates
+
+Critics r10 (`notes/critic/soldier_r10/tally.md`, `G1_compare.md`): m11 / m13 / D3 (the round-10 grime: big, soft, pale
+camouflage blotches, "stone", the same noise on every plate; also our own look at the hero frame), m45 (cut card: uniform
+thickness, sharp corners), m6 / m7 / D7 (the right pauldron a long flat slab above the shoulder line, standing off the
+deltoid), m29 / m27 (the left one flat cards; the emblem a pale star), m4 / m22 / D2 (knee caps flat slabs, puffy cushions or
+deep bowls with pale faces), m9 / m12 / m31 / D10 (forearm guards: short bands, or flared tubes with gaps at the rim; the left
+one high), m36 (the elbow pad a tiny puck).
+
+**The look.** The blotches were the round-10 mottle (14 mm noise toward #2e2b27 at 0.65) and R005's soft clouds at 0.9 (R005
+carries low-frequency light clouds under its fine scratches, `renders/look/scratch/r005.png`). Now (`ARMOUR_TAN`): paint
+#666460 (cooler; was #6a655c), mottle 0.10 at 60 mm, R005 at 0.65 on its catalogue tile of 150 mm (70 and 90 both fail lint
+L6), roughness span 0.10 (0.20); the worn rim 1.8 mm, broken by its noise at 0.95, at amount 0.55 (the rolled rims below made
+the Bevel mask fire along every outline, a continuous tan line); chips only within 3.5 mm of an edge (22 % there, 0 on the
+faces), rub 0.35, grime 1.6 / cavity 1.6, and two library additions (below): `object_jitter` 1.0 (each plate in its own
+turned, scaled and shifted texture space) and `low_grime` 0.9 (grime along each plate's lower edges, 10 mm band). Knee face
+#524f4b (was #746a5e), no mottle, the frame worn tan as before (break 0.25).
+
+**Library (additive, defaults keep the old behaviour; LIB_VERSION unchanged):** `lib/mat_hard.py build_painted`:
+`rec["object_jitter"]` (0 = the plain object coordinates; else Object Info Random drives a rotation, a +-25 % scale and an
+offset of the coordinates every noise and box projection reads; the mottle, chip-patch, rub and frame noises now take that
+coordinate explicitly, identical when it is 0); `rec["low_grime"]` {amount 0 = off, hex, band_mm, below, above, noise_mm}:
+the paint darkened toward `hex` within band_mm of an edge where the rest mesh's Generated z is low. `lib/mat_catalogue.py
+POLYMER_PAINTED_ARMOUR`: the two keys added at 0 (overrides refuse unknown keys).
+
+**Plates only** (the shell and knee materials under a material mask, Workbench flat, eroded 2 px; graded Cycles at 32 spp from
+an in-memory assembly of the current caches, scratch `asm_look.py` / `matstats.py`, not a round; Y median (p10-p90), r/g / b/g):
+
+| Crop | Round 10 (this session's baseline) | Round 10b | Reference plates (section 12) |
+|---|---|---|---|
+| arm_L | 0.171 (0.021-0.278), 1.14 / 0.87 | 0.196 (0.027-0.279), 1.07 / 0.93 | 0.198 / 0.228 / 0.110; 0.88-1.14 / 0.89-1.14 |
+| arm_R | 0.212 (0.048-0.348), 1.24 / 0.81 | 0.241 (0.056-0.339), 1.17 / 0.89 | 0.320 (lit guard); 1.13 / 0.90 |
+| torso_vest | 0.191 (0.028-0.323), 1.19 / 0.85 | 0.219 (0.034-0.303), 1.10 / 0.90 | |
+| legs_knees | 0.071 (0.023-0.197), 1.40 / 0.75 | 0.047 (0.016-0.162), 1.28 / 0.85 | 0.190 frame, 0.060 centre; 1.13-1.14 / 0.86-0.90 |
+
+Whole armour mask (`look_stats.py`, graded): median ratio 0.45 -> 0.51 (render #655a52 -> #5e5753 against #423f3c); r/g, b/g
+1.27, 0.82 -> 1.17, 0.91 against 1.13 / 1.10, 0.94 / 0.91. The hue is now inside the reference plates' range; the arm plates'
+value stays at the drawn mid tone (a darker paint, #5e5d5a, `renders/look/r10b_vB`, put arm_L at 0.175; not taken).
+
+**Form.**
+- **Rolled rims** (m45): `rolled()` replaces the flat edge bead on every shell (cap, tier 2, guards, elbow cap, knee cap): the
+  wall thins to 0.65 x at the very edge and swells 1.3-1.5 mm in a half sine over the 4-5 mm inside it. Corners rounded
+  (`round_corner_hw`): cap 16 above / 24 below (were 45-degree chamfers), tier 2 16 below / 8 above.
+- **Right pauldron** (m6, m7, D7): `CAP_W` R 126 / 106 (150 / 122), `CAP_Q` R -30..38 deg (-40..50; about 110 mm, was 145),
+  `CAP_UP` R 1.0 -> 0.85, `CAP_DOME` R 15 (9). **Left** (m29): dome 13 (9); the emblem plate 2.2 mm thick (1.0), decal UV
+  63.9 x 75.0. **Emblem** (m27): `Decal.Emblem` f0 (0.045, 0.055, 0.072), rough 0.55 (was the light anodised 0.14-0.19), a
+  dark steel-blue panel under the light mark.
+- **Knee caps** (m4, m22, D2): 124 x 164 (132 x 176), facets rising 15 mm (18), the face 1.2 mm under the frame (3: the
+  "bowl"), no patella dome (7: the "cushion"), and a raised hexagonal centre plate (`KNEE_HEX`: 48 wide, 68 point to point,
+  5 mm proud over 8 mm chamfered flanks) in place of the centre ridge.
+- **Forearm guards** (m9, m12, m31, D10): narrower dorsal shells, Main d 92-182 at 160 deg (R 158; was 96-186 at 176 / 172),
+  Lower d 174-264 at 150 deg (178-256 at 160) onto the 30 mm glove cuff, the main shell's lap over the lower one ramped over
+  18 mm (10; lift 5.7 mm).
+- **Elbow pads** (m36): 94 x 100 (76 x 88), dome 8 (13), base 3 (4), straps at 56 / 78 mm (52 / 74).
+
+**Clashes and stand-off** (`clash_report` / `standoff_report` on the in-memory assembly; baseline -> 10b): armour in carbine
+49 v / 3.4 mm -> 22 / 3.4 (`Guard.R.Sleeve` at the stock); carbine in armour 72 / 1.1 (same); armour in shirt 76 / 1.9 -> 66 /
+2.1 (`Guard.L.Lower.Foam` at the bunched left cuff); shirt in armour 25 / 1.7 -> 30 / 1.7; gloves in armour 20 / 0.9 (same);
+armour in trousers none -> 6 / 0.5 (`Kneepad.R.LadderLock` on the knee pocket); armour in body none. posed_clear pushes:
+upper-arm straps 1.7 / 4.7, right elbow strap 6.0 (the cap), the left guard's lower shell and foam 6.0 (the cap). Stand-off:
+only `Guard.R.Lower.Foam` 10.7 mm (10.5; designed, under the main shell's lip). Lint errors 0.
+
+**Renders opened**: `renders/look/r10b_base/sheet_*_graded.png` (before), `renders/look/r10b_vA/pair_*.png`,
+`r10b_vC/pair_arm_R.png`, `renders/look/r10b_final/sheet_{arm_R,arm_L,torso_vest,legs_knees}_graded.png`, clay zooms
+`renders/look/r10b_zoom/armour_sheet.png` (`paulR`, `paulL`, `kneeR`, `kneeL`, `armL`). What they show: the blotches are gone;
+the plates are one even blue-grey paint with broken tan rims; the right cap is a smaller domed shell cupping the front of the
+deltoid and no longer rises past the shoulder line in `torso_vest`; the emblem is a dark panel with a light mark; the knee caps
+have a dark face inside the tan frame and a raised hex plate; the elbow pad wraps the point of the elbow.
+
+### Still wrong, for round 11
+1. **Too clean now.** The drawn plates carry dense fine scratches, scuffs and dark grime over the faces; ours read as clean
+   painted grey with tan rims. R005's scratches barely read at hero distance. A scratch and scuff map made for this
+   (directional, denser near edges and contact points) is the next step, not more noise.
+2. The emblem's mark reads as an arrow or chevron at hero scale, not the drawn crossed X (R003's inner mark).
+3. Forearm guards: from the hero camera they still read as two bands, the right one end-on (the pose's foreshortening,
+   section 12), and a strip of sleeve shows between the left guard and the glove (its lower shell is pushed out the full 6 mm
+   by the bunched sleeve). Segmenting the main shell waits on the pose.
+4. Knee caps: the hex plate reads, but the facets are smooth, with no slots, bolts or pitting; the face is a shade dark (knee
+   median 0.047 against the drawn centre's 0.060) and warm (r/g 1.28).
+5. The right pauldron is still a single shell; the drawn one has articulated plates under it.

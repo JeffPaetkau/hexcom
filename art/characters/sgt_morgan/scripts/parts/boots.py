@@ -52,10 +52,10 @@ TOE_ALLOW = 2.0                                  # the last carries the toe room
 HEEL_ALLOW = 2.5                                 # these few mm let the ends round off (a slab of points is flat-backed)
 NOSE, HEEL_END = 52.0, 38.0                      # lengths of the rounded toe and heel ends (round 9: nose 44 -> 40,
                                                  # with a blunter, higher nose: NOSE_H, NOSE_EXP)
-NOSE_H, NOSE_EXP, NOSE_PLAN = 24.0, 0.42, 0.80   # round 9 (critics r8 m4, "sneaker": a low pointed wedge toe): the nose
+NOSE_H, NOSE_EXP, NOSE_PLAN = 30.0, 0.38, 0.80   # round 9 (critics r8 m4, "sneaker": a low pointed wedge toe): the nose
                                                  # section keeps NOSE_H mm of height at the very tip (was 12) and rounds
                                                  # with e ** NOSE_EXP in profile (0.5), e ** NOSE_PLAN in plan (0.6)
-TOE_PUFF = 6.0                                   # round 9: the toe box raised this much ahead of the ball (a Zephyr-class
+TOE_PUFF = 9.0                                   # round 9: the toe box raised this much ahead of the ball (a Zephyr-class
                                                  # boot's high rounded toe box; spec 02 §3.1 internal 73 x 27 at the hallux)
 ARCH_H = 6.0                                     # round 9: the outsole's waist recessed this much between heel breast and
                                                  # forefoot (the drawn sole shows a heel block and a gap under the arch)
@@ -67,9 +67,13 @@ NOSE_RELAX = 16.0                                # round 10: the nose's sections
                                                  # nose) inside take 1's square toe box, so the toe rounds in plan
 TOE_ROUND, TOE_RELAX = 0.40, 12.0                 # round 10: the forefoot's sections round over above 45 % of their
                                                  # height, up to 6 mm inside take 1's square toe-box corners
+# round 10b (critics r10 m1, all three, D4: "a smooth galosh with a low wedge toe and a thin forefoot sole"): the nose keeps
+# 30 mm at the tip (24) and rounds blunter (e ** 0.38), the toe box rises 9 mm ahead of the ball (6), and the midsole
+# stripe stands 25 / 24 mm at the ball and the toe (21 / 19), so the toe and the forefoot sole carry more height; the
+# outsole's lugged cup wall is 11 mm (9) with the perimeter teeth wrapping 10 mm up it (8)
 SEC_N = 2.7                                      # superellipse exponent of the arches (2 = ellipse)
 TOE_SPRING = 15.0
-STACK_HEEL, STACK_BALL, STACK_TOE = 40.0, 21.0, 19.0   # floor -> midsole stripe top; the rand rises above it
+STACK_HEEL, STACK_BALL, STACK_TOE = 40.0, 25.0, 24.0   # floor -> midsole stripe top; the rand rises above it
 RAND = {"side": 12.0, "heel": 16.0, "toe": 14.0, "proud": 2.0, "lip": 0.8, "toe_exp": 4.0}   # round 10: a low strip
                                                  # (round 9: side 13, toe 26, proud 3.2, lip 1.4 with cos^10 at the toe)
 RUBBER_TOE = (60.0, 30.0, 1.8)                   # round 10 (D9, D10: a squared bumper wall): the rubber toe cap is an
@@ -77,10 +81,10 @@ RUBBER_TOE = (60.0, 30.0, 1.8)                   # round 10 (D9, D10: a squared 
                                                  # tip, its top edge RUBBER_TOE[1] mm over the stripe at the tip curving
                                                  # down into the rand along the sides, RUBBER_TOE[2] mm proud; the rand is
                                                  # a low strip (round 9: a 26 mm wall with a lip, read as a slab)
-LUG, SIDEWALL, CUP = 5.0, 1.5, 9.0               # lug height, sole grown past the upper, outsole cup wall (round 9:
+LUG, SIDEWALL, CUP = 5.0, 1.5, 11.0              # lug height, sole grown past the upper, outsole cup wall (round 9:
                                                  # cup 6 -> 9, a deeper lug wall; the teeth wrap TOOTH_WRAP up it;
                                                  # round 10: sidewall 3 -> 1.5, the sole 116-125 wide as a real one)
-TOOTH_WRAP, TOOTH_PROUD = 8.0, 1.4               # round 9: perimeter teeth wrap 8 mm up the sidewall (3); round 10: 1.4
+TOOTH_WRAP, TOOTH_PROUD = 10.0, 1.4              # round 9: perimeter teeth wrap 8 mm up the sidewall (3); round 10: 1.4
                                                  # proud (round 9: 2.6)
 SHAFT = [(74.0, (64.0, 50.0)), (122.0, (68.0, 52.0)), (RIM_Z, C.BOOT["shaft_rim_ab"])]   # rest z: (front-back, side)
 SHAFT_ZLO = -60.0                                # the shaft runs down into the sole (tapered), so no ledge
@@ -100,9 +104,22 @@ QUARTER = (98.0, 14.0, 60.0)                     # round 6: the leather quarter'
 MUD = (92.0, 45.0, 1.0)                          # round 6: the leather mudguard's top edge, h 92 behind falling to 45 at the
                                                  # ball, standing 1.0 proud (the drawn boot's diagonal panel line)
 VAMP = (12.0, 0.95)                              # round 10: vamp_s(): s_ball - 12 at h 50, slanting back 0.95 mm per mm up
-SUEDE = {"albedo_hex": "#4a4642", "rough": 0.90, "rough_span": 0.08, "normal_strength": 0.12,
-         "polish__rough": 0.90, "polish__coat": 0.0, "sheen_mottle__rough": 0.02, "edge__amount": 0.3,
-         "dust__amount": 1.4}
+SUEDE = {"albedo_hex": "#7c746a", "rough": 0.95, "rough_span": 0.06, "normal_strength": 0.15,
+         "polish__rough": 0.95, "polish__coat": 0.0, "sheen_mottle__rough": 0.02, "edge__amount": 0.3,
+         "dust__amount": 1.6}
+# round 10b (critics r10 m1: "round 10's panels, suede and seams are all near-black, so they don't read"): the materials
+# separated in value. Suede lighter and dead matte (#7c746a, rough 0.95; was #4a4642, 0.90); the Cordura panels a
+# lighter, visibly woven textile (#57544e, the basket weave's crown 0.04 -> 0.10 mm, rough 0.86); the smooth leather
+# (toe cap, counter, stays, tongue) darker with a sheen (#262524, rough 0.40, more polish coat); the rubber toe cap and
+# rand darker still (#1b1b1b)
+CORDURA_BOOT = {"albedo_hex": "#57544e", "rough": 0.86, "weave__crown_mm": 0.10}
+LEATHER_SMOOTH = {"albedo_hex": "#262524", "rough": 0.40, "polish__coat": 0.22, "polish__rough": 0.30}
+RUBBER_DARK = {"albedo_hex": "#1b1b1b"}
+DUST_SIDE = {"L": 1.25, "R": 0.6}                # round 10b (Decision 3, Q7): the left boot visibly dustier (1.0 / 0.7)
+POSED_CLEAR = (4.2, 20.0)                        # round 10b: the upper and collar clear the POSED skin by this much (mm),
+                                                 # at most the second figure pushed (posed_clear_upper)
+LACE_FLAT = (4.4, 1.8)                           # round 10b (critic r10 m38: uniform round wires floating in a perfect X):
+                                                 # a flat braided lace 4.4 x 1.8 mm lying on the tongue
                                                  # round 10: the suede vamp and mudguard (Leather.Boot.FullGrain made
                                                  # matte, its grain flattened, no polish): Boot.Mat.Suede
 TOECAP_LIFT = 1.6                                # round 6: the toe cap's step over the vamp (0.8 did not read in profile)
@@ -1120,6 +1137,117 @@ def tube(path, r, sides=8, caps=True):
     return V, F
 
 
+def flat_tube(path, normals, w, t, sides=10):
+    """Round 10b: a flat cord along `path`: an elliptical section `w` wide (across the path, in the surface) and `t`
+    thick (along the surface normals given per point), capped."""
+    P = np.asarray(path, float)
+    n = len(P)
+    T = np.gradient(P, axis=0)
+    T /= np.maximum(np.linalg.norm(T, axis=1, keepdims=True), 1e-9)
+    Nn = np.asarray(normals, float)
+    Nn = Nn - T * np.einsum("ij,ij->i", Nn, T)[:, None]
+    Nn /= np.maximum(np.linalg.norm(Nn, axis=1, keepdims=True), 1e-9)
+    B = np.cross(T, Nn)
+    a = 2 * np.pi * np.arange(sides) / sides
+    V = (P[:, None, :] + 0.5 * t * np.sin(a)[None, :, None] * Nn[:, None, :]
+         + 0.5 * w * np.cos(a)[None, :, None] * B[:, None, :]).reshape(-1, 3)
+    F = []
+    for k in range(n - 1):
+        for j in range(sides):
+            j1 = (j + 1) % sides
+            F.append((k * sides + j, k * sides + j1, (k + 1) * sides + j1, (k + 1) * sides + j))
+    V = np.vstack([V, P[0], P[-1]])
+    c0, c1 = len(V) - 2, len(V) - 1
+    for j in range(sides):
+        j1 = (j + 1) % sides
+        F.append((j1, j, c0))
+        F.append(((n - 1) * sides + j, (n - 1) * sides + j1, c1))
+    return V, F
+
+
+def posed_clear_upper(obs, masks, body, rig, clear, cap, say, iters=3):
+    """Round 10b (the trousers agent, round 10: "the body's heel comes through the boot's counter"; boots.json's posed
+    clearance: the back of each shaft 15-21 mm inside the skin at h 140-150). The boot is bound by weights and the
+    posed heel and Achilles skin move against it; here, in the hero pose, every vertex of the upper's (or collar's)
+    outer face nearer than `clear` mm to the posed skin (or inside it, by ray parity) is pushed out AT REST along its
+    own outward normal by the shortfall, spread over its neighbours, at most `cap` mm in all; the moved patch is then
+    Taubin-smoothed so it shows as a swell, not a bump. `masks` {name: bool per vertex or None}: only these may move
+    (the upper's heel, counter and shaft: its floor rows at the toe lie inside the sole and the toes by design).
+    Returns {name: (vertices moved, max push mm)}."""
+    import bpy  # noqa: F401
+    C.apply_hero_pose(rig)
+    out = {}
+    try:
+        bvh = C.body_bvh(body)
+        for ob in obs:
+            me = ob.data
+            nv = len(me.vertices)
+            R0 = np.empty(nv * 3)
+            me.vertices.foreach_get("co", R0)
+            R0 = R0.reshape(-1, 3)
+            Nr = np.empty(nv * 3)
+            me.vertex_normals.foreach_get("vector", Nr)
+            Nr = Nr.reshape(-1, 3)
+            E = np.array([tuple(e.vertices) for e in me.edges])
+            total = np.zeros(nv)
+            dis = tuple(m.type for m in ob.modifiers if m.type in ("SOLIDIFY", "SUBSURF"))
+            for _it in range(iters):
+                Vp, _F = C.evaluated_world_mm(ob, disable=dis)
+                if len(Vp) != nv:
+                    break
+                d, _ = C.signed_dist(Vp, bvh)
+                cand = np.nonzero(d < clear + 0.5)[0]
+                if _it == 0 and len(cand):
+                    # the outward normal: away from the skin (rest normals are not trusted for sign)
+                    from mathutils import Vector
+                    for i in cand:
+                        loc, _n, _k, _dd = bvh.find_nearest(Vector(Vp[i]))
+                        if loc is not None and (Vp[i] - np.array(loc)) @ Nr[i] < 0 and not _inside(bvh, Vp[i]):
+                            Nr[i] = -Nr[i]
+                dd = robust_signed(Vp[cand], bvh, near=clear + 0.5) if len(cand) else np.zeros(0)
+                need = np.zeros(nv)
+                need[cand] = np.maximum(0.0, clear - dd)
+                if masks.get(ob.name) is not None and len(masks[ob.name]) == nv:
+                    need[~masks[ob.name]] = 0.0
+                need = np.minimum(need, cap - total)
+                if need.max() < 0.2:
+                    break
+                sm = need.copy()
+                for _ in range(5):
+                    acc = np.zeros(nv)
+                    deg = np.zeros(nv)
+                    np.add.at(acc, E[:, 0], sm[E[:, 1]])
+                    np.add.at(acc, E[:, 1], sm[E[:, 0]])
+                    np.add.at(deg, E[:, 0], 1)
+                    np.add.at(deg, E[:, 1], 1)
+                    sm = np.maximum(need, 0.8 * acc / np.maximum(deg, 1))
+                if masks.get(ob.name) is not None and len(masks[ob.name]) == nv:
+                    sm[~masks[ob.name]] = 0.0
+                need = np.minimum(sm, cap - total)
+                R0 = R0 + Nr * (need * C.MM)[:, None]
+                total += need
+                me.vertices.foreach_set("co", R0.ravel())
+                me.update()
+            moved = total > 0.05
+            if moved.any():
+                reg = moved.copy()
+                for _ in range(3):
+                    g = reg.copy()
+                    g[E[:, 0]] |= reg[E[:, 1]]
+                    g[E[:, 1]] |= reg[E[:, 0]]
+                    reg = g
+                R1 = C.taubin(R0 * 1000.0, E, iters=6, lam=0.5, mu=-0.53, pin=~reg) / 1000.0
+                keep = np.einsum("ij,ij->i", R1 - R0, Nr) < 0.0        # never smooth a vertex back inward
+                R1[keep] = R0[keep]
+                me.vertices.foreach_set("co", R1.ravel())
+                me.update()
+            out[ob.name] = (int(moved.sum()), round(float(total.max()), 1))
+    finally:
+        C.rest_pose(rig)
+    say("posed clearance push (vertices, max mm):", json.dumps(out))
+    return out
+
+
 def join(pieces):
     V, F = [], []
     for v, f in pieces:
@@ -1176,29 +1304,34 @@ def build_laces(throat, holes):
     def strand(ka, sa, kb, sb, sag, drift):
         """From hole (ka, side sa) to (kb, side sb) over the tongue: laid in the throat's own (L, a) coordinates
         at a height over the surface, the crossing drifting `drift` mm off the centre line, the ends running into
-        the holes."""
-        x = np.linspace(0.0, 1.0, 22)
-        L_ = Ls[ka] + (Ls[kb] - Ls[ka]) * x
+        the holes. Round 10b (m38): it LIES on the tongue between the stays (half its thickness + 0.6 mm over the
+        surface there, `sag` the extra of the strand riding over at the crossing) and rises over the stays only near
+        its ends; returns the path and the surface normals along it."""
+        x = np.linspace(0.0, 1.0, 26)
+        L_ = Ls[ka] + (Ls[kb] - Ls[ka]) * x + float(rng.uniform(-1.2, 1.2)) * np.sin(np.pi * x)
         a_ = sa * a[ka] + (sb * a[kb] - sa * a[ka]) * x + drift * np.sin(np.pi * x)
         S, Ns = throat.across(L_, a_, 0.0)
-        hgt = STAY_PROUD + LACE_R + 0.6 + sag * np.sin(np.pi * x)
+        half_gap = 0.5 * throat.gap(L_)
+        on_stay = smoothstep(half_gap - 3.0, half_gap + 3.0, np.abs(a_))
+        hgt = 0.5 * LACE_FLAT[1] + 0.6 + STAY_PROUD * on_stay + sag * np.exp(-((x - 0.5) / 0.16) ** 2)
         pts = S + Ns * hgt[:, None]
         for k in range(3):                                # the cord does not follow the surface's facets
             pts[:, k] = gauss1d(pts[:, k], 1.6)
         p0, p1 = holes[(ka, sa)], holes[(kb, sb)]
-        w = np.clip(np.minimum(x, 1 - x) / 0.14, 0, 1)
+        w = np.clip(np.minimum(x, 1 - x) / 0.12, 0, 1)
         q = p0[None] + (p1 - p0)[None] * x[:, None]
-        return q + (pts - q) * w[:, None]
+        return q + (pts - q) * w[:, None], Ns
 
     k0 = order[0]
-    pieces.append(tube(strand(k0, 1.0, k0, -1.0, 0.3, 0.0), LACE_R, sides=8))
+    pieces.append(flat_tube(*strand(k0, 1.0, k0, -1.0, 0.0, 0.0), *LACE_FLAT))
     for side0 in (1.0, -1.0):
         sgn = side0
         for i in range(len(order) - 1):
             ka, kb = order[i], order[i + 1]
-            sag = 1.8 if (side0 > 0) == (i % 2 == 0) else 0.3   # the strands take turns riding over
-            slack = 0.6 * max(0.0, 1.0 - i / 3.0)                # slacker low, tight at the ankle (spec 02 §4.11)
-            pieces.append(tube(strand(ka, sgn, kb, -sgn, sag + slack, float(rng.uniform(-3.0, 3.0))), LACE_R, sides=8))
+            # the strands take turns riding over (the over-strand lies on the under one at the crossing), with an
+            # uneven tension: a random drift off the centre line and a random height of the crossing
+            sag = (LACE_FLAT[1] + float(rng.uniform(-0.2, 0.5))) if (side0 > 0) == (i % 2 == 0) else float(rng.uniform(0.0, 0.3))
+            pieces.append(flat_tube(*strand(ka, sgn, kb, -sgn, sag, float(rng.uniform(-4.0, 4.0))), *LACE_FLAT))
             sgn = -sgn
     Q, N, _, _ = throat.at(np.array([1.0]))
     pieces.append(torus(Q[0] + N[0] * 5.0, N[0], 3.0, 1.9, nu=10, nv=6))   # the knot, under the hem
@@ -1722,10 +1855,10 @@ def apply_library(built, side, ff, last, upper_info, say):
     polish = np.maximum(0.85 * smoothstep(98.0, 92.0, h + 0.42 * s) * smoothstep(92.0, 86.0, s),
                         0.6 * smoothstep(last.s_tip - 80.0, last.s_tip - 70.0, s))
     att.data.foreach_set("value", polish.astype(np.float32))
-    M.assign(up, "Leather.Boot.FullGrain", part="Boot", faces=np.nonzero(fm == 0)[0])
-    M.assign(up, "Cordura.500D.Black", part="Boot", faces=np.nonzero(fm == 1)[0])
+    M.assign(up, "Leather.Boot.FullGrain", part="Boot", faces=np.nonzero(fm == 0)[0], **LEATHER_SMOOTH)
+    M.assign(up, "Cordura.500D.Black", part="Boot", faces=np.nonzero(fm == 1)[0], **CORDURA_BOOT)
     if (fm == 3).any():   # round 10: the rubber toe cap moulded on the toe box
-        M.assign(up, "Rubber.Rand.Black", part="Boot", faces=np.nonzero(fm == 3)[0])
+        M.assign(up, "Rubber.Rand.Black", part="Boot", faces=np.nonzero(fm == 3)[0], **RUBBER_DARK)
     if (fm == 2).any():   # round 10: the suede vamp and mudguard
         M.assign(up, "Leather.Boot.FullGrain", part="Boot", faces=np.nonzero(fm == 2)[0], variant="Leather.Suede", **SUEDE)
     zones = {"toe": smoothstep(last.s_tip - 85.0, last.s_tip - 60.0, s) * smoothstep(85.0, 70.0, h),
@@ -1736,17 +1869,17 @@ def apply_library(built, side, ff, last, upper_info, say):
     for k in ("Stays", "Tongue"):
         ob = built[k]
         vertex_uv(ob, strip_uv(np.array([tuple(v.co) for v in ob.data.vertices]) * 1000.0))
-        M.assign(ob, "Leather.Boot.FullGrain", part="Boot")
+        M.assign(ob, "Leather.Boot.FullGrain", part="Boot", **LEATHER_SMOOTH)
     ob = built["Collar"]
     vertex_uv(ob, strip_uv(np.array([tuple(v.co) for v in ob.data.vertices]) * 1000.0))
-    M.assign(ob, "Cordura.500D.Black", part="Boot")
+    M.assign(ob, "Cordura.500D.Black", part="Boot", **CORDURA_BOOT)
     M.wear_zones(ob, "boot.toe", {"collar_top": 1.0})
     rand = built["Rand"]
     Rr = np.array([tuple(v.co) for v in rand.data.vertices]) * 1000.0
     bump = smoothstep(last.s_tip - 70.0, last.s_tip - 40.0, ff.s_of(Rr))
     a2 = rand.data.attributes.new("bumper", "FLOAT", "POINT")
     a2.data.foreach_set("value", bump.astype(np.float32))
-    M.assign(rand, "Rubber.Rand.Black", part="Boot")
+    M.assign(rand, "Rubber.Rand.Black", part="Boot", **RUBBER_DARK)
     M.wear_zones(rand, "boot.toe", {"bumper_top": bump, "quarters": 1.0})
     so = built["Sole"]
     sm = np.empty(len(so.data.polygons), np.int32)
@@ -1760,7 +1893,7 @@ def apply_library(built, side, ff, last, upper_info, say):
     M.assign(la, "Lace.Nylon.Black", part="Boot")
     M.wear_zones(la, "boot.toe", {"laces": 1.0})
     for ob in built.values():
-        ob["wear_dust_scale"] = 1.0 if side == "L" else 0.7
+        ob["wear_dust_scale"] = DUST_SIDE[side]
         # drop the flat round 1 slots the library replaced (keeps the cache lean)
         used = set()
         pm = np.empty(len(ob.data.polygons), np.int32)
@@ -1951,6 +2084,7 @@ def main():
     lasts, knit = build_socks_and_lasts(body, rig, coll, say)
     say(f"socks and lasts in {time.perf_counter() - t0:.1f} s")
     objs, meas, extra, uppers = [], {}, {}, {}
+    clear_masks = {}
     for side in ("L", "R"):
         ff = FootFrame(side)
         last = Last(ff, last_cloud(lasts[side]), say)
@@ -2017,6 +2151,8 @@ def main():
         dl, _ = C.signed_dist(Vu2, bl)
         say(f"{side}: upper {len(Vu2)} verts; {int((d0 < 2.5).sum())} pushed out to 2.5 mm from the skin (min was "
             f"{d0.min():.1f}); upper outer face to the last: min {dl.min():.1f}, 1st percentile {np.percentile(dl, 1):.1f} mm")
+        # round 10b: where the posed clearance push may move the upper: behind the ball and above the sole's rand
+        clear_masks[f"Boot.{side}.Upper"] = (ff.h_of(Vu2) > 45.0) & (ff.s_of(Vu2) < ff.s_ball - 30.0)
         up = C.mesh_object(f"Boot.{side}.Upper", Vu2, F2, coll, mats=[mats["leather"], mats["cordura"], mats["suede"],
                                                                                   mats["rubber"]],
                            face_mat=fm2)
@@ -2117,6 +2253,8 @@ def main():
                       "lugs_faces": len(Fl), "strap": strap_info, "stitches": st_info}
         extra[side] = {"ff": ff, "last": last, "throat": throat}
         uppers[side] = (Vu2, F2)
+    pushed = posed_clear_upper([bpy.data.objects[f"Boot.{sd}.{k}"] for sd in ("L", "R") for k in ("Upper", "Collar")],
+                               clear_masks, body, rig, POSED_CLEAR[0], POSED_CLEAR[1], say)
     sec_path = sections(body, lasts, uppers, os.path.join(C.PARTS_DIR, f"{tag}_sections.json"))
     lasts_path = os.path.join(C.PARTS_DIR, f"{tag}_lasts.blend")
     lcoll = save_lasts(lasts, lasts_path, say)
@@ -2144,6 +2282,7 @@ def main():
     bpy.data.collections.remove(lcoll)
     C.save_part(tag, coll, {"round": 3, "base": os.path.relpath(C.BASE_BLEND, C.PROJECT), "measure_mm": meas,
                             "posed_soles": floor, "clearance_rest": rest, "clearance_posed": posed, "pose": used,
+                            "posed_clear_push": pushed,
                             "lasts": os.path.relpath(lasts_path, C.PROJECT), "seconds": round(time.perf_counter() - t0, 1)})
     if "--no-render" not in args:
         render_round3(coll, lasts_path, extra, say)
