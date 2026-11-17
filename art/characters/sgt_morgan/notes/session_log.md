@@ -3,6 +3,55 @@
 Newest first. One entry per working session: what was done, what is next, anything a fresh
 session must know. Take 1's log is `archive/v1/notes/session_log.md`.
 
+## 2026-11-16 — round 10's second pair, rounds 11 and 11b; stopped at about 21:45 while round 12 was building
+
+**Done and committed.**
+- **Round 10 critics:** 6, 6, 4 (`notes/critic/soldier_r10/`); ChatGPT's R007 scored 5.
+- **Head, round 10, on Fable:** skin, strand stubble, eyes, and 64k hair curves with a glTF proxy. The eye band
+  was a brow shelf in the face shape.
+- **Trousers and shirt:** the hems fall over the real boots, and the trousers now depend on the boots.
+- **Armour and boots, round 10b:** wear on edges and recesses, compact pauldrons, hex knee centres.
+- **Round 11 rendered** (face round 5 wired in). Critics:
+  - First round on PLAN.md Decision 7. C1 was Fable (4); C2 should have been ChatGPT but it ran out of tokens,
+    so Opus stood in (5); C3 Opus (5).
+  - Two blocking: the left hand, and "the face is another man".
+- **The hold (round 11):** the left hand cups the handguard from below, using the `--hold` terms in
+  `pose_solve.py`.
+- **Head, round 11b, on Fable:** shape round 6 (brows at the drawn height, leaner jaw, hollower cheeks); the
+  hair a crop with haired sides; the skin desaturated.
+- **Face round 6 wired in by hand, not by `--rebuild base`.** A base change makes assemble start a fresh pose
+  solve, which loses the hold. The steps:
+  1. base.py
+  2. `head.py --check r11b`
+  3. `build_face_targets("r11b")`
+  4. `pose_contact.py --export`
+  5. `pose_solve.py --continue-from cache/r11hold/pose_x_hold2.npz --hold` (cost 121)
+  6. `pose.write_basis()`
+  
+  Commit cabd5dd.
+
+**Interrupted.** `assemble.py --rebuild`, then `--round 12 --packet`, were running when Jeff shut down. Resume:
+1. Run `assemble.py --status`. Check that `pose_needs_solve()` says no re-solve; never let it start a fresh solve,
+   because that loses the hold.
+2. Run `--rebuild`, then `--round 12 --packet`.
+3. Critics per Decision 7: C1 Fable, C2 ChatGPT (an R009 request in `gen/REQUESTS.md`; R008 is still `taken`, so
+   close it as superseded), C3 Opus. Tally and copy to `notes/critic/soldier_r12/`.
+4. Re-export to Godot. The new hair proxy and the head's render-only objects are untested in the exporter.
+
+**Open, worst first.**
+- **The right hand:** still beside the pistol grip, not wrapped round it. Needs a web-on-backstrap term.
+- **The boots:** round 10b's lightening made them read as pale low trainers (all three round 11 critics). Go darker
+  again, and keep the toe height.
+- **The face:** the dark band under the brows and the flat modelling. Both head passes point to a missing fill on
+  the shadow side; test a soft fill in `scripts/eval/scene.py` against the whole figure before adopting it. Lips,
+  nose tip, and feature spacing about 5 % wide (an eye-bone move).
+- **The carrier:** reads flat and clean; the shoulder straps bridge over gaps (ChatGPT D1); torn strap tops at the
+  gaiter.
+- **The armour:** plates still read pale and clean; forearm guards still read as stacked cylinders.
+- **The trousers:** lower legs are smooth tubes; the seat still shows from behind; a sock gap shows at the hem.
+- **Smaller items:** wire hooks under the right drop-leg pouch; skin showing at the left shoulder.
+- **`assemble.py`:** when the base changes, re-solve by `--continue-from` the last state instead of a fresh solve.
+
 ## 2026-11-15 (late) — round 10, first pair; paused at 22:30 for the night
 
 - **ChatGPT as a fourth critic (R006, round 9).** Overall 4, 22 defects. It caught a broken elbow strap (D1)

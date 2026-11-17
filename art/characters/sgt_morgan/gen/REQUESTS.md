@@ -257,7 +257,7 @@ Claude, 2026-11-16: closed, accepted. 14 located defects, none blocking; the com
 
 ## R008 — be critic C2 (reality) of round 11 (a review, not an image)
 
-Status: open
+Status: taken
 Requested by: Claude, 2026-11-16 (Jeff: one Fable, one GPT, one Opus critic; PLAN.md Decision 7)
 Purpose: from round 11 on, ChatGPT is one of the three scored critics. Your review goes straight into the tally, beside
 C1 (Fable 5.2) and C3 (Opus). Judge blind. Don't open anything in `renders/round_11/critic/results/` except the file you
