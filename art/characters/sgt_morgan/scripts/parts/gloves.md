@@ -236,3 +236,18 @@ shirt of 18:22 fixed it). Body-gloves 65 vertices, 1.9 mm; gloves-armour 20, 0.9
 
 Still wrong: the fingers still show the bare hand's nails and creases (fingertip ease would move the fronts); the knit
 back has no honeycomb; no stitch rows as geometry.
+
+## 13. Round 11 (2026-11-16, the hold; the pose agent)
+
+The glove meshes were not changed; the pose changed which of their surfaces carry the gun (scripts/stages/README.md, "Round 11:
+the hold"). The left hand now cradles the handguard from below, as drawn:
+- the palm patch and the heel of the palm are on the bottom flat and the left lower bevel (palm normal 16 deg from up);
+- the fingers' palm sides are on the right face (distal 0.4-0.5 mm off, proximal 7-12 mm off);
+- the knuckle guard faces down;
+- the thumb is over the top on his side.
+
+Clash test: gloves in the carbine 12 vertices, 1.3 mm (the palm patch and shell on the handguard; round 11: 70, 4.7). The
+test's reverse reading ("carbine in gloves", 324 vertices, 11.2 mm, under the heel of the palm) is an artefact of
+`Glove.L.PalmPatch` being a two-sided slab: half its normals face inward, so the open-shell side test flips. Measured against
+`Glove.L.Shell` directly, those handguard vertices are at most 0.5 mm behind it. If the palm patch had one outward-facing side,
+that reading would go away.

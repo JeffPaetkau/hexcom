@@ -753,3 +753,166 @@ graded, in-progress materials.
 5. The muzzle pin 24.5 px and the carbine's roll -18 deg.
 6. Round 4's items 4-5 stand (the strap pads in the gaiter, the right forefoot in the sole). The right wrist is off its
    ulnar limit now (flexion 29, deviation 21.5).
+
+## Round 11: the hold (2026-11-16)
+
+Jeff: "the left hand is wrong. It should be cupping the rifle underneath not on top." Critics since round 9 (r9 m29, m32,
+m47; r10 m3, m15, ChatGPT D6; r11 C1 D3 blocking, C3 D2, D1): the left hand lay open on top of the handguard, straight
+fingers down its right face, the tips in the rail teeth. The reference's left hand cradles the handguard from below
+(`ref/zoom_arm_lhand_clamp_x8.png`, `ref/crop_hands_rifle.png`): the wrist and the back of the hand beyond the gun on his
+body's side, the palm under it facing up, the four fingers curled round the gun's right face (the camera side, the side
+away from him) with their tips at its lower edge, the thumb over the top on his side. From the hero camera an overhand and
+an underhand grip give nearly the same keypoints (the single-view depth case, notes/research_canitcode.md), so the grasp
+itself is now constrained, in the gun frame.
+
+### Inputs
+- The pose continued from **round 7's state** (`cache/r7/pose_x_solve2b.npz`, copied to `cache/r11hold/pose_x_r7_committed.npz`),
+  not from round 11's. Round 11 was rendered on a *fresh* full solve that `assemble.py` started by itself when face shape
+  round 5 changed the face's landmarks (the basis signature). That solve was never committed: cost 413, the left glove 5.2 mm
+  in the handguard, the left hand targets 23-56 mm off (`cache/r11hold/hero_pose_r11_fresh.json`, `pose_x_r11_fresh.npz`).
+  Round 7's state on today's base: face 0.83 px RMS, no glove in the gun.
+- contact.npz / contact_sdf.npz of 19:16 (today's parts, the carrier sampled in round 7's pose). No part was rebuilt.
+
+### The new terms (pose_solve.py, on with `--hold`)
+`HOLD` (a dict; `Model.hold_terms`, in every body pass and in `place_left_arm` through `contact_terms`; gun frame, mm):
+
+| Term | What | Weight (sigma) |
+|---|---|---|
+| station | the palm centre (mean of the glove's palm-side metacarpal points) at x 290 along the handguard. The drawn hand is 0.53 of the way from the receiver face to the drawn handguard's front (0.37 of the way to the muzzle): on the real MCMR-13 (x 117-457) that is x 297 (277). Round 7: 252 | 2 mm (3 in the first pass) |
+| palm under | the palm centre below z -14 and between y -6 and +16 (the bottom flat, 17 wide at z -19, and the gun's left lower bevel); softplus hinges | 1 mm |
+| palm normal | the palm normal (out of the palm, from the wrist and the index and little MCPs) within 20 deg of gun +Z leaned 15 deg toward the camera side (the way a palm on the left lower bevel faces); softplus hinge | 2 deg |
+| knuckles | the MCP line's midpoint at y <= -14 and z >= -40 (beside the right lower corner, so the fingers rise up the right face; the flat palm's bone line runs ~15 mm under its skin, so the knuckles cannot reach the corner itself) | 1.5 mm |
+| hand axis | wrist to middle MCP within 35 deg of gun -Y (a first aim without the knuckle and axis terms hung the hand under the gun: knuckles 51 mm below the bore, fingers pointing at the muzzle) | 2.5 deg |
+| no fingertip in the rail | every second glove point of fingers 2-5 over the handguard (x 120-460, within 14 mm of the top centre line, smooth window) stays below z +15 (the top flat is at +19, the rail runs to +26.5); also in `fit_fingers` | 1 mm per point |
+
+`GRASP_UNDER_L` replaces `GRASP["L"]` (fit_fingers and place_left_arm; distal glove means):
+- fingers 2-5 at y -25 to -11 (on the right face, whose flat is at -18.5) and z -17 to +2 (its lower half; with +10 the first
+  pass curled them to the top edge);
+- the thumb at y +3 to +28 (his side, near the left face);
+- sigma 2 (thumb 3).
+
+Other changes:
+- The right ring and little proximal touch sigmas go from 2 to 1 mm (`FINGER["touch"]`, a tighter fist).
+- `place_left_arm` now also places the thumb's tip (GRASP_UNDER_L names it).
+- Under `--hold`, `place_left_arm` starts the fingers from (MCP, PIP) (40, 60) and (60, 80) (`HOLD["curl_starts"]`).
+
+**`place_left_under`** (new). From the overhand hold no local fit gets there: the forearm has to turn over and the hand has to
+pass through the gun. So the left arm alone (clavicle, shoulder, elbow, forearm twist, wrist: 12 parameters) is fitted first:
+- from five forearm twists (-100 to +100 deg), 60 evaluations each, about 50 s for all five;
+- with the fingers fixed at a wrap;
+- with the carbine's non-penetration and the rail term off, and the whole solve's other residuals and the hold's palm terms on.
+
+All five starts land palm-up, within 7-16 deg. The best one starts `place_left_arm`, then round 7's continuation runs (right
+fingers, the body at pen sigma 2, fingers, whole glove, fingers).
+
+### The chain (`cache/r11hold/`)
+1. `--continue-from pose_x_r7_committed.npz --hold` (1050 s; tips z <= 10, station sigma 3): the palm under, the fingertips at
+   the right face's top edge (`hero_pose_hold1.json`, `pose_x_hold1.npz`).
+2. `--continue-from pose_x_hold1.npz --hold` (757 s; tips z <= 2, station sigma 2, the right touch change) = **hero_pose.json**
+   (`pose_x_hold2.npz`, also `cache/stages/pose_x_pass1.npz`).
+   - Blender vs the solver: 0.0085 mm.
+   - `hero_pose_basis.json` unchanged (same base).
+   - Then `assemble.py --rebuild pose armour` (for the armour's posed_clear).
+
+**A fresh solve does not reproduce this.**
+- If the base's signature changes, `assemble.py` re-solves from scratch, as it did in round 11. Re-solve instead with
+  `pose_solve.py --continue-from cache/r11hold/pose_x_hold2.npz --hold` (about 13 min), then check the hands.
+- Any edit to pose_solve.py also makes assemble re-solve, because the file is then newer than hero_pose.json. After a
+  comment-only edit, `touch` hero_pose.json.
+
+### Before and after (solver fields and readbacks; "round 11" = the fresh solve the round was rendered on)
+
+| | Round 7 state | Round 11 | Round 11 hold |
+|---|---:|---:|---:|
+| left palm normal vs gun +Z (up) | 163 deg (down) | 159 deg (down) | **15.6 deg (up)** |
+| left palm normal vs the bore | 89 deg | 83 deg | 78 deg |
+| left palm centre (gun x, y, z) | 252, -10, +40 (on the rail) | 254, +37, +24 | **290, +13, -14** (under) |
+| left palm to the handguard (mean of 12, field) | +0.97 | -1.46 | -0.19 |
+| left fingertips (distal means, gun y / z) | -18..-38 / -16..+6 | -10..+27 / -25..+18 | -29..-31 / +1..+12 (right face) |
+| left finger or palm glove points at the rail | 52 (the palm) | 79 | **0** |
+| left glove in the carbine (field min) | -0.33 | -5.56 | -0.50 |
+| left phalanges to the gun (distal / proximal) | | | 0.35-0.48 / 7-12 |
+| thumb tip (gun) | 168, -65, +28 | 216, +48, -46 | 361, +27, +26 (over the top, his side) |
+| left wrist flexion / deviation | -14.6 / -10.0 | -13.8 / +8.3 | 7.8 / 8.7 |
+| right glove in the carbine (field min) | -0.03 | +0.12 | -0.20 |
+| right sleeve / guard in the carbine | -1.6 / -4.3 | -0.2 / -2.9 | +0.8 / -2.5 |
+| stock to the right arm (STOCK_PIN) | 0.74 | 2.4 | 3.0 |
+| carbine in the carrier (min) | -2.29 | +1.8 | +1.44 |
+| butt pad to the carrier (mean of 8) | 1.1 | 1.8 | 2.5 |
+| face (MediaPipe) RMS | 0.83 px | 0.87 | 1.00 |
+| head yaw / pitch / roll | 17.5 / -1.0 / -2.5 | 16.9 / -0.1 / -2.4 | 16.8 / -0.5 / -2.3 |
+| chest pitch; skull top z | 10.1; 1844 | 8.0; 1850 | 13.5; 1834 |
+| elbows L / R | 47.3 / 87.1 | 47.9 / 88.0 | 41.4 / 93.3 |
+| right wrist flexion / deviation | 29.2 / 21.5 | 26.5 / 23.1 | 13.5 / 30.1 (at the soft limit) |
+
+Reprojection (px; each cell is round 7 state / round 11 / hold):
+
+| Joint | px | Joint | px |
+|---|---|---|---|
+| pupils R, L | 2.1, 3.0 / 2.1, 3.0 / 2.5, 2.9 | wrist R | 16.4 / 15.5 / 14.9 |
+| nose | 5.7 / 5.5 / 5.5 | wrist L | 21.6 / 21.6 / **16.8** |
+| chin | 8.2 / 8.1 / 8.7 | hips R, L | 19.6, 15.3 / 23.0, 17.2 / 20.1, 16.5 |
+| right ear | 2.7 / 3.4 / 3.0 | knees R, L | 4.1, 8.2 / 4.4, 8.1 / 3.5, 8.5 |
+| skull top | 17.3 / 16.0 / 15.9 | ankles R, L | 3.6, 3.8 / 3.5, 4.3 / 3.1, 2.7 |
+| shoulder R | 19.8 / 15.3 / 16.7 | elbow R | 9.5 / 4.8 / 3.5 |
+| shoulder L | 13.9 / 12.9 / **19.8** | elbow L | 18.2 / 21.2 / 20.0 |
+
+### Clashes (assemble.py's clash_report on the posed caches, `cache/r11hold/clashes_hold2.json`; round 10 = round 7's pose)
+
+| Pair | Round 10 | Round 11 | Hold |
+|---|---:|---:|---:|
+| gloves in the carbine | 31 verts, 1.2 mm | 70, 4.7 | 12, 1.3 (the left palm patch and shell on the handguard) |
+| carbine "in" the gloves (open shell) | 112, 5.5 | 783, 17.6 | 324, 11.2 (see below) |
+| body in the carbine | 10, 1.3 | 16, 3.2 | 3, 1.1 |
+| carbine "in" the body | 52, 3.8 | 629, 15.0 | 276, 9.3 (see below) |
+| carrier-carbine | 129, 5.0 (the butt pad in the bag) | 30, 1.6 | 19, 1.2 (PALS against the stock) |
+| armour-carbine (Guard.R.Sleeve and the stock) | 119, 3.4 | 20, 3.5 | 21, 2.8 |
+| shirt-carbine | 60, 4.3 | 44, 1.9 | 15, 1.3 |
+| body-gloves | 65, 1.9 | 97, 1.9 | 31, 1.6 |
+| shirt-gloves | 3, 20.9 | 3, 25.0 | 7, 24.7 (the left palm patch at the sleeve's end; open-shell reading) |
+
+The two reverse readings at the left palm come from the open-shell test, not from the glove. They are handguard vertices on its
+bottom flat at gun x 252-257, under the heel of the palm. Measured directly in Blender:
+- those vertices are at most 0.5 mm behind Glove.L.Shell's nearest face;
+- the palm patch is a two-sided slab: half its normals face inward, so "behind the nearest face" flips sign;
+- the body there is masked (its MASK modifier deletes the skin under the gloves), so it is not closed and its ray parity
+  misreads;
+- only 3-6 body vertices lie inside the closed handguard.
+
+### Renders looked at
+- `renders/pose/hero_hold2_hands_rifle_pair.png` (clay hero crop | reference | overlay) and `hero_hold1_hands_rifle_pair.png`:
+  - the left hand is under the handguard, at the drawn hand's place along it;
+  - the forearm comes down from behind the gun, as drawn;
+  - the fingers curl up the camera face.
+- `hero_hold2_arm_L_pair.png`, `hero_hold2_soldier_full.png`.
+- `renders/pose/sheet_hold2_L.png` (`pose_hands_hold2_L_{camera,gun_right,gun_left,above,front,below,front_left}.png`, from
+  `pose_contact.py --render-hands --quick --tag _hold2`; `below` and `front_left` are new views):
+  - from below: the back of the hand and its knuckle guard under the gun;
+  - from the gun's left: the wrist and the heel of the palm on the left lower bevel, the thumb over the top on his side;
+  - from the front-left: the four fingers wrapped round the right face.
+- `sheet_r11before.png`: round 11's hand on top of the handguard, for comparison.
+- `renders/pose/sheet_hold2_turn.png` (`pose_hero_hold2_threeq_{L,R}.png`, clay three-quarters): nothing stray; from his left
+  front the left hand reads as under the gun.
+
+### Still wrong
+1. **The fingertips sit mid-face, not at its lower edge** as drawn: the distal means are at z +1 to +12, against the bound of
+   +2. With the palm flat under the bottom, the fingers have to rise that far before they meet the face. The proximal phalanges
+   arch 7-12 mm off the gun. A cupped palm (the metacarpal arch, which the rig's hand does not bend) would let the hand sit
+   lower.
+2. **The left arm moved in the frame.** The left shoulder pixel went from 13.9 to 19.8 and the elbow from 18.2 to 20.0; the
+   wrist improved, from 21.6 to 16.8. The chest pitched 3.4 deg further forward, so the skull top is 10 mm lower (1834 mm),
+   though its pixel is unchanged. The head yaw lost 0.7 deg (now 16.8).
+3. **The right hand still has round 7's grip**; a full wrap was not reached.
+   - The knuckle line still runs on the grip's right side (MCPs 29-39 mm right of its centre line).
+   - The web of the hand is about 24 mm right of the back strap's line under the tang (the bones' midpoint is at gun y -24).
+   - The ring and little proximal phalanges are 3 mm off the grip.
+   - The wrist is at its ulnar soft limit (30).
+   - Next step: a web term in place_hand (the thumb-index web on the back strap under the beavertail, about gun (-88, 0,
+     -50)), then re-place the right hand.
+   - Kept: the index stays along the frame (lowest z -52.3), and no finger enters the trigger guard.
+4. **The stock** now stands 3 mm off the right arm (STOCK_PIN; round 7: 0.7), and the right forearm guard's sleeve is 2.5 mm
+   into it (2.8 by the clash test). The butt pad is on the carrier (2.5 mm by the field, no clash) instead of 5 mm into the bag.
+5. **The shoulders** were not touched. The right shoulder joint stands 92 mm above the left (z 1535 / 1442), because the stock
+   pinned under the arm lifts it. That is the opposite of the reference's dropped right shoulder (r10 m2, m41). A clavicle
+   prior would fight the stock pin and the grip, so it is left for a pose round with its own budget.
+6. Round 7's items 2 (thin walls in the smoothed field) and 6 stand.

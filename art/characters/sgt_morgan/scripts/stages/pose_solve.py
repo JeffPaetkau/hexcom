@@ -35,6 +35,8 @@ distances per stage and the fitted finger angles.
       (about 25 minutes with contact; --no-contact is round 1's objective, 10 s)
   "$SGT_PYIMG" -I scripts/stages/pose_solve.py --continue-from <state.npz> [--place-left]
       (round 7: from a saved state; --place-left first fits the left arm and fingers round the handguard)
+  "$SGT_PYIMG" -I scripts/stages/pose_solve.py --continue-from <state.npz> --hold
+      (round 11: the left hand cradling the handguard from below, HOLD; README "Round 11: the hold")
   "$SGT_PYIMG" -I scripts/stages/pose_solve.py --face-targets      (rebuild face_targets.json from head.py's fit)
 """
 import argparse
@@ -416,6 +418,10 @@ class Contact:
             n = np.cross(a_, k_) if s == "R" else -np.cross(a_, k_)
             n /= np.linalg.norm(n)
             g["palmar"] = g["N"] @ n > 0.35
+            # round 11 (HOLD): the palm centre's points (palm side, on the metacarpals) and the points the rail term
+            # watches (fingers 2-5, every second point)
+            g["palmc"] = g["palmar"] & np.array([d_.startswith("metacarpal") for d_ in g["dom"]])
+            g["railset"] = np.isin(g["chain"], CHAINS[1:]) & (np.arange(len(g["dom"])) % 2 == 0)
             sk_ = self.sets[f"skin_{s}"]
             sk_["chain"] = np.array([next((c for c in CHAINS if n_.startswith(c + "-")), "palm") for n_ in sk_["dom"]])
             sk_["chain"][np.array([n_.startswith("finger1-1") for n_ in sk_["dom"]])] = "palm"
@@ -878,6 +884,11 @@ class Model:
                 # carrier (touch:butt_on_carrier) and the arm closed on the stock's side, so the carbine is braced
                 v = kmin_mean(np.concatenate(pin_d), STOCK_PIN["k"])
                 add("touch:stock_under_arm_R", v - STOCK_PIN["touch_mm"], STOCK_PIN["sigma_mm"])
+        if HOLD["on"]:
+            v, hinfo = self.hold_terms(P, G, Ms)
+            r.extend(v.tolist())
+            if detail:
+                info.update(hinfo)
         # the carbine clear of the carrier (pouches, bag), the butt pad on its face
         S = C_.gun_world(C_.gun_surf[::2] if sub else C_.gun_surf, G)
         hinge("pen:carbine_in_carrier", C_.car_d(S, P, Tc), K["margin_carbine_carrier_mm"])
@@ -895,6 +906,40 @@ class Model:
             if detail:
                 info["face:rms_px"] = round(float(np.sqrt(np.mean(np.sum(e ** 2, 1)))), 2)
                 info["face:mean_dx_dy_px"] = [round(float(v), 2) for v in e.mean(0)]
+
+    def hold_terms(self, P, G, Ms=None):
+        """Round 11 (HOLD): the left palm under the handguard. Residuals (fixed length) and a readback: the palm centre's
+        station along the handguard, its place under it, the palm normal up into it, and fingers 2-5 kept off the rail."""
+        C_, H_ = self.contact, HOLD
+        Ms = C_.mats(P) if Ms is None else Ms
+        g = C_.sets["glove_L"]
+        pc = ((C_.lbs("glove_L", Ms, g["palmc"]) - G[:3, 3]) @ G[:3, :3]).mean(0) * 1000.0
+        W, i2, i5 = (P[b][:3, 3] for b in ("wrist.L", "finger2-1.L", "finger5-1.L"))
+        n = -np.cross((i2 + i5) / 2 - W, i5 - i2)
+        nG = G[:3, :3].T @ (n / np.linalg.norm(n))
+        ang = math.degrees(math.acos(max(-1.0, min(1.0, float(nG @ np.array(H_["palm_up"]))))))
+        ps = H_["palm_pos_sigma_mm"]
+        out = [(pc[0] - H_["station_x_mm"]) / H_["station_sigma_mm"],
+               float(softplus(ang - H_["palm_up_tol_deg"], 1.0)) / H_["palm_up_sigma_deg"],
+               float(softplus(H_["palm_y_mm"][0] - pc[1], 0.5)) / ps, float(softplus(pc[1] - H_["palm_y_mm"][1], 0.5)) / ps,
+               float(softplus(pc[2] - H_["palm_z_max_mm"], 0.5)) / ps]
+        K = (G[:3, :3].T @ ((i2 + i5) / 2 - G[:3, 3])) * 1000.0
+        a = G[:3, :3].T @ (P["finger3-1.L"][:3, 3] - W)
+        aang = math.degrees(math.acos(max(-1.0, min(1.0, float(a @ np.array(H_["axis"]) / np.linalg.norm(a))))))
+        ks = H_["knuckle_sigma_mm"]
+        out += [float(softplus(K[1] - H_["knuckle_y_max_mm"], 0.5)) / ks,
+                float(softplus(H_["knuckle_z_min_mm"] - K[2], 0.5)) / ks,
+                float(softplus(aang - H_["axis_tol_deg"], 1.0)) / H_["axis_sigma_deg"]]
+        Lr = (C_.lbs("glove_L", Ms, g["railset"]) - G[:3, 3]) @ G[:3, :3] * 1000.0
+        w = (np.clip((Lr[:, 0] - 110.0) / 10.0, 0, 1) * np.clip((470.0 - Lr[:, 0]) / 10.0, 0, 1)
+             * np.clip((16.0 - np.abs(Lr[:, 1])) / 4.0, 0, 1))
+        rail = w * softplus(Lr[:, 2] - H_["rail_z_mm"], 0.5) / H_["rail_sigma_mm"] * (1.0 if H_["rail_on"] else 0.0)
+        info = {"hold:palm_centre_gun_mm": [round(float(c), 1) for c in pc],
+                "hold:palm_normal_gun": [round(float(c), 3) for c in nG],
+                "hold:palm_normal_off_up_deg": round(ang, 1),
+                "hold:knuckles_gun_mm": [round(float(c), 1) for c in K], "hold:hand_axis_off_deg": round(aang, 1),
+                "hold:rail_max_z_mm": round(float((Lr[:, 2] * (w > 0.5)).max()), 1) if (w > 0.5).any() else None}
+        return np.r_[out, rail], info
 
     def bounds(self):
         lo, hi = np.full(self.n, -np.inf), np.full(self.n, np.inf)
@@ -959,7 +1004,8 @@ def finger_basis(model, P):
 FINGER = {
     "touch_mm": 0.6, "touch_k": 4,
     # phalanges that rest on the gun, and how firmly (sigma, mm)
-    "touch": {"R": {"finger3": (2.0, 2.0, 2.0), "finger4": (2.0, 2.0, 2.0), "finger5": (2.0, 2.0, 2.0),
+    # round 11: the right ring and little proximal phalanges at 1 mm (they stood 3.5-4 mm off the grip: a loose fist)
+    "touch": {"R": {"finger3": (2.0, 2.0, 2.0), "finger4": (1.0, 2.0, 2.0), "finger5": (1.0, 2.0, 2.0),
                     "finger2": (None, 3.0, 3.0), "finger1": (None, 2.0, 2.0)},
               "L": {"finger2": (3.0, 2.0, 2.0), "finger3": (3.0, 2.0, 2.0), "finger4": (3.0, 2.0, 2.0),
                     "finger5": (3.0, 2.0, 2.0), "finger1": (None, 3.0, 3.0)}},
@@ -986,6 +1032,48 @@ GRASP = {
     # try with only "z below -9" let the fingers hang straight down the right face past the bottom)
     "L": {f: [("z", -10.0, -1, 2.0), ("z", -27.0, +1, 2.0), ("y", -15.0, +1, 2.0)]
           for f in ("finger2", "finger3", "finger4", "finger5")},
+}
+# Round 11, the hold (Jeff: "the left hand is wrong. It should be cupping the rifle underneath not on top"; critics r9 m29,
+# m32, m47, r10 m3, m15, D6, r11 C1 D3 blocking). The reference's left hand cradles the handguard from below: the palm under
+# it facing up, the wrist on the gun's left (his body's side), the fingers curled round the gun's right face (the camera
+# side, the side away from him) with their tips on that face, the thumb along the gun's left side or over its top on that
+# side. From the hero camera a hand over the handguard and one under it project to nearly the same keypoints (the
+# single-view depth case, notes/research_canitcode.md), so the grasp itself is constrained (HOLD, gun frame): the
+# fingertips on the lower half of the right face (y -25 to -11, within ~6 mm of its flat at -18.5; z -17 to +2: with
+# z up to +10 the first hold curled them to the face's top edge, where the drawing shows them at its lower edge), the thumb's
+# tip on the gun's left half near its face; the palm terms are in HOLD.
+GRASP_UNDER_L = {**{f: [("y", -11.0, -1, 2.0), ("y", -25.0, +1, 2.0), ("z", 2.0, -1, 2.0), ("z", -17.0, +1, 2.0)]
+                    for f in ("finger2", "finger3", "finger4", "finger5")},
+                 # the thumb's tip on the gun's left half and near its left face (+18.5): a first placement left it
+                 # pointing at the muzzle 69 mm out in the air
+                 "finger1": [("y", 3.0, +1, 3.0), ("y", 28.0, -1, 3.0)]}
+HOLD = {
+    "on": False,               # set by --hold (round 11): GRASP["L"] becomes GRASP_UNDER_L and the palm terms below apply
+    "rail_on": True,           # off while place_left_under aims the arm with the fingers fixed at a wrap
+    # the palm centre (the mean of the glove's palm-side metacarpal points, gun frame, mm) along the handguard: the drawn
+    # hand is 0.53 of the way from the receiver face to the drawn handguard's front (0.37 of the way to the muzzle), on
+    # the real MCMR-13 (x 117 to 457) x 297 (277); round 7's was 252
+    "station_x_mm": 290.0, "station_sigma_mm": 2.0,
+    # under the handguard (octagon 38.1 across the flats, bottom flat at z -19.05, 17 wide): the palm centre below z -14,
+    # between y -6 and +16 (the bottom flat and the gun's left lower bevel, where a palm cupping from his side rests)
+    "palm_y_mm": (-6.0, 16.0), "palm_z_max_mm": -14.0, "palm_pos_sigma_mm": 1.0,
+    # the palm normal (out of the palm) points up into the handguard: within palm_up_tol_deg of palm_up (gun +Z leaned
+    # 15 deg toward the camera side, as a palm on the left lower bevel faces)
+    "palm_up": (0.0, -0.2588, 0.9659), "palm_up_tol_deg": 20.0, "palm_up_sigma_deg": 2.0,
+    # no glove of fingers 2-5 at the rail: points over the handguard (x 120-460) within 14 mm of its top centre line may
+    # not rise above z +15 (the rail's base is the octagon's top flat at +19; the slots and teeth to +26.5)
+    "rail_z_mm": 15.0, "rail_sigma_mm": 1.0,
+    # the hand across the handguard, not hanging under it: the knuckle line (index to little MCP centres) beside the
+    # gun's right lower corner (y at most -14, z at least -40: the palm is flat, so its bone line runs ~15 mm under the
+    # palm's skin and the knuckles cannot rise to the corner itself), so the fingers rise up the right face, and the hand's axis
+    # (wrist to middle MCP) within axis_tol_deg of gun -Y (a first aim without these hung the hand under the gun, the
+    # knuckles 51 mm below the bore and the fingers pointing at the muzzle)
+    "knuckle_y_max_mm": -14.0, "knuckle_z_min_mm": -40.0, "knuckle_sigma_mm": 1.5,
+    "axis": (0.0, -1.0, 0.0), "axis_tol_deg": 35.0, "axis_sigma_deg": 2.5,
+    # the arm-only placement (place_left_under): starts over the forearm's twist, the gun's surfaces off (the hand passes
+    # through the handguard to get under it), then on
+    "twist_starts_deg": (-100.0, -50.0, 0.0, 50.0, 100.0), "aim_nfev": 60,
+    "curl_starts": ((40.0, 60.0), (60.0, 80.0)),     # place_left_arm's finger starts (MCP, PIP) under the handguard
 }
 FINGER_BOUNDS = {1: (-35.0, 95.0), 2: (0.0, 110.0), 3: (0.0, 85.0)}
 THUMB_BOUNDS = {1: (-40.0, 80.0), 2: (-20.0, 80.0), 3: (-10.0, 85.0)}
@@ -1083,6 +1171,8 @@ def fit_fingers(model, x, side, verbose=True):
     idx_pts = np.nonzero(np.isin(gdom, [f"finger2-2.{side}", f"finger2-3.{side}"]))[0] if side == "R" else None
     grasp = [(f, np.nonzero(gdom == f"{f}-3.{side}")[0], terms) for f, terms in GRASP.get(side, {}).items()]
     grasp = [g_ for g_ in grasp if len(g_[1])]
+    rail_pts = (np.nonzero(np.isin(gchain, CHAINS[1:]) & (np.arange(len(gchain)) % 2 == 0))[0]
+                if side == "L" and HOLD["on"] else None)
     G = model.gun(x)
     base_b, rw = model.basis(x)
     keep = {k: v for k, v in model.finger_basis.items() if not k.endswith("." + side)}
@@ -1141,6 +1231,12 @@ def fit_fingers(model, x, side, verbose=True):
                     v = q["xyz".index(ax)]
                     out.append(float(softplus(sgn * (bound - v), 0.5)) / sg)
                 info[f"grasp:{f}"] = [round(float(c), 1) for c in q]
+        if rail_pts is not None:          # round 11 (HOLD): fingers 2-5 off the rail
+            Lr = (X[rail_pts] - G[:3, 3]) @ G[:3, :3] * 1000.0
+            w = (np.clip((Lr[:, 0] - 110.0) / 10.0, 0, 1) * np.clip((470.0 - Lr[:, 0]) / 10.0, 0, 1)
+                 * np.clip((16.0 - np.abs(Lr[:, 1])) / 4.0, 0, 1))
+            out += list(w * softplus(Lr[:, 2] - HOLD["rail_z_mm"], 0.5) / HOLD["rail_sigma_mm"])
+            info["rail_max_z_mm"] = round(float(Lr[w > 0.5, 2].max()), 1) if (w > 0.5).any() else None
         if idx_pts is not None:
             z = ((X[idx_pts] - G[:3, 3]) @ G[:3, :3])[:, 2] * 1000.0
             out += list(np.maximum(0.0, Fk["index_floor_mm"] - z) / 1.0)
@@ -1338,6 +1434,7 @@ def place_left_arm(model, x, verbose=True):
     keep = {k: v for k, v in model.finger_basis.items() if not k.endswith("." + side)}
     g = C_.sets[f"glove_{side}"]
     gsel = np.isin(g["chain"], CHAINS[1:]) & (g["palmar"] | np.array([d.split(".")[0].endswith("-3") for d in g["dom"]]))
+    gsel |= g["dom"] == f"finger1-3.{side}"       # round 11: GRASP_UNDER_L places the thumb's tip too
     dom, chain, palmar = g["dom"][gsel], g["chain"][gsel], g["palmar"][gsel]
     grasp = [(np.nonzero(dom == f"{f}-3.{side}")[0], terms) for f, terms in GRASP[side].items()]
     touch = [np.nonzero((chain == f) & palmar)[0] for f in CHAINS[1:]]
@@ -1400,7 +1497,7 @@ def place_left_arm(model, x, verbose=True):
     model.contact_full, model.hand_skip = True, {side}
     best = None
     t_start = time.perf_counter()
-    for mcp, pip in A["starts"]:
+    for mcp, pip in (HOLD["curl_starts"] if HOLD["on"] else A["starts"]):
         tab = tab_of(mcp, pip)
         p = np.clip(np.r_[x[idx], tab], lo + 1e-6, hi - 1e-6)
         for sig, nf in zip((3.0, sig_final), A["nfev"]):
@@ -1437,6 +1534,64 @@ def place_left_arm(model, x, verbose=True):
     return x, out
 
 
+def place_left_under(model, x, verbose=True):
+    """Round 11 (HOLD): bring the left hand under the handguard before place_left_arm. From the overhand hold a local
+    fit cannot get there (the forearm must turn over and the hand pass through the gun), so the left arm alone
+    (clavicle, shoulder, elbow, forearm twist, wrist: 12) is fitted from several forearm twists, the fingers at a
+    wrap (HOLD curl_starts[0]), with the whole solve's residuals but the carbine's non-penetration off and the hold's
+    palm terms on; the best becomes place_left_arm's start. Returns x."""
+    side, A = "L", LEFT_ARM
+    idx = np.concatenate([np.arange(model.slices[b][0].start, model.slices[b][0].stop) for b in A["bones"]])
+    lo_b, hi_b = model.bounds()
+    lo, hi = lo_b[idx], hi_b[idx]
+    tw = model.slices["lowerarm02.L"][0].start
+    wr = model.slices["wrist.L"][0]
+    # the fingers at a wrap while the arm is aimed
+    axes = finger_axes(model, side)
+    mcp, pip = HOLD["curl_starts"][0]
+    curl = {"finger2": (mcp, pip, 0.65 * pip), "finger3": (mcp, pip, 0.65 * pip), "finger4": (mcp + 3, pip, 0.65 * pip),
+            "finger5": (mcp + 5, pip - 5, 0.65 * (pip - 5))}
+    fb = {}
+    for b, al in axes.items():
+        f, j = b.split(".")[0].split("-")
+        for ax, kind in al:
+            if kind == "flex":
+                fb[b] = rot4(rv(ax * D(curl.get(f, CURLS[side][f])[int(j) - 1])))
+    keep = {k: v for k, v in model.finger_basis.items() if not k.endswith("." + side)}
+    old = (model.contact_full, set(model.hand_skip), model.gun_pen, dict(model.finger_basis))
+    model.contact_full, model.hand_skip, model.gun_pen = False, {side}, False
+    model.finger_basis = {**keep, **fb}
+    HOLD["rail_on"] = False
+
+    def res(p):
+        xx = x.copy()
+        xx[idx] = p
+        return model.residuals(xx)
+    best, t0, tried = None, time.perf_counter(), []
+    for t in HOLD["twist_starts_deg"]:
+        p = x[idx].copy()
+        p[int(np.nonzero(idx == tw)[0][0])] = D(t)
+        p[np.isin(idx, np.arange(wr.start, wr.stop))] = 0.0
+        p = np.clip(p, lo + 1e-6, hi - 1e-6)
+        sol = least_squares(res, p, bounds=(lo, hi), x_scale="jac", diff_step=1e-5, max_nfev=HOLD["aim_nfev"],
+                            xtol=1e-8, ftol=1e-8)
+        xx = x.copy()
+        xx[idx] = sol.x
+        _, info, _ = model.residuals(xx, detail=True)
+        tried.append({"twist_start_deg": t, "cost": round(float(sol.cost), 1),
+                      "palm_centre_gun_mm": info.get("hold:palm_centre_gun_mm"),
+                      "palm_normal_off_up_deg": info.get("hold:palm_normal_off_up_deg")})
+        if verbose:
+            print(f"  left hand aimed under from twist {t}: {tried[-1]} ({time.perf_counter() - t0:.0f} s)", flush=True)
+        if best is None or sol.cost < best.cost:
+            best = sol
+    model.contact_full, model.hand_skip, model.gun_pen, model.finger_basis = old
+    HOLD["rail_on"] = True
+    x = x.copy()
+    x[idx] = best.x
+    return x, tried
+
+
 def hand_targets_npz(model):
     """Round 7: the left hand's targets (gun frame, m: wrist, index and little MCP) for a saved solver state."""
     return {"hand_L": np.array([model.hand_local["L"][b] for b in ("wrist.L", "finger2-1.L", "finger5-1.L")])}
@@ -1464,10 +1619,13 @@ def contact_report(model, x):
     sub, model.contact.subsample = model.contact.subsample, False
     _, info, _ = model.residuals(x, detail=True)
     model.contact.subsample = sub
-    return {k: v for k, v in info.items() if k.startswith(("pen:", "touch:", "face:"))}
+    return {k: v for k, v in info.items() if k.startswith(("pen:", "touch:", "face:", "hold:"))}
 
 
-def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=None, place_left=False):
+def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=None, place_left=False, hold=False):
+    if hold:        # round 11: the left hand under the handguard (HOLD, GRASP_UNDER_L, place_left_under)
+        HOLD["on"] = True
+        GRASP["L"] = GRASP_UNDER_L
     with open(BASE_JSON, encoding="utf-8") as f:
         base = json.load(f)
     with open(KP_JSON, encoding="utf-8") as f:
@@ -1526,13 +1684,16 @@ def solve(restarts=3, seed=7, contact=True, refit_fingers=False, continue_from=N
             z = np.load(continue_from)
             x = z["x"]
             model.finger_params = {s: z[f"fp_{s}"] for s in "LR" if f"fp_{s}" in z}
-            if "hand_L" in z.files and not place_left:      # round 7: the left hand's targets from place_left_arm
+            if "hand_L" in z.files and not (place_left or hold):      # round 7: the left hand's targets from place_left_arm
                 model.hand_local["L"] = dict(zip(("wrist.L", "finger2-1.L", "finger5-1.L"), z["hand_L"]))
                 stages["hand_L_targets_from"] = os.path.relpath(continue_from, PROJECT).replace(os.sep, "/")
             model.contact_full = True
-            if place_left:
+            if place_left or hold:
                 # round 7: the left arm and fingers fitted round the handguard (place_left_arm), the right fingers
-                # refit, then the body at a soft penetration sigma before the usual fingers / whole glove / fingers
+                # refit, then the body at a soft penetration sigma before the usual fingers / whole glove / fingers.
+                # Round 11 (--hold): first the left arm aimed under the handguard (place_left_under)
+                if hold:
+                    x, stages["hold_aim"] = place_left_under(model, x)
                 x, stages["place_hand"]["L"] = place_left_arm(model, x)
                 fingers_out = {"R": fit_fingers(model, x, "R")}
                 sig_final = CONTACT["pen_sigma_mm"]
@@ -1712,8 +1873,10 @@ if __name__ == "__main__":
                     help="keep the body of the last full solve (cache/stages/pose_x_pass1.npz), fit only the fingers")
     ap.add_argument("--place-left", action="store_true",
                     help="with --continue-from (round 7): fit the left arm and fingers round the handguard first")
+    ap.add_argument("--hold", action="store_true",
+                    help="with --continue-from (round 11): the left hand under the handguard (HOLD), aimed, then placed")
     a = ap.parse_args()
     if a.face_targets:
         sys.exit(build_face_targets())
     sys.exit(solve(a.restarts, contact=not a.no_contact, refit_fingers=a.refit_fingers, continue_from=a.continue_from,
-                   place_left=a.place_left))
+                   place_left=a.place_left, hold=a.hold))

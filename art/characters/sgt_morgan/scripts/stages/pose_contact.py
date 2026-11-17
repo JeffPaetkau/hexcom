@@ -303,7 +303,9 @@ def render_hands(assembled=os.path.join(PROJECT, "cache", "assembled.blend"), qu
         cdir = (cam_loc - t) / np.linalg.norm(cam_loc - t)
         Gm = np.array(bpy.data.objects["Carbine.Root"].matrix_world)[:3, :3] if "Carbine.Root" in bpy.data.objects else np.eye(3)
         views = (("camera", cdir), ("gun_right", -Gm[:, 1] + 0.15 * Gm[:, 2]), ("gun_left", Gm[:, 1] + 0.15 * Gm[:, 2]),
-                 ("above", (0, -0.02, 1)), ("front", (0, -1, 0)))
+                 ("above", (0, -0.02, 1)), ("front", (0, -1, 0)),
+                 # round 11 (the hold): from under the gun and from his front-left
+                 ("below", -Gm[:, 2] - 0.15 * Gm[:, 1]), ("front_left", (0.6, -0.8, -0.1)))
         for name, d in views:
             d = np.asarray(d, float) / np.linalg.norm(d)
             outs.append(C.render_view("pose", keep, f"hands{tag}_{side}_{name}", t + d * 1500.0, t, 200.0, res=700))
