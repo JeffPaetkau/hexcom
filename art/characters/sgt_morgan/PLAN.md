@@ -116,3 +116,12 @@ grade, the blind critic loop in `eval/critic/`); `scripts/tools/` (the Blender s
 6. **The evaluation's colour**: the ungraded key renders neutral surfaces warm; neutralise it with
    the evaluation grade (the colour grade is in scope, CLAUDE.md), judged against the reference's
    neutrals (Jeff left it to judgement, 2026-11-15).
+7. **Critics from three model families** (Jeff, 2026-11-16, from round 11). The lenses stay, each with its own model:
+   - C1 fidelity: Fable 5.2, an agent with `model: fable`.
+   - C2 reality: ChatGPT, through `gen/REQUESTS.md`. It writes `results/C2.json` in the packet, to the schema, with
+     `"critic": "C2"`, `"lens": "reality"` and its own model name.
+   - C3 craft: Opus.
+
+   Same prompts (`scripts/eval/critic/prompts/`), same blindness, same tally. If ChatGPT cannot take a round, Opus runs
+   C2 and the tally notes the substitution. Round 11 is a new baseline: scores shift with the model, so compare across
+   the switch with care. Rounds 9-10 ran C1-C3 on Opus, with ChatGPT as an extra critic, G1.
