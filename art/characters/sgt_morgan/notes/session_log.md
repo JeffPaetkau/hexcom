@@ -30,7 +30,7 @@ session must know. Take 1's log is `archive/v1/notes/session_log.md`.
   
   Commit cabd5dd.
 
-**Interrupted.** `assemble.py --rebuild`, then `--round 12 --packet`, were running when Jeff shut down. Resume:
+**Round 12 rendered** just before shutdown (`renders/round_12/`, packet sha 6e1b5c60; no re-solve, the hold kept). Resume at step 3:
 1. Run `assemble.py --status`. Check that `pose_needs_solve()` says no re-solve; never let it start a fresh solve,
    because that loses the hold.
 2. Run `--rebuild`, then `--round 12 --packet`.
