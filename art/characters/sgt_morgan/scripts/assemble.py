@@ -1025,7 +1025,8 @@ DECLARE = [
     "The scene is only the matched camera, the key, side and world lights and a plain floor: no hangar, haze or "
     "depth of field. The Cycles views are colour-graded so that neutral surfaces match the reference's neutrals "
     "(a warm key and a cooler side light); judge hue and value against the reference directly.",
-    "The face is a parametric head fitted toward the reference; skin is a default material.",
+    "The face is a parametric head fitted toward the reference (round 10: procedural skin, strand stubble and hair "
+    "curves); its expression is neutral.",
 ]
 
 

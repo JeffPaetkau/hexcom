@@ -1,0 +1,1517 @@
+{
+ "part": "18",
+ "round": 11,
+ "attempt": 1,
+ "packet": "renders/round_11/critic/",
+ "packet_sha": "947fa9579b363545b76dec00bb81826759f0a5e7c397292b8f12962dacfb6e5b",
+ "scope": "the whole soldier: proportions, silhouette, placement, layering, the hold, and the first materials (values, colours, wear) against the reference; ignore fine surface detail",
+ "critics": {
+  "C1": {
+   "lens": "fidelity",
+   "model": "claude-fable-5-2",
+   "overall": 4,
+   "pass": false,
+   "confidence": 0.75,
+   "blocking": 2,
+   "majors": 10,
+   "minors": 1
+  },
+  "C2": {
+   "lens": "reality",
+   "model": "claude-opus-5-5",
+   "overall": 5,
+   "pass": false,
+   "confidence": 0.7,
+   "blocking": 0,
+   "majors": 11,
+   "minors": 2
+  },
+  "C3": {
+   "lens": "craft",
+   "model": "claude-opus-5-5",
+   "overall": 5,
+   "pass": false,
+   "confidence": 0.7,
+   "blocking": 0,
+   "majors": 13,
+   "minors": 3
+  }
+ },
+ "median": 5,
+ "spread": 1,
+ "blocking": 2,
+ "metrics": null,
+ "failing_metrics": [],
+ "pass": false,
+ "decision": "revise",
+ "questions": {
+  "Q1": {
+   "C1": 6,
+   "C2": 6,
+   "C3": 5
+  },
+  "Q2": {
+   "C1": 6,
+   "C2": 7,
+   "C3": 6
+  },
+  "Q3": {
+   "C1": 5,
+   "C2": 6,
+   "C3": 6
+  },
+  "Q4": {
+   "C1": 5,
+   "C2": 5,
+   "C3": 5
+  },
+  "Q5": {
+   "C1": 4,
+   "C2": 5,
+   "C3": 5
+  },
+  "Q6": {
+   "C1": 4,
+   "C2": 5,
+   "C3": 4
+  }
+ },
+ "claims": {},
+ "merged": [
+  {
+   "id": "m1",
+   "severity": "blocking",
+   "critics": [
+    "C1",
+    "C2"
+   ],
+   "text": "The left hand does not hold the carbine: it lies flat on the handguard with straight fingers. Any shooter would see the support hand is not controlling the muzzle.",
+   "also": [
+    "The left hand lies open over the handguard and does not hold the carbine; the reference grips from below with closed fingers.",
+    "The left hand rests open on top of the handguard with straight fingers pointing down the far side; it does not close on the carbine. The reference wraps the handguard from below with curled fingers and the thumb over.",
+    "Left hand lies palm-down on top of the handguard with straight, splayed fingers that never wrap it; no thumb opposes, so the hand is resting on the gun, not holding it."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "blocking",
+     "image": "pair_hands_rifle_cycles.png",
+     "box_px": [
+      1500,
+      540,
+      1720,
+      720
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_hands_rifle_cycles.png",
+     "box_px": [
+      1515,
+      550,
+      1710,
+      710
+     ]
+    }
+   ],
+   "fixes": [
+    "Bring the palm under the handguard and curl all four fingers round it, thumb along the near side.",
+    "Cup the handguard from below as drawn: palm under the rail, fingers curled over the top, thumb along the near side, knuckles flexed about 60 to 90 degrees."
+   ],
+   "spec_refs": [
+    "Pass criteria 4"
+   ],
+   "ranks": {
+    "C1": 3,
+    "C2": 1
+   }
+  },
+  {
+   "id": "m2",
+   "severity": "blocking",
+   "critics": [
+    "C1"
+   ],
+   "text": "The face is another man: broad, flat and square with a heavy brow bar, small eyes and orange skin, where the reference has a long lean face, high hairline, arched brows and hollow cheeks. Identity fails at a glance.",
+   "also": [
+    "The face is not the reference man: wider and flatter, square forehead with a straight low hairline, heavy dark brow bar, small close-set eyes, short blunt nose, weak cheekbones and jaw definition, saturated orange skin."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "blocking",
+     "image": "pair_head_face_cycles.png",
+     "box_px": [
+      1050,
+      60,
+      1500,
+      560
+     ]
+    }
+   ],
+   "fixes": [
+    "The reference has a longer, narrower face, a higher M-shaped hairline, arched separate brows, deeper-set larger eyes, a longer straight nose, hollow cheeks and a tanned but neutral skin tone."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 1
+   }
+  },
+  {
+   "id": "m3",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The boots are low pale trainers with pointed toes; the reference has tall, dark, heavy laced combat boots with deep lugged soles.",
+   "also": [
+    "The boots read as low, smooth trainers: short shaft, thin pointed toe, slim sole, pale grey panels. The reference has tall laced combat boots with a bulbous toe cap, deep lugged sole, heel block and dark scuffed leather.",
+    "The boots are low trainers with thin soles and pointed toes; a combat boot of this class has a mid shaft, chunky lugged sole and a rubber toe cap.",
+    "Boots read as low-cut trainers: shaft barely above the ankle, thin sole, long pointed toe with no bumper; the reference and a Zephyr-class mid boot have a shaft about 150 mm high, a chunky lugged sole and a rounded rubber toe cap.",
+    "The soldier's right boot reads as a low trainer with a swoosh upper and a thin sole; both boots lack the reference's chunky lugs and visible lacing.",
+    "The soldier's right boot reads as a low trainer: a smooth swoosh-panelled upper, low collar, few visible laces and a thin sole, unlike the reference's chunky lace-up boots with deep lugs."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_boots_feet_cycles.png",
+     "box_px": [
+      1060,
+      180,
+      1900,
+      420
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_boots_feet_cycles.png",
+     "box_px": [
+      1070,
+      190,
+      1390,
+      370
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_boots_feet_cycles.png",
+     "box_px": [
+      1070,
+      180,
+      1380,
+      370
+     ]
+    }
+   ],
+   "fixes": [
+    "Raise the shaft to mid-shin height under the trouser, deepen the toe box and the sole, darken the upper to near black.",
+    "Raise the shaft to mid-boot height, thicken the midsole and lugs, round and bulk the toe with a rubber rand.",
+    "Mid-height leather and textile upper with visible eyelets and laces to the collar, toe rand, and a thick lugged sole with a heel step."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 4,
+    "C2": 6,
+    "C3": 9
+   }
+  },
+  {
+   "id": "m4",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C2",
+    "C3"
+   ],
+   "text": "The carrier is a flat clean grey-olive; the reference is worn olive-khaki with dirt and edge abrasion. The kit reads unissued.",
+   "also": [
+    "The carrier is too grey and too tidy: three identical pouches and a plain panel, against a warm worn olive carrier with unequal flapped pouches.",
+    "The carrier is a flat grey-olive with three identical smooth pouches and a plain chest panel; the reference carrier is a warmer coyote-olive, heavily worn, with a detailed chest panel and unequal flapped pouches.",
+    "Carrier and pouches are a flat, clean grey-olive; the reference carrier is olive-khaki Cordura with heavy edge wear, dirt and fading, and its colour shifts warmer than the render.",
+    "The carrier and pouches are clean blockout boxes in flat olive-grey; the reference's are worn tan-olive cordura with lumps, binding and dirt.",
+    "The carrier front and pouches read as clean blockout boxes: flat uniform olive-grey with no fabric weave, binding, wear or dirt, and pouch flaps as flat lids; the reference's carrier is worn tan-olive cordura."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1240,
+      150,
+      1700,
+      620
+     ]
+    },
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1240,
+      140,
+      1700,
+      600
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1240,
+      160,
+      1690,
+      600
+     ]
+    }
+   ],
+   "fixes": [
+    "Shift the carrier hue toward yellow-olive, raise saturation, and vary the pouch row as drawn.",
+    "Warm the base toward olive-khaki, add abrasion on edges and pouch lids, dust in recesses and fading on the top surfaces.",
+    "Cordura weave at real scale, bound edges, the reference's tan-olive hue, scuffs and dirt on edges, pouch flaps with thickness and sag."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 8,
+    "C2": 4,
+    "C3": 5
+   }
+  },
+  {
+   "id": "m5",
+   "severity": "major",
+   "critics": [
+    "C1",
+    "C3"
+   ],
+   "text": "The hair is a tall spiked crest that runs out of the frame; the reference is a short textured crop with faded sides.",
+   "also": [
+    "The hair stands in a tall spiked crest that leaves the top of the frame, like a mohawk, with dense dark sides; the reference is a short textured crop about 30 mm high with a faded side.",
+    "The hair is a mohawk-like crest of cones that breaks the top of the silhouette.",
+    "Hair is a crest of spiky cones on a shaved scalp, a mohawk tuft that breaks the head silhouette; the reference has short textured hair with front volume and short but covered sides."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_soldier_full_cycles.png",
+     "box_px": [
+      1230,
+      0,
+      1420,
+      110
+     ]
+    },
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_soldier_full_clay.png",
+     "box_px": [
+      1235,
+      0,
+      1335,
+      120
+     ]
+    }
+   ],
+   "fixes": [
+    "Shorten the crown strands to a few centimetres, lay them forward and sideways in clumps, and fade the sides to stubble length.",
+    "Clumped short strands swept up and to one side at the front, tapering to short coverage over the sides and back."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 6,
+    "C3": 7
+   }
+  },
+  {
+   "id": "m6",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "[D2] The hold is not a hold: the right hand is a loose fist beside the pistol grip and the left hand drapes stiff fingers over the rail. Real hands wrap, with the palm pressed to the gun.",
+   "also": [
+    "Right hand does not close on the pistol grip: middle, ring and little fingers curl into a loose fist beside the grip with air inside, the index finger lies straight along the receiver; the hand hovers rather than grips."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hands_rifle_cycles.png",
+     "box_px": [
+      1170,
+      310,
+      1370,
+      460
+     ]
+    }
+   ],
+   "fixes": [
+    "Wrap the three lower fingers fully round the grip with the web of the hand high in the grip's tang, palm in contact; index along the lower receiver above the trigger guard."
+   ],
+   "spec_refs": [
+    "Q6"
+   ],
+   "ranks": {
+    "C3": 1
+   }
+  },
+  {
+   "id": "m7",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "Skin is orange and waxy, which reads as CG before anything else in the frame; the reference skin is a desaturated, weathered tan.",
+   "also": [
+    "Skin is a saturated orange, uniform and waxy, with no redness variation at nose, cheeks and ears and no paler stubble zone; the reference skin is a desaturated, weathered tan."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_head_face_cycles.png",
+     "box_px": [
+      1060,
+      100,
+      1500,
+      560
+     ]
+    }
+   ],
+   "fixes": [
+    "Lower saturation, add regional colour zones (redder nose and ears, bluish beard shadow) and specular breakup."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 2
+   }
+  },
+  {
+   "id": "m8",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "The shirt is a neoprene skin: smooth, seamless, slightly shiny sleeves and torso. Real combat shirts gather at the elbows and under straps and show seams and weave.",
+   "also": [
+    "The combat shirt reads as a neoprene wetsuit: seamless smooth sleeves and torso with a slight sheen, no folds, seams, cuffs or cloth weave anywhere on the arms or chest."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_arm_L_cycles.png",
+     "box_px": [
+      470,
+      330,
+      790,
+      560
+     ]
+    }
+   ],
+   "fixes": [
+    "Matte woven cloth with seams down the sleeve, gathering at the elbow crook and under straps, fabric texture at native scale."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 2
+   }
+  },
+  {
+   "id": "m9",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "Pauldrons and forearm guards are pale clean grey plastic; the reference armour is dark and worn, so the arms jump out of the value structure.",
+   "also": [
+    "Pauldrons and forearm guards are pale, clean grey reading as plastic; the reference armour is dark grey-olive, scuffed to bright metal-like edges."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1700,
+      90,
+      1900,
+      420
+     ]
+    }
+   ],
+   "fixes": [
+    "Darken the base value markedly, keep wear to edges and raised areas."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 3
+   }
+  },
+  {
+   "id": "m10",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "The armour plates are light grey plastic with painted edge streaks; the reference's are dark gunmetal with chipped, dirty wear. The value jump makes the kit read toy-like.",
+   "also": [
+    "Armour plates (pauldrons, upper-arm and forearm guards) are light grey plastic, far lighter than the reference's dark gunmetal; wear is only painted streaks along the edges."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_soldier_full_cycles.png",
+     "box_px": [
+      990,
+      300,
+      1640,
+      780
+     ]
+    }
+   ],
+   "fixes": [
+    "Darker painted-metal or polymer value near the reference's, wear as chips and scuffs on high points and edges with dirt in recesses."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 3
+   }
+  },
+  {
+   "id": "m11",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "[D6] Hard armour behaves like cloth: the pauldron is dented and wobbly with rolled rims, and the forearm guards are inflated stacked cylinders instead of thin shells following the forearm.",
+   "also": [
+    "The right pauldron is a flat bent sheet with wobbly, dented surfaces and soft rolled rims, like crumpled cloth rather than a rigid moulded shell; its outer edge stands well off the arm."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_arm_R_cycles.png",
+     "box_px": [
+      615,
+      0,
+      815,
+      300
+     ]
+    }
+   ],
+   "fixes": [
+    "A rigid moulded shell: smooth continuous curvature, crisp chamfered edges, consistent thickness, seated on the shoulder with its strap pulling it in."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 4
+   }
+  },
+  {
+   "id": "m12",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "The trousers below the knee are narrow smooth tubes with a straight hem and a thin ankle showing; the reference is baggy, panelled and bloused over the boots.",
+   "also": [
+    "The lower trousers are smooth narrow tubes ending in a straight hem above the boot; the reference trousers are baggy, with reinforced shin panels, stacked folds and the cuffs bloused over the boot tops."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_legs_knees_cycles.png",
+     "box_px": [
+      1130,
+      380,
+      1900,
+      778
+     ]
+    }
+   ],
+   "fixes": [
+    "Add cloth volume below the knee, the lighter shin reinforcement panels, and gather the hem onto the boot collar."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 5
+   }
+  },
+  {
+   "id": "m13",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "The right pauldron is a flat board standing off the shoulder and rising above it, breaking the shoulder silhouette; real plates are domed and seated on the deltoid.",
+   "also": [
+    "Right pauldron is a flat board hanging from the shoulder strap, standing off the deltoid and rising above the shoulder line; real shoulder armour is domed to follow the deltoid and sits on it."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_arm_R_cycles.png",
+     "box_px": [
+      615,
+      0,
+      810,
+      300
+     ]
+    }
+   ],
+   "fixes": [
+    "Curve the plate around the deltoid cap, seat it on the sleeve, and hang it from the carrier shoulder strap so its top sits at the acromion, not above it."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 5
+   }
+  },
+  {
+   "id": "m14",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "The face is orange and waxy with a uniform sheen and painted-on brows; it reads as a game asset next to the reference's weathered skin.",
+   "also": [
+    "Skin is saturated orange and waxy with flat shading and a broad uniform sheen; eyebrows are dark painted bars with hard lower edges; the temple silhouette on the viewer's right is a straight vertical cut."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_head_face_cycles.png",
+     "box_px": [
+      1060,
+      80,
+      1500,
+      560
+     ]
+    }
+   ],
+   "fixes": [
+    "Less saturated, varied skin tone (redder cheeks and nose, cooler jaw under stubble), breakup in the specular, hair-strand brows, a rounded temple."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 6
+   }
+  },
+  {
+   "id": "m15",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "The arm armour is light clean grey; the reference plates are dark gunmetal with tan worn edges, near the shirt in value. The diff map is white across every plate.",
+   "also": [
+    "The arm armour is a clean light grey, far lighter than the reference (white in the diff): the drawn plates are dark gunmetal with tan worn edges and olive-brown grime, close in value to the shirt."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1020,
+      90,
+      1200,
+      360
+     ]
+    }
+   ],
+   "fixes": [
+    "Drop the plates' base value by about half and warm it; keep bright values only on worn edges."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 7
+   }
+  },
+  {
+   "id": "m16",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "A dark sock gap shows between trouser hem and boot collar; trousers break over the boot or blouse into it, never stop short.",
+   "also": [
+    "Trouser hem ends above the boot collar, leaving a dark band of sock or ankle; real trousers either break over the boot top or are bloused into it."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_boots_feet_cycles.png",
+     "box_px": [
+      1200,
+      150,
+      1390,
+      250
+     ]
+    }
+   ],
+   "fixes": [
+    "Lengthen the hem so it rests on the boot upper with a break and stacked folds, as the reference shows."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 7
+   }
+  },
+  {
+   "id": "m17",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "The face scowls under low brows on a flat forehead with a very wide square jaw; the head reads boxy and heavier than the reference man.",
+   "also": [
+    "Brows sit low on the upper lids in a scowl over a flat, slab forehead with no frontal eminences or temple hollows; the jaw reads very wide and square, making the head boxy."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_head_face_cycles.png",
+     "box_px": [
+      1200,
+      170,
+      1470,
+      270
+     ]
+    }
+   ],
+   "fixes": [
+    "Raise the brows to sit on the orbital rim, model the frontal bossing and temporal fossa, narrow the gonial angles."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 8
+   }
+  },
+  {
+   "id": "m18",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "The gloves are smooth rubber mitts with sausage fingers, no knuckle pads or seams.",
+   "also": [
+    "Gloves read as smooth rubber mitts: equal sausage fingers, no knuckle pads, panel seams, palm wrinkles or fabric texture; the reference shows padded M-Pact type gloves."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_arm_R_cycles.png",
+     "box_px": [
+      800,
+      490,
+      1010,
+      660
+     ]
+    }
+   ],
+   "fixes": [
+    "Model the knuckle and finger armour pads, panel seams, fourchettes and bunching at the knuckles; give the backhand a synthetic textile and the palm a suede-like value."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 8
+   }
+  },
+  {
+   "id": "m19",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "The right hand does not read as closed on a pistol grip, and both gloves are bare-hand shapes without padding or cuffs.",
+   "also": [
+    "The right hand is a thin bare-hand shape in a glove colour, lying against the receiver with no visible wrap of a pistol grip; the reference glove is bulky, with knuckle padding and a broad cuff under the forearm guard."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_hands_rifle_cycles.png",
+     "box_px": [
+      1170,
+      300,
+      1380,
+      480
+     ]
+    }
+   ],
+   "fixes": [
+    "Close the lower three fingers round the grip with the web high on the backstrap, and give the glove its padded thickness."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 9
+   }
+  },
+  {
+   "id": "m20",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "The hair is a spiky crest over shaved sides, a mohawk, rather than the reference's short textured crop with haired sides.",
+   "also": [
+    "Hair is a spiky upright crest over clean shaved sides, reading as a mohawk; the reference has a short textured crop, top swept up and back, sides short but haired."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_head_face_cycles.png",
+     "box_px": [
+      1070,
+      0,
+      1500,
+      200
+     ]
+    }
+   ],
+   "fixes": [
+    "Keep a few millimetres of hair on the sides tapering to the ears and lay the top longer and swept back."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 9
+   }
+  },
+  {
+   "id": "m21",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "The shirt is skin-tight over the back, shoulders and arms; the reference shirt has ease, seams and folds.",
+   "also": [
+    "The shirt follows every muscle of the back and upper arms like paint; the reference shirt is a loose combat shirt with seams, sleeve folds and its own thickness."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_turn_back.png",
+     "box_px": [
+      150,
+      200,
+      460,
+      420
+     ]
+    }
+   ],
+   "fixes": [
+    "Give the shirt ease over the shoulders and arms so it bridges the muscle forms and folds at the elbow and armpit."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 10
+   }
+  },
+  {
+   "id": "m22",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "The lower trousers are straight pipes with no stacking over the boots, and the camo is blurred blotch noise rather than a printed pattern with dirt.",
+   "also": [
+    "Lower trouser legs are straight smooth pipes with no stacking or blousing over the boot, and the camo is large blurred low-frequency blotches that read as a smudged noise texture, not a printed pattern with dirt."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_legs_knees_cycles.png",
+     "box_px": [
+      1140,
+      380,
+      1380,
+      770
+     ]
+    }
+   ],
+   "fixes": [
+    "Cloth stacking and bunching above the boot collar, sharper printed pattern at real scale over a near-black base, dirt concentrated at the hems and knees."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 10
+   }
+  },
+  {
+   "id": "m23",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "The left upper-arm plates stop short and leave a long bare sleeve above the elbow; the drawn plates and olive band nearly reach the elbow.",
+   "also": [
+    "The left upper-arm armour ends about a third of the way up from the elbow, leaving a long bare sleeve; the reference stacks a pauldron and a long second plate with an olive band that reach nearly to the elbow."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_arm_L_cycles.png",
+     "box_px": [
+      560,
+      10,
+      760,
+      360
+     ]
+    }
+   ],
+   "fixes": [
+    "Lengthen the lower plate and add the olive wrap so the armour covers the upper arm as drawn."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 11
+   }
+  },
+  {
+   "id": "m24",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "The left sleeve balloons at the elbow point instead of stretching over it and gathering in the crook.",
+   "also": [
+    "Left sleeve balloons into a large rounded bulge at the elbow point; a bent sleeve stretches over the olecranon and gathers in the crook, it does not inflate outward."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_arm_L_cycles.png",
+     "box_px": [
+      690,
+      410,
+      795,
+      600
+     ]
+    }
+   ],
+   "fixes": [
+    "Pull the sleeve taut over the elbow point and bunch the slack into the inner crook."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 11
+   }
+  },
+  {
+   "id": "m25",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "Seen from behind, the trousers cling to the seat like leggings, at odds with the baggy legs below.",
+   "also": [
+    "The trousers cling to the buttocks and hamstrings like leggings, showing glute anatomy, inconsistent with the baggy legs below."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_turn_back.png",
+     "box_px": [
+      200,
+      430,
+      420,
+      640
+     ]
+    }
+   ],
+   "fixes": [
+    "Stiff trouser cloth hanging from the seat with ease, folds radiating from the crotch and under the belt."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 11
+   }
+  },
+  {
+   "id": "m26",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "The knee pads are plain boxes with a hexagon, proud of the leg; the drawn caps are faceted shields in a tan frame with side wings.",
+   "also": [
+    "The knee pads are plain rounded boxes with a raised hexagon, standing proud of the leg; the reference pads have a faceted shield-shaped cap in a tan frame with side wings, seated on a dark padded backing."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_legs_knees_cycles.png",
+     "box_px": [
+      1100,
+      120,
+      1280,
+      360
+     ]
+    }
+   ],
+   "fixes": [
+    "Shape the cap as a tapering faceted shield, add the frame and wings, and seat it into the backing."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 12
+   }
+  },
+  {
+   "id": "m27",
+   "severity": "major",
+   "critics": [
+    "C2"
+   ],
+   "text": "Knee pads are flat boxes sitting proud of the leg with one strap; real pads curve around the knee.",
+   "also": [
+    "Knee pads are flat-faced boxes standing proud of the trouser, with only one visible strap; AirFlex-class pads are curved shells that wrap the patella and sit in a knee pocket or under two straps."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "major",
+     "image": "pair_legs_knees_cycles.png",
+     "box_px": [
+      1105,
+      130,
+      1265,
+      365
+     ]
+    }
+   ],
+   "fixes": [
+    "Curve the cap around the knee, seat it into the trouser knee, and show the upper and lower straps."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 12
+   }
+  },
+  {
+   "id": "m28",
+   "severity": "major",
+   "critics": [
+    "C1"
+   ],
+   "text": "A skin-coloured patch shows at the left shoulder beside the strap, under the antenna.",
+   "also": [
+    "A skin-coloured orange-brown patch shows at the left shoulder beside the carrier strap, below the antenna, where there should be only shirt and strap."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1660,
+      60,
+      1720,
+      120
+     ]
+    }
+   ],
+   "fixes": [
+    "Find what is showing through (the body through the shirt, or an unassigned material) and cover or correct it."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 13
+   }
+  },
+  {
+   "id": "m29",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "Left hand's fingers lie stiff and evenly spaced over the top of the handguard like a claw, no thumb visible under or beside it, fingertips appear to sit into the rail teeth.",
+   "also": [],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_hands_rifle_cycles.png",
+     "box_px": [
+      1510,
+      540,
+      1710,
+      710
+     ]
+    }
+   ],
+   "fixes": [
+    "Close the hand round the handguard: thumb along the side or over the top, fingers wrapped under, palm pressing the side, fingertips resting on the surface, not in it."
+   ],
+   "spec_refs": [
+    "Q6"
+   ],
+   "ranks": {}
+  },
+  {
+   "id": "m30",
+   "severity": "major",
+   "critics": [
+    "C3"
+   ],
+   "text": "Forearm guards (both arms, right shown) are fat stacked cylinders like rolled cuffs, wider than the forearm and not tapering to the wrist; the reference's guards are contoured plates following the forearm.",
+   "also": [],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "major",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1000,
+      430,
+      1170,
+      560
+     ]
+    }
+   ],
+   "fixes": [
+    "Shells that follow the forearm's taper and flattened cross-section, thin-walled, strapped close, segmented where the reference shows segments."
+   ],
+   "spec_refs": [],
+   "ranks": {}
+  },
+  {
+   "id": "m31",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "A hard ring above the left elbow where the simulated upper sleeve stops over the lower sleeve gives away two separate meshes.",
+   "also": [
+    "Hard stepped ring above the left elbow where the simulated upper sleeve ends over the lower sleeve: a clean lip with a dark gap, like two separate tubes."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_arm_L_cycles.png",
+     "box_px": [
+      480,
+      410,
+      770,
+      520
+     ]
+    }
+   ],
+   "fixes": [
+    "One continuous sleeve, folds gathering into the elbow crook rather than a seam-like step."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 13
+   }
+  },
+  {
+   "id": "m32",
+   "severity": "minor",
+   "critics": [
+    "C2"
+   ],
+   "text": "The front mag pouches are wide pudgy blocks rather than narrow, taller flapped M4 pouches.",
+   "also": [
+    "Mag pouches are wide, pudgy blocks butted together; real triple M4 pouches are narrow (about 75 mm each) and taller, with flaps or bungee retention and visible spacing on the PALS."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_torso_vest_cycles.png",
+     "box_px": [
+      1355,
+      355,
+      1690,
+      600
+     ]
+    }
+   ],
+   "fixes": [
+    "Narrow each pouch to one STANAG width plus wall, raise its height, add the flap or bungee."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 15
+   }
+  },
+  {
+   "id": "m33",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "Knee pads are soft pillows with clean surfaces instead of rigid faceted caps, and the strap behind the right knee stands off the leg.",
+   "also": [
+    "Knee pads are soft pillow shells with a uniform clean surface; the strap and buckle behind the soldier's right knee stand off the leg."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_legs_knees_cycles.png",
+     "box_px": [
+      1110,
+      120,
+      1350,
+      360
+     ]
+    }
+   ],
+   "fixes": [
+    "Rigid faceted caps with crisp edges and scuffs, straps pulled tight into the trouser cloth."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 16
+   }
+  },
+  {
+   "id": "m34",
+   "severity": "minor",
+   "critics": [
+    "C1"
+   ],
+   "text": "The right thigh cases have bright tan faces; the drawn ones are dark throughout.",
+   "also": [
+    "The right thigh rig's two cases have bright tan faces on black bodies; in the reference the cases are dark grey-black with only faint tan wear, and read as one dark mass."
+   ],
+   "locations": [
+    {
+     "critic": "C1",
+     "severity": "minor",
+     "image": "pair_belt_hips_cycles.png",
+     "box_px": [
+      1010,
+      150,
+      1200,
+      440
+     ]
+    }
+   ],
+   "fixes": [
+    "Darken the case faces to near the body colour and keep tan for worn edges only."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 17
+   }
+  },
+  {
+   "id": "m35",
+   "severity": "minor",
+   "critics": [
+    "C2"
+   ],
+   "text": "Two stray wire hooks hang under the right drop-leg panel.",
+   "also": [
+    "Two thin wire-like hooks dangle under the drop-leg panel with nothing to attach to."
+   ],
+   "locations": [
+    {
+     "critic": "C2",
+     "severity": "minor",
+     "image": "pair_belt_hips_cycles.png",
+     "box_px": [
+      1420,
+      385,
+      1460,
+      430
+     ]
+    }
+   ],
+   "fixes": [
+    "Remove them or make them the panel's lower leg-strap buckle ends."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 17
+   }
+  },
+  {
+   "id": "m36",
+   "severity": "minor",
+   "critics": [
+    "C3"
+   ],
+   "text": "Two wire hooks dangle under the soldier's right drop-leg pouch, and the thigh straps are perfect flat bands round a cylinder.",
+   "also": [
+    "Thigh straps wrap the leg as perfect flat bands with no compression or wrinkling of the trouser cloth beneath; two wire hooks dangle under the drop-leg pouch."
+   ],
+   "locations": [
+    {
+     "critic": "C3",
+     "severity": "minor",
+     "image": "pair_belt_hips_cycles.png",
+     "box_px": [
+      1200,
+      240,
+      1420,
+      400
+     ]
+    }
+   ],
+   "fixes": [
+    "Straps cinch into the cloth with gathers either side; hooks either tucked or removed."
+   ],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 19
+   }
+  },
+  {
+   "id": "m37",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The whole figure reads as an athlete in a tight suit with plates attached, not the reference's bulky layered soldier. The mass of cloth and kit is well under the drawing on the arms, hips and legs.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 2
+   }
+  },
+  {
+   "id": "m38",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "Sleeves are smooth inflated tubes: the arms read bodybuilder-thick while the reference is lean with armour giving the bulk.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 10
+   }
+  },
+  {
+   "id": "m39",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "Straps sit on every surface without biting into it: no compression, gathers or contact shadow under the arm, thigh and knee straps, so each item looks pasted on rather than worn.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 12
+   }
+  },
+  {
+   "id": "m40",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "In the side views the carbine is carried at arm's length well in front of the carrier; the reference low ready keeps it closer to the body.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 13
+   }
+  },
+  {
+   "id": "m41",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The right pauldron sits higher and further outboard than drawn and is a single smooth plate; the reference has a smaller cap with a second plate under it running down the arm.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 14
+   }
+  },
+  {
+   "id": "m42",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "Gloves read as smooth rubber with no knuckle protection or seams; Mechanix M-Pact class gloves have moulded knuckle guards visible at this size.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 14
+   }
+  },
+  {
+   "id": "m43",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "Mass reads wrong: inflated arms and cuffs but a thin, flat-faced carrier with empty-looking pouches, where the reference is lean in the body and heavy in the kit.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 14
+   }
+  },
+  {
+   "id": "m44",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The gaiter is a tall smooth cowl of one value; the reference is a thinner scarf with deep irregular folds that sits lower on the neck and tucks inside the carrier straps.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 15
+   }
+  },
+  {
+   "id": "m45",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "The legs are straight locked columns with no calf or knee shape showing through the cloth, which stiffens the stance next to the reference's.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 15
+   }
+  },
+  {
+   "id": "m46",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The trouser cloth is a uniform brown-grey with soft blotches; the reference is darker, nearly black in the folds, with strong lighter wear on the thighs and shins.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 16
+   }
+  },
+  {
+   "id": "m47",
+   "severity": "unrated",
+   "critics": [
+    "C2"
+   ],
+   "text": "Trouser upper legs read close to tights around the crotch while the lower legs are wide straight tubes; Crye G3 class cut is roomier above and tapers below.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C2": 16
+   }
+  },
+  {
+   "id": "m48",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "The stock hangs in front of the right chest without clear contact with the arm or the carrier; in a real low ready it rests against the chest or under the arm.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 17
+   }
+  },
+  {
+   "id": "m49",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The emblem is a bright white star on mid blue; the reference is a duller pale crossed mark on a dark slate shield, less contrast and a different figure.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 18
+   }
+  },
+  {
+   "id": "m50",
+   "severity": "unrated",
+   "critics": [
+    "C3"
+   ],
+   "text": "The carbine is uniformly clean matte black with no edge wear, next to a heavily worn reference gun, so it reads as a fresh model rather than a used rifle.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C3": 18
+   }
+  },
+  {
+   "id": "m51",
+   "severity": "unrated",
+   "critics": [
+    "C1"
+   ],
+   "text": "The carbine, though declared real, reads slim and toy-clean against the hands: a matte black with no wear and tan flecks only, where the drawn gun is worn grey metal with tan parts. Its value is too uniform.",
+   "also": [],
+   "locations": [],
+   "fixes": [],
+   "spec_refs": [],
+   "ranks": {
+    "C1": 19
+   }
+  }
+ ]
+}
