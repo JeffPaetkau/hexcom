@@ -34,7 +34,7 @@ SIZE = 2048
 
 # ---- the skin's numbers (calibrated against ref/crop_head_face.png through the hero camera: head.md §13)
 SKIN = {
-    "tone": (0.557, 0.354, 0.291),       # x MPFB's diffuse (linear)
+    "tone": (0.516, 0.364, 0.316),       # x MPFB's diffuse (linear)
     "sss_weight": 0.5,
     "sss_scale": 0.0020,                 # m: the red radius
     "sss_radius": (1.0, 0.45, 0.30),     # x scale
@@ -46,7 +46,7 @@ SKIN = {
     "undereye_rgb": (0.86, 0.76, 0.78), "undereye_k": 0.8,
     "beard_rgb": (0.76, 0.86, 0.98), "beard_k": 0.5,      # the shadow of the follicles under the skin: darker, bluer
     "stubble_hex": "#2b2523", "stubble_grey_hex": "#8c8580", "stubble_cover": 0.6, "stubble_dots_scale": 1300.0,
-    "scalp_rgb": (0.50, 0.46, 0.46), "scalp_k": 0.85,      # the scalp under hair: shaded and tinted by the roots
+    "scalp_rgb": (0.30, 0.27, 0.27), "scalp_k": 0.9,      # the scalp under hair: shaded and tinted by the roots
     "lips_rgb": (0.84, 0.78, 0.80), "lips_k": 0.8,
     "pore_mm": 0.12, "mottle_mm": 0.35, "wrinkle_mm": 4.0,  # bump distances; the height map spans +-2 mm
 }

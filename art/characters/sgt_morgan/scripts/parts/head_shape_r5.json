@@ -13,6 +13,12 @@
   "jaw_sigma": 11.0,
   "taper_mm": 2.4,
   "taper_sz": 20.0,
+  "canthus_iters": 16,
+  "canthus_sigma": 5.0,
+  "orbit_iters": 30,
+  "orbit_above": 10.0,
+  "orbit_x0": 9.0,
+  "orbit_x1": 80.0,
   "crease_iters": 8,
   "crease_sigma": 7.0,
   "smooth_iters": 2
@@ -42,13 +48,21 @@
    "max_mm": 2.4,
    "verts": 196
   },
+  "orbit": {
+   "max_mm": 9.38,
+   "verts": 490
+  },
+  "canthus": {
+   "max_mm": 2.67,
+   "verts": 336
+  },
   "crease": {
    "max_mm": 3.68,
-   "verts": 575
+   "verts": 577
   },
   "total": {
    "max_mm": 6.67,
-   "verts": 1588,
+   "verts": 2162,
    "asymmetry_mm": "symmetric by construction (fields of |x|)"
   }
  },
@@ -124,12 +138,12 @@
  "r5": {
   "tag": "r5",
   "far_cheek_px": {
-   "rms": 1.03,
-   "mean": 0.41,
+   "rms": 0.89,
+   "mean": 0.27,
    "rows": 94,
    "by_band_mean": {
-    "68-82": 0.62,
-    "82-96": 0.21,
+    "68-82": 0.17,
+    "82-96": 0.09,
     "96-110": 0.27,
     "110-124": 0.54
    }
@@ -140,17 +154,17 @@
   },
   "rigid_head_fit": {
    "rms_px": 0.82,
-   "yaw_more_deg": -0.01,
-   "pitch_up_more_deg": -0.06,
+   "yaw_more_deg": -0.03,
+   "pitch_up_more_deg": -0.05,
    "rotvec_deg": [
-    0.06,
-    -0.37,
-    -0.01
+    0.05,
+    -0.33,
+    -0.03
    ]
   },
   "head_yaw_deg": {
    "now": 17.45,
-   "face_wants": 17.44
+   "face_wants": 17.43
   },
   "jaw_band_px": {
    "top": {

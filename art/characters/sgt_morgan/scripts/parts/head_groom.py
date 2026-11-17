@@ -33,11 +33,11 @@ HAIR = {
     "temple_x": 60.0, "temple_thin": 0.88, "temple_sigma": 19.0, "temple_dz": -12.0,
     "top_front": 36.0, "top_back": 27.0,
     "side_max": 10.0, "side_min": 0.6,
-    "density_top": 70.0, "density_side": 110.0,      # roots / cm2 (real ~200; thicker strands stand in)
+    "density_top": 105.0, "density_side": 110.0,      # roots / cm2 (real ~200; thicker strands stand in)
     "radius_root": 0.060, "radius_tip": 0.018,       # mm
     "clump_gap": 10.5, "clump_max": 0.92, "spike_share": 0.14, "flyaway": 0.05,
     "points": 7,
-    "melanin": 0.76, "redness": 0.05, "roughness": 0.36, "tip_lighten": 0.30,
+    "melanin": 0.88, "redness": 0.05, "roughness": 0.36, "tip_lighten": 0.30,
 }
 BROW = {"below": 0.70, "above": 0.15, "n": 950, "length": (5.0, 8.5), "radius": 0.065, "melanin": 0.92, "redness": 0.25}
 LASH = {"upper": 95, "lower": 34, "len_upper": 5.0, "len_lower": 2.0, "radius": 0.045, "melanin": 0.95}

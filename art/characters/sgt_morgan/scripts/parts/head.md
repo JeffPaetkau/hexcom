@@ -813,7 +813,8 @@ numbers to within 2 %, so most of the tuning ran there (`renders/head/r10/v1`-`v
   - above all, geometry. The brow's lower edge stands 11 mm in front of the lid plane, and the key comes from 37° up and
     56° to his right (measured in the head's frame). The brow's shadow therefore reaches 8 mm down, to the pupil, and
     the upper lid faces away from the light. This is the face's shape (§13.5's hood) and the scene's light, not a
-    material.
+    material. **Corrected in §13.9**: it is not a cast shadow at all but a shelf under the brow's ridge, and the
+    `orbit` field there, not the hood, removes it.
 - **The ball** (`Head.Mat.Eye`): iris, limbal ring, pupil and sclera from one radial ramp on a new UV map (`IrisUV`,
   planar about the iris axis, so it survives export).
   - Iris 12.2 mm: grey-hazel #5b4a3e, #7a6a55 round the pupil, limbal ring #2a201b, radial fibres. Analysis §5 found not
@@ -862,8 +863,9 @@ round**: the assembled file has not been rebuilt with the new part.
 
 ### 13.5 Shape round 5 (`head_shape_r5.py`, `head-shape-r5.target`, `head_shape_r5.json`; not wired)
 
-Not a fit: seven explicit displacement fields on round 4's face, symmetric, skin vertices only (1 588 moved, at most
-6.7 mm, no triangle flipped against round 4). No helper geometry and no joint cube moves, so the rig, the eye bones and
+Not a fit: explicit displacement fields on round 4's face, symmetric, skin vertices only. Seven at first (1 588
+vertices moved, at most 6.7 mm, no triangle flipped against round 4), the table and numbers below; §13.9 adds two
+(`orbit`, `canthus`) and has the final numbers. No helper geometry and no joint cube moves, so the rig, the eye bones and
 the MHCLO fits come out unchanged. Developed in memory as a shape key on an opened base.blend; `head-shape.target` and
 base.py are untouched.
 
@@ -937,10 +939,10 @@ Renders opened (`renders/head/r10/`):
 - `a1/head_face_pair.png`: the first look in the assembled scene (gaiter and carrier on); the same skin numbers as the
   base-only look.
 - `a2_r4face/head_face_pair.png`, `a4_r4face/head_face_pair.png`: the new part on round 4's face, which is what a
-  re-assembly gives now (a4 with the final gaze and brow tail).
+  re-assembly gives now. Both have the earlier gaze (4° to his left; a2 9° down, a4 14°); neither is the final part.
 - `a3_r5face/`, `a5_r5face/` and `a6_r5face/` (`head_face_pair.png`, `zoom_*_pair.png`; a3 also
-  `soldier_full_pair.png`): the same on shape round 5. **a6 is the final part** (the gaze of §13.3); a2-a5 differ from
-  it only in the gaze and the brow's tail.
+  `soldier_full_pair.png`): the same on the first round-5 sculpt. a6 has the final gaze (§13.3); a2-a5 differ from it
+  only in the gaze and the brow's tail. **The final part and sculpt are `a7_r5face/` (§13.9).**
 - `a6_r5face/zoom_z_head_x8_pair.png`: the irises sit nearer the middle of each fissure than in a5; a white still
   shows under them from the low camera.
 
@@ -968,12 +970,12 @@ Cheaper than §11.6, because no bone, helper or joint cube moves:
 4. Optional, for the next pose solve: `head.py --check r10` on the new base and
    `pose_solve.build_face_targets("r10")`. The zone masks and brows read `face_targets.json`; the sculpt moves its
    points little (0.87 -> 0.83 px), so they work unrefreshed.
-5. `assemble.py --round N`. Compare `head_face_compare.png` with `renders/head/r10/a6_r5face/head_face_pair.png`.
+5. `assemble.py --round N`. Compare `head_face_compare.png` with `renders/head/r10/a7_r5face/head_face_pair.png`.
 6. To go back: `git checkout scripts/parts/head-shape.target`.
 
 ### 13.8 Still wrong, ranked for round 11
 
-1. **The orbit and the gaze.** The irises still sit high in the fissure with a white under them (a6); the lids are
+1. **The orbit and the gaze** (see §13.9: the band was a shelf in the shape, fixed in round 5). The irises still sit high in the fissure with a white under them (a6); the lids are
    wider open than the drawn, narrowed eyes (aspect 0.28). The brow shadows the whole upper lid and the eye under the scene's key (§13.3). The shape can go
    further (a shallower orbit, a lower brow ridge: the drawing's brows sit about 4 mm nearer the eyes), or the
    evaluation light can gain a fill; the drawing has one. The shadow is also too saturated: skin albedo inter-reflected
@@ -994,3 +996,76 @@ Cheaper than §11.6, because no bone, helper or joint cube moves:
 8. `scripts/tools/look_loop.py`'s part mask colours meshes only: hair curves keep their own colour in its mask pass.
 9. The wrinkle map is 1.66 px/mm: the lines are soft at zoom. A head-only UV tile or a 4096² mask would sharpen them.
 10. §11.7 items 2-6 stand (R001's jaw angle, the chin-neck crease, camera dependence, the relief term, 12 flips).
+
+### 13.9 Follow-up (2026-11-16): the band between brow and eye was geometry, and the crown
+
+The coordinator, on `a6_r5face/head_face_pair.png`: the band between the brows and the eyes is a hard-edged, saturated
+strip from temple to temple that reads as goggles, not as a soft shadow. §13.3 and §13.8 item 1 called it the brow's
+shadow under the key. That was wrong, and the toggles show it.
+
+**The toggles** (`renders/head/r10/band/`, the base and the cached part through the hero pose, one change each;
+`sheet.png` has them side by side):
+
+| Toggle | Band |
+|---|---|
+| A as built | there |
+| B no brows, lashes, wet shell, tear line, stubble or hair | there: not the strands, not the shell |
+| C a plain grey diffuse on the body (no textures, no subsurface, no bump) | there, as a grey strip with the same edges: not a mask zone, not the material |
+| D the body casts no shadows | **there, unchanged: not a cast shadow** |
+| E the eyeballs hidden too | there |
+| G the body subdivided twice | there: not a shadow-terminator artefact of the coarse mesh |
+| W Workbench clay | a ledge: the brow's lower edge is a sharp ridge with a flat underside running back to the lid |
+
+So it is **the face's shape, in rounds 1-4, already in base.blend** (round 9 shows the same band under the old skin).
+- The brow's lower edge is a crisp ridge standing 10 mm proud of the lid and only 6 mm above it. Its underside is a
+  flat shelf turned down and away from both lights, so it is unlit whatever casts shadows; its crisp top edge is the
+  ridge and its crisp bottom edge the lid's crease.
+- Lateral of each eye, round 4 left the orbital rim crumpled: 6-7 mm edges folded 50-70° (the ragged dark marks at the
+  brow's tail), and round 4's outer-canthus patch left 0.4-1.5 mm edges folded 90-120° at the corner of the eye.
+- The saturation was the skin's albedo: matched on the lit cheek, where AgX desaturates, it was too saturated for the
+  half-light, where skin is lit mostly by skin.
+- Round 5's first `hood` field (§13.5) sat on the ridge, not under it, and did not change this.
+
+**The fix** is in the shape, so it is in `head-shape-r5.target` and shows only once round 5 is wired (§13.7). Round 4's
+face, which a re-assembly gives today, keeps the band.
+- `orbit` (new field in `head_shape_r5.py`): 30 passes of position relaxing between the brow's top and the lid (the
+  lid margin held over the eye; lateral of the outer canthus the mask runs down past the eye's level, over the rim).
+  The ridge rounds off and the shelf becomes a slope. Largest move 9.4 mm, 490 vertices.
+- `canthus` (new field): 16 passes within 5 mm of each outer canthus. Largest move 2.7 mm.
+- Folds lateral of the eye (edges over 35°, |x| > 54): 14 on round 4, 7 on round 5; the worst 71° -> 60°.
+- The skin's tone 25 % less saturated: (0.557, 0.354, 0.291) -> (0.516, 0.364, 0.316).
+
+**Round 5's numbers again** (`cache/head_r5/measure.json`; the table in §13.5 is the first sculpt's): 2 162 vertices
+moved, at most 6.7 mm, no triangle flipped. Hero far-cheek outline 1.16 (+0.59) -> **0.89 (+0.27) px**; by band 68-82 /
+82-96 / 96-110 / 110-124: +0.61 / +0.21 / +0.37 / +1.17 -> **+0.17 / +0.09 / +0.27 / +0.54**. Landmarks 0.87 -> 0.83
+px. Yaw the landmarks ask for: 17.43° against the solved 17.45°, so still no further turn from the face term.
+
+**The crown** (the coordinator: a smooth orange-brown patch where the strands thin to the scalp). The top had 70
+roots/cm² and the scalp under hair was only shaded to half the skin's colour, so the scalp showed between the clumps
+in the key. Now 105 roots/cm² on top, the scalp under hair at 0.30 / 0.27 / 0.27 of the skin, and melanin 0.76 -> 0.88.
+
+**Renders opened** (`renders/head/r10/`):
+- `band/sheet.png`, `band/sheet_r5.png`, `band/sheet_r5b.png`, `band/r5_C_grey_no_fuzz.png`: the toggles; on round 5 in
+  grey the strip is gone and the orbit shades softly; thin crease lines remain at the lateral rim.
+- `a7_r5face/head_face_pair.png` (**the final part on round 5**, in the assembled scene): no strip. The brows read as
+  brows with a soft shadow under them; both eyes show iris and sclera; the hair is dark brown to the top with no
+  orange patch.
+- `a7_r5face/zoom_g_eye_right_x20_pair.png`: brow strands over a rounded ridge, the upper lid visible and softly
+  shaded, a catchlight on the cornea, lashes on the lid.
+
+Region means in `a7_r5face` (hex, saturation; the reference in §13.6): near cheek #c79481, 0.35; nose #cf9a88, 0.34;
+chin stubble #785144; moustache #8a6053; near jaw 0.55; under-eye 0.54; ear 0.52; temple fade #7d5543; hair top
+#341e17, 0.55.
+
+**Still wrong after it**, replacing §13.8 items 1, 2 and 5:
+1. The brows now sit higher and more arched than the drawn low, straight ones, and a few inner strands fan upward.
+   The eyes read a little wide; the drawn ones are narrowed.
+2. Half-lit skin is still over-saturated, less than before (near jaw 0.55, under-eye 0.54 against 0.39 and 0.37).
+   What is left is the light: the drawing's shadow side is filled cool (far cheek #aa8e8e, saturation 0.16). A
+   **proposal, not made**: in `scripts/eval/scene.py` raise the cool side light or the world by about a third, or add
+   a low frontal fill. It affects every part, so it is the coordinator's call.
+3. The hair top is now darker than drawn (#341e17, value 0.21, against #543c32, 0.33); melanin about 0.82 would sit
+   between. Not re-rendered.
+4. Thin crease lines remain at the lateral orbital rim in the grey render (7 edges over 35°).
+5. Nothing here was seen on round 4's face after the tone and hair changes: the cached part is built on it, but the
+   last look on it (a4) predates them.

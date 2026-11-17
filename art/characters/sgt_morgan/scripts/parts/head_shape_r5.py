@@ -48,6 +48,8 @@ P5 = {
     "chin_k": 0.16, "chin_sz": 16.0,
     "jaw_up_mm": 4.0, "jaw_in_mm": 3.0, "jaw_sigma": 11.0,
     "taper_mm": 2.4, "taper_sz": 20.0,
+    "canthus_iters": 16, "canthus_sigma": 5.0,
+    "orbit_iters": 30, "orbit_above": 10.0, "orbit_x0": 9.0, "orbit_x1": 80.0,
     "crease_iters": 8, "crease_sigma": 7.0,
     "smooth_iters": 2,
 }
@@ -130,6 +132,31 @@ def delta(C, bd, marks, P=P5):
     parts["taper"] = np.stack([-sx * P["taper_mm"] * w, np.zeros(len(V)), np.zeros(len(V))], 1)
     for kk in ("hood", "lid", "hollow", "chin", "jaw", "taper"):
         D += parts[kk] * region[:, None]
+    # --- orbit: the brow's lower edge is a shelf (a sharp ridge 10 mm proud of the lid, 6 mm above it, its underside
+    # turned down and away from both lights: the hard dark band of round 10). Relax the positions between the
+    # brow's top and the lid, so the ridge rounds off and the underside becomes a slope; the lid margin stays.
+    bt = L["brow_mid_top"]
+    # over the eye the lid margin bounds it below; lateral of the outer canthus (the orbital rim, where round 4 left
+    # 6-7 mm edges folded 50-70 degrees) it runs down to below the eye's level
+    lat_ = _ss(abs(L["eye_out"][0]) + 1.0, abs(L["eye_out"][0]) + 6.0, np.abs(V[:, 0]))
+    low_ = (1 - lat_) * _ss(lid_top + 0.3, lid_top + 2.5, V[:, 2]) + lat_ * _ss(L["pupil"][2] - 16.0, L["pupil"][2] - 9.0, V[:, 2])
+    mo_ = low_ * _ss(bt[2] + P["orbit_above"], bt[2] + P["orbit_above"] - 5.0, V[:, 2])
+    mo_ *= _ss(P["orbit_x0"] - 4.0, P["orbit_x0"], np.abs(V[:, 0])) * _ss(P["orbit_x1"], P["orbit_x1"] - 8.0, np.abs(V[:, 0]))
+    mo_ *= _ss(L["pupil"][1] + 42.0, L["pupil"][1] + 28.0, V[:, 1]) * region
+    X = V + D
+    for _ in range(P["orbit_iters"]):
+        X = X + mo_[:, None] * 0.5 * (C.smooth_field(X, E, iters=1, lam=1.0) - X)
+    parts["orbit"] = X - (V + D)
+    D = X - V
+    # --- canthus: round 4's outer-canthus patch left a crumple of 0.4-1.5 mm edges folded 90-120 degrees at the outer
+    # corner of each eye (the ragged dark marks at the brow's tail); relax the positions within a few mm of it
+    eo_ = L["eye_out"]
+    mc_ = np.exp(-0.5 * (np.linalg.norm(Vr - eo_, axis=1) / P["canthus_sigma"]) ** 2) * region
+    X = V + D
+    for _ in range(P["canthus_iters"]):
+        X = X + mc_[:, None] * 0.5 * (C.smooth_field(X, E, iters=1, lam=1.0) - X)
+    parts["canthus"] = X - (V + D)
+    D = X - V
     # --- crease: relax the groove from beside the nose down to the mouth corner (positions, masked)
     ala = L["ala"]
     b0 = np.array([ala[0] - 2.0, ala[1] + 6.0, L["pupil"][2] - 16.0])
